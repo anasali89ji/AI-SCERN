@@ -35,7 +35,7 @@ const navGroups = [
       { href: '/profile', icon: User, label: 'Profile' },
       { href: '/settings', icon: Settings, label: 'Settings' },
     ]
-  }
+  },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
