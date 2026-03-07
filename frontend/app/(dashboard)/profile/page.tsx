@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { User, Mail, Shield, BarChart3, Calendar, Edit3, Save, X, Camera } from 'lucide-react'

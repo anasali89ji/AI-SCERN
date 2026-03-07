@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Settings, Bell, Shield, Palette, Key, Save, AlertTriangle } from 'lucide-react'

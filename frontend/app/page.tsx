@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3, ChevronRight, Check } from 'lucide-react'

@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, Search, AlertTriangle, CheckCircle, HelpCircle, Loader2, ExternalLink, Image as ImgIcon, FileText, BarChart3 } from 'lucide-react'
