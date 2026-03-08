@@ -18,8 +18,17 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
+async function setSessionCookie(user: any) {
+  const idToken = await user.getIdToken()
+  await fetch('/api/auth/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  })
+}
+
 export default function LoginPage() {
-  const [showPw, setShowPw]       = useState(false)
+  const [showPw, setShowPw]        = useState(false)
   const [googleLoading, setGoogle] = useState(false)
   const router = useRouter()
 
@@ -29,7 +38,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password)
+      const cred = await signInWithEmailAndPassword(auth, data.email, data.password)
+      await setSessionCookie(cred.user)
       toast.success('Welcome back!')
       router.push('/dashboard')
     } catch (err: unknown) {
@@ -45,7 +55,8 @@ export default function LoginPage() {
   const signInWithGoogle = async () => {
     setGoogle(true)
     try {
-      await signInWithPopup(auth, googleProvider)
+      const cred = await signInWithPopup(auth, googleProvider)
+      await setSessionCookie(cred.user)
       toast.success('Welcome back!')
       router.push('/dashboard')
     } catch (err: unknown) {
@@ -58,11 +69,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background grid */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none" />
-      
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/25">
             <Shield className="w-8 h-8 text-white" />
@@ -77,7 +85,6 @@ export default function LoginPage() {
             <p className="text-text-muted text-sm mt-0.5">Sign in to your account</p>
           </div>
 
-          {/* Google */}
           <button onClick={signInWithGoogle} disabled={googleLoading}
             className="w-full py-3 px-4 rounded-xl border border-border bg-surface hover:bg-surface-active transition-all flex items-center justify-center gap-3 text-sm font-medium text-text-primary disabled:opacity-50">
             {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
@@ -97,7 +104,6 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">Email</label>
@@ -124,7 +130,7 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" disabled={isSubmitting}
-              className="btn-primary w-full py-3 text-sm font-semibold disabled:opacity-50">
+              className="btn-primary w-full py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign In <ArrowRight className="w-4 h-4" /></>}
             </button>
           </form>

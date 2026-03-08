@@ -39,6 +39,16 @@ async function syncToSupabase(uid: string, email: string, name: string, avatar: 
   }, { onConflict: 'id' })
 }
 
+
+async function setSessionCookie(user: any) {
+  const idToken = await user.getIdToken()
+  await fetch('/api/auth/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  })
+}
+
 export default function SignupPage() {
   const [showPw, setShowPw]       = useState(false)
   const [googleLoading, setGoogle] = useState(false)
@@ -51,6 +61,7 @@ export default function SignupPage() {
   const onSubmit = async (data: FormData) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, data.email, data.password)
+      await setSessionCookie(cred.user)
       await updateProfile(cred.user, { displayName: data.name })
       await syncToSupabase(cred.user.uid, data.email, data.name, null)
       toast.success('Account created! Welcome to DETECTAI 🎉')
@@ -66,6 +77,7 @@ export default function SignupPage() {
     setGoogle(true)
     try {
       const cred = await signInWithPopup(auth, googleProvider)
+      await setSessionCookie(cred.user)
       const u = cred.user
       await syncToSupabase(u.uid, u.email!, u.displayName || u.email!.split('@')[0], u.photoURL)
       toast.success('Account created! Welcome to DETECTAI 🎉')
