@@ -1,4 +1,4 @@
-name: 🚀 Deploy All Sites
+name: Deploy to Vercel
 
 on:
   push:
@@ -6,41 +6,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Main site: trigger Netlify build hook
   deploy-main:
+    name: Main Platform
     runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Main Site Build
-        run: |
-          curl -s -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}"
-          echo "✅ Main site build triggered → https://detectai-platform.netlify.app"
-
-  # Admin panel: build from admin/ subdirectory and deploy
-  deploy-admin:
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli@latest
-
-      - name: Deploy Admin Panel
-        working-directory: admin
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Deploy to Vercel
+        run: npx vercel --prod --yes --token=$VERCEL_TOKEN
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: c17c17c4-bf23-4100-8754-a7792dca32cb
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          HUGGINGFACE_API_TOKEN: ${{ secrets.HUGGINGFACE_API_TOKEN }}
-          HF_DATASET_REPO: saghi776/detectai-dataset
-        run: |
-          netlify deploy --build --prod \
-            --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$NETLIFY_SITE_ID" \
-            --message="Admin panel deploy $(date +%Y-%m-%d)"
-          echo "✅ Admin panel deployed → https://detectai-admin-panel.netlify.app"
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-admin:
+    name: Admin Panel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - run: npm ci
+      - name: Deploy to Vercel
+        run: npx vercel --prod --yes --token=$VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
