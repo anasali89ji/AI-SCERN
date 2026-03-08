@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Netlify
+name: 🚀 Deploy All Sites
 
 on:
   push:
@@ -6,10 +6,40 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-main:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Netlify Build
+      - name: Trigger Main Site Build
         run: |
           curl -s -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}"
-          echo "✅ Netlify build triggered — check https://app.netlify.com/projects/detectai-platform/deploys"
+          echo "✅ Main site build triggered"
+
+  deploy-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & Build Admin
+        working-directory: admin
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Deploy Admin to Netlify
+        working-directory: admin
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: c17c17c4-bf23-4100-8754-a7792dca32cb
+        run: |
+          netlify deploy --prod --dir=.next --auth="$NETLIFY_AUTH_TOKEN" --site="$NETLIFY_SITE_ID"
+          echo "✅ Admin panel deployed: https://detectai-admin-panel.netlify.app"
