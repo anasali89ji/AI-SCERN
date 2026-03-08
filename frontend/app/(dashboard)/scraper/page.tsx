@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, Search, AlertTriangle, CheckCircle, HelpCircle, Loader2, ExternalLink, Image as ImgIcon, FileText, BarChart3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import { validateUrl } from '@/lib/utils/helpers'
 
 interface ScrapedAsset {
@@ -46,6 +47,7 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 export default function ScraperPage() {
+  const { user: firebaseUser } = useAuth()
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ScrapeResult | null>(null)

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
 
@@ -11,6 +12,7 @@ const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, u
 const mediaColors = { image: 'text-primary bg-primary/10', video: 'text-secondary bg-secondary/10', audio: 'text-cyan bg-cyan/10', text: 'text-amber bg-amber/10', url: 'text-emerald bg-emerald/10' }
 
 export default function HistoryPage() {
+  const { user: firebaseUser } = useAuth()
   const [scans, setScans] = useState<Scan[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -23,8 +25,9 @@ export default function HistoryPage() {
   }, [])
 
   async function loadScans() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+      const uid = firebaseUser?.uid
+      if (!uid) return
+      const user = { id: uid }
     const { data } = await supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100)
     if (data) setScans(data)
     setLoading(false)

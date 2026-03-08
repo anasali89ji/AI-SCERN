@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { User, Mail, Shield, BarChart3, Calendar, Edit3, Save, X, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { Profile, UserStats } from '@/types'
 import { formatDate } from '@/lib/utils/helpers'
 
 export default function ProfilePage() {
+  const { user: firebaseUser } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [editing, setEditing] = useState(false)
@@ -18,8 +20,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const uid = firebaseUser?.uid
+      if (!uid) return
+      const user = { id: uid }
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (p) { setProfile(p); setDisplayName(p.display_name || '') }
       const { data: s } = await supabase.rpc('get_user_stats', { p_user_id: user.id })

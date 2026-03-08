@@ -41,6 +41,7 @@ const navGroups = [
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user: firebaseUser } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { user, loading: isLoading, signOut } = useAuth()

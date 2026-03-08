@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence } from '@/lib/utils/helpers'
 
@@ -12,6 +13,7 @@ const SAMPLE_AI_TEXT = `Artificial intelligence has revolutionized the way we pr
 const SAMPLE_HUMAN_TEXT = `I've been thinking about this for a while now. My grandmother used to say you could tell a lot about a person by how they treat waitstaff. Honestly? She was right. Last week at the diner on Fifth, I watched this guy snap his fingers at our server three times. Three! The look on Maria's face - she's been working there twelve years - just killed me.`
 
 export default function TextDetectionPage() {
+  const { user: firebaseUser } = useAuth()
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DetectionResult | null>(null)

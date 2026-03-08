@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Settings, Bell, Shield, Palette, Key, Save, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
+  const { user: firebaseUser, signOut } = useAuth()
   const [notifications, setNotifications] = useState(true)
   const [autoSave, setAutoSave] = useState(true)
   const [highConf, setHighConf] = useState(60)
@@ -24,7 +26,7 @@ export default function SettingsPage() {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut()
     router.push('/')
   }
 

@@ -5,11 +5,13 @@ import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Layers, Upload, X, Play, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
 
 interface BatchFile { id: string; file: File; status: 'queued' | 'processing' | 'done' | 'error'; verdict?: string; confidence?: number }
 
 export default function BatchPage() {
+  const { user: firebaseUser } = useAuth()
   const [files, setFiles] = useState<BatchFile[]>([])
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(0)

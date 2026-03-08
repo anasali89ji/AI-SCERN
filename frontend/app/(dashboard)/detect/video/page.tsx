@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Video, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
 
@@ -30,6 +31,7 @@ function FrameAnalysisGrid({ count }: { count: number }) {
 }
 
 export default function VideoDetectionPage() {
+  const { user: firebaseUser } = useAuth()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

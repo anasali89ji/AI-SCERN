@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Brain, Eye, FileText, Mic, BarChart3, TrendingUp, Clock, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { UserStats, Scan } from '@/types'
 import { formatRelativeTime, getVerdictColor } from '@/lib/utils/helpers'
 
@@ -38,6 +39,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
 }
 
 export default function DashboardPage() {
+  const { user: firebaseUser } = useAuth()
   const [stats, setStats] = useState<UserStats | null>(null)
   const [scans, setScans] = useState<Scan[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,8 +47,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const uid = firebaseUser?.uid
+      if (!uid) return
+      const user = { id: uid }
 
       const { data: statsData } = await supabase.rpc('get_user_stats', { p_user_id: user.id })
       if (statsData) setStats(statsData)

@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
 
@@ -32,6 +33,7 @@ function WaveformVisualizer({ playing }: { playing: boolean }) {
 }
 
 export default function AudioDetectionPage() {
+  const { user: firebaseUser } = useAuth()
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DetectionResult | null>(null)
