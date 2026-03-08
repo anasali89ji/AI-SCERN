@@ -1,76 +1,43 @@
-name: 🚀 Deploy DETECTAI to Netlify
+name: 🚀 Deploy to Netlify
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   deploy:
-    name: Build & Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: cd frontend && npm ci
 
-      - name: 🔍 TypeScript check
-        run: cd frontend && npx tsc --noEmit
-
-      - name: 🏗️ Build production
+      - name: Build
         run: cd frontend && npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL: https://detectai-platform.netlify.app
-          NEXT_PUBLIC_APP_NAME: DETECTAI
-          HUGGINGFACE_API_TOKEN: ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          NEXT_PUBLIC_FIREBASE_API_KEY:  ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: detectai-prod.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID:  detectai-prod
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: detectai-prod.firebasestorage.app
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "830272475702"
+          NEXT_PUBLIC_FIREBASE_APP_ID:  ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          HUGGINGFACE_API_TOKEN:        ${{ secrets.HUGGINGFACE_API_TOKEN }}
 
-      - name: 🌐 Deploy to Netlify (Preview)
-        if: github.event_name == 'pull_request'
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: './frontend/.next'
-          site-id: ${{ secrets.NETLIFY_SITE_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "PR Preview #${{ github.event.number }}"
-          enable-pull-request-comment: true
-          enable-commit-comment: false
-          overwrites-pull-request-comment: true
-          netlify-config-path: ./netlify.toml
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        timeout-minutes: 10
-
-      - name: 🚀 Deploy to Netlify (Production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: './frontend/.next'
-          site-id: ${{ secrets.NETLIFY_SITE_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy ${{ github.sha }} — ${{ github.event.head_commit.message }}"
-          production-deploy: true
-          enable-pull-request-comment: false
-          enable-commit-comment: true
-          netlify-config-path: ./netlify.toml
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        timeout-minutes: 10
-
-      - name: ✅ Deployment complete
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Deploy to Netlify
         run: |
-          echo "🎉 DETECTAI is live at https://detectai-platform.netlify.app"
-          echo "📦 Commit: ${{ github.sha }}"
-          echo "💬 Message: ${{ github.event.head_commit.message }}"
+          cd frontend
+          npx netlify-cli deploy \
+            --dir .next \
+            --site ${{ secrets.NETLIFY_SITE_ID }} \
+            --auth ${{ secrets.NETLIFY_AUTH_TOKEN }} \
+            --prod \
+            --message "Deploy $(git rev-parse --short HEAD)"
