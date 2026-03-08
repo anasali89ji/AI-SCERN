@@ -1,65 +1,31 @@
-name: Pipeline Scheduler
+name: ⚙️ Pipeline Worker
+
 on:
   schedule:
-    - cron: '0 */6 * * *'   # Scrape every 6h
-    - cron: '0 1 * * *'     # Clean + dedupe daily  
-    - cron: '0 2 * * 1'     # Retrain weekly
-  workflow_dispatch:
-    inputs:
-      job:
-        description: 'Job type (scrape/clean/dedupe/upload)'
-        required: true
-        default: 'scrape'
-        type: choice
-        options: [scrape, clean, dedupe, upload]
+    - cron: '0 */6 * * *'   # Every 6 hours
+  workflow_dispatch:          # Manual trigger anytime
 
 jobs:
-  pipeline:
+  run-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - name: Trigger scrape
+        run: |
+          curl -s -X POST \
+            "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1/pipeline-worker" \
+            -H "Content-Type: application/json" \
+            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -d '{"job_type": "scrape"}' | jq .
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: pipeline/package-lock.json
+      - name: Trigger clean
+        run: |
+          curl -s -X POST \
+            "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1/pipeline-worker" \
+            -H "Content-Type: application/json" \
+            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -d '{"job_type": "clean"}' | jq .
 
-      - name: Install dependencies
-        working-directory: pipeline
-        run: npm ci --prefer-offline || npm install
-        env:
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
-          HF_DATASET_REPO:     ${{ secrets.HF_DATASET_REPO }}
-          HF_MODEL_REPO:       ${{ secrets.HF_MODEL_REPO }}
-
-      - name: Run scraper
-        if: github.event.schedule == '0 */6 * * *' || github.event.inputs.job == 'scrape'
-        working-directory: pipeline
-        run: node src/workers/scraper.js
-        env:
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
-          HF_DATASET_REPO:     ${{ secrets.HF_DATASET_REPO }}
-
-      - name: Run cleaner + deduplicator
-        if: github.event.schedule == '0 1 * * *' || github.event.inputs.job == 'clean'
-        working-directory: pipeline
-        run: node src/workers/cleaner.js && node src/workers/deduplicator.js
-        env:
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-
-      - name: Run uploader
-        if: github.event.inputs.job == 'upload'
-        working-directory: pipeline
-        run: node src/workers/uploader.js
-        env:
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
-          HF_DATASET_REPO:     ${{ secrets.HF_DATASET_REPO }}
+      - name: Summary
+        run: echo "✅ Pipeline cycle complete"
