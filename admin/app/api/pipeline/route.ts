@@ -1,36 +1,55 @@
+/**
+ * Admin Pipeline API — proxies to Supabase pipeline-status edge function
+ * Supports: GET (status), POST (trigger job)
+ */
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-export const dynamic = 'force-dynamic'
 
-export async function GET() {
+const EF_BASE  = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+async function callEdge(path: string, init: RequestInit = {}) {
+  const res = await fetch(`${EF_BASE}/${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ANON_KEY}`,
+      ...(init.headers || {}),
+    },
+  })
+  return res
+}
+
+export async function GET(req: NextRequest) {
   try {
-    const [jobs, items, scans, profiles] = await Promise.allSettled([
-      db.from('pipeline_jobs').select('*').order('created_at', { ascending: false }).limit(50),
-      db.from('dataset_items').select('id,media_type,label,split,is_deduplicated,source_name,created_at').order('created_at', { ascending: false }).limit(200),
-      db.from('scans').select('id,media_type,verdict,confidence_score,created_at,user_id').order('created_at', { ascending: false }).limit(100),
-      db.from('profiles').select('id,email,display_name,plan,scan_count,created_at').order('created_at', { ascending: false }).limit(100),
-    ])
-    return NextResponse.json({
-      jobs:     jobs.status     === 'fulfilled' ? (jobs.value.data     ?? []) : [],
-      dataset:  items.status    === 'fulfilled' ? (items.value.data    ?? []) : [],
-      scans:    scans.status    === 'fulfilled' ? (scans.value.data    ?? []) : [],
-      profiles: profiles.status === 'fulfilled' ? (profiles.value.data ?? []) : [],
-    })
-  } catch (err) {
-    return NextResponse.json({ jobs: [], dataset: [], scans: [], profiles: [], error: String(err) })
+    const action = req.nextUrl.searchParams.get('action') || 'status'
+    const res    = await callEdge(`pipeline-status?action=${action}`)
+    const data   = await res.json()
+    return NextResponse.json(data)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { action, job_type, payload } = await req.json()
-    if (action === 'trigger') {
-      const { error } = await db.from('pipeline_jobs').insert({ job_type, status: 'pending', priority: 1, payload: payload || {} })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-      return NextResponse.json({ ok: true })
+    const body = await req.json()
+
+    if (body.trigger === 'run') {
+      // Trigger full orchestrator run immediately
+      const [statusRes, orchRes] = await Promise.all([
+        callEdge('pipeline-status?action=trigger'),
+        callEdge('pipeline-orchestrator', { method: 'POST', body: JSON.stringify({ manual: true }) }),
+      ])
+      const statusData = await statusRes.json().catch(() => ({}))
+      const orchData   = await orchRes.json().catch(() => ({}))
+      return NextResponse.json({ triggered: true, queue: statusData, run: orchData })
     }
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+
+    // Queue a specific job type
+    const res  = await callEdge('pipeline-status?action=trigger')
+    const data = await res.json()
+    return NextResponse.json(data)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
