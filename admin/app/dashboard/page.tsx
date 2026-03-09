@@ -2,764 +2,615 @@
 export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  Shield, Database, Users, Brain, Activity, Upload, RefreshCw,
-  LogOut, BarChart3, Globe, AlertTriangle, CheckCircle,
-  XCircle, Clock, Loader2, Terminal, Heart,
-  TrendingUp, Server, GitBranch, Eye, Wifi, WifiOff,
-  AlertCircle, Play, Zap, Radio
-} from 'lucide-react'
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell, PieChart, Pie, AreaChart, Area
-} from 'recharts'
+import { Shield, Database, Activity, Upload, RefreshCw, LogOut, BarChart3, CheckCircle, XCircle, Clock, Loader2, Play, Zap, Radio, GitBranch, Server, TrendingUp, ChevronRight, AlertTriangle, Eye, Users, Terminal, Heart, Cpu, Globe } from 'lucide-react'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
 
-const TABS = [
-  { id: 'overview',  label: 'Overview',  icon: BarChart3  },
-  { id: 'pipeline',  label: 'Pipeline',  icon: Activity   },
-  { id: 'health',    label: 'Health',    icon: Heart      },
-  { id: 'dataset',   label: 'Dataset',   icon: Database   },
-  { id: 'scans',     label: 'Scans',     icon: Eye        },
-  { id: 'users',     label: 'Users',     icon: Users      },
-  { id: 'logs',      label: 'Logs',      icon: Terminal   },
+const SB_URL = 'https://xtdrwspsbranhunvlbfa.supabase.co'
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZHJ3c3BzYnJhbmh1bnZsYmZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgwMjEsImV4cCI6MjA4ODI4NDAyMX0.2xKiY0unR1Joq2W5M2YnzluSyjS2eXFZH8NUTm3qfnE'
+const HF_REPO = 'saghi776/detectai-dataset'
+const sbH: Record<string,string> = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
+
+async function sbGet(table: string, qs = '') {
+  try { const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}`, { headers: sbH }); return r.ok ? r.json() : [] } catch { return [] }
+}
+async function callEdge(fn: string, body?: any) {
+  try { const r = await fetch(`${SB_URL}/functions/v1/${fn}`, { method: 'POST', headers: sbH, body: JSON.stringify(body || {}) }); return r.json() } catch (e: any) { return { error: e.message } }
+}
+
+const STAGES = [
+  { id: 'scrape',  label: 'Scrape',  icon: '🌐', color: '#22d3ee', desc: '8 shards · 33 sources' },
+  { id: 'clean',   label: 'Dedupe',  icon: '⚙️',  color: '#a78bfa', desc: 'Hash deduplication'   },
+  { id: 'augment', label: 'Augment', icon: '📈', color: '#f59e0b', desc: 'Label & split balance'  },
+  { id: 'upload',  label: 'Stage',   icon: '📤', color: '#34d399', desc: 'Mark for HF push'       },
+  { id: 'hf_push', label: 'HF Push', icon: '🤗', color: '#f472b6', desc: 'Commit to HuggingFace' },
 ]
 
-const STATUS_COLORS: Record<string,string> = {
-  pending:'#f59e0b', running:'#3b82f6', done:'#10b981',
-  failed:'#f43f5e',  completed:'#10b981', partial:'#f59e0b',
-  alive:'#10b981',   degraded:'#f59e0b', dead:'#f43f5e',
+const CRON = [
+  { name: 'Pipeline Scheduler', schedule: 'Every 5 min',  icon: '⚡' },
+  { name: 'Orchestrator',       schedule: 'Every 5 min',  icon: '🎯' },
+  { name: 'HF Pusher',          schedule: 'Every 30 min', icon: '🤗' },
+  { name: 'Stale Recovery',     schedule: 'Every 10 min', icon: '♻️' },
+  { name: 'Metrics Snapshot',   schedule: 'Every hour',   icon: '📊' },
+  { name: 'Cleanup',            schedule: 'Daily 3am',    icon: '🧹' },
+]
+
+const TABS = [
+  { id: 'flow',    label: 'Flow Monitor' },
+  { id: 'jobs',    label: 'Jobs'         },
+  { id: 'dataset', label: 'Dataset'      },
+  { id: 'hf',      label: 'HF Pushes'   },
+  { id: 'cron',    label: 'Schedule'     },
+  { id: 'overview',label: 'Analytics'    },
+]
+
+function Dot({ on, color }: { on: boolean; color: string }) {
+  return <span className="inline-flex items-center justify-center w-3 h-3">
+    <span className="w-2 h-2 rounded-full inline-block transition-all" style={{ backgroundColor: on ? color : '#374151', boxShadow: on ? `0 0 6px ${color}` : 'none' }} />
+  </span>
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const color = STATUS_COLORS[status] || '#6b7280'
-  const spinning = status === 'running'
-  const Icon = status === 'running' ? Loader2 : status === 'done' || status === 'completed' ? CheckCircle
-             : status === 'failed' ? XCircle : status === 'pending' ? Clock : Activity
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-      style={{ background: `${color}18`, color, border: `1px solid ${color}35` }}>
-      <Icon className={`w-3 h-3 ${spinning ? 'animate-spin' : ''}`}/>
-      {status}
-    </span>
-  )
+function Stat({ value, label, color, sub }: any) {
+  const [n, setN] = useState(0)
+  useEffect(() => { const s = Math.max(1, Math.ceil(value/40)); const t = setInterval(()=>setN(p=>{ if(p>=value){clearInterval(t);return value;} return p+s }), 25); return ()=>clearInterval(t) }, [value])
+  return <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5 relative overflow-hidden">
+    <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 blur-2xl" style={{ background: color, transform: 'translate(30%,-30%)' }} />
+    <div className="text-3xl font-black font-mono" style={{ color }}>{n.toLocaleString()}</div>
+    <div className="text-[#8b949e] text-xs mt-1">{label}</div>
+    {sub && <div className="text-[#484f58] text-xs mt-0.5">{sub}</div>}
+  </div>
 }
 
-function StatCard({ label, value, sub, color, icon: Icon, trend }: any) {
-  return (
-    <div className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{ background: `radial-gradient(circle at 80% 20%, ${color}, transparent 60%)` }}/>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-text-muted font-medium uppercase tracking-widest">{label}</p>
-        {Icon && <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}20` }}>
-          <Icon className="w-4 h-4" style={{ color }}/>
-        </div>}
-      </div>
-      <p className="text-3xl font-black text-text-primary">{value ?? '—'}</p>
-      {sub   && <p className="text-xs text-text-muted mt-1">{sub}</p>}
-      {trend !== undefined && <p className={`text-xs mt-1 font-medium ${trend >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-        {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)} vs last run
-      </p>}
-    </div>
-  )
-}
-
-function LiveDot({ color = '#10b981' }: { color?: string }) {
-  return (
-    <span className="relative flex h-2.5 w-2.5">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: color }}/>
-      <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ background: color }}/>
-    </span>
-  )
-}
-
-function HeartbeatBar({ beats }: { beats: any[] }) {
-  if (!beats?.length) return <p className="text-text-muted text-sm">No heartbeats yet</p>
-  const last = beats[0]
-  const secsAgo = Math.floor((Date.now() - new Date(last.beat_at).getTime()) / 1000)
-  const color = last.status === 'alive' ? '#10b981' : last.status === 'degraded' ? '#f59e0b' : '#f43f5e'
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <LiveDot color={color}/>
-        <span className="text-sm font-semibold capitalize" style={{ color }}>{last.status}</span>
-        <span className="text-xs text-text-muted">last beat {secsAgo}s ago</span>
-        <span className="ml-auto text-xs text-text-muted">{last.message}</span>
-      </div>
-      <div className="flex gap-1">
-        {beats.slice(0, 40).reverse().map((b: any, i: number) => (
-          <div key={i} className="flex-1 h-8 rounded-sm transition-all"
-            style={{ background: b.status === 'alive' ? '#10b981' : b.status === 'degraded' ? '#f59e0b' : '#f43f5e',
-              opacity: 0.5 + (i / beats.length) * 0.5 }}
-            title={`${new Date(b.beat_at).toLocaleTimeString()} — ${b.status}: ${b.message}`}/>
-        ))}
-      </div>
-      <p className="text-xs text-text-muted text-right">← last 40 heartbeats</p>
-    </div>
-  )
+function Badge({ status }: { status: string }) {
+  const m: Record<string,string> = {
+    pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    running: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    done:    'bg-green-500/10 text-green-400 border-green-500/20',
+    failed:  'bg-red-500/10 text-red-400 border-red-500/20',
+  }
+  return <span className={`px-2 py-0.5 text-xs border rounded font-mono ${m[status]||'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+    {status === 'running' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1 animate-pulse align-middle" />}{status}
+  </span>
 }
 
 export default function Dashboard() {
   const router = useRouter()
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab] = useState('flow')
   const [data, setData] = useState<any>(null)
-  const [logs, setLogs] = useState<any[]>([])
-  const [healthData, setHealthData] = useState<any>({ runs: [], beats: [], alerts: [], overview: {} })
+  const [hfLog, setHfLog] = useState<any[]>([])
+  const [metrics, setMetrics] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [triggering, setTriggering] = useState(false)
-  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [hfTriggering, setHfTriggering] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<Date|null>(null)
-  const logsRef = useRef<HTMLDivElement>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval>|null>(null)
+  const [liveLog, setLiveLog] = useState<string[]>([])
+  const intRef = useRef<any>(null)
 
-  // Direct Supabase — bypasses Vercel API routes entirely
-  const SB_URL = 'https://xtdrwspsbranhunvlbfa.supabase.co'
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZHJ3c3BzYnJhbmh1bnZsYmZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDgwMjEsImV4cCI6MjA4ODI4NDAyMX0.2xKiY0unR1Joq2W5M2YnzluSyjS2eXFZH8NUTm3qfnE'
-  const sbH = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
-
-  const sbGet = useCallback(async (table: string, qs = '') => {
-    try {
-      const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}`, { headers: sbH })
-      return r.ok ? r.json() : []
-    } catch { return [] }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const callEdge = useCallback(async (fn: string, body?: any) => {
-    try {
-      const r = await fetch(`${SB_URL}/functions/v1/${fn}`, {
-        method: 'POST', headers: sbH,
-        body: body ? JSON.stringify(body) : '{}',
-      })
-      return r.json()
-    } catch (e: any) { return { error: e.message } }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const fetchData = useCallback(async (silent = false) => {
+  const fetchData = useCallback(async (silent=false) => {
     if (!silent) setRefreshing(true)
     try {
-      const [jobs, runs, schedule, metrics, dsRows] = await Promise.all([
-        sbGet('pipeline_jobs', 'select=id,job_type,status,priority,result,error_message,started_at,completed_at,created_at&order=created_at.desc&limit=50'),
-        sbGet('pipeline_runs', 'select=id,triggered_by,status,jobs_total,jobs_done,jobs_failed,items_scraped,items_cleaned,items_uploaded,started_at,completed_at&order=started_at.desc&limit=10'),
-        sbGet('pipeline_schedule', 'select=*&limit=1'),
-        sbGet('pipeline_metrics', 'select=metric_name,metric_value,tags,recorded_at&order=recorded_at.desc&limit=50'),
-        sbGet('dataset_items', 'select=label,is_deduplicated,split&limit=100000'),
+      const [jobs, runs, dsRows, hfLogRows, metricsRows, schedule] = await Promise.all([
+        sbGet('pipeline_jobs','select=id,job_type,status,priority,payload,result,error_message,started_at,completed_at,created_at&order=created_at.desc&limit=60'),
+        sbGet('pipeline_runs','select=id,run_id,triggered_by,status,jobs_total,jobs_done,jobs_failed,items_scraped,started_at,completed_at&order=started_at.desc&limit=15'),
+        sbGet('dataset_items','select=label,media_type,split,is_deduplicated,hf_pushed_at,source_name&limit=200000'),
+        sbGet('hf_push_log','select=id,pushed_at,item_count,commit_id,repo,status,error,duration_ms,metadata&order=pushed_at.desc&limit=20'),
+        sbGet('pipeline_metrics','select=metric_name,metric_value,recorded_at,tags&order=recorded_at.desc&limit=100'),
+        sbGet('pipeline_schedule','select=items_per_run,scrape_interval_h,max_concurrent_jobs,next_run_at,last_run_at,run_count&limit=1'),
       ])
       const rows: any[] = Array.isArray(dsRows) ? dsRows : []
-      const dsStats = {
-        total: rows.length,
-        ai: rows.filter(r => r.label === 'ai').length,
-        human: rows.filter(r => r.label === 'human').length,
-        deduplicated: rows.filter(r => r.is_deduplicated).length,
-        train: rows.filter(r => r.split === 'train').length,
-        val: rows.filter(r => r.split === 'val').length,
-        test: rows.filter(r => r.split === 'test').length,
+      const srcMap: Record<string,number> = {}
+      for (const r of rows) srcMap[r.source_name] = (srcMap[r.source_name]||0)+1
+      const ds = {
+        total:     rows.length,
+        ai:        rows.filter(r=>r.label==='ai').length,
+        human:     rows.filter(r=>r.label==='human').length,
+        deduped:   rows.filter(r=>r.is_deduplicated).length,
+        hf_pushed: rows.filter(r=>r.hf_pushed_at).length,
+        pending_hf:rows.filter(r=>r.is_deduplicated&&!r.hf_pushed_at).length,
+        text:      rows.filter(r=>r.media_type==='text').length,
+        image:     rows.filter(r=>r.media_type==='image').length,
+        audio:     rows.filter(r=>r.media_type==='audio').length,
+        train:     rows.filter(r=>r.split==='train').length,
+        val:       rows.filter(r=>r.split==='val').length,
+        test:      rows.filter(r=>r.split==='test').length,
+        sources:   srcMap,
       }
-      setData({ jobs: Array.isArray(jobs) ? jobs : [], runs: Array.isArray(runs) ? runs : [], dataset: dsStats, schedule: Array.isArray(schedule) ? schedule[0] : null, metrics: Array.isArray(metrics) ? metrics : [] })
-      setHealthData({ runs: Array.isArray(runs) ? runs : [], beats: [], alerts: [], overview: {
-        total_items: dsStats.total, clean_items: dsStats.deduplicated, items_24h: 0,
-        health: { status: Array.isArray(jobs) && jobs.some((j: any) => j.status === 'done') ? 'healthy' : 'unknown' }
-      }})
+      setData({ jobs:Array.isArray(jobs)?jobs:[], runs:Array.isArray(runs)?runs:[], ds, schedule:Array.isArray(schedule)?schedule[0]:null })
+      setHfLog(Array.isArray(hfLogRows)?hfLogRows:[])
+      setMetrics(Array.isArray(metricsRows)?metricsRows:[])
       setLastRefresh(new Date())
-    } catch(e) { console.error('fetchData:', e) }
+    } catch(e){ console.error(e) }
     setLoading(false)
     setRefreshing(false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sbGet])
+  },[])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(()=>{ fetchData() },[fetchData])
+  useEffect(()=>{
+    if(intRef.current) clearInterval(intRef.current)
+    const j=data?.jobs||[]; const active=j.some((j:any)=>['pending','running'].includes(j.status))
+    intRef.current=setInterval(()=>fetchData(true), active?6000:12000)
+    return ()=>clearInterval(intRef.current)
+  },[fetchData,data])
 
-  // Smart auto-refresh: 8s when running, 15s otherwise
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    if (!autoRefresh) return
-    const jobs = data?.jobs || []
-    const hasActive = jobs.some((j: any) => ['pending','running'].includes(j.status))
-    const interval  = hasActive ? 8000 : 15000
-    intervalRef.current = setInterval(() => fetchData(true), interval)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [autoRefresh, fetchData, data])
-
-  useEffect(() => {
-    if (logsRef.current && tab === 'logs') {
-      logsRef.current.scrollTop = logsRef.current.scrollHeight
-    }
-  }, [logs, tab])
-
-  const triggerPipeline = async () => {
-    setTriggering(true)
+  const runPipeline = async () => {
+    setTriggering(true); setLiveLog(['🚀 Scheduling pipeline run...'])
     try {
-      // 1. Schedule a new run directly via DB
-      await fetch(`${SB_URL}/rest/v1/rpc/schedule_pipeline_run`, {
-        method: 'POST', headers: sbH,
-        body: JSON.stringify({ p_triggered_by: 'admin-manual' }),
-      })
-      // 2. Call orchestrator to process jobs immediately
-      const result = await callEdge('pipeline-orchestrator', { source: 'admin-manual' })
-      console.log('Pipeline trigger result:', result)
-      setTimeout(() => fetchData(true), 1500)
-      setTimeout(() => fetchData(true), 5000)
-    } catch(e) { console.error('trigger error:', e) }
+      const r1=await fetch(`${SB_URL}/rest/v1/rpc/schedule_pipeline_run`,{method:'POST',headers:sbH,body:JSON.stringify({p_triggered_by:'admin-manual'})})
+      const rid=await r1.json(); setLiveLog(p=>[...p,`✅ Run ${String(rid).slice(0,8)}`,'⚡ Calling orchestrator...'])
+      const r2=await callEdge('pipeline-orchestrator',{source:'admin-manual'})
+      setLiveLog(r2?.log?.slice(-15)||[r2?.error?`❌ ${r2.error}`:'✅ Done'])
+      setTimeout(()=>fetchData(true),2000); setTimeout(()=>fetchData(true),7000)
+    } catch(e:any){ setLiveLog(p=>[...p,`❌ ${e.message}`]) }
     setTriggering(false)
   }
 
-  const triggerJob = async (job_type: string) => {
+  const pushHF = async () => {
+    setHfTriggering(true); setLiveLog(['🤗 Triggering HuggingFace push...'])
     try {
-      await callEdge('pipeline-orchestrator', { source: 'admin-job', job_type })
-      fetchData(true)
-    } catch {}
+      const r=await callEdge('hf-push',{source:'admin-manual'})
+      setLiveLog(r?.log?.slice(-12)||[r?.error?`❌ ${r.error}`:`✅ Pushed ${r?.pushed||0} items`])
+      setTimeout(()=>fetchData(true),2000)
+    } catch(e:any){ setLiveLog(p=>[...p,`❌ ${e.message}`]) }
+    setHfTriggering(false)
   }
 
-  const logout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' })
-    router.push('/')
-  }
+  if(loading) return <div className="min-h-screen bg-[#0d1117] flex items-center justify-center"><div className="text-center space-y-3"><div className="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto"/><p className="text-[#484f58] font-mono text-sm">Loading mission control…</p></div></div>
 
-  const jobs     = data?.jobs    || []
-  const dataset  = data?.dataset || { total: 0, ai: 0, human: 0, deduplicated: 0, train: 0, val: 0, test: 0 }
-  const scans    = data?.scans   || []
-  const profiles = data?.profiles|| []
-
-  const runningJobs = jobs.filter((j: any) => j.status === 'running').length
-  const pendingJobs = jobs.filter((j: any) => j.status === 'pending').length
-  const doneJobs    = jobs.filter((j: any) => j.status === 'done').length
-  const failedJobs  = jobs.filter((j: any) => j.status === 'failed').length
-
-  const overview    = healthData.overview  || {}
-  const beats       = healthData.beats     || []
-  const runs        = healthData.runs      || []
-  const alerts      = healthData.alerts    || []
-
-  const health       = overview?.health || {}
-  const pipelineAlive = health?.status === 'healthy'
-  const totalItems    = overview?.total_items || dataset.length
-  const cleanItems    = overview?.clean_items || 0
-  const items24h      = overview?.items_24h   || 0
-  const items1h       = overview?.items_1h    || 0
-
-  const datasetStats = dataset.reduce((a: any, i: any) => {
-    const k = `${i.media_type}_${i.label}`; a[k] = (a[k] || 0) + 1; return a
-  }, {})
-  const pieData = Object.entries(datasetStats).map(([k, v]) => ({
-    name: k.replace('_', ' '), value: v as number,
-    color: k.includes('ai') ? '#f43f5e' : '#10b981'
-  }))
-
-  const throughput24h = data?.throughput_24h || {}
-  const runTrend = runs.slice(0,10).reverse().map((r: any, i: number) => ({
-    i, scraped: r.items_scraped || 0, cleaned: r.items_cleaned || 0, uploaded: r.items_uploaded || 0,
-    status: r.status
-  }))
-
-  if (loading) return (
-    <div className="min-h-screen bg-bg flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto"/>
-        <p className="text-text-muted">Loading admin panel…</p>
-      </div>
-    </div>
-  )
+  const jobs=data?.jobs||[]; const runs=data?.runs||[]; const ds=data?.ds||{total:0,ai:0,human:0,deduped:0,hf_pushed:0,pending_hf:0,text:0,image:0,audio:0,train:0,val:0,test:0,sources:{}}; const sched=data?.schedule
+  const running=jobs.filter((j:any)=>j.status==='running').length
+  const pending=jobs.filter((j:any)=>j.status==='pending').length
+  const done=jobs.filter((j:any)=>j.status==='done').length
+  const failed=jobs.filter((j:any)=>j.status==='failed').length
+  const stageStatus:Record<string,string>={}
+  for(const j of jobs.slice(0,20)) if(!stageStatus[j.job_type]||j.status==='running') stageStatus[j.job_type]=j.status
+  const srcEntries=Object.entries(ds.sources||{}).sort((a:any,b:any)=>b[1]-a[1]).slice(0,12)
+  const srcColors=['#22d3ee','#a78bfa','#f59e0b','#34d399','#f472b6','#60a5fa','#fb923c','#a3e635','#e879f9','#94a3b8','#f87171','#4ade80']
+  const labelPie=[{name:'AI',value:ds.ai,color:'#f43f5e'},{name:'Human',value:ds.human,color:'#10b981'}]
+  const mediaPie=[{name:'Text',value:ds.text,color:'#22d3ee'},{name:'Image',value:ds.image,color:'#a78bfa'},{name:'Audio',value:ds.audio,color:'#f59e0b'}].filter(d=>d.value>0)
+  const splitBars=[{name:'Train',value:ds.train,color:'#3b82f6'},{name:'Val',value:ds.val,color:'#8b5cf6'},{name:'Test',value:ds.test,color:'#ec4899'}]
+  const throughput=metrics.filter((m:any)=>m.metric_name==='hf_pushed').slice(0,20).reverse().map((m:any,i:number)=>({i,v:m.metric_value,t:new Date(m.recorded_at).toLocaleTimeString()}))
+  const runChart=runs.slice(0,10).reverse().map((r:any,i:number)=>({i,done:r.jobs_done||0,fail:r.jobs_failed||0}))
 
   return (
-    <div className="min-h-screen bg-bg flex">
-      {/* ── Sidebar ─────────────────────────────────── */}
-      <aside className="w-56 bg-surface border-r border-border flex flex-col shrink-0">
-        <div className="p-5 border-b border-border">
-          <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-5 h-5 text-primary"/>
-            <span className="font-black text-text-primary text-sm">DETECTAI</span>
-          </div>
-          <span className="text-xs text-text-muted font-medium px-1 py-0.5 bg-primary/10 text-primary rounded">
-            Admin Panel
-          </span>
-        </div>
+    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9]" style={{fontFamily:"'JetBrains Mono','Fira Code','Courier New',monospace"}}>
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet"/>
 
-        {/* Pipeline status chip */}
-        <div className="px-4 py-3 border-b border-border">
+      {/* HEADER */}
+      <header className="bg-[#0d1117] border-b border-[#21262d] px-5 py-2.5 flex items-center justify-between sticky top-0 z-50 backdrop-blur-sm">
+        <div className="flex items-center gap-5">
           <div className="flex items-center gap-2">
-            <LiveDot color={pipelineAlive ? '#10b981' : '#f59e0b'}/>
-            <span className="text-xs text-text-muted">
-              {pipelineAlive ? 'Pipeline healthy' : 'Pipeline degraded'}
-            </span>
-          </div>
-          {alerts.length > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-400">
-              <AlertCircle className="w-3 h-3"/> {alerts.length} alert{alerts.length > 1 ? 's' : ''}
+            <div className="w-5 h-5 rounded bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center">
+              <span className="text-cyan-400 text-xs">D</span>
             </div>
-          )}
-        </div>
-
-        <nav className="flex-1 p-3 space-y-1">
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-                ${tab === t.id ? 'bg-primary/15 text-primary' : 'text-text-muted hover:text-text-primary hover:bg-white/5'}`}>
-              <t.icon className="w-4 h-4"/>
-              {t.label}
-              {t.id === 'pipeline' && runningJobs > 0 && (
-                <span className="ml-auto w-2 h-2 rounded-full bg-blue-400 animate-pulse"/>
-              )}
-              {t.id === 'pipeline' && pendingJobs > 0 && runningJobs === 0 && (
-                <span className="ml-auto text-xs bg-amber-400/20 text-amber-400 rounded-full px-1.5">
-                  {pendingJobs}
-                </span>
-              )}
-              {t.id === 'health' && alerts.length > 0 && (
-                <span className="ml-auto text-xs bg-rose-400/20 text-rose-400 rounded-full px-1.5">
-                  {alerts.length}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-border space-y-3">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setAutoRefresh(a => !a)}
-              className={`flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 transition-all ${autoRefresh ? 'text-emerald-400 bg-emerald-400/10' : 'text-text-muted bg-white/5'}`}>
-              {autoRefresh ? <Wifi className="w-3 h-3"/> : <WifiOff className="w-3 h-3"/>}
-              {autoRefresh ? 'Live' : 'Paused'}
-            </button>
-            <button onClick={() => fetchData()} className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary transition-all ml-auto">
-              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`}/>
-            </button>
+            <span className="text-white font-bold text-sm tracking-wider" style={{fontFamily:'Syne,sans-serif'}}>DETECTAI</span>
+            <span className="text-[#484f58] text-xs">admin</span>
           </div>
-          {lastRefresh && <p className="text-[10px] text-text-muted">{lastRefresh.toLocaleTimeString()}</p>}
-          <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-text-muted hover:text-rose-400 hover:bg-rose-400/10 transition-all">
-            <LogOut className="w-4 h-4"/>Logout
+          <div className="flex items-center gap-3 text-xs text-[#484f58] hidden md:flex">
+            <span><span className="text-blue-400 font-bold">{running}</span> running</span>
+            <span><span className="text-yellow-400 font-bold">{pending}</span> pending</span>
+            <span><span className="text-green-400 font-bold">{done}</span> done</span>
+            {failed>0&&<span><span className="text-red-400 font-bold">{failed}</span> failed</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {lastRefresh&&<span className="text-[#484f58] text-xs hidden md:block">{lastRefresh.toLocaleTimeString()}</span>}
+          <button onClick={()=>fetchData()} className="p-1.5 text-[#484f58] hover:text-cyan-400 transition-colors" title="Refresh">
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing?'animate-spin':''}`}/>
+          </button>
+          <button onClick={async()=>{await fetch('/api/auth',{method:'DELETE'}).catch(()=>{}); router.push('/')}} className="px-3 py-1.5 text-xs text-[#484f58] hover:text-red-400 border border-[#21262d] hover:border-red-900/50 rounded transition-all">
+            Exit
           </button>
         </div>
-      </aside>
+      </header>
 
-      {/* ── Main ────────────────────────────────────── */}
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-black text-text-primary capitalize">{tab}</h1>
-              <p className="text-sm text-text-muted mt-0.5">
-                {tab === 'pipeline' && `${jobs.length} total · ${runningJobs} running · ${pendingJobs} pending · ${failedJobs} failed`}
-                {tab === 'health'   && `${runs.length} runs · ${alerts.length} active alerts`}
-                {tab === 'dataset'  && `${totalItems.toLocaleString()} total items · ${cleanItems.toLocaleString()} clean`}
-                {tab === 'overview' && 'Real-time platform metrics'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {(tab === 'pipeline' || tab === 'overview') && (
-                <button onClick={triggerPipeline} disabled={triggering}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-all">
-                  {triggering ? <Loader2 className="w-4 h-4 animate-spin"/> : <Play className="w-4 h-4"/>}
-                  Run Pipeline Now
-                </button>
-              )}
-            </div>
+      <div className="flex">
+        {/* SIDEBAR */}
+        <aside className="w-44 border-r border-[#21262d] sticky top-[45px] h-[calc(100vh-45px)] flex flex-col shrink-0">
+          <nav className="p-2 flex-1 space-y-0.5">
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)} className={`w-full text-left px-3 py-2 rounded text-xs transition-all ${tab===t.id?'bg-cyan-500/10 text-cyan-400':'text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#161b22]'}`}>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <div className="p-3 border-t border-[#21262d] space-y-2">
+            <div className="text-[#484f58] text-xs uppercase tracking-widest mb-1">Live</div>
+            {[['Total',ds.total.toLocaleString(),'#22d3ee'],['HF Pushed',ds.hf_pushed.toLocaleString(),'#f472b6'],['Pending',ds.pending_hf.toLocaleString(),'#f59e0b']].map(([l,v,c])=>(
+              <div key={l as string} className="flex justify-between text-xs">
+                <span className="text-[#484f58]">{l}</span>
+                <span className="font-bold" style={{color:c as string}}>{v}</span>
+              </div>
+            ))}
           </div>
+        </aside>
 
-          {/* Active alerts banner */}
-          {alerts.length > 0 && (
-            <div className="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-4 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5"/>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-rose-300">{alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}</p>
-                <div className="space-y-1 mt-1">
-                  {alerts.map((a: any) => (
-                    <p key={a.id} className="text-xs text-rose-400/80">{a.title}: {a.message}</p>
+        {/* MAIN */}
+        <main className="flex-1 overflow-auto min-h-[calc(100vh-45px)]">
+
+          {/* ══════════════ FLOW MONITOR ══════════════ */}
+          {tab==='flow'&&(
+            <div className="p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>Pipeline Flow Monitor</h1>
+                  <p className="text-[#484f58] text-xs mt-0.5">8 parallel scrapers · 33 sources · auto HF commit every 30min</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={pushHF} disabled={hfTriggering} className="flex items-center gap-1.5 px-3 py-2 text-xs bg-pink-500/10 text-pink-400 border border-pink-500/20 rounded-lg hover:bg-pink-500/15 disabled:opacity-40 transition-all">
+                    {hfTriggering?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:'🤗'} HF Push
+                  </button>
+                  <button onClick={runPipeline} disabled={triggering} className="flex items-center gap-1.5 px-3 py-2 text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/15 disabled:opacity-40 transition-all">
+                    {triggering?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:<Play className="w-3.5 h-3.5"/>} Run Pipeline
+                  </button>
+                </div>
+              </div>
+
+              {/* PIPELINE FLOW DIAGRAM */}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-6">
+                <div className="text-[#484f58] text-xs uppercase tracking-widest mb-5">Automated Pipeline · Triggered Every 5 Min</div>
+                <div className="flex items-stretch gap-2 overflow-x-auto pb-2">
+                  {STAGES.map((s,i)=>{
+                    const st=stageStatus[s.id]
+                    const isRun=st==='running'; const isDone=st==='done'; const isFail=st==='failed'; const isPend=st==='pending'
+                    return <div key={s.id} className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-col items-center gap-2 p-4 rounded-xl border min-w-[110px] transition-all relative" style={{
+                        borderColor: isRun?s.color:isDone?`${s.color}40`:isFail?'#f43f5e40':'#21262d',
+                        backgroundColor: isRun?`${s.color}08`:isDone?`${s.color}05`:'transparent',
+                        boxShadow: isRun?`0 0 20px ${s.color}20`:''
+                      }}>
+                        {isRun&&<div className="absolute inset-0 rounded-xl animate-pulse opacity-5" style={{backgroundColor:s.color}}/>}
+                        <div className="text-2xl">{s.icon}</div>
+                        <div className="text-xs font-bold text-white">{s.label}</div>
+                        <div className="text-[#484f58] text-xs text-center leading-tight">{s.desc}</div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Dot on={isRun||isPend} color={s.color}/>
+                          <span className="text-xs font-mono" style={{color:isRun?s.color:isDone?'#10b981':isFail?'#f43f5e':isPend?s.color:'#484f58'}}>
+                            {isRun?'LIVE':isDone?'done':isFail?'err':isPend?'queue':'idle'}
+                          </span>
+                        </div>
+                      </div>
+                      {i<STAGES.length-1&&<div className="flex items-center text-[#21262d] text-lg">→</div>}
+                    </div>
+                  })}
+                </div>
+
+                {/* Shard grid */}
+                <div className="mt-5 pt-4 border-t border-[#21262d]">
+                  <div className="text-[#484f58] text-xs mb-3">Scraper Shards (0–7) · Each covers ~4 sources</div>
+                  <div className="flex gap-2">
+                    {Array.from({length:8},(_,i)=>{
+                      const sj=jobs.filter((j:any)=>j.job_type==='scrape'&&j.payload?.shard===i)
+                      const lat=sj[0]; const c=lat?.status==='running'?'#22d3ee':lat?.status==='done'?'#10b981':lat?.status==='failed'?'#f43f5e':'#21262d'
+                      const ins=lat?.result?.inserted||0
+                      return <div key={i} className="flex flex-col items-center gap-1">
+                        <div className="w-10 h-10 rounded-lg border flex items-center justify-center text-xs font-black transition-all" style={{borderColor:c,color:c,backgroundColor:`${c}10`,boxShadow:lat?.status==='running'?`0 0 12px ${c}40`:''}}>
+                          {i}
+                        </div>
+                        <div className="text-[#484f58] text-xs">{ins?`${(ins/1000).toFixed(1)}k`:lat?.status==='done'?'✓':lat?.status==='running'?'▶':'·'}</div>
+                      </div>
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Live log */}
+              {liveLog.length>0&&(
+                <div className="bg-[#0d1117] border border-cyan-900/30 rounded-xl p-4">
+                  <div className="text-cyan-500 text-xs uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Radio className="w-3 h-3 animate-pulse"/> Live Output
+                  </div>
+                  <div className="space-y-0.5 max-h-36 overflow-y-auto">
+                    {liveLog.map((l,i)=><div key={i} className="text-xs text-[#8b949e] font-mono">{l}</div>)}
+                  </div>
+                </div>
+              )}
+
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Stat value={ds.total}     label="Total Collected"   color="#22d3ee" sub={`${ds.deduped.toLocaleString()} deduped`}/>
+                <Stat value={ds.hf_pushed} label="Pushed to HF"      color="#f472b6" sub={HF_REPO}/>
+                <Stat value={ds.pending_hf}label="Pending HF Push"   color="#f59e0b" sub="queued for next push"/>
+                <Stat value={done}          label="Jobs Completed"   color="#10b981"  sub={`${failed} failed`}/>
+              </div>
+
+              {/* Recent runs */}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">Recent Pipeline Runs</div>
+                <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                  {runs.slice(0,8).map((r:any)=>(
+                    <div key={r.id} className="flex items-center justify-between px-3 py-2 bg-[#161b22] rounded-lg text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-1.5 h-1.5 rounded-full ${r.status==='running'?'bg-blue-400 animate-pulse':r.status==='done'?'bg-green-400':'bg-[#484f58]'}`}/>
+                        <span className="text-[#8b949e] font-mono">{r.run_id?.slice(0,8)||'—'}</span>
+                        <span className="text-[#484f58]">{r.triggered_by}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-[#484f58]">
+                        <span>{r.jobs_done||0}/{r.jobs_total||0} jobs</span>
+                        <span>{r.started_at?new Date(r.started_at).toLocaleTimeString():'—'}</span>
+                      </div>
+                    </div>
                   ))}
+                  {!runs.length&&<div className="text-[#484f58] text-xs text-center py-4">No runs yet — trigger one above</div>}
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── OVERVIEW ────────────────────────────── */}
-          {tab === 'overview' && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Items"   value={totalItems.toLocaleString()} sub={`${items24h} added today`}          icon={Database}    color="#7c3aed"/>
-                <StatCard label="Last Hour"     value={items1h}                     sub="items scraped"                      icon={Zap}         color="#3b82f6"/>
-                <StatCard label="Clean Rate"    value={totalItems ? `${Math.round(cleanItems/totalItems*100)}%` : '—'} sub="deduplicated"  icon={CheckCircle} color="#10b981"/>
-                <StatCard label="Total Users"   value={profiles.length}             sub="registered"                         icon={Users}       color="#f59e0b"/>
+          {/* ══════════════ JOBS ══════════════ */}
+          {tab==='jobs'&&(
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>Job Tracker</h1>
+                <div className="flex gap-3 text-xs">
+                  {[['running','#3b82f6',running],['pending','#f59e0b',pending],['done','#10b981',done],['failed','#f43f5e',failed]].map(([s,c,n])=>(
+                    <span key={s as string} className="flex items-center gap-1.5 text-[#8b949e]">
+                      <span className="w-2 h-2 rounded-full" style={{backgroundColor:c as string}}/>{s}: <span className="font-bold" style={{color:c as string}}>{n as number}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <StatCard label="Total Scans"   value={scans.length}                sub="all time"  icon={Eye}         color="#ec4899"/>
-                <StatCard label="Pipeline Runs" value={runs.length}                 sub="all time"  icon={GitBranch}   color="#14b8a6"/>
-                <StatCard label="Active Alerts" value={alerts.length}               sub={alerts.length === 0 ? 'All clear ✓' : 'needs attention'} icon={AlertCircle} color={alerts.length === 0 ? '#10b981' : '#f43f5e'}/>
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl overflow-hidden">
+                <div className="grid grid-cols-6 px-4 py-2 border-b border-[#21262d] text-[#484f58] text-xs uppercase tracking-wider">
+                  <span>Type</span><span>Status</span><span>Priority</span><span>Shard</span><span>Result</span><span>Time</span>
+                </div>
+                <div className="max-h-[65vh] overflow-y-auto divide-y divide-[#161b22]">
+                  {jobs.slice(0,60).map((j:any)=>{
+                    const r=j.result||{}; const stC=STAGES.find(s=>s.id===j.job_type)?.color||'#8b949e'
+                    const res=j.job_type==='scrape'?`${r.inserted||0} inserted`:j.job_type==='clean'?`${r.deduplicated||0} deduped`:j.job_type==='hf_push'?`${r.pushed||0} pushed`:j.job_type==='upload'?`${r.staged||0} staged`:j.error_message?.slice(0,25)||'—'
+                    return <div key={j.id} className="grid grid-cols-6 px-4 py-2.5 hover:bg-[#161b22] transition-colors text-xs">
+                      <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full inline-block" style={{backgroundColor:stC}}/><span className="text-[#c9d1d9]">{j.job_type}</span></div>
+                      <div><Badge status={j.status}/></div>
+                      <div className="text-[#484f58] flex items-center">{j.priority}</div>
+                      <div className="text-[#484f58] flex items-center">{j.payload?.shard!==undefined?`S${j.payload.shard}`:'—'}</div>
+                      <div className="text-[#8b949e] flex items-center truncate">{res}</div>
+                      <div className="text-[#484f58] flex items-center">{new Date(j.completed_at||j.started_at||j.created_at).toLocaleTimeString()}</div>
+                    </div>
+                  })}
+                  {!jobs.length&&<div className="text-[#484f58] text-xs text-center py-8">No jobs found</div>}
+                </div>
               </div>
+            </div>
+          )}
 
-              {/* 24h throughput */}
+          {/* ══════════════ DATASET ══════════════ */}
+          {tab==='dataset'&&(
+            <div className="p-6 space-y-5">
+              <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>Dataset Statistics</h1>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Stat value={ds.total}   label="Total Items"    color="#22d3ee"/>
+                <Stat value={ds.ai}      label="AI Samples"     color="#f43f5e"/>
+                <Stat value={ds.human}   label="Human Samples"  color="#10b981"/>
+                <Stat value={ds.deduped} label="Deduplicated"   color="#a78bfa"/>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: 'Scraped (24h)',  value: throughput24h.scraped  || 0, color: '#7c3aed' },
-                  { label: 'Cleaned (24h)',  value: throughput24h.cleaned  || 0, color: '#3b82f6' },
-                  { label: 'Uploaded (24h)', value: throughput24h.uploaded || 0, color: '#10b981' },
-                ].map(m => (
-                  <div key={m.label} className="bg-surface border border-border rounded-2xl p-5 text-center">
-                    <p className="text-xs text-text-muted uppercase tracking-widest mb-2">{m.label}</p>
-                    <p className="text-4xl font-black" style={{ color: m.color }}>{m.value.toLocaleString()}</p>
+                  {title:'Label Split',data:labelPie},
+                  {title:'Media Type', data:mediaPie},
+                ].map(({title,data})=>(
+                  <div key={title} className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                    <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">{title}</div>
+                    <ResponsiveContainer width="100%" height={150}>
+                      <PieChart>
+                        <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value" paddingAngle={3}>
+                          {data.map((e:any,i:number)=><Cell key={i} fill={e.color}/>)}
+                        </Pie>
+                        <Tooltip contentStyle={{background:'#161b22',border:'1px solid #21262d',borderRadius:8,color:'#c9d1d9',fontFamily:'JetBrains Mono'}}/>
+                        <Legend iconType="circle" iconSize={7} wrapperStyle={{fontSize:10,color:'#8b949e'}}/>
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 ))}
+                <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                  <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">Train / Val / Test</div>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart data={splitBars} barSize={24}>
+                      <XAxis dataKey="name" tick={{fill:'#484f58',fontSize:10}}/>
+                      <YAxis tick={{fill:'#484f58',fontSize:9}}/>
+                      <Tooltip contentStyle={{background:'#161b22',border:'1px solid #21262d',borderRadius:8,color:'#c9d1d9',fontFamily:'JetBrains Mono'}}/>
+                      <Bar dataKey="value" radius={[4,4,0,0]}>{splitBars.map((e,i)=><Cell key={i} fill={e.color}/>)}</Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
+              {/* Source breakdown */}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                <div className="text-[#484f58] text-xs uppercase tracking-widest mb-4">Source Breakdown ({srcEntries.length} sources)</div>
+                <div className="space-y-2">
+                  {srcEntries.map(([src,count],i)=>{
+                    const pct=ds.total?Math.round((count as number)/ds.total*100):0
+                    return <div key={src} className="flex items-center gap-3">
+                      <div className="text-[#484f58] text-xs w-5 text-right">{i+1}</div>
+                      <div className="text-[#8b949e] text-xs w-40 truncate">{src}</div>
+                      <div className="flex-1 bg-[#21262d] rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full transition-all" style={{width:`${pct}%`,backgroundColor:srcColors[i%srcColors.length]}}/>
+                      </div>
+                      <div className="text-[#484f58] text-xs w-14 text-right">{(count as number).toLocaleString()}</div>
+                      <div className="text-[#21262d] text-xs w-7 text-right">{pct}%</div>
+                    </div>
+                  })}
+                  {!srcEntries.length&&<div className="text-[#484f58] text-xs text-center py-4">Collecting data…</div>}
+                </div>
+              </div>
+            </div>
+          )}
 
-              {/* Run trend chart */}
-              {runTrend.length > 0 && (
-                <div className="bg-surface border border-border rounded-2xl p-5">
-                  <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary"/> Recent Pipeline Runs
-                  </h3>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <AreaChart data={runTrend}>
-                      <XAxis dataKey="i" hide/>
-                      <YAxis hide/>
-                      <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: 8 }}/>
-                      <Area type="monotone" dataKey="scraped"  stroke="#7c3aed" fill="#7c3aed20" strokeWidth={2}/>
-                      <Area type="monotone" dataKey="cleaned"  stroke="#3b82f6" fill="#3b82f620" strokeWidth={2}/>
-                      <Area type="monotone" dataKey="uploaded" stroke="#10b981" fill="#10b98120" strokeWidth={2}/>
+          {/* ══════════════ HF PUSHES ══════════════ */}
+          {tab==='hf'&&(
+            <div className="p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>HuggingFace Pushes</h1>
+                  <a href={`https://huggingface.co/datasets/${HF_REPO}`} target="_blank" rel="noopener" className="text-pink-400 hover:text-pink-300 text-xs underline">{HF_REPO}</a>
+                </div>
+                <button onClick={pushHF} disabled={hfTriggering} className="flex items-center gap-1.5 px-3 py-2 text-xs bg-pink-500/10 text-pink-400 border border-pink-500/20 rounded-lg hover:bg-pink-500/15 disabled:opacity-40 transition-all">
+                  {hfTriggering?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:'🤗'} Manual Push
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Stat value={ds.hf_pushed}  label="Items Pushed"       color="#f472b6"/>
+                <Stat value={ds.pending_hf} label="Pending Push"        color="#f59e0b"/>
+                <Stat value={hfLog.filter(l=>l.status==='done').length} label="Successful Commits" color="#10b981"/>
+              </div>
+              {throughput.length>0&&(
+                <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                  <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">Push History</div>
+                  <ResponsiveContainer width="100%" height={110}>
+                    <AreaChart data={throughput}>
+                      <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f472b6" stopOpacity={0.25}/><stop offset="95%" stopColor="#f472b6" stopOpacity={0}/></linearGradient></defs>
+                      <XAxis dataKey="t" tick={{fill:'#484f58',fontSize:9}}/>
+                      <Tooltip contentStyle={{background:'#161b22',border:'1px solid #21262d',borderRadius:8,color:'#c9d1d9',fontFamily:'JetBrains Mono'}}/>
+                      <Area type="monotone" dataKey="v" stroke="#f472b6" fill="url(#pg)" strokeWidth={2} dot={false}/>
                     </AreaChart>
                   </ResponsiveContainer>
-                  <div className="flex gap-6 mt-2 justify-center">
-                    {[['Scraped','#7c3aed'],['Cleaned','#3b82f6'],['Uploaded','#10b981']].map(([l,c]) => (
-                      <div key={l} className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <div className="w-2 h-2 rounded-full" style={{ background: c as string }}/>
-                        {l}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* ── PIPELINE ────────────────────────────── */}
-          {tab === 'pipeline' && (
-            <div className="space-y-5">
-              {/* Heartbeat monitor */}
-              <div className="bg-surface border border-border rounded-2xl p-5">
-                <h3 className="font-semibold text-text-primary flex items-center gap-2 mb-4">
-                  <Radio className="w-4 h-4 text-primary"/> Live Heartbeat Monitor
-                </h3>
-                <HeartbeatBar beats={beats}/>
-              </div>
-
-              {/* Pipeline stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Pending"  value={pendingJobs}  icon={Clock}        color="#f59e0b"/>
-                <StatCard label="Running"  value={runningJobs}  icon={Loader2}      color="#3b82f6"/>
-                <StatCard label="Done"     value={doneJobs}     icon={CheckCircle}  color="#10b981"/>
-                <StatCard label="Failed"   value={failedJobs}   icon={XCircle}      color="#f43f5e"/>
-              </div>
-
-              {/* Manual job triggers */}
-              <div className="bg-surface border border-border rounded-2xl p-5">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Server className="w-4 h-4 text-primary"/> Manual Triggers
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {[
-                    { type:'scrape',  label:'Scrape Data',   icon: Globe,   color:'#10b981' },
-                    { type:'clean',   label:'Clean & Dedupe',icon: Brain,   color:'#3b82f6' },
-                    { type:'augment', label:'Augment',       icon: TrendingUp, color:'#f59e0b' },
-                    { type:'upload',  label:'Upload to HF',  icon: Upload,  color:'#7c3aed' },
-                  ].map(({ type, label, icon: Icon, color }) => (
-                    <button key={type} onClick={() => triggerJob(type)}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-medium transition-all hover:scale-105 active:scale-95"
-                      style={{ borderColor: `${color}40`, color, background: `${color}10` }}>
-                      <Icon className="w-4 h-4"/>
-                      {label}
-                    </button>
-                  ))}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl overflow-hidden">
+                <div className="grid grid-cols-5 px-4 py-2 border-b border-[#21262d] text-[#484f58] text-xs uppercase tracking-wider">
+                  <span>Status</span><span>Items</span><span>Commit</span><span>Duration</span><span>Time</span>
                 </div>
-              </div>
-
-              {/* Schedule info */}
-              <div className="bg-surface border border-border rounded-2xl p-5">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary"/> Automation Schedule
-                </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[
-                    { name: 'Orchestrator',    schedule: 'Every 5 min',  color: '#3b82f6', active: true },
-                    { name: 'Scraper',         schedule: 'Every hour',   color: '#10b981', active: true },
-                    { name: 'Cleaner',         schedule: 'Daily 3am UTC',color: '#7c3aed', active: true },
-                    { name: 'Uploader',        schedule: 'Daily 4am UTC',color: '#f59e0b', active: true },
-                    { name: 'Health Monitor',  schedule: 'Every 10 min', color: '#ec4899', active: true },
-                    { name: 'Metrics Cleanup', schedule: 'Daily midnight',color: '#14b8a6', active: true },
-                  ].map(s => (
-                    <div key={s.name} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-border">
-                      <div className="w-2 h-2 rounded-full" style={{ background: s.color }}/>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">{s.name}</p>
-                        <p className="text-xs text-text-muted">{s.schedule}</p>
+                <div className="max-h-[50vh] overflow-y-auto divide-y divide-[#161b22]">
+                  {hfLog.map((l:any)=>(
+                    <div key={l.id} className="grid grid-cols-5 px-4 py-3 text-xs hover:bg-[#161b22]">
+                      <div>{l.status==='done'?<span className="text-green-400">✓ done</span>:<span className="text-red-400">✗ failed</span>}</div>
+                      <div className="text-cyan-400 font-bold">{(l.item_count||0).toLocaleString()}</div>
+                      <div className="font-mono text-[#484f58]">
+                        {l.commit_id?<a href={`https://huggingface.co/datasets/${HF_REPO}/commit/${l.commit_id}`} target="_blank" rel="noopener" className="text-pink-400 hover:underline">{l.commit_id.slice(0,10)}…</a>:'—'}
                       </div>
-                      <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0"/>
+                      <div className="text-[#484f58]">{l.duration_ms?`${(l.duration_ms/1000).toFixed(1)}s`:'—'}</div>
+                      <div className="text-[#484f58]">{new Date(l.pushed_at).toLocaleString()}</div>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Jobs table */}
-              <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                  <h3 className="font-semibold text-text-primary">Job Queue</h3>
-                  <span className="text-xs text-text-muted">{jobs.length} total</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        {['Type','Status','Attempt','Triggered By','Duration','Result','Created'].map(h => (
-                          <th key={h} className="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide text-left">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {jobs.slice(0, 50).map((job: any) => (
-                        <tr key={job.id} className="border-b border-border/50 hover:bg-white/[0.02] transition-colors">
-                          <td className="px-4 py-3 font-medium text-text-primary capitalize">{job.job_type}</td>
-                          <td className="px-4 py-3"><StatusBadge status={job.status}/></td>
-                          <td className="px-4 py-3 text-text-muted text-xs">{job.attempt || 0}/{job.max_attempts || 3}</td>
-                          <td className="px-4 py-3 text-text-muted text-xs max-w-[140px] truncate">{job.triggered_by || '—'}</td>
-                          <td className="px-4 py-3 text-text-muted text-xs">
-                            {job.duration_ms ? `${(job.duration_ms/1000).toFixed(1)}s` : '—'}
-                          </td>
-                          <td className="px-4 py-3 text-text-muted text-xs max-w-[180px] truncate">
-                            {job.result ? JSON.stringify(job.result).slice(0,80) : job.error_log?.at(-1)?.error?.slice(0,60) || '—'}
-                          </td>
-                          <td className="px-4 py-3 text-text-muted text-xs">{new Date(job.created_at).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                      {jobs.length === 0 && (
-                        <tr><td colSpan={7} className="px-4 py-12 text-center text-text-muted">No jobs yet</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                  {!hfLog.length&&<div className="text-[#484f58] text-xs text-center py-8">No pushes yet — will run automatically every 30 min</div>}
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── HEALTH ──────────────────────────────── */}
-          {tab === 'health' && (
-            <div className="space-y-5">
-              {/* Health summary */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Pipeline Status" value={health?.status || '?'} icon={Activity}    color={STATUS_COLORS[health?.status] || '#6b7280'}/>
-                <StatCard label="Total Runs"       value={runs.length}           icon={GitBranch}   color="#7c3aed"/>
-                <StatCard label="Active Alerts"    value={alerts.length}         icon={AlertCircle} color={alerts.length === 0 ? '#10b981' : '#f43f5e'}/>
-                <StatCard label="Items (24h)"      value={items24h}              icon={Database}    color="#10b981"/>
-              </div>
-
-              {/* Heartbeat history */}
-              <div className="bg-surface border border-border rounded-2xl p-5">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-primary"/> Heartbeat History
-                </h3>
-                <HeartbeatBar beats={beats}/>
-                <div className="mt-4 max-h-40 overflow-y-auto space-y-1">
-                  {beats.slice(0,10).map((b: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 text-xs py-1.5 border-b border-border/30">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: STATUS_COLORS[b.status] || '#6b7280' }}/>
-                      <span className="text-text-muted w-24 shrink-0">{new Date(b.beat_at).toLocaleTimeString()}</span>
-                      <span className="capitalize font-medium" style={{ color: STATUS_COLORS[b.status] || '#6b7280' }}>{b.status}</span>
-                      <span className="text-text-muted truncate">{b.message}</span>
+          {/* ══════════════ SCHEDULE ══════════════ */}
+          {tab==='cron'&&(
+            <div className="p-6 space-y-5">
+              <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>Automation Schedule</h1>
+              {sched&&(
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[['Items/Run',(sched.items_per_run||0).toLocaleString(),'#22d3ee'],['Interval',`${sched.scrape_interval_h}h`,'#a78bfa'],['Concurrency',sched.max_concurrent_jobs,'#f59e0b'],['Total Runs',(sched.run_count||0).toLocaleString(),'#10b981']].map(([l,v,c])=>(
+                    <div key={l as string} className="bg-[#0d1117] border border-[#21262d] rounded-xl p-4">
+                      <div className="font-mono text-2xl font-black" style={{color:c as string}}>{v}</div>
+                      <div className="text-[#484f58] text-xs mt-1">{l}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sched?.next_run_at&&(
+                <div className="bg-yellow-500/5 border border-yellow-500/15 rounded-xl px-5 py-3 flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-yellow-400"/>
+                  <div><div className="text-yellow-400 text-xs font-bold">Next Scheduled Run</div>
+                  <div className="text-[#c9d1d9] text-sm mt-0.5">{new Date(sched.next_run_at).toLocaleString()}</div></div>
+                </div>
+              )}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#21262d] text-[#484f58] text-xs uppercase tracking-widest">Active pg_cron Jobs</div>
+                <div className="divide-y divide-[#161b22]">
+                  {CRON.map(j=>(
+                    <div key={j.name} className="flex items-center justify-between px-5 py-3.5 hover:bg-[#161b22] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{j.icon}</span>
+                        <div><div className="text-[#c9d1d9] text-sm">{j.name}</div>
+                        <div className="text-[#484f58] text-xs font-mono">{j.schedule}</div></div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"/>
+                        <span className="text-green-400 text-xs">ACTIVE</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+              {/* Architecture */}
+              <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                <div className="text-[#484f58] text-xs uppercase tracking-widest mb-4">System Architecture</div>
+                <pre className="text-xs text-[#8b949e] leading-relaxed overflow-x-auto">{`
+pg_cron (5min) ──→ schedule_pipeline_run()
+                      └── 8 × scrape[shard 0..7]  (priority 1, all parallel)
+                      └── clean    (priority 2)
+                      └── augment  (priority 3)
+                      └── upload   (priority 4)
+                      └── hf_push  (priority 5)
 
-              {/* Run history */}
-              <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-border">
-                  <h3 className="font-semibold text-text-primary">Pipeline Run History</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        {['Run ID','Status','Jobs','Scraped','Cleaned','Uploaded','Duration','Started'].map(h => (
-                          <th key={h} className="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide text-left">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {runs.slice(0,30).map((run: any) => {
-                        const dur = run.completed_at && run.started_at
-                          ? Math.round((new Date(run.completed_at).getTime() - new Date(run.started_at).getTime()) / 1000)
-                          : null
-                        return (
-                          <tr key={run.run_id} className="border-b border-border/50 hover:bg-white/[0.02]">
-                            <td className="px-4 py-3 font-mono text-xs text-text-muted">{run.run_id?.slice(0,12)}…</td>
-                            <td className="px-4 py-3"><StatusBadge status={run.status}/></td>
-                            <td className="px-4 py-3 text-text-secondary">{run.jobs_done}/{run.jobs_total}</td>
-                            <td className="px-4 py-3" style={{ color:'#7c3aed' }}>{run.items_scraped  || 0}</td>
-                            <td className="px-4 py-3" style={{ color:'#3b82f6' }}>{run.items_cleaned  || 0}</td>
-                            <td className="px-4 py-3" style={{ color:'#10b981' }}>{run.items_uploaded || 0}</td>
-                            <td className="px-4 py-3 text-text-muted">{dur ? `${dur}s` : run.status === 'running' ? '⏳' : '—'}</td>
-                            <td className="px-4 py-3 text-text-muted text-xs">{new Date(run.started_at).toLocaleString()}</td>
-                          </tr>
-                        )
-                      })}
-                      {runs.length === 0 && <tr><td colSpan={8} className="px-4 py-12 text-center text-text-muted">No runs yet</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
+pg_cron (5min) ──→ pipeline-orchestrator [edge fn]
+                      └── picks up pending jobs, runs in parallel groups
+
+pg_cron (30min) ─→ hf-push [edge fn]
+                      └── commits un-pushed items to HuggingFace as JSONL
+
+pg_cron (10min) ─→ recover_stale_jobs()
+                      └── resets stuck running jobs >15 min
+
+GitHub Actions (6h) → orchestrator + hf-push [backup]
+                `.trim()}</pre>
               </div>
             </div>
           )}
 
-          {/* ── DATASET ─────────────────────────────── */}
-          {tab === 'dataset' && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Items"  value={totalItems.toLocaleString()} icon={Database}    color="#7c3aed"/>
-                <StatCard label="Clean Items"  value={cleanItems.toLocaleString()} icon={CheckCircle} color="#10b981"/>
-                <StatCard label="AI Samples"   value={(overview?.ai_items    || 0).toLocaleString()} icon={Brain} color="#f43f5e"/>
-                <StatCard label="Human Samples" value={(overview?.human_items || 0).toLocaleString()} icon={Users} color="#3b82f6"/>
+          {/* ══════════════ ANALYTICS ══════════════ */}
+          {tab==='overview'&&(
+            <div className="p-6 space-y-5">
+              <h1 className="text-white font-black text-xl" style={{fontFamily:'Syne,sans-serif'}}>Analytics</h1>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Stat value={ds.total}     label="Total Collected" color="#22d3ee"/>
+                <Stat value={ds.hf_pushed} label="HF Pushed"       color="#f472b6"/>
+                <Stat value={ds.ai}        label="AI Samples"      color="#f43f5e" sub={`${ds.total?Math.round(ds.ai/ds.total*100):0}% of total`}/>
+                <Stat value={ds.human}     label="Human Samples"   color="#10b981" sub={`${ds.total?Math.round(ds.human/ds.total*100):0}% of total`}/>
               </div>
-              {pieData.length > 0 && (
-                <div className="bg-surface border border-border rounded-2xl p-5 flex items-center gap-8">
-                  <ResponsiveContainer width={200} height={200}>
-                    <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value">
-                        {pieData.map((entry: any, i: number) => <Cell key={i} fill={entry.color}/>)}
-                      </Pie>
-                    </PieChart>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                  <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">Jobs per Run (last 10)</div>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={runChart} barGap={3}>
+                      <XAxis dataKey="i" tick={{fill:'#484f58',fontSize:10}}/>
+                      <YAxis tick={{fill:'#484f58',fontSize:10}}/>
+                      <Tooltip contentStyle={{background:'#161b22',border:'1px solid #21262d',borderRadius:8,color:'#c9d1d9',fontFamily:'JetBrains Mono'}}/>
+                      <Bar dataKey="done" name="Done" fill="#10b981" radius={[3,3,0,0]}/>
+                      <Bar dataKey="fail" name="Failed" fill="#f43f5e" radius={[3,3,0,0]}/>
+                    </BarChart>
                   </ResponsiveContainer>
-                  <div className="space-y-3">
-                    {pieData.map((d: any) => (
-                      <div key={d.name} className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full" style={{ background: d.color }}/>
-                        <span className="text-sm text-text-primary capitalize">{d.name}</span>
-                        <span className="ml-auto font-bold" style={{ color: d.color }}>{d.value.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              )}
-              <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-text-primary">Dataset Items</h3></div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        {['Type','Source','Label','Confidence','Split','Status','Created'].map(h => (
-                          <th key={h} className="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide text-left">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dataset.slice(0,100).map((item: any) => (
-                        <tr key={item.id} className="border-b border-border/50 hover:bg-white/[0.02]">
-                          <td className="px-4 py-3 text-text-muted capitalize">{item.media_type}</td>
-                          <td className="px-4 py-3 text-text-secondary text-xs">{item.source_name}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs font-semibold" style={{ color: item.label === 'ai' ? '#f43f5e' : '#10b981' }}>
-                              {item.label?.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-text-muted">{(item.confidence * 100).toFixed(0)}%</td>
-                          <td className="px-4 py-3 text-text-muted text-xs">{item.split}</td>
-                          <td className="px-4 py-3 text-xs" style={{ color: item.is_deduplicated ? '#10b981' : '#f59e0b' }}>
-                            {item.is_deduplicated ? '✓ Clean' : '⏳ Pending'}
-                          </td>
-                          <td className="px-4 py-3 text-text-muted text-xs">{new Date(item.created_at).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-[#0d1117] border border-[#21262d] rounded-xl p-5">
+                  <div className="text-[#484f58] text-xs uppercase tracking-widest mb-3">HF Push History</div>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <AreaChart data={throughput.length?throughput:[{i:0,v:ds.hf_pushed,t:'now'}]}>
+                      <defs><linearGradient id="pg2" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f472b6" stopOpacity={0.2}/><stop offset="95%" stopColor="#f472b6" stopOpacity={0}/></linearGradient></defs>
+                      <XAxis dataKey="t" tick={{fill:'#484f58',fontSize:9}}/>
+                      <Tooltip contentStyle={{background:'#161b22',border:'1px solid #21262d',borderRadius:8,color:'#c9d1d9',fontFamily:'JetBrains Mono'}}/>
+                      <Area type="monotone" dataKey="v" stroke="#f472b6" fill="url(#pg2)" strokeWidth={2} dot={false}/>
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* ── SCANS ───────────────────────────────── */}
-          {tab === 'scans' && (
-            <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-text-primary">Recent Scans</h3></div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {['Type','Result','Confidence','User','Created'].map(h => (
-                        <th key={h} className="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide text-left">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scans.slice(0,50).map((s: any) => (
-                      <tr key={s.id} className="border-b border-border/50 hover:bg-white/[0.02]">
-                        <td className="px-4 py-3 capitalize text-text-secondary">{s.scan_type || s.type}</td>
-                        <td className="px-4 py-3"><span className="text-xs font-semibold" style={{ color: s.result === 'ai' ? '#f43f5e' : '#10b981' }}>
-                          {s.result?.toUpperCase() || '—'}</span></td>
-                        <td className="px-4 py-3 text-text-muted">{s.confidence ? `${(s.confidence*100).toFixed(0)}%` : '—'}</td>
-                        <td className="px-4 py-3 text-text-muted text-xs font-mono">{s.user_id?.slice(0,8)}…</td>
-                        <td className="px-4 py-3 text-text-muted text-xs">{new Date(s.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                    {scans.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-text-muted">No scans yet</td></tr>}
-                  </tbody>
-                </table>
+              {/* Quick links */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  {label:'HF Dataset',url:`https://huggingface.co/datasets/${HF_REPO}`,color:'#f472b6',icon:'🤗'},
+                  {label:'Main Platform',url:'https://detect-ai-nu.vercel.app',color:'#22d3ee',icon:'🌐'},
+                  {label:'GitHub',url:'https://github.com/saghirahmed9067-png/DETECT-AI',color:'#a78bfa',icon:'📦'},
+                ].map(l=>(
+                  <a key={l.label} href={l.url} target="_blank" rel="noopener" className="flex items-center gap-3 bg-[#0d1117] border border-[#21262d] hover:border-[#30363d] rounded-xl p-4 transition-all group">
+                    <span className="text-xl">{l.icon}</span>
+                    <div><div className="text-xs font-bold" style={{color:l.color}}>{l.label}</div>
+                    <div className="text-[#484f58] text-xs truncate">{l.url.replace('https://','')}</div></div>
+                  </a>
+                ))}
               </div>
             </div>
           )}
 
-          {/* ── USERS ───────────────────────────────── */}
-          {tab === 'users' && (
-            <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-text-primary">Users — {profiles.length} registered</h3></div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {['ID','Display Name','Plan','Created'].map(h => (
-                        <th key={h} className="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide text-left">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profiles.slice(0,50).map((u: any) => (
-                      <tr key={u.id} className="border-b border-border/50 hover:bg-white/[0.02]">
-                        <td className="px-4 py-3 font-mono text-xs text-text-muted">{u.id?.slice(0,8)}…</td>
-                        <td className="px-4 py-3 text-text-primary">{u.display_name || '—'}</td>
-                        <td className="px-4 py-3"><span className="text-xs font-semibold text-primary capitalize">{u.plan || 'free'}</span></td>
-                        <td className="px-4 py-3 text-text-muted text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ── LOGS ────────────────────────────────── */}
-          {tab === 'logs' && (
-            <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-text-primary flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-primary"/> System Logs
-                </h3>
-              </div>
-              <div ref={logsRef} className="bg-[#0a0a0f] p-4 h-[600px] overflow-y-auto font-mono text-xs space-y-0.5">
-                {logs.length === 0
-                  ? <p className="text-text-muted">No logs yet…</p>
-                  : logs.map((log: any, i: number) => (
-                    <div key={i} className="flex gap-3 hover:bg-white/[0.02] px-1 py-0.5 rounded">
-                      <span className="text-text-muted shrink-0 w-24">{new Date(log.timestamp || log.created_at).toLocaleTimeString()}</span>
-                      <span className={`shrink-0 w-16 ${log.level === 'error' ? 'text-rose-400' : log.level === 'warn' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                        [{log.level?.toUpperCase() || 'INFO'}]
-                      </span>
-                      <span className="text-gray-300 break-all">{log.message || JSON.stringify(log)}</span>
-                    </div>
-                  ))
-                }
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
+        </main>
+      </div>
+      <style jsx global>{`
+        ::-webkit-scrollbar{width:4px;height:4px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:#21262d;border-radius:2px;}
+        ::-webkit-scrollbar-thumb:hover{background:#30363d;}
+      `}</style>
     </div>
   )
 }
