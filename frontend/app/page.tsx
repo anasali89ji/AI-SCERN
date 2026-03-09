@@ -1,539 +1,601 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useEffect, useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import {
   Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3,
-  ArrowRight, Check, Star, Lock, Activity,
-  ChevronRight, Upload, Loader2, CheckCircle, XCircle,
-  HelpCircle, Image as ImageIcon, Video, Music, Menu, X
+  ArrowRight, CheckCircle, XCircle, HelpCircle,
+  Image as ImageIcon, Video, Music, ChevronRight, Loader2,
+  MessageSquare, Cpu, Lock, Database, AlertTriangle, Sparkles,
+  TrendingUp, Users, Award, Play, Github
 } from 'lucide-react'
 
-/* ─── demo localStorage helpers ─── */
-const DEMO_KEY = 'detectai_demo_used'
-function getDemoUsed(): Record<string, boolean> {
-  if (typeof window === 'undefined') return {}
-  try { return JSON.parse(localStorage.getItem(DEMO_KEY) || '{}') } catch { return {} }
-}
-function markDemoUsed(tool: string) {
-  if (typeof window === 'undefined') return
-  const used = getDemoUsed(); used[tool] = true
-  localStorage.setItem(DEMO_KEY, JSON.stringify(used))
+// ─── Canvas Particle Network ───────────────────────────────────────────────
+function ParticleNetwork() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    let animId: number
+    let W = window.innerWidth, H = window.innerHeight
+    canvas.width = W; canvas.height = H
+
+    const NODES = 60
+    const nodes = Array.from({ length: NODES }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+      r: 1.5 + Math.random() * 1.5,
+      pulse: Math.random() * Math.PI * 2,
+    }))
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H)
+      const time = Date.now() * 0.001
+
+      for (const n of nodes) {
+        n.x += n.vx; n.y += n.vy
+        if (n.x < 0 || n.x > W) n.vx *= -1
+        if (n.y < 0 || n.y > H) n.vy *= -1
+        n.pulse += 0.02
+      }
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y
+          const dist = Math.sqrt(dx*dx + dy*dy)
+          if (dist < 140) {
+            const alpha = (1 - dist / 140) * 0.18
+            ctx.beginPath()
+            ctx.strokeStyle = `rgba(124,58,237,${alpha})`
+            ctx.lineWidth = 0.8
+            ctx.moveTo(nodes[i].x, nodes[i].y)
+            ctx.lineTo(nodes[j].x, nodes[j].y)
+            ctx.stroke()
+          }
+        }
+      }
+
+      for (const n of nodes) {
+        const alpha = 0.4 + Math.sin(n.pulse) * 0.25
+        ctx.beginPath()
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(124,58,237,${alpha})`
+        ctx.fill()
+      }
+      animId = requestAnimationFrame(draw)
+    }
+
+    draw()
+    const onResize = () => {
+      W = window.innerWidth; H = window.innerHeight
+      canvas.width = W; canvas.height = H
+    }
+    window.addEventListener('resize', onResize)
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', onResize) }
+  }, [])
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none opacity-60" />
 }
 
-/* ─── data ─── */
-const TOOLS = [
-  { id: 'text',   href: '/detect/text',  icon: FileText,  label: 'Text Detector',  color: 'text-amber',     bg: 'bg-amber/10',     border: 'border-amber/20',     desc: 'Detect AI-written articles, essays & content' },
-  { id: 'image',  href: '/detect/image', icon: ImageIcon, label: 'Image Detector', color: 'text-primary',   bg: 'bg-primary/10',   border: 'border-primary/20',   desc: 'Spot GAN artifacts & diffusion fingerprints' },
-  { id: 'audio',  href: '/detect/audio', icon: Music,     label: 'Audio Detector', color: 'text-cyan',      bg: 'bg-cyan/10',      border: 'border-cyan/20',      desc: 'Detect TTS synthesis & voice cloning' },
-  { id: 'video',  href: '/detect/video', icon: Video,     label: 'Video Detector', color: 'text-secondary', bg: 'bg-secondary/10', border: 'border-secondary/20', desc: 'Frame-by-frame deepfake analysis' },
-  { id: 'scraper',href: '/scraper',      icon: Globe,     label: 'Web Scraper',    color: 'text-emerald',   bg: 'bg-emerald/10',   border: 'border-emerald/20',   desc: 'Analyze any URL for AI-generated content' },
-  { id: 'batch',  href: '/batch',        icon: BarChart3, label: 'Batch Analyzer', color: 'text-rose',      bg: 'bg-rose/10',      border: 'border-rose/20',      desc: 'Analyze up to 20 files at once' },
-]
-const FEATURES = [
-  { icon: Eye,      title: 'Image Detection',  desc: 'GAN artifacts, diffusion fingerprints, pixel forensics.',           color: 'text-primary',   bg: 'bg-primary/10'   },
-  { icon: Zap,      title: 'Video Analysis',   desc: 'Frame-by-frame deepfake & temporal consistency analysis.',           color: 'text-secondary', bg: 'bg-secondary/10' },
-  { icon: Mic,      title: 'Audio Detection',  desc: 'Voice synthesis, TTS artifacts, spectral irregularities.',           color: 'text-cyan',      bg: 'bg-cyan/10'      },
-  { icon: FileText, title: 'Text Analysis',    desc: 'RoBERTa classifier, perplexity scoring, sentence-level heatmap.',    color: 'text-emerald',   bg: 'bg-emerald/10'   },
-  { icon: Globe,    title: 'Web Scraper',      desc: 'Paste any URL to analyze the full page for AI-generated content.',   color: 'text-amber',     bg: 'bg-amber/10'     },
-  { icon: BarChart3,title: 'Analytics',        desc: 'Real-time dashboard, scan trends, and model accuracy metrics.',       color: 'text-rose',      bg: 'bg-rose/10'      },
-]
-const STEPS = [
-  { n: '01', title: 'Upload or Paste',  desc: 'Drop any image, video, audio, or paste text / a URL.' },
-  { n: '02', title: 'Deep AI Scan',     desc: 'Free HuggingFace models scan for 20+ detection signals in seconds.' },
-  { n: '03', title: 'Get Full Report',  desc: 'Confidence score, signal breakdown & sentence-level heatmap.' },
-  { n: '04', title: 'Export & Share',   desc: 'Save history, share results, or export reports.' },
-]
-const STATS   = [{ value: '94%', label: 'Text Accuracy' }, { value: '4', label: 'Media Types' }, { value: '100%', label: 'Free Forever' }, { value: '∞', label: 'Scans / Account' }]
-const QUOTES  = [
-  { text: 'Caught an AI-written press release before we published it. Saved us massive embarrassment.', name: 'Sarah K.',  role: 'Editor, News Outlet' },
-  { text: 'The text analyzer is scary accurate. I tested it on GPT-4 output and it nailed it every time.', name: 'Marcus T.', role: 'AI Researcher' },
-  { text: 'Best free deepfake detector I have found. Clean UI and explains WHY it flagged content.',     name: 'Priya M.',  role: 'Content Creator' },
+// ─── Floating Holographic Cards ─────────────────────────────────────────────
+const FLOAT_ITEMS = [
+  { icon: '🔍', label: 'AI Text', pct: '94.2%', color: '#7c3aed', x: '8%', y: '18%', delay: 0 },
+  { icon: '🖼️', label: 'Deepfake', pct: '97.1%', color: '#2563eb', x: '82%', y: '12%', delay: 0.6 },
+  { icon: '🎵', label: 'AI Audio', pct: '91.8%', color: '#06b6d4', x: '5%', y: '62%', delay: 1.2 },
+  { icon: '🎥', label: 'AI Video', pct: '88.5%', color: '#10b981', x: '85%', y: '58%', delay: 0.3 },
+  { icon: '🤖', label: 'GPT-4', pct: 'Detected', color: '#f43f5e', x: '50%', y: '82%', delay: 0.9 },
+  { icon: '🧬', label: 'Stable Diff', pct: 'Flagged', color: '#f59e0b', x: '20%', y: '85%', delay: 1.5 },
 ]
 
-/* ─── Text Demo ─── */
-function TextDemo({ onUsed, isLoggedIn }: { onUsed: () => void; isLoggedIn: boolean }) {
+function FloatingCards() {
+  return (
+    <>
+      {FLOAT_ITEMS.map((item, i) => (
+        <motion.div key={i}
+          className="absolute hidden lg:flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl z-10"
+          style={{
+            left: item.x, top: item.y,
+            background: `${item.color}18`,
+            borderColor: `${item.color}35`,
+            boxShadow: `0 0 20px ${item.color}20`,
+          }}
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+          transition={{
+            opacity: { delay: item.delay + 0.5, duration: 0.6 },
+            scale: { delay: item.delay + 0.5, duration: 0.6 },
+            y: { delay: item.delay, duration: 3 + i * 0.4, repeat: Infinity, ease: 'easeInOut' }
+          }}>
+          <span className="text-lg">{item.icon}</span>
+          <div>
+            <div className="text-[10px] font-medium" style={{ color: `${item.color}cc` }}>{item.label}</div>
+            <div className="text-xs font-bold text-white">{item.pct}</div>
+          </div>
+        </motion.div>
+      ))}
+    </>
+  )
+}
+
+// ─── Live Counter ───────────────────────────────────────────────────────────
+function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        let start = 0
+        const step = target / 60
+        const interval = setInterval(() => {
+          start += step
+          if (start >= target) { setCount(target); clearInterval(interval) }
+          else setCount(Math.floor(start))
+        }, 16)
+      }
+    })
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [target])
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
+}
+
+// ─── Live Demo ───────────────────────────────────────────────────────────────
+function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [text, setText] = useState('')
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [used, setUsed] = useState(false)
   const router = useRouter()
 
   const analyze = async () => {
     if (text.length < 50) return
-    if (getDemoUsed()['text'] && !isLoggedIn) { router.push('/login'); return }
-    setLoading(true)
+    if (used && !isLoggedIn) { router.push('/signup'); return }
+    setLoading(true); setResult(null)
     try {
-      const res = await fetch('/api/detect/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, user_id: null }) })
+      const res = await fetch('/api/detect/text', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, user_id: null }),
+      })
       const d = await res.json()
-      if (d.success) { setResult(d.data); if (!isLoggedIn) { markDemoUsed('text'); onUsed() } }
-    } catch {}
+      if (d.success) { setResult(d.data); setUsed(true) }
+      else setResult({ verdict: 'ERROR', confidence: 0 })
+    } catch { setResult({ verdict: 'ERROR', confidence: 0 }) }
     setLoading(false)
   }
 
-  const color = result?.verdict === 'AI' ? 'rose' : result?.verdict === 'HUMAN' ? 'emerald' : 'amber'
+  const examples = [
+    { label: 'AI text', text: 'The intersection of artificial intelligence and human creativity presents a fascinating paradox in contemporary discourse. As machine learning models become increasingly sophisticated in generating coherent, contextually appropriate text, the boundaries between human and algorithmic authorship continue to blur in unprecedented ways.' },
+    { label: 'Human text', text: 'I spent all weekend trying to fix my leaky faucet and honestly I have no idea what I\'m doing. Watched like 6 YouTube videos and still made it worse. Water is now shooting sideways. My neighbor thinks it\'s hilarious. Calling a plumber tomorrow. RIP my bank account.' },
+  ]
 
   return (
-    <div className="space-y-4">
-      <textarea value={text} onChange={e => setText(e.target.value)}
-        placeholder="Paste any text here (min. 50 characters) to test AI detection for free..."
-        className="w-full h-36 bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary transition-colors" />
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? '· need 50+' : ''}</span>
-        <button onClick={analyze} disabled={loading || text.length < 50}
-          className="btn-primary px-6 py-2.5 text-sm flex items-center gap-2 disabled:opacity-40">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-          {loading ? 'Analyzing…' : 'Analyze Free'}
-        </button>
-      </div>
-      {result && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl border p-4 bg-${color}/5 border-${color}/20`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald" /> : <HelpCircle className="w-5 h-5 text-amber" />}
-              <span className={`font-bold text-lg text-${color}`}>{result.verdict}</span>
-            </div>
-            <span className="text-2xl font-black text-text-primary">{Math.round(result.confidence)}%</span>
-          </div>
-          <p className="text-sm text-text-secondary">{result.summary}</p>
-          {!isLoggedIn && (
-            <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-3">
-              <p className="text-xs text-text-muted">Sign up for unlimited scans & history</p>
-              <Link href="/signup" className="text-xs btn-primary px-3 py-1.5 flex-shrink-0">Get Free Account</Link>
-            </div>
-          )}
-        </motion.div>
-      )}
-    </div>
-  )
-}
-
-/* ─── Image Demo ─── */
-function ImageDemo({ onUsed, isLoggedIn }: { onUsed: () => void; isLoggedIn: boolean }) {
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleFile = (f: File) => {
-    setFile(f); setResult(null)
-    const r = new FileReader(); r.onload = e => setPreview(e.target?.result as string); r.readAsDataURL(f)
-  }
-  const analyze = async () => {
-    if (!file) return
-    if (getDemoUsed()['image'] && !isLoggedIn) { router.push('/login'); return }
-    setLoading(true)
-    try {
-      const form = new FormData(); form.append('file', file)
-      const res = await fetch('/api/detect/image', { method: 'POST', body: form })
-      const d = await res.json()
-      if (d.success) { setResult(d.data); if (!isLoggedIn) { markDemoUsed('image'); onUsed() } }
-    } catch {}
-    setLoading(false)
-  }
-  const color = result?.verdict === 'AI' ? 'rose' : result?.verdict === 'HUMAN' ? 'emerald' : 'amber'
-
-  return (
-    <div className="space-y-4">
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
-      {!file ? (
-        <button onClick={() => inputRef.current?.click()}
-          className="w-full h-36 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors group">
-          <Upload className="w-8 h-8 text-text-muted group-hover:text-primary transition-colors" />
-          <span className="text-sm text-text-muted">Click to upload an image</span>
-          <span className="text-xs text-text-disabled">JPG, PNG, WebP up to 10MB</span>
-        </button>
-      ) : (
-        <div className="flex gap-4 items-start">
-          <img src={preview} alt="preview" className="w-24 h-24 object-cover rounded-xl border border-border flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-text-secondary truncate">{file.name}</p>
-            <p className="text-xs text-text-muted mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-            <button onClick={() => { setFile(null); setPreview(''); setResult(null) }} className="text-xs text-rose mt-2 hover:underline">Remove</button>
-          </div>
-        </div>
-      )}
-      {file && (
-        <button onClick={analyze} disabled={loading}
-          className="w-full btn-primary py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-40">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-          {loading ? 'Analyzing…' : 'Detect AI Image'}
-        </button>
-      )}
-      {result && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl border p-4 bg-${color}/5 border-${color}/20`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald" /> : <HelpCircle className="w-5 h-5 text-amber" />}
-              <span className={`font-bold text-lg text-${color}`}>{result.verdict}</span>
-            </div>
-            <span className="text-2xl font-black text-text-primary">{Math.round(result.confidence)}%</span>
-          </div>
-          <p className="text-sm text-text-secondary">{result.summary}</p>
-          {!isLoggedIn && (
-            <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-3">
-              <p className="text-xs text-text-muted">Sign up for unlimited scans</p>
-              <Link href="/signup" className="text-xs btn-primary px-3 py-1.5 flex-shrink-0">Get Free Account</Link>
-            </div>
-          )}
-        </motion.div>
-      )}
-    </div>
-  )
-}
-
-/* ─── Main Page ─── */
-export default function LandingPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [scrolled, setScrolled] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [activeDemo, setActiveDemo] = useState<'text' | 'image'>('text')
-  const [demoUsedNotice, setDemoUsedNotice] = useState(false)
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', fn)
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
-
-  const isLoggedIn = !loading && !!user
-
-  return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-
-      {/* ── NAV ── */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-surface/95 backdrop-blur-xl border-b border-border shadow-lg shadow-black/20' : ''}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <div className="relative">
+      <div className="card border-primary/20 bg-surface/80 backdrop-blur-xl">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold gradient-text">DETECTAI</span>
+            <div className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
+            <span className="text-sm font-semibold text-text-primary">Live AI Detector</span>
           </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm text-text-muted">
-            {[['#tools','Tools'],['#features','Features'],['#demo','Try Free'],['#pricing','Pricing']].map(([h,l]) => (
-              <a key={h} href={h} className="hover:text-text-primary transition-colors">{l}</a>
+          <div className="flex gap-2">
+            {examples.map(ex => (
+              <button key={ex.label} onClick={() => setText(ex.text)}
+                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-primary/50 text-text-muted hover:text-primary transition-all">
+                {ex.label}
+              </button>
             ))}
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {isLoggedIn ? (
-              <Link href="/dashboard" className="btn-primary text-xs sm:text-sm py-2 px-3 sm:px-4 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse hidden sm:inline-block" />
-                Dashboard <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/login"  className="btn-ghost text-xs sm:text-sm py-2 px-2 sm:px-3 hidden sm:block">Sign In</Link>
-                <Link href="/signup" className="btn-primary text-xs sm:text-sm py-2 px-3 sm:px-4">Get Started</Link>
-              </>
-            )}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-text-muted hover:text-text-primary">
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
+        <textarea value={text} onChange={e => setText(e.target.value)}
+          placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
+          className="w-full h-32 bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors" />
+
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '✓'}</span>
+          <button onClick={analyze} disabled={loading || text.length < 50}
+            className="btn-primary px-5 py-2 text-sm disabled:opacity-40 flex items-center gap-2">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
+            {loading ? 'Scanning…' : 'Analyze Free'}
+          </button>
         </div>
 
         <AnimatePresence>
-          {mobileOpen && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="md:hidden bg-surface border-b border-border px-6 pb-4 pt-2 space-y-3">
-              {[['#tools','Tools'],['#features','Features'],['#demo','Try Free'],['#pricing','Pricing']].map(([h,l]) => (
-                <a key={h} href={h} onClick={() => setMobileOpen(false)} className="block text-sm text-text-muted hover:text-text-primary py-1">{l}</a>
-              ))}
-              {!isLoggedIn && <Link href="/login" onClick={() => setMobileOpen(false)} className="block text-sm text-primary py-1">Sign In</Link>}
+          {result && (
+            <motion.div initial={{ opacity: 0, y: 8, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
+              <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose/5 border-rose/20' : result.verdict === 'HUMAN' ? 'bg-emerald/5 border-emerald/20' : 'bg-amber/5 border-amber/20'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald" /> : <HelpCircle className="w-5 h-5 text-amber" />}
+                    <span className={`font-bold text-lg ${result.verdict === 'AI' ? 'text-rose' : result.verdict === 'HUMAN' ? 'text-emerald' : 'text-amber'}`}>
+                      {result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-text-primary">{Math.round(result.confidence || 0)}%</div>
+                    <div className="text-xs text-text-muted">confidence</div>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full bg-background overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence || 0}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-rose' : result.verdict === 'HUMAN' ? 'bg-emerald' : 'bg-amber'}`} />
+                </div>
+                {!isLoggedIn && (
+                  <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+                    <p className="text-xs text-text-muted">Sign up for unlimited scans, history & more</p>
+                    <Link href="/signup" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
+                      Get started free <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+const TOOLS = [
+  { href: '/detect/text',  icon: FileText,  label: 'Text Detector',  color: 'text-amber',     bg: 'from-amber/10 to-amber/5',     desc: 'Detect ChatGPT, Claude, Gemini & more', accuracy: '94%' },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image Detector', color: 'text-primary',   bg: 'from-primary/10 to-primary/5', desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '97%' },
+  { href: '/detect/audio', icon: Music,     label: 'Audio Detector', color: 'text-cyan',      bg: 'from-cyan/10 to-cyan/5',       desc: 'ElevenLabs, voice cloning, TTS synthesis', accuracy: '91%' },
+  { href: '/detect/video', icon: Video,     label: 'Video Detector', color: 'text-secondary', bg: 'from-secondary/10 to-secondary/5', desc: 'Frame-by-frame deepfake analysis', accuracy: '88%' },
+  { href: '/chat',         icon: MessageSquare, label: 'AI Assistant', color: 'text-emerald', bg: 'from-emerald/10 to-emerald/5', desc: 'Ask anything about AI detection', accuracy: 'New' },
+  { href: '/batch',        icon: Database,  label: 'Batch Analyzer', color: 'text-rose',      bg: 'from-rose/10 to-rose/5',       desc: 'Analyze 20 files simultaneously', accuracy: '20x' },
+]
+
+const STATS = [
+  { value: 285246, suffix: '+', label: 'Training Samples', icon: Database },
+  { value: 60, suffix: '', label: 'Source Datasets', icon: Globe },
+  { value: 94, suffix: '%', label: 'Text Accuracy', icon: TrendingUp },
+  { value: 100, suffix: '%', label: 'Free Forever', icon: Award },
+]
+
+const REVIEWS = [
+  { text: 'Caught an AI-written press release before we published it. Saved us massive embarrassment.', name: 'Sarah K.', role: 'Editor, News Outlet', stars: 5 },
+  { text: 'The text analyzer is scary accurate. Tested it on GPT-4 output and it nailed it every time.', name: 'Marcus T.', role: 'AI Researcher', stars: 5 },
+  { text: 'Best free deepfake detector I\'ve found. Clean UI and explains WHY it flagged content.', name: 'Priya M.', role: 'Content Creator', stars: 5 },
+]
+
+const HOW_IT_WORKS = [
+  { n: '01', icon: '📂', title: 'Upload or Paste', desc: 'Drop any image, video, audio file or paste text / a URL' },
+  { n: '02', icon: '🧠', title: 'Deep AI Scan', desc: '60+ HuggingFace models analyze 20+ detection signals in seconds' },
+  { n: '03', icon: '📊', title: 'Get Full Report', desc: 'Confidence score, signal breakdown & sentence-level heatmap' },
+  { n: '04', icon: '📤', title: 'Export & Share', desc: 'Save history, share results, export PDF reports' },
+]
+
+export default function HomePage() {
+  const { user, loading } = useAuth()
+  const { scrollY } = useScroll()
+  const heroY = useTransform(scrollY, [0, 500], [0, -80])
+
+  return (
+    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden">
+
+      {/* ── NAV ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-black text-xl gradient-text">DETECTAI</span>
+          </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
+            <Link href="#tools" className="hover:text-text-primary transition-colors">Tools</Link>
+            <Link href="#how" className="hover:text-text-primary transition-colors">How It Works</Link>
+            <Link href="/chat" className="hover:text-text-primary transition-colors flex items-center gap-1">
+              <MessageSquare className="w-3.5 h-3.5" />AI Chat
+            </Link>
+            <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener" className="hover:text-text-primary transition-colors flex items-center gap-1">
+              <Database className="w-3.5 h-3.5" />Dataset
+            </a>
+          </div>
+          <div className="flex items-center gap-3">
+            {!loading && (
+              user ? (
+                <Link href="/dashboard" className="btn-primary px-4 py-2 text-sm">Dashboard →</Link>
+              ) : (
+                <>
+                  <Link href="/login" className="text-sm text-text-muted hover:text-text-primary transition-colors">Sign in</Link>
+                  <Link href="/signup" className="btn-primary px-4 py-2 text-sm">Get started free</Link>
+                </>
+              )
+            )}
+          </div>
+        </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,80,255,0.12),transparent)] pointer-events-none" />
-        <div className="absolute top-40 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-40 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary">100% Free · No Credit Card · Open Detection</span>
-            </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+        <ParticleNetwork />
+        <FloatingCards />
+
+        {/* Glow orbs */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-secondary/8 blur-[80px] pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan/5 blur-[80px] pointer-events-none" />
+
+        <motion.div style={{ y: heroY }} className="relative z-20 text-center px-4 max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>285,000+ samples · 60 datasets · Fully open-source</span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-6xl md:text-7xl font-black text-text-primary mb-5 leading-tight tracking-tight">
-            Detect AI Content<br /><span className="gradient-text">Before It Spreads</span>
+          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] mb-6">
+            <span className="gradient-text">Unmask</span>
+            <br /><span className="text-text-primary">the Machine.</span>
           </motion.h1>
 
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-base sm:text-xl text-text-muted max-w-2xl mx-auto mb-10 leading-relaxed px-2">
-            Analyze images, videos, audio, and text for AI generation — powered by free HuggingFace models. No subscription, no limits.
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+            className="text-lg sm:text-xl text-text-muted max-w-2xl mx-auto mb-10 leading-relaxed">
+            Detect AI-generated <strong className="text-text-secondary">text</strong>, <strong className="text-text-secondary">images</strong>, <strong className="text-text-secondary">audio</strong> & <strong className="text-text-secondary">video</strong> with state-of-the-art models.
+            Free forever. No limits. Open dataset.
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-            {isLoggedIn ? (
-              <Link href="/dashboard" className="btn-primary px-8 py-4 text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
-                Open Dashboard <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/signup" className="btn-primary px-8 py-4 text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
-                  Start Detecting Free <ArrowRight className="w-4 h-4" />
-                </Link>
-                <a href="#demo" className="btn-ghost px-8 py-4 text-base font-semibold flex items-center justify-center gap-2">
-                  Try Without Login
-                </a>
-              </>
-            )}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-4 mb-16">
+            <Link href={user ? '/dashboard' : '/signup'} className="btn-primary px-8 py-3.5 text-base font-bold flex items-center gap-2 shadow-xl shadow-primary/30">
+              {user ? 'Open Dashboard' : 'Start Detecting Free'}
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link href="/chat" className="btn-secondary px-8 py-3.5 text-base flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-emerald" />Try AI Assistant
+            </Link>
           </motion.div>
 
-          {isLoggedIn && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              className="mt-4 text-sm text-text-muted flex items-center justify-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
-              Signed in as <span className="text-text-secondary font-medium">{user?.email}</span>
-            </motion.p>
-          )}
-        </div>
-
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="max-w-2xl mx-auto mt-16 sm:mt-20 grid grid-cols-2 sm:grid-cols-4 gap-6">
-          {STATS.map((s, i) => (
-            <div key={i} className="text-center">
-              <div className="text-3xl font-black gradient-text mb-1">{s.value}</div>
-              <div className="text-xs text-text-muted">{s.label}</div>
-            </div>
-          ))}
+          {/* Live demo */}
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+            className="max-w-2xl mx-auto">
+            <LiveDemo isLoggedIn={!!user} />
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* ── TOOLS GRID ── */}
-      <section id="tools" className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">
-              {isLoggedIn ? 'Your Detection' : 'Six Powerful'} <span className="gradient-text">Tools</span>
-            </h2>
-            <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto">
-              {isLoggedIn
-                ? 'Click any tool to start detecting — results are saved automatically.'
-                : 'Sign up free to access all tools with unlimited scans and history.'}
-            </p>
+      {/* ── STATS ── */}
+      <section className="py-20 border-y border-border/50 bg-surface/30">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {STATS.map((stat, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className="text-center">
+                <div className="text-4xl lg:text-5xl font-black gradient-text mb-2">
+                  <CountUp target={stat.value} suffix={stat.suffix} />
+                </div>
+                <p className="text-text-muted text-sm font-medium">{stat.label}</p>
+              </motion.div>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      {/* ── TOOLS GRID ── */}
+      <section id="tools" className="py-24 px-4">
+        <div className="max-w-6xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-black mb-4">
+              Detection <span className="gradient-text">Arsenal</span>
+            </h2>
+            <p className="text-text-muted text-lg max-w-2xl mx-auto">
+              Six powerful tools, all free, all powered by open-source models trained on 285k+ real samples.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {TOOLS.map((tool, i) => (
-              <motion.div key={tool.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.07 }}>
-                <Link href={isLoggedIn ? tool.href : `/login?returnTo=${encodeURIComponent(tool.href)}`}
-                  className={`block card card-hover group border ${tool.border}`}>
-                  <div className={`w-12 h-12 rounded-xl ${tool.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <tool.icon className={`w-6 h-6 ${tool.color}`} />
+              <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                whileHover={{ y: -4, scale: 1.02 }} className="group cursor-pointer">
+                <Link href={tool.href}>
+                  <div className={`relative overflow-hidden rounded-2xl border border-border p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 transition-all duration-300 h-full`}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-12 h-12 rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>
+                        <tool.icon className="w-6 h-6" />
+                      </div>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-background/80 ${tool.color}`}>{tool.accuracy}</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-white transition-colors">{tool.label}</h3>
+                    <p className="text-sm text-text-muted leading-relaxed">{tool.desc}</p>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors">
+                      Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-text-primary">{tool.label}</h3>
-                    {isLoggedIn
-                      ? <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                      : <Lock className="w-3.5 h-3.5 text-text-muted group-hover:text-primary transition-colors" />}
-                  </div>
-                  <p className="text-sm text-text-muted">{tool.desc}</p>
                 </Link>
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
 
-          {!isLoggedIn && (
-            <div className="text-center mt-8">
-              <Link href="/signup" className="btn-primary px-8 py-3 text-sm inline-flex items-center gap-2">
-                Create Free Account — Unlock All Tools <ArrowRight className="w-4 h-4" />
+      {/* ── AI ASSISTANT PROMO ── */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-emerald/5 pointer-events-none" />
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald/30 bg-emerald/10 text-emerald text-xs font-semibold mb-6">
+                <Sparkles className="w-3.5 h-3.5" />New — AI Assistant
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-black mb-6">
+                Ask Anything About<br /><span className="gradient-text">AI Detection</span>
+              </h2>
+              <p className="text-text-muted text-lg mb-8 leading-relaxed">
+                DETECTAI Assistant is trained on our 285k+ sample dataset. Ask it how deepfakes work, how to spot AI text, what signals give away synthetic media — or just have a conversation.
+              </p>
+              <div className="flex flex-wrap gap-3 mb-8">
+                {['"How do deepfakes work?"', '"Is this text AI?"', '"What is GAN fingerprinting?"', '"Explain voice cloning"'].map(q => (
+                  <span key={q} className="text-xs px-3 py-1.5 rounded-full border border-border bg-surface text-text-muted">{q}</span>
+                ))}
+              </div>
+              <Link href="/chat" className="btn-primary px-7 py-3.5 text-base inline-flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />Open AI Assistant
               </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6 bg-surface/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Everything to <span className="gradient-text">Unmask AI</span></h2>
-            <p className="text-text-muted text-sm sm:text-base">Six powerful tools. One platform. Zero cost.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {FEATURES.map((f, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="card group hover:border-primary/30 transition-all">
-                <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <f.icon className={`w-6 h-6 ${f.color}`} />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              {/* Chat preview mockup */}
+              <div className="rounded-2xl border border-emerald/20 bg-surface/80 backdrop-blur-xl overflow-hidden shadow-2xl shadow-emerald/10">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-background/50">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald animate-pulse" />
+                  <span className="text-sm font-semibold text-text-primary">DETECTAI Assistant</span>
+                  <span className="ml-auto text-xs text-emerald font-medium">Online</span>
                 </div>
-                <h3 className="font-bold text-text-primary mb-2">{f.title}</h3>
-                <p className="text-sm text-text-muted leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── LIVE DEMO ── */}
-      <section id="demo" className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">
-              Try It <span className="gradient-text">Right Now</span>
-            </h2>
-            <p className="text-text-muted text-sm sm:text-base">
-              {isLoggedIn
-                ? "You're logged in — unlimited scans across all tools."
-                : 'One free demo per tool. No account needed for your first try.'}
-            </p>
-          </div>
-
-          <AnimatePresence>
-            {demoUsedNotice && !isLoggedIn && (
-              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="mb-6 bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Free demo used!</p>
-                  <p className="text-xs text-text-muted mt-0.5">Create a free account for unlimited scans.</p>
+                <div className="p-4 space-y-3">
+                  {[
+                    { role: 'user', text: 'How can I tell if an image is AI-generated?' },
+                    { role: 'ai', text: 'Great question! AI-generated images have several telltale signs: unnatural textures in hair/eyes, asymmetric features, artifacts in backgrounds, and irregular lighting. Our detector analyzes 15+ signals including GAN fingerprints and diffusion patterns...' },
+                    { role: 'user', text: 'What accuracy rate do you achieve?' },
+                  ].map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] px-3 py-2 rounded-xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-primary/20 text-primary border border-primary/20' : 'bg-surface-active text-text-secondary border border-border'}`}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-start">
+                    <div className="px-3 py-2 rounded-xl bg-surface-active border border-border">
+                      <div className="flex gap-1">
+                        {[0,1,2].map(i => (
+                          <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald"
+                            animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, delay: i * 0.2, repeat: Infinity }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <Link href="/signup" className="btn-primary text-xs px-4 py-2 flex-shrink-0">Sign Up Free</Link>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="card">
-            <div className="flex items-center gap-2 mb-6 border-b border-border pb-4">
-              {([['text', FileText, 'Text'], ['image', ImageIcon, 'Image']] as const).map(([id, Icon, label]) => {
-                const used = !isLoggedIn && getDemoUsed()[id]
-                return (
-                  <button key={id} onClick={() => setActiveDemo(id)}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-                      ${activeDemo === id ? 'bg-primary/15 text-primary' : 'text-text-muted hover:text-text-primary'}`}>
-                    <Icon className="w-4 h-4" />{label}
-                    {used && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber" />}
-                  </button>
-                )
-              })}
-              <span className="ml-auto text-xs text-text-muted hidden sm:block">
-                {isLoggedIn ? '✓ Unlimited scans' : 'Demo: 1 free try per tool'}
-              </span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {activeDemo === 'text' && (
-                <motion.div key="text" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                  {!isLoggedIn && getDemoUsed()['text'] ? (
-                    <div className="text-center py-12">
-                      <Lock className="w-10 h-10 text-text-muted mx-auto mb-4" />
-                      <p className="font-semibold text-text-secondary mb-1">Demo used for Text</p>
-                      <p className="text-sm text-text-muted mb-6">Create a free account for unlimited text analysis.</p>
-                      <Link href="/signup" className="btn-primary px-8 py-3 inline-flex items-center gap-2">Sign Up Free <ArrowRight className="w-4 h-4" /></Link>
-                    </div>
-                  ) : <TextDemo onUsed={() => setDemoUsedNotice(true)} isLoggedIn={isLoggedIn} />}
-                </motion.div>
-              )}
-              {activeDemo === 'image' && (
-                <motion.div key="image" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                  {!isLoggedIn && getDemoUsed()['image'] ? (
-                    <div className="text-center py-12">
-                      <Lock className="w-10 h-10 text-text-muted mx-auto mb-4" />
-                      <p className="font-semibold text-text-secondary mb-1">Demo used for Image</p>
-                      <p className="text-sm text-text-muted mb-6">Create a free account for unlimited image detection.</p>
-                      <Link href="/signup" className="btn-primary px-8 py-3 inline-flex items-center gap-2">Sign Up Free <ArrowRight className="w-4 h-4" /></Link>
-                    </div>
-                  ) : <ImageDemo onUsed={() => setDemoUsedNotice(true)} isLoggedIn={isLoggedIn} />}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <div className="px-4 py-3 border-t border-border/50">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-background border border-border/50 text-text-muted text-xs">
+                    <span className="flex-1">Ask about AI detection…</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-surface/30">
+      <section id="how" className="py-24 px-4 bg-surface/20">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">How It <span className="gradient-text">Works</span></h2>
-            <p className="text-text-muted text-sm sm:text-base">From upload to verdict in under 10 seconds.</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-black mb-4">How It <span className="gradient-text">Works</span></h2>
+            <p className="text-text-muted text-lg">From upload to verdict in seconds.</p>
+          </motion.div>
+
+          <div className="relative">
+            <div className="absolute left-6 lg:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-secondary/30 to-transparent hidden sm:block" />
+            <div className="space-y-12">
+              {HOW_IT_WORKS.map((step, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+                  whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+                  className={`flex items-center gap-6 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
+                  <div className="flex-1 hidden lg:block" />
+                  <div className="relative z-10 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 flex items-center justify-center text-2xl flex-shrink-0 shadow-lg shadow-primary/20">
+                    {step.icon}
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-white">
+                      {i+1}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-text-primary mb-2">{step.title}</h3>
+                    <p className="text-text-muted leading-relaxed">{step.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {STEPS.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-primary font-black text-sm">{s.n}</span>
+        </div>
+      </section>
+
+      {/* ── DATASET SECTION ── */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface to-secondary/5 p-8 lg:p-12">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent pointer-events-none" />
+            <div className="relative z-10 grid lg:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-6">
+                  <Database className="w-3.5 h-3.5" />Open Dataset · HuggingFace
                 </div>
-                <h3 className="font-bold text-text-primary mb-2">{s.title}</h3>
-                <p className="text-sm text-text-muted">{s.desc}</p>
-              </motion.div>
-            ))}
+                <h2 className="text-3xl lg:text-4xl font-black mb-4">
+                  <span className="gradient-text">285,000+</span> Training Samples
+                </h2>
+                <p className="text-text-muted mb-6 leading-relaxed">
+                  Our detection models are trained on a massive open dataset collected from 60+ sources across text, image, and audio. The dataset is publicly available on HuggingFace and grows daily.
+                </p>
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  {[
+                    { label: 'AI Text', value: '156k', color: 'text-rose' },
+                    { label: 'Human Text', value: '89k', color: 'text-emerald' },
+                    { label: 'Media', value: '40k', color: 'text-cyan' },
+                  ].map(s => (
+                    <div key={s.label} className="text-center p-3 rounded-xl bg-background/50 border border-border/50">
+                      <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+                      <div className="text-xs text-text-muted mt-1">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
+                  className="btn-secondary inline-flex items-center gap-2 text-sm">
+                  <Database className="w-4 h-4 text-primary" />View Dataset on HuggingFace
+                </a>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { src: 'HC3, RAID, GhostBuster', type: 'AI Text', count: '45k', color: '#f43f5e' },
+                  { src: 'OpenWebText, Wikipedia', type: 'Human Text', count: '38k', color: '#10b981' },
+                  { src: 'FaceForensics++, DFDC', type: 'Deepfake Images', count: '15k', color: '#2563eb' },
+                  { src: 'ASVspoof, ElevenLabs', type: 'Fake Audio', count: '8k', color: '#06b6d4' },
+                  { src: '+ 56 more datasets', type: 'Mixed Sources', count: '179k', color: '#7c3aed' },
+                ].map((s, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                    className="flex items-center gap-4 p-3 rounded-xl bg-background/50 border border-border/50">
+                    <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-text-primary truncate">{s.type}</div>
+                      <div className="text-xs text-text-muted truncate">{s.src}</div>
+                    </div>
+                    <div className="text-sm font-bold text-text-secondary flex-shrink-0">{s.count}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
+      {/* ── REVIEWS ── */}
+      <section className="py-20 px-4 bg-surface/20">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Trusted by <span className="gradient-text">Researchers & Creators</span></h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-            {QUOTES.map((q, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="card">
-                <div className="flex gap-1 mb-4">{[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 fill-amber text-amber" />)}</div>
-                <p className="text-sm text-text-secondary leading-relaxed mb-4">"{q.text}"</p>
-                <p className="text-sm font-semibold text-text-primary">{q.name}</p>
-                <p className="text-xs text-text-muted">{q.role}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 bg-surface/30">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Simple <span className="gradient-text">Pricing</span></h2>
-            <p className="text-text-muted text-sm sm:text-base">No tricks. No paywalls. Full platform free forever.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-            {[
-              { name: 'Free', price: '$0', period: 'forever', highlight: false, cta: isLoggedIn ? 'Go to Dashboard' : 'Get Started Free', href: isLoggedIn ? '/dashboard' : '/signup',
-                features: ['Unlimited scans', 'All 4 media types', 'Scan history', 'Web scraper', 'HF pipeline access'] },
-              { name: 'Pro', price: 'Soon', period: '', highlight: true, cta: 'Join Waitlist', href: '#',
-                features: ['Everything in Free', 'Batch processing (100 files)', 'API access', 'PDF export reports', 'Team workspace'] },
-            ].map((plan, i) => (
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="text-center mb-12">
+            <h2 className="text-3xl font-black mb-3">What People <span className="gradient-text">Say</span></h2>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {REVIEWS.map((r, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className={`card ${plan.highlight ? 'border-primary/40 bg-primary/5 relative overflow-hidden' : ''}`}>
-                {plan.highlight && <div className="absolute top-4 right-4 bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded-full">COMING SOON</div>}
-                <h3 className="text-lg font-bold text-text-primary mb-1">{plan.name}</h3>
-                <div className="flex items-end gap-1 mb-6">
-                  <span className="text-4xl font-black gradient-text">{plan.price}</span>
-                  {plan.period && <span className="text-text-muted text-sm mb-1">/{plan.period}</span>}
+                className="card border-border/50 hover:border-primary/20 transition-colors">
+                <div className="flex gap-0.5 mb-4">
+                  {Array.from({length: r.stars}).map((_, j) => <span key={j} className="text-amber text-sm">★</span>)}
                 </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f, j) => (
-                    <li key={j} className="flex items-center gap-2.5 text-sm text-text-secondary">
-                      <Check className="w-4 h-4 text-emerald flex-shrink-0" />{f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.href} className={`block text-center py-3 rounded-xl font-semibold text-sm transition-all ${plan.highlight ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'btn-primary'}`}>
-                  {plan.cta}
-                </Link>
+                <p className="text-text-secondary text-sm leading-relaxed mb-4">&ldquo;{r.text}&rdquo;</p>
+                <div>
+                  <div className="text-sm font-semibold text-text-primary">{r.name}</div>
+                  <div className="text-xs text-text-muted">{r.role}</div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -541,46 +603,50 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-primary/30">
+      <section className="py-28 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-background to-background pointer-events-none" />
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-primary/30">
               <Shield className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary mb-4">Start Detecting <span className="gradient-text">Right Now</span></h2>
-            <p className="text-text-muted mb-10 text-sm sm:text-base">Join researchers, journalists & creators who trust DETECTAI.</p>
-            {isLoggedIn ? (
-              <Link href="/dashboard" className="btn-primary px-10 py-4 text-base font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25">
-                Open Dashboard <ArrowRight className="w-4 h-4" />
+            <h2 className="text-5xl lg:text-6xl font-black mb-6">
+              Start <span className="gradient-text">Unmasking</span><br />the Machine
+            </h2>
+            <p className="text-text-muted text-xl mb-10 max-w-xl mx-auto">
+              Free forever. No credit card. No limits. Just powerful AI detection at your fingertips.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href={user ? '/dashboard' : '/signup'} className="btn-primary px-8 py-4 text-lg font-bold flex items-center gap-2 shadow-2xl shadow-primary/30">
+                {user ? 'Go to Dashboard' : 'Create Free Account'}
+                <ArrowRight className="w-5 h-5" />
               </Link>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
-                  Create Free Account <ArrowRight className="w-4 h-4" />
-                </Link>
-                <a href="#demo" className="btn-ghost px-8 py-3.5 text-sm font-semibold inline-flex items-center justify-center gap-2">
-                  Try Demo First
-                </a>
-              </div>
-            )}
+              <Link href="/chat" className="btn-secondary px-8 py-4 text-lg flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-emerald" />Try AI Assistant
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-border py-8 sm:py-10 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-border py-8 px-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-bold gradient-text">DETECTAI</span>
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="font-black gradient-text">DETECTAI</span>
+            <span className="text-text-disabled text-sm">— Unmask the Machine</span>
           </div>
-          <p className="text-xs text-text-disabled text-center">Built with HuggingFace · Firebase · Supabase · Next.js · 100% Free</p>
-          <div className="flex items-center gap-4">
-            <Link href="/login"  className="text-xs text-text-muted hover:text-text-secondary transition-colors">Sign In</Link>
-            <Link href="/signup" className="text-xs text-text-muted hover:text-text-secondary transition-colors">Sign Up</Link>
+          <div className="flex items-center gap-6 text-sm text-text-muted">
+            <a href="https://github.com/saghirahmed9067-png/DETECT-AI" target="_blank" rel="noopener"
+              className="hover:text-text-primary transition-colors flex items-center gap-1.5">
+              <Github className="w-4 h-4" />GitHub
+            </a>
+            <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
+              className="hover:text-text-primary transition-colors">HuggingFace</a>
+            <Link href="/chat" className="hover:text-text-primary transition-colors">AI Chat</Link>
           </div>
+          <p className="text-xs text-text-disabled">© 2025 DETECTAI · Open Source · MIT License</p>
         </div>
       </footer>
     </div>

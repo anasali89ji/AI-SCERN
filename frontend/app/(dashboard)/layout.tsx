@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Image, Video, Music, FileText, Globe,
   Layers, Clock, User, Settings, Shield, ChevronLeft,
-  ChevronRight, Menu, Brain, LogOut, ChevronDown
+  ChevronRight, Menu, Brain, LogOut, ChevronDown, MessageSquare
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
@@ -25,16 +25,17 @@ const navGroups = [
   {
     label: 'Tools',
     items: [
-      { href: '/scraper',  icon: 'Globe',  label: 'Web Scraper' },
-      { href: '/batch',    icon: 'Layers', label: 'Batch'       },
-      { href: '/history',  icon: 'Clock',  label: 'History'     },
-      { href: '/pipeline', icon: 'Brain',  label: 'HF Pipeline' },
+      { href: '/chat',     icon: 'MessageSquare', label: 'AI Assistant' },
+      { href: '/scraper',  icon: 'Globe',         label: 'Web Scraper' },
+      { href: '/batch',    icon: 'Layers',        label: 'Batch'       },
+      { href: '/history',  icon: 'Clock',         label: 'History'     },
+      { href: '/pipeline', icon: 'Brain',         label: 'HF Pipeline' },
     ],
   },
 ]
 
 const iconMap: Record<string, any> = {
-  LayoutDashboard, Image, Video, Music, FileText, Globe, Layers, Clock, Brain, User, Settings
+  LayoutDashboard, Image, Video, Music, FileText, Globe, Layers, Clock, Brain, User, Settings, MessageSquare
 }
 
 function Avatar({ user, size = 8 }: { user: any; size?: number }) {
