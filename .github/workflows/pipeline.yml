@@ -1,31 +1,42 @@
-name: ⚙️ Pipeline Worker
+name: 🤖 Run Pipeline
 
 on:
+  workflow_dispatch:
+    inputs:
+      job_types:
+        description: 'Job types to run (comma separated: scrape,clean,augment,upload)'
+        required: false
+        default: 'scrape,clean,augment,upload'
   schedule:
-    - cron: '0 */6 * * *'   # Every 6 hours
-  workflow_dispatch:          # Manual trigger anytime
+    - cron: '0 2 * * *'  # Run daily at 2am UTC
 
 jobs:
   run-pipeline:
+    name: 🔄 Execute Pipeline Workers
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
     steps:
-      - name: Trigger scrape
-        run: |
-          curl -s -X POST \
-            "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1/pipeline-worker" \
-            -H "Content-Type: application/json" \
-            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
-            -d '{"job_type": "scrape"}' | jq .
+      - uses: actions/checkout@v4
 
-      - name: Trigger clean
-        run: |
-          curl -s -X POST \
-            "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1/pipeline-worker" \
-            -H "Content-Type: application/json" \
-            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
-            -d '{"job_type": "clean"}' | jq .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          HUGGINGFACE_API_TOKEN: ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          JOB_TYPES: ${{ github.event.inputs.job_types || 'scrape,clean,augment,upload' }}
+        run: node src/index.js
 
       - name: Summary
-        run: echo "✅ Pipeline cycle complete"
+        run: echo "✅ Pipeline completed at $(date)"
