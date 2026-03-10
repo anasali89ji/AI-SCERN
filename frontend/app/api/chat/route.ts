@@ -355,9 +355,11 @@ export async function POST(req: NextRequest) {
       return { role: m.role === 'user' ? 'user' : 'assistant', content: m.content }
     })
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY || ''
+    // ── DeepSeek v3 via NVIDIA API (OpenAI-compatible) ─────────────────────────
+    const nvidiaKey = process.env.NVIDIA_API_KEY || ''
+    const DEEPSEEK_MODEL = 'deepseek-ai/deepseek-v3-0324'
 
-    if (!anthropicKey) {
+    if (!nvidiaKey) {
       return new Response(
         JSON.stringify({ text: getFallback(messages[messages.length - 1]?.content || '') }),
         { headers: { 'Content-Type': 'application/json' } }
@@ -370,31 +372,41 @@ export async function POST(req: NextRequest) {
         const send = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
 
         try {
-          let msgs = [...apiMessages]
+          // Build OpenAI-format messages with system prompt
+          let msgs: any[] = [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...apiMessages,
+          ]
 
-          for (let iter = 0; iter < 6; iter++) {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
+          // DeepSeek via NVIDIA: up to 3 tool-call iterations
+          for (let iter = 0; iter < 3; iter++) {
+            const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'anthropic-version': '2023-06-01',
-                'x-api-key': anthropicKey,
+                'Authorization': `Bearer ${nvidiaKey}`,
               },
               body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: DEEPSEEK_MODEL,
                 max_tokens: 2000,
-                system: SYSTEM_PROMPT,
-                tools: TOOLS,
+                temperature: 0.6,
                 messages: msgs,
                 stream: true,
               }),
+              signal: AbortSignal.timeout(60000),
             })
 
-            if (!res.ok) { send({ type: 'error', message: await res.text() }); break }
+            if (!res.ok) {
+              const errText = await res.text()
+              send({ type: 'error', message: `DeepSeek API ${res.status}: ${errText.slice(0, 200)}` })
+              break
+            }
 
             const reader = res.body!.getReader()
             const dec = new TextDecoder()
-            let stopReason = '', toolUses: any[] = [], currentTU: any = null, inputBuf = '', fullText = ''
+            let fullText = ''
+            let toolUses: any[] = []
+            let stopReason = ''
 
             while (true) {
               const { done, value } = await reader.read()
@@ -402,27 +414,24 @@ export async function POST(req: NextRequest) {
               for (const line of dec.decode(value, { stream: true }).split('\n')) {
                 if (!line.startsWith('data: ')) continue
                 const raw = line.slice(6).trim()
-                if (raw === '[DONE]') continue
+                if (raw === '[DONE]') { stopReason = 'stop'; continue }
                 try {
                   const ev = JSON.parse(raw)
-                  if (ev.type === 'content_block_start' && ev.content_block?.type === 'tool_use') {
-                    currentTU = { id: ev.content_block.id, name: ev.content_block.name }
-                    inputBuf = ''
-                    send({ type: 'tool_start', tool: currentTU.name })
+                  const delta = ev.choices?.[0]?.delta
+                  if (delta?.content) {
+                    fullText += delta.content
+                    send({ type: 'text', text: delta.content })
                   }
-                  if (ev.type === 'content_block_delta') {
-                    if (ev.delta?.type === 'text_delta') { fullText += ev.delta.text; send({ type: 'text', text: ev.delta.text }) }
-                    if (ev.delta?.type === 'input_json_delta') inputBuf += ev.delta.partial_json
-                  }
-                  if (ev.type === 'content_block_stop' && currentTU) {
-                    try { currentTU.input = JSON.parse(inputBuf) } catch (_) { currentTU.input = {} }
-                    toolUses.push(currentTU); currentTU = null; inputBuf = ''
-                  }
-                  if (ev.type === 'message_delta') stopReason = ev.delta?.stop_reason || ''
+                  if (ev.choices?.[0]?.finish_reason) stopReason = ev.choices[0].finish_reason
                 } catch (_) {}
               }
             }
 
+            // DeepSeek doesn't support native tool_calls yet via NVIDIA NIM
+            // so we break after first response (no tool loop needed for text model)
+            break
+
+            // ── dead code below kept for future tool support ──
             if (toolUses.length === 0 || stopReason !== 'tool_use') break
 
             const assistContent: any[] = []
@@ -463,5 +472,5 @@ function getFallback(q: string) {
   if (l.includes('deepfake') || l.includes('image')) return '**Deepfake Detection** powered by NVIDIA VILA analyzes GAN fingerprints, facial geometry, eye reflections, and shadow physics. Upload an image to run a full VILA analysis.'
   if (l.includes('text') || l.includes('ai written')) return '**AI Text Detection** measures perplexity, burstiness, vocabulary diversity, and sentence uniformity. Paste any text to analyze.'
   if (l.includes('audio') || l.includes('voice')) return '**Voice Clone Detection** identifies spectral anomalies and unnatural prosody from TTS systems.'
-  return 'DETECTAI Assistant with NVIDIA VILA is online. Configure ANTHROPIC_API_KEY and NVIDIA_API_KEY in Vercel environment variables for full AI responses.'
+  return 'DETECTAI Assistant with NVIDIA VILA is online. DETECTAI Assistant powered by DeepSeek v3 + NVIDIA VILA is online.'
 }
