@@ -144,7 +144,7 @@ async function runScraper(env: Env, shardIdx: number): Promise<{ inserted: numbe
           is_synthetic,is_deduplicated,split,content_hash,metadata,created_at)
          VALUES ${placeholders}`
       ).bind(...values).run()
-      totalInserted += (result.meta?.changes ?? chunk.length)
+      totalInserted += chunk.length // D1 multi-row INSERT returns changes=0 in meta; count on success
     } catch (err: any) {
       console.error(`[INSERT ERROR] shard=${shardIdx} chunk=${i}: ${err?.message}`)
     }
