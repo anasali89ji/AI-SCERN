@@ -11,7 +11,7 @@ import {
   ArrowRight, CheckCircle, XCircle, HelpCircle,
   Image as ImageIcon, Video, Music, ChevronRight, Loader2,
   MessageSquare, Cpu, Lock, Database, AlertTriangle, Sparkles,
-  TrendingUp, Users, Award, Play, Github, Menu, X, Search,
+  TrendingUp, Users, Award, Play, Menu, X, Search,
   Scan, Fingerprint, Waves, Dna, Bot, Radio,
   Activity, Layers, Wand2
 } from 'lucide-react'
@@ -313,7 +313,7 @@ const STATS = [
   { value: 285246, suffix: '+', label: 'Training Samples', icon: Database },
   { value: 60, suffix: '', label: 'Source Datasets', icon: Globe },
   { value: 94, suffix: '%', label: 'Text Accuracy', icon: TrendingUp },
-  { value: 100, suffix: '%', label: 'Free Forever', icon: Award },
+  { value: 100, suffix: '%', label: 'Uptime SLA', icon: Award },
 ]
 
 const REVIEWS = [
@@ -355,7 +355,7 @@ export default function HomePage() {
             <Link href="/chat" className="hover:text-text-primary transition-colors flex items-center gap-1">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
             </Link>
-            <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener" className="hover:text-text-primary transition-colors flex items-center gap-1">
+            <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener" className="hover:text-text-primary transition-colors flex items-center gap-1">
               <Database className="w-3.5 h-3.5" />Dataset
             </a>
           </div>
@@ -401,7 +401,7 @@ export default function HomePage() {
                 <Link href="/chat" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
                   <MessageSquare className="w-4 h-4" />AI Chat
                 </Link>
-                <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
+                <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
                   onClick={() => setMobileNavOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
                   <Database className="w-4 h-4" />Dataset
@@ -431,7 +431,7 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">285,000+ samples · 60 datasets · Fully open-source</span>
+            <span className="hidden sm:inline">285,000+ training samples · Enterprise-grade AI detection</span>
             <span className="sm:hidden">285k+ samples · Open-source</span>
           </motion.div>
 
@@ -444,7 +444,7 @@ export default function HomePage() {
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
             className="text-base sm:text-xl text-text-muted max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
             Detect AI-generated <strong className="text-text-secondary">text</strong>, <strong className="text-text-secondary">images</strong>, <strong className="text-text-secondary">audio</strong> &amp; <strong className="text-text-secondary">video</strong> with state-of-the-art models.
-            Free forever. No limits. Open dataset.
+            Start free. Upgrade as you grow.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
@@ -493,7 +493,7 @@ export default function HomePage() {
               Detection <span className="gradient-text">Arsenal</span>
             </h2>
             <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
-              Six powerful tools, all free, all powered by open-source models trained on 285k+ real samples.
+              Six powerful tools powered by proprietary multi-model AI trained on 285k+ verified samples.
             </p>
           </motion.div>
 
@@ -654,7 +654,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
+                <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
                   className="btn-secondary inline-flex items-center gap-2 text-sm">
                   <Database className="w-4 h-4 text-primary" />View Dataset on HuggingFace
                 </a>
@@ -722,7 +722,7 @@ export default function HomePage() {
               Start <span className="gradient-text">Unmasking</span><br />the Machine
             </h2>
             <p className="text-text-muted text-lg sm:text-xl mb-10 max-w-xl mx-auto">
-              Free forever. No credit card. No limits. Just powerful AI detection at your fingertips.
+              Start with 5 free scans. No credit card required. Upgrade when you're ready.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link href={user ? '/dashboard' : '/signup'} className="btn-primary px-7 sm:px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
