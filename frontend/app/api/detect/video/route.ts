@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
     if (file.size > 100 * 1024 * 1024) return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Video must be under 100MB' } }, { status: 400 })
 
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
-    const result = await analyzeVideo(file.name, file.size, ext)
+    const bytes  = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    const result = await analyzeVideo(file.name, file.size, ext, buffer)
     const processingTime = Date.now() - start
 
     if (userId) {

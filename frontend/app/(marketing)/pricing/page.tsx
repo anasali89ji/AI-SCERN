@@ -202,7 +202,7 @@ export default function PricingPage() {
 
         {/* Trust signals */}
         <div className="flex flex-wrap justify-center gap-8 text-sm text-text-muted">
-          {['✓ Cancel anytime', '✓ 30-day money-back guarantee', '✓ No setup fees', '✓ Secure payments by Stripe'].map(t => (
+          {['✓ Cancel anytime', '✓ 30-day money-back guarantee', '✓ No setup fees', '✓ Secure payments by XPay (Visa/Mastercard/JazzCash/EasyPaisa)'].map(t => (
             <span key={t} className="text-text-secondary">{t}</span>
           ))}
         </div>

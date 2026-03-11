@@ -21,8 +21,32 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 async function setSessionCookie(user: any) {
-  const idToken = await user.getIdToken()
-  await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) })
+  // Force token refresh to ensure it's fresh, then retry on failure
+  const idToken = await user.getIdToken(true)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    })
+    if (res.ok) return
+    if (res.status === 401) {
+      // Token may need refresh — get a fresh one
+      if (attempt < 2) {
+        const freshToken = await user.getIdToken(true)
+        if (freshToken !== idToken) {
+          const res2 = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: freshToken }),
+          })
+          if (res2.ok) return
+        }
+      }
+      throw new Error('Session setup failed — please try again')
+    }
+    await new Promise(r => setTimeout(r, 800))
+  }
 }
 
 function FullScreenLoader({ message }: { message: string }) {
@@ -99,8 +123,26 @@ export default function SignupPage() {
       toast.success('Welcome to DETECTAI!')
       setTimeout(() => router.push('/dashboard'), 900)
     } catch (err: any) {
-      if (!err?.message?.includes('popup-closed')) toast.error(err?.message || 'Google sign-up failed')
-    } finally { setGoogle(false) }
+      const msg = err?.message || ''
+      // Popup blocked or unauthorized domain → fall back to redirect
+      const useRedirect = msg.includes('unauthorized-domain') || msg.includes('popup-blocked') ||
+        err?.code === 'auth/unauthorized-domain' || err?.code === 'auth/popup-blocked'
+      if (useRedirect) {
+        try {
+          const { signInWithRedirect } = await import('firebase/auth')
+          await signInWithRedirect(auth, googleProvider)
+          // Page reloads; getRedirectResult() in useEffect handles the result
+        } catch (rErr: any) {
+          toast.error(rErr?.message || 'Google sign-up failed')
+          setGoogle(false)
+        }
+      } else if (!msg.includes('popup-closed')) {
+        toast.error(msg || 'Google sign-up failed')
+        setGoogle(false)
+      } else {
+        setGoogle(false)
+      }
+    }
   }
 
   return (

@@ -124,8 +124,11 @@ async function analyzeTextViaHF(text: string, baseUrl: string): Promise<Record<s
   try {
     const res = await fetch(`${baseUrl}/api/detect/text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, user_id: null }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'detectai-internal-2026',
+      },
+      body: JSON.stringify({ text }),
       signal: AbortSignal.timeout(35000),
     })
     if (!res.ok) return null

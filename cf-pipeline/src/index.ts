@@ -84,8 +84,8 @@ const SOURCES = [
 ]
 
 const TOTAL_SHARDS = 24
-const SHARDS_PER_RUN = 4
-const ITEMS_PER_SHARD = 90 // 90items / 9chunk = 10 INSERT queries per shard
+const SHARDS_PER_RUN = 8
+const ITEMS_PER_SHARD = 180 // 90items / 9chunk = 10 INSERT queries per shard
 
 function getShardSources(idx: number) {
   return SOURCES.filter((_, i) => i % TOTAL_SHARDS === idx)
@@ -129,7 +129,7 @@ async function runScraper(env: Env, shardIdx: number): Promise<{ inserted: numbe
   }
 
   // D1 batch insert - 50 items × 11 cols = 550 bind params (SQLite hard limit is 999)
-  const CHUNK = 9 // D1/DO max bound params=100; 9×11cols=99✓
+  const CHUNK = 9 // 9×11cols=99 bind params (D1 SQLite limit=999 but practical limit ~100)
   let totalInserted = 0
   for (let i = 0; i < items.length; i += CHUNK) {
     const chunk = items.slice(i, i + CHUNK)
@@ -160,7 +160,7 @@ async function runScraper(env: Env, shardIdx: number): Promise<{ inserted: numbe
 
 // -- HF PUSH -------------------------------------------------------------------
 async function runHFPush(env: Env): Promise<{ pushed: number; commitId: string; url: string } | { pushed: number; message: string }> {
-  const BATCH = 20000
+  const BATCH = 40000
   const HF_TOKEN = env.HF_TOKEN
   const HF_REPO = env.HF_REPO || 'saghi776/detectai-dataset'
 

@@ -355,9 +355,7 @@ export default function HomePage() {
             <Link href="/chat" className="hover:text-text-primary transition-colors flex items-center gap-1">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
             </Link>
-            <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener" className="hover:text-text-primary transition-colors flex items-center gap-1">
-              <Database className="w-3.5 h-3.5" />Dataset
-            </a>
+
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -401,11 +399,7 @@ export default function HomePage() {
                 <Link href="/chat" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
                   <MessageSquare className="w-4 h-4" />AI Chat
                 </Link>
-                <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
-                  <Database className="w-4 h-4" />Dataset
-                </a>
+
                 {!loading && !user && (
                   <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
                     <Lock className="w-4 h-4" />Sign in
@@ -654,10 +648,9 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <a href="https://detect-ai-nu.vercel.app/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener"
-                  className="btn-secondary inline-flex items-center gap-2 text-sm">
-                  <Database className="w-4 h-4 text-primary" />View Dataset on HuggingFace
-                </a>
+                <Link href="/about" className="btn-secondary inline-flex items-center gap-2 text-sm">
+                  <Database className="w-4 h-4 text-primary" />How It Works
+                </Link>
               </div>
               <div className="space-y-3">
                 {[

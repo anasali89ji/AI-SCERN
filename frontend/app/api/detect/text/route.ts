@@ -21,14 +21,22 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Internal server-to-server bypass (chat route calls this without a user session)
+  const internalSecret = req.headers.get('X-Internal-Secret')
+  const isInternal = internalSecret && internalSecret === process.env.INTERNAL_API_SECRET
+
   // BUG-009 fix: require authentication + deduct credit before inference
   let userId: string
-  try {
-    const guard = await creditGuard(req, 'text')
-    userId = guard.userId
-  } catch (err) {
-    if (err instanceof HTTPError) return httpErrorResponse(err)
-    return NextResponse.json({ success: false, error: { code: 'AUTH_ERROR', message: 'Authentication failed' } }, { status: 401 })
+  if (isInternal) {
+    userId = 'internal'
+  } else {
+    try {
+      const guard = await creditGuard(req, 'text')
+      userId = guard.userId
+    } catch (err) {
+      if (err instanceof HTTPError) return httpErrorResponse(err)
+      return NextResponse.json({ success: false, error: { code: 'AUTH_ERROR', message: 'Authentication failed' } }, { status: 401 })
+    }
   }
 
   const start = Date.now()
@@ -46,20 +54,22 @@ export async function POST(req: NextRequest) {
     const result = await analyzeText(text)
     const processingTime = Date.now() - start
 
-    // Save scan to Supabase
-    await supabase.from('scans').insert({
-      user_id:          userId,
-      media_type:       'text',
-      content_preview:  text.substring(0, 500),
-      verdict:          result.verdict,
-      confidence_score: result.confidence,
-      signals:          result.signals,
-      processing_time:  processingTime,
-      model_used:       result.model_used,
-      model_version:    result.model_version,
-      status:           'complete',
-      metadata:         { char_count: text.length, word_count: text.split(/\s+/).length },
-    })
+    // Save scan to Supabase (skip for internal chat calls)
+    if (userId !== 'internal') {
+      await supabase.from('scans').insert({
+        user_id:          userId,
+        media_type:       'text',
+        content_preview:  text.substring(0, 500),
+        verdict:          result.verdict,
+        confidence_score: result.confidence,
+        signals:          result.signals,
+        processing_time:  processingTime,
+        model_used:       result.model_used,
+        model_version:    result.model_version,
+        status:           'complete',
+        metadata:         { char_count: text.length, word_count: text.split(/\s+/).length },
+      })
+    }
 
     return NextResponse.json({ success: true, data: { ...result, processing_time: processingTime } })
   } catch (err) {
