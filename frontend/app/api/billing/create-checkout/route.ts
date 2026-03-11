@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Record pending order in Supabase
-    await supabase.from('orders').upsert({
+    supabase.from('orders').upsert({
       id:           orderId,
       user_id:      userId,
       plan_id:      planId,
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       status:       'pending',
       payment_url:  checkout.paymentUrl,
       created_at:   new Date().toISOString(),
-    }).catch(() => {}) // non-fatal if orders table doesn't exist yet
+    }).then(() => {}, () => {}) // non-fatal if orders table doesn't exist yet
 
     return NextResponse.json({
       paymentUrl: checkout.paymentUrl,

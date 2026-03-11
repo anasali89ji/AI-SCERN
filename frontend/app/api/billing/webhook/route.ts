@@ -97,11 +97,11 @@ export async function POST(req: NextRequest) {
 
     console.log(`[webhook] Order ${order_id} completed — user ${userId} upgraded to ${planId}`)
   } else if (status === 'FAILED') {
-    await supabase.from('orders').upsert({
+    supabase.from('orders').upsert({
       id: order_id,
       status: 'failed',
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' }).catch(() => {})
+    }, { onConflict: 'id' }).then(() => {}, () => {})
   }
 
   return NextResponse.json({ ok: true })
