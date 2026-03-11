@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { Shield, Github, ExternalLink, Mail, Twitter } from 'lucide-react'
+import { Shield, Mail, Twitter } from 'lucide-react'
 
 export function SiteFooter() {
   return (
@@ -17,23 +17,24 @@ export function SiteFooter() {
               <span className="font-black text-lg gradient-text">DETECTAI</span>
             </div>
             <p className="text-text-muted text-sm leading-relaxed mb-4">
-              The world&apos;s most advanced multi-modal AI content detection platform. Detect deepfakes, AI text, synthetic audio, and more.
+              Enterprise-grade multi-modal AI content detection. Detect deepfakes, synthetic text, AI audio, and more — in seconds.
             </p>
             <p className="text-xs text-text-disabled">
-              Built by <span className="text-text-secondary font-semibold">Anas Ali</span>
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
             </p>
           </div>
 
           {/* Product */}
           <div>
-            <h4 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">Product</h4>
+            <h4 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">Platform</h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'Detection Hub', href: '/detect' },
-                { label: 'AI Chat Assistant', href: '/chat' },
-                { label: 'Web Scraper', href: '/scraper' },
-                { label: 'Batch Analysis', href: '/batch' },
-                { label: 'Dashboard', href: '/dashboard' },
+                { label: 'Image Detection',    href: '/detect/image' },
+                { label: 'Video Detection',    href: '/detect/video' },
+                { label: 'Audio Detection',    href: '/detect/audio' },
+                { label: 'Text Detection',     href: '/detect/text'  },
+                { label: 'AI Chat Assistant',  href: '/chat'         },
+                { label: 'Batch Analysis',     href: '/batch'        },
               ].map(l => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-sm text-text-muted hover:text-text-primary transition-colors">
@@ -44,27 +45,20 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Company */}
           <div>
-            <h4 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">Resources</h4>
+            <h4 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">Company</h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'GitHub', href: 'https://github.com/saghirahmed9067-png/DETECT-AI', external: true },
-                { label: 'HuggingFace Dataset', href: 'https://huggingface.co/datasets/saghi776/detectai-dataset', external: true },
-                { label: 'About', href: '/about' },
-                { label: 'Contact', href: '/contact' },
+                { label: 'About Us',    href: '/about'   },
+                { label: 'Contact',     href: '/contact' },
+                { label: 'Careers',     href: '/contact' },
+                { label: 'Blog',        href: '/about'   },
               ].map(l => (
-                <li key={l.href}>
-                  {l.external ? (
-                    <a href={l.href} target="_blank" rel="noopener noreferrer"
-                      className="text-sm text-text-muted hover:text-text-primary transition-colors flex items-center gap-1">
-                      {l.label} <ExternalLink className="w-3 h-3" />
-                    </a>
-                  ) : (
-                    <Link href={l.href} className="text-sm text-text-muted hover:text-text-primary transition-colors">
-                      {l.label}
-                    </Link>
-                  )}
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-text-muted hover:text-text-primary transition-colors">
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -77,39 +71,34 @@ export function SiteFooter() {
               {[
                 { label: 'Privacy Policy', href: '/privacy' },
                 { label: 'Terms of Service', href: '/terms' },
+                { label: 'Security',  href: '/privacy' },
               ].map(l => (
-                <li key={l.href}>
+                <li key={l.label}>
                   <Link href={l.href} className="text-sm text-text-muted hover:text-text-primary transition-colors">
                     {l.label}
                   </Link>
                 </li>
               ))}
             </ul>
+
             <div className="mt-6">
-              <h4 className="text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">Connect</h4>
-              <div className="flex gap-3">
-                <a href="https://github.com/saghirahmed9067-png/DETECT-AI" target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all">
-                  <Github className="w-4 h-4" />
-                </a>
-                <a href="mailto:contact@detectai.app"
-                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all">
-                  <Mail className="w-4 h-4" />
-                </a>
-              </div>
+              <h4 className="text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">Contact</h4>
+              <a href="mailto:contact@detectai.io"
+                className="flex items-center gap-2 text-sm text-text-muted hover:text-primary transition-colors">
+                <Mail className="w-4 h-4" /> contact@detectai.io
+              </a>
             </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-text-disabled text-center sm:text-left">
-            © {new Date().getFullYear()} DETECTAI · Built by <span className="text-text-muted">Anas Ali</span> · MIT License
+        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-text-disabled">
+            &copy; {new Date().getFullYear()} DETECTAI. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-text-disabled">
-            <Link href="/privacy" className="hover:text-text-muted transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-text-muted transition-colors">Terms</Link>
-            <Link href="/about" className="hover:text-text-muted transition-colors">About</Link>
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
+            <span className="text-xs text-text-muted">All systems operational</span>
           </div>
         </div>
       </div>

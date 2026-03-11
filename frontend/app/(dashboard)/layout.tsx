@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Image, Video, Music, FileText, Globe,
   Layers, Clock, User, Settings, Shield, ChevronLeft,
-  ChevronRight, Menu, Brain, LogOut, ChevronDown, MessageSquare
+  ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
@@ -15,27 +15,27 @@ const navGroups = [
   {
     label: 'Detection',
     items: [
-      { href: '/dashboard',     icon: 'LayoutDashboard', label: 'Dashboard' },
-      { href: '/detect/image',  icon: 'Image',           label: 'Image'     },
-      { href: '/detect/video',  icon: 'Video',           label: 'Video'     },
-      { href: '/detect/audio',  icon: 'Music',           label: 'Audio'     },
-      { href: '/detect/text',   icon: 'FileText',        label: 'Text'      },
+      { href: '/dashboard',     icon: 'LayoutDashboard', label: 'Overview'   },
+      { href: '/detect/image',  icon: 'Image',           label: 'Image'      },
+      { href: '/detect/video',  icon: 'Video',           label: 'Video'      },
+      { href: '/detect/audio',  icon: 'Music',           label: 'Audio'      },
+      { href: '/detect/text',   icon: 'FileText',        label: 'Text'       },
     ],
   },
   {
     label: 'Tools',
     items: [
       { href: '/chat',     icon: 'MessageSquare', label: 'AI Assistant' },
-      { href: '/scraper',  icon: 'Globe',         label: 'Web Scraper' },
-      { href: '/batch',    icon: 'Layers',        label: 'Batch'       },
-      { href: '/history',  icon: 'Clock',         label: 'History'     },
-      { href: '/pipeline', icon: 'Brain',         label: 'HF Pipeline' },
+      { href: '/scraper',  icon: 'Globe',         label: 'Web Scanner'  },
+      { href: '/batch',    icon: 'Layers',        label: 'Batch Scan'   },
+      { href: '/history',  icon: 'Clock',         label: 'History'      },
+      { href: '/dashboard#analytics', icon: 'BarChart2', label: 'Analytics' },
     ],
   },
 ]
 
 const iconMap: Record<string, any> = {
-  LayoutDashboard, Image, Video, Music, FileText, Globe, Layers, Clock, Brain, User, Settings, MessageSquare
+  LayoutDashboard, Image, Video, Music, FileText, Globe, Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap
 }
 
 function Avatar({ user, size = 8 }: { user: any; size?: number }) {
@@ -102,7 +102,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
                   <p className="text-xs text-text-muted truncate">{email}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
-                    <span className="text-[10px] text-emerald font-medium">Active &middot; Free Plan</span>
+                    <span className="text-[10px] text-emerald font-medium">Active &middot; Pro Plan</span>
                   </div>
                 </div>
               </div>
@@ -111,12 +111,17 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
               <Link href="/profile" onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
                 <User className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                <span className="text-sm text-text-secondary group-hover:text-text-primary">Profile</span>
+                <span className="text-sm text-text-secondary group-hover:text-text-primary">My Profile</span>
               </Link>
               <Link href="/settings" onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
                 <Settings className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
                 <span className="text-sm text-text-secondary group-hover:text-text-primary">Settings</span>
+              </Link>
+              <Link href="/history" onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
+                <Clock className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
+                <span className="text-sm text-text-secondary group-hover:text-text-primary">Scan History</span>
               </Link>
             </div>
             <div className="p-2 border-t border-border">
@@ -135,7 +140,6 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth()
-  const { user: firebaseUser } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
@@ -182,7 +186,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 const active = pathname === item.href
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                       ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}`}>
                     <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
                     <span className="text-sm font-medium">{item.label}</span>
@@ -249,7 +253,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Menu className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-2 lg:hidden">
-              <Brain className="w-5 h-5 text-primary" />
+              <Shield className="w-5 h-5 text-primary" />
               <span className="font-bold gradient-text text-sm">DETECTAI</span>
             </div>
             <div className="hidden lg:flex items-center gap-2 text-sm text-text-muted">

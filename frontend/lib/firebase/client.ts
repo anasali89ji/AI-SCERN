@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } 
 
 const firebaseConfig = {
   apiKey:            'AIzaSyCMbmpuHY7DXPTNsT-X8KfakBJ8TFaAM2w',
-  authDomain:        'detectai-prod.firebaseapp.com',
+  authDomain:        'detect-ai-nu.vercel.app',   // ← custom domain (add this to Firebase authorized domains)
   projectId:         'detectai-prod',
   storageBucket:     'detectai-prod.firebasestorage.app',
   messagingSenderId: '830272475702',
@@ -35,17 +35,17 @@ export const googleProvider = provider
 export function parseFirebaseError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
   if (msg.includes('auth/unauthorized-domain')) {
-    return 'Google sign-in unavailable on this domain. Please use email/password or contact support.'
+    return 'Google sign-in requires domain authorization. Use email/password or contact support at contact@detectai.io'
   }
   if (msg.includes('auth/user-not-found') || msg.includes('auth/wrong-password') || msg.includes('auth/invalid-credential')) {
-    return 'Invalid email or password. Please try again.'
+    return 'Incorrect email or password. Please try again.'
   }
   if (msg.includes('auth/email-already-in-use')) return 'An account with this email already exists.'
   if (msg.includes('auth/weak-password')) return 'Password must be at least 6 characters.'
   if (msg.includes('auth/too-many-requests')) return 'Too many attempts. Please wait a moment and try again.'
   if (msg.includes('auth/network-request-failed')) return 'Network error. Check your connection.'
   if (msg.includes('auth/popup-closed-by-user') || msg.includes('popup-closed')) return ''
-  if (msg.includes('auth/popup-blocked')) return 'Popup blocked. Please allow popups and try again.'
+  if (msg.includes('auth/popup-blocked')) return 'Popup blocked. Please allow popups for this site and try again.'
   return msg.replace('Firebase: ', '').replace(/\(auth\/.*?\)\.?/, '').trim()
 }
 
