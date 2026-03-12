@@ -73,7 +73,7 @@ export default function ScraperPage() {
       clearInterval(interval)
       if (!data.success) throw new Error(data.error?.message || 'Scraping failed')
       setResult(data.data)
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = firebaseUser ? { id: firebaseUser.uid } : null
       if (user) {
         await supabase.from('scraper_sessions').insert({
           user_id: user.id, target_url: url.trim(),

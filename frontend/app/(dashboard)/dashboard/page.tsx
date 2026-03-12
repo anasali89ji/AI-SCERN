@@ -46,36 +46,51 @@ export default function DashboardPage() {
   const supabase = createClient()
 
   useEffect(() => {
+    if (!firebaseUser?.uid) return
+    const uid = firebaseUser.uid
     async function loadData() {
-      const uid = firebaseUser?.uid
-      if (!uid) return
-      const user = { id: uid }
-
-      const { data: statsData } = await supabase.rpc('get_user_stats', { p_user_id: user.id })
-      if (statsData) setStats(statsData)
-
+      // Try RPC first, fall back to direct aggregation if RPC missing
+      const { data: statsData, error: rpcErr } = await supabase.rpc('get_user_stats', { p_user_id: uid })
+      if (statsData && !rpcErr) {
+        const avgConf = (statsData.avg_confidence ?? 0) <= 1
+          ? Math.round(statsData.avg_confidence * 100)
+          : Math.round(statsData.avg_confidence)
+        setStats({ ...statsData, avg_confidence: avgConf })
+      } else {
+        const { data: allScans } = await supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', uid)
+        if (allScans) {
+          const total = allScans.length
+          setStats({
+            total_scans:    total,
+            ai_detected:    allScans.filter(s => s.verdict === 'AI').length,
+            human_detected: allScans.filter(s => s.verdict === 'HUMAN').length,
+            avg_confidence: total > 0 ? Math.round(allScans.reduce((s: number, r: any) => s + (r.confidence_score ?? 0), 0) / total * 100) : 0,
+            image_scans:    allScans.filter(s => s.media_type === 'image').length,
+            video_scans:    allScans.filter(s => s.media_type === 'video').length,
+            audio_scans:    allScans.filter(s => s.media_type === 'audio').length,
+            text_scans:     allScans.filter(s => s.media_type === 'text').length,
+            uncertain:      allScans.filter(s => s.verdict === 'UNCERTAIN').length,
+          })
+        }
+      }
       const { data: scansData } = await supabase
-        .from('scans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10)
+        .from('scans').select('*').eq('user_id', uid)
+        .order('created_at', { ascending: false }).limit(10)
       if (scansData) setScans(scansData)
       setLoading(false)
     }
     loadData()
 
-    // Realtime subscription
     const channel = supabase
-      .channel('scans-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scans' }, (payload) => {
+      .channel(`scans-rt-${uid}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scans', filter: `user_id=eq.${uid}` }, (payload) => {
         setScans(prev => [payload.new as Scan, ...prev.slice(0, 9)])
         setStats(prev => prev ? { ...prev, total_scans: prev.total_scans + 1 } : prev)
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [firebaseUser?.uid])
 
   if (loading) {
     return (
@@ -192,10 +207,10 @@ export default function DashboardPage() {
                         <div className="w-16 h-1.5 bg-border rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-primary to-secondary"
-                            style={{ width: `${scan.confidence_score ?? 0}%` }}
+                            style={{ width: `${Math.round((scan.confidence_score ?? 0) * ((scan.confidence_score ?? 0) <= 1 ? 100 : 1))}%` }}
                           />
                         </div>
-                        <span className="text-xs text-text-muted">{scan.confidence_score ?? 0}%</span>
+                        <span className="text-xs text-text-muted">{Math.round((scan.confidence_score ?? 0) * ((scan.confidence_score ?? 0) <= 1 ? 100 : 1))}%</span>
                       </div>
                     </td>
                     <td className="py-3 text-xs text-text-muted">{formatRelativeTime(scan.created_at)}</td>

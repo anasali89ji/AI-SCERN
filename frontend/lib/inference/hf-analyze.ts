@@ -39,6 +39,7 @@ const MODELS = {
   text_tertiary:  'PirateXX/AI-Content-Detector',
   image_primary:  'umm-maybe/AI-image-detector',
   image_sdxl:     'Organika/sdxl-detector',
+  image_face:     'Wvolf/ViT-Deepfake-Detection',
   audio:          'mo-thecreator/Deepfake-audio-detection',
 }
 
@@ -153,21 +154,23 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 // ── IMAGE DETECTION ───────────────────────────────────────────────────────────
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileName: string): Promise<DetectionResult> {
   const scores: { model: string; aiScore: number; weight: number }[] = []
-  const [r1, r2] = await Promise.allSettled([
+  const [r1, r2, r3] = await Promise.allSettled([
     hfInference(MODELS.image_primary, null, { binary: true, binaryData: imageBuffer }),
     hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: imageBuffer }),
+    hfInference(MODELS.image_face,    null, { binary: true, binaryData: imageBuffer }),
   ])
   const parseImg = (r: PromiseSettledResult<unknown>, w: number, m: string) => {
     if (r.status !== 'fulfilled') return
     try {
       const raw   = r.value as { label: string; score: number }[]
-      const aiE   = raw.find(s => /ai|fake|sdxl|synthetic|label_1/i.test(s.label))
+      const aiE   = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake/i.test(s.label))
       const huE   = raw.find(s => /real|human|authentic|label_0/i.test(s.label))
       scores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1-huE.score : 0.5), weight: w })
     } catch {}
   }
-  parseImg(r1, 0.55, MODELS.image_primary)
-  parseImg(r2, 0.45, MODELS.image_sdxl)
+  parseImg(r1, 0.40, MODELS.image_primary)
+  parseImg(r2, 0.35, MODELS.image_sdxl)
+  parseImg(r3, 0.25, MODELS.image_face)
   if (!scores.length) scores.push({ model: 'detectai-image-heuristic', aiScore: 0.5+(Math.random()-0.5)*0.2, weight: 1 })
 
   const totalW  = scores.reduce((s, m) => s + m.weight, 0)

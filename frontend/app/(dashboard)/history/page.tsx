@@ -128,7 +128,7 @@ export default function HistoryPage() {
                   )}
                   {scan.confidence_score !== null && (
                     <div className="text-right hidden sm:block">
-                      <p className="text-sm font-bold text-text-primary">{scan.confidence_score}%</p>
+                      <p className="text-sm font-bold text-text-primary">{Math.round((scan.confidence_score ?? 0) * ((scan.confidence_score ?? 0) <= 1 ? 100 : 1))}%</p>
                       <p className="text-xs text-text-muted">confidence</p>
                     </div>
                   )}

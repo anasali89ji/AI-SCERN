@@ -29,10 +29,28 @@ export default function ProfilePage() {
       if (p) { setProfile(p); setDisplayName(p.display_name || ''); setAvatarUrl(p.avatar_url || '') }
       if (!p?.display_name && fbUser?.displayName) setDisplayName(fbUser.displayName)
       if (!p?.avatar_url  && fbUser?.photoURL)    setAvatarUrl(fbUser.photoURL)
-      try {
-        const { data: s } = await supabase.rpc('get_user_stats', { p_user_id: fbUser!.uid })
-        if (s) setStats(s)
-      } catch {}
+      const { data: s, error: rpcErr } = await supabase.rpc('get_user_stats', { p_user_id: fbUser!.uid })
+      if (s && !rpcErr) {
+        const avgConf = (s.avg_confidence ?? 0) <= 1 ? Math.round(s.avg_confidence * 100) : Math.round(s.avg_confidence)
+        setStats({ ...s, avg_confidence: avgConf })
+      } else {
+        // Fallback: compute stats directly from scans table
+        const { data: scanRows } = await supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', fbUser!.uid)
+        if (scanRows) {
+          const total = scanRows.length
+          setStats({
+            total_scans:    total,
+            ai_detected:    scanRows.filter((r: any) => r.verdict === 'AI').length,
+            human_detected: scanRows.filter((r: any) => r.verdict === 'HUMAN').length,
+            avg_confidence: total > 0 ? Math.round(scanRows.reduce((acc: number, r: any) => acc + (r.confidence_score ?? 0), 0) / total * 100) : 0,
+            image_scans:    scanRows.filter((r: any) => r.media_type === 'image').length,
+            video_scans:    scanRows.filter((r: any) => r.media_type === 'video').length,
+            audio_scans:    scanRows.filter((r: any) => r.media_type === 'audio').length,
+            text_scans:     scanRows.filter((r: any) => r.media_type === 'text').length,
+            uncertain:      scanRows.filter((r: any) => r.verdict === 'UNCERTAIN').length,
+          })
+        }
+      }
       setLoading(false)
     }
     load()

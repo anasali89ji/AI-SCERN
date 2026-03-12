@@ -33,7 +33,7 @@ export default function BatchPage() {
   const runBatch = async () => {
     if (!files.length || running) return
     setRunning(true); setDone(0)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = firebaseUser ? { id: firebaseUser.uid } : null
 
     for (let i = 0; i < files.length; i++) {
       const bf = files[i]
@@ -175,7 +175,7 @@ export default function BatchPage() {
                       <span className={bf.verdict === 'AI' ? 'badge-ai' : bf.verdict === 'HUMAN' ? 'badge-human' : 'badge-uncertain'}>
                         {bf.verdict}
                       </span>
-                      <span className="text-sm font-bold text-text-muted">{bf.confidence}%</span>
+                      <span className="text-sm font-bold text-text-muted">{bf.confidence !== undefined ? Math.round(bf.confidence <= 1 ? bf.confidence * 100 : bf.confidence) : 0}%</span>
                     </div>
                   )}
                   {bf.status === 'queued' && (

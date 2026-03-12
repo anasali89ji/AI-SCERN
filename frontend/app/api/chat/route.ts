@@ -6,7 +6,7 @@ export const maxDuration = 120
 // ─── NVIDIA / DeepSeek Config ─────────────────────────────────────────────────
 const NVIDIA_BASE     = 'https://integrate.api.nvidia.com/v1'
 const DEEPSEEK_MODEL  = 'deepseek-ai/deepseek-v3-0324'  // V3 — fast, conversational, no <think> noise
-const VILA_MODEL      = 'nvidia/vila'                    // vision-language model for image analysis
+const VILA_MODEL      = 'meta/llama-3.2-11b-vision-instruct'  // vision-language model for image analysis
 
 // ─── Cloudflare D1 live pipeline stats ───────────────────────────────────────
 const CF_ACCOUNT  = '34400e6e147e83e95c942135f54aeba7'
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
       toolEvents.push({ tool: 'detect_image_with_vila', result: {
         verdict:        vilaResult.verdict,
         confidence_pct: vilaResult.confidence_pct,
-        analysis_model: 'NVIDIA VILA (nvidia/vila)',
+        analysis_model: 'NVIDIA Llama-3.2 Vision (meta/llama-3.2-11b-vision-instruct)',
         analysis_focus: 'general-authenticity',
         vila_analysis:  vilaResult.analysis,
       }})
