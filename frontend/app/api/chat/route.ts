@@ -5,8 +5,10 @@ export const maxDuration = 120
 
 // ─── NVIDIA / DeepSeek Config ─────────────────────────────────────────────────
 const NVIDIA_BASE     = 'https://integrate.api.nvidia.com/v1'
-const DEEPSEEK_MODEL  = 'deepseek-ai/deepseek-v3-0324'  // V3 — fast, conversational, no <think> noise
-const VILA_MODEL      = 'meta/llama-3.2-11b-vision-instruct'  // vision-language model for image analysis
+const DEEPSEEK_MODEL  = 'deepseek-ai/deepseek-v3-0324'         // primary chat — fast, no <think> noise
+const CHAT_FALLBACK   = 'nvidia/llama-3.1-nemotron-70b-instruct' // fallback if DeepSeek unavailable
+const VILA_MODEL      = 'nvidia/llama-3.2-90b-vision-instruct'  // 90B vision — best for deepfake analysis
+const VILA_FALLBACK   = 'meta/llama-3.2-11b-vision-instruct'    // fallback vision (smaller, always available)
 
 // ─── Cloudflare D1 live pipeline stats ───────────────────────────────────────
 const CF_ACCOUNT  = '34400e6e147e83e95c942135f54aeba7'
@@ -85,12 +87,12 @@ Respond with:
 - CONFIDENCE: X% (your confidence in the verdict)
 - ANALYSIS: Detailed forensic observations (what you ACTUALLY SEE — be specific)`
 
-  try {
+  const tryVisionModel = async (model: string) => {
     const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: VILA_MODEL,
+        model,
         messages: [{ role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
           { type: 'text', text: prompt },
@@ -99,23 +101,27 @@ Respond with:
         temperature: 0.2,
         stream: false,
       }),
-      signal: AbortSignal.timeout(40000),
+      signal: AbortSignal.timeout(45000),
     })
+    if (!res.ok) throw new Error(`${model} ${res.status}: ${(await res.text()).slice(0, 200)}`)
+    return res.json()
+  }
 
-    if (!res.ok) throw new Error(`VILA ${res.status}: ${(await res.text()).slice(0, 200)}`)
-    const d = await res.json()
+  try {
+    // Try 90B first, fall back to 11B if quota/unavailable
+    let d: any
+    try { d = await tryVisionModel(VILA_MODEL) }
+    catch { d = await tryVisionModel(VILA_FALLBACK) }
+
     const text: string = d.choices?.[0]?.message?.content || ''
-
     const isAI = /ai.generated|deepfake|synthetic|manipulated|not (authentic|real|genuine)/i.test(text)
     const confMatch = text.match(/(\d{1,3})\s*%/)
     const conf = confMatch ? Math.min(99, parseInt(confMatch[1])) : (isAI ? 78 : 24)
-
     const verdictMatch = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
     const verdict = verdictMatch?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
-
     return { verdict, confidence_pct: conf, analysis: text, focus: 'general-authenticity' }
   } catch (err: any) {
-    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `VILA error: ${err?.message}`, focus: 'error' }
+    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision error: ${err?.message}`, focus: 'error' }
   }
 }
 
@@ -223,7 +229,7 @@ export async function POST(req: NextRequest) {
       toolEvents.push({ tool: 'detect_image_with_vila', result: {
         verdict:        vilaResult.verdict,
         confidence_pct: vilaResult.confidence_pct,
-        analysis_model: 'NVIDIA Llama-3.2 Vision (meta/llama-3.2-11b-vision-instruct)',
+        analysis_model: 'NVIDIA Llama-3.2 Vision 90B (nvidia/llama-3.2-90b-vision-instruct)',
         analysis_focus: 'general-authenticity',
         vila_analysis:  vilaResult.analysis,
       }})
