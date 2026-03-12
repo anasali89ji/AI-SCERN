@@ -1,10 +1,10 @@
 /**
- * DETECTAI Pipeline — Worker A
- * Shards: 0–9  |  Cron: every 1 min  |  ~2,000 items/run
+ * DETECTAI Pipeline — Worker D
+ * Shards: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]  |  Cron: every 1 min  |  ~2,000 items/run
  */
-import { runScraper, getStatus, Env } from './core'
+import { runScraper, getStatus, Env } from '../src/core'
 
-const MY_SHARDS   = [0,1,2,3,4,5,6,7,8,9]
+const MY_SHARDS   = [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
 const ITEMS_SHARD = 200
 let shardCursor   = 0
 
@@ -19,23 +19,24 @@ export default {
         results.push(await runScraper(env, shard, ITEMS_SHARD))
         shardCursor++
       }
-      return Response.json({ ok: true, worker: 'A', results })
+      return Response.json({ ok: true, worker: 'D', results })
     }
-    return Response.json({ worker: 'A', shards: MY_SHARDS, cron: '*/1 * * * *' })
+    return Response.json({ worker: 'D', shards: MY_SHARDS, cron: '*/1 * * * *' })
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const start = shardCursor % MY_SHARDS.length
-    const batch = MY_SHARDS.slice(start, start + 4).concat(
-      start + 4 > MY_SHARDS.length ? MY_SHARDS.slice(0, (start + 4) - MY_SHARDS.length) : []
-    )
+    const end   = start + 4
+    const batch = end <= MY_SHARDS.length
+      ? MY_SHARDS.slice(start, end)
+      : [...MY_SHARDS.slice(start), ...MY_SHARDS.slice(0, end - MY_SHARDS.length)]
     let total = 0
     for (const shard of batch) {
       const r = await runScraper(env, shard, ITEMS_SHARD)
       total += r.inserted
-      console.log(`[A] shard=${shard} inserted=${r.inserted} errors=${r.errors}`)
+      console.log(`[D] shard=${shard} inserted=${r.inserted} errors=${r.errors}`)
     }
     shardCursor = (shardCursor + 4) % MY_SHARDS.length
-    console.log(`[A] Done total=${total}`)
+    console.log(`[D] Done total=${total}`)
   }
 }

@@ -1,6 +1,5 @@
-# ─── Worker A (main — shards 0–9) ─────────────────────────────────────────
-name                = "detectai-pipeline"
-main                = "src/index.ts"
+name                = "detectai-pipeline-b"
+main                = "workers/worker-b.ts"
 compatibility_date  = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev         = false
