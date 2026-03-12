@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import { auth, googleProvider } from '@/lib/firebase/client'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Mail, Lock, User, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -20,32 +19,25 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-async function setSessionCookie(user: any) {
-  // Force token refresh to ensure it's fresh, then retry on failure
-  const idToken = await user.getIdToken(true)
+async function setSessionCookie(user: any): Promise<void> {
+  let idToken = await user.getIdToken(true)
   for (let attempt = 0; attempt < 3; attempt++) {
+    // Always get fresh token on retries
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 600))
+      idToken = await user.getIdToken(true)
+    }
     const res = await fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     })
     if (res.ok) return
-    if (res.status === 401) {
-      // Token may need refresh — get a fresh one
-      if (attempt < 2) {
-        const freshToken = await user.getIdToken(true)
-        if (freshToken !== idToken) {
-          const res2 = await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: freshToken }),
-          })
-          if (res2.ok) return
-        }
-      }
-      throw new Error('Session setup failed — please try again')
+    // Last attempt — throw so callers always know about failure
+    if (attempt === 2) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body?.error || `Session error (${res.status})`)
     }
-    await new Promise(r => setTimeout(r, 800))
   }
 }
 
@@ -73,7 +65,6 @@ export default function SignupPage() {
   const [showPw, setShowPw]           = useState(false)
   const [googleLoading, setGoogle]    = useState(false)
   const [redirecting, setRedirecting] = useState(false)
-  const router   = useRouter()
   const supabase = createClient()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
@@ -91,27 +82,33 @@ export default function SignupPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Account created! Welcome to DETECTAI')
-      setTimeout(() => router.push('/dashboard'), 900)
+      // Hard navigation so the browser sends the fresh cookie to middleware
+      setTimeout(() => { window.location.href = '/dashboard' }, 800)
     } catch (err: any) {
       const msg = err?.message || 'Signup failed'
-      toast.error(msg.includes('email-already-in-use') ? 'An account with this email already exists' : msg)
+      toast.error(
+        msg.includes('email-already-in-use') ? 'An account with this email already exists' :
+        msg.includes('Session') ? 'Account created but session failed — please sign in' : msg
+      )
+      setRedirecting(false)
     }
   }
 
-  // Handle Google redirect result on mount
+  // Handle Google redirect result on mount — don't setGoogle(true) here,
+  // that was disabling the submit button as a side effect on every page load
   useEffect(() => {
     if (!auth) return
-    setGoogle(true)
     getRedirectResult(auth).then(async result => {
       if (result?.user) {
+        setGoogle(true)
         await createProfile(result.user.uid, result.user.email || '', result.user.displayName || '')
         await setSessionCookie(result.user)
         setRedirecting(true)
         toast.success('Account created! Welcome to DETECTAI')
-        setTimeout(() => router.push('/dashboard'), 900)
+        window.location.href = '/dashboard'
       }
-    }).catch(() => {}).finally(() => setGoogle(false))
-  }, [router])
+    }).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const signUpWithGoogle = async () => {
     setGoogle(true)
@@ -121,7 +118,7 @@ export default function SignupPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome to DETECTAI!')
-      setTimeout(() => router.push('/dashboard'), 900)
+      window.location.href = '/dashboard'
     } catch (err: any) {
       const msg = err?.message || ''
       // Popup blocked or unauthorized domain → fall back to redirect

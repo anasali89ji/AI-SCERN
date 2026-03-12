@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import { auth, googleProvider, parseFirebaseError } from '@/lib/firebase/client'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,13 +17,23 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-async function setSessionCookie(user: any) {
-  const idToken = await user.getIdToken(true)
-  const res = await fetch('/api/auth/session', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken }),
-  })
-  if (!res.ok) throw new Error('Session error')
+async function setSessionCookie(user: any): Promise<void> {
+  let idToken = await user.getIdToken(true)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 600))
+      idToken = await user.getIdToken(true)
+    }
+    const res = await fetch('/api/auth/session', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    })
+    if (res.ok) return
+    if (attempt === 2) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body?.error || `Session error (${res.status})`)
+    }
+  }
 }
 
 export default function LoginPage() {
@@ -32,28 +41,24 @@ export default function LoginPage() {
   const [googleLoad, setGoogleLoad] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
   const [authError,  setAuthError]  = useState('')
-  const router = useRouter()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
-  // Handle Google redirect return
   useEffect(() => {
     if (!auth) return
-    setGoogleLoad(true)
     getRedirectResult(auth)
       .then(async result => {
         if (result?.user) {
           await setSessionCookie(result.user)
           setRedirecting(true)
           toast.success('Welcome back!')
-          setTimeout(() => router.push('/dashboard'), 600)
+          window.location.href = '/dashboard'
         }
       })
       .catch(err => {
         const msg = parseFirebaseError(err)
         if (msg) { setAuthError(msg); toast.error(msg) }
       })
-      .finally(() => setGoogleLoad(false))
-  }, [router])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (data: FormData) => {
     setAuthError('')
@@ -63,7 +68,7 @@ export default function LoginPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome back!')
-      setTimeout(() => router.push('/dashboard'), 600)
+      window.location.href = '/dashboard'
     } catch (err) {
       const msg = parseFirebaseError(err)
       if (msg) { setAuthError(msg); toast.error(msg) }
@@ -79,7 +84,7 @@ export default function LoginPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome back!')
-      setTimeout(() => router.push('/dashboard'), 600)
+      window.location.href = '/dashboard'
     } catch (err: any) {
       const msg = parseFirebaseError(err)
       const useRedirect =
