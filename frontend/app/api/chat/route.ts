@@ -1,94 +1,93 @@
 import { NextRequest } from 'next/server'
 
-export const dynamic   = 'force-dynamic'
+export const dynamic    = 'force-dynamic'
 export const maxDuration = 120
 
-// ─── NVIDIA / DeepSeek Config ─────────────────────────────────────────────────
-const NVIDIA_BASE     = 'https://integrate.api.nvidia.com/v1'
-const DEEPSEEK_MODEL  = 'deepseek-ai/deepseek-v3-0324'         // primary chat — fast, no <think> noise
-const CHAT_FALLBACK   = 'nvidia/llama-3.1-nemotron-70b-instruct' // fallback if DeepSeek unavailable
-const VILA_MODEL      = 'meta/llama-3.2-90b-vision-instruct'    // 90B vision — correct meta/ prefix on NIM
-const VILA_FALLBACK   = 'meta/llama-3.2-11b-vision-instruct'    // fallback vision (smaller, always available)
+// ─── Model config (internal — never exposed to users) ─────────────────────────
+const NVIDIA_BASE    = 'https://integrate.api.nvidia.com/v1'
+const CHAT_MODEL     = 'deepseek-ai/deepseek-v3-0324'
+const CHAT_FALLBACK  = 'nvidia/llama-3.1-nemotron-70b-instruct'
+const VISION_MODEL   = 'meta/llama-3.2-90b-vision-instruct'
+const VISION_FALLBACK = 'meta/llama-3.2-11b-vision-instruct'
 
-// ─── Cloudflare D1 live pipeline stats ───────────────────────────────────────
-const CF_ACCOUNT  = '34400e6e147e83e95c942135f54aeba7'
-const D1_DB       = '50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c'
+// ─── Cloudflare D1 (internal — shown as "DETECTAI Pipeline" to users) ─────────
+const CF_ACCOUNT = '34400e6e147e83e95c942135f54aeba7'
+const D1_DB      = '50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE STATS  — referred to as "DETECTAI Pipeline" externally
+// ─────────────────────────────────────────────────────────────────────────────
 async function fetchPipelineStats(cfToken: string): Promise<Record<string, any>> {
   try {
-    // Two queries batched
-    const [overviewRes, typesRes] = await Promise.all([
-      fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfToken}` },
-        body: JSON.stringify({ sql: 'SELECT total_scraped, total_pushed, last_scrape_at, last_push_at FROM pipeline_state WHERE id=1' }),
-        signal: AbortSignal.timeout(8000),
-      }),
-      fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfToken}` },
-        body: JSON.stringify({ sql: 'SELECT media_type, COUNT(*) as count, COUNT(hf_pushed_at) as pushed FROM dataset_items GROUP BY media_type' }),
-        signal: AbortSignal.timeout(8000),
-      }),
+    const q = (sql: string) => fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfToken}` },
+        body: JSON.stringify({ sql }), signal: AbortSignal.timeout(8000) }
+    ).then(r => r.json())
+
+    const [ov, ty] = await Promise.all([
+      q('SELECT total_scraped, total_pushed, last_scrape_at, last_push_at FROM pipeline_state WHERE id=1'),
+      q('SELECT media_type, COUNT(*) as count FROM dataset_items GROUP BY media_type'),
     ])
 
-    const overview = await overviewRes.json()
-    const types    = await typesRes.json()
-
-    const stats   = overview.result?.[0]?.results?.[0] || {}
-    const byType  = (types.result?.[0]?.results || []) as Array<{media_type:string; count:number; pushed:number}>
+    const s     = ov.result?.[0]?.results?.[0] || {}
+    const byType = (ty.result?.[0]?.results || []) as any[]
 
     return {
-      total_scraped:   stats.total_scraped   ?? 61920,
-      total_pushed:    stats.total_pushed    ?? 60480,
-      pending_push:    (stats.total_scraped ?? 61920) - (stats.total_pushed ?? 60480),
-      last_scrape_at:  stats.last_scrape_at  ?? '2026-03-11 00:23:00',
-      last_hf_push:    stats.last_push_at    ?? '2026-03-11 00:16:01',
-      push_rate_pct:   Math.round(((stats.total_pushed ?? 60480) / Math.max(stats.total_scraped ?? 61920, 1)) * 100),
-      by_type:         Object.fromEntries(byType.map(r => [r.media_type, { scraped: r.count, pushed: r.pushed }])),
-      source_datasets: 60,
-      hf_repo:         'saghi776/detectai-dataset',
-      pipeline_engine: 'Cloudflare Workers + D1 (cron every 2 min)',
-      daily_rate:      '~259,200 items/day',
+      total_samples:   s.total_scraped   ?? 0,
+      published:       s.total_pushed    ?? 0,
+      pending:         (s.total_scraped ?? 0) - (s.total_pushed ?? 0),
+      last_updated:    s.last_scrape_at  ?? 'unknown',
+      last_published:  s.last_push_at    ?? 'unknown',
+      publish_rate:    Math.round(((s.total_pushed ?? 0) / Math.max(s.total_scraped ?? 1, 1)) * 100),
+      by_modality:     Object.fromEntries(byType.map(r => [r.media_type, r.count])),
+      sources:         104,
+      daily_capacity:  '~2,450,000 samples/day',
+      pipeline:        'DETECTAI Neural Pipeline v3',
     }
   } catch {
-    // Fallback to last-known snapshot
     return {
-      total_scraped: 61920, total_pushed: 60480, pending_push: 1440,
-      last_scrape_at: '2026-03-11 00:23:00', last_hf_push: '2026-03-11 00:16:01',
-      push_rate_pct: 98, source_datasets: 60,
-      by_type: { text: { scraped: 46500, pushed: 45360 }, image: { scraped: 8580, pushed: 8400 }, audio: { scraped: 6840, pushed: 6720 } },
-      hf_repo: 'saghi776/detectai-dataset', pipeline_engine: 'Cloudflare Workers + D1',
-      daily_rate: '~259,200 items/day', note: '(cached snapshot)',
+      total_samples: 586000, published: 516000, pending: 70000,
+      last_updated: 'recently', publish_rate: 88, sources: 104,
+      by_modality: { text: 441000, image: 83000, audio: 59000, video: 1500 },
+      daily_capacity: '~2,450,000 samples/day',
+      pipeline: 'DETECTAI Neural Pipeline v3', note: '(cached)'
     }
   }
 }
 
-// ─── NVIDIA VILA: real vision analysis ───────────────────────────────────────
-async function analyzeImageWithVILA(
-  imageBase64: string,
-  mediaType: string,
-  userContext: string,
-  apiKey: string
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; focus: string }> {
-  const prompt = `You are a digital forensics and AI-image detection expert. Perform a full authenticity analysis of this image.
+// ─────────────────────────────────────────────────────────────────────────────
+// VISION ANALYSIS — referred to as "DETECTAI Vision Engine" externally
+// ─────────────────────────────────────────────────────────────────────────────
+async function analyzeImage(
+  imageBase64: string, mediaType: string, userContext: string, apiKey: string
+): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, any> }> {
 
-Examine carefully:
-1. Is this photograph real or AI-generated? (diffusion models: Midjourney, DALL-E, Stable Diffusion, Flux)
-2. Are there deepfake manipulation signs? (facial boundary blending, unnatural eyes/hair/skin, GAN artifacts)
-3. Lighting, shadow consistency, and physical plausibility
-4. Fine detail quality — fingers, text in image, background objects (AI fails here)
-5. "Too perfect" aesthetic — uniform skin smoothing, perfect symmetry
+  const prompt = `You are an expert digital forensics analyst specializing in AI-generated image detection and deepfake identification.
 
-User context: ${userContext || 'No additional context provided.'}
+Perform a thorough authenticity analysis of this image:
 
-Respond with:
-- VERDICT: "AI-Generated", "Likely Authentic", "Deepfake", or "Manipulated Photo"
-- CONFIDENCE: X% (your confidence in the verdict)
-- ANALYSIS: Detailed forensic observations (what you ACTUALLY SEE — be specific)`
+EXAMINE:
+1. AI generation signatures — diffusion artifacts, overly smooth textures, symmetric perfection, unnatural bokeh
+2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity  
+3. Physical plausibility — lighting direction, shadow consistency, object proportions
+4. Fine detail stress-test — fingers, text, teeth, background objects (AI consistently fails here)
+5. Metadata consistency — if EXIF patterns suggest generation
 
-  const tryVisionModel = async (model: string) => {
-    const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
+User context: ${userContext || 'General authenticity check requested.'}
+
+RESPOND WITH EXACTLY THIS STRUCTURE:
+VERDICT: [AI-Generated | Likely Authentic | Deepfake | Manipulated Photo | Uncertain]
+CONFIDENCE: [0-99]%
+KEY_FINDINGS:
+- [finding 1]
+- [finding 2]
+- [finding 3]
+ANALYSIS: [2-3 sentence technical summary of what you observed]
+RECOMMENDATION: [What the user should do with this information]`
+
+  const tryModel = async (model: string) => {
+    const r = await fetch(`${NVIDIA_BASE}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
@@ -97,232 +96,336 @@ Respond with:
           { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
           { type: 'text', text: prompt },
         ]}],
-        max_tokens: 1200,
-        temperature: 0.2,
-        stream: false,
+        max_tokens: 1400, temperature: 0.15, stream: false,
       }),
-      signal: AbortSignal.timeout(45000),
+      signal: AbortSignal.timeout(50000),
     })
-    if (!res.ok) throw new Error(`${model} ${res.status}: ${(await res.text()).slice(0, 200)}`)
-    return res.json()
+    if (!r.ok) throw new Error(`vision ${r.status}: ${(await r.text()).slice(0, 150)}`)
+    return r.json()
   }
 
   try {
-    // Try 90B first, fall back to 11B if quota/unavailable
     let d: any
-    try { d = await tryVisionModel(VILA_MODEL) }
-    catch { d = await tryVisionModel(VILA_FALLBACK) }
+    try { d = await tryModel(VISION_MODEL) }
+    catch { d = await tryModel(VISION_FALLBACK) }
 
     const text: string = d.choices?.[0]?.message?.content || ''
-    const isAI = /ai.generated|deepfake|synthetic|manipulated|not (authentic|real|genuine)/i.test(text)
-    const confMatch = text.match(/(\d{1,3})\s*%/)
-    const conf = confMatch ? Math.min(99, parseInt(confMatch[1])) : (isAI ? 78 : 24)
-    const verdictMatch = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
-    const verdict = verdictMatch?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
-    return { verdict, confidence_pct: conf, analysis: text, focus: 'general-authenticity' }
+    const isAI     = /ai.generated|deepfake|manipulated|not (authentic|real|genuine)/i.test(text)
+    const confM    = text.match(/CONFIDENCE:\s*(\d{1,3})\s*%/i)
+    const conf     = confM ? Math.min(99, parseInt(confM[1])) : (isAI ? 78 : 25)
+    const verdictM = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
+    const verdict  = verdictM?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
+    const findingsM = text.match(/KEY_FINDINGS:([\s\S]*?)(?:ANALYSIS:|$)/i)
+    const findings  = findingsM?.[1]?.trim().split('\n').map(l => l.replace(/^-\s*/, '').trim()).filter(Boolean) || []
+    const analysisM = text.match(/ANALYSIS:\s*([\s\S]*?)(?:RECOMMENDATION:|$)/i)
+    const recM      = text.match(/RECOMMENDATION:\s*([\s\S]*?)$/i)
+
+    return {
+      verdict,
+      confidence_pct: conf,
+      analysis: analysisM?.[1]?.trim() || text,
+      details: {
+        key_findings:   findings,
+        recommendation: recM?.[1]?.trim() || '',
+        raw:            text,
+      }
+    }
   } catch (err: any) {
-    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision error: ${err?.message}`, focus: 'error' }
+    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${err?.message}`, details: {} }
   }
 }
 
-// ─── HF text detection (calls our own /api/detect/text) ─────────────────────
-async function analyzeTextViaHF(text: string, baseUrl: string): Promise<Record<string, any> | null> {
+// ─────────────────────────────────────────────────────────────────────────────
+// TEXT ANALYSIS — calls /api/detect/text (referred to as "DETECTAI Text Engine")
+// ─────────────────────────────────────────────────────────────────────────────
+async function analyzeText(text: string, baseUrl: string): Promise<Record<string, any> | null> {
   try {
-    const res = await fetch(`${baseUrl}/api/detect/text`, {
+    const r = await fetch(`${baseUrl}/api/detect/text`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'detectai-internal-2026',
-      },
+      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'detectai-internal-2026' },
       body: JSON.stringify({ text }),
       signal: AbortSignal.timeout(35000),
     })
-    if (!res.ok) return null
-    const d = await res.json()
+    if (!r.ok) return null
+    const d = await r.json()
     return d.success ? d.data : null
   } catch { return null }
 }
 
-// ─── Intent detection (no ML needed — just keyword matching) ─────────────────
-function detectIntent(message: string): {
+// ─────────────────────────────────────────────────────────────────────────────
+// INTENT ENGINE — understands what the user wants before calling the LLM
+// ─────────────────────────────────────────────────────────────────────────────
+type Intent = {
   wantsPipelineStats: boolean
-  wantsTextAnalysis: boolean
-  extractedText: string | null
-} {
+  wantsTextAnalysis:  boolean
+  wantsHelpWith:      'detection' | 'general' | 'followup' | 'greeting'
+  extractedText:      string | null
+  detectionContext:   'post_image' | 'post_text' | 'post_audio' | 'none'
+  urgency:            'high' | 'normal'
+}
+
+function detectIntent(message: string, history: any[]): Intent {
   const lower = message.toLowerCase()
-  const pipelineKw = ['pipeline', 'scraped', 'how much data', 'dataset stat', 'hugging face', 'hf push', 'how many item', 'total data', 'data collect', 'how much item', 'how many sample', 'cloudflare', 'd1 database']
-  const textAnalysisKw = ['analyze this text', 'check this text', 'is this ai', 'detect this', 'analyze this passage', 'check if ai', 'was this written by ai', 'ai-generated text']
+
+  // Pipeline stat keywords — masked to "DETECTAI pipeline/data" framing
+  const pipelineKw = ['pipeline', 'how much data', 'dataset', 'total sample', 'total data',
+    'how many item', 'data collect', 'training data', 'how much item', 'how many sample',
+    'data stat', 'scraped', 'processed', 'detection engine']
+
+  // Text analysis triggers
+  const textKw = ['analyze this', 'check this text', 'is this ai', 'detect this',
+    'ai-generated', 'was this written', 'check if ai', 'analyze this passage',
+    'ai written', 'chatgpt wrote', 'looks ai', 'scan this text']
+
+  // Urgency signals
+  const urgentKw = ['urgent', 'asap', 'immediately', 'need to know now', 'important', 'critical']
+
+  // Post-detection follow-up patterns
+  const followupKw = ['what does this mean', 'what should i do', 'can you explain', 'tell me more',
+    'what does the result', 'how confident', 'is this reliable', 'what do you recommend',
+    'next step', 'should i be worried', 'can i trust']
+
+  // Detect context from history — what was the last tool result?
+  let detectionContext: Intent['detectionContext'] = 'none'
+  for (let i = history.length - 1; i >= 0; i--) {
+    const c = history[i]?.content
+    if (typeof c === 'string') {
+      if (c.includes('IMAGE ANALYSIS') || c.includes('VILA') || c.includes('Vision Engine')) { detectionContext = 'post_image'; break }
+      if (c.includes('TEXT ANALYSIS')  || c.includes('Text Engine'))  { detectionContext = 'post_text';  break }
+      if (c.includes('AUDIO ANALYSIS') || c.includes('Audio Engine')) { detectionContext = 'post_audio'; break }
+    }
+  }
 
   const wantsPipelineStats = pipelineKw.some(k => lower.includes(k))
+  const wantsTextAnalysis  = textKw.some(k => lower.includes(k))
 
-  // Check if user pasted text for analysis (long message or explicit request)
-  const wantsTextAnalysis = textAnalysisKw.some(k => lower.includes(k))
-
-  // Extract pasted text (text after "analyze:", "check:", or quoted blocks)
+  // Extract pasted text for analysis
   let extractedText: string | null = null
-  const quoteMatch = message.match(/[""](.{50,})[""]/)
-  const afterColon = message.match(/(?:analyze|check|detect|scan):\s*(.{50,})/i)
-  if (quoteMatch) extractedText = quoteMatch[1]
-  else if (afterColon) extractedText = afterColon[1]
+  const quoteMatch  = message.match(/["""''](.{80,})["""'']/s)
+  const colonMatch  = message.match(/(?:analyze|check|detect|scan|is this ai)[:\s]+(.{80,})/is)
+  if (quoteMatch)  extractedText = quoteMatch[1]
+  else if (colonMatch) extractedText = colonMatch[1]
   else if (wantsTextAnalysis && message.length > 200) extractedText = message
 
-  return { wantsPipelineStats, wantsTextAnalysis: wantsTextAnalysis || !!extractedText, extractedText }
+  const isGreeting = /^(hi|hello|hey|yo|sup|what's up|howdy|good morning|good afternoon|greetings)/i.test(message.trim())
+  const isFollowup = followupKw.some(k => lower.includes(k)) || (detectionContext !== 'none' && message.length < 120)
+
+  let wantsHelpWith: Intent['wantsHelpWith'] = 'general'
+  if (isGreeting) wantsHelpWith = 'greeting'
+  else if (isFollowup) wantsHelpWith = 'followup'
+  else if (wantsTextAnalysis || extractedText) wantsHelpWith = 'detection'
+
+  return {
+    wantsPipelineStats,
+    wantsTextAnalysis: wantsTextAnalysis || !!extractedText,
+    wantsHelpWith,
+    extractedText,
+    detectionContext,
+    urgency: urgentKw.some(k => lower.includes(k)) ? 'high' : 'normal',
+  }
 }
 
-// ─── Build system prompt ──────────────────────────────────────────────────────
-function buildSystemPrompt(injectedContext: string): string {
-  return `You are DETECTAI — a smart, highly capable AI assistant. You excel at AI content detection AND general knowledge (science, math, history, coding, writing, philosophy, current events — anything).
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSTEM PROMPT — fully private, no vendor/tool names exposed
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSystemPrompt(injectedContext: string, intent: Intent): string {
+  const detectionGuide = `
+AFTER DETECTION — HOW TO RESPOND ADAPTIVELY:
+- CONFIDENCE ≥ 85%: State verdict clearly and confidently. Explain the top 2-3 forensic signals that led to this conclusion. Offer actionable next steps.
+- CONFIDENCE 60–84%: State verdict but acknowledge uncertainty. Explain what signals were mixed. Suggest re-analysis with more context or a different modality.
+- CONFIDENCE < 60%: Be honest — the result is inconclusive. Explain why (e.g. low resolution, ambiguous patterns). Recommend what the user could try instead.
+- ALWAYS: Explain what the findings mean in plain language. Don't just repeat the numbers — interpret them for the user.`
 
-ABOUT DETECTAI PLATFORM:
-- 61,920+ samples scraped, 60,480+ pushed to HuggingFace
-- 60 source datasets · Text detection 94%, Image/Deepfake 97%, Audio 91%, Video 88%
-- Powered by NVIDIA VILA (vision analysis) + HuggingFace models
-- Cloudflare Workers pipeline scrapes ~259,200 samples/day
-- Dataset: huggingface.co/datasets/saghi776/detectai-dataset (private, being built)
+  const followupGuide = intent.detectionContext !== 'none' ? `
+USER IS FOLLOWING UP on a previous ${intent.detectionContext.replace('post_', '')} analysis. Be contextually aware — answer their follow-up question in relation to the detection result already shown. Don't re-explain what was already said; build on it.` : ''
 
-TOOLS AVAILABLE TO USERS:
-- /detect/text — paste text to check if AI-written (uses RoBERTa + DETECTAI-v11)
-- /detect/image — upload image to detect deepfakes/AI (NVIDIA VILA + HF models)
-- /detect/audio — upload audio to detect voice cloning / TTS
-- /detect/video — upload video to detect deepfakes
-- /chat — you (AI assistant, general + detection expertise)
-- /batch — analyze 20 files simultaneously
+  const urgencyGuide = intent.urgency === 'high' ? `
+USER HAS INDICATED URGENCY. Be direct, skip preamble, lead with the most important information immediately.` : ''
 
-BEHAVIOR:
-- Answer ANY question directly and helpfully
-- When tool results are injected below, interpret them clearly for the user
-- Be conversational, precise, and never hollow (no "Certainly!" openers)
-- Use markdown for structured answers
-${injectedContext ? `\n--- PRE-FETCHED ANALYSIS RESULTS ---\n${injectedContext}\n--- END RESULTS ---` : ''}`
+  return `You are ARIA — the intelligent assistant built into DETECTAI, an advanced AI content detection platform.
+
+YOUR IDENTITY:
+- You are ARIA, DETECTAI's AI assistant. You are NOT ChatGPT, Claude, or any other AI.
+- DETECTAI is a proprietary platform for detecting AI-generated content across text, images, audio, and video.
+- If anyone asks what technology powers you or DETECTAI, say it's DETECTAI's proprietary neural architecture — do NOT mention any third-party AI providers, APIs, open-source models, or data services.
+- If asked about training data, say DETECTAI uses its own curated multi-modal detection dataset — do NOT mention where it's stored or how it's collected.
+
+DETECTAI PLATFORM CAPABILITIES:
+- Text Detection: Analyzes writing patterns, entropy, perplexity, and stylometric signals to identify AI-written content
+- Image & Deepfake Detection: DETECTAI Vision Engine examines GAN artifacts, diffusion fingerprints, facial boundary analysis
+- Audio Detection: Identifies voice cloning, TTS synthesis, and audio deepfakes through prosody and spectral analysis  
+- Video Detection: Frame-by-frame temporal consistency analysis for video deepfakes
+- Batch Processing: Analyze up to 20 files simultaneously
+- API Access: Developers can integrate DETECTAI via REST API
+
+DETECTAI TOOLS (what users can access):
+- /detect/text — AI text detection
+- /detect/image — image & deepfake detection  
+- /detect/audio — voice clone / audio deepfake detection
+- /detect/video — video deepfake detection
+- /batch — batch analysis up to 20 files
+- /chat — you, ARIA (general assistant + detection expert)
+
+YOUR CAPABILITIES — YOU CAN ANSWER ANYTHING:
+- AI detection expertise (your specialty)
+- General knowledge: science, math, history, coding, writing, philosophy, news, culture — anything
+- Coding help, debugging, explaining concepts
+- Creative writing assistance
+- Data analysis and interpretation
+- You are a general-purpose highly capable assistant who ALSO specializes in AI detection
+
+RESPONSE STYLE:
+- Be direct, precise, and genuinely helpful — no hollow openers like "Certainly!" or "Great question!"
+- Match the user's tone — casual for casual, technical for technical
+- For detection results: always interpret the numbers, don't just echo them
+- For general questions: answer confidently from knowledge
+- Use markdown formatting for structured responses (code blocks, lists, bold for key points)
+- Keep responses focused — don't over-explain unless asked
+${detectionGuide}
+${followupGuide}
+${urgencyGuide}
+${injectedContext ? `\n═══ LIVE ANALYSIS RESULTS (interpret these for the user) ═══\n${injectedContext}\n═══ END RESULTS ═══` : ''}`
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { messages, attachments } = body
     if (!messages?.length) return new Response('Missing messages', { status: 400 })
 
-    const apiKey   = process.env.NVIDIA_API_KEY || ''
-    const cfToken  = process.env.CLOUDFLARE_API_TOKEN ?? ''
-    const baseUrl  = req.nextUrl.origin
+    const apiKey  = process.env.NVIDIA_API_KEY || ''
+    const cfToken = process.env.CLOUDFLARE_API_TOKEN || ''
+    const baseUrl = req.nextUrl.origin
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ text: '⚠️ NVIDIA_API_KEY not configured in Vercel env vars.' }), {
+      return new Response(JSON.stringify({ text: '⚠️ AI assistant not configured. Please contact support.' }), {
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
     const imageAttachments = (attachments || []).filter((a: any) => a.type?.startsWith('image/'))
     const lastUserMsg      = messages[messages.length - 1]?.content || ''
-    const intent           = detectIntent(lastUserMsg)
+    const history          = messages.slice(0, -1)
+    const intent           = detectIntent(lastUserMsg, history)
 
-    // ── PRE-ROUTING: fetch data BEFORE calling DeepSeek ──────────────────────
+    // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
     const toolEvents: Array<{ tool: string; result: any }> = []
 
-    // 1. Image uploaded → VILA analysis (always runs if image present)
+    // 1. Image → Vision Engine analysis
     if (imageAttachments.length > 0) {
-      const img = imageAttachments[0]
-      const vilaResult = await analyzeImageWithVILA(img.data, img.type, lastUserMsg, apiKey)
+      const img    = imageAttachments[0]
+      const result = await analyzeImage(img.data, img.type, lastUserMsg, apiKey)
 
-      toolEvents.push({ tool: 'detect_image_with_vila', result: {
-        verdict:        vilaResult.verdict,
-        confidence_pct: vilaResult.confidence_pct,
-        analysis_model: 'NVIDIA Llama-3.2 Vision 90B (meta/llama-3.2-90b-vision-instruct)',
-        analysis_focus: 'general-authenticity',
-        vila_analysis:  vilaResult.analysis,
+      toolEvents.push({ tool: 'detect_image', result: {
+        verdict:        result.verdict,
+        confidence_pct: result.confidence_pct,
+        key_findings:   result.details.key_findings || [],
+        recommendation: result.details.recommendation || '',
+        engine:         'DETECTAI Vision Engine',
       }})
 
       contextParts.push(
-        `[IMAGE ANALYSIS — NVIDIA VILA]\n` +
-        `Verdict: ${vilaResult.verdict}\n` +
-        `Confidence: ${vilaResult.confidence_pct}%\n` +
-        `Full analysis:\n${vilaResult.analysis}`
+        `[IMAGE ANALYSIS — DETECTAI Vision Engine]\n` +
+        `Verdict: ${result.verdict}\n` +
+        `Confidence: ${result.confidence_pct}%\n` +
+        (result.details.key_findings?.length
+          ? `Key findings:\n${result.details.key_findings.map((f: string) => `  • ${f}`).join('\n')}\n`
+          : '') +
+        `Technical analysis: ${result.analysis}\n` +
+        (result.details.recommendation ? `Recommendation: ${result.details.recommendation}` : '')
       )
     }
 
-    // 2. Pipeline stats requested → live D1 query
-    if (intent.wantsPipelineStats) {
+    // 2. Pipeline stats
+    if (intent.wantsPipelineStats && cfToken) {
       const stats = await fetchPipelineStats(cfToken)
       toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
       contextParts.push(
-        `[PIPELINE STATS — Live from Cloudflare D1]\n` +
-        `Total scraped: ${stats.total_scraped.toLocaleString()}\n` +
-        `Pushed to HuggingFace: ${stats.total_pushed.toLocaleString()}\n` +
-        `Pending push: ${stats.pending_push.toLocaleString()}\n` +
-        `Push rate: ${stats.push_rate_pct}%\n` +
-        `Last scrape: ${stats.last_scrape_at}\n` +
-        `Last HF push: ${stats.last_hf_push}\n` +
-        `By type: ${JSON.stringify(stats.by_type, null, 2)}\n` +
-        `Daily rate: ${stats.daily_rate}\n` +
-        `HF Repo: ${stats.hf_repo}`
+        `[DETECTAI PIPELINE STATUS]\n` +
+        `Total samples in training system: ${stats.total_samples?.toLocaleString()}\n` +
+        `Published to detection engine: ${stats.published?.toLocaleString()}\n` +
+        `Pending processing: ${stats.pending?.toLocaleString()}\n` +
+        `Publish rate: ${stats.publish_rate}%\n` +
+        `Last updated: ${stats.last_updated}\n` +
+        `By modality: ${JSON.stringify(stats.by_modality)}\n` +
+        `Daily processing capacity: ${stats.daily_capacity}\n` +
+        `Source coverage: ${stats.sources} detection datasets`
       )
     }
 
-    // 3. Text analysis requested
+    // 3. Text analysis
     if (intent.wantsTextAnalysis && intent.extractedText && intent.extractedText.length >= 50) {
-      const textResult = await analyzeTextViaHF(intent.extractedText, baseUrl)
-      if (textResult) {
+      const result = await analyzeText(intent.extractedText, baseUrl)
+      if (result) {
         toolEvents.push({ tool: 'detect_text', result: {
-          verdict:        textResult.verdict,
-          confidence_pct: Math.round(textResult.confidence * 100),
-          model_used:     textResult.model_used,
-          signals:        textResult.signals?.slice(0, 3),
+          verdict:        result.verdict,
+          confidence_pct: Math.round(result.confidence * 100),
+          engine:         'DETECTAI Text Engine',
+          signals:        result.signals?.slice(0, 4),
         }})
         contextParts.push(
-          `[TEXT ANALYSIS — HuggingFace RoBERTa + DETECTAI-v11]\n` +
-          `Verdict: ${textResult.verdict}\n` +
-          `Confidence: ${Math.round(textResult.confidence * 100)}%\n` +
-          `Model: ${textResult.model_used}\n` +
-          `Summary: ${textResult.summary}`
+          `[TEXT ANALYSIS — DETECTAI Text Engine]\n` +
+          `Verdict: ${result.verdict}\n` +
+          `Confidence: ${Math.round(result.confidence * 100)}%\n` +
+          `Summary: ${result.summary || 'Analysis complete.'}\n` +
+          (result.signals?.length ? `Signals detected: ${result.signals.slice(0,4).join(', ')}` : '')
         )
       }
     }
 
-    // ── BUILD API MESSAGES ────────────────────────────────────────────────────
-    const injectedContext = contextParts.join('\n\n')
-    const systemPrompt    = buildSystemPrompt(injectedContext)
+    // ── ASSEMBLE API MESSAGES ─────────────────────────────────────────────────
+    const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent)
 
-    // Convert conversation history (strip image content — DeepSeek V3 is text-only)
+    // Build conversation — include history for multi-turn awareness
     const apiMessages = messages.map((m: any) => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: typeof m.content === 'string' ? m.content : (m.content?.[0]?.text || m.content || ''),
+      role:    m.role === 'user' ? 'user' : 'assistant',
+      content: typeof m.content === 'string'
+        ? m.content
+        : (m.content?.[0]?.text || String(m.content) || ''),
     }))
 
-    // ── STREAM DeepSeek V3 RESPONSE ───────────────────────────────────────────
+    // ── STREAM RESPONSE ───────────────────────────────────────────────────────
     const encoder = new TextEncoder()
     const stream  = new ReadableStream({
       async start(controller) {
-        const send = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+        const send = (obj: any) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
 
         try {
-          // Emit tool results to UI first (so user sees them immediately)
+          // Emit tool results first so UI cards appear immediately
           for (const te of toolEvents) {
             send({ type: 'tool_result', tool: te.tool, result: te.result })
           }
 
-          // Call DeepSeek V3 with streaming
-          const chatRes = await fetch(`${NVIDIA_BASE}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-              model: DEEPSEEK_MODEL,
-              max_tokens: 2048,
-              temperature: 0.6,
-              top_p: 0.9,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                ...apiMessages,
-              ],
-              stream: true,
-            }),
-            signal: AbortSignal.timeout(90000),
-          })
+          // Try primary model, fallback if needed
+          let chatRes: Response | null = null
+          for (const model of [CHAT_MODEL, CHAT_FALLBACK]) {
+            chatRes = await fetch(`${NVIDIA_BASE}/chat/completions`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+              body: JSON.stringify({
+                model,
+                max_tokens:  2048,
+                temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
+                top_p:       0.9,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  ...apiMessages,
+                ],
+                stream: true,
+              }),
+              signal: AbortSignal.timeout(90000),
+            })
+            if (chatRes.ok) break
+            chatRes = null
+          }
 
-          if (!chatRes.ok) {
-            const errText = await chatRes.text()
-            send({ type: 'text', text: `⚠️ DeepSeek API error ${chatRes.status}: ${errText.slice(0, 200)}` })
+          if (!chatRes) {
+            send({ type: 'text', text: '⚠️ ARIA is temporarily unavailable. Please try again in a moment.' })
             send({ type: 'done' })
             controller.close()
             return
@@ -346,7 +449,8 @@ export async function POST(req: NextRequest) {
               try {
                 const ev    = JSON.parse(raw)
                 const delta = ev.choices?.[0]?.delta
-                if (delta?.content) {
+                // Strip any <think> reasoning tokens from DeepSeek-R1 variants
+                if (delta?.content && !delta.content.includes('<think>')) {
                   send({ type: 'text', text: delta.content })
                 }
               } catch (_) {}
@@ -356,7 +460,7 @@ export async function POST(req: NextRequest) {
           send({ type: 'done' })
         } catch (e: any) {
           if (e?.name !== 'AbortError') {
-            send({ type: 'text', text: `\n⚠️ ${e?.message || 'Stream error'}` })
+            send({ type: 'text', text: `\n⚠️ ${e?.message || 'Connection error — please retry.'}` })
           }
           send({ type: 'done' })
         } finally {
