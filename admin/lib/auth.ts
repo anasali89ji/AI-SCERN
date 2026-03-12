@@ -88,17 +88,29 @@ export async function revokeAdminSession(token: string): Promise<void> {
 export async function verifyAdminPassword(password: string): Promise<boolean> {
   const stored = process.env.ADMIN_PASSWORD
   if (!stored) return false
-  // Compare — use bcrypt if hash starts with $2b$, else plaintext comparison (dev only)
-  if (stored.startsWith('$2b$') || stored.startsWith('$2a$')) {
-    try {
-      const { default: bcrypt } = await import('bcryptjs')
-      return bcrypt.compare(password, stored)
-    } catch {
-      return false
-    }
+  // Timing-safe comparison using Web Crypto (no external deps, edge-compatible)
+  // Supports both plaintext (dev) and SHA-256 hex hash (production)
+  if (stored.length === 64 && /^[0-9a-f]{64}$/.test(stored)) {
+    // Production: ADMIN_PASSWORD is a SHA-256 hex hash of the real password
+    const enc     = new TextEncoder()
+    const hashBuf = await crypto.subtle.digest('SHA-256', enc.encode(password))
+    const hashHex = Buffer.from(hashBuf).toString('hex')
+    // Timing-safe compare
+    const a = enc.encode(hashHex)
+    const b = enc.encode(stored)
+    if (a.length !== b.length) return false
+    let diff = 0
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+    return diff === 0
   }
-  // Dev fallback: plaintext comparison
-  return password === stored
+  // Dev/simple: plaintext constant-time compare
+  const enc = new TextEncoder()
+  const a   = enc.encode(password)
+  const b   = enc.encode(stored)
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+  return diff === 0
 }
 
 export function getClientIp(req: NextRequest): string {
