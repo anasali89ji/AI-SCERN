@@ -1,42 +1,42 @@
 /**
- * DETECTAI Pipeline — Worker D
- * Shards: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]  |  Cron: every 1 min  |  ~2,000 items/run
+ * DETECTAI Neural Pipeline v4 — Worker D
+ * Video deepfake + real video (VIDEO_SOURCES)
+ * Captures: duration, resolution, URL, manipulation_type, has_face
  */
-import { runScraper, getStatus, Env } from '../src/core'
+import { Env, VIDEO_SOURCES, scrapeSource, getStatus } from '../src/core'
 
-const MY_SHARDS   = [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
-const ITEMS_SHARD = 200
-let shardCursor   = 0
+const WORKER_ID  = 'worker-d'
+const MY_SOURCES = VIDEO_SOURCES
+const BATCH_SIZE = 40   // video metadata is heavier
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url)
-    if (url.pathname === '/status') return Response.json(await getStatus(env))
-    if (url.pathname === '/trigger/scrape' && request.method === 'POST') {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url  = new URL(req.url)
+    const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+
+    if (url.pathname === '/status') return Response.json(await getStatus(env.DB), { headers: cors })
+    if (url.pathname === '/health') return Response.json({ ok: true, worker: WORKER_ID }, { headers: cors })
+
+    if (url.pathname === '/trigger/scrape' && req.method === 'POST') {
       const results = []
-      for (let i = 0; i < 4; i++) {
-        const shard = MY_SHARDS[shardCursor % MY_SHARDS.length]
-        results.push(await runScraper(env, shard, ITEMS_SHARD))
-        shardCursor++
+      for (const src of MY_SOURCES) {
+        results.push(await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE))
       }
-      return Response.json({ ok: true, worker: 'D', results })
+      return Response.json({ ok: true, worker: WORKER_ID, results }, { headers: cors })
     }
-    return Response.json({ worker: 'D', shards: MY_SHARDS, cron: '*/1 * * * *' })
+
+    return Response.json({
+      worker:   WORKER_ID,
+      modality: 'video',
+      sources:  MY_SOURCES.map(s => `${s.name} [${s.label}]`),
+      features: ['duration_seconds', 'resolution_w', 'resolution_h', 'has_face', 'manipulation_type', 'content_url'],
+    }, { headers: cors })
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const start = shardCursor % MY_SHARDS.length
-    const end   = start + 4
-    const batch = end <= MY_SHARDS.length
-      ? MY_SHARDS.slice(start, end)
-      : [...MY_SHARDS.slice(start), ...MY_SHARDS.slice(0, end - MY_SHARDS.length)]
-    let total = 0
-    for (const shard of batch) {
-      const r = await runScraper(env, shard, ITEMS_SHARD)
-      total += r.inserted
-      console.log(`[D] shard=${shard} inserted=${r.inserted} errors=${r.errors}`)
-    }
-    shardCursor = (shardCursor + 4) % MY_SHARDS.length
-    console.log(`[D] Done total=${total}`)
-  }
+    const tick = Math.floor(Date.now() / 60000)
+    const src  = MY_SOURCES[tick % MY_SOURCES.length]
+    const res  = await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE)
+    console.log(`[D] source=${res.source} inserted=${res.inserted} skipped=${res.skipped}${res.error ? ' err='+res.error : ''}`)
+  },
 }

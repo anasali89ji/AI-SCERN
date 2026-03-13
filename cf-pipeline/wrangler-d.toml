@@ -1,8 +1,9 @@
-name                = "detectai-pipeline-d"
-main                = "workers/worker-d.ts"
-compatibility_date  = "2025-01-01"
+# ─── Worker D — Video deepfake scraper ────────────────────────────────────
+name               = "detectai-pipeline-d"
+main               = "workers/worker-d.ts"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev         = false
+workers_dev        = false
 
 [[d1_databases]]
 binding       = "DB"

@@ -1,8 +1,9 @@
-name                = "detectai-pipeline-c"
-main                = "workers/worker-c.ts"
-compatibility_date  = "2025-01-01"
+# ─── Worker C — Audio deepfake scraper ────────────────────────────────────
+name               = "detectai-pipeline-c"
+main               = "workers/worker-c.ts"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev         = false
+workers_dev        = false
 
 [[d1_databases]]
 binding       = "DB"

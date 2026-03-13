@@ -1,42 +1,44 @@
 /**
- * DETECTAI Pipeline — Worker C
- * Shards: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]  |  Cron: every 1 min  |  ~2,000 items/run
+ * DETECTAI Neural Pipeline v4 — Worker C
+ * Audio deepfake + real speech (AUDIO_SOURCES)
+ * Captures: duration, sample_rate, transcript, speaker metadata
  */
-import { runScraper, getStatus, Env } from '../src/core'
+import { Env, AUDIO_SOURCES, scrapeSource, getStatus } from '../src/core'
 
-const MY_SHARDS   = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
-const ITEMS_SHARD = 200
-let shardCursor   = 0
+const WORKER_ID  = 'worker-c'
+const MY_SOURCES = AUDIO_SOURCES
+const BATCH_SIZE = 60
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url)
-    if (url.pathname === '/status') return Response.json(await getStatus(env))
-    if (url.pathname === '/trigger/scrape' && request.method === 'POST') {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url  = new URL(req.url)
+    const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+
+    if (url.pathname === '/status') return Response.json(await getStatus(env.DB), { headers: cors })
+    if (url.pathname === '/health') return Response.json({ ok: true, worker: WORKER_ID }, { headers: cors })
+
+    if (url.pathname === '/trigger/scrape' && req.method === 'POST') {
+      // Scrape ALL audio sources in one trigger call
       const results = []
-      for (let i = 0; i < 4; i++) {
-        const shard = MY_SHARDS[shardCursor % MY_SHARDS.length]
-        results.push(await runScraper(env, shard, ITEMS_SHARD))
-        shardCursor++
+      for (const src of MY_SOURCES.slice(0, 3)) {
+        results.push(await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE))
       }
-      return Response.json({ ok: true, worker: 'C', results })
+      return Response.json({ ok: true, worker: WORKER_ID, results }, { headers: cors })
     }
-    return Response.json({ worker: 'C', shards: MY_SHARDS, cron: '*/1 * * * *' })
+
+    return Response.json({
+      worker:   WORKER_ID,
+      modality: 'audio',
+      sources:  MY_SOURCES.map(s => `${s.name} [${s.label}]`),
+      features: ['duration_seconds', 'sample_rate', 'transcript', 'speaker_meta', 'has_speech'],
+    }, { headers: cors })
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const start = shardCursor % MY_SHARDS.length
-    const end   = start + 4
-    const batch = end <= MY_SHARDS.length
-      ? MY_SHARDS.slice(start, end)
-      : [...MY_SHARDS.slice(start), ...MY_SHARDS.slice(0, end - MY_SHARDS.length)]
-    let total = 0
-    for (const shard of batch) {
-      const r = await runScraper(env, shard, ITEMS_SHARD)
-      total += r.inserted
-      console.log(`[C] shard=${shard} inserted=${r.inserted} errors=${r.errors}`)
-    }
-    shardCursor = (shardCursor + 4) % MY_SHARDS.length
-    console.log(`[C] Done total=${total}`)
-  }
+    // Rotate across audio sources
+    const tick = Math.floor(Date.now() / 60000)
+    const src  = MY_SOURCES[tick % MY_SOURCES.length]
+    const res  = await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE)
+    console.log(`[C] source=${res.source} inserted=${res.inserted} skipped=${res.skipped}${res.error ? ' err='+res.error : ''}`)
+  },
 }

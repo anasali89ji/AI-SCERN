@@ -1,8 +1,9 @@
-name                = "detectai-pipeline-e"
-main                = "workers/worker-e.ts"
-compatibility_date  = "2025-01-01"
+# ─── Worker E — HF Push + Cleanup + Text fill-in ─────────────────────────
+name               = "detectai-pipeline-e"
+main               = "workers/worker-e.ts"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev         = false
+workers_dev        = false
 
 [[d1_databases]]
 binding       = "DB"
@@ -10,7 +11,7 @@ database_name = "detectai-pipeline"
 database_id   = "50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c"
 
 [triggers]
-crons = ["*/1 * * * *", "*/10 * * * *", "*/30 * * * *"]
+crons = ["*/1 * * * *"]
 
 [vars]
 HF_REPO = "saghi776/detectai-dataset"

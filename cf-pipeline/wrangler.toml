@@ -1,9 +1,9 @@
-# ─── Worker A (main — shards 0–9) ─────────────────────────────────────────
-name                = "detectai-pipeline"
-main                = "src/index.ts"
-compatibility_date  = "2025-01-01"
+# ─── Worker A — Text scraper (shards 0–9) ─────────────────────────────────
+name               = "detectai-pipeline"
+main               = "src/index.ts"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev         = false
+workers_dev        = false
 
 [[d1_databases]]
 binding       = "DB"

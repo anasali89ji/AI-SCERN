@@ -1,41 +1,49 @@
 /**
- * DETECTAI Pipeline — Worker A
- * Shards: 0–9  |  Cron: every 1 min  |  ~2,000 items/run
+ * DETECTAI Neural Pipeline v4 — Worker A
+ * Text AI + Human samples (shards 0–9 of TEXT_SOURCES)
+ * Routes: GET /status, GET /health, POST /trigger/scrape
  */
-import { runScraper, getStatus, Env } from './core'
+import { Env, TEXT_SOURCES, scrapeSource, getStatus } from './core'
 
-const MY_SHARDS   = [0,1,2,3,4,5,6,7,8,9]
-const ITEMS_SHARD = 200
-let shardCursor   = 0
+const WORKER_ID  = 'worker-a'
+const MY_SOURCES = TEXT_SOURCES.filter((_, i) => i % 5 === 0)   // every 5th source
+const BATCH_SIZE = 60   // items per source per cron tick
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url)
-    if (url.pathname === '/status') return Response.json(await getStatus(env))
-    if (url.pathname === '/trigger/scrape' && request.method === 'POST') {
-      const results = []
-      for (let i = 0; i < 4; i++) {
-        const shard = MY_SHARDS[shardCursor % MY_SHARDS.length]
-        results.push(await runScraper(env, shard, ITEMS_SHARD))
-        shardCursor++
-      }
-      return Response.json({ ok: true, worker: 'A', results })
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url = new URL(req.url)
+    const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+
+    if (url.pathname === '/status') {
+      const data = await getStatus(env.DB)
+      return Response.json(data, { headers: cors })
     }
-    return Response.json({ worker: 'A', shards: MY_SHARDS, cron: '*/1 * * * *' })
+
+    if (url.pathname === '/health') {
+      return Response.json({ ok: true, worker: WORKER_ID, ts: new Date().toISOString() }, { headers: cors })
+    }
+
+    if (url.pathname === '/trigger/scrape' && req.method === 'POST') {
+      const results = []
+      const src = MY_SOURCES[Math.floor(Math.random() * MY_SOURCES.length)]
+      results.push(await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE))
+      return Response.json({ ok: true, worker: WORKER_ID, results }, { headers: cors })
+    }
+
+    return Response.json({
+      worker:     WORKER_ID,
+      modality:   'text',
+      sources:    MY_SOURCES.map(s => s.name),
+      cron:       '*/1 * * * *',
+      batch_size: BATCH_SIZE,
+    }, { headers: cors })
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const start = shardCursor % MY_SHARDS.length
-    const batch = MY_SHARDS.slice(start, start + 4).concat(
-      start + 4 > MY_SHARDS.length ? MY_SHARDS.slice(0, (start + 4) - MY_SHARDS.length) : []
-    )
-    let total = 0
-    for (const shard of batch) {
-      const r = await runScraper(env, shard, ITEMS_SHARD)
-      total += r.inserted
-      console.log(`[A] shard=${shard} inserted=${r.inserted} errors=${r.errors}`)
-    }
-    shardCursor = (shardCursor + 4) % MY_SHARDS.length
-    console.log(`[A] Done total=${total}`)
-  }
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Round-robin across assigned sources each tick
+    const idx  = Math.floor(Date.now() / 60000) % MY_SOURCES.length
+    const src  = MY_SOURCES[idx]
+    const res  = await scrapeSource(env.DB, src, env.HF_TOKEN, WORKER_ID, BATCH_SIZE)
+    console.log(`[A] source=${res.source} inserted=${res.inserted} skipped=${res.skipped}${res.error ? ' err='+res.error : ''}`)
+  },
 }
