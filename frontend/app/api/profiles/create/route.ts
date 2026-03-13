@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         display_name:     display_name || email?.split('@')[0] || 'User',
         plan:             'free',
         plan_id:          'free',
-        credits_remaining: 5,
+        credits_remaining: 9999,
         scan_count:       0,
         monthly_scans:    0,
         created_at:       new Date().toISOString(),

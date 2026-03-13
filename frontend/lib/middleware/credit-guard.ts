@@ -60,7 +60,7 @@ export async function creditGuard(req: NextRequest, scanType: string): Promise<C
 
   // 3. Ensure profile exists (upsert on first scan)
   await supabaseAdmin.from('profiles').upsert(
-    { id: userId, credits_remaining: 5, plan_id: 'free', updated_at: new Date().toISOString() },
+    { id: userId, credits_remaining: 9999, plan_id: 'free', updated_at: new Date().toISOString() },
     { onConflict: 'id', ignoreDuplicates: true }
   )
 

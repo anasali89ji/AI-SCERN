@@ -41,7 +41,7 @@ export async function createAdminSession(ip: string, userAgent: string): Promise
       session_token: token,
       ip_address: ip,
       user_agent: userAgent,
-      expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2h
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 2h
     })
     await sb.from('admin_audit_log').insert({
       action: 'login_success',
@@ -67,7 +67,7 @@ export async function verifyAdminSession(token: string | undefined): Promise<boo
 
   // Check expiry (2h)
   const ts = parseInt(parts[parts.length - 1])
-  if (Date.now() - ts > 2 * 60 * 60 * 1000) return false
+  if (Date.now() - ts > 24 * 60 * 60 * 1000) return false
 
   return true
 }

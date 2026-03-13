@@ -292,41 +292,203 @@ function SecurityTab() {
   )
 }
 
-// ── Pipeline Tab (existing, secured) ─────────────────────────────────────────
+// ── Pipeline Tab — Real Cloudflare D1 Data ───────────────────────────────────
 function PipelineTab() {
-  const [stats, setStats] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [data,      setData]      = useState<any>(null)
+  const [loading,   setLoading]   = useState(true)
+  const [triggering,setTriggering]= useState(false)
+  const [trigResult,setTrigResult]= useState<any>(null)
+  const [error,     setError]     = useState('')
 
-  useEffect(() => {
-    fetch('/api/pipeline-stats').then(r => r.json()).then(d => { setStats(d); setLoading(false) })
-    .catch(() => setLoading(false))
-  }, [])
+  const load = () => {
+    setLoading(true); setError('')
+    fetch('/api/pipeline').then(r => r.json()).then(d => {
+      if (d.ok === false) setError(d.error + (d.hint ? `\n${d.hint}` : ''))
+      else setData(d)
+      setLoading(false)
+    }).catch(e => { setError(e.message); setLoading(false) })
+  }
+
+  useEffect(() => { load() }, []) // eslint-disable-line
+
+  const triggerAll = async () => {
+    setTriggering(true); setTrigResult(null)
+    const r = await fetch('/api/pipeline', { method: 'POST' }).then(x => x.json()).catch(e => ({ error: e.message }))
+    setTrigResult(r); setTriggering(false)
+    setTimeout(load, 3000)
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>
+
+  if (error) return (
+    <div className="bg-red-900/20 border border-red-700/40 rounded-xl p-6 text-center space-y-3">
+      <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
+      <p className="text-red-300 text-sm font-mono whitespace-pre-wrap">{error}</p>
+      <button onClick={load} className="text-xs text-gray-400 hover:text-white underline">Retry</button>
+    </div>
+  )
+
+  const p = data?.pipeline ?? {}
+  const b = data?.d1_buffer ?? {}
+  const sources = data?.top_sources ?? []
+  const pushes  = data?.recent_pushes ?? []
+  const workers = data?.worker_stats ?? []
+
+  const mediaBreakdown = [
+    { label: 'Text',  value: b.text,  color: '#a855f7' },
+    { label: 'Image', value: b.image, color: '#22d3ee' },
+    { label: 'Audio', value: b.audio, color: '#10b981' },
+    { label: 'Video', value: b.video, color: '#f59e0b' },
+  ].filter(x => (x.value ?? 0) > 0)
 
   return (
     <div className="space-y-6">
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>
-      ) : stats ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            { label: 'Total Scraped',   value: stats.totalScraped?.toLocaleString(),  icon: Database, color: 'text-cyan-400'   },
-            { label: 'Pushed to HF',    value: stats.totalPushed?.toLocaleString(),   icon: Radio,    color: 'text-purple-400' },
-            { label: 'Pending',         value: stats.pendingItems?.toLocaleString(),  icon: Server,   color: 'text-amber-400'  },
-          ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Icon className={`w-4 h-4 ${color}`} />
-                <span className="text-xs text-gray-400">{label}</span>
-              </div>
-              <p className="text-2xl font-black text-white">{value || '—'}</p>
-            </div>
-          ))}
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-white font-bold">{p.version}</h3>
+          <p className="text-gray-400 text-xs mt-0.5">Live Cloudflare D1 data</p>
         </div>
-      ) : (
-        <div className="bg-gray-800/60 rounded-xl p-8 border border-gray-700 text-center text-gray-400">
-          Pipeline stats unavailable. Check CLOUDFLARE_API_TOKEN env var.
+        <div className="flex gap-2">
+          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs text-gray-200 transition-colors">
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </button>
+          <button onClick={triggerAll} disabled={triggering}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-xs text-white transition-colors">
+            {triggering ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+            Trigger All 20 Workers
+          </button>
+        </div>
+      </div>
+
+      {trigResult && (
+        <div className={`rounded-xl p-3 border text-xs font-mono ${trigResult.error ? 'bg-red-900/20 border-red-700/30 text-red-300' : 'bg-green-900/20 border-green-700/30 text-green-300'}`}>
+          {trigResult.error ? `Error: ${trigResult.error}` : `✓ Triggered ${trigResult.success}/${(trigResult.success||0)+(trigResult.failed||0)} workers successfully`}
         </div>
       )}
+
+      {/* Main stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Scraped',  value: (p.total_scraped ?? 0).toLocaleString(), icon: Database, color: 'text-cyan-400'   },
+          { label: 'Pushed to HF',   value: (p.total_pushed  ?? 0).toLocaleString(), icon: Radio,    color: 'text-purple-400' },
+          { label: 'D1 Buffer',      value: (b.total         ?? 0).toLocaleString(), icon: Server,   color: 'text-amber-400'  },
+          { label: 'Avg Quality',    value: (b.avg_quality   ?? 0).toString(),        icon: TrendingUp, color: 'text-green-400'},
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
+            <div className="flex items-center gap-2 mb-2">
+              <Icon className={`w-4 h-4 ${color}`} />
+              <span className="text-xs text-gray-400">{label}</span>
+            </div>
+            <p className="text-2xl font-black text-white">{value || '0'}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* AI vs Human + Media breakdown */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
+          <h4 className="text-xs font-semibold text-gray-400 mb-3">Label Balance (D1 buffer)</h4>
+          <div className="space-y-2">
+            {[
+              { label: 'AI-generated', value: b.ai_items    ?? 0, total: b.total ?? 1, color: '#a855f7' },
+              { label: 'Human',        value: b.human_items ?? 0, total: b.total ?? 1, color: '#22d3ee' },
+            ].map(({ label, value, total, color }) => (
+              <div key={label}>
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>{label}</span><span>{value.toLocaleString()} ({Math.round(value/total*100)}%)</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${Math.round(value/total*100)}%`, background: color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
+          <h4 className="text-xs font-semibold text-gray-400 mb-3">Media Type Breakdown</h4>
+          {mediaBreakdown.length ? (
+            <div className="space-y-2">
+              {mediaBreakdown.map(({ label, value, color }) => (
+                <div key={label}>
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>{label}</span><span>{(value ?? 0).toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${Math.round((value ?? 0)/(b.total||1)*100)}%`, background: color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-gray-500 text-xs">No data yet</p>}
+        </div>
+      </div>
+
+      {/* Worker activity */}
+      {workers.length > 0 && (
+        <div className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
+          <h4 className="text-xs font-semibold text-gray-400 mb-3">Worker Activity ({workers.length} active workers)</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {workers.slice(0,20).map((w: any) => (
+              <div key={w.worker_id} className="bg-gray-700/60 rounded-lg p-2">
+                <p className="text-xs font-mono text-purple-300">{w.worker_id}</p>
+                <p className="text-sm font-bold text-white mt-0.5">{(w.items ?? 0).toLocaleString()}</p>
+                <p className="text-[10px] text-gray-500">q={w.avg_q}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top sources */}
+      <div className="bg-gray-800/60 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-700">
+          <h4 className="text-xs font-semibold text-gray-400">Top Sources in Buffer</h4>
+        </div>
+        <div className="divide-y divide-gray-700/50 max-h-64 overflow-y-auto">
+          {sources.slice(0,20).map((s: any) => (
+            <div key={`${s.source_name}-${s.label}`} className="flex items-center justify-between px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${s.media_type==='text'?'bg-purple-900/50 text-purple-300':s.media_type==='image'?'bg-cyan-900/50 text-cyan-300':s.media_type==='audio'?'bg-green-900/50 text-green-300':'bg-amber-900/50 text-amber-300'}`}>{s.media_type}</span>
+                <span className="text-sm text-white font-mono">{s.source_name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${s.label==='ai'?'bg-rose-900/40 text-rose-300':'bg-emerald-900/40 text-emerald-300'}`}>{s.label}</span>
+                <span className="text-sm text-gray-300 font-bold">{(s.count ?? 0).toLocaleString()}</span>
+              </div>
+            </div>
+          ))}
+          {sources.length === 0 && <p className="text-gray-500 text-xs p-4">No data yet</p>}
+        </div>
+      </div>
+
+      {/* Recent HF push log */}
+      <div className="bg-gray-800/60 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-700">
+          <h4 className="text-xs font-semibold text-gray-400">Recent HF Push Log</h4>
+        </div>
+        <div className="divide-y divide-gray-700/50">
+          {pushes.slice(0,8).map((push: any, i: number) => (
+            <div key={i} className="flex items-center justify-between px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                {push.status === 'success'
+                  ? <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                  : <XCircle    className="w-3.5 h-3.5 text-red-400 flex-shrink-0"   />}
+                <span className="text-xs text-gray-300">{push.status === 'success' ? `${push.item_count} items → HF` : (push.error?.slice(0,60) ?? 'error')}</span>
+              </div>
+              <span className="text-[10px] text-gray-500 font-mono">{push.created_at?.slice(0,16)}</span>
+            </div>
+          ))}
+          {pushes.length === 0 && <p className="text-gray-500 text-xs p-4">No pushes yet — HF fix deployed, workers need redeployment via GitHub Actions</p>}
+        </div>
+      </div>
+
+      {/* Timing */}
+      <div className="grid grid-cols-2 gap-3 text-xs text-gray-500">
+        <div>Last scrape: <span className="text-gray-300 font-mono">{p.last_scrape?.slice(0,16) ?? '—'}</span></div>
+        <div>Last push:   <span className="text-gray-300 font-mono">{p.last_push?.slice(0,16)   ?? 'never'}</span></div>
+      </div>
     </div>
   )
 }

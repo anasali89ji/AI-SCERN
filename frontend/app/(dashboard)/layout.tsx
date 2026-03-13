@@ -102,7 +102,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
                   <p className="text-xs text-text-muted truncate">{email}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
-                    <span className="text-[10px] text-emerald font-medium">Active &middot; Pro Plan</span>
+                    <span className="text-[10px] text-emerald font-medium">Free · Unlimited Access</span>
                   </div>
                 </div>
               </div>
