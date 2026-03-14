@@ -15,5 +15,5 @@ database_id   = "50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c"
 crons = ["*/1 * * * *"]
 
 [vars]
-WORKER_NUM = "14"
+WORKER_NUM = "4"
 HF_REPO    = "saghi776/detectai-dataset"
