@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyXPayWebhook, XPAY_PLANS, type XPayPlanId } from '@/lib/xpay/client'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -29,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!order_id) return NextResponse.json({ error: 'Missing order_id' }, { status: 400 })
 
   // Idempotency: skip if already processed
-  const { data: existing } = await supabase
+  const { data: existing } = await getSupabaseAdmin()
     .from('orders')
     .select('status')
     .eq('id', order_id)
@@ -54,7 +49,7 @@ export async function POST(req: NextRequest) {
     // Grant credits + update subscription
     await Promise.all([
       // Update profile with new plan
-      supabase.from('profiles').upsert({
+      getSupabaseAdmin().from('profiles').upsert({
         id:                userId,
         plan_id:           planId,
         credits_remaining: plan.credits === -1 ? 999999 : plan.credits,
@@ -63,7 +58,7 @@ export async function POST(req: NextRequest) {
       }, { onConflict: 'id' }),
 
       // Insert subscription record
-      supabase.from('subscriptions').upsert({
+      getSupabaseAdmin().from('subscriptions').upsert({
         user_id:        userId,
         plan_id:        planId,
         status:         'active',
@@ -76,7 +71,7 @@ export async function POST(req: NextRequest) {
       }, { onConflict: 'user_id' }),
 
       // Log credit grant
-      supabase.from('credit_transactions').insert({
+      getSupabaseAdmin().from('credit_transactions').insert({
         user_id:     userId,
         type:        'purchase',
         amount:      plan.credits === -1 ? 999999 : plan.credits,
@@ -85,7 +80,7 @@ export async function POST(req: NextRequest) {
       }),
 
       // Update order status
-      supabase.from('orders').upsert({
+      getSupabaseAdmin().from('orders').upsert({
         id:            order_id,
         user_id:       userId,
         plan_id:       planId,
@@ -97,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[webhook] Order ${order_id} completed — user ${userId} upgraded to ${planId}`)
   } else if (status === 'FAILED') {
-    supabase.from('orders').upsert({
+    getSupabaseAdmin().from('orders').upsert({
       id: order_id,
       status: 'failed',
       updated_at: new Date().toISOString(),

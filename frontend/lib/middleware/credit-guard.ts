@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export interface CreditGuardResult {
   userId: string
@@ -59,13 +53,13 @@ export async function creditGuard(req: NextRequest, scanType: string): Promise<C
   }
 
   // 3. Ensure profile exists (upsert on first scan)
-  await supabaseAdmin.from('profiles').upsert(
+  await getSupabaseAdmin().from('profiles').upsert(
     { id: userId, credits_remaining: 9999, plan_id: 'free', updated_at: new Date().toISOString() },
     { onConflict: 'id', ignoreDuplicates: true }
   )
 
   // 4. Atomically consume credit
-  const { data, error } = await supabaseAdmin.rpc('consume_credit', {
+  const { data, error } = await getSupabaseAdmin().rpc('consume_credit', {
     p_user_id: userId,
     p_scan_type: scanType,
     p_scan_id: null,

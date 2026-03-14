@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe/client'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get('__session')?.value
@@ -24,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase.from('profiles').select('stripe_customer_id').eq('id', userId).single()
+  const { data: profile } = await getSupabaseAdmin().from('profiles').select('stripe_customer_id').eq('id', userId).single()
   if (!profile?.stripe_customer_id) {
     return NextResponse.json({ error: 'No Stripe customer found. Please subscribe first.' }, { status: 400 })
   }

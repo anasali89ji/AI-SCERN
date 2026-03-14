@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
 // Uses SERVICE ROLE key — bypasses RLS entirely
 // Firebase users have no Supabase auth.uid() so client-side upsert always fails
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing uid' }, { status: 400 })
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('profiles')
       .upsert({
         id:               uid,

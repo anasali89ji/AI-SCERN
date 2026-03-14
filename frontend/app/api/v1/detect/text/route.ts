@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText } from '@/lib/inference/hf-analyze'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   // API key authentication (Pro+ users)
@@ -18,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Look up user by API key
-  const { data: profile } = await supabase
+  const { data: profile } = await getSupabaseAdmin()
     .from('profiles')
     .select('id, plan_id, credits_remaining')
     .eq('api_key', apiKey)
@@ -35,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Consume credit atomically
-  const { data: creditResult } = await supabase.rpc('consume_credit', {
+  const { data: creditResult } = await getSupabaseAdmin().rpc('consume_credit', {
     p_user_id: profile.id, p_scan_type: 'text_api', p_scan_id: null
   })
   if (!creditResult?.ok) {

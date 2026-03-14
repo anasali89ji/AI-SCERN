@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createXPayCheckout, XPAY_PLANS, type XPayPlanId } from '@/lib/xpay/client'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Record pending order in Supabase
-    supabase.from('orders').upsert({
+    getSupabaseAdmin().from('orders').upsert({
       id:           orderId,
       user_id:      userId,
       plan_id:      planId,

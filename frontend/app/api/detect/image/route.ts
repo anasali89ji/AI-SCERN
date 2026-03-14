@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeImage, checkRateLimit } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-)
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
@@ -45,7 +40,7 @@ export async function POST(req: NextRequest) {
     const processingTime = Date.now() - start
 
     if (userId) {
-      await supabase.from('scans').insert({
+      await getSupabaseAdmin().from('scans').insert({
         user_id:          userId,
         media_type:       'image',
         file_name:        file.name,
