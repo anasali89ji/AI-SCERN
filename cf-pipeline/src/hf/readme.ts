@@ -134,7 +134,7 @@ CC-BY-4.0. Individual source datasets retain their original licenses.
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       summary:    'docs: update dataset card with latest stats',
-      operations: [{ type: 'addOrUpdate', path: 'README.md', content: toBase64(content) }],
+      operations: [{ type: 'addOrUpdate', key: 'README.md', value: toBase64(content) }],
     }),
     signal: AbortSignal.timeout(30_000),
   }).catch(() => {}) // Non-fatal — README update failures don't block pipeline

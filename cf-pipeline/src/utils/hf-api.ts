@@ -5,11 +5,10 @@
 
 const HF_DATASETS_API = 'https://datasets-server.huggingface.co'
 
-/** Exponential backoff retry wrapper */
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
-  baseMs = 500,
+  baseMs      = 500,
 ): Promise<T> {
   let lastError: Error | undefined
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -35,7 +34,20 @@ export interface HFRowsResponse {
   rows: HFRow[]
 }
 
-/** Fetch rows from HuggingFace Datasets Server API */
+function buildUrl(dataset: string, config: string, split: string, offset: number, length: number): string {
+  return [
+    `${HF_DATASETS_API}/rows`,
+    `?dataset=${encodeURIComponent(dataset)}`,
+    `&config=${encodeURIComponent(config)}`,
+    `&split=${encodeURIComponent(split)}`,
+    `&offset=${offset}`,
+    `&length=${length}`,
+  ].join('')
+}
+
+/** Fetch rows from HuggingFace Datasets Server API.
+ *  If the offset is out-of-range (HTTP 400/416), automatically retries from offset=0.
+ */
 export async function fetchHFRows(
   dataset:  string,
   config  = 'default',
@@ -44,25 +56,20 @@ export async function fetchHFRows(
   length  = 100,
   hfToken?: string,
 ): Promise<HFRowsResponse> {
-  const url = [
-    `${HF_DATASETS_API}/rows`,
-    `?dataset=${encodeURIComponent(dataset)}`,
-    `&config=${encodeURIComponent(config)}`,
-    `&split=${encodeURIComponent(split)}`,
-    `&offset=${offset}`,
-    `&length=${length}`,
-  ].join('')
-
   const headers: Record<string, string> = {
     'User-Agent': 'DETECTAI-Pipeline/6.0',
   }
   if (hfToken) headers['Authorization'] = `Bearer ${hfToken}`
 
   return withRetry(async () => {
-    const res = await fetch(url, {
-      headers,
-      signal: AbortSignal.timeout(20_000),
-    })
+    let url = buildUrl(dataset, config, split, offset, length)
+    let res = await fetch(url, { headers, signal: AbortSignal.timeout(20_000) })
+
+    // Offset out of range — retry from beginning
+    if ((res.status === 400 || res.status === 416) && offset > 0) {
+      url = buildUrl(dataset, config, split, 0, length)
+      res = await fetch(url, { headers, signal: AbortSignal.timeout(20_000) })
+    }
 
     if (res.status === 429) {
       const retry = res.headers.get('Retry-After')

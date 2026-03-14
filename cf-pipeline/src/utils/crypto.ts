@@ -18,9 +18,18 @@ export async function sha256Bytes(data: Uint8Array): Promise<string> {
     .join('')
 }
 
-/** Base64-encode a string (UTF-8 safe) */
+/**
+ * Base64-encode a UTF-8 string.
+ * Uses TextEncoder + Uint8Array → avoids deprecated unescape() which is
+ * unreliable for non-ASCII content in Cloudflare Workers.
+ */
 export function toBase64(str: string): string {
-  return btoa(unescape(encodeURIComponent(str)))
+  const bytes = new TextEncoder().encode(str)
+  let binary  = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
 }
 
 /** Shard filename: part-0001.jsonl */

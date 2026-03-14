@@ -136,18 +136,18 @@ export async function pushToHF(
       hf_path:            filePath,
     }
 
-    // JSONL shard operation
+    // JSONL shard operation — HF Hub API uses 'key' + 'value', NOT 'path' + 'content'
     operations.push({
-      type:    'addOrUpdate',
-      path:    filePath,
-      content: toBase64(jsonl),
+      type:  'addOrUpdate',
+      key:   filePath,
+      value: toBase64(jsonl),
     })
 
     // Meta JSON operation
     operations.push({
-      type:    'addOrUpdate',
-      path:    metaPath,
-      content: toBase64(JSON.stringify(meta, null, 2)),
+      type:  'addOrUpdate',
+      key:   metaPath,
+      value: toBase64(JSON.stringify(meta, null, 2)),
     })
 
     shardMetas.push(meta)
@@ -160,9 +160,9 @@ export async function pushToHF(
   // ── Also push/update dataset_infos.json ─────────────────────────────────
   const datasetInfo = buildDatasetInfo(shardMetas)
   operations.push({
-    type:    'addOrUpdate',
-    path:    'dataset_infos.json',
-    content: toBase64(JSON.stringify(datasetInfo, null, 2)),
+    type:  'addOrUpdate',
+    key:   'dataset_infos.json',
+    value: toBase64(JSON.stringify(datasetInfo, null, 2)),
   })
 
   // ── Commit all operations in one HF API call ─────────────────────────────
@@ -216,8 +216,11 @@ export async function pushToHF(
     WHERE id = 1
   `).bind(pushedIds.length, now).run().catch(() => {})
 
-  // ── DELETE pushed rows immediately (keep D1 lean) ───────────────────────
+  // ── Mark rows as pushed, then DELETE immediately (keep D1 lean) ─────────
   const idList = pushedIds.map(id => `'${id}'`).join(',')
+  await db.prepare(`
+    UPDATE dataset_items SET hf_pushed_at = datetime('now') WHERE id IN (${idList})
+  `).run()
   await db.prepare(`DELETE FROM dataset_items WHERE id IN (${idList})`).run()
 
   return { pushed: pushedIds.length, commitId, files: pushedFiles }

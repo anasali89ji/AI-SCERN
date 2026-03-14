@@ -2,23 +2,41 @@ import type { Source, Extracted } from '../types'
 import { sha256 } from '../utils/crypto'
 import { qualityText } from '../utils/quality'
 
-function extractText(row: Record<string, any>, fields: string[]): string | null {
-  for (const f of fields) {
-    const v = row[f]
-    if (!v) continue
-    if (typeof v === 'string' && v.trim()) return v.trim()
-    if (Array.isArray(v)) {
-      const first = v[0]
-      if (typeof first === 'string' && first.trim()) return first.trim()
-      if (first && typeof first === 'object') {
-        const c = first.content ?? first.text ?? first.value
-        if (typeof c === 'string' && c.trim()) return c.trim()
+/**
+ * Recursively extract a text string from a field value.
+ * Handles: plain string, string[], object with text/content/answer/value keys,
+ * and array of such objects (e.g. stack-exchange answers: [{text_url, answer}]).
+ */
+function deepExtractText(v: unknown, depth = 0): string | null {
+  if (depth > 3) return null
+  if (typeof v === 'string' && v.trim().length > 0) return v.trim()
+
+  if (Array.isArray(v)) {
+    for (const item of v) {
+      const result = deepExtractText(item, depth + 1)
+      if (result) return result
+    }
+    return null
+  }
+
+  if (v && typeof v === 'object') {
+    const obj = v as Record<string, unknown>
+    // Common text field names in descending priority
+    for (const key of ['text', 'content', 'answer', 'body', 'value', 'response', 'description', 'sentence']) {
+      if (obj[key]) {
+        const result = deepExtractText(obj[key], depth + 1)
+        if (result) return result
       }
     }
-    if (typeof v === 'object' && v !== null) {
-      const c = v.text ?? v.content ?? v.value
-      if (typeof c === 'string' && c.trim()) return c.trim()
-    }
+  }
+  return null
+}
+
+function extractText(row: Record<string, any>, fields: string[]): string | null {
+  for (const f of fields) {
+    if (row[f] == null) continue
+    const result = deepExtractText(row[f])
+    if (result) return result
   }
   return null
 }
@@ -35,7 +53,7 @@ export async function extractTextRow(
   row: Record<string, any>,
   src: Source,
 ): Promise<Extracted | null> {
-  const fields = src.text_fields ?? ['text', 'content', 'body', 'article', 'document']
+  const fields = src.text_fields ?? ['text', 'content', 'body', 'article', 'document', 'answer']
   const text   = extractText(row, fields)
   if (!text || text.length < 80) return null
 

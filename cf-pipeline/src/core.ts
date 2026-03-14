@@ -29,7 +29,8 @@ export async function scrapeSource(
 ): Promise<ScrapeResult> {
   const start = Date.now()
   try {
-    const offset = Math.floor(Math.random() * 15_000)
+    // Random offset — keep under 10k so small datasets don't 404
+    const offset = Math.floor(Math.random() * 10_000)
     const { rows } = await fetchHFRows(
       src.id, src.config ?? 'default', src.split ?? 'train',
       offset, Math.min(target * 2, 100), token,

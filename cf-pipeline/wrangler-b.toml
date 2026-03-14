@@ -1,9 +1,9 @@
 # ─── Worker B — Image deepfake scraper ────────────────────────────────────
 name               = "detectai-pipeline-b"
-main               = "workers/worker-b.ts"
+main               = "src/worker.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev        = false
+workers_dev        = true
 
 [[d1_databases]]
 binding       = "DB"
@@ -14,4 +14,5 @@ database_id   = "50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c"
 crons = ["*/1 * * * *"]
 
 [vars]
-HF_REPO = "saghi776/detectai-dataset"
+WORKER_NUM = "2"
+HF_REPO    = "saghi776/detectai-dataset"
