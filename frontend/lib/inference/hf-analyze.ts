@@ -12,6 +12,7 @@
  */
 
 import { extractTextSignals, aggregateTextSignals } from './signals/text-signals'
+import { extractImageSignals, aggregateImageSignals } from './signals/image-signals'
 import { analyzeVideoFrames }                        from './nvidia-nim'
 import { buildVideoSignals }                         from './signals/video-signals'
 
@@ -46,7 +47,7 @@ const MODELS = {
   text_tertiary:  'PirateXX/AI-Content-Detector',
   image_primary:  'umm-maybe/AI-image-detector',
   image_sdxl:     'Organika/sdxl-detector',
-  image_face:     'Wvolf/ViT-Deepfake-Detection',
+  image_face:     'Nahrawy/AIorNot',  // Better general AI image detector than ViT-Deepfake
   audio:          'mo-thecreator/Deepfake-audio-detection',
 }
 
@@ -183,70 +184,83 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 
 // ── IMAGE DETECTION ────────────────────────────────────────────────────────
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileName: string): Promise<DetectionResult> {
+  // Run ML models + deterministic image signals in parallel
   const [r1, r2, r3] = await Promise.allSettled([
     hfInference(MODELS.image_primary, null, { binary: true, binaryData: imageBuffer }),
     hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: imageBuffer }),
     hfInference(MODELS.image_face,    null, { binary: true, binaryData: imageBuffer }),
   ])
 
-  const scores: { model: string; aiScore: number; weight: number }[] = []
+  const mlScores: { model: string; aiScore: number; weight: number }[] = []
   const parseImg = (r: PromiseSettledResult<unknown>, w: number, m: string) => {
     if (r.status !== 'fulfilled') return
     try {
       const raw = r.value as { label: string; score: number }[]
-      const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake/i.test(s.label))
-      const huE = raw.find(s => /real|human|authentic|label_0/i.test(s.label))
-      scores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
+      const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake|generated/i.test(s.label))
+      const huE = raw.find(s => /real|human|authentic|label_0|photo/i.test(s.label))
+      if (aiE || huE) {
+        mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
+      }
     } catch {}
   }
   parseImg(r1, 0.40, MODELS.image_primary)
   parseImg(r2, 0.35, MODELS.image_sdxl)
   parseImg(r3, 0.25, MODELS.image_face)
 
-  // Pixel-level heuristics (always available)
-  const pixelScore = imagePixelHeuristic(imageBuffer)
-  scores.push({ model: 'pixel-heuristic', aiScore: pixelScore, weight: 0.15 })
+  // Deterministic image signals (always available, catch what ML misses)
+  const imgSignals     = extractImageSignals(imageBuffer, imageBuffer.length)
+  const imgSignalScore = aggregateImageSignals(imgSignals)
 
-  const totalW  = scores.reduce((s, m) => s + m.weight, 0)
-  const aiScore = scores.reduce((s, m) => s + m.aiScore * m.weight, 0) / totalW
-  const verdict = toVerdict(aiScore)
-  const mlCount = scores.filter(s => !s.model.includes('heuristic')).length
+  // Adaptive ensemble: ML models 65%, image signals 35%
+  // If all ML models fail, image signals carry full weight
+  const mlTotalW  = mlScores.reduce((s, m) => s + m.weight, 0) || 1
+  const mlScore   = mlScores.length
+    ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0)
+    : 0.5
+  const mlWeight  = mlScores.length > 0 ? 0.65 : 0.0
+  const sigWeight = 1 - mlWeight
+  const aiScore   = mlScore * mlWeight + imgSignalScore * sigWeight
+
+  // Image verdict threshold: 0.52 (lower than text/audio)
+  // AI portrait generators produce scores just above 0.5 on ML models
+  // but signal analysis pushes them clearly above with correct weighting
+  const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' =
+    aiScore >= 0.52 ? 'AI' : aiScore <= 0.38 ? 'HUMAN' : 'UNCERTAIN'
+
+  const mlCount = mlScores.length
+  const topSignal = imgSignals.sort((a, b) => b.score - a.score)[0]
 
   return {
     verdict,
     confidence:    Math.round(aiScore * 1000) / 1000,
-    model_used:    `DETECTAI-ImageEnsemble(${scores.map(s => s.model.split('/').pop()).join('+')})`,
-    model_version: '3.0.0',
+    model_used:    `DETECTAI-ImageEnsemble(${mlCount ? mlScores.map((s: {model:string;aiScore:number;weight:number}) => s.model.split('/').pop()).join('+') + '+' : ''}6PixelSignals)`,
+    model_version: '3.1.0',
     signals: [
-      { name: 'Neural Image Classifier',  category: 'ML',     description: `${mlCount} specialized vision models: AI-image-detector, SDXL-detector, ViT-Deepfake`, weight: 85, value: aiScore, flagged: aiScore > 0.60 },
-      { name: 'Diffusion/GAN Artifacts',  category: 'Visual', description: 'Generative models leave spectral artifacts in high-frequency DCT coefficients', weight: 80, value: aiScore, flagged: aiScore > 0.65 },
-      { name: 'Texture Naturalness',      category: 'Visual', description: 'AI images have unnaturally smooth textures and implausible fine details', weight: 75, value: aiScore > 0.5 ? 0.70 : 0.30, flagged: aiScore > 0.65 },
-      { name: 'Pixel Statistics',         category: 'Statistical', description: 'Color channel distributions and noise floor differ between real and synthetic images', weight: 65, value: pixelScore, flagged: pixelScore > 0.55 },
-      { name: 'Semantic Coherence',       category: 'Visual', description: 'AI images produce physically implausible shadows, reflections, and backgrounds', weight: 60, value: aiScore, flagged: aiScore > 0.70 },
+      {
+        name:        'Neural Image Classifier',
+        category:    'ML',
+        description: mlCount
+          ? `${mlCount} vision models: AI-image-detector, SDXL-detector, AIorNot`
+          : 'ML models unavailable — pixel signal analysis only',
+        weight:      Math.round(mlWeight * 100),
+        value:       mlScore,
+        flagged:     mlScore > 0.52,
+      },
+      ...imgSignals.map((sig: {name:string;category?:string;description:string;weight:number;score:number}) => ({
+        name:        sig.name,
+        category:    'Pixel Analysis',
+        description: sig.description,
+        weight:      Math.round(sig.weight * 35),
+        value:       sig.score,
+        flagged:     sig.score > 0.58,
+      })),
     ],
     summary: verdict === 'AI'
-      ? `Image detected as AI-generated with ${Math.round(aiScore * 100)}% confidence using ${mlCount} specialized models.`
+      ? `Image detected as AI-generated with ${Math.round(aiScore * 100)}% confidence. Key signal: ${topSignal?.name ?? 'pixel analysis'}.`
       : verdict === 'HUMAN'
       ? `Image appears authentic — ${Math.round((1 - aiScore) * 100)}% confidence of being a real photograph.`
-      : `Image analysis inconclusive (${Math.round(aiScore * 100)}% AI probability).`,
+      : `Image analysis inconclusive (${Math.round(aiScore * 100)}% AI probability). Try a higher-resolution image.`,
   }
-}
-
-function imagePixelHeuristic(buf: Buffer): number {
-  // Sample ~500 bytes spread through the image buffer for quick stats
-  const step = Math.max(1, Math.floor(buf.length / 500))
-  const samples: number[] = []
-  for (let i = 10; i < buf.length - 4; i += step) {
-    samples.push(buf[i], buf[i + 1], buf[i + 2])
-  }
-  if (!samples.length) return 0.5
-  const mean = samples.reduce((a, b) => a + b, 0) / samples.length
-  const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / samples.length
-  const stdDev = Math.sqrt(variance)
-  // AI images: very low noise variance (clean, no sensor noise)
-  // Real photos: higher variance from sensor noise and compression
-  const noiseScore = stdDev < 30 ? 0.70 : stdDev < 50 ? 0.50 : 0.30
-  return noiseScore
 }
 
 // ── AUDIO DETECTION ────────────────────────────────────────────────────────
