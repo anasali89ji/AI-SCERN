@@ -1,0 +1,17 @@
+# ─── Calibration Worker: cal-agg ─────────────────────────────────────────
+# HTTP-only — NO cron trigger (saves CF free plan cron slots)
+# Triggered by Worker E every 6 hours via internal fetch()
+name               = "detectai-cal-agg"
+main               = "workers/worker-cal-agg.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id         = "34400e6e147e83e95c942135f54aeba7"
+workers_dev        = true
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "detectai-pipeline"
+database_id   = "50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c"
+
+[vars]
+ROLE = "cal-agg"

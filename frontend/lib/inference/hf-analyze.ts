@@ -12,7 +12,8 @@
  */
 
 import { extractTextSignals, aggregateTextSignals } from './signals/text-signals'
-import { extractImageSignals, aggregateImageSignals } from './signals/image-signals'
+import { extractImageSignals, aggregateImageSignals, applyCalibration } from './signals/image-signals'
+import { getCalibrationStats } from './calibration-client'
 import { analyzeVideoFrames }                        from './nvidia-nim'
 import { buildVideoSignals }                         from './signals/video-signals'
 
@@ -234,7 +235,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileNa
     verdict,
     confidence:    Math.round(aiScore * 1000) / 1000,
     model_used:    `DETECTAI-ImageEnsemble(${mlCount ? mlScores.map((s: {model:string;aiScore:number;weight:number}) => s.model.split('/').pop()).join('+') + '+' : ''}6PixelSignals)`,
-    model_version: '3.1.0',
+    model_version: '3.2.0',
     signals: [
       {
         name:        'Neural Image Classifier',

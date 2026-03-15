@@ -13,7 +13,8 @@
 
 export interface ImageSignalResult {
   name:        string
-  score:       number   // 0–1, higher = more AI-like
+  score:       number    // 0–1, higher = more AI-like
+  rawValue:    number    // raw signal value (for calibration comparison)
   weight:      number
   description: string
 }
@@ -175,47 +176,72 @@ function compressionEfficiencySignal(fileSize: number): number {
 export function extractImageSignals(buf: Buffer, fileSize: number): ImageSignalResult[] {
   const samples = samplePixelBytes(buf, 2000)
 
+  const entropyScore     = byteEntropy(samples)
+  const noiseScore       = sensorNoiseProxy(samples)
+  const bgScore          = backgroundUniformity(buf)
+  const luminanceScore   = luminanceDistribution(samples)
+  const colorScore       = colorChannelSkew(buf)
+  const compressionScore = compressionEfficiencySignal(fileSize)
+
   return [
-    {
-      name:        'Byte Entropy',
-      score:       byteEntropy(samples),
-      weight:      0.22,
-      description: 'AI images compress more efficiently than real photos — lower byte entropy across pixel data',
-    },
-    {
-      name:        'Sensor Noise Absence',
-      score:       sensorNoiseProxy(samples),
-      weight:      0.22,
-      description: 'Real camera sensors introduce random noise; AI diffusion models produce unnaturally clean images',
-    },
-    {
-      name:        'Background Uniformity',
-      score:       backgroundUniformity(buf),
-      weight:      0.20,
-      description: 'AI studio renders have perfectly smooth gradient backgrounds; real photos have texture and noise',
-    },
-    {
-      name:        'Luminance Clustering',
-      score:       luminanceDistribution(samples),
-      weight:      0.18,
-      description: 'Diffusion models cluster pixel values in mid-tones; real photos have wider luminance spread',
-    },
-    {
-      name:        'Color Channel Balance',
-      score:       colorChannelSkew(buf),
-      weight:      0.10,
-      description: 'AI generators produce unnaturally balanced RGB values; real photos have natural color casts',
-    },
-    {
-      name:        'Compression Efficiency',
-      score:       compressionEfficiencySignal(fileSize),
-      weight:      0.08,
-      description: 'AI images compress more efficiently than real photos at the same resolution',
-    },
+    { name: 'Byte Entropy',           score: entropyScore,     rawValue: entropyScore,     weight: 0.22, description: 'AI images compress more efficiently than real photos — lower byte entropy across pixel data' },
+    { name: 'Sensor Noise Absence',   score: noiseScore,       rawValue: noiseScore,       weight: 0.22, description: 'Real camera sensors introduce random noise; AI diffusion models produce unnaturally clean images' },
+    { name: 'Background Uniformity',  score: bgScore,          rawValue: bgScore,          weight: 0.20, description: 'AI studio renders have perfectly smooth gradient backgrounds; real photos have texture and noise' },
+    { name: 'Luminance Clustering',   score: luminanceScore,   rawValue: luminanceScore,   weight: 0.18, description: 'Diffusion models cluster pixel values in mid-tones; real photos have wider luminance spread' },
+    { name: 'Color Channel Balance',  score: colorScore,       rawValue: colorScore,       weight: 0.10, description: 'AI generators produce unnaturally balanced RGB values; real photos have natural color casts' },
+    { name: 'Compression Efficiency', score: compressionScore, rawValue: compressionScore, weight: 0.08, description: 'AI images compress more efficiently than real photos at the same resolution' },
   ]
 }
 
 export function aggregateImageSignals(signals: ImageSignalResult[]): number {
   const totalW = signals.reduce((s, sig) => s + sig.weight, 0)
   return signals.reduce((s, sig) => s + sig.score * sig.weight, 0) / totalW
+}
+
+// ── CALIBRATED SCORING (uses live DiffusionDB reference data) ───────────────
+import type { CalibrationStats } from '../calibration-client'
+import { calibratedScore }       from '../calibration-client'
+
+/**
+ * Re-score image signals using live calibration data from DiffusionDB.
+ * Falls back to original static scores if calibration unavailable.
+ */
+export function applyCalibration(
+  signals: ImageSignalResult[],
+  cal:     CalibrationStats,
+): ImageSignalResult[] {
+  const sigMap: Record<string, { aiM: number; aiS: number; realM: number; realS: number }> = {
+    'Byte Entropy': {
+      aiM: cal.entropy_ai_mean,     aiS: cal.entropy_ai_std,
+      realM: cal.entropy_real_mean, realS: cal.entropy_real_std,
+    },
+    'Sensor Noise Absence': {
+      aiM: cal.noise_ai_mean,     aiS: cal.noise_ai_std,
+      realM: cal.noise_real_mean, realS: cal.noise_real_std,
+    },
+    'Background Uniformity': {
+      aiM: cal.bg_ai_mean,     aiS: cal.bg_ai_std,
+      realM: cal.bg_real_mean, realS: cal.bg_real_std,
+    },
+    'Luminance Clustering': {
+      aiM: cal.luminance_ai_mean,     aiS: cal.luminance_ai_std,
+      realM: cal.luminance_real_mean, realS: cal.luminance_real_std,
+    },
+    'Color Channel Balance': {
+      aiM: cal.color_ai_mean,     aiS: cal.color_ai_std,
+      realM: cal.color_real_mean, realS: cal.color_real_std,
+    },
+    'Compression Efficiency': {
+      aiM: cal.compression_ai_mean,     aiS: cal.compression_ai_std,
+      realM: cal.compression_real_mean, realS: cal.compression_real_std,
+    },
+  }
+
+  return signals.map(sig => {
+    const ref = sigMap[sig.name]
+    if (!ref) return sig
+    // Use the raw value stored in sig.value for calibrated scoring
+    const calibrated = calibratedScore(sig.rawValue, ref.aiM, ref.aiS, ref.realM, ref.realS)
+    return { ...sig, score: calibrated }
+  })
 }

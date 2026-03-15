@@ -85,6 +85,31 @@ export default {
     const tick = Math.floor(Date.now() / 60_000)
 
     if (wnum === 20) {
+      // Every 360 ticks (6 hours): run calibration workers
+      // Workers are HTTP-only (no cron) so we trigger them from here
+      if (tick % 360 === 0) {
+        const calBase = 'https://detectai-cal-ai.saghirahmed9067.workers.dev'
+        const realBase = 'https://detectai-cal-real.saghirahmed9067.workers.dev'
+        const aggBase  = 'https://detectai-cal-agg.saghirahmed9067.workers.dev'
+        try {
+          // Step 1: collect AI + real samples in parallel
+          const [aiRes, realRes] = await Promise.all([
+            fetch(`${calBase}/run`,  { method: 'POST', signal: AbortSignal.timeout(120_000) }),
+            fetch(`${realBase}/run`, { method: 'POST', signal: AbortSignal.timeout(120_000) }),
+          ])
+          const aiData   = await aiRes.json()   as { inserted?: number; failed?: number }
+          const realData = await realRes.json() as { inserted?: number; failed?: number }
+          console.log(`[W20] cal-ai: ${aiData.inserted ?? 0} inserted, ${aiData.failed ?? 0} failed`)
+          console.log(`[W20] cal-real: ${realData.inserted ?? 0} inserted, ${realData.failed ?? 0} failed`)
+          // Step 2: aggregate into calibration_state
+          const aggRes  = await fetch(`${aggBase}/run`, { method: 'POST', signal: AbortSignal.timeout(30_000) })
+          const aggData = await aggRes.json() as { ai_samples?: number; real_samples?: number }
+          console.log(`[W20] cal-agg: AI=${aggData.ai_samples ?? 0} Real=${aggData.real_samples ?? 0}`)
+        } catch (calErr: any) {
+          console.error('[W20] calibration run failed:', calErr?.message)
+        }
+      }
+
       // Every 10 ticks: push to HF with modality+language sharding
       if (tick % 10 === 0) {
         const push = await pushToHF(env.DB, env.HF_TOKEN, repo, 3000)
