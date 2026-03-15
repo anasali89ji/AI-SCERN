@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { signInWithEmailAndPassword, getRedirectResult } from 'firebase/auth'
+import { googleSignInWithFallback } from '@/lib/firebase/google-auth'
 import { auth, googleProvider, parseFirebaseError } from '@/lib/firebase/client'
 import { motion } from 'framer-motion'
 import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
@@ -79,35 +80,29 @@ export default function LoginPage() {
     if (!auth) { toast.error('Auth not ready'); return }
     setAuthError(''); setGoogleLoad(true)
     try {
-      // Try popup first; fall back to redirect if blocked / unauthorized-domain
-      const cred = await signInWithPopup(auth, googleProvider)
+      const cred = await googleSignInWithFallback(
+        auth,
+        googleProvider,
+        () => {
+          // Redirect fallback triggered — page will navigate away, show loader
+          setRedirecting(true)
+        },
+      )
+      if (!cred) {
+        // Redirect initiated or popup closed — either way do nothing
+        // If redirect: page will reload and getRedirectResult() handles it
+        // If closed: reset loading state
+        if (!redirecting) setGoogleLoad(false)
+        return
+      }
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome back!')
       window.location.href = '/dashboard'
     } catch (err: any) {
       const msg = parseFirebaseError(err)
-      const useRedirect =
-        msg.includes('unauthorized-domain') ||
-        msg.includes('popup-blocked') ||
-        err?.code === 'auth/unauthorized-domain' ||
-        err?.code === 'auth/popup-blocked'
-
-      if (useRedirect) {
-        // Redirect method — goes through detectai-prod.firebaseapp.com so always works
-        try {
-          await signInWithRedirect(auth, googleProvider)
-          // Page will reload; getRedirectResult() above handles the result
-        } catch (redirectErr) {
-          const m2 = parseFirebaseError(redirectErr)
-          if (m2) { setAuthError(m2); toast.error(m2) }
-          setGoogleLoad(false)
-        }
-      } else if (msg) {
-        setAuthError(msg); toast.error(msg); setGoogleLoad(false)
-      } else {
-        setGoogleLoad(false)
-      }
+      if (msg) { setAuthError(msg); toast.error(msg) }
+      setGoogleLoad(false)
     }
   }
 

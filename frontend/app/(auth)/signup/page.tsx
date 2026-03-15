@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { createUserWithEmailAndPassword, updateProfile, getRedirectResult } from 'firebase/auth'
+import { googleSignInWithFallback } from '@/lib/firebase/google-auth'
 import { auth, googleProvider } from '@/lib/firebase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Mail, Lock, User, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -116,32 +117,28 @@ export default function SignupPage() {
   const signUpWithGoogle = async () => {
     setGoogle(true)
     try {
-      const cred = await signInWithPopup(auth, googleProvider)
+      const cred = await googleSignInWithFallback(
+        auth,
+        googleProvider,
+        () => {
+          // Redirect fallback — page will navigate away, show loader
+          setRedirecting(true)
+        },
+      )
+      if (!cred) {
+        // Redirect initiated or popup closed
+        if (!redirecting) setGoogle(false)
+        return
+      }
       await createProfile(cred.user.uid, cred.user.email || '', cred.user.displayName || '')
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome to DETECTAI!')
       window.location.href = '/dashboard'
     } catch (err: any) {
-      const msg = err?.message || ''
-      // Popup blocked or unauthorized domain → fall back to redirect
-      const useRedirect = msg.includes('unauthorized-domain') || msg.includes('popup-blocked') ||
-        err?.code === 'auth/unauthorized-domain' || err?.code === 'auth/popup-blocked'
-      if (useRedirect) {
-        try {
-          const { signInWithRedirect } = await import('firebase/auth')
-          await signInWithRedirect(auth, googleProvider)
-          // Page reloads; getRedirectResult() in useEffect handles the result
-        } catch (rErr: any) {
-          toast.error(rErr?.message || 'Google sign-up failed')
-          setGoogle(false)
-        }
-      } else if (!msg.includes('popup-closed')) {
-        toast.error(msg || 'Google sign-up failed')
-        setGoogle(false)
-      } else {
-        setGoogle(false)
-      }
+      const msg = err?.message || 'Google sign-up failed'
+      toast.error(msg)
+      setGoogle(false)
     }
   }
 
