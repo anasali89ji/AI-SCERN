@@ -1,4 +1,4 @@
-name: Deploy Cloudflare Pipeline (All Workers)
+name: Deploy Cloudflare Pipeline (5 Workers)
 
 on:
   push:
@@ -34,8 +34,8 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      # ── Main pipeline workers (have cron triggers) ──────────────────────
-      - name: Deploy pipeline workers (w/ cron)
+      # ── Main pipeline workers (5 with cron triggers) ────────────────────
+      - name: Deploy pipeline workers
         run: |
           FAILED=0
           for cfg in wrangler.toml wrangler-b.toml wrangler-c.toml wrangler-d.toml wrangler-e.toml; do
@@ -48,24 +48,7 @@ jobs:
               FAILED=$((FAILED+1))
             fi
           done
-          [ "$FAILED" -gt 0 ] && echo "$FAILED pipeline workers failed" && exit 1 || echo "All pipeline workers deployed"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          HF_TOKEN_VAL:         ${{ secrets.HUGGINGFACE_API_TOKEN }}
-
-      # ── Calibration workers (HTTP-only, NO cron — share same D1) ───────
-      - name: Deploy calibration workers (no cron)
-        run: |
-          for cfg in wrangler-cal-ai.toml wrangler-cal-real.toml wrangler-cal-agg.toml; do
-            echo "▶ Deploying $cfg..."
-            if npx wrangler deploy --config "$cfg"; then
-              echo "$HF_TOKEN_VAL" | npx wrangler secret put HF_TOKEN --config "$cfg" || true
-              echo "  ✅ $cfg deployed"
-            else
-              echo "  ⚠ $cfg failed (non-fatal)"
-            fi
-          done
-          echo "Calibration workers deployed"
+          [ "$FAILED" -gt 0 ] && echo "$FAILED workers failed" && exit 1 || echo "All 5 pipeline workers deployed"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           HF_TOKEN_VAL:         ${{ secrets.HUGGINGFACE_API_TOKEN }}
@@ -78,15 +61,12 @@ jobs:
           echo "  detectai-pipeline-b → scraper 2/4"
           echo "  detectai-pipeline-c → scraper 3/4"
           echo "  detectai-pipeline-d → scraper 4/4"
-          echo "  detectai-pipeline-e → HF push + calibration trigger"
+          echo "  detectai-pipeline-e → HF push every 10 min"
           echo ""
-          echo "Calibration workers (HTTP-only):"
-          echo "  detectai-cal-ai   → samples 200 AI images"
-          echo "  detectai-cal-real → samples 200 real photos"
-          echo "  detectai-cal-agg  → aggregates + serves /calibration"
+          echo "NOTE: Calibration workers moved to separate CF account"
+          echo "      Provide new CF token to deploy: wrangler-cal-*.toml"
           echo ""
-          echo "Status:   https://detectai-pipeline.saghirahmed9067.workers.dev/status"
-          echo "Cal health: https://detectai-cal-agg.saghirahmed9067.workers.dev/health"
+          echo "Status: https://detectai-pipeline.saghirahmed9067.workers.dev/status"
           echo "========================================"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

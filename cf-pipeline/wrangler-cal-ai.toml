@@ -5,7 +5,6 @@ name               = "detectai-cal-ai"
 main               = "workers/worker-cal-ai.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-account_id         = "34400e6e147e83e95c942135f54aeba7"
 workers_dev        = true
 
 [[d1_databases]]

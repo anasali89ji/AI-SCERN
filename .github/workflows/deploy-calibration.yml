@@ -1,0 +1,68 @@
+name: Deploy Calibration Workers (Separate CF Account)
+
+# Only runs manually — triggered after new CF account token is added
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'cf-pipeline/workers/worker-cal-*.ts'
+      - 'cf-pipeline/src/calibration/**'
+      - 'cf-pipeline/wrangler-cal-*.toml'
+      - '.github/workflows/deploy-calibration.yml'
+
+jobs:
+  deploy-calibration:
+    name: Deploy Cal Workers to New CF Account
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cf-pipeline
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: cf-pipeline/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Deploy cal-ai worker
+        run: |
+          npx wrangler deploy --config wrangler-cal-ai.toml
+          echo "$HF_TOKEN_VAL" | npx wrangler secret put HF_TOKEN --config wrangler-cal-ai.toml || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_CAL_TOKEN }}
+          HF_TOKEN_VAL:         ${{ secrets.HUGGINGFACE_API_TOKEN }}
+
+      - name: Deploy cal-real worker
+        run: |
+          npx wrangler deploy --config wrangler-cal-real.toml
+          echo "$HF_TOKEN_VAL" | npx wrangler secret put HF_TOKEN --config wrangler-cal-real.toml || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_CAL_TOKEN }}
+          HF_TOKEN_VAL:         ${{ secrets.HUGGINGFACE_API_TOKEN }}
+
+      - name: Deploy cal-agg worker
+        run: |
+          npx wrangler deploy --config wrangler-cal-agg.toml
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_CAL_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "========================================"
+          echo "Calibration workers deployed to new CF account:"
+          echo "  detectai-cal-ai   → AI image sampler"
+          echo "  detectai-cal-real → Real photo sampler"
+          echo "  detectai-cal-agg  → Aggregator + /calibration endpoint"
+          echo ""
+          echo "After deploy, run calibration from admin panel"
+          echo "========================================"
