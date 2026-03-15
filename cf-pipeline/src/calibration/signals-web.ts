@@ -99,8 +99,24 @@ export function computeSignals(bytes: Uint8Array, fileSize: number): SignalSet {
   }
 }
 
+/**
+ * Decode base64 string to Uint8Array (CF Workers compatible)
+ * Handles both plain base64 and data URLs (data:image/jpeg;base64,...)
+ */
+function base64ToBytes(b64: string): Uint8Array {
+  // Strip data URL prefix if present: data:image/jpeg;base64,XXXX
+  const comma = b64.indexOf(',')
+  const raw   = comma >= 0 ? b64.slice(comma + 1) : b64
+  const binary = atob(raw)
+  const bytes  = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
+/** Fetch an image from a plain HTTP/HTTPS URL and compute signals */
 export async function signalsFromUrl(url: string, hfToken?: string): Promise<SignalSet | null> {
   try {
+    if (!url.startsWith('http')) return null  // reject data: and other non-HTTP URLs
     const headers: Record<string,string> = { 'User-Agent': 'DETECTAI-Cal/1.0' }
     if (hfToken) headers['Authorization'] = `Bearer ${hfToken}`
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) })
@@ -110,6 +126,17 @@ export async function signalsFromUrl(url: string, hfToken?: string): Promise<Sig
   } catch { return null }
 }
 
+/**
+ * Fetch a HuggingFace dataset row's image and compute signals.
+ *
+ * The HF Datasets Server API returns images in one of these formats:
+ *   1. { src: "data:image/jpeg;base64,..." }  ← most common (can't fetch, decode directly)
+ *   2. { bytes: <array>, path: "..." }         ← binary bytes
+ *   3. "https://..."                            ← direct URL (can fetch)
+ *   4. { url: "https://..." }                  ← URL field
+ *
+ * CF Workers cannot fetch() data: URLs, so we decode base64 directly.
+ */
 export async function signalsFromHFDataset(
   dataset: string, config: string, split: string,
   offset: number, hfToken: string,
@@ -123,23 +150,62 @@ export async function signalsFromHFDataset(
       `&split=${encodeURIComponent(split)}`,
       `&offset=${offset}&length=1`,
     ].join('')
+
     const res = await fetch(apiUrl, {
       headers: { 'Authorization': `Bearer ${hfToken}`, 'User-Agent': 'DETECTAI-Cal/1.0' },
-      signal: AbortSignal.timeout(20_000),
+      signal:  AbortSignal.timeout(20_000),
     })
     if (!res.ok) return null
+
     const data = await res.json() as { rows: { row: Record<string,any> }[] }
     const row  = data.rows?.[0]?.row
     if (!row) return null
-    let imgUrl: string | null = null
-    if (urlField && typeof row[urlField] === 'string') imgUrl = row[urlField]
-    else if (row[imageField]) {
-      const img = row[imageField]
-      if (typeof img === 'string') imgUrl = img
-      else if (img?.src) imgUrl = img.src
-      else if (img?.url) imgUrl = img.url
+
+    // ── Try URL field first (Unsplash, Midjourney, etc.) ──────────────────
+    if (urlField && typeof row[urlField] === 'string' && row[urlField].startsWith('http')) {
+      return signalsFromUrl(row[urlField], hfToken)
     }
-    if (!imgUrl) return null
-    return signalsFromUrl(imgUrl, hfToken)
+
+    // ── Try image field ───────────────────────────────────────────────────
+    const img = row[imageField]
+    if (!img) return null
+
+    // Case 1: plain string URL
+    if (typeof img === 'string') {
+      if (img.startsWith('http')) return signalsFromUrl(img, hfToken)
+      if (img.startsWith('data:')) {
+        // data URL — decode base64 directly (CF Workers can't fetch data: URLs)
+        const bytes = base64ToBytes(img)
+        return computeSignals(bytes, bytes.length)
+      }
+    }
+
+    // Case 2: object with src (HF Datasets Server most common format)
+    if (img && typeof img === 'object') {
+      // src field (usually a data URL from HF Datasets API)
+      if (typeof img.src === 'string') {
+        if (img.src.startsWith('data:')) {
+          const bytes = base64ToBytes(img.src)
+          return computeSignals(bytes, bytes.length)
+        }
+        if (img.src.startsWith('http')) return signalsFromUrl(img.src, hfToken)
+      }
+      // url field
+      if (typeof img.url === 'string' && img.url.startsWith('http')) {
+        return signalsFromUrl(img.url, hfToken)
+      }
+      // bytes field (array of integers)
+      if (Array.isArray(img.bytes) && img.bytes.length > 0) {
+        const bytes = new Uint8Array(img.bytes)
+        return computeSignals(bytes, bytes.length)
+      }
+      // path field (sometimes a relative path — try fetching as HF CDN URL)
+      if (typeof img.path === 'string' && img.path.length > 0) {
+        const cdnUrl = `https://huggingface.co/datasets/${dataset}/resolve/main/${img.path}`
+        return signalsFromUrl(cdnUrl, hfToken)
+      }
+    }
+
+    return null
   } catch { return null }
 }
