@@ -1,7 +1,8 @@
 /**
- * DETECTAI — Calibration Worker: Real Images
- * Fetches 200 real photos (Unsplash + Flickr) and computes pixel signals.
- * HTTP-only worker — triggered by Worker E every 6 hours.
+ * DETECTAI — Calibration Worker: Real Photos
+ *
+ * Fetches 30 real photos from Unsplash and computes pixel signals.
+ * Reduced from 200 → 30 to stay within CF Workers 30s CPU time limit.
  */
 
 import { signalsFromHFDataset } from '../src/calibration/signals-web'
@@ -13,90 +14,66 @@ interface Env {
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
 
-const REAL_SOURCES = [
-  // Unsplash — 120 samples
-  ...Array.from({ length: 120 }, (_, i) => ({
-    dataset:  'jamescalam/unsplash-25k-photos',
-    config:   'default',
-    split:    'train',
-    offset:   Math.floor(Math.random() * 20_000) + i * 180,
-    urlField: 'photo_image_url',
-    name: 'unsplash',
-  })),
-  // Flickr30k — 50 samples
-  ...Array.from({ length: 50 }, (_, i) => ({
-    dataset:    'nlphuji/flickr30k',
-    config:     'default',
-    split:      'test',
-    offset:     Math.floor(Math.random() * 25_000) + i * 500,
-    imageField: 'image',
-    name: 'flickr',
-  })),
-  // DIV2K real photos — 30 samples (high-quality real photography)
-  ...Array.from({ length: 30 }, (_, i) => ({
-    dataset:    'eugenesiow/Div2k',
-    config:     'bicubic_x2',
-    split:      'train',
-    offset:     Math.floor(Math.random() * 700) + i * 25,
-    imageField: 'hr',
-    name: 'div2k',
-  })),
-]
-
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url)
 
     if (url.pathname === '/health') {
-      return Response.json({ ok: true, role: 'cal-real', sources: 200 }, { headers: CORS })
+      const count = await env.DB.prepare(
+        `SELECT COUNT(*) as n FROM calibration_samples WHERE label='real'`
+      ).first<{n:number}>().catch(() => ({n:0}))
+      return Response.json({ ok: true, role: 'cal-real', pending_samples: count?.n ?? 0 }, { headers: CORS })
     }
 
     if (url.pathname === '/run' && req.method === 'POST') {
       return runCalibration(env)
     }
 
-    if (url.pathname === '/status') {
-      const count = await env.DB.prepare(
-        `SELECT COUNT(*) as n FROM calibration_samples WHERE label='real'`
-      ).first<{n:number}>()
-      return Response.json({ ok: true, real_samples_pending: count?.n ?? 0 }, { headers: CORS })
-    }
-
-    return Response.json({ worker: 'cal-real', status: 'ready', sources_to_sample: 200 }, { headers: CORS })
+    return Response.json({ worker: 'cal-real', status: 'ready' }, { headers: CORS })
   },
 }
 
 async function runCalibration(env: Env): Promise<Response> {
-  const start   = Date.now()
-  let inserted  = 0
-  let failed    = 0
-  const batchSize = 10
+  const start = Date.now()
 
   await env.DB.prepare(`DELETE FROM calibration_samples WHERE label='real'`).run().catch(() => {})
 
-  for (let i = 0; i < REAL_SOURCES.length; i += batchSize) {
-    const batch   = REAL_SOURCES.slice(i, i + batchSize)
+  // 30 random offsets from Unsplash 25k (real photos)
+  const offsets: number[] = []
+  for (let i = 0; i < 30; i++) {
+    offsets.push(Math.floor(Math.random() * 24_000))
+  }
+
+  let inserted = 0
+  let failed   = 0
+
+  const batchSize = 5
+  for (let i = 0; i < offsets.length; i += batchSize) {
+    const batch = offsets.slice(i, i + batchSize)
     const results = await Promise.allSettled(
-      batch.map(src => signalsFromHFDataset(
-        src.dataset, src.config, src.split, src.offset,
-        env.HF_TOKEN,
-        (src as any).imageField,
-        (src as any).urlField,
-      ))
+      batch.map(offset =>
+        signalsFromHFDataset(
+          'jamescalam/unsplash-25k-photos',
+          'default',
+          'train',
+          offset,
+          env.HF_TOKEN,
+          'image',
+          'photo_image_url',
+        )
+      )
     )
 
     const stmts = []
-    for (let j = 0; j < results.length; j++) {
-      const r = results[j]
+    for (const r of results) {
       if (r.status === 'fulfilled' && r.value) {
         const sig = r.value
         stmts.push(env.DB.prepare(`
           INSERT INTO calibration_samples
             (id, label, source, entropy, noise, luminance, background, color_balance, compression, created_at)
-          VALUES (?, 'real', ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+          VALUES (?, 'real', 'unsplash', ?, ?, ?, ?, ?, ?, datetime('now'))
         `).bind(
           crypto.randomUUID(),
-          batch[j].name,
           sig.entropy, sig.noise, sig.luminance,
           sig.background, sig.colorBalance, sig.compression,
         ))
@@ -106,6 +83,11 @@ async function runCalibration(env: Env): Promise<Response> {
       }
     }
     if (stmts.length > 0) await env.DB.batch(stmts).catch(() => {})
+
+    if (Date.now() - start > 25_000) {
+      console.warn(`[cal-real] Time limit approaching — stopping at ${inserted} samples`)
+      break
+    }
   }
 
   return Response.json({
