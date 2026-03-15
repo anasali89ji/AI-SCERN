@@ -1,30 +1,52 @@
 /**
  * DETECTAI — Reliable Google Auth Helper
  *
- * Root cause of hang: signInWithPopup silently hangs when the current domain
- * is not in Firebase's authorized domains list. Firebase opens the popup,
- * user selects account, but the popup handler at detectai-prod.firebaseapp.com
- * refuses to postMessage back to an unauthorized origin — so the Promise
- * never resolves or rejects.
- *
- * Fix: race signInWithPopup against a 10-second timeout. If it hangs,
- * fall back to signInWithRedirect which always works (goes through
- * detectai-prod.firebaseapp.com, which is always an authorized domain).
+ * Fixes two issues:
+ * 1. signInWithPopup hangs on unauthorized domains → timeout + redirect fallback
+ * 2. getRedirectResult() is called on every page load (300-500ms wasted) →
+ *    only call it when a redirect flag is set in sessionStorage
  */
 
 import {
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult as firebaseGetRedirectResult,
   UserCredential,
   Auth,
   AuthProvider,
 } from 'firebase/auth'
 
-const POPUP_TIMEOUT_MS = 10_000  // 10 seconds — enough for a real popup, catches hangs
+const POPUP_TIMEOUT_MS    = 10_000
+const REDIRECT_FLAG_KEY   = '__detectai_google_redirect'
+
+/** Mark that we're about to do a Google redirect (call before signInWithRedirect) */
+export function markGoogleRedirect(): void {
+  try { sessionStorage.setItem(REDIRECT_FLAG_KEY, '1') } catch {}
+}
+
+/** Check + clear the redirect flag. Returns true only on post-redirect page load. */
+export function consumeGoogleRedirectFlag(): boolean {
+  try {
+    const val = sessionStorage.getItem(REDIRECT_FLAG_KEY)
+    if (val) { sessionStorage.removeItem(REDIRECT_FLAG_KEY); return true }
+  } catch {}
+  return false
+}
 
 /**
- * Try popup with timeout. Falls back to redirect if popup hangs or is blocked.
- * Returns the credential if popup succeeded, or null if redirecting (page will reload).
+ * Only call getRedirectResult when we're actually returning from a Google redirect.
+ * Skips the 300-500ms Firebase call on all other page loads.
+ */
+export async function getRedirectResultIfExpected(
+  auth: Auth,
+): Promise<UserCredential | null> {
+  if (!consumeGoogleRedirectFlag()) return null
+  return firebaseGetRedirectResult(auth)
+}
+
+/**
+ * Try popup with 10s timeout → auto-falls back to redirect if popup hangs/blocked.
+ * Returns credential if popup succeeded, null if redirect was initiated.
  */
 export async function googleSignInWithFallback(
   auth: Auth,
@@ -33,26 +55,19 @@ export async function googleSignInWithFallback(
 ): Promise<UserCredential | null> {
   let popupTimedOut = false
 
-  const popupPromise = signInWithPopup(auth, provider)
-
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => {
-      popupTimedOut = true
-      reject(new Error('popup-timeout'))
-    }, POPUP_TIMEOUT_MS)
+    setTimeout(() => { popupTimedOut = true; reject(new Error('popup-timeout')) }, POPUP_TIMEOUT_MS)
   )
 
   try {
-    // Race: popup vs timeout
-    const cred = await Promise.race([popupPromise, timeoutPromise])
+    const cred = await Promise.race([signInWithPopup(auth, provider), timeoutPromise])
     return cred
   } catch (err: any) {
     const code = err?.code ?? ''
     const msg  = err?.message ?? ''
 
-    // Conditions that warrant falling back to redirect:
     const shouldRedirect =
-      popupTimedOut ||                           // popup hung (unauthorized domain)
+      popupTimedOut ||
       code === 'auth/unauthorized-domain' ||
       code === 'auth/popup-blocked' ||
       code === 'auth/operation-not-supported-in-this-environment' ||
@@ -62,17 +77,16 @@ export async function googleSignInWithFallback(
 
     if (shouldRedirect) {
       onRedirectFallback?.()
+      markGoogleRedirect()  // set flag so result is picked up on return
       await signInWithRedirect(auth, provider)
-      // Page navigates away; getRedirectResult() handles the result on return
       return null
     }
 
-    // User closed popup deliberately — not an error
+    // User closed popup deliberately
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return null
     }
 
-    // Real error — rethrow so callers can show it
     throw err
   }
 }

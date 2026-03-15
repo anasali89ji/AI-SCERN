@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { signInWithEmailAndPassword, getRedirectResult } from 'firebase/auth'
-import { googleSignInWithFallback } from '@/lib/firebase/google-auth'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { googleSignInWithFallback, getRedirectResultIfExpected } from '@/lib/firebase/google-auth'
 import { auth, googleProvider, parseFirebaseError } from '@/lib/firebase/client'
 import { motion } from 'framer-motion'
 import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const schema = z.object({
   email:    z.string().email('Invalid email'),
@@ -38,6 +39,7 @@ async function setSessionCookie(user: any): Promise<void> {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [showPw,     setShowPw]     = useState(false)
   const [googleLoad, setGoogleLoad] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
@@ -46,13 +48,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!auth) return
-    getRedirectResult(auth)
+    getRedirectResultIfExpected(auth)
       .then(async result => {
         if (result?.user) {
           await setSessionCookie(result.user)
           setRedirecting(true)
           toast.success('Welcome back!')
-          window.location.href = '/dashboard'
+          router.replace('/dashboard')
         }
       })
       .catch(err => {
@@ -69,7 +71,7 @@ export default function LoginPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome back!')
-      window.location.href = '/dashboard'
+      router.replace('/dashboard')
     } catch (err) {
       const msg = parseFirebaseError(err)
       if (msg) { setAuthError(msg); toast.error(msg) }
@@ -98,7 +100,7 @@ export default function LoginPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome back!')
-      window.location.href = '/dashboard'
+      router.replace('/dashboard')
     } catch (err: any) {
       const msg = parseFirebaseError(err)
       if (msg) { setAuthError(msg); toast.error(msg) }

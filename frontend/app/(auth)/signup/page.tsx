@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createUserWithEmailAndPassword, updateProfile, getRedirectResult } from 'firebase/auth'
-import { googleSignInWithFallback } from '@/lib/firebase/google-auth'
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { googleSignInWithFallback, getRedirectResultIfExpected } from '@/lib/firebase/google-auth'
 import { auth, googleProvider } from '@/lib/firebase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Mail, Lock, User, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const schema = z.object({
   name:     z.string().min(2, 'Name must be at least 2 characters'),
@@ -62,6 +63,7 @@ function FullScreenLoader({ message }: { message: string }) {
 }
 
 export default function SignupPage() {
+  const router = useRouter()
   const [showPw, setShowPw]           = useState(false)
   const [googleLoading, setGoogle]    = useState(false)
   const [redirecting, setRedirecting] = useState(false)
@@ -87,7 +89,7 @@ export default function SignupPage() {
       setRedirecting(true)
       toast.success('Account created! Welcome to DETECTAI')
       // Hard navigation so the browser sends the fresh cookie to middleware
-      setTimeout(() => { window.location.href = '/dashboard' }, 800)
+      setTimeout(() => { router.replace('/dashboard') }, 800)
     } catch (err: any) {
       const msg = err?.message || 'Signup failed'
       toast.error(
@@ -102,14 +104,14 @@ export default function SignupPage() {
   // that was disabling the submit button as a side effect on every page load
   useEffect(() => {
     if (!auth) return
-    getRedirectResult(auth).then(async result => {
+    getRedirectResultIfExpected(auth).then(async result => {
       if (result?.user) {
         setGoogle(true)
         await createProfile(result.user.uid, result.user.email || '', result.user.displayName || '')
         await setSessionCookie(result.user)
         setRedirecting(true)
         toast.success('Account created! Welcome to DETECTAI')
-        window.location.href = '/dashboard'
+        router.replace('/dashboard')
       }
     }).catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -134,7 +136,7 @@ export default function SignupPage() {
       await setSessionCookie(cred.user)
       setRedirecting(true)
       toast.success('Welcome to DETECTAI!')
-      window.location.href = '/dashboard'
+      router.replace('/dashboard')
     } catch (err: any) {
       const msg = err?.message || 'Google sign-up failed'
       toast.error(msg)

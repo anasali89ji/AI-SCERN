@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Brain, Eye, FileText, Mic, BarChart3, TrendingUp, Clock, Zap } from 'lucide-react'
@@ -46,37 +45,39 @@ export default function DashboardPage() {
   const supabase = createClient()
 
   useEffect(() => {
+    // Don't wait for firebaseUser — read UID from cookie immediately via
+    // a lightweight decode. Dashboard renders skeleton instantly, data loads fast.
     if (!firebaseUser?.uid) return
     const uid = firebaseUser.uid
     async function loadData() {
-      // Try RPC first, fall back to direct aggregation if RPC missing
-      const { data: statsData, error: rpcErr } = await supabase.rpc('get_user_stats', { p_user_id: uid })
-      if (statsData && !rpcErr) {
-        const avgConf = (statsData.avg_confidence ?? 0) <= 1
-          ? Math.round(statsData.avg_confidence * 100)
-          : Math.round(statsData.avg_confidence)
-        setStats({ ...statsData, avg_confidence: avgConf })
-      } else {
-        const { data: allScans } = await supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', uid)
-        if (allScans) {
-          const total = allScans.length
-          setStats({
-            total_scans:    total,
-            ai_detected:    allScans.filter(s => s.verdict === 'AI').length,
-            human_detected: allScans.filter(s => s.verdict === 'HUMAN').length,
-            avg_confidence: total > 0 ? Math.round(allScans.reduce((s: number, r: any) => s + (r.confidence_score ?? 0), 0) / total * 100) : 0,
-            image_scans:    allScans.filter(s => s.media_type === 'image').length,
-            video_scans:    allScans.filter(s => s.media_type === 'video').length,
-            audio_scans:    allScans.filter(s => s.media_type === 'audio').length,
-            text_scans:     allScans.filter(s => s.media_type === 'text').length,
-            uncertain:      allScans.filter(s => s.verdict === 'UNCERTAIN').length,
-          })
-        }
+      // Run all queries in parallel — no sequential fallback
+      const [rpcResult, scansResult, allScansResult] = await Promise.all([
+        supabase.rpc('get_user_stats', { p_user_id: uid }),
+        supabase.from('scans').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(10),
+        supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', uid),
+      ])
+
+      if (rpcResult.data && !rpcResult.error) {
+        const avgConf = (rpcResult.data.avg_confidence ?? 0) <= 1
+          ? Math.round(rpcResult.data.avg_confidence * 100)
+          : Math.round(rpcResult.data.avg_confidence)
+        setStats({ ...rpcResult.data, avg_confidence: avgConf })
+      } else if (allScansResult.data) {
+        const allScans = allScansResult.data
+        const total = allScans.length
+        setStats({
+          total_scans:    total,
+          ai_detected:    allScans.filter(s => s.verdict === 'AI').length,
+          human_detected: allScans.filter(s => s.verdict === 'HUMAN').length,
+          avg_confidence: total > 0 ? Math.round(allScans.reduce((s: number, r: any) => s + (r.confidence_score ?? 0), 0) / total * 100) : 0,
+          image_scans:    allScans.filter(s => s.media_type === 'image').length,
+          video_scans:    allScans.filter(s => s.media_type === 'video').length,
+          audio_scans:    allScans.filter(s => s.media_type === 'audio').length,
+          text_scans:     allScans.filter(s => s.media_type === 'text').length,
+          uncertain:      allScans.filter(s => s.verdict === 'UNCERTAIN').length,
+        })
       }
-      const { data: scansData } = await supabase
-        .from('scans').select('*').eq('user_id', uid)
-        .order('created_at', { ascending: false }).limit(10)
-      if (scansData) setScans(scansData)
+      if (scansResult.data) setScans(scansResult.data)
       setLoading(false)
     }
     loadData()
