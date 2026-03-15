@@ -10,13 +10,13 @@ import {
 // Note: Firebase client API keys are NOT secrets (by Firebase's design).
 // Security is enforced via Firebase Security Rules + authorized domains.
 const firebaseConfig = {
-  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY            || 'AIzaSyCMbmpuHY7DXPTNsT-X8KfakBJ8TFaAM2w',
-  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN        || 'detectai-prod.firebaseapp.com',
-  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID         || 'detectai-prod',
-  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET     || 'detectai-prod.firebasestorage.app',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '830272475702',
-  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID             || '1:830272475702:web:51cf8033f52f28d603fe97',
-  measurementId:     process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID     || 'G-FE84SYHN99',
+  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId:     process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 }
 
 const app: FirebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)

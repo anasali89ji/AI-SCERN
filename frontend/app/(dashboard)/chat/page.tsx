@@ -88,27 +88,66 @@ function loadChats(): Chat[] {
 }
 
 // ── Markdown renderer ───────────────────────────────────────────────────────
+// Sanitize HTML to prevent XSS — only allow safe tags and attributes
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, 'blocked:')
+    .replace(/<a\s/gi, '<a rel="noopener noreferrer" target="_blank" ')
+}
+
 function Markdown({ content }: { content: string }) {
-  const html = content
-    .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-black/40 border border-white/8 rounded-xl p-4 my-3 overflow-x-auto text-xs font-mono text-emerald-300 leading-relaxed whitespace-pre"><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs font-mono">$1</code>')
-    .replace(/^### (.+)$/gm, '<h3 class="text-sm font-bold text-white mt-5 mb-1.5 tracking-wide">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-base font-bold text-white mt-5 mb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-white mt-5 mb-3">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" class="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors">$1</a>')
-    .replace(/^- (.+)$/gm, '<li class="flex gap-2.5 items-start py-0.5"><span class="mt-2 w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0 block"></span><span>$1</span></li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li class="flex gap-2.5 items-start py-0.5"><span class="text-violet-400 font-mono text-xs mt-0.5 shrink-0 w-4">$1.</span><span>$2</span></li>')
-    .replace(/(<li.*?<\/li>\n?)+/gs, '<ul class="space-y-0.5 my-2">$&</ul>')
-    .replace(/\n\n/g, '</p><p class="mt-2 text-gray-300 leading-relaxed">')
-    .replace(/\n/g, '<br/>')
+  const lines = content.split('\n')
+  let html = ''
+  let inCode = false
+  let codeLang = ''
+  let codeLines: string[] = []
+
+  for (const line of lines) {
+    const codeMatch = line.match(/^```(\w+)?$/)
+    if (codeMatch) {
+      if (!inCode) {
+        inCode = true
+        codeLang = codeMatch[1] || ''
+        codeLines = []
+      } else {
+        const escaped = codeLines.join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        html += `<pre class="bg-black/40 border border-white/8 rounded-xl p-4 my-3 overflow-x-auto text-xs font-mono text-emerald-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
+        inCode = false
+        codeLines = []
+      }
+      continue
+    }
+    if (inCode) { codeLines.push(line); continue }
+
+    let l = line
+    l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
+      `<code class="px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+    if (l.startsWith('### ')) { html += `<h3 class="text-sm font-bold text-white mt-5 mb-1.5">${l.slice(4)}</h3>`; continue }
+    if (l.startsWith('## '))  { html += `<h2 class="text-base font-bold text-white mt-5 mb-2">${l.slice(3)}</h2>`; continue }
+    if (l.startsWith('# '))   { html += `<h1 class="text-lg font-bold text-white mt-5 mb-3">${l.slice(2)}</h1>`; continue }
+    if (l.startsWith('- '))   { html += `<li class="flex gap-2 items-start py-0.5"><span class="mt-2 w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span><span>${l.slice(2)}</span></li>`; continue }
+    if (/^\d+\. /.test(l)) {
+      const m = l.match(/^(\d+)\. (.+)/)
+      if (m) { html += `<li class="flex gap-2 items-start py-0.5"><span class="text-violet-400 text-xs font-mono mt-0.5 w-4 shrink-0">${m[1]}.</span><span>${m[2]}</span></li>`; continue }
+    }
+    l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+    l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
+    l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-violet-400 hover:text-violet-300 underline">$1</a>')
+    if (l === '') { html += '<br/>'; continue }
+    html += `<span>${l}</span><br/>`
+  }
+
+  const safeHtml = sanitizeHtml(html)
   return (
-    <div className="text-sm leading-relaxed text-gray-300 [&_ul]:ml-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0"
-      dangerouslySetInnerHTML={{ __html: `<p class="mt-0 text-gray-300 leading-relaxed">${html}</p>` }}
+    <div className="text-sm leading-relaxed text-gray-300"
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   )
 }
+
 
 // ── Tool result card ─────────────────────────────────────────────────────
 function ToolCard({ tool, result }: { tool: string; result: any }) {

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || '34400e6e147e83e95c942135f54aeba7'
-const D1_DB      = '50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c'
+const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || ''
+const D1_DB      = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
 const CF_BASE    = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`
 
 async function d1(sql: string, token: string) {

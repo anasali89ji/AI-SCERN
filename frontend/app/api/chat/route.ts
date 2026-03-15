@@ -11,8 +11,8 @@ const VISION_MODEL   = 'meta/llama-3.2-90b-vision-instruct'
 const VISION_FALLBACK = 'meta/llama-3.2-11b-vision-instruct'
 
 // ─── Cloudflare D1 (internal — shown as "DETECTAI Pipeline" to users) ─────────
-const CF_ACCOUNT = '34400e6e147e83e95c942135f54aeba7'
-const D1_DB      = '50f5e26a-c794-4cfa-b2b7-2bbd1d7c045c'
+const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || ''
+const D1_DB      = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PIPELINE STATS  — referred to as "DETECTAI Pipeline" externally

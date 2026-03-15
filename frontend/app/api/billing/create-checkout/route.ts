@@ -6,6 +6,22 @@ export const dynamic = 'force-dynamic'
 
 
 export async function POST(req: NextRequest) {
+  // Verify session cookie — prevent billing to arbitrary userIds
+  const sessionToken = req.cookies.get('__session')?.value
+  if (!sessionToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  try {
+    const parts = sessionToken.split('.')
+    if (parts.length !== 3) return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (!payload.sub || Date.now() / 1000 > payload.exp) {
+      return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+  }
+
   try {
     const body   = await req.json()
     const { planId, userId, userEmail, userName } = body as {

@@ -78,6 +78,27 @@ async function analyzeTextBlock(text: string): Promise<{ verdict: string; confid
 }
 
 export async function POST(req: NextRequest) {
+  // Require authentication to prevent scraping abuse
+  const session = req.cookies.get('__session')?.value
+  if (!session) {
+    return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
+  }
+
+  // IP-based rate limit: 10 scrapes per minute
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  const rateKey = `scraper:${ip}`
+  const _scraperLimits = new Map<string, { count: number; resetAt: number }>()
+  const now = Date.now()
+  const entry = _scraperLimits.get(rateKey)
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= 10) {
+      return NextResponse.json({ success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests' } }, { status: 429 })
+    }
+    entry.count++
+  } else {
+    _scraperLimits.set(rateKey, { count: 1, resetAt: now + 60_000 })
+  }
+
   try {
     const { url } = await req.json()
     if (!url) return NextResponse.json<APIResponse>({

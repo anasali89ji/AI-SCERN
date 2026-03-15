@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import {
   Shield, Activity, LogOut, RefreshCw, Loader2, Users, CreditCard,
   BarChart3, Database, Flag, Lock, Key, CheckCircle, XCircle, TrendingUp,
-  AlertTriangle, Play, Zap, Crown, Ban, DollarSign, Radio, Server, Brain, Cpu
+  AlertTriangle, Play, Zap, Crown, Ban, DollarSign, Radio, Server, Brain, Cpu,
+  Settings, Clock, Globe, AlertCircle, ToggleLeft, ToggleRight, Eye
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -31,6 +32,9 @@ const TABS = [
   { id: 'flags',         label: 'Feature Flags', icon: Flag       },
   { id: 'security',      label: 'Security',      icon: Lock       },
   { id: 'apikeys',       label: 'API Keys',      icon: Key        },
+  { id: 'settings',      label: 'Settings',      icon: Settings   },
+  { id: 'errors',        label: 'Errors',        icon: AlertTriangle },
+  { id: 'activity',      label: 'Activity Log',  icon: Clock      },
 ]
 
 const PLAN_COLORS: Record<string,string> = {
@@ -609,6 +613,178 @@ function PipelineTab() {
               <p className="text-gray-600 text-[10px] mt-1">Click "Run Calibration" to fetch 200 AI + 200 real images and train detection thresholds.</p>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+// ── Settings Tab ──────────────────────────────────────────────────────────────
+function SettingsTab() {
+  const [settings, setSettings] = useState<any[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState<string|null>(null)
+
+  useEffect(() => {
+    api('/settings').then(d => { setSettings(d.settings || []); setLoading(false) })
+  }, [])
+
+  const toggle = async (key: string, current: any) => {
+    const newVal = typeof current === 'boolean' ? !current : current === 'true' ? 'false' : 'true'
+    setSaving(key)
+    await api(`/settings`, 'PATCH', { key, value: newVal })
+    setSettings(prev => prev.map(s => s.key === key ? { ...s, value: String(newVal) } : s))
+    setSaving(null)
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>
+
+  const boolSettings = settings.filter(s => s.value === 'true' || s.value === 'false')
+  const numSettings  = settings.filter(s => !isNaN(Number(s.value)))
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-white font-bold text-lg">Platform Configuration</h3>
+      <div className="grid md:grid-cols-2 gap-4">
+        {boolSettings.map(s => (
+          <div key={s.key} className="bg-gray-800/60 rounded-xl p-4 border border-gray-700 flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">{s.key.replace(/_/g,' ').replace(/\w/g,(c:string)=>c.toUpperCase())}</p>
+              {s.description && <p className="text-gray-500 text-xs mt-0.5">{s.description}</p>}
+            </div>
+            <button
+              onClick={() => toggle(s.key, s.value === 'true')}
+              disabled={saving === s.key}
+              className={`relative w-12 h-6 rounded-full transition-colors ${s.value === 'true' ? 'bg-purple-600' : 'bg-gray-600'} disabled:opacity-50`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${s.value === 'true' ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
+        ))}
+        {numSettings.map(s => (
+          <div key={s.key} className="bg-gray-800/60 rounded-xl p-4 border border-gray-700">
+            <p className="text-white text-sm font-medium mb-2">{s.key.replace(/_/g,' ').replace(/\w/g,(c:string)=>c.toUpperCase())}</p>
+            {s.description && <p className="text-gray-500 text-xs mb-3">{s.description}</p>}
+            <div className="flex items-center gap-2">
+              <input
+                type="number" defaultValue={s.value}
+                className="w-24 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                onBlur={async (e) => {
+                  setSaving(s.key)
+                  await api('/settings', 'PATCH', { key: s.key, value: e.target.value })
+                  setSaving(null)
+                }}
+              />
+              {saving === s.key && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Errors Tab ─────────────────────────────────────────────────────────────────
+function ErrorsTab() {
+  const [errors, setErrors]   = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [service, setService] = useState('all')
+
+  const load = () => {
+    setLoading(true)
+    const q = service !== 'all' ? `?service=${service}&resolved=false` : '?resolved=false'
+    api(`/errors${q}`).then(d => { setErrors(d.errors || []); setLoading(false) })
+  }
+
+  useEffect(load, [service]) // eslint-disable-line
+
+  const resolve = async (id: number) => {
+    await api('/errors', 'PATCH', { id })
+    setErrors(prev => prev.filter(e => e.id !== id))
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-white font-bold text-lg">System Errors ({errors.length} unresolved)</h3>
+        <select value={service} onChange={e => setService(e.target.value)}
+          className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-sm text-white">
+          <option value="all">All Services</option>
+          {['api','scraper','worker','inference','auth'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      {errors.length === 0 ? (
+        <div className="bg-green-900/20 border border-green-700/30 rounded-xl p-8 text-center">
+          <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-3" />
+          <p className="text-green-300 font-medium">No unresolved errors</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {errors.map(err => (
+            <div key={err.id} className="bg-gray-800/60 rounded-xl p-4 border border-red-800/30">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300">{err.service}</span>
+                    {err.error_code && <span className="text-xs text-gray-500 font-mono">{err.error_code}</span>}
+                    <span className="text-xs text-gray-600">{err.created_at?.slice(0,16)}</span>
+                  </div>
+                  <p className="text-sm text-white">{err.message}</p>
+                  {err.stack_trace && <pre className="text-xs text-gray-500 mt-2 overflow-x-auto max-h-20">{err.stack_trace.slice(0,300)}</pre>}
+                </div>
+                <button onClick={() => resolve(err.id)}
+                  className="shrink-0 px-3 py-1.5 text-xs bg-green-700/20 text-green-400 rounded-lg hover:bg-green-700/40 transition-colors">
+                  Resolve
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Activity Log Tab ───────────────────────────────────────────────────────────
+function ActivityLogTab() {
+  const [logs, setLogs]       = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api('/activity-logs').then(d => { setLogs(d.logs || []); setLoading(false) })
+  }, [])
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-white font-bold text-lg">Admin Activity Log ({logs.length} recent)</h3>
+      <div className="bg-gray-800/60 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-gray-800">
+              <tr className="border-b border-gray-700">
+                {['Time','Admin','Action','Resource','IP'].map(h => (
+                  <th key={h} className="text-left py-3 px-4 text-xs text-gray-400 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700/50">
+              {logs.map(log => (
+                <tr key={log.id} className="hover:bg-gray-700/30">
+                  <td className="py-2.5 px-4 text-gray-400 text-xs font-mono whitespace-nowrap">{log.created_at?.slice(0,16)}</td>
+                  <td className="py-2.5 px-4 text-gray-300 text-xs">{log.admin_users?.email || log.admin_id?.slice(0,8) || '—'}</td>
+                  <td className="py-2.5 px-4"><span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/40 text-purple-300">{log.action_type}</span></td>
+                  <td className="py-2.5 px-4 text-gray-400 text-xs">{log.target_resource || '—'}</td>
+                  <td className="py-2.5 px-4 text-gray-500 text-xs font-mono">{log.ip_address || '—'}</td>
+                </tr>
+              ))}
+              {logs.length === 0 && <tr><td colSpan={5} className="py-8 text-center text-gray-600">No activity logs yet</td></tr>}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

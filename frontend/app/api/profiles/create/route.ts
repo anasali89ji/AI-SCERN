@@ -7,6 +7,13 @@ export const dynamic = 'force-dynamic'
 // Firebase users have no Supabase auth.uid() so client-side upsert always fails
 
 export async function POST(req: NextRequest) {
+  // This route is called server-side after Firebase auth — verify session or internal secret
+  const session = req.cookies.get('__session')?.value
+  const internalSecret = req.headers.get('x-internal-secret')
+  const validInternal = internalSecret === (process.env.INTERNAL_API_SECRET || 'detectai-internal-2026')
+  if (!session && !validInternal) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { uid, email, display_name } = await req.json()
 

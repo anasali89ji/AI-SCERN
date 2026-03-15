@@ -3,10 +3,14 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
-  (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ?? 'placeholder-anon-key'
-)
+// Use service role key only (this is a server-side route)
+// NEXT_PUBLIC_SUPABASE_ANON_KEY is NOT a fallback for service role
+function getDb() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Missing Supabase config')
+  return createClient(url, key, { auth: { persistSession: false } })
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -15,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ success: false, error: 'Invalid feedback value' }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { error } = await getDb()
       .from('scans')
       .update({ user_feedback: feedback })
       .eq('id', params.id)
@@ -24,9 +28,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // If incorrect: enqueue augment job for self-improving loop
     if (feedback === 'incorrect') {
-      const { data: scan } = await supabase.from('scans').select('*').eq('id', params.id).single()
+      const { data: scan } = await getDb().from('scans').select('*').eq('id', params.id).single()
       if (scan) {
-        await supabase.from('pipeline_jobs').insert({
+        await getDb().from('pipeline_jobs').insert({
           job_type:    'augment',
           priority:    5,
           payload: {
