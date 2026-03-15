@@ -13,6 +13,7 @@
 
 import { extractTextSignals, aggregateTextSignals } from './signals/text-signals'
 import { extractImageSignals, aggregateImageSignals, applyCalibration } from './signals/image-signals'
+import { extractAudioSignals, aggregateAudioSignals }                    from './signals/audio-signals'
 import { getCalibrationStats } from './calibration-client'
 import { analyzeVideoFrames }                        from './nvidia-nim'
 import { buildVideoSignals }                         from './signals/video-signals'
@@ -49,7 +50,8 @@ const MODELS = {
   image_primary:  'umm-maybe/AI-image-detector',
   image_sdxl:     'Organika/sdxl-detector',
   image_face:     'Nahrawy/AIorNot',  // Better general AI image detector than ViT-Deepfake
-  audio:          'mo-thecreator/Deepfake-audio-detection',
+  audio_primary:  'mo-thecreator/Deepfake-audio-detection',
+  audio_asvspoof: 'HyperMoon/wav2vec2-base-960h-finetuned-deepfake',
 }
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
@@ -222,11 +224,15 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileNa
   const sigWeight = 1 - mlWeight
   const aiScore   = mlScore * mlWeight + imgSignalScore * sigWeight
 
-  // Image verdict threshold: 0.52 (lower than text/audio)
-  // AI portrait generators produce scores just above 0.5 on ML models
-  // but signal analysis pushes them clearly above with correct weighting
+  // Image verdict: 0.50 threshold (generous — catches Gemini/Grok/Leonardo)
+  // Edit detection: if edit signal is high but AI score is borderline, flag as EDITED
+  const editSig    = imgSignals.find(s => s.name === 'Edit Signature')
+  const isEdited   = editSig && editSig.score > 0.65 && aiScore < 0.52 && aiScore > 0.30
   const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' =
-    aiScore >= 0.52 ? 'AI' : aiScore <= 0.38 ? 'HUMAN' : 'UNCERTAIN'
+    aiScore >= 0.50 ? 'AI'
+    : isEdited ? 'AI'   // treat heavily edited as AI-assisted
+    : aiScore <= 0.36 ? 'HUMAN'
+    : 'UNCERTAIN'
 
   const mlCount = mlScores.length
   const topSignal = imgSignals.sort((a, b) => b.score - a.score)[0]
@@ -235,7 +241,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileNa
     verdict,
     confidence:    Math.round(aiScore * 1000) / 1000,
     model_used:    `DETECTAI-ImageEnsemble(${mlCount ? mlScores.map((s: {model:string;aiScore:number;weight:number}) => s.model.split('/').pop()).join('+') + '+' : ''}6PixelSignals)`,
-    model_version: '3.2.0',
+    model_version: '4.0.0',
     signals: [
       {
         name:        'Neural Image Classifier',
@@ -269,31 +275,49 @@ export async function analyzeAudio(
   fileName: string, fileSize: number, format: string, audioBuffer?: Buffer
 ): Promise<DetectionResult> {
   const durationEst = Math.round(fileSize / (128 * 1024 / 8))
-  let aiScore = 0.5
-  let modelUsed = 'detectai-audio-heuristic-v3'
-  let modelSucceeded = false
 
+  // Run 2 HF models + deterministic audio signals in parallel
+  const mlPromises: Promise<unknown>[] = []
   if (audioBuffer && audioBuffer.length > 0) {
-    try {
-      const result = await hfInference(MODELS.audio, null, { binary: true, binaryData: audioBuffer, retries: 2, timeoutMs: 40000 })
-      const raw    = result as { label: string; score: number }[]
-      const fakeE  = raw.find(s => s.label.toUpperCase() === 'FAKE' || s.label === 'LABEL_1')
-      const realE  = raw.find(s => s.label.toUpperCase() === 'REAL' || s.label === 'LABEL_0')
-      const modelScore = fakeE?.score ?? (realE ? 1 - realE.score : null)
-      if (modelScore !== null) {
-        // Blend model score with heuristic
-        const heurScore = heuristicAudioScore(fileSize, format)
-        aiScore         = modelScore * 0.80 + heurScore * 0.20
-        modelUsed       = `DETECTAI-AudioDeepfake(${MODELS.audio.split('/').pop()}+SpectralHeuristics)`
-        modelSucceeded  = true
-      }
-    } catch (err: any) {
-      console.warn('[analyzeAudio] Model failed:', err?.message)
-      aiScore = heuristicAudioScore(fileSize, format)
-    }
-  } else {
-    aiScore = heuristicAudioScore(fileSize, format)
+    mlPromises.push(
+      hfInference(MODELS.audio_primary,  null, { binary: true, binaryData: audioBuffer, retries: 1, timeoutMs: 35000 }).catch(() => null),
+      hfInference(MODELS.audio_asvspoof, null, { binary: true, binaryData: audioBuffer, retries: 1, timeoutMs: 35000 }).catch(() => null),
+    )
   }
+
+  const [mlR1, mlR2] = await Promise.all(mlPromises.length ? mlPromises : [Promise.resolve(null), Promise.resolve(null)])
+
+  // Deterministic audio signals (always run)
+  const audioSignals = audioBuffer
+    ? extractAudioSignals(audioBuffer, fileSize, format, fileName)
+    : extractAudioSignals(Buffer.alloc(0), fileSize, format, fileName)
+  const sigScore = aggregateAudioSignals(audioSignals)
+
+  // Parse ML model results
+  const mlScores: number[] = []
+  const parseAudioResult = (r: unknown) => {
+    if (!r) return
+    try {
+      const raw   = r as { label: string; score: number }[]
+      const fakeE = raw.find(s => /fake|spoof|label_1/i.test(s.label))
+      const realE = raw.find(s => /real|bonafide|label_0/i.test(s.label))
+      const score = fakeE?.score ?? (realE ? 1 - realE.score : null)
+      if (score !== null && score !== undefined) mlScores.push(score)
+    } catch {}
+  }
+  parseAudioResult(mlR1)
+  parseAudioResult(mlR2)
+
+  // Ensemble: ML models 70% + audio signals 30% (or 100% signals if ML unavailable)
+  const mlMean    = mlScores.length ? mlScores.reduce((a, b) => a + b, 0) / mlScores.length : null
+  const mlWeight  = mlScores.length > 0 ? 0.70 : 0.0
+  const aiScore   = mlMean !== null
+    ? mlMean * mlWeight + sigScore * (1 - mlWeight)
+    : sigScore
+
+  const modelUsed = mlScores.length > 0
+    ? `DETECTAI-AudioEnsemble(${mlScores.length}HFModels+5AudioSignals)`
+    : 'DETECTAI-AudioSignals(HeuristicFallback)'
 
   const verdict  = toVerdict(aiScore)
   const segCount = Math.max(3, Math.min(10, Math.ceil(durationEst / 5)))
@@ -302,16 +326,29 @@ export async function analyzeAudio(
     verdict,
     confidence:    Math.round(aiScore * 1000) / 1000,
     model_used:    modelUsed,
-    model_version: '3.0.0',
+    model_version: '4.0.0',
     signals: [
-      { name: 'Wav2Vec2 Deepfake Detector', category: 'Acoustic', description: modelSucceeded ? 'Fine-tuned wav2vec2 trained on ASVspoof2019 deepfake dataset' : 'Model unavailable — spectral heuristics used', weight: 90, value: aiScore, flagged: aiScore > 0.60 },
-      { name: 'Prosody Regularity',         category: 'Acoustic', description: 'TTS/voice-clone produces unnaturally regular pitch and rhythm', weight: 80, value: aiScore > 0.5 ? 0.72 : 0.28, flagged: aiScore > 0.65 },
-      { name: 'Spectral Artifacts',         category: 'Acoustic', description: 'Voice synthesis introduces spectral gaps at codec boundaries', weight: 75, value: aiScore > 0.5 ? 0.68 : 0.32, flagged: aiScore > 0.65 },
-      { name: 'Breathing Naturalness',      category: 'Acoustic', description: 'Real speech has organic breath patterns TTS/cloning lacks', weight: 65, value: aiScore > 0.5 ? 0.62 : 0.38, flagged: aiScore > 0.70 },
-      { name: 'Dynamic Range Compression',  category: 'Acoustic', description: 'TTS outputs are unnaturally compressed compared to real recordings', weight: 60, value: aiScore > 0.5 ? 0.55 : 0.45, flagged: false },
+      {
+        name:        'Neural Deepfake Classifier',
+        category:    'ML',
+        description: mlScores.length
+          ? `${mlScores.length} wav2vec2/ASVspoof models: combined score ${Math.round((mlMean ?? 0.5) * 100)}%`
+          : 'ML models unavailable — audio signal analysis only',
+        weight:      Math.round(mlWeight * 100),
+        value:       mlMean ?? sigScore,
+        flagged:     (mlMean ?? sigScore) > 0.60,
+      },
+      ...audioSignals.map(sig => ({
+        name:        sig.name,
+        category:    'Acoustic',
+        description: sig.description,
+        weight:      Math.round(sig.weight * 30),
+        value:       sig.score,
+        flagged:     sig.score > 0.62,
+      })),
     ],
     summary: verdict === 'AI'
-      ? `Voice detected as AI-synthesized/cloned with ${Math.round(aiScore * 100)}% confidence.`
+      ? `Voice detected as AI-synthesized/cloned with ${Math.round(aiScore * 100)}% confidence. ${mlScores.length} neural models + 5 acoustic signals analyzed.`
       : verdict === 'HUMAN'
       ? `Voice detected as authentic human speech — ${Math.round((1 - aiScore) * 100)}% confidence.`
       : `Audio analysis inconclusive (${Math.round(aiScore * 100)}% synthetic probability). Use WAV format for best accuracy.`,
