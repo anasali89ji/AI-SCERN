@@ -214,10 +214,16 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, user_id: null }),
       })
+      if (res.status === 401) {
+        // Not signed in — redirect to signup
+        router.push('/signup')
+        setLoading(false)
+        return
+      }
       const d = await res.json()
       if (d.success) { setResult(d.data); setUsed(true) }
-      else setResult({ verdict: 'ERROR', confidence: 0 })
-    } catch { setResult({ verdict: 'ERROR', confidence: 0 }) }
+      else setResult({ verdict: 'UNCERTAIN', confidence: 50, summary: d.error?.message || 'Try signing in for full results.' })
+    } catch { setResult({ verdict: 'UNCERTAIN', confidence: 50, summary: 'Analysis unavailable. Sign in for full access.' }) }
     setLoading(false)
   }
 
@@ -246,7 +252,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full h-28 sm:h-32 bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors" />
+          className="w-full h-24 sm:h-28 md:h-32 bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors" />
 
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '✓'}</span>
@@ -412,7 +418,7 @@ export default function HomePage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-16">
         <ParticleNetwork />
         <FloatingCards />
 
@@ -504,7 +510,7 @@ export default function HomePage() {
                       </div>
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-background/80 ${tool.color}`}>{tool.accuracy}</span>
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-white transition-colors">{tool.label}</h3>
+                    <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-primary transition-colors">{tool.label}</h3>
                     <p className="text-sm text-text-muted leading-relaxed">{tool.desc}</p>
                     <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors">
                       Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

@@ -5,7 +5,7 @@
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  body { font-family: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
@@ -38,7 +38,7 @@
   }
 
   .card {
-    @apply bg-surface border border-border rounded-2xl p-6;
+    @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
   }
 
   .card-hover {
@@ -140,6 +140,14 @@
 
   /* Mobile safe paddings */
   .mobile-safe { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+}
+
+/* Mobile responsive table wrapper */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent horizontal scroll on mobile */

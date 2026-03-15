@@ -1,6 +1,7 @@
-export const dynamic = 'force-dynamic'
-
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 import './globals.css'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/components/auth-provider'
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'DETECTAI — Unmask the Machine',
     description: 'Detect AI-generated content with advanced ML models',
-    url: 'https://detectai-platform.netlify.app',
+    url: 'https://detect-ai-nu.vercel.app',
     siteName: 'DETECTAI',
     type: 'website',
   },
@@ -20,8 +21,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-background text-text-primary antialiased">
+    <html lang="en" className={`dark ${inter.variable}`}>
+      <body className="bg-background text-text-primary antialiased font-sans">
         <AuthProvider>
           {children}
           <Toaster

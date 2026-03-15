@@ -52,8 +52,8 @@ export function SiteFooter() {
               {[
                 { label: 'About Us',    href: '/about'   },
                 { label: 'Contact',     href: '/contact' },
-                { label: 'Careers',     href: '/contact' },
-                { label: 'Blog',        href: '/about'   },
+                { label: 'API Docs',    href: '/docs/api' },
+                { label: 'Pricing',     href: '/pricing' },
               ].map(l => (
                 <li key={l.label}>
                   <Link href={l.href} className="text-sm text-text-muted hover:text-text-primary transition-colors">
