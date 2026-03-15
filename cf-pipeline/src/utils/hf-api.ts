@@ -78,6 +78,10 @@ export async function fetchHFRows(
       throw new Error(`Rate limited on ${dataset}`)
     }
 
+    if (res.status === 401 || res.status === 403) {
+      // Gated dataset — not yet approved or token missing. Skip gracefully.
+      throw new Error(`GATED:${res.status} — ${dataset} requires access approval at huggingface.co/datasets/${dataset}`)
+    }
     if (!res.ok) {
       throw new Error(`HF API ${res.status} for ${dataset}: ${await res.text().catch(() => '')}`)
     }

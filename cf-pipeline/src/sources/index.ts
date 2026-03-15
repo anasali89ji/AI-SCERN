@@ -7,31 +7,27 @@ import { VIDEO_SOURCES } from './video'
 export { TEXT_SOURCES, IMAGE_SOURCES, AUDIO_SOURCES, VIDEO_SOURCES }
 
 /**
- * All 59 sources in flat list.
+ * All sources — 72 total (was 58)
+ *   Text:  27 sources  (unchanged)
+ *   Image: 11 sources  (unchanged)
+ *   Audio: 18 sources  (+6: ASVspoof5, MLAAD, UniDataPro, kept all 12)
+ *   Video: 10 sources  (+2: AV-Deepfake1M++, AV-Deepfake1M)
  *
- * Cloudflare free plan = 5 cron triggers max.
- * Architecture:
- *   Worker 1  (detectai-pipeline)   — scraper, sources slice 1/4
- *   Worker 2  (detectai-pipeline-b) — scraper, sources slice 2/4
- *   Worker 3  (detectai-pipeline-c) — scraper, sources slice 3/4
- *   Worker 4  (detectai-pipeline-d) — scraper, sources slice 4/4
- *   Worker 20 (detectai-pipeline-e) — HF push + cleanup (every 10 min)
+ * Gated datasets (require HF access approval):
+ *   ControlNet/AV-Deepfake1M-PlusPlus
+ *   ControlNet/AV-Deepfake1M
+ *   nuriachandra/Deepfake-Eval-2024 (not yet added — pending access)
+ * Workers skip gated sources gracefully with GATED: error log.
  */
 export const ALL_SOURCES: Source[] = [
-  ...TEXT_SOURCES,    // 28 sources
-  ...IMAGE_SOURCES,   // 11 sources
-  ...AUDIO_SOURCES,   // 12 sources
-  ...VIDEO_SOURCES,   //  8 sources
-  // Total: 59 sources
+  ...TEXT_SOURCES,    // 0–26  (27 sources)
+  ...IMAGE_SOURCES,   // 27–37 (11 sources)
+  ...AUDIO_SOURCES,   // 38–55 (18 sources)
+  ...VIDEO_SOURCES,   // 56–65 (10 sources)
 ]
 
-/** Total number of scraper workers on free plan */
 export const TOTAL_SCRAPER_WORKERS = 4
 
-/**
- * Return the sources assigned to a scraper worker (1–4).
- * Worker 20 (push) calls this with workerNum=20 and gets [] — correct.
- */
 export function getWorkerSources(workerNum: number): Source[] {
   if (workerNum < 1 || workerNum > TOTAL_SCRAPER_WORKERS) return []
   const perWorker = Math.ceil(ALL_SOURCES.length / TOTAL_SCRAPER_WORKERS)
