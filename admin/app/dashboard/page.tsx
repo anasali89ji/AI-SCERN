@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   Shield, Activity, LogOut, RefreshCw, Loader2, Users, CreditCard,
   BarChart3, Database, Flag, Lock, Key, CheckCircle, XCircle, TrendingUp,
-  AlertTriangle, Play, Zap, Crown, Ban, DollarSign, Radio, Server
+  AlertTriangle, Play, Zap, Crown, Ban, DollarSign, Radio, Server, Brain, Cpu
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -299,6 +299,10 @@ function PipelineTab() {
   const [triggering,setTriggering]= useState(false)
   const [trigResult,setTrigResult]= useState<any>(null)
   const [error,     setError]     = useState('')
+  const [calRunning, setCalRunning] = useState(false)
+  const [calPhase,   setCalPhase]   = useState('')
+  const [calResult,  setCalResult]  = useState<any>(null)
+  const [calStats,   setCalStats]   = useState<any>(null)
 
   const load = () => {
     setLoading(true); setError('')
@@ -309,7 +313,46 @@ function PipelineTab() {
     }).catch(e => { setError(e.message); setLoading(false) })
   }
 
-  useEffect(() => { load() }, []) // eslint-disable-line
+  useEffect(() => { load(); fetchCalStats() }, []) // eslint-disable-line
+
+  const fetchCalStats = async () => {
+    try {
+      const res = await fetch('https://detectai-cal-agg.saghirahmed9067.workers.dev/calibration')
+      const d   = await res.json()
+      if (d.ok) setCalStats(d.data)
+    } catch {}
+  }
+
+  const triggerCalibration = async () => {
+    setCalRunning(true); setCalResult(null); setCalPhase('')
+    const CAL_AI   = 'https://detectai-cal-ai.saghirahmed9067.workers.dev'
+    const CAL_REAL = 'https://detectai-cal-real.saghirahmed9067.workers.dev'
+    const CAL_AGG  = 'https://detectai-cal-agg.saghirahmed9067.workers.dev'
+    try {
+      // Step 1: collect AI + real samples in parallel
+      setCalPhase('Collecting 200 AI images from DiffusionDB + Midjourney…')
+      const [aiRes, realRes] = await Promise.all([
+        fetch(`${CAL_AI}/run`,   { method: 'POST', signal: AbortSignal.timeout(180_000) }),
+        fetch(`${CAL_REAL}/run`, { method: 'POST', signal: AbortSignal.timeout(180_000) }),
+      ])
+      const aiData   = await aiRes.json()   as any
+      const realData = await realRes.json() as any
+
+      // Step 2: aggregate
+      setCalPhase('Aggregating stats into calibration_state…')
+      const aggRes  = await fetch(`${CAL_AGG}/run`, { method: 'POST', signal: AbortSignal.timeout(30_000) })
+      const aggData = await aggRes.json() as any
+
+      setCalResult({ ok: true, aiInserted: aiData.inserted, realInserted: realData.inserted, aggData })
+      setCalPhase('')
+      // Refresh cal stats
+      await fetchCalStats()
+    } catch (err: any) {
+      setCalResult({ ok: false, error: err?.message || 'Calibration failed' })
+      setCalPhase('')
+    }
+    setCalRunning(false)
+  }
 
   const triggerAll = async () => {
     setTriggering(true); setTrigResult(null)
@@ -488,6 +531,85 @@ function PipelineTab() {
       <div className="grid grid-cols-2 gap-3 text-xs text-gray-500">
         <div>Last scrape: <span className="text-gray-300 font-mono">{p.last_scrape?.slice(0,16) ?? '—'}</span></div>
         <div>Last push:   <span className="text-gray-300 font-mono">{p.last_push?.slice(0,16)   ?? 'never'}</span></div>
+      </div>
+
+      {/* ── Calibration Section ──────────────────────────────────────── */}
+      <div className="bg-gray-800/60 rounded-xl border border-purple-700/40 overflow-hidden">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="w-4 h-4 text-purple-400" />
+            <h4 className="text-sm font-semibold text-white">Image Detection Calibration</h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-300">DiffusionDB</span>
+          </div>
+          <button
+            onClick={triggerCalibration}
+            disabled={calRunning}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-xs text-white transition-colors font-medium"
+          >
+            {calRunning
+              ? <><Loader2 className="w-3 h-3 animate-spin" /> Running…</>
+              : <><Cpu className="w-3 h-3" /> Run Calibration</>
+            }
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Phase indicator */}
+          {calPhase && (
+            <div className="flex items-center gap-2 text-xs text-purple-300 bg-purple-900/20 rounded-lg px-3 py-2">
+              <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+              <span>{calPhase}</span>
+            </div>
+          )}
+
+          {/* Result */}
+          {calResult && (
+            <div className={`rounded-lg px-3 py-2 text-xs font-mono ${calResult.ok ? 'bg-green-900/20 text-green-300 border border-green-700/30' : 'bg-red-900/20 text-red-300 border border-red-700/30'}`}>
+              {calResult.ok
+                ? `✓ Calibration complete — AI: ${calResult.aiInserted} samples, Real: ${calResult.realInserted} samples aggregated`
+                : `✗ ${calResult.error}`
+              }
+            </div>
+          )}
+
+          {/* Current calibration stats */}
+          {calStats ? (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-400">
+                Last updated: <span className="text-gray-200 font-mono">{calStats.updated_at?.slice(0,16) ?? '—'}</span>
+                {' · '}AI samples: <span className="text-purple-300">{calStats.ai_sample_count}</span>
+                {' · '}Real samples: <span className="text-cyan-300">{calStats.real_sample_count}</span>
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {[
+                  { label: 'Entropy',     ai: calStats.entropy_ai_mean,     real: calStats.entropy_real_mean,     unit: 'bits' },
+                  { label: 'Noise',       ai: calStats.noise_ai_mean,       real: calStats.noise_real_mean,       unit: '' },
+                  { label: 'Luminance',   ai: calStats.luminance_ai_mean,   real: calStats.luminance_real_mean,   unit: '' },
+                  { label: 'Background',  ai: calStats.bg_ai_mean,          real: calStats.bg_real_mean,          unit: 'σ' },
+                  { label: 'Color Bal.',  ai: calStats.color_ai_mean,       real: calStats.color_real_mean,       unit: '' },
+                  { label: 'Compression', ai: calStats.compression_ai_mean, real: calStats.compression_real_mean, unit: 'B' },
+                ].map(({ label, ai, real, unit }) => (
+                  <div key={label} className="bg-gray-700/50 rounded-lg p-2 text-[11px]">
+                    <p className="text-gray-400 mb-1 font-medium">{label}</p>
+                    <div className="flex justify-between">
+                      <span className="text-rose-300">AI: {typeof ai === 'number' ? ai.toFixed(2) : '—'}{unit}</span>
+                      <span className="text-emerald-300">Real: {typeof real === 'number' ? real.toFixed(2) : '—'}{unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-500">
+                These thresholds are learned from {calStats.ai_sample_count} DiffusionDB + Midjourney images vs {calStats.real_sample_count} Unsplash + Flickr photos.
+                Auto-recalibrates every 6 hours.
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-500 text-xs">No calibration data yet.</p>
+              <p className="text-gray-600 text-[10px] mt-1">Click "Run Calibration" to fetch 200 AI + 200 real images and train detection thresholds.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
