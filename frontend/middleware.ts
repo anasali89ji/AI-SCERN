@@ -12,9 +12,10 @@ const isProtected = createRouteMatcher([
   '/chat(.*)',
 ])
 
-export default clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware((auth, req) => {
   if (isProtected(req)) {
-    await auth.protect()
+    // In Clerk 5: auth is a function, call auth() to get the auth object
+    auth().protect()
   }
 })
 
