@@ -15,13 +15,14 @@ interface BatchFile {
   error?: string
 }
 
-const MAX_FILES = 25
-const CONCURRENCY = 3 // run 3 in parallel
+const MAX_FILES = 40
+const CONCURRENCY = 5  // 5 parallel workers
 
 function detectType(f: File) {
   if (f.type.startsWith('image/')) return 'image'
   if (f.type.startsWith('audio/')) return 'audio'
   if (f.type.startsWith('video/')) return 'video'
+  if (f.type === 'application/pdf' || f.name.endsWith('.pdf')) return 'pdf'
   return 'text'
 }
 
@@ -34,6 +35,8 @@ export default function BatchPage() {
   const { user: firebaseUser } = useAuth()
   const [files, setFiles] = useState<BatchFile[]>([])
   const [running, setRunning] = useState(false)
+  const [correlation, setCorrelation] = useState<{score:number;pattern:string}|null>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
   const [paused, setPaused] = useState(false)
   const [filter, setFilter] = useState<'all' | 'AI' | 'HUMAN' | 'UNCERTAIN' | 'error'>('all')
   const [elapsed, setElapsed] = useState(0)
@@ -62,8 +65,8 @@ export default function BatchPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': [], 'audio/*': [], 'video/*': [], 'text/plain': ['.txt'] },
-    maxSize: 50 * 1024 * 1024, multiple: true,
+    accept: { 'image/*': [], 'audio/*': [], 'video/*': [], 'text/plain': ['.txt'], 'application/pdf': ['.pdf'] },
+    maxSize: 100 * 1024 * 1024, multiple: true,
     onDropRejected: () => {}
   })
 
@@ -72,7 +75,10 @@ export default function BatchPage() {
     try {
       const mediaType = detectType(bf.file)
       let res: Response
-      if (mediaType === 'text') {
+      if (mediaType === 'pdf') {
+        const formData = new FormData(); formData.append('file', bf.file)
+        res = await fetch('/api/detect/pdf', { method: 'POST', body: formData })
+      } else if (mediaType === 'text') {
         const text = await bf.file.text()
         if (text.trim().length < 50) return { status: 'error', error: 'Text too short (min 50 chars)' }
         res = await fetch('/api/detect/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
@@ -126,6 +132,20 @@ export default function BatchPage() {
     await Promise.all(Array.from({ length: CONCURRENCY }, next))
 
     if (timerRef.current) clearInterval(timerRef.current)
+
+    // Cross-tool correlation pass
+    setFiles(prev => {
+      const done = prev.filter(f => f.status === 'done')
+      const aiFiles = done.filter(f => f.verdict === 'AI')
+      const aiRate = done.length > 0 ? aiFiles.length / done.length : 0
+      if (done.length >= 3 && aiRate >= 0.6) {
+        setCorrelation({ score: Math.round(aiRate * 100), pattern: `${aiFiles.length} of ${done.length} files show consistent AI-generation patterns` })
+      } else {
+        setCorrelation(null)
+      }
+      return prev
+    })
+
     setRunning(false); setPaused(false); pauseRef.current = false
   }
 
@@ -169,6 +189,69 @@ export default function BatchPage() {
 
   const formatElapsed = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
+  const exportPdfReport = async () => {
+    const done = files.filter(f => f.status === 'done')
+    if (!done.length) return
+    setExportingPdf(true)
+    try {
+      // Dynamic import to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+      const pageW = 210; const pageH = 297; const margin = 20; const col = pageW - margin * 2
+
+      // ── Cover page ───────────────────────────────────────────────────
+      doc.setFillColor(10, 10, 20); doc.rect(0, 0, pageW, pageH, 'F')
+      doc.setFillColor(60, 20, 100); doc.rect(0, 0, pageW, 60, 'F')
+      doc.setFontSize(28); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
+      doc.text('DETECTAI', margin, 35)
+      doc.setFontSize(14); doc.setTextColor(180,150,255)
+      doc.text('Batch Analysis Report', margin, 47)
+      doc.setFontSize(10); doc.setTextColor(160,160,160); doc.setFont('helvetica','normal')
+      doc.text(`Generated: ${new Date().toLocaleString()}`, margin, 75)
+      doc.text(`Files analyzed: ${done.length}`, margin, 83)
+      doc.text(`Report ID: DETECT-${Date.now()}`, margin, 91)
+      const aiCount = done.filter(f=>f.verdict==='AI').length
+      const humanCount = done.filter(f=>f.verdict==='HUMAN').length
+      const overallRisk = Math.round((aiCount/done.length)*100)
+      doc.setFontSize(11); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
+      doc.text('Executive Summary', margin, 115)
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(200,200,200)
+      const summaryLines = doc.splitTextToSize(`This batch scan analyzed ${done.length} files. ${aiCount} files were flagged as AI-generated (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
+      doc.text(summaryLines, margin, 125)
+
+      // ── Per-file breakdown ────────────────────────────────────────────
+      doc.addPage()
+      doc.setFillColor(10,10,20); doc.rect(0,0,pageW,pageH,'F')
+      doc.setFontSize(14); doc.setTextColor(180,150,255); doc.setFont('helvetica','bold')
+      doc.text('Per-File Analysis', margin, 25)
+      let y = 38
+      for (const bf of done) {
+        if (y > pageH - 40) { doc.addPage(); doc.setFillColor(10,10,20); doc.rect(0,0,pageW,pageH,'F'); y = 25 }
+        const conf = normalizeConf(bf.confidence)
+        const isAI = bf.verdict==='AI'
+        doc.setFillColor(isAI?80:30, isAI?20:70, 30); doc.roundedRect(margin, y-4, col, 18, 2, 2, 'F')
+        doc.setFontSize(9); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
+        doc.text(bf.file.name.slice(0,50), margin+3, y+4)
+        doc.setFont('helvetica','normal'); doc.setTextColor(isAI?255:100, isAI?100:220, 100)
+        doc.text(`${bf.verdict} — ${conf}%`, margin+3, y+11)
+        doc.setTextColor(160,160,160)
+        doc.text(`${detectType(bf.file).toUpperCase()} · ${formatFileSize(bf.file.size)}`, col-20, y+4, {align:'right'})
+        y += 22
+      }
+
+      // ── Footer ────────────────────────────────────────────────────────
+      const total = doc.getNumberOfPages()
+      for (let i = 1; i <= total; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8); doc.setTextColor(60,60,80); doc.setFont('helvetica','normal')
+        doc.text(`DETECTAI · AI Content Detection Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
+      }
+
+      doc.save(`detectai-batch-report-${Date.now()}.pdf`)
+    } catch (e) { console.error('PDF export failed', e) }
+    setExportingPdf(false)
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8">
@@ -179,7 +262,7 @@ export default function BatchPage() {
           Batch Processing
         </h1>
         <p className="text-text-muted ml-14 text-sm">
-          Analyze up to {MAX_FILES} files simultaneously · {CONCURRENCY} concurrent workers · Auto-saves to history
+          Analyze up to {MAX_FILES} files · PDF, images, audio, video, text · {CONCURRENCY} concurrent workers · Correlation detection · PDF export
         </p>
       </div>
 
@@ -272,12 +355,27 @@ export default function BatchPage() {
             </button>
 
             {completed > 0 && (
-              <button onClick={exportCSV} className="btn-ghost flex items-center gap-2 text-sm ml-auto">
-                <Download className="w-4 h-4" /> Export CSV
-              </button>
+              <div className="flex gap-2 ml-auto">
+                <button onClick={exportCSV} className="btn-ghost flex items-center gap-2 text-sm">
+                  <Download className="w-4 h-4" /> CSV
+                </button>
+                <button onClick={exportPdfReport} disabled={exportingPdf} className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50">
+                  {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF Report
+                </button>
+              </div>
             )}
           </div>
 
+          {/* Cross-tool correlation alert */}
+          {correlation && (
+            <div className="p-4 rounded-xl border border-rose/30 bg-rose/5 flex items-start gap-3 mb-2">
+              <AlertTriangle className="w-5 h-5 text-rose shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-rose">Correlated AI Pattern Detected</p>
+                <p className="text-sm text-text-muted mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
+              </div>
+            </div>
+          )}
           {/* Filter tabs */}
           {completed + errored > 0 && (
             <div className="flex gap-1.5 mb-4 flex-wrap">

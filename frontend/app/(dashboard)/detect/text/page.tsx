@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic'
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste } from 'lucide-react'
+import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
@@ -34,15 +34,53 @@ export default function TextDetectionPage() {
   const [copied, setCopied] = useState(false)
   const [pasteLoading, setPasteLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfMode, setPdfMode] = useState(false)
+  const [paragraphScores, setParagraphScores] = useState<{text:string;confidence:number;verdict:string}[]>([])
 
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
+  const charLimit = 100_000
+  const charColor = charCount > 90_000 ? 'text-rose' : charCount > 70_000 ? 'text-amber' : 'text-text-muted'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
+  const handlePdfUpload = async (file: File) => {
+    if (!file.name.endsWith('.pdf') && file.type !== 'application/pdf') {
+      setError('Please upload a PDF file')
+      return
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setError('PDF too large (max 20MB)')
+      return
+    }
+    setPdfLoading(true); setPdfFile(file); setError(null); setResult(null); setParagraphScores([])
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res  = await fetch('/api/detect/pdf', { method: 'POST', body: form })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error?.message || 'PDF analysis failed')
+      setResult(data.data)
+      if (data.data.paragraph_scores) setParagraphScores(data.data.paragraph_scores)
+      if (firebaseUser?.uid) {
+        await supabase.from('scans').insert({
+          user_id: firebaseUser.uid, media_type: 'text',
+          content_preview: `[PDF: ${file.name}]`,
+          verdict: data.data.verdict, confidence_score: data.data.confidence,
+          model_used: data.data.model_used, processing_time: data.data.processing_time, status: 'complete'
+        })
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'PDF analysis failed')
+    } finally { setPdfLoading(false) }
+  }
+
   const handleDetect = async () => {
-    if (!text.trim() || text.length < 50) {
+    if (!pdfMode && (!text.trim() || text.length < 50)) {
       setError('Please enter at least 50 characters for accurate detection.')
       return
     }
@@ -150,6 +188,47 @@ Analyzed: ${new Date().toLocaleString()}`
               className="input-field h-56 resize-none font-mono text-sm"
             />
 
+            {/* PDF Upload Zone */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setPdfMode(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!pdfMode ? 'bg-amber/15 text-amber border border-amber/30' : 'text-text-muted hover:text-text-secondary'}`}>
+                <FileText className="w-3.5 h-3.5" /> Text Input
+              </button>
+              <button
+                onClick={() => setPdfMode(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${pdfMode ? 'bg-primary/15 text-primary border border-primary/30' : 'text-text-muted hover:text-text-secondary'}`}>
+                <BookOpen className="w-3.5 h-3.5" /> PDF Upload
+              </button>
+            </div>
+
+            {pdfMode && (
+              <div>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center py-10 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3
+                    ${pdfFile ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-primary/3'}`}>
+                  {pdfLoading ? (
+                    <><Loader2 className="w-8 h-8 text-primary animate-spin mb-2" /><p className="text-sm text-text-muted">Extracting & analyzing PDF…</p></>
+                  ) : pdfFile ? (
+                    <><BookOpen className="w-8 h-8 text-primary mb-2" /><p className="text-sm font-semibold text-text-primary">{pdfFile.name}</p><p className="text-xs text-text-muted mt-1">{(pdfFile.size/1024/1024).toFixed(2)} MB · Click to change</p></>
+                  ) : (
+                    <><Upload className="w-8 h-8 text-text-muted mb-2" /><p className="text-sm font-semibold text-text-primary">Drop PDF here or click to browse</p><p className="text-xs text-text-muted mt-1">Academic papers, student submissions, reports · Up to 20MB</p></>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f) }} />
+                {pdfFile && !pdfLoading && !result && (
+                  <button onClick={() => { setPdfFile(null); setResult(null) }}
+                    className="flex items-center gap-1.5 text-xs text-text-muted hover:text-rose transition-colors mb-2">
+                    <X className="w-3.5 h-3.5" /> Clear PDF
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!pdfMode && (
+            <>
             {/* Live stats bar */}
             <div className="mt-3 grid grid-cols-4 gap-2">
               {[
@@ -165,6 +244,15 @@ Analyzed: ${new Date().toLocaleString()}`
               ))}
             </div>
 
+            {/* Char limit warning */}
+            {charCount > 70_000 && (
+              <div className="mt-2">
+                <div className="h-1 bg-border rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${charCount > 90_000 ? 'bg-rose' : 'bg-amber'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
+                </div>
+                <p className={`text-xs mt-1 ${charCount > 90_000 ? 'text-rose' : 'text-amber'}`}>{(100_000 - charCount).toLocaleString()} chars remaining (100k limit)</p>
+              </div>
+            )}
             {/* Progress to minimum */}
             {charCount < 50 && charCount > 0 && (
               <div className="mt-2">
@@ -193,6 +281,8 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </div>
             <p className="text-xs text-text-disabled mt-2">Ctrl+Enter to analyze</p>
+            </>
+            )}
           </div>
 
           {error && (
@@ -293,6 +383,25 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 </div>
 
+                {/* Paragraph-level scores */}
+                {paragraphScores.length > 0 && (
+                  <div className="card">
+                    <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2 text-sm">
+                      <span className="w-2 h-2 rounded-full bg-rose" />
+                      Top AI-Probable Paragraphs
+                    </h3>
+                    <div className="space-y-3">
+                      {paragraphScores.map((p, i) => (
+                        <div key={i} className={`p-3 rounded-xl border text-xs ${p.verdict === 'AI' ? 'border-rose/20 bg-rose/5' : 'border-border/50 bg-surface-active/30'}`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`font-bold text-xs px-2 py-0.5 rounded-full ${p.verdict === 'AI' ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>{p.confidence}% AI</span>
+                          </div>
+                          <p className="text-text-muted leading-relaxed line-clamp-3">{p.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* Actions footer */}
                 <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs text-text-muted font-mono truncate">{result.model_used} · {result.processing_time}ms</span>

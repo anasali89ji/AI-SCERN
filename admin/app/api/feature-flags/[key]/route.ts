@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
-
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest, { params }: { params: { key: string } }) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
+  const body = await req.json()
+  await getAdminDb().from('feature_flags').upsert({ key: params.key, ...body, updated_at: new Date().toISOString() })
+  await logAdminAction(`flag_update:${params.key}`, null, (auth as any).ip, body)
+  return NextResponse.json({ ok: true })
+}
 
-  const { enabled, rollout_pct } = await req.json()
-  const db = getAdminDb()
-  const { error } = await db.from('feature_flags').upsert({
-    key: params.key, enabled, rollout_pct: rollout_pct ?? 100, updated_at: new Date().toISOString()
-  })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  await logAdminAction('flag_toggle', null, auth.ip, { key: params.key, enabled })
+export async function DELETE(req: NextRequest, { params }: { params: { key: string } }) {
+  const auth = await requireAdmin(req)
+  if (auth instanceof NextResponse) return auth
+  await getAdminDb().from('feature_flags').delete().eq('key', params.key)
+  await logAdminAction(`flag_delete:${params.key}`, null, (auth as any).ip, {})
   return NextResponse.json({ ok: true })
 }
