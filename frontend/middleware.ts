@@ -1,27 +1,28 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { authMiddleware } from '@clerk/nextjs/server'
 
-const isProtected = createRouteMatcher([
-  '/dashboard(.*)',
-  '/detect(.*)',
-  '/scraper(.*)',
-  '/batch(.*)',
-  '/history(.*)',
-  '/profile(.*)',
-  '/settings(.*)',
-  '/pipeline(.*)',
-  '/chat(.*)',
-])
-
-export default clerkMiddleware((auth, req) => {
-  if (isProtected(req)) {
-    // In Clerk 5: auth is a function, call auth() to get the auth object
-    auth().protect()
+export default authMiddleware({
+  publicRoutes: [
+    '/',
+    '/login(.*)',
+    '/signup(.*)',
+    '/pricing(.*)',
+    '/about(.*)',
+    '/contact(.*)',
+    '/privacy(.*)',
+    '/terms(.*)',
+    '/docs(.*)',
+    '/api/auth(.*)',
+    '/api/webhook(.*)',
+    '/api/billing/webhook(.*)',
+  ],
+  afterAuth(auth, req) {
+    // Redirect signed-in users away from auth pages
+    if (auth.userId && (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/signup')) {
+      return Response.redirect(new URL('/dashboard', req.url))
+    }
   }
 })
 
 export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 }
