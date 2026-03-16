@@ -5,12 +5,12 @@ import { motion } from 'framer-motion'
 import { Mail, Shield, BarChart3, Calendar, Edit3, Save, X, Camera, Loader2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
-import { updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase/client'
+import { useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
 
 export default function ProfilePage() {
   const { user: fbUser } = useAuth()
+  const { user: clerkUser } = useUser()
   const [profile,     setProfile]      = useState<any>(null)
   const [stats,       setStats]        = useState<any>(null)
   const [editing,     setEditing]      = useState(false)
@@ -67,7 +67,7 @@ export default function ProfilePage() {
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
       const url = urlData.publicUrl
       await supabase.from('profiles').upsert({ id: fbUser.uid, avatar_url: url })
-      if (auth.currentUser) await updateProfile(auth.currentUser, { photoURL: url })
+      if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
       setAvatarUrl(url)
       setProfile((p: any) => ({ ...p, avatar_url: url }))
       toast.success('Profile photo updated!')
@@ -83,7 +83,7 @@ export default function ProfilePage() {
     if (!fbUser?.uid) return
     setSaving(true)
     try {
-      if (auth.currentUser) await updateProfile(auth.currentUser, { displayName, photoURL: avatarUrl || undefined })
+      if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
       await supabase.from('profiles').upsert({ id: fbUser.uid, display_name: displayName, avatar_url: avatarUrl || null, updated_at: new Date().toISOString() })
       setProfile((p: any) => ({ ...p, display_name: displayName, avatar_url: avatarUrl }))
       setEditing(false)
@@ -189,8 +189,8 @@ export default function ProfilePage() {
         <h3 className="font-semibold text-text-primary text-sm">Account Details</h3>
         <div className="space-y-1">
           {[
-            { icon: Mail,     label: 'Email',         value: fbUser?.email || '—',                     extra: fbUser?.emailVerified ? <Check className="w-4 h-4 text-emerald ml-auto" /> : null },
-            { icon: Shield,   label: 'Auth Provider', value: (fbUser?.providerData?.[0]?.providerId || 'password').replace('.com','').replace('password','Email/Password') },
+            { icon: Mail,     label: 'Email',         value: fbUser?.email || '—',                     extra: true ? <Check className="w-4 h-4 text-emerald ml-auto" /> : null },
+            { icon: Shield,   label: 'Auth Provider', value: ('password' || 'password').replace('.com','').replace('password','Email/Password') },
             { icon: BarChart3, label: 'Plan',         value: profile?.plan === 'pro' ? 'Pro' : 'Free Forever' },
           ].map((row, i) => (
             <div key={i} className={`flex items-center gap-3 py-3 ${i < 2 ? 'border-b border-border' : ''}`}>

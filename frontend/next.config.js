@@ -4,12 +4,19 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_URL:      process.env.NEXT_PUBLIC_SUPABASE_URL      || 'https://lpgzmruxaeikxxayjmze.supabase.co',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     NVIDIA_API_KEY:                process.env.NVIDIA_API_KEY                || '',
-    CLOUDFLARE_D1_DATABASE_ID: process.env.CLOUDFLARE_D1_DATABASE_ID || '',
+    CLOUDFLARE_D1_DATABASE_ID:     process.env.CLOUDFLARE_D1_DATABASE_ID    || '',
+    // Clerk redirect configuration
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL:      '/login',
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL:      '/signup',
+    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL:'/dashboard',
+    NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL:'/dashboard',
   },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'img.clerk.com' },
+      { protocol: 'https', hostname: '*.clerk.accounts.dev' },
     ],
   },
   headers: async () => [

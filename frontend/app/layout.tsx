@@ -1,39 +1,59 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
-import './globals.css'
-import { Toaster } from 'sonner'
+import { ClerkProvider } from '@clerk/nextjs'
 import { AuthProvider } from '@/components/auth-provider'
+import { Toaster } from 'sonner'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: { default: 'DETECTAI — Unmask the Machine', template: '%s | DETECTAI' },
-  description: 'Agentic AI content detection platform. Detect AI-generated images, videos, audio, and text with high accuracy using fine-tuned ML models.',
-  keywords: ['AI detection', 'deepfake detection', 'AI content', 'fake media'],
+  title:       'DETECTAI — AI Content Detection',
+  description: 'Detect AI-generated text, images, audio, and video with enterprise-grade accuracy.',
+  keywords:    ['AI detection', 'deepfake', 'AI text', 'content authenticity'],
   openGraph: {
-    title: 'DETECTAI — Unmask the Machine',
-    description: 'Detect AI-generated content with advanced ML models',
-    url: 'https://detect-ai-nu.vercel.app',
-    siteName: 'DETECTAI',
-    type: 'website',
+    title:       'DETECTAI',
+    description: 'AI content detection across text, images, audio and video',
+    type:        'website',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${inter.variable}`}>
-      <body className="bg-background text-text-primary antialiased font-sans">
-        <AuthProvider>
-          {children}
-          <Toaster
-            theme="dark"
-            position="bottom-right"
-            toastOptions={{
-              style: { background: '#111118', border: '1px solid #1E1E2E', color: '#F1F5F9' },
-            }}
-          />
-        </AuthProvider>
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary:       '#7c3aed',
+          colorBackground:    '#0d0d1a',
+          colorInputBackground:'#1a1a2e',
+          colorText:          '#f1f5f9',
+          colorInputText:     '#f1f5f9',
+          colorNeutral:       '#64748b',
+          borderRadius:       '0.75rem',
+          fontFamily:         'Inter, sans-serif',
+        },
+        elements: {
+          card:               'bg-surface border border-border shadow-2xl',
+          headerTitle:        'text-text-primary font-black',
+          headerSubtitle:     'text-text-muted',
+          formButtonPrimary:  'btn-primary w-full',
+          formFieldInput:     'input-field',
+          footerActionLink:   'text-primary hover:text-primary/80',
+          dividerLine:        'bg-border',
+          dividerText:        'text-text-muted',
+          socialButtonsBlockButton: 'btn-ghost border border-border',
+          socialButtonsBlockButtonText: 'text-text-secondary',
+        },
+      }}
+    >
+      <html lang="en" className={inter.variable}>
+        <body className="bg-background text-text-primary antialiased">
+          <AuthProvider>
+            {children}
+            <Toaster richColors position="top-right" />
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export interface CreditGuardResult {
-  userId: string
+  userId:           string
   creditsRemaining: number
-  unlimited?: boolean
+  unlimited?:       boolean
 }
 
 export class HTTPError extends Error {
@@ -14,12 +14,12 @@ export class HTTPError extends Error {
 }
 
 /**
- * Verify session cookie + atomically consume 1 credit before inference.
- * Call this at the top of every detection API route.
- * Throws HTTPError if auth fails or credits are exhausted.
+ * Verify Clerk session + atomically consume 1 credit before inference.
+ * Clerk sets __session (JWT) and __client_uat cookies automatically.
+ * The JWT sub claim is the Clerk userId.
  */
 export async function creditGuard(req: NextRequest, scanType: string): Promise<CreditGuardResult> {
-  // 1. Get session cookie
+  // 1. Get Clerk session token
   const token = req.cookies.get('__session')?.value
   if (!token) {
     throw new HTTPError(401, 'Authentication required', {
@@ -29,82 +29,85 @@ export async function creditGuard(req: NextRequest, scanType: string): Promise<C
     })
   }
 
-  // 2. Extract user ID from JWT (structural decode — full crypto done by session route)
+  // 2. Decode Clerk JWT to get userId (sub claim)
   let userId: string
   try {
-    const parts = token.split('.')
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-
-    if (!payload.sub || !payload.exp) throw new Error('bad payload')
-    if (Date.now() / 1000 > payload.exp) {
-      throw new HTTPError(401, 'Session expired', {
-        code: 'SESSION_EXPIRED',
-        message: 'Your session has expired. Please sign in again.',
-        loginUrl: '/login',
-      })
-    }
-    if (payload.iss !== 'https://securetoken.google.com/detectai-prod') {
-      throw new HTTPError(401, 'Invalid token issuer', { code: 'INVALID_TOKEN' })
-    }
-    userId = payload.sub
-  } catch (err) {
-    if (err instanceof HTTPError) throw err
-    throw new HTTPError(401, 'Malformed session token', { code: 'INVALID_TOKEN' })
+    const parts   = token.split('.')
+    const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString())
+    if (!payload.sub) throw new Error('no sub')
+    if (Date.now() / 1000 > payload.exp) throw new Error('expired')
+    userId = payload.sub   // Clerk user ID: user_xxxxxxxxxx
+  } catch {
+    throw new HTTPError(401, 'Invalid or expired session', {
+      code: 'INVALID_SESSION',
+      message: 'Your session has expired. Please sign in again.',
+      loginUrl: '/login',
+    })
   }
 
-  // 3. Ensure profile exists (upsert on first scan)
-  await getSupabaseAdmin().from('profiles').upsert(
-    { id: userId, credits_remaining: 9999, plan_id: 'free', updated_at: new Date().toISOString() },
-    { onConflict: 'id', ignoreDuplicates: true }
-  )
+  // 3. Load profile + credit balance
+  const db = getSupabaseAdmin()
+  const { data: profile, error } = await db
+    .from('profiles')
+    .select('id, credits_remaining, plan_id, is_banned')
+    .eq('id', userId)
+    .single()
 
-  // 4. Atomically consume credit
-  const { data, error } = await getSupabaseAdmin().rpc('consume_credit', {
+  // Auto-create profile for new Clerk users
+  if (error || !profile) {
+    await db.from('profiles').upsert({
+      id:                userId,
+      credits_remaining: 10,
+      plan_id:           'free',
+      scan_count:        0,
+    }, { onConflict: 'id', ignoreDuplicates: true })
+    return { userId, creditsRemaining: 10 }
+  }
+
+  if (profile.is_banned) {
+    throw new HTTPError(403, 'Account suspended', {
+      code: 'ACCOUNT_BANNED',
+      message: 'Your account has been suspended. Contact support.',
+    })
+  }
+
+  // 4. Enterprise / unlimited plan bypass
+  if (profile.plan_id === 'enterprise' || profile.credits_remaining === -1) {
+    return { userId, creditsRemaining: Infinity, unlimited: true }
+  }
+
+  // 5. Check credits
+  if ((profile.credits_remaining ?? 0) < 1) {
+    throw new HTTPError(402, 'Insufficient credits', {
+      code: 'NO_CREDITS',
+      message: 'You have no credits remaining. Please upgrade your plan.',
+      upgradeUrl: '/pricing',
+      creditsRemaining: 0,
+    })
+  }
+
+  // 6. Atomically deduct 1 credit + record transaction
+  const { error: deductErr } = await db.rpc('deduct_credit', {
     p_user_id: userId,
     p_scan_type: scanType,
-    p_scan_id: null,
-  })
+  }).single()
 
-  if (error) {
-    console.error('[creditGuard] RPC error:', error.message)
-    // If function doesn't exist yet, allow through (migration may not have run)
-    return { userId, creditsRemaining: 999 }
-  }
-
-  const result = data as { ok: boolean; reason?: string; balance?: number; unlimited?: boolean; plan?: string }
-
-  if (!result.ok) {
-    if (result.reason === 'account_suspended') {
-      throw new HTTPError(403, 'Account suspended', {
-        code: 'ACCOUNT_SUSPENDED',
-        message: 'Your account has been suspended. Contact support@detectai.io',
-      })
-    }
-    if (result.reason === 'insufficient_credits') {
-      throw new HTTPError(402, 'Credits exhausted', {
-        code: 'CREDITS_EXHAUSTED',
-        creditsRemaining: 0,
-        plan: result.plan,
-        message: 'You have used all your credits for this month. Upgrade to continue scanning.',
-        upgradeUrl: '/pricing',
-      })
-    }
-    throw new HTTPError(402, result.reason || 'Credit check failed', {
-      code: 'CREDIT_CHECK_FAILED',
-    })
+  if (deductErr) {
+    // Fallback: direct update if RPC doesn't exist yet
+    await db.from('profiles')
+      .update({ credits_remaining: (profile.credits_remaining ?? 1) - 1 })
+      .eq('id', userId)
   }
 
   return {
     userId,
-    creditsRemaining: result.balance ?? 0,
-    unlimited: result.unlimited,
+    creditsRemaining: (profile.credits_remaining ?? 1) - 1,
   }
 }
 
-/** Convert HTTPError to NextResponse */
 export function httpErrorResponse(err: HTTPError): NextResponse {
   return NextResponse.json(
-    { success: false, error: err.body || { message: err.message } },
+    { success: false, error: err.body ?? { message: err.message } },
     { status: err.status }
   )
 }

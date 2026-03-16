@@ -9,6 +9,7 @@ import {
   ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { UserButton } from '@clerk/nextjs'
 
 const navGroups = [
   {
@@ -57,85 +58,23 @@ function Avatar({ user, size = 8 }: { user: any; size?: number }) {
 }
 
 function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User'
-  const email = user?.email || ''
-  const shortEmail = email.length > 22 ? email.slice(0, 19) + '\u2026' : email
-
   return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-all">
-        <Avatar user={user} size={8} />
-        <div className="hidden md:block text-left">
-          <p className="text-xs font-semibold text-text-primary truncate max-w-[110px]">{displayName}</p>
-          <p className="text-[10px] text-text-muted truncate max-w-[110px]">{shortEmail}</p>
-        </div>
-        <ChevronDown className={`w-3.5 h-3.5 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border rounded-2xl shadow-2xl z-50 overflow-hidden"
-          >
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center gap-3">
-                <Avatar user={user} size={10} />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text-primary truncate">{displayName}</p>
-                  <p className="text-xs text-text-muted truncate">{email}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
-                    <span className="text-[10px] text-emerald font-medium">Free · Unlimited Access</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-2">
-              <Link href="/profile" onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
-                <User className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                <span className="text-sm text-text-secondary group-hover:text-text-primary">My Profile</span>
-              </Link>
-              <Link href="/settings" onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
-                <Settings className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                <span className="text-sm text-text-secondary group-hover:text-text-primary">Settings</span>
-              </Link>
-              <Link href="/history" onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors group">
-                <Clock className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                <span className="text-sm text-text-secondary group-hover:text-text-primary">Scan History</span>
-              </Link>
-            </div>
-            <div className="p-2 border-t border-border">
-              <button onClick={() => { setOpen(false); signOut() }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose/10 transition-colors group">
-                <LogOut className="w-4 h-4 text-text-muted group-hover:text-rose transition-colors" />
-                <span className="text-sm text-text-secondary group-hover:text-rose">Sign out</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center gap-3 px-4 py-3 border-t border-border/50">
+      <UserButton
+        appearance={{
+          elements: { avatarBox: 'w-9 h-9' }
+        }}
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-text-primary truncate">
+          {user?.displayName || user?.email?.split('@')[0] || 'User'}
+        </p>
+        <p className="text-xs text-text-muted truncate">{user?.email || ''}</p>
+      </div>
     </div>
   )
 }
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth()
