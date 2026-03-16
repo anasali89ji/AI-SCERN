@@ -5,7 +5,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <SignIn
         routing="hash"
-        afterSignInUrl="/dashboard"
+        forceRedirectUrl="/dashboard"
         signUpUrl="/signup"
       />
     </div>

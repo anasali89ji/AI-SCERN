@@ -12,7 +12,8 @@ function getDb() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   try {
     const { feedback } = await req.json()
     if (!['correct', 'incorrect'].includes(feedback)) {
@@ -22,13 +23,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const { error } = await getDb()
       .from('scans')
       .update({ user_feedback: feedback })
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) throw error
 
     // If incorrect: enqueue augment job for self-improving loop
     if (feedback === 'incorrect') {
-      const { data: scan } = await getDb().from('scans').select('*').eq('id', params.id).single()
+      const { data: scan } = await getDb().from('scans').select('*').eq('id', id).single()
       if (scan) {
         await getDb().from('pipeline_jobs').insert({
           job_type:    'augment',

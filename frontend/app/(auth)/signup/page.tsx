@@ -5,7 +5,7 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <SignUp
         routing="hash"
-        afterSignUpUrl="/dashboard"
+        forceRedirectUrl="/dashboard"
         signInUrl="/login"
       />
     </div>

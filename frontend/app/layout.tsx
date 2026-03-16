@@ -16,13 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body className="bg-background text-text-primary antialiased">
-        <ClerkProvider
-          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-          afterSignInUrl="/dashboard"
-          afterSignUpUrl="/dashboard"
-          signInUrl="/login"
-          signUpUrl="/signup"
-        >
+        <ClerkProvider>
           <AuthProvider>
             {children}
             <Toaster richColors position="top-right" />
