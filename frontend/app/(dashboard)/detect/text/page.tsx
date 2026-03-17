@@ -446,3 +446,4 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
   )
 }
+// Metadata added separately in (marketing) or via generateMetadata; keeping dynamic page
