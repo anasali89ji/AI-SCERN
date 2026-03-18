@@ -72,6 +72,7 @@ export default function TextDetectionPage() {
       if (data.data.paragraph_scores) setParagraphScores(data.data.paragraph_scores)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
+      window.dispatchEvent(new Event('aiscern:scan'))
       if (currentUser?.uid) {
         await supabase.from('scans').insert({
           user_id: currentUser.uid, media_type: 'text',
