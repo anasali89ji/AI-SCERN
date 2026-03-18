@@ -13,8 +13,6 @@ export default function robots(): MetadataRoute.Robots {
           '/contact',
           '/reviews',
           '/detect/',
-          '/login',
-          '/signup',
           '/privacy',
           '/terms',
         ],

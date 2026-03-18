@@ -82,15 +82,8 @@ export default function DashboardPage() {
     }
     loadData()
 
-    const channel = supabase
-      .channel(`scans-rt-${uid}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scans', filter: `user_id=eq.${uid}` }, (payload) => {
-        setScans(prev => [payload.new as Scan, ...prev.slice(0, 9)])
-        setStats(prev => prev ? { ...prev, total_scans: prev.total_scans + 1 } : prev)
-      })
-      .subscribe()
-
-    return () => { (supabase as any).removeChannel(channel) }
+    // Realtime disabled (Supabase auth off) - data loads on mount
+    return () => {}
   }, [currentUser?.uid])
 
   if (loading) {
