@@ -96,7 +96,7 @@ export default function TermsPage() {
           <Section title="7. Intellectual Property">
             <p>
               The DETECTAI platform, including its design, AI models, codebase (MIT License), and branding, is the property
-              of Anas Ali. The source code is available on GitHub under the MIT License. You may not use our trademarks,
+              of Anas Ali. You may not use our trademarks,
               logos, or branding without prior written permission.
             </p>
           </Section>

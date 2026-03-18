@@ -38,13 +38,13 @@ export default function ContactPage() {
             </div>
           </a>
 
-          <a href="https://github.com/saghirahmed9067-png/DETECT-AI/issues" target="_blank" rel="noopener noreferrer"
+          <a href="mailto:support@aiscern.com" target="_blank" rel="noopener noreferrer"
             className="card hover:border-primary/30 transition-all flex items-center gap-4 group">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
               <Github className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <div className="font-semibold text-text-primary mb-0.5">GitHub Issues</div>
+              <div className="font-semibold text-text-primary mb-0.5">Support Tickets</div>
               <div className="text-sm text-text-muted">Bug reports &amp; feature requests</div>
             </div>
           </a>

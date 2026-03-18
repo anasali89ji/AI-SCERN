@@ -191,7 +191,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 sm:h-16 border-b border-border flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-surface/50 flex-shrink-0 backdrop-blur-sm">
+        <header className="h-14 sm:h-16 border-b border-border flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-surface/50 flex-shrink-0 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
               <Menu className="w-6 h-6" />
@@ -207,7 +207,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <UserDropdown user={user} signOut={signOut} />
         </header>
-        <main className="flex-1 overflow-y-auto pb-safe">{children}</main>
+        <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full">{children}</div></main>
       </div>
     </div>
   )

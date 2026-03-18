@@ -97,7 +97,7 @@ function FloatingCards() {
         const isHovered = hovered === i
         return (
           <motion.div key={i}
-            className="absolute hidden lg:flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl z-10 cursor-pointer select-none"
+            className="absolute hidden xl:flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl z-10 cursor-pointer select-none"
             style={{
               left: item.x, top: item.y,
               background: `${item.color}18`,
@@ -325,7 +325,7 @@ export default function HomePage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden">
+    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
 
       {/* ── Schema.org JSON-LD ── */}
       <script
@@ -433,7 +433,7 @@ export default function HomePage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-28 sm:pt-32">
         <ParticleNetwork />
         <FloatingCards />
 
@@ -450,7 +450,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-4xl sm:text-6xl lg:text-8xl font-black leading-[0.9] mb-6">
+            className="text-3xl sm:text-5xl lg:text-7xl font-black leading-[0.95] mb-6">
             <span className="gradient-text">Unmask AI-Generated Content</span>
             <br /><span className="text-text-primary text-3xl sm:text-4xl lg:text-5xl">— Free Detector for Text, Images, Audio &amp; Video</span>
           </motion.h1>
@@ -639,7 +639,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {[
               { icon: Database,    color: 'bg-primary/10 text-primary',   title: '285,000+ Samples', desc: 'Trained on the largest public AI-detection dataset — DiffusionDB, LSUN, MLAAD, OpenAI WebText, and 56 more sources.' },
-              { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Open Source Code', desc: 'Every model weight, signal, and ensemble formula is visible on GitHub. No black boxes. Full transparency.' },
+              { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every signal, ensemble formula and threshold is documented and auditable.' },
               { icon: TrendingUp,  color: 'bg-amber/10 text-amber',       title: '94% Accuracy',     desc: 'Independently validated against GPT-4, Claude 3, Gemini, Midjourney, DALL-E 3, and ElevenLabs outputs.' },
               { icon: Zap,         color: 'bg-cyan/10 text-cyan',         title: 'Free Forever',     desc: 'No subscriptions, no scan limits, no paywalls. Core detection will always be free — always.' },
             ].map(({ icon: Icon, color, title, desc }) => (
@@ -698,7 +698,7 @@ export default function HomePage() {
                 {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link href="/signup" className="btn-secondary px-7 sm:px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2" title="Create free account">
+              <Link href="/signup" className="btn-secondary px-7 sm:px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2" title="Create free Aiscern account">
                 <Zap className="w-5 h-5 text-amber" />Create Free Account
               </Link>
             </div>

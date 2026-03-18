@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CheckCircle, Zap, Shield, Github } from 'lucide-react'
+import { CheckCircle, Zap, Shield } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Free AI Detector — No Subscription Required | Aiscern',
@@ -69,9 +69,9 @@ export default function PricingPage() {
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors">
               <Zap className="w-4 h-4" /> Start Detecting Free
             </Link>
-            <a href="https://github.com/saghirahmed9067-png/DETECT-AI" target="_blank" rel="noopener noreferrer"
+            <a href="/docs/api"
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-colors">
-              <Github className="w-4 h-4" /> View Source
+              Read the Docs →
             </a>
           </div>
         </div>
