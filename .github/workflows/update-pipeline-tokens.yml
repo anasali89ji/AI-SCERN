@@ -1,0 +1,29 @@
+name: Update HF Token on All 20 Workers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g wrangler@latest
+      - name: Push HF_TOKEN to all 20 workers
+        working-directory: cf-pipeline
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HF_TOKEN_VALUE: ${{ secrets.HUGGINGFACE_API_TOKEN }}
+        run: |
+          CONFIGS=(wrangler.toml wrangler-w2.toml wrangler-w3.toml wrangler-w4.toml wrangler-w5.toml wrangler-w6.toml wrangler-w7.toml wrangler-w8.toml wrangler-w9.toml wrangler-w10.toml wrangler-w11.toml wrangler-w12.toml wrangler-w13.toml wrangler-w14.toml wrangler-w15.toml wrangler-w16.toml wrangler-w17.toml wrangler-w18.toml wrangler-w19.toml wrangler-w20.toml)
+          for cfg in "${CONFIGS[@]}"; do
+            printf "%s" "$HF_TOKEN_VALUE" | wrangler secret put HF_TOKEN --config "$cfg" && echo "✅ $cfg" || echo "❌ $cfg"
+          done
+      - name: Health check
+        run: |
+          sleep 5
+          curl -sf https://detectai-pipeline.workers.dev/health | python3 -m json.tool || echo "check failed"
+          curl -sf https://detectai-pipeline-w20.workers.dev/health | python3 -m json.tool || echo "w20 check failed"
