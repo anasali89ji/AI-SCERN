@@ -1,0 +1,37 @@
+name: Pipeline Status Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Worker health check
+        run: |
+          echo "🔍 DETECTAI Pipeline Status"
+          WORKERS=(detectai-pipeline detectai-pipeline-b detectai-pipeline-c detectai-pipeline-d detectai-pipeline-e)
+          ALIVE=0; DEAD=0
+          for W in "${WORKERS[@]}"; do
+            RESP=$(curl -sf --max-time 10 "https://${W}.workers.dev/health" 2>/dev/null)
+            if [ $? -eq 0 ]; then
+              ROLE=$(echo "$RESP" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('role','?'))" 2>/dev/null)
+              echo "  ✅ $W — $ROLE"; ALIVE=$((ALIVE+1))
+            else
+              echo "  ❌ $W — OFFLINE"; DEAD=$((DEAD+1))
+            fi
+          done
+          echo "── $ALIVE alive, $DEAD offline ──"
+
+      - name: D1 stats
+        run: |
+          curl -sf --max-time 15 "https://detectai-pipeline.workers.dev/status" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+ds=d.get('dataset',{}); ps=d.get('state',{})
+print(f'  Total:   {ds.get(\"total\",0):,}')
+print(f'  Pending: {ds.get(\"pending\",0):,}')
+print(f'  Pushed:  {ps.get(\"total_pushed\",0):,}')
+" 2>/dev/null || echo "  Could not fetch stats"

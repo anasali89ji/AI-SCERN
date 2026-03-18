@@ -34,39 +34,38 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      # ── Main pipeline workers (5 with cron triggers) ────────────────────
-      - name: Deploy pipeline workers
+      - name: Deploy 5 pipeline workers + set HF_TOKEN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          declare -A NAMES
+          NAMES["wrangler.toml"]="detectai-pipeline"
+          NAMES["wrangler-b.toml"]="detectai-pipeline-b"
+          NAMES["wrangler-c.toml"]="detectai-pipeline-c"
+          NAMES["wrangler-d.toml"]="detectai-pipeline-d"
+          NAMES["wrangler-e.toml"]="detectai-pipeline-e"
+
           FAILED=0
           for cfg in wrangler.toml wrangler-b.toml wrangler-c.toml wrangler-d.toml wrangler-e.toml; do
-            echo "▶ Deploying $cfg..."
+            NAME="${NAMES[$cfg]}"
+            echo "▶ Deploying $cfg → $NAME"
             if npx wrangler deploy --config "$cfg"; then
-              echo "$HF_TOKEN_VAL" | npx wrangler secret put HF_TOKEN --config "$cfg" || true
-              echo "  ✅ $cfg deployed"
+              echo "${{ secrets.HUGGINGFACE_API_TOKEN }}" | npx wrangler secret put HF_TOKEN --name "$NAME" || true
+              echo "  ✅ $NAME deployed"
             else
               echo "  ❌ $cfg FAILED"
               FAILED=$((FAILED+1))
             fi
           done
-          [ "$FAILED" -gt 0 ] && echo "$FAILED workers failed" && exit 1 || echo "All 5 pipeline workers deployed"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          HF_TOKEN_VAL:         ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          [ "$FAILED" -gt 0 ] && exit 1 || echo "All 5 workers deployed ✅"
 
       - name: Summary
         run: |
-          echo "========================================"
-          echo "Pipeline workers (cron every 1 min):"
-          echo "  detectai-pipeline   → scraper 1/4"
-          echo "  detectai-pipeline-b → scraper 2/4"
-          echo "  detectai-pipeline-c → scraper 3/4"
-          echo "  detectai-pipeline-d → scraper 4/4"
-          echo "  detectai-pipeline-e → HF push every 10 min"
-          echo ""
-          echo "NOTE: Calibration workers moved to separate CF account"
-          echo "      Provide new CF token to deploy: wrangler-cal-*.toml"
-          echo ""
-          echo "Status: https://detectai-pipeline.saghirahmed9067.workers.dev/status"
-          echo "========================================"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          echo "════════════════════════════════════════"
+          echo "  detectai-pipeline   → scraper (W1)"
+          echo "  detectai-pipeline-b → scraper (W2)"
+          echo "  detectai-pipeline-c → scraper (W3)"
+          echo "  detectai-pipeline-d → scraper (W4)"
+          echo "  detectai-pipeline-e → HF push (W20)"
+          echo "  Status: https://detectai-pipeline.workers.dev/status"
+          echo "════════════════════════════════════════"
