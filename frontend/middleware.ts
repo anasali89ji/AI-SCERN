@@ -1,7 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Routes that require authentication
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/detect(.*)',
@@ -15,37 +14,13 @@ const isProtectedRoute = createRouteMatcher([
   '/api/admin(.*)',
 ])
 
-const _clerkHandler = clerkMiddleware(async (auth, req) => {
-  const path = req.nextUrl.pathname
-
+// Correct Clerk v7 pattern: clerkMiddleware wraps handler, auth().protect() redirects
+export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
-    const { userId } = await auth()
-    if (!userId) {
-      // Redirect to login with return URL
-      const loginUrl = new URL('/login', req.url)
-      loginUrl.searchParams.set('redirect_url', path)
-      return NextResponse.redirect(loginUrl)
-    }
+    // auth().protect() in Clerk v7 automatically redirects to sign-in
+    await auth.protect()
   }
-  return NextResponse.next()
 })
-
-export default async function middleware(req: NextRequest, event: any) {
-  const pubKey    = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  const secretKey = process.env.CLERK_SECRET_KEY
-
-  if (!pubKey || !secretKey) {
-    console.warn('[Middleware] Clerk keys missing — bypassing auth.')
-    return NextResponse.next()
-  }
-
-  try {
-    return await _clerkHandler(req, event)
-  } catch (err) {
-    console.error('[Middleware] Clerk error:', err)
-    return NextResponse.next()
-  }
-}
 
 export const config = {
   matcher: [

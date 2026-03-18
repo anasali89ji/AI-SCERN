@@ -10,6 +10,7 @@ import {
   ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap, Star
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { AuthGuard } from '@/components/AuthGuard'
 import { UserButton } from '@clerk/nextjs'
 
 const navGroups = [
@@ -167,6 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   return (
+    <AuthGuard>
     <div className="flex h-screen bg-background overflow-hidden">
       <motion.aside animate={{ width: collapsed ? 72 : 260 }} transition={{ duration: 0.3 }}
         className="hidden lg:flex flex-col bg-surface border-r border-border relative flex-shrink-0">
@@ -210,5 +212,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full">{children}</div></main>
       </div>
     </div>
+    </AuthGuard>
   )
 }
