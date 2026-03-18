@@ -28,8 +28,8 @@ export default function LoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-accent/25">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-black text-text-1">DETECTAI</h1>
-          <p className="text-text-3 text-sm mt-1">Owner Admin Panel</p>
+          <h1 className="text-2xl font-black text-text-1">Aiscern</h1>
+          <p className="text-text-3 text-sm mt-1">admin.aiscern.com</p>
         </div>
 
         <div className="bg-surface border border-border rounded-2xl p-6">

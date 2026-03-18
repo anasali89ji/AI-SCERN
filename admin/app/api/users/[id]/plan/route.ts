@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 const PLAN_CREDITS: Record<string, number> = { free: 5, starter: 100, pro: 500, enterprise: -1 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
   const { id } = await params
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
@@ -25,4 +26,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   await logAdminAction('plan_change', id, auth.ip, { planId })
   return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    console.error("[Admin API]", err?.message)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
 }

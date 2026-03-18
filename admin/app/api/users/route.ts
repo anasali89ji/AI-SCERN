@@ -4,6 +4,7 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
+  try {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
@@ -26,4 +27,8 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ users: data, total: count, page, pages: Math.ceil((count || 0) / limit) })
+  } catch (err: any) {
+    console.error("[Admin API]", err?.message)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
 }
