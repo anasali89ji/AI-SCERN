@@ -117,7 +117,7 @@ export default function HistoryPage() {
     const { data } = await supabase
       .from('scans').select('*').eq('user_id', uid)
       .order('created_at', { ascending: false }).limit(200)
-    if (data) setScans(data)
+    if (data) setScans(data as any)
     setLoading(false)
     setRefreshing(false)
   }, [currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,7 +126,7 @@ export default function HistoryPage() {
 
   async function deleteScan(id: string) {
     setDeleting(id)
-    await supabase.from('scans').delete().eq('id', id)
+    await (supabase as any).from('scans').delete().eq('id', id)
     setScans(prev => prev.filter(s => s.id !== id))
     setDeleting(null)
   }
@@ -134,7 +134,7 @@ export default function HistoryPage() {
   async function deleteAll() {
     if (!confirm(`Delete all ${scans.length} scans? This cannot be undone.`)) return
     const uid = currentUser?.uid; if (!uid) return
-    await supabase.from('scans').delete().eq('user_id', uid)
+    await (supabase as any).from('scans').delete().eq('user_id', uid)
     setScans([])
   }
 

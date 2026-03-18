@@ -75,7 +75,7 @@ export default function ScraperPage() {
       setResult(data.data)
       const user = currentUser ? { id: currentUser.uid } : null
       if (user) {
-        await supabase.from('scraper_sessions').insert({
+        await (supabase as any).from('scraper_sessions').insert({
           user_id: user.id, target_url: url.trim(),
           domain: new URL(url.trim()).hostname,
           page_title: data.data.title, page_description: data.data.description,

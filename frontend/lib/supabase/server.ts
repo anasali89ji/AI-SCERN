@@ -1,21 +1,17 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+/**
+ * Supabase Server Client — DATA ONLY, no auth.
+ * Auth is handled entirely by Clerk.
+ */
+import { createClient } from '@supabase/supabase-js'
 
-export async function createClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key',
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }) } catch {}
-        },
-        remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }) } catch {}
-        },
-      },
-    }
-  )
+export async function createServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co'
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key'
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
 }

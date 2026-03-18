@@ -70,7 +70,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!currentUser?.uid) return
-    supabase.from('profiles').select('metadata').eq('id', currentUser.uid).single().then(({ data: p }) => {
+    (supabase as any).from('profiles').select('metadata').eq('id', currentUser.uid).single().then(({ data: p }: any) => {
       const prefs = p?.metadata?.preferences || {}
       if (prefs.emailNotif   !== undefined) setEmailNotif(prefs.emailNotif)
       if (prefs.batchAlerts  !== undefined) setBatchAlerts(prefs.batchAlerts)
@@ -93,7 +93,7 @@ export default function SettingsPage() {
     if (!currentUser?.uid) return
     setSaving(true)
     try {
-      await supabase.from('profiles').upsert({
+      await (supabase as any).from('profiles').upsert({
         id: currentUser.uid,
         metadata: { preferences: {
           emailNotif, batchAlerts, weeklyReport, autoSave,

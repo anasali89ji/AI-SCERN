@@ -106,7 +106,7 @@ export default function AudioDetectionPage() {
       if (!data.success) throw new Error(data.error?.message || 'Detection failed')
       setResult(data.data)
       if (currentUser?.uid) {
-        await supabase.from('scans').insert({
+        await (supabase as any).from('scans').insert({
           user_id: currentUser.uid, media_type: 'audio', file_name: file.name,
           file_size: file.size, verdict: data.data.verdict,
           confidence_score: data.data.confidence, signals: data.data.signals,

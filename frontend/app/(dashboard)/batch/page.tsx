@@ -93,7 +93,7 @@ export default function BatchPage() {
 
       const processingTime = Date.now() - start
       if (uid) {
-        await supabase.from('scans').insert({
+        await (supabase as any).from('scans').insert({
           user_id: uid, media_type: mediaType, file_name: bf.file.name, file_size: bf.file.size,
           verdict: data.data.verdict, confidence_score: data.data.confidence,
           signals: data.data.signals, model_used: data.data.model_used, status: 'complete'

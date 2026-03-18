@@ -74,7 +74,7 @@ export default function TextDetectionPage() {
       window.dispatchEvent(new Event('aiscern:scan'))
       window.dispatchEvent(new Event('aiscern:scan'))
       if (currentUser?.uid) {
-        await supabase.from('scans').insert({
+        await (supabase as any).from('scans').insert({
           user_id: currentUser.uid, media_type: 'text',
           content_preview: `[PDF: ${file.name}]`,
           verdict: data.data.verdict, confidence_score: data.data.confidence,
@@ -103,7 +103,7 @@ export default function TextDetectionPage() {
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
       if (currentUser?.uid) {
-        await supabase.from('scans').insert({
+        await (supabase as any).from('scans').insert({
           user_id: currentUser.uid, media_type: 'text',
           content_preview: text.substring(0, 200),
           verdict: data.data.verdict, confidence_score: data.data.confidence,

@@ -53,28 +53,28 @@ export default function DashboardPage() {
       // Run all queries in parallel — no sequential fallback
       const [rpcResult, scansResult, allScansResult] = await Promise.all([
         supabase.rpc('get_user_stats', { p_user_id: uid }),
-        supabase.from('scans').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(10),
-        supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', uid),
+        (supabase as any).from('scans').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(10),
+        (supabase as any).from('scans').select('verdict,confidence_score,media_type').eq('user_id', uid),
       ])
 
-      if (rpcResult.data && !rpcResult.error) {
-        const avgConf = (rpcResult.data.avg_confidence ?? 0) <= 1
-          ? Math.round(rpcResult.data.avg_confidence * 100)
-          : Math.round(rpcResult.data.avg_confidence)
-        setStats({ ...rpcResult.data, avg_confidence: avgConf })
+      if (rpcResult.data && !rpcResult.error) { const d = rpcResult.data as any;
+        const avgConf = (d.avg_confidence ?? 0) <= 1
+          ? Math.round(d.avg_confidence * 100)
+          : Math.round(d.avg_confidence)
+        setStats({ ...d, avg_confidence: avgConf })
       } else if (allScansResult.data) {
         const allScans = allScansResult.data
         const total = allScans.length
         setStats({
           total_scans:    total,
-          ai_detected:    allScans.filter(s => s.verdict === 'AI').length,
-          human_detected: allScans.filter(s => s.verdict === 'HUMAN').length,
+          ai_detected:    allScans.filter((s: any) => s.verdict === 'AI').length,
+          human_detected: allScans.filter((s: any) => s.verdict === 'HUMAN').length,
           avg_confidence: total > 0 ? Math.round(allScans.reduce((s: number, r: any) => s + (r.confidence_score ?? 0), 0) / total * 100) : 0,
-          image_scans:    allScans.filter(s => s.media_type === 'image').length,
-          video_scans:    allScans.filter(s => s.media_type === 'video').length,
-          audio_scans:    allScans.filter(s => s.media_type === 'audio').length,
-          text_scans:     allScans.filter(s => s.media_type === 'text').length,
-          uncertain:      allScans.filter(s => s.verdict === 'UNCERTAIN').length,
+          image_scans:    allScans.filter((s: any) => s.media_type === 'image').length,
+          video_scans:    allScans.filter((s: any) => s.media_type === 'video').length,
+          audio_scans:    allScans.filter((s: any) => s.media_type === 'audio').length,
+          text_scans:     allScans.filter((s: any) => s.media_type === 'text').length,
+          uncertain:      allScans.filter((s: any) => s.verdict === 'UNCERTAIN').length,
         })
       }
       if (scansResult.data) setScans(scansResult.data)
@@ -90,7 +90,7 @@ export default function DashboardPage() {
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { (supabase as any).removeChannel(channel) }
   }, [currentUser?.uid])
 
   if (loading) {

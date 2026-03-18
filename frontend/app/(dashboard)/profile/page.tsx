@@ -25,17 +25,17 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!currentUser?.uid) return
     async function load() {
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', currentUser!.uid).single()
+      const { data: p } = await (supabase as any).from('profiles').select('*').eq('id', currentUser!.uid).single()
       if (p) { setProfile(p); setDisplayName(p.display_name || ''); setAvatarUrl(p.avatar_url || '') }
       if (!p?.display_name && currentUser?.displayName) setDisplayName(currentUser.displayName)
       if (!p?.avatar_url  && currentUser?.photoURL)    setAvatarUrl(currentUser.photoURL)
-      const { data: s, error: rpcErr } = await supabase.rpc('get_user_stats', { p_user_id: currentUser!.uid })
+      const { data: s, error: rpcErr } = await (supabase as any).rpc('get_user_stats', { p_user_id: currentUser!.uid })
       if (s && !rpcErr) {
         const avgConf = (s.avg_confidence ?? 0) <= 1 ? Math.round(s.avg_confidence * 100) : Math.round(s.avg_confidence)
         setStats({ ...s, avg_confidence: avgConf })
       } else {
         // Fallback: compute stats directly from scans table
-        const { data: scanRows } = await supabase.from('scans').select('verdict,confidence_score,media_type').eq('user_id', currentUser!.uid)
+        const { data: scanRows } = await (supabase as any).from('scans').select('verdict,confidence_score,media_type').eq('user_id', currentUser!.uid)
         if (scanRows) {
           const total = scanRows.length
           setStats({
@@ -62,11 +62,11 @@ export default function ProfilePage() {
     try {
       const ext  = file.name.split('.').pop()
       const path = `avatars/${currentUser.uid}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+      const { error: uploadErr } = await (supabase as any).storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
       if (uploadErr) throw uploadErr
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { data: urlData } = (supabase as any).storage.from('avatars').getPublicUrl(path)
       const url = urlData.publicUrl
-      await supabase.from('profiles').upsert({ id: currentUser.uid, avatar_url: url })
+      await (supabase as any).from('profiles').upsert({ id: currentUser.uid, avatar_url: url })
       if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
       setAvatarUrl(url)
       setProfile((p: any) => ({ ...p, avatar_url: url }))
@@ -84,7 +84,7 @@ export default function ProfilePage() {
     setSaving(true)
     try {
       if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
-      await supabase.from('profiles').upsert({ id: currentUser.uid, display_name: displayName, avatar_url: avatarUrl || null, updated_at: new Date().toISOString() })
+      await (supabase as any).from('profiles').upsert({ id: currentUser.uid, display_name: displayName, avatar_url: avatarUrl || null, updated_at: new Date().toISOString() })
       setProfile((p: any) => ({ ...p, display_name: displayName, avatar_url: avatarUrl }))
       setEditing(false)
       toast.success('Profile saved!')
