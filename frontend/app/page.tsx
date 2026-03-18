@@ -6,7 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
-import { useClerk } from '@clerk/nextjs'
 import { AuthModal } from '@/components/AuthModal'
 import { SiteFooter } from '@/components/site-footer'
 import {
@@ -322,7 +321,6 @@ const HOW_IT_WORKS = [
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function HomePage() {
   const { user, loading } = useAuth()
-  // useClerk accessed via AuthModal component
   const { scrollY } = useScroll()
   const heroY = useTransform(scrollY, [0, 500], [0, -80])
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
