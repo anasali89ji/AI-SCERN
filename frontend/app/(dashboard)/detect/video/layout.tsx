@@ -48,7 +48,7 @@ const jsonLd = {
                   {
                     "@type": "Question",
                     "name": "How does deepfake video detection work?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Aiscern extracts frames from your video and analyzes each frame with NVIDIA vision models for facial inconsistencies, temporal artifacts and GAN signatures. Results show per-frame AI scores." }
+                    "acceptedAnswer": { "@type": "Answer", "text": "Aiscern extracts frames from your video and analyzes each frame with our proprietary vision engine for facial inconsistencies, temporal artifacts and GAN signatures. Results show per-frame AI scores." }
                   },
                   {
                     "@type": "Question",

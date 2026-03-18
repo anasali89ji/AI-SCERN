@@ -48,7 +48,7 @@ const jsonLd = {
                   {
                     "@type": "Question",
                     "name": "How do I detect ElevenLabs voice cloning?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Upload an MP3 or WAV file to Aiscern. Our wav2vec2 models analyze prosody, spectral patterns and acoustic signatures to detect ElevenLabs and other AI voice synthesis with 91% accuracy." }
+                    "acceptedAnswer": { "@type": "Answer", "text": "Upload an MP3 or WAV file to Aiscern. Aiscern's audio detection engine analyzes prosody, spectral patterns and acoustic signatures to detect ElevenLabs and other AI voice synthesis with 91% accuracy." }
                   },
                   {
                     "@type": "Question",

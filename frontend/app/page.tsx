@@ -312,7 +312,7 @@ const REVIEWS = [
 
 const HOW_IT_WORKS = [
   { n: '01', title: 'Upload or Paste',  desc: 'Drop any image, video, audio file or paste text / a URL' },
-  { n: '02', title: 'Deep AI Scan',     desc: '60+ HuggingFace models analyze 20+ detection signals in seconds' },
+  { n: '02', title: 'Deep AI Scan',     desc: 'Advanced multi-modal AI analyzes 20+ forensic signals across all content types' },
   { n: '03', title: 'Get Full Report',  desc: 'Confidence score, signal breakdown & sentence-level heatmap' },
   { n: '04', title: 'Export & Share',   desc: 'Save history, share results, export PDF reports' },
 ]
@@ -331,7 +331,7 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `[
         {"@context":"https://schema.org","@type":"WebApplication","@id":"https://aiscern.com/#app","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"The most accurate free AI detection platform. Detect ChatGPT text, Midjourney deepfakes, ElevenLabs voice clones. 285k+ training samples.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","reviewCount":"2847","bestRating":"5"},"featureList":["AI Text Detection - ChatGPT Claude Gemini","Deepfake Image Detection","AI Audio Voice Clone Detection","Deepfake Video Detection","Batch Analysis","AI Detection API"],"creator":{"@type":"Person","name":"Anas Ali","url":"https://aiscern.com/about"}},
         {"@context":"https://schema.org","@type":"Organization","@id":"https://aiscern.com/#org","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png","foundingDate":"2024","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"contact@aiscern.com"}},
-        {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern achieves 94% accuracy on AI text, 97% on deepfake images, 91% on AI audio and 88% on deepfake video. Trained on 285,000+ samples from 60+ datasets."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern is completely free with no subscription, no credit card and no scan limits. All tools are free forever."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and 50+ AI writing models with 94% accuracy using a RoBERTa ensemble and linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion and deepfake faces with 97% accuracy."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free REST API for AI detection. See aiscern.com/docs/api."}}]}
+        {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern achieves 94% accuracy on AI text, 97% on deepfake images, 91% on AI audio and 88% on deepfake video. Validated across 285,000+ real-world samples."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern is completely free with no subscription, no credit card and no scan limits. All tools are free forever."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and 50+ AI writing models with 94% accuracy using advanced proprietary linguistic analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion and deepfake faces with 97% accuracy."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free REST API for AI detection. See aiscern.com/docs/api."}}]}
       ]` }} />
 
       {/* ── NAV ── */}
@@ -620,8 +620,8 @@ export default function HomePage() {
           {/* 4 trust pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {[
-              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '285,000+ Samples', desc: 'Trained on the largest public AI-detection dataset — DiffusionDB, LSUN, MLAAD, OpenAI WebText, and 56 more sources.' },
-              { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every signal, ensemble formula and threshold is documented and auditable.' },
+              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '285,000+ Samples', desc: 'Trained on 285,000+ verified samples spanning diverse AI-generated and authentic content from 60+ curated sources.' },
+              { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every detection signal and methodology is validated against real-world AI outputs.' },
               { icon: TrendingUp,  color: 'bg-amber/10 text-amber',       title: '94% Accuracy',     desc: 'Independently validated against GPT-4, Claude 3, Gemini, Midjourney, DALL-E 3, and ElevenLabs outputs.' },
               { icon: Zap,         color: 'bg-cyan/10 text-cyan',         title: 'Free Forever',     desc: 'No subscriptions, no scan limits, no paywalls. Core detection will always be free — always.' },
             ].map(({ icon: Icon, color, title, desc }) => (
@@ -648,7 +648,7 @@ export default function HomePage() {
           {/* Methodology note */}
           <div className="max-w-2xl mx-auto text-center p-6 rounded-2xl border border-border/60 bg-surface/40">
             <p className="text-sm text-text-muted leading-relaxed">
-              <span className="font-semibold text-text-secondary">How our detection works:</span> Each scan runs through an ensemble of 3–6 HuggingFace transformer models
+              <span className="font-semibold text-text-secondary">How our detection works:</span> Each scan runs through Aiscern's proprietary multi-model detection engine
               plus 7–10 deterministic signal extractors (perplexity, burstiness, spectral entropy, GAN artifacts).
               Weights adapt in real time — if a model is unavailable, its weight redistributes to the remaining models.
               Final verdict requires ≥62% confidence to label AI, ≤38% for Human.

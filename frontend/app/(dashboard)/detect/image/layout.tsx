@@ -48,7 +48,7 @@ const jsonLd = {
                   {
                     "@type": "Question",
                     "name": "How do I detect a Midjourney image?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Upload the image to Aiscern's AI image detector. It uses three vision models to analyze GAN artifacts, pixel patterns and frequency signatures to detect Midjourney, DALL-E and other AI-generated images." }
+                    "acceptedAnswer": { "@type": "Answer", "text": "Upload the image to Aiscern's AI image detector. Aiscern analyzes GAN artifacts, pixel patterns and frequency signatures to detect Midjourney, DALL-E and other AI-generated images." }
                   },
                   {
                     "@type": "Question",
