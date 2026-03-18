@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
+import { SignInButton, SignUpButton } from '@clerk/nextjs'
 import { SiteFooter } from '@/components/site-footer'
 import {
   Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3,
@@ -367,20 +368,18 @@ export default function HomePage() {
               </Link>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/40 transition-all"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Get Started</span>
-                  <span className="sm:hidden">Join</span>
-                </Link>
+                <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                  <button className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/40 transition-all">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                  <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Get Started</span>
+                    <span className="sm:hidden">Join</span>
+                  </button>
+                </SignUpButton>
               </>
             )}
             <button
@@ -410,8 +409,12 @@ export default function HomePage() {
                 <Link href="/pricing"  onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Zap className="w-4 h-4" />View AI Detector Plans</Link>
                 {!loading && !user && (
                   <>
-                    <Link href="/login"   onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Lock className="w-4 h-4" />Sign In</Link>
-                    <Link href="/signup"  onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold mt-1"><Zap className="w-4 h-4" />Get Started Free</Link>
+                    <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                      <button onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium w-full"><Lock className="w-4 h-4" />Sign In</button>
+                    </SignInButton>
+                    <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                      <button onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold mt-1 w-full"><Zap className="w-4 h-4" />Get Started Free</button>
+                    </SignUpButton>
                   </>
                 )}
               </div>

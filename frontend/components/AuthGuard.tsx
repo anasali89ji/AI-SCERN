@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, Lock, ArrowRight } from 'lucide-react'
+import { SignInButton, SignUpButton } from '@clerk/nextjs'
 
 const PERKS = [
   'Save your complete scan history',
@@ -104,17 +105,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
             {/* CTA Buttons */}
             <div className="space-y-3">
-              <Link href="/signup"
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
-                <Zap className="w-4 h-4" />
-                Create Free Account
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link href="/login"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
-                <Lock className="w-4 h-4" />
-                Already have an account? Sign In
-              </Link>
+              <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                <button className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
+                  <Zap className="w-4 h-4" />
+                  Create Free Account
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+                  <Lock className="w-4 h-4" />
+                  Already have an account? Sign In
+                </button>
+              </SignInButton>
             </div>
 
             {/* Trust note */}
