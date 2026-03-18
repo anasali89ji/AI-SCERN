@@ -5,11 +5,34 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/pricing', '/docs', '/about', '/contact', '/detect/', '/login', '/signup'],
-        disallow: ['/dashboard', '/history', '/profile', '/settings', '/batch', '/api/'],
+        allow: [
+          '/',
+          '/pricing',
+          '/docs/',
+          '/about',
+          '/contact',
+          '/reviews',
+          '/detect/',
+          '/login',
+          '/signup',
+          '/privacy',
+          '/terms',
+        ],
+        disallow: [
+          '/dashboard',
+          '/history',
+          '/profile',
+          '/settings',
+          '/batch',
+          '/scraper',
+          '/pipeline',
+          '/admin',
+          '/api/',
+          '/unauthorized',
+        ],
       },
     ],
-    sitemap: 'https://detect-ai-nu.vercel.app/sitemap.xml',
-    host: 'https://detect-ai-nu.vercel.app',
+    sitemap: 'https://aiscern.com/sitemap.xml',
+    host:    'https://aiscern.com',
   }
 }

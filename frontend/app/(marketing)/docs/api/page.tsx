@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = {
+  title: 'API Documentation | Aiscern AI Detection REST API',
+  description: 'Integrate AI content detection into your app. Free REST API for detecting AI text, images, audio and video.',
+  alternates: { canonical: 'https://aiscern.com/docs/api' },
+}
+
 import Link from 'next/link'
 import { Shield } from 'lucide-react'
 

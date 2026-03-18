@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = {
+  title: 'Contact Aiscern — AI Detection Support',
+  description: 'Get in touch with the Aiscern team for support, feedback, or partnership inquiries.',
+  alternates: { canonical: 'https://aiscern.com/contact' },
+}
+
 'use client'
 import Link from 'next/link'
 import { Shield, ArrowLeft, Github, Mail, ExternalLink, MessageSquare } from 'lucide-react'
