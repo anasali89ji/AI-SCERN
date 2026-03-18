@@ -1,46 +1,15 @@
-name: Deploy Pipeline v5 — 20 Workers
+# This workflow is an alias for deploy-cf-pipeline.yml
+# The canonical deploy is in deploy-cf-pipeline.yml (5 workers: a/b/c/d/e)
+name: Deploy Pipeline (alias)
 
 on:
-  push:
-    paths: ['cf-pipeline/**']
-    branches: [main]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  redirect:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cf-pipeline
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: cf-pipeline/package-lock.json
-      - run: npm ci
-
-      # Helper script: deploy one worker + set its HF_TOKEN secret
-      - name: Deploy all 20 workers
+      - name: Info
         run: |
-          deploy_worker() {
-            local cfg=$1
-            echo "▶ Deploying $cfg ..."
-            npx wrangler deploy --config "$cfg"
-            printf "%s" "$HF_TOKEN" | npx wrangler secret put HF_TOKEN --config "$cfg"
-            echo "  ✅ $cfg done"
-          }
-          deploy_worker wrangler.toml
-          for i in $(seq 2 20); do
-            deploy_worker "wrangler-w${i}.toml"
-          done
-          echo ""
-          echo "🚀 All 20 workers deployed!"
-          echo "   Workers 1-19: scraping 57 sources every 1 min"
-          echo "   Worker  20:   HF push every 10 min + cleanup"
-          echo "   Status: https://detectai-pipeline.workers.dev/status"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          echo "Use 'Deploy Cloudflare Pipeline (5 Workers)' workflow instead."
+          echo "That workflow deploys: detectai-pipeline, -b, -c, -d, -e"

@@ -1,77 +1,17 @@
-name: Deploy Audio Pipeline (New CF Account)
+# Audio pipeline workers were removed (had PLACEHOLDER_AUDIO_D1_ID, never deployed).
+# Audio sources are now handled by the main 5 workers via cf-pipeline/src/sources/audio.ts
+# This workflow is kept for reference only — DO NOT RUN.
+name: "[DISABLED] Deploy Audio Pipeline"
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'cf-pipeline/wrangler-audio-*.toml'
-      - 'cf-pipeline/src/sources/audio*.ts'
-      - '.github/workflows/deploy-audio-pipeline.yml'
 
 jobs:
-  deploy-audio:
-    name: Deploy Audio Workers to New CF Account
+  disabled:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cf-pipeline
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_CAL_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: b3f69b82379d8d62f6d619124d677ee8
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: cf-pipeline/package-lock.json
-
-      - name: Install deps
-        run: npm ci
-
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Create D1 database for audio pipeline
-        run: |
-          echo "Creating detectai-audio-pipeline D1..."
-          OUT=$(npx wrangler d1 create detectai-audio-pipeline 2>&1 || true)
-          echo "$OUT"
-          D1_ID=$(echo "$OUT" | grep -oP 'database_id\s*=\s*"\K[^"]+' | head -1)
-          if [ -z "$D1_ID" ]; then
-            D1_ID=$(npx wrangler d1 list 2>&1 | grep detectai-audio-pipeline | grep -oP '[0-9a-f-]{36}' | head -1)
-          fi
-          if [ -n "$D1_ID" ]; then
-            echo "AUDIO_D1_ID=$D1_ID" >> $GITHUB_ENV
-            sed -i "s/PLACEHOLDER_AUDIO_D1_ID/$D1_ID/g" wrangler-audio-w*.toml
-            echo "✅ D1 ID: $D1_ID"
-          fi
-
-      - name: Run D1 migration
-        run: |
-          if [ -n "$AUDIO_D1_ID" ]; then
-            npx wrangler d1 execute detectai-audio-pipeline \
-              --file=../supabase/migrations/v6_pipeline_schema.sql --remote || true
-            echo "✅ Migration complete"
-          fi
-
-      - name: Deploy 5 audio workers (5 cron triggers = free plan max)
-        run: |
-          for cfg in wrangler-audio-w1.toml wrangler-audio-w2.toml wrangler-audio-w3.toml wrangler-audio-w4.toml wrangler-audio-w5.toml; do
-            echo "▶ $cfg"
-            if npx wrangler deploy --config "$cfg"; then
-              echo "${{ secrets.HUGGINGFACE_API_TOKEN }}" | npx wrangler secret put HF_TOKEN --config "$cfg" || true
-              echo "  ✅ deployed"
-            else
-              echo "  ❌ failed"
-            fi
-          done
-
-      - name: Summary
-        run: |
-          echo "Audio pipeline workers deployed on new CF account!"
-          echo "5 workers scraping 12 AI audio sources every minute"
-          echo "Target: saghi776/detectai-audio-dataset on HuggingFace"
+      - run: |
+          echo "Audio pipeline is now handled by the main 5 CF workers."
+          echo "Audio sources: cf-pipeline/src/sources/audio.ts (15 sources)"
+          echo "Run 'Deploy Cloudflare Pipeline (5 Workers)' instead."
+          exit 1
