@@ -3,10 +3,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SUPABASE_URL:      process.env.NEXT_PUBLIC_SUPABASE_URL      || 'https://lpgzmruxaeikxxayjmze.supabase.co',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-    NVIDIA_API_KEY:                process.env.NVIDIA_API_KEY                || '',
-    CLOUDFLARE_D1_DATABASE_ID:     process.env.CLOUDFLARE_D1_DATABASE_ID     || '',
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '',
-    CLERK_SECRET_KEY:                  process.env.CLERK_SECRET_KEY || '',
     NEXT_PUBLIC_CLERK_SIGN_IN_URL:       '/login',
     NEXT_PUBLIC_CLERK_SIGN_UP_URL:       '/signup',
     NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: '/dashboard',

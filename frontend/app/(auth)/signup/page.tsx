@@ -5,40 +5,34 @@ import Link from 'next/link'
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-5">
-      <Link href="/" className="flex items-center gap-2.5">
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#0a0a0f',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        gap: '1.5rem',
+      }}
+    >
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
         <Image src="/logo.png" alt="Aiscern" width={44} height={30}
-          className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.5)]" priority />
-        <span className="text-2xl font-black gradient-text">Aiscern</span>
+          style={{ objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(245,100,0,0.5))' }}
+          priority />
+        <span style={{ fontSize: '1.5rem', fontWeight: 900, background: 'linear-gradient(135deg,#7c3aed,#2563eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Aiscern
+        </span>
       </Link>
 
       <SignUp
-        routing="hash"
         forceRedirectUrl="/dashboard"
+        fallbackRedirectUrl="/dashboard"
         signInUrl="/login"
-        appearance={{
-          variables: {
-            colorPrimary: '#7c3aed',
-            colorBackground: '#0f0f14',
-            colorInputBackground: '#1a1a24',
-            colorInputText: '#f1f0f5',
-            colorText: '#f1f0f5',
-            colorTextSecondary: '#9b9aaa',
-            borderRadius: '12px',
-          },
-          elements: {
-            rootBox: 'w-full max-w-md',
-            card: 'shadow-2xl !bg-[#13131a] border border-white/10',
-            socialButtonsBlockButton: '!border !border-white/15 !bg-white/5 hover:!bg-white/10 !text-white !font-semibold',
-            formButtonPrimary: '!bg-[#7c3aed] hover:!bg-[#6d28d9] !font-semibold',
-            footerActionLink: '!text-[#7c3aed]',
-            formFieldInput: '!bg-[#1a1a24] !border-white/15 !text-white',
-          },
-          layout: { socialButtonsPlacement: 'top', showOptionalFields: false },
-        }}
       />
 
-      <p className="text-xs text-text-disabled max-w-sm text-center">
+      <p style={{ fontSize: '0.75rem', color: '#334155', textAlign: 'center', maxWidth: '360px' }}>
         Free forever · No credit card · Scan history saved when signed in
       </p>
     </div>

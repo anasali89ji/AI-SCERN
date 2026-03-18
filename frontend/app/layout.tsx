@@ -81,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="bg-background text-text-primary antialiased">
-        <ClerkProvider dynamic>
+        <ClerkProvider>
           <AuthProvider>
             {children}
             <Toaster richColors position="top-right" />
