@@ -38,7 +38,7 @@ export default async function middleware(req: NextRequest) {
 
   const pubKey    = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   const secretKey = process.env.CLERK_SECRET_KEY
-  const hasKeys   = !!(pubKey && pubKey.startsWith('pk_') && secretKey && secretKey.startsWith('sk_'))
+  const hasKeys   = !!(pubKey && (pubKey.startsWith('pk_live_') || pubKey.startsWith('pk_test_')) && secretKey && (secretKey.startsWith('sk_live_') || secretKey.startsWith('sk_test_')))
 
   if (!hasKeys) {
     // Keys not set — redirect protected routes to login, let everything else through
