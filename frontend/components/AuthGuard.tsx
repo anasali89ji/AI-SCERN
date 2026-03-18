@@ -7,11 +7,11 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
+import { AuthModal } from '@/components/AuthModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, Lock, ArrowRight } from 'lucide-react'
-import { useClerk } from '@clerk/nextjs'
 
 const PERKS = [
   'Save your complete scan history',
@@ -23,7 +23,6 @@ const PERKS = [
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  const { openSignIn, openSignUp } = useClerk()
   const [checked, setChecked] = useState(false)
   const pathname = usePathname()
   // These paths are open to anonymous users (SignupGate handles them after 3 scans)
@@ -106,21 +105,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
             {/* CTA Buttons */}
             <div className="space-y-3">
-              <button
-                onClick={() => openSignUp({ forceRedirectUrl: '/dashboard', fallbackRedirectUrl: '/dashboard' })}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
-              >
-                <Zap className="w-4 h-4" />
-                Create Free Account
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => openSignIn({ forceRedirectUrl: '/dashboard', fallbackRedirectUrl: '/dashboard' })}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all"
-              >
-                <Lock className="w-4 h-4" />
-                Already have an account? Sign In
-              </button>
+              <AuthModal mode="signUp">
+                <button className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
+                  <Zap className="w-4 h-4" />
+                  Create Free Account
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </AuthModal>
+              <AuthModal mode="signIn">
+                <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+                  <Lock className="w-4 h-4" />
+                  Already have an account? Sign In
+                </button>
+              </AuthModal>
             </div>
 
             {/* Trust note */}
