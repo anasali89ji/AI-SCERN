@@ -25,8 +25,14 @@ interface AuditLog { id: number; action_type: string; admin_id?: string; target_
 interface Setting { key: string; value: string; description?: string }
 
 async function api(path: string, method = 'GET', body?: unknown) {
-  const r = await fetch(`/api${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-  return r.json()
+  try {
+    const r = await fetch(`/api${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    if (!r.ok && r.status === 401) return { error: 'Unauthorized' }
+    return r.json()
+  } catch (e) {
+    console.error('[Admin API]', path, e)
+    return { error: 'Network error' }
+  }
 }
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -452,8 +458,8 @@ function AuditTab() {
             </tr></thead>
             <tbody className="divide-y divide-gray-700/50">
               {filtered.map(log=>(
-                <>
-                  <tr key={log.id} className="hover:bg-gray-700/20 cursor-pointer" onClick={()=>setExpanded(expanded===log.id?null:log.id)}>
+                <React.Fragment key={log.id}>
+                  <tr className="hover:bg-gray-700/20 cursor-pointer" onClick={()=>setExpanded(expanded===log.id?null:log.id)}>
                     <td className="py-2.5 px-4 text-gray-400 text-xs font-mono whitespace-nowrap">{log.created_at?.slice(0,16)}</td>
                     <td className="py-2.5 px-4 text-gray-300 text-xs">{log.admin_users?.email||log.admin_id?.slice(0,8)||'system'}</td>
                     <td className="py-2.5 px-4"><Badge color="purple">{log.action_type}</Badge></td>
@@ -466,7 +472,7 @@ function AuditTab() {
                       <pre className="text-xs text-gray-400 font-mono bg-black/20 rounded p-3 overflow-x-auto">{JSON.stringify(log.metadata,null,2)}</pre>
                     </td></tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
               {!filtered.length&&<tr><td colSpan={6} className="py-10 text-center text-gray-600">No audit logs</td></tr>}
             </tbody>
@@ -596,7 +602,7 @@ export default function AdminDashboard() {
 
   useEffect(()=>{
     api('/stats/overview').then(r=>{
-      if(r.error==='Unauthorized'||r.status===401){router.push('/');return}
+      if(r.error==='Unauthorized'||r.error==='Internal server error'){router.push('/');return}
       setChecking(false);setOverview(r)
     }).catch(()=>router.push('/'))
   },[router])
@@ -618,7 +624,7 @@ export default function AdminDashboard() {
         <div className="px-5 py-5 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center"><Shield className="w-4 h-4 text-white"/></div>
-            <div><div className="text-white font-bold text-sm">DETECTAI</div><div className="text-gray-600 text-xs">Admin Panel</div></div>
+            <div><div className="text-white font-bold text-sm">Aiscern</div><div className="text-gray-600 text-xs">admin.aiscern.com</div></div>
           </div>
         </div>
         {overview&&(
@@ -644,7 +650,7 @@ export default function AdminDashboard() {
       <main className="flex-1 min-w-0 overflow-auto">
         <div className="p-6 lg:p-8">
           <div className="mb-6 flex items-center justify-between">
-            <div><h1 className="text-xl font-black text-white">{TABS.find(t=>t.id===tab)?.label}</h1><p className="text-gray-600 text-sm mt-0.5">DETECTAI Admin</p></div>
+            <div><h1 className="text-xl font-black text-white">{TABS.find(t=>t.id===tab)?.label}</h1><p className="text-gray-600 text-sm mt-0.5">admin.aiscern.com</p></div>
             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"/><span className="text-xs text-gray-600">Live</span></div>
           </div>
           {content[tab]}
