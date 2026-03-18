@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body className="bg-background text-text-primary antialiased">
-        <ClerkProvider>
+        <ClerkProvider dynamic>
           <AuthProvider>
             {children}
             <Toaster richColors position="top-right" />

@@ -1,13 +1,7 @@
 'use client'
 /**
  * Aiscern — Auth Provider (Clerk)
- *
- * Wraps Clerk into a simple { user, loading, signOut } context.
- * Also auto-creates/syncs the Supabase profile row on every sign-in,
- * including Google OAuth redirects — eliminating all Firebase auth.
- *
- * user.uid   → Clerk userId  (maps to user_id in Supabase)
- * user.email → primary email
+ * Safe wrapper: if Clerk keys are missing the app renders with user=null.
  */
 import { createContext, useContext, useEffect, useRef } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
@@ -27,7 +21,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({
   user:    null,
-  loading: true,
+  loading: false,
   signOut: async () => {},
 })
 
@@ -36,16 +30,14 @@ async function syncProfile(user: AuthUser) {
     await fetch('/api/profiles/create', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        uid:          user.uid,
-        email:        user.email,
-        display_name: user.displayName,
-      }),
+      body:    JSON.stringify({ uid: user.uid, email: user.email, display_name: user.displayName }),
     })
-  } catch { /* non-fatal — profile sync is best-effort */ }
+  } catch { /* non-fatal */ }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // useUser() is safe inside ClerkProvider even with missing keys —
+  // it returns { user: null, isLoaded: false } rather than throwing.
   const { user, isLoaded } = useUser()
   const { signOut: clerkSignOut } = useClerk()
   const syncedRef = useRef<string | null>(null)
@@ -57,17 +49,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     photoURL:    user.imageUrl ?? null,
   } : null
 
-  // Auto-sync Supabase profile once per session (covers Google OAuth redirects)
+  // Auto-sync Supabase profile once per sign-in
   useEffect(() => {
     if (authUser && syncedRef.current !== authUser.uid) {
       syncedRef.current = authUser.uid
       syncProfile(authUser)
     }
-  }, [authUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authUser?.uid]) // eslint-disable-line
 
   const handleSignOut = async () => {
     syncedRef.current = null
-    await clerkSignOut({ redirectUrl: '/login' })
+    try {
+      await clerkSignOut({ redirectUrl: '/' })
+    } catch {
+      window.location.href = '/'
+    }
   }
 
   return (
