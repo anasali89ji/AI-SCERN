@@ -12,7 +12,6 @@ import {
 import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { UserButton } from '@clerk/nextjs'
 
 const navGroups = [
   {
@@ -48,39 +47,91 @@ const iconMap: Record<string, any> = {
   LayoutDashboard, ImageIcon, Video, Music, FileText, Globe, Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap, Star
 }
 
-function Avatar({ user, size = 8 }: { user: any; size?: number }) {
+function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() || 'U'
-
   if (user?.photoURL) {
     return (
-      <img src={user.photoURL} alt="avatar"
-        className={`w-${size} h-${size} rounded-full object-cover ring-2 ring-primary/30`}
-        onError={e => { (e.target as HTMLImageElement).style.display='none' }} />
+      <img src={user.photoURL} alt={initials}
+        className={`w-${size} h-${size} rounded-full object-cover ring-2 ring-primary/40 flex-shrink-0`}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
     )
   }
   return (
-    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-white ring-2 ring-primary/20 flex-shrink-0`}>
+    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/40 flex-shrink-0 select-none`}>
       {initials}
     </div>
   )
 }
 
 function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const name  = user?.displayName || user?.email?.split('@')[0] || 'User'
+  const email = user?.email || ''
+
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-t border-border/50">
-      <UserButton
-        appearance={{
-          elements: { avatarBox: 'w-9 h-9' }
-        }}
-      />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-text-primary truncate">
-          {user?.displayName || user?.email?.split('@')[0] || 'User'}
-        </p>
-        <p className="text-xs text-text-muted truncate">{user?.email || ''}</p>
-      </div>
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
+        <UserAvatar user={user} size={9} />
+        <div className="hidden sm:block text-left min-w-0">
+          <p className="text-sm font-semibold text-text-primary truncate max-w-[120px]">{name}</p>
+          <p className="text-xs text-text-muted truncate max-w-[120px]">{email}</p>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-text-muted transition-transform hidden sm:block ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border rounded-2xl shadow-2xl shadow-black/40 z-50 overflow-hidden">
+          {/* User info header */}
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-surface-active">
+            <UserAvatar user={user} size={11} />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-text-primary truncate">{name}</p>
+              <p className="text-xs text-text-muted truncate">{email}</p>
+              <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-emerald bg-emerald/10 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald" />
+                Active
+              </span>
+            </div>
+          </div>
+
+          {/* Menu items */}
+          <div className="p-2 space-y-0.5">
+            <Link href="/profile" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors text-sm text-text-secondary hover:text-text-primary">
+              <User className="w-4 h-4" /> My Profile
+            </Link>
+            <Link href="/settings" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors text-sm text-text-secondary hover:text-text-primary">
+              <Settings className="w-4 h-4" /> Settings
+            </Link>
+            <Link href="/history" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover transition-colors text-sm text-text-secondary hover:text-text-primary">
+              <Clock className="w-4 h-4" /> Scan History
+            </Link>
+          </div>
+
+          {/* Sign out */}
+          <div className="p-2 border-t border-border">
+            <button onClick={() => { setOpen(false); signOut() }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose/10 transition-colors text-sm text-text-muted hover:text-rose w-full">
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -147,7 +198,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="border-t border-border p-3">
         {!collapsed ? (
           <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
-            <Avatar user={user} size={8} />
+            <UserAvatar user={user} size={8} />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-text-secondary truncate">
                 {user?.displayName || user?.email?.split('@')[0] || 'User'}

@@ -1,209 +1,248 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Shield, BarChart3, Calendar, Edit3, Save, X, Camera, Loader2, Check } from 'lucide-react'
+import {
+  Mail, Shield, BarChart3, Calendar, Edit3, Save, X,
+  Loader2, Check, FileText, Image as ImageIcon, Music, Video,
+  Brain, User, Zap
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
-import { useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
 
+function Avatar({ user, size = 24 }: { user: any; size?: number }) {
+  const initials = user?.displayName
+    ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() || 'U'
+
+  if (user?.photoURL) {
+    return (
+      <img
+        src={user.photoURL}
+        alt={initials}
+        style={{ width: size * 4, height: size * 4 }}
+        className="rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20"
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+      />
+    )
+  }
+  return (
+    <div
+      style={{ width: size * 4, height: size * 4, fontSize: size * 1.2 }}
+      className="rounded-full bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-700 flex items-center justify-center text-white font-black ring-4 ring-primary/30 shadow-xl shadow-primary/20 select-none"
+    >
+      {initials}
+    </div>
+  )
+}
+
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      className="bg-surface border border-border rounded-2xl p-5 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-black text-text-primary">{value ?? 0}</p>
+        <p className="text-xs text-text-muted mt-0.5">{label}</p>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function ProfilePage() {
-  const { user: currentUser } = useAuth()
-  const { user: clerkUser } = useUser()
-  const [profile,     setProfile]      = useState<any>(null)
-  const [stats,       setStats]        = useState<any>(null)
-  const [editing,     setEditing]      = useState(false)
-  const [displayName, setDisplayName]  = useState('')
-  const [avatarUrl,   setAvatarUrl]    = useState('')
-  const [saving,      setSaving]       = useState(false)
-  const [uploading,   setUploading]    = useState(false)
-  const [loading,     setLoading]      = useState(true)
-  const fileRef   = useRef<HTMLInputElement>(null)
-  const supabase  = createClient()
+  const { user } = useAuth()
+  const [stats,       setStats]       = useState<any>(null)
+  const [editing,     setEditing]     = useState(false)
+  const [displayName, setDisplayName] = useState('')
+  const [saving,      setSaving]      = useState(false)
+  const [loading,     setLoading]     = useState(true)
+  const [saved,       setSaved]       = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
-    if (!currentUser?.uid) return
+    if (!user?.uid) return
+    setDisplayName(user.displayName || user.email?.split('@')[0] || '')
     async function load() {
-      const { data: p } = await (supabase as any).from('profiles').select('*').eq('id', currentUser!.uid).single()
-      if (p) { setProfile(p); setDisplayName(p.display_name || ''); setAvatarUrl(p.avatar_url || '') }
-      if (!p?.display_name && currentUser?.displayName) setDisplayName(currentUser.displayName)
-      if (!p?.avatar_url  && currentUser?.photoURL)    setAvatarUrl(currentUser.photoURL)
-      const { data: s, error: rpcErr } = await (supabase as any).rpc('get_user_stats', { p_user_id: currentUser!.uid })
-      if (s && !rpcErr) {
-        const avgConf = (s.avg_confidence ?? 0) <= 1 ? Math.round(s.avg_confidence * 100) : Math.round(s.avg_confidence)
-        setStats({ ...s, avg_confidence: avgConf })
+      const { data: s, error } = await (supabase as any).rpc('get_user_stats', { p_user_id: user!.uid })
+      if (s && !error) {
+        const avg = (s.avg_confidence ?? 0) <= 1
+          ? Math.round(s.avg_confidence * 100)
+          : Math.round(s.avg_confidence)
+        setStats({ ...s, avg_confidence: avg })
       } else {
-        // Fallback: compute stats directly from scans table
-        const { data: scanRows } = await (supabase as any).from('scans').select('verdict,confidence_score,media_type').eq('user_id', currentUser!.uid)
-        if (scanRows) {
-          const total = scanRows.length
+        const { data: rows } = await (supabase as any)
+          .from('scans').select('verdict,confidence_score,media_type').eq('user_id', user!.uid)
+        if (rows) {
+          const total = rows.length
           setStats({
             total_scans:    total,
-            ai_detected:    scanRows.filter((r: any) => r.verdict === 'AI').length,
-            human_detected: scanRows.filter((r: any) => r.verdict === 'HUMAN').length,
-            avg_confidence: total > 0 ? Math.round(scanRows.reduce((acc: number, r: any) => acc + (r.confidence_score ?? 0), 0) / total * 100) : 0,
-            image_scans:    scanRows.filter((r: any) => r.media_type === 'image').length,
-            video_scans:    scanRows.filter((r: any) => r.media_type === 'video').length,
-            audio_scans:    scanRows.filter((r: any) => r.media_type === 'audio').length,
-            text_scans:     scanRows.filter((r: any) => r.media_type === 'text').length,
-            uncertain:      scanRows.filter((r: any) => r.verdict === 'UNCERTAIN').length,
+            ai_detected:    rows.filter((r: any) => r.verdict === 'AI').length,
+            human_detected: rows.filter((r: any) => r.verdict === 'HUMAN').length,
+            uncertain:      rows.filter((r: any) => r.verdict === 'UNCERTAIN').length,
+            avg_confidence: total > 0 ? Math.round(rows.reduce((a: number, r: any) => a + (r.confidence_score ?? 0), 0) / total * 100) : 0,
+            text_scans:     rows.filter((r: any) => r.media_type === 'text').length,
+            image_scans:    rows.filter((r: any) => r.media_type === 'image').length,
+            audio_scans:    rows.filter((r: any) => r.media_type === 'audio').length,
+            video_scans:    rows.filter((r: any) => r.media_type === 'video').length,
           })
         }
       }
       setLoading(false)
     }
     load()
-  }, [currentUser])
+  }, [user?.uid]) // eslint-disable-line
 
-  const handleAvatarUpload = async (file: File) => {
-    if (!currentUser?.uid) return
-    setUploading(true)
-    try {
-      const ext  = file.name.split('.').pop()
-      const path = `avatars/${currentUser.uid}.${ext}`
-      const { error: uploadErr } = await (supabase as any).storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
-      if (uploadErr) throw uploadErr
-      const { data: urlData } = (supabase as any).storage.from('avatars').getPublicUrl(path)
-      const url = urlData.publicUrl
-      await (supabase as any).from('profiles').upsert({ id: currentUser.uid, avatar_url: url })
-      if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
-      setAvatarUrl(url)
-      setProfile((p: any) => ({ ...p, avatar_url: url }))
-      toast.success('Profile photo updated!')
-    } catch {
-      const objectUrl = URL.createObjectURL(file)
-      setAvatarUrl(objectUrl)
-      toast.error('Storage unavailable — showing locally only. Create an "avatars" bucket in Supabase Storage.')
-    }
-    setUploading(false)
-  }
-
-  const saveProfile = async () => {
-    if (!currentUser?.uid) return
+  const handleSave = async () => {
+    if (!user?.uid || !displayName.trim()) return
     setSaving(true)
-    try {
-      if (null) await clerkUser?.update({ firstName: displayName.trim().split(' ')[0], lastName: displayName.trim().split(' ').slice(1).join(' ') || undefined })
-      await (supabase as any).from('profiles').upsert({ id: currentUser.uid, display_name: displayName, avatar_url: avatarUrl || null, updated_at: new Date().toISOString() })
-      setProfile((p: any) => ({ ...p, display_name: displayName, avatar_url: avatarUrl }))
-      setEditing(false)
-      toast.success('Profile saved!')
-    } catch { toast.error('Failed to save profile') }
+    await (supabase as any).from('profiles').upsert({ id: user.uid, display_name: displayName.trim() })
     setSaving(false)
+    setSaved(true)
+    setEditing(false)
+    toast.success('Profile updated')
+    setTimeout(() => setSaved(false), 2000)
   }
 
-  if (loading) return (
-    <div className="p-6 lg:p-8 space-y-4">
-      {[...Array(3)].map((_, i) => <div key={i} className="card h-32 animate-pulse bg-surface-active" />)}
-    </div>
-  )
-
-  const avatar   = avatarUrl || currentUser?.photoURL || ''
-  const initials = (displayName || currentUser?.email || 'U').slice(0, 2).toUpperCase()
-  const aiRate   = stats ? Math.round((stats.ai_detected / Math.max(stats.total_scans, 1)) * 100) : 0
+  const name      = displayName || user?.displayName || user?.email?.split('@')[0] || 'User'
+  const joinedAt  = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-text-primary">Profile</h1>
-        <p className="text-text-muted text-sm mt-1">Manage your account details</p>
-      </div>
 
-      <div className="card">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              {avatar
-                ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                : <span className="text-2xl font-black text-white">{initials}</span>}
+      {/* ── Profile card ── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-surface border border-border rounded-3xl overflow-hidden">
+
+        {/* Banner */}
+        <div className="h-28 bg-gradient-to-r from-violet-600/30 via-indigo-600/20 to-purple-600/30 relative">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.15),transparent)]" />
+        </div>
+
+        {/* Avatar + info */}
+        <div className="px-6 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 sm:-mt-14">
+            {/* Avatar circle */}
+            <div className="relative">
+              <Avatar user={{ ...user, displayName: displayName || user?.displayName }} size={14} />
+              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald border-2 border-surface" />
             </div>
-            {uploading && (
-              <div className="absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
-              </div>
-            )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
-            <button onClick={() => fileRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary border-2 border-background flex items-center justify-center hover:bg-primary/80 transition-colors"
-              title="Change photo">
-              <Camera className="w-3.5 h-3.5 text-white" />
-            </button>
+
+            {/* Edit / Save buttons */}
+            <div className="flex gap-2 mt-2 sm:mt-0">
+              {editing ? (
+                <>
+                  <button onClick={handleSave} disabled={saving}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-60">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save
+                  </button>
+                  <button onClick={() => { setEditing(false); setDisplayName(user?.displayName || '') }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-hover transition-all">
+                    <X className="w-4 h-4" /> Cancel
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => setEditing(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:border-primary/40 transition-all">
+                  {saved ? <Check className="w-4 h-4 text-emerald" /> : <Edit3 className="w-4 h-4" />}
+                  {saved ? 'Saved!' : 'Edit Profile'}
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* Name + email */}
+          <div className="mt-4 space-y-1">
             {editing ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-text-muted mb-1">Display Name</label>
-                  <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    className="input-field w-full max-w-xs py-2" placeholder="Your name" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={saveProfile} disabled={saving}
-                    className="btn-primary px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50">
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save
-                  </button>
-                  <button onClick={() => setEditing(false)} className="btn-ghost px-4 py-2 text-sm"><X className="w-4 h-4" /></button>
-                </div>
-              </div>
+              <input
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                className="text-2xl font-black bg-surface-active border border-primary/40 rounded-xl px-3 py-1 text-text-primary focus:outline-none focus:border-primary w-full max-w-xs"
+                autoFocus
+              />
             ) : (
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-text-primary">{displayName || 'Set your name'}</h2>
-                  <button onClick={() => setEditing(true)} className="text-text-muted hover:text-primary transition-colors">
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-text-muted text-sm mt-1 truncate">{currentUser?.email}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
-                    Free · Open Source
-                  </span>
-                  <span className="text-xs text-text-muted flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    Joined {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
-                  </span>
-                </div>
-              </div>
+              <h1 className="text-2xl font-black text-text-primary">{name}</h1>
             )}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted mt-1">
+              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" />{user?.email}</span>
+              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Joined {joinedAt}</span>
+              <span className="flex items-center gap-1.5 text-emerald">
+                <Shield className="w-4 h-4" />Verified account
+              </span>
+            </div>
+
+            {/* Plan badge */}
+            <div className="flex items-center gap-2 mt-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+                <Zap className="w-3.5 h-3.5" /> Free Plan — Unlimited Scans
+              </span>
+            </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* ── Stats grid ── */}
+      <div>
+        <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">Detection Stats</h2>
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-surface border border-border rounded-2xl p-5 h-20 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-primary/10 text-primary" />
+            <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose/10 text-rose" />
+            <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald/10 text-emerald" />
+            <StatCard icon={BarChart3} label="Avg Confidence" value={stats?.avg_confidence ?? 0} color="bg-amber/10 text-amber" />
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Scans',   value: stats?.total_scans    ?? 0,  color: 'text-primary'   },
-          { label: 'AI Detected',   value: stats?.ai_detected    ?? 0,  color: 'text-rose'      },
-          { label: 'Human Content', value: stats?.human_detected ?? 0,  color: 'text-emerald'   },
-          { label: 'AI Rate',       value: `${aiRate}%`,                color: 'text-amber'     },
-        ].map((s, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="card text-center">
-            <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-text-muted mt-1">{s.label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="card space-y-4">
-        <h3 className="font-semibold text-text-primary text-sm">Account Details</h3>
-        <div className="space-y-1">
-          {[
-            { icon: Mail,     label: 'Email',         value: currentUser?.email || '—',                     extra: true ? <Check className="w-4 h-4 text-emerald ml-auto" /> : null },
-            { icon: Shield,   label: 'Auth Provider', value: ('password' || 'password').replace('.com','').replace('password','Email/Password') },
-            { icon: BarChart3, label: 'Plan',         value: 'Free Forever' },
-          ].map((row, i) => (
-            <div key={i} className={`flex items-center gap-3 py-3 ${i < 2 ? 'border-b border-border' : ''}`}>
-              <row.icon className="w-4 h-4 text-text-muted flex-shrink-0" />
-              <div>
-                <p className="text-xs text-text-muted">{row.label}</p>
-                <p className="text-sm text-text-primary font-medium capitalize">{row.value}</p>
-              </div>
-              {row.extra}
-            </div>
-          ))}
+      {/* ── By modality ── */}
+      <div>
+        <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">By Modality</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard icon={FileText}  label="Text Scans"  value={stats?.text_scans  ?? 0} color="bg-amber/10 text-amber" />
+          <StatCard icon={ImageIcon} label="Image Scans" value={stats?.image_scans ?? 0} color="bg-violet/10 text-violet-400" />
+          <StatCard icon={Music}     label="Audio Scans" value={stats?.audio_scans ?? 0} color="bg-cyan/10 text-cyan" />
+          <StatCard icon={Video}     label="Video Scans" value={stats?.video_scans ?? 0} color="bg-secondary/10 text-secondary" />
         </div>
       </div>
+
+      {/* ── Account details ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <h2 className="font-bold text-text-primary flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" /> Account Details
+        </h2>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+            <span className="text-text-muted">Email address</span>
+            <span className="font-medium text-text-primary">{user?.email}</span>
+          </div>
+          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+            <span className="text-text-muted">Display name</span>
+            <span className="font-medium text-text-primary">{name}</span>
+          </div>
+          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
+            <span className="text-text-muted">Account status</span>
+            <span className="text-emerald font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald" /> Active
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-text-muted">Plan</span>
+            <span className="font-semibold text-primary">Free Forever</span>
+          </div>
+        </div>
+      </motion.div>
+
     </div>
   )
 }
