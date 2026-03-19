@@ -27,8 +27,8 @@ export default function SignUpPage() {
       <div className="relative z-10 w-full max-w-[400px]">
         <SignUp
           routing="hash"
-          afterSignUpUrl="/dashboard"
-          redirectUrl="/dashboard"
+          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
           signInUrl="/login"
           appearance={{
             layout: {

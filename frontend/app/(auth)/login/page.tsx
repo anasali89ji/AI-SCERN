@@ -28,8 +28,8 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[400px]">
         <SignIn
           routing="hash"
-          afterSignInUrl="/dashboard"
-          redirectUrl="/dashboard"
+          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
           signUpUrl="/signup"
           appearance={{
             layout: {
