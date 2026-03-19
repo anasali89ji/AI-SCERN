@@ -79,62 +79,137 @@ function ParticleNetwork() {
 }
 
 // ─── Floating Nature Images (hero background trees/plants) ───────────────────
-const NATURE_IMGS = [
-  { src: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=180&h=260&fit=crop&fm=webp&q=70', alt: 'Tall forest trees', x: '2%',  y: '8%',  w: 110, h: 160, delay: 0,   rot: -6  },
-  { src: 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=160&h=240&fit=crop&fm=webp&q=70', alt: 'Pine tree',        x: '88%', y: '4%',  w: 95,  h: 150, delay: 0.4, rot: 5   },
-  { src: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=280&fit=crop&fm=webp&q=70', alt: 'Forest sunlight',  x: '0%',  y: '55%', w: 100, h: 155, delay: 0.8, rot: -4  },
-  { src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&h=200&fit=crop&fm=webp&q=70', alt: 'Tropical leaves',  x: '91%', y: '52%', w: 90,  h: 140, delay: 0.2, rot: 7   },
-  { src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=160&h=220&fit=crop&fm=webp&q=70', alt: 'Forest path',      x: '10%', y: '78%', w: 100, h: 140, delay: 1.0, rot: -3  },
-  { src: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=140&h=200&fit=crop&fm=webp&q=70', alt: 'Autumn tree',      x: '84%', y: '76%', w: 90,  h: 135, delay: 0.6, rot: 4   },
-]
+// ── Hero Image Tree — Left (AI Generated) / Right (Real/Authentic) ──────────
+// Images will be served from /public/hero/ai/ and /public/hero/real/
+// Filenames: ai-01.jpg … ai-20.jpg | real-01.jpg … real-20.jpg
+const AI_IMGS = Array.from({length: 20}, (_, i) => ({
+  file: `/hero/ai/ai-${String(i+1).padStart(2,'0')}.jpg`,
+  delay: i * 0.08,
+}))
+const REAL_IMGS = Array.from({length: 20}, (_, i) => ({
+  file: `/hero/real/real-${String(i+1).padStart(2,'0')}.jpg`,
+  delay: i * 0.08,
+}))
 
 const FLOAT_BADGES = [
-  { Icon: Search,      label: 'AI Text',    pct: 'Detected', color: '#7c3aed', x: '16%', y: '14%', delay: 0,   pulse: true  },
-  { Icon: Eye,         label: 'Deepfake',   pct: 'Flagged',  color: '#2563eb', x: '76%', y: '10%', delay: 0.5, pulse: false },
-  { Icon: Waves,       label: 'AI Audio',   pct: 'AI 91%',   color: '#06b6d4', x: '72%', y: '72%', delay: 1.0, pulse: false },
-  { Icon: Bot,         label: 'GPT-4',      pct: 'Detected', color: '#f43f5e', x: '22%', y: '72%', delay: 0.7, pulse: true  },
+  { Icon: Search,      label: 'AI Text',      pct: 'Detected', color: '#7c3aed', x: '22%',  y: '12%', delay: 0,   pulse: true  },
+  { Icon: Eye,         label: 'Deepfake',      pct: 'Flagged',  color: '#2563eb', x: '72%',  y: '9%',  delay: 0.5, pulse: false },
+  { Icon: Waves,       label: 'AI Voice Clone',pct: 'AI Found', color: '#06b6d4', x: '20%',  y: '80%', delay: 1.0, pulse: false },
+  { Icon: Bot,         label: 'GPT-4 Text',    pct: 'Detected', color: '#f43f5e', x: '74%',  y: '78%', delay: 0.7, pulse: true  },
 ]
+
+// Gradient colours used as bg fallback while images load
+const AI_COLORS   = ['#7c3aed','#6d28d9','#5b21b6','#4c1d95','#7c3aed','#6366f1','#4f46e5','#4338ca','#3730a3','#312e81','#7c3aed','#8b5cf6','#7c3aed','#6d28d9','#5b21b6','#7c3aed','#6366f1','#4f46e5','#4338ca','#3730a3']
+const REAL_COLORS = ['#065f46','#047857','#059669','#10b981','#34d399','#064e3b','#065f46','#047857','#059669','#10b981','#065f46','#047857','#059669','#10b981','#34d399','#064e3b','#065f46','#047857','#059669','#10b981']
+
+function HeroImageCard({ file, delay, color, side, index }: {
+  file: string; delay: number; color: string; side: 'ai'|'real'; index: number
+}) {
+  const [loaded, setLoaded] = useState(false)
+  const isAI = side === 'ai'
+  return (
+    <motion.div
+      className="relative overflow-hidden rounded-xl flex-shrink-0 cursor-pointer group"
+      style={{ width: 140, height: 96 }}
+      initial={{ opacity: 0, scale: 0.85, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: [0, index % 2 === 0 ? -6 : -10, 0] }}
+      transition={{
+        opacity: { delay: delay + 0.3, duration: 0.5 },
+        scale:   { delay: delay + 0.3, duration: 0.5 },
+        y: { delay: delay, duration: 3.5 + (index % 5) * 0.6, repeat: Infinity, ease: 'easeInOut' },
+      }}
+      whileHover={{ scale: 1.08, zIndex: 20 }}
+    >
+      {/* Fallback gradient background */}
+      <div className="absolute inset-0 rounded-xl" style={{ background: `linear-gradient(135deg, ${color}60, ${color}30)` }} />
+
+      {/* Actual image */}
+      <img
+        src={file}
+        alt={isAI ? `AI generated image ${index+1}` : `Real authentic photo ${index+1}`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={e => { (e.target as HTMLImageElement).style.display='none' }}
+        loading="lazy"
+      />
+
+      {/* Always-visible label overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isAI ? 'bg-rose/80 text-white' : 'bg-emerald/80 text-white'}`}>
+          {isAI ? 'AI' : 'REAL'}
+        </span>
+        <span className="text-[9px] text-white/60">{String(index+1).padStart(2,'0')}</span>
+      </div>
+
+      {/* Hover overlay */}
+      <motion.div
+        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        style={{ background: `${color}40` }}
+      >
+        <span className={`text-[10px] font-black text-white px-2 py-1 rounded-full border ${isAI ? 'border-rose/60' : 'border-emerald/60'}`}>
+          {isAI ? '⚡ AI Generated' : '✓ Authentic'}
+        </span>
+      </motion.div>
+    </motion.div>
+  )
+}
 
 function FloatingCards() {
   return (
     <>
-      {/* Nature/tree images floating in background */}
-      {NATURE_IMGS.map((img, i) => (
-        <motion.div key={i}
-          className="absolute hidden lg:block pointer-events-none z-0 overflow-hidden rounded-2xl"
-          style={{ left: img.x, top: img.y, width: img.w, height: img.h, rotate: img.rot }}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: [0, 0.35, 0.35], y: [0, -12, 0] }}
-          transition={{
-            opacity: { delay: img.delay + 0.5, duration: 1.2 },
-            y: { delay: img.delay, duration: 5 + i * 0.7, repeat: Infinity, ease: 'easeInOut' }
-          }}
-        >
-          <img src={img.src} alt={img.alt}
-            className="w-full h-full object-cover opacity-90"
-            style={{ filter: 'saturate(0.3) brightness(0.45) contrast(1.1)' }}
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/60" />
+      {/* ── LEFT COLUMN — AI Generated Images ── */}
+      <div className="absolute hidden xl:flex left-2 top-20 bottom-20 z-10 flex-col gap-2.5 overflow-hidden"
+        style={{ width: 150 }}>
+        {/* Column label */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-rose/30 bg-rose/10 backdrop-blur-sm mb-1">
+          <Bot className="w-3.5 h-3.5 text-rose flex-shrink-0" />
+          <span className="text-[10px] font-bold text-rose">AI GENERATED</span>
         </motion.div>
-      ))}
+        {/* Scrolling images — two sets for infinite feel */}
+        <div className="flex flex-col gap-2.5 animate-scroll-up overflow-hidden flex-1">
+          {[...AI_IMGS, ...AI_IMGS].map((img, i) => (
+            <HeroImageCard key={i} file={img.file} delay={img.delay} color={AI_COLORS[i % 20]} side="ai" index={i % 20} />
+          ))}
+        </div>
+      </div>
 
-      {/* Detection badge overlays */}
+      {/* ── RIGHT COLUMN — Real/Authentic Images ── */}
+      <div className="absolute hidden xl:flex right-2 top-20 bottom-20 z-10 flex-col gap-2.5 overflow-hidden"
+        style={{ width: 150 }}>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald/30 bg-emerald/10 backdrop-blur-sm mb-1">
+          <CheckCircle className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
+          <span className="text-[10px] font-bold text-emerald">AUTHENTIC</span>
+        </motion.div>
+        <div className="flex flex-col gap-2.5 animate-scroll-up-slow overflow-hidden flex-1">
+          {[...REAL_IMGS, ...REAL_IMGS].map((img, i) => (
+            <HeroImageCard key={i} file={img.file} delay={img.delay} color={REAL_COLORS[i % 20]} side="real" index={i % 20} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Detection badge overlays ── */}
       {FLOAT_BADGES.map((item, i) => {
         const Icon = item.Icon
         return (
           <motion.div key={i}
-            className="absolute hidden xl:flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl z-10 select-none"
+            className="absolute hidden 2xl:flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl z-20 select-none"
             style={{
               left: item.x, top: item.y,
               background: `${item.color}18`,
               borderColor: `${item.color}35`,
-              boxShadow: `0 0 20px ${item.color}20`,
+              boxShadow: `0 0 24px ${item.color}25`,
             }}
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
             transition={{
-              opacity: { delay: item.delay + 0.5, duration: 0.6 },
+              opacity: { delay: item.delay + 0.8, duration: 0.5 },
               y: { delay: item.delay, duration: 3 + i * 0.4, repeat: Infinity, ease: 'easeInOut' }
             }}
           >
@@ -343,22 +418,22 @@ const COMPARISON_CARDS = [
     tag: 'Authentic', icon: 'text' },
   // Image AI vs Real
   { type: 'image', label: 'AI-Generated Portrait', verdict: 'AI',    confidence: 98, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-portrait-01.jpg',
     tag: 'Midjourney', icon: 'image' },
   { type: 'image', label: 'Authentic Photo',        verdict: 'HUMAN', confidence: 97, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-portrait-01.jpg',
     tag: 'Authentic', icon: 'image' },
   { type: 'image', label: 'DALL-E 3 Landscape',    verdict: 'AI',    confidence: 95, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-city-01.jpg',
     tag: 'DALL-E 3', icon: 'image' },
   { type: 'image', label: 'Real Landscape',         verdict: 'HUMAN', confidence: 93, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-mountain-01.jpg',
     tag: 'Authentic', icon: 'image' },
   { type: 'image', label: 'Stable Diffusion Art',  verdict: 'AI',    confidence: 99, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-abstract-01.jpg',
     tag: 'SD XL', icon: 'image' },
   { type: 'image', label: 'Real Urban Photo',       verdict: 'HUMAN', confidence: 91, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-street-01.jpg',
     tag: 'Authentic', icon: 'image' },
   // More text
   { type: 'text', label: 'AI Essay',            verdict: 'AI',    confidence: 93, color: '#f43f5e',
@@ -369,22 +444,22 @@ const COMPARISON_CARDS = [
     tag: 'Authentic', icon: 'text' },
   // More images
   { type: 'image', label: 'AI Nature Scene',    verdict: 'AI',    confidence: 97, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-nature-01.jpg',
     tag: 'Firefly', icon: 'image' },
   { type: 'image', label: 'Real Forest',        verdict: 'HUMAN', confidence: 95, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-forest-01.jpg',
     tag: 'Authentic', icon: 'image' },
   { type: 'image', label: 'AI Portrait',        verdict: 'AI',    confidence: 99, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-face-01.jpg',
     tag: 'ThisPersonDoesNotExist', icon: 'image' },
   { type: 'image', label: 'Real Portrait',      verdict: 'HUMAN', confidence: 92, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-face-01.jpg',
     tag: 'Authentic', icon: 'image' },
   { type: 'image', label: 'AI Architecture',    verdict: 'AI',    confidence: 94, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-architecture-01.jpg',
     tag: 'Midjourney', icon: 'image' },
   { type: 'image', label: 'Real Architecture',  verdict: 'HUMAN', confidence: 96, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1431274172761-fcdab704a0ef?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-architecture-01.jpg',
     tag: 'Authentic', icon: 'image' },
   { type: 'text', label: 'AI Product Desc.',    verdict: 'AI',    confidence: 91, color: '#f43f5e',
     preview: 'Experience unparalleled innovation with our cutting-edge solution that seamlessly integrates advanced AI-powered functionality to deliver exceptional results...',
@@ -393,10 +468,10 @@ const COMPARISON_CARDS = [
     preview: "shipped faster than expected, packaging was a bit beat up but the actual item inside was totally fine. would buy again if the price drops",
     tag: 'Authentic', icon: 'text' },
   { type: 'image', label: 'AI Food Photo',      verdict: 'AI',    confidence: 95, color: '#f43f5e',
-    img: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/ai-food-01.jpg',
     tag: 'DALL-E 3', icon: 'image' },
   { type: 'image', label: 'Real Food Photo',    verdict: 'HUMAN', confidence: 93, color: '#10b981',
-    img: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=320&h=220&fit=crop&fm=webp&q=75',
+    img: '/compare/real-food-01.jpg',
     tag: 'Authentic', icon: 'image' },
 ]
 
@@ -454,12 +529,19 @@ function ComparisonCard({ card }: { card: { type: string; label: string; verdict
       {/* Image or text preview */}
       {card.type === 'image' && card.img ? (
         <div className="relative h-44 overflow-hidden bg-surface-active">
+          {/* Gradient fallback — always visible, image loads on top */}
+          <div className="absolute inset-0" style={{
+            background: isAI
+              ? 'linear-gradient(135deg, #4c1d9580 0%, #1e1b4b80 100%)'
+              : 'linear-gradient(135deg, #064e3b80 0%, #052e1680 100%)',
+          }} />
           <img src={card.img} alt={card.label}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          {/* Verdict overlay */}
-          <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold text-white backdrop-blur-sm ${isAI ? 'bg-rose/80' : 'bg-emerald/80'}`}>
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10"
+            loading="lazy"
+            onError={e => { (e.target as HTMLImageElement).style.display='none' }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
+          <div className={`absolute top-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold text-white backdrop-blur-sm ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
             {isAI ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
             {card.verdict}
           </div>

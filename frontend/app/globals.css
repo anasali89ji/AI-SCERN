@@ -223,3 +223,23 @@ h1 {
 .animate-scroll-right:hover {
   animation-play-state: paused;
 }
+
+/* ── Hero image column scroll animations ── */
+@keyframes scroll-up {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+@keyframes scroll-up-slow {
+  0%   { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+.animate-scroll-up {
+  animation: scroll-up 35s linear infinite;
+}
+.animate-scroll-up-slow {
+  animation: scroll-up-slow 42s linear infinite;
+}
+.animate-scroll-up:hover,
+.animate-scroll-up-slow:hover {
+  animation-play-state: paused;
+}
