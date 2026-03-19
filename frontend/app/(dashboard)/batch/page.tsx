@@ -95,11 +95,11 @@ export default function BatchPage() {
       if (uid) {
         await (supabase as any).from('scans').insert({
           user_id: uid, media_type: mediaType, file_name: bf.file.name, file_size: bf.file.size,
-          verdict: data.data.verdict, confidence_score: data.data.confidence,
-          signals: data.data.signals, model_used: data.data.model_used, status: 'complete'
+          verdict: data.result?.verdict, confidence_score: data.result?.confidence,
+          signals: data.result?.signals, model_used: data.result?.model_used, status: 'complete'
         })
       }
-      return { status: 'done', verdict: data.data.verdict, confidence: data.data.confidence, processingTime }
+      return { status: 'done', verdict: data.result?.verdict, confidence: data.result?.confidence, processingTime }
     } catch (e: any) {
       return { status: 'error', error: e?.message || 'Network error' }
     }

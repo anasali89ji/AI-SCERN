@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRateLimit(ip)) return NextResponse.json(
-    { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests' } }, { status: 429 }
-  )
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests' } }, { status: 429 })
+  }
 
   let userId: string
   try {
@@ -33,51 +33,49 @@ export async function POST(req: NextRequest) {
         format:   string
       }
 
-      if (!body.frames?.length) {
+      if (!body.frames?.length)
         return NextResponse.json({ success: false, error: { code: 'NO_FRAMES', message: 'No frames provided' } }, { status: 400 })
-      }
-      if (body.frames.length > 10) {
+      if (body.frames.length > 10)
         return NextResponse.json({ success: false, error: { code: 'TOO_MANY_FRAMES', message: 'Max 10 frames per request' } }, { status: 400 })
-      }
 
-      const result = await analyzeVideoWithFrames(
-        body.fileName, body.fileSize, body.format, body.frames
-      )
+      const result = await analyzeVideoWithFrames(body.fileName, body.fileSize, body.format, body.frames)
       const processingTime = Date.now() - start
 
+      let scanId: string | null = null
       if (userId && !userId.startsWith('anon_')) {
-        await getSupabaseAdmin().from('scans').insert({
-          user_id:          userId,
-          media_type:       'video',
-          file_name:        body.fileName,
-          file_size:        body.fileSize,
-          verdict:          result.verdict,
-          confidence_score: result.confidence,
-          signals:          result.signals,
-          processing_time:  processingTime,
-          model_used:       result.model_used,
-          status:           'complete',
-          metadata:         {
-            format:       body.format,
-            frame_count:  body.frames.length,
-            engine:       'nvidia-nim',
-          },
-        })
+        try {
+          const { data: sr } = await getSupabaseAdmin().from('scans').insert({
+            user_id:          userId,
+            media_type:       'video',
+            file_name:        body.fileName,
+            file_size:        body.fileSize,
+            verdict:          result.verdict,
+            confidence_score: result.confidence,
+            signals:          result.signals,
+            processing_time:  processingTime,
+            model_used:       result.model_used,
+            status:           'complete',
+            metadata:         { format: body.format, frame_count: body.frames.length, engine: 'nvidia-nim' },
+          }).select('id').single()
+          scanId = sr?.id ?? null
+        } catch { /* non-fatal */ }
       }
 
       return NextResponse.json({
         success: true,
-        scan_id: scanId ?? null,
+        scan_id: scanId,
         result:  { ...result, processing_time: processingTime, file_name: body.fileName },
       })
     }
 
-    // ── FormData path: legacy direct upload (no frame extraction) ────────
-    const form   = await req.formData()
-    const file   = form.get('file') as File | null
+    // ── FormData path: legacy direct upload ──────────────────────────────
+    const form = await req.formData()
+    const file = form.get('file') as File | null
 
-    if (!file) return NextResponse.json({ success: false, error: { code: 'NO_FILE', message: 'No file provided' } }, { status: 400 })
-    if (file.size > 100 * 1024 * 1024) return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Video must be under 100MB' } }, { status: 400 })
+    if (!file)
+      return NextResponse.json({ success: false, error: { code: 'NO_FILE', message: 'No file provided' } }, { status: 400 })
+    if (file.size > 100 * 1024 * 1024)
+      return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Video must be under 100MB' } }, { status: 400 })
 
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
     const bytes  = await file.arrayBuffer()
@@ -85,25 +83,30 @@ export async function POST(req: NextRequest) {
     const result = await analyzeVideo(file.name, file.size, ext, buffer)
     const processingTime = Date.now() - start
 
+    let scanId: string | null = null
     if (userId && !userId.startsWith('anon_')) {
-      await getSupabaseAdmin().from('scans').insert({
-        user_id:          userId,
-        media_type:       'video',
-        file_name:        file.name,
-        file_size:        file.size,
-        verdict:          result.verdict,
-        confidence_score: result.confidence,
-        signals:          result.signals,
-        processing_time:  processingTime,
-        model_used:       result.model_used,
-        status:           'complete',
-        metadata:         { format: ext },
-      })
+      try {
+        const { data: sr } = await getSupabaseAdmin().from('scans').insert({
+          user_id:          userId,
+          media_type:       'video',
+          file_name:        file.name,
+          file_size:        file.size,
+          verdict:          result.verdict,
+          confidence_score: result.confidence,
+          signals:          result.signals,
+          processing_time:  processingTime,
+          model_used:       result.model_used,
+          status:           'complete',
+          metadata:         { format: ext },
+        }).select('id').single()
+        scanId = sr?.id ?? null
+      } catch { /* non-fatal */ }
     }
 
     return NextResponse.json({
       success: true,
-      data:    { ...result, processing_time: processingTime, file_name: file.name },
+      scan_id: scanId,
+      result:  { ...result, processing_time: processingTime, file_name: file.name },
     })
   } catch (err) {
     return NextResponse.json({
