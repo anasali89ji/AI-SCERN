@@ -97,7 +97,7 @@ export default function PrivacyPage() {
               <li><strong>Supabase:</strong> Database and authentication (EU/US infrastructure)</li>
               <li><strong>Vercel:</strong> Hosting and edge functions</li>
               <li><strong>Hugging Face:</strong> AI model inference</li>
-              <li><strong>NVIDIA (NIM API):</strong> Vision-language model for chat features</li>
+              <li><strong>AI Vision Services:</strong> Advanced vision model for image analysis</li>
               <li><strong>Cloudflare:</strong> CDN, edge workers</li>
             </ul>
             <p>

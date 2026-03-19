@@ -52,7 +52,7 @@ export function SiteFooter() {
                 { label: 'About Aiscern',  href: '/about',    title: 'About Aiscern — AI Detection Built on 285k+ Samples' },
                 { label: 'Contact',        href: '/contact',  title: 'Contact Aiscern' },
                 { label: 'API Docs',       href: '/docs/api', title: 'Aiscern API — AI Detection REST API for Developers' },
-                { label: 'Free · Open Source', href: '/pricing', title: 'Aiscern is Free' },
+                { label: 'Free Forever', href: '/pricing', title: 'Aiscern is Free' },
                 { label: 'Reviews',        href: '/reviews',  title: 'Aiscern User Reviews' },
               ].map(l => (
                 <li key={l.label}>

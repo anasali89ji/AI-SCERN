@@ -428,7 +428,7 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">285,000+ training samples · Enterprise-grade AI detection</span>
-            <span className="sm:hidden">285k+ samples · Open-source</span>
+            <span className="sm:hidden">285k+ samples · Enterprise-grade</span>
           </div>
 
           <motion.h1 initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}

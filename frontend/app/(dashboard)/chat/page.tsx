@@ -50,7 +50,7 @@ const TOOL_META: Record<string,{label:string;color:string;Ic:()=>JSX.Element}> =
   detect_image:           { label:'Image Analysis',   color:'#2563eb', Ic: Ico.Image },
   detect_audio:           { label:'Audio Analysis',   color:'#0891b2', Ic: Ico.Music },
   detect_video:           { label:'Video Analysis',   color:'#059669', Ic: Ico.Video },
-  get_pipeline_stats:     { label:'Pipeline Status',  color:'#d97706', Ic: Ico.DB },
+  get_pipeline_stats:     { label:'Detection Stats',  color:'#d97706', Ic: Ico.DB },
   analyze_url:            { label:'URL Analysis',     color:'#d97706', Ic: Ico.Globe },
 }
 
@@ -360,7 +360,7 @@ const SUGGESTIONS = [
   { Ic: Ico.Music,    text: 'How do forensic tools detect voice cloning?',                    cat: 'Audio' },
   { Ic: Ico.Brain,    text: 'Explain GAN fingerprinting and diffusion model artifacts',        cat: 'Learn' },
   { Ic: Ico.Shield,   text: 'What makes DETECTAI different from GPTZero and Turnitin?',        cat: 'Compare'},
-  { Ic: Ico.DB,       text: 'Show me DETECTAI\'s current pipeline statistics',                 cat: 'Data'  },
+  { Ic: Ico.DB,       text: 'Show me Aiscern\'s current detection statistics',                 cat: 'Data'  },
 ]
 
 // ── Main ───────────────────────────────────────────────────────────────────

@@ -20,7 +20,7 @@ export default function PipelinePage() {
   const [logs, setLogs] = useState<string[]>([])
   const [stats, setStats] = useState<PipelineStats | null>(null)
   const [metrics, setMetrics] = useState<Record<string, number> | null>(null)
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'stats'>('pipeline')
+  const [activeTab, setActiveTab] = useState<'collection' | 'stats'>('collection')
 
   useEffect(() => { loadStats() }, [])
 
@@ -70,7 +70,7 @@ export default function PipelinePage() {
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <Brain className="w-6 h-6 text-primary" />
           </div>
-          HuggingFace Pipeline
+          Data Collection Pipeline
         </h1>
         <p className="text-text-muted ml-14">Scrape URLs → Classify with HF models → Build LLM training dataset</p>
       </div>
@@ -97,16 +97,16 @@ export default function PipelinePage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
-        {(['pipeline', 'stats'] as const).map(tab => (
+        {(['collection', 'stats'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all
               ${activeTab === tab ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:border-primary/50'}`}>
-            {tab === 'pipeline' ? '🚀 Run Pipeline' : '📊 History'}
+            {tab === 'collection' ? '🚀 Run Collection' : '📊 History'}
           </button>
         ))}
       </div>
 
-      {activeTab === 'pipeline' && (
+      {activeTab === 'collection' && (
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Input */}
           <div className="space-y-4">
@@ -162,7 +162,7 @@ export default function PipelinePage() {
               <div className="space-y-2">
                 {[
                   { step: '1', label: 'Scrape URLs', desc: 'Extract text content from pages', color: 'bg-amber/10 text-amber border-amber/20' },
-                  { step: '2', label: 'HF Classification', desc: `Run through ${stats?.model?.split('/').pop() || 'RoBERTa'} model`, color: 'bg-primary/10 text-primary border-primary/20' },
+                  { step: '2', label: 'HF Classification', desc: `Run through Aiscern detection engine`, color: 'bg-primary/10 text-primary border-primary/20' },
                   { step: '3', label: 'Store Training Data', desc: 'Save labeled data to Supabase', color: 'bg-cyan/10 text-cyan border-cyan/20' },
                   { step: '4', label: 'Update Pipeline Metrics', desc: 'Track model performance over time', color: 'bg-emerald/10 text-emerald border-emerald/20' },
                 ].map(s => (

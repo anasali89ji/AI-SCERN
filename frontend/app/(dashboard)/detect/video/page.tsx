@@ -278,7 +278,7 @@ export default function VideoDetectionPage() {
   const loadingLabel = phase === 'extracting'
     ? `Extracting frame ${framesDone} of ${FRAME_POSITIONS.length}…`
     : phase === 'analyzing'
-    ? 'Analyzing frames with NVIDIA Vision AI…'
+    ? 'Analyzing frames for deepfake artifacts…'
     : 'Analyzing…'
 
   return (
@@ -293,7 +293,7 @@ export default function VideoDetectionPage() {
           Video Detection
         </h1>
         <p className="text-text-muted ml-14 text-sm">
-          Browser frame extraction · NVIDIA Vision AI per-frame · Temporal consistency analysis
+          Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
         </p>
       </div>
 
@@ -339,7 +339,7 @@ export default function VideoDetectionPage() {
                       </div>
                     )}
                     {phase === 'analyzing' && (
-                      <p className="text-xs text-text-muted animate-pulse">Sending {extractedFrames.length} frames to NVIDIA NIM…</p>
+                      <p className="text-xs text-text-muted animate-pulse">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
                     )}
                   </div>
                 ) : (
@@ -405,7 +405,7 @@ export default function VideoDetectionPage() {
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-secondary/60" />
               <span>
                 <span className="text-text-secondary font-medium">How it works:</span> Your browser extracts {FRAME_POSITIONS.length} frames directly from the video,
-                then NVIDIA's vision AI analyzes each frame for deepfake artifacts. No video data is stored.
+                then Aiscern's vision engine analyzes each frame for deepfake artifacts. No video data is stored.
               </span>
             </div>
           </div>
@@ -517,12 +517,12 @@ export default function VideoDetectionPage() {
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload a Video</h3>
               <p className="text-text-muted text-sm max-w-xs">
-                Your browser extracts frames, NVIDIA AI analyzes each one for deepfake artifacts
+                Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts
               </p>
               <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
                 {[
                   'Browser frame extraction',
-                  'NVIDIA NIM vision AI',
+                  'Aiscern vision engine',
                   'Face detection per frame',
                   'Temporal consistency check',
                   'Per-frame confidence scores',

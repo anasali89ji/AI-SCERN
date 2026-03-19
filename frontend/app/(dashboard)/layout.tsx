@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UserButton } from '@clerk/nextjs'
 
 const navGroups = [
@@ -209,7 +210,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <UserDropdown user={user} signOut={signOut} />
         </header>
-        <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full">{children}</div></main>
+        <ErrorBoundary>
+          <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full">{children}</div></main>
+        </ErrorBoundary>
       </div>
     </div>
     </AuthGuard>

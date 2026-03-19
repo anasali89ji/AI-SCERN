@@ -169,7 +169,7 @@ Analyzed: ${new Date().toLocaleString()}`
           </div>
           Text Detection
         </h1>
-        <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · RoBERTa ensemble</p>
+        <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -442,7 +442,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   Enter text on the left and click Detect. Minimum 50 characters for accurate results.
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-text-muted w-full max-w-xs">
-                  {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'RoBERTa ensemble'].map(f => (
+                  {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
                     <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />{f}
                     </div>

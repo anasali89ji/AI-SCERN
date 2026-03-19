@@ -16,15 +16,15 @@ const VALUES = [
   { icon: Target, title: 'Accuracy First',   desc: 'We prioritize detection precision above all. Every model update is benchmarked against independent test sets to ensure reliable, bias-free results.' },
   { icon: Lock,   title: 'Privacy by Design', desc: 'Your data is never stored beyond what is needed for analysis. Scans are ephemeral, results belong to you, and we never sell your data.' },
   { icon: Globe,  title: 'Universal Access',  desc: 'AI-generated media disinformation is a global problem. DETECTAI is built to be accessible to journalists, researchers, and everyday users worldwide.' },
-  { icon: Brain,  title: 'AI-Powered',        desc: 'Our detection stack runs NVIDIA VILA for vision, HuggingFace RoBERTa for text, and proprietary signal extractors for audio and video.' },
+  { icon: Brain,  title: 'AI-Powered',        desc: 'Our detection system combines advanced vision models, linguistic analysis, and proprietary signal extractors across all content types.' },
 ]
 
 const TIMELINE = [
   { year: '2023', event: 'Research phase — studying detection gaps in commercial tools' },
   { year: 'Early 2024', event: 'First prototype: text-only detection with 78% accuracy' },
   { year: 'Mid 2024', event: 'Multi-modal expansion: added image, audio, and video detection' },
-  { year: 'Late 2024', event: 'NVIDIA VILA integration achieved 97% image deepfake accuracy' },
-  { year: '2025', event: 'Cloudflare pipeline deployed — scraping 259K+ samples/day' },
+  { year: 'Late 2024', event: 'Vision detection achieved 97% accuracy on deepfake images' },
+  { year: '2025', event: 'Automated data system deployed — processing 259K+ samples/day' },
   { year: '2026', event: '147K+ labeled samples · 50+ enterprise clients · Global launch' },
 ]
 
@@ -117,13 +117,13 @@ export default function AboutPage() {
                   </p>
                   <p className="text-text-muted text-sm leading-relaxed mb-5">
                     With a background spanning machine learning, cloud infrastructure, and product design,
-                    Anas architected DETECTAI's entire stack — from the Cloudflare Workers data pipeline to the
-                    NVIDIA VILA vision models — with a single goal: make enterprise-grade media authentication
+                    Anas architected Aiscern's entire detection system — from the data infrastructure to the
+                    advanced vision models — with a single goal: make enterprise-grade media authentication
                     accessible to everyone.
                   </p>
 
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start mb-4">
-                    {['Python', 'TypeScript', 'Next.js', 'Cloudflare', 'NVIDIA NIM', 'PyTorch'].map(s => (
+                    {['Python', 'TypeScript', 'Next.js', 'Computer Vision', 'ML Systems', 'PyTorch'].map(s => (
                       <span key={s} className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary">{s}</span>
                     ))}
                   </div>
