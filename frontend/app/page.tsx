@@ -353,7 +353,7 @@ export default function HomePage() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
             <Link href="#tools" className="hover:text-text-primary transition-colors">Tools</Link>
             <Link href="#how"   className="hover:text-text-primary transition-colors">How It Works</Link>
-            <Link href="/chat"  className="hover:text-text-primary transition-colors flex items-center gap-1" title="AI Detection Assistant">
+            <Link href={user ? "/chat" : "/signup"} className="hover:text-text-primary transition-colors flex items-center gap-1" title="AI Detection Assistant">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
             </Link>
             <Link href="/reviews" className="hover:text-text-primary transition-colors" title="Aiscern User Reviews">Reviews</Link>
@@ -399,7 +399,7 @@ export default function HomePage() {
               <div className="px-4 py-4 flex flex-col gap-3">
                 <Link href="#tools"    onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Cpu className="w-4 h-4" />Tools</Link>
                 <Link href="#how"      onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Activity className="w-4 h-4" />How It Works</Link>
-                <Link href="/chat"     onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><MessageSquare className="w-4 h-4" />AI Detection Assistant</Link>
+                <Link href={user ? "/chat" : "/signup"} onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><MessageSquare className="w-4 h-4" />AI Detection Assistant</Link>
                 <Link href="/reviews"  onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Star className="w-4 h-4" />Reviews</Link>
                 <Link href="/pricing"  onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium"><Zap className="w-4 h-4" />View AI Detector Plans</Link>
                 {!loading && !user && (
@@ -449,7 +449,7 @@ export default function HomePage() {
               {user ? 'Open Dashboard' : 'Start Detecting AI Content Free'}
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/chat" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 text-base flex items-center justify-center gap-2" title="AI Detection Assistant">
+            <Link href={user ? "/chat" : "/signup"} className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 text-base flex items-center justify-center gap-2" title="AI Detection Assistant">
               <MessageSquare className="w-5 h-5 text-emerald" />Try AI Assistant
             </Link>
           </motion.div>
@@ -504,7 +504,7 @@ export default function HomePage() {
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 whileHover={{ y: -4, scale: 1.02 }} className="group cursor-pointer">
-                <Link href={tool.href} title={tool.label}>
+                <Link href={(!user && (tool.href === "/chat" || tool.href === "/batch" || tool.href === "/scraper")) ? "/signup" : tool.href} title={tool.label}>
                   <div className={`relative overflow-hidden rounded-2xl border border-border p-5 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 transition-all duration-300 h-full`}>
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>

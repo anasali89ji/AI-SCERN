@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// ALL routes that require authentication
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/batch',
-  '/history', 
+  '/history',
   '/profile',
   '/settings',
+  '/chat',
+  '/scraper',
+  '/pipeline',
   '/api/admin',
 ]
 
@@ -13,7 +17,6 @@ function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
 }
 
-// Lazily-built Clerk handler — only created once keys are confirmed present
 let _clerkHandler: ((req: NextRequest, evt: any) => Promise<NextResponse>) | null = null
 
 async function getClerkHandler() {
@@ -38,24 +41,24 @@ export default async function middleware(req: NextRequest) {
 
   const pubKey    = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   const secretKey = process.env.CLERK_SECRET_KEY
-  const hasKeys   = !!(pubKey && (pubKey.startsWith('pk_live_') || pubKey.startsWith('pk_test_')) && secretKey && (secretKey.startsWith('sk_live_') || secretKey.startsWith('sk_test_')))
+  const hasKeys   = !!(
+    pubKey && (pubKey.startsWith('pk_live_') || pubKey.startsWith('pk_test_')) &&
+    secretKey && (secretKey.startsWith('sk_live_') || secretKey.startsWith('sk_test_'))
+  )
 
   if (!hasKeys) {
-    // Keys not set — redirect protected routes to login, let everything else through
     if (isProtectedPath(pathname)) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
     return NextResponse.next()
   }
 
-  // Keys are valid — use Clerk
   try {
     const handler = await getClerkHandler()
     const result  = await handler(req, {})
     return result ?? NextResponse.next()
   } catch (err) {
     console.error('[Middleware] Clerk error:', (err as any)?.message)
-    // On Clerk error: protect sensitive routes, pass through the rest
     if (isProtectedPath(pathname)) {
       return NextResponse.redirect(new URL('/login', req.url))
     }

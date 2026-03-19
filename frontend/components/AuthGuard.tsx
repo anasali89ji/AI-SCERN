@@ -1,11 +1,10 @@
 'use client'
 /**
- * AuthGuard — client-side safety net for protected pages.
- * Shows a beautiful sign-in popup if user is not authenticated.
- * Works even if middleware redirect fails (e.g. during Clerk key setup).
+ * AuthGuard — client-side safety net for all protected pages.
+ * Middleware handles server-side redirect; this handles client-side hydration edge cases.
  */
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -22,24 +21,15 @@ const PERKS = [
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  const [checked, setChecked] = useState(false)
-  const pathname = usePathname()
-  // These paths are open to anonymous users (SignupGate handles them after 3 scans)
-  const isOpenPath = pathname.startsWith('/detect') || 
-                     pathname.startsWith('/chat') ||
-                     pathname.startsWith('/scraper') ||
-                     pathname.startsWith('/pipeline')
+  const [checked, setChecked]   = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-    // Small delay to let Clerk initialize — avoids flash of modal for logged-in users
     const t = setTimeout(() => setChecked(true), 400)
     return () => clearTimeout(t)
   }, [])
 
-  // Open paths don't need auth — render immediately
-  if (isOpenPath) return <>{children}</>
-
-  // Still loading — render children silently (Clerk is initializing)
+  // Still initializing
   if (!checked || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -56,13 +46,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Authenticated — render page normally
+  // Authenticated — render page
   if (user) return <>{children}</>
 
-  // Not authenticated — show sign-in popup (non-dismissible)
+  // Not authenticated — show sign-in wall (no escape)
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background blur */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
 
@@ -73,12 +62,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           transition={{ type: 'spring', damping: 22, stiffness: 300 }}
           className="relative w-full max-w-md z-10"
         >
-          {/* Top gradient bar */}
           <div className="h-1 w-full bg-gradient-to-r from-primary via-orange-400 to-amber-400 rounded-t-2xl" />
-
           <div className="bg-surface border border-white/10 rounded-b-2xl shadow-2xl shadow-primary/20 p-8 space-y-6">
 
-            {/* Logo + heading */}
             <div className="text-center space-y-3">
               <Link href="/">
                 <Image src="/logo.png" alt="Aiscern" width={72} height={50}
@@ -88,11 +74,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 Sign in to <span className="gradient-text">Aiscern</span>
               </h1>
               <p className="text-text-muted text-sm leading-relaxed">
-                Create a free account to access the dashboard and all AI detection tools — no credit card, no limits.
+                Create a free account to access AI detection tools — no credit card, no limits.
               </p>
             </div>
 
-            {/* Perks */}
             <ul className="space-y-2.5 bg-surface-active rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-text-secondary">
@@ -102,7 +87,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               ))}
             </ul>
 
-            {/* CTA Buttons */}
             <div className="space-y-3">
               <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
                 <Zap className="w-4 h-4" />
@@ -115,17 +99,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            {/* Trust note */}
             <p className="text-center text-xs text-text-disabled flex items-center justify-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-emerald" />
               Free forever · No credit card · 285,000+ training samples
-            </p>
-
-            {/* Continue without account link */}
-            <p className="text-center text-xs text-text-disabled">
-              <Link href="/detect/text" className="text-primary/70 hover:text-primary underline transition-colors">
-                Try the text detector without signing in →
-              </Link>
             </p>
           </div>
         </motion.div>
