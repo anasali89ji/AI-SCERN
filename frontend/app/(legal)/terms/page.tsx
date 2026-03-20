@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Aiscern terms of service. Use our AI detection tools freely. No spam, no misuse of detection results for harmful purposes.',
 }
 
-const LAST_UPDATED = 'March 10, 2025'
+const LAST_UPDATED = 'March 20, 2026'
 
 export default function TermsPage() {
   return (
@@ -95,7 +95,7 @@ export default function TermsPage() {
 
           <Section title="7. Intellectual Property">
             <p>
-              The Aiscern platform, including its design, AI models, codebase (MIT License), and branding, is the property
+              The Aiscern platform, including its design, AI models, codebase, and branding, is the proprietary property
               of Anas Ali. You may not use our trademarks,
               logos, or branding without prior written permission.
             </p>
@@ -127,7 +127,7 @@ export default function TermsPage() {
 
           <Section title="11. Governing Law">
             <p>
-              These Terms are governed by applicable international law. Any disputes shall be resolved through good-faith
+              These Terms are governed by and construed in accordance with the laws of Pakistan. Any disputes arising from these Terms shall first be attempted to be resolved through good-faith  Failing resolution, disputes shall be submitted to binding arbitration under internationally recognized arbitration rules.
               negotiation, and failing that, through binding arbitration.
             </p>
           </Section>

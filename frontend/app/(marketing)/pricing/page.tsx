@@ -114,6 +114,44 @@ export default function PricingPage() {
           </p>
         </div>
       </main>
+      
+        {/* Revenue Roadmap */}
+        <section className="py-16 px-4 max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-black mb-3">For <span className="gradient-text">Organizations</span></h2>
+            <p className="text-text-muted text-sm max-w-lg mx-auto">
+              Core detection will always be free. These optional tiers support continued model training and infrastructure.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              { name: 'API Access', tag: 'Coming Soon', color: 'border-primary/30 bg-primary/5',
+                features: ['Programmatic API access','Higher rate limits for applications','All 4 detection modalities','Webhook support','Dedicated email support'] },
+              { name: 'Enterprise', tag: 'Contact Us', color: 'border-emerald/30 bg-emerald/5',
+                features: ['Custom volume agreements','SLA guarantees','Priority model updates','Custom model fine-tuning','Dedicated account manager'] },
+            ].map(tier => (
+              <div key={tier.name} className={`rounded-2xl border p-6 ${tier.color}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-black text-lg text-text-primary">{tier.name}</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-surface border border-border text-text-muted">{tier.tag}</span>
+                </div>
+                <ul className="space-y-2 mb-5">
+                  {tier.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-text-muted">
+                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a href="mailto:contact@aiscern.com"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold hover:border-primary/50 transition-all">
+                  Contact Us
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+
       <SiteFooter />
     </div>
   )

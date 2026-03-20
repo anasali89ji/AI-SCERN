@@ -252,3 +252,9 @@ h1 {
     node-fadein 0.7s ease-out forwards,
     node-bob-b 5.1s ease-in-out infinite;
 }
+
+/* ── Mobile: faster scroll animations so cards are visible ── */
+@media (max-width: 640px) {
+  .animate-scroll-left  { animation-duration: 18s; }
+  .animate-scroll-right { animation-duration: 22s; }
+}

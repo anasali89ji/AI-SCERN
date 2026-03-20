@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI detection tools.',
 }
 
-const LAST_UPDATED = 'March 10, 2025'
+const LAST_UPDATED = 'March 20, 2026'
 
 export default function PrivacyPage() {
   return (

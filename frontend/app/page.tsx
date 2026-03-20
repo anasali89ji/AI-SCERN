@@ -115,14 +115,14 @@ const REAL_EDGES_MD = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
 
 // ── Mobile nodes (3+3, tight to edges only) ──
 const AI_NODES_SM = [
-  { x: 2,  y: 15, delay: 0.00 },
-  { x: 4,  y: 48, delay: 0.20 },
-  { x: 2,  y: 78, delay: 0.40 },
+  { x: 1,  y: 18, delay: 0.00 },
+  { x: 2,  y: 50, delay: 0.25 },
+  { x: 1,  y: 80, delay: 0.50 },
 ]
 const REAL_NODES_SM = [
-  { x: 97, y: 15, delay: 0.00 },
-  { x: 95, y: 48, delay: 0.20 },
-  { x: 97, y: 78, delay: 0.40 },
+  { x: 98, y: 18, delay: 0.00 },
+  { x: 97, y: 50, delay: 0.25 },
+  { x: 98, y: 80, delay: 0.50 },
 ]
 const AI_EDGES_SM   = [[0,1],[1,2]]
 const REAL_EDGES_SM = [[0,1],[1,2]]
@@ -254,7 +254,7 @@ function FloatingCards() {
   const realEdges = bp === 'sm' ? REAL_EDGES_SM : bp === 'md' ? REAL_EDGES_MD : REAL_EDGES_LG
 
   // Card sizes per breakpoint
-  const cardSize = bp === 'sm' ? { w: 40, h: 52 } : bp === 'md' ? { w: 52, h: 66 } : { w: 64, h: 80 }
+  const cardSize = bp === 'sm' ? { w: 32, h: 42 } : bp === 'md' ? { w: 48, h: 62 } : { w: 64, h: 80 }
 
   // Badge positions change per breakpoint
   const badgePositions = bp === 'sm'
@@ -342,23 +342,29 @@ function FloatingCards() {
 
 // ─── Live Counter ───────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(target)  // Start at target — always visible
+  const [animated, setAnimated] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
+    if (animated) return
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        let start = 0
-        const step = target / 60
-        const interval = setInterval(() => {
-          start += step
-          if (start >= target) { setCount(target); clearInterval(interval) }
-          else setCount(Math.floor(start))
-        }, 16)
-      }
-    })
+      if (!entry.isIntersecting || animated) return
+      setAnimated(true)
+      let start = 0
+      const duration = 1600
+      const steps = 60
+      const step = target / steps
+      const interval = setInterval(() => {
+        start += step
+        if (start >= target) { setCount(target); clearInterval(interval) }
+        else setCount(Math.floor(start))
+      }, duration / steps)
+    }, { threshold: 0.1 })
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
-  }, [target])
+  }, [target, animated])
+
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
 }
 
@@ -495,7 +501,7 @@ const STATS = [
   { value: 413000, suffix: '+', label: 'Samples Collected', icon: Database  },
   { value: 87,     suffix: '',  label: 'Source Datasets',   icon: Globe     },
   { value: 4,      suffix: '',  label: 'Modalities Covered',icon: Layers    },
-  { value: 20,     suffix: '',  label: 'Cloudflare Workers',icon: Zap       },
+  { value: 15,     suffix: '',  label: 'Scraper Workers',   icon: Zap       },
 ]
 
 const REVIEWS = [
@@ -601,43 +607,29 @@ function AIvsRealSection() {
           </p>
         </motion.div>
 
-        {/* ── Mobile: single-column stacked cards (< 640px) ── */}
-        <div className="sm:hidden space-y-3">
-          {COMPARISON_CARDS.slice(0, 6).map((card, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-              <ComparisonCardMobile card={card} />
-            </motion.div>
-          ))}
-          <p className="text-center text-xs text-text-disabled pt-2">
-            Showing 6 of 20 examples · Results are illustrative detections
-          </p>
-        </div>
-
-        {/* ── Tablet+: scrolling rows (≥ 640px) ── */}
-        <div className="hidden sm:block space-y-3">
-          {/* Row 1 */}
+        {/* ── ALL SCREENS: auto-scrolling rows (mobile gets smaller cards) ── */}
+        <div className="space-y-2 sm:space-y-3">
+          {/* Row 1 — scrolls left */}
           <div className="relative overflow-hidden">
-            <div className="flex gap-3 animate-scroll-left" style={{ width: 'max-content' }}>
+            <div className="flex gap-2 sm:gap-3 animate-scroll-left" style={{ width: 'max-content' }}>
               {[...COMPARISON_CARDS.slice(0, 10), ...COMPARISON_CARDS.slice(0, 10)].map((card, i) => (
                 <ComparisonCard key={i} card={card} />
               ))}
             </div>
-            <div className="absolute left-0 inset-y-0 w-12 sm:w-20 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-12 sm:w-20 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
           </div>
-          {/* Row 2 */}
+          {/* Row 2 — scrolls right */}
           <div className="relative overflow-hidden">
-            <div className="flex gap-3 animate-scroll-right" style={{ width: 'max-content' }}>
+            <div className="flex gap-2 sm:gap-3 animate-scroll-right" style={{ width: 'max-content' }}>
               {[...COMPARISON_CARDS.slice(10), ...COMPARISON_CARDS.slice(10)].map((card, i) => (
                 <ComparisonCard key={i} card={card} />
               ))}
             </div>
-            <div className="absolute left-0 inset-y-0 w-12 sm:w-20 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-12 sm:w-20 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
           </div>
-          <p className="text-center text-xs text-text-disabled pt-2">
+          <p className="text-center text-xs text-text-disabled pt-1">
             Results shown are illustrative detections
           </p>
         </div>
@@ -708,7 +700,7 @@ function ComparisonCard({ card }: { card: { type: string; label: string; verdict
     <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group">
       {/* Top — image or text */}
       {card.type === 'image' && card.img ? (
-        <div className="relative h-36 sm:h-40 lg:h-44 overflow-hidden bg-surface-active">
+        <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
           <div className="absolute inset-0" style={{
             background: isAI ? 'linear-gradient(135deg,#4c1d9580,#1e1b4b50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
           }} />
@@ -724,7 +716,7 @@ function ComparisonCard({ card }: { card: { type: string; label: string; verdict
           </div>
         </div>
       ) : (
-        <div className="h-36 sm:h-40 lg:h-44 p-3 sm:p-4 bg-surface-active flex flex-col justify-center relative overflow-hidden">
+        <div className="h-28 sm:h-36 lg:h-44 p-2 sm:p-4 bg-surface-active flex flex-col justify-center relative overflow-hidden">
           <div className={`absolute top-0 left-0 w-1 h-full ${isAI ? 'bg-rose' : 'bg-emerald'}`} />
           <p className="text-xs sm:text-sm text-text-muted leading-relaxed line-clamp-4 italic pl-3">
             "{card.preview}"
@@ -738,7 +730,7 @@ function ComparisonCard({ card }: { card: { type: string; label: string; verdict
       {/* Footer */}
       <div className="p-3 flex items-center justify-between">
         <div className="min-w-0">
-          <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">{card.label}</p>
+          <p className="text-[10px] sm:text-sm font-semibold text-text-primary truncate">{card.label}</p>
           <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 ${isAI ? 'bg-rose/10 text-rose' : 'bg-emerald/10 text-emerald'}`}>
             {card.tag}
           </span>
@@ -864,7 +856,7 @@ export default function HomePage() {
         <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-secondary/8 blur-[80px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan/5 blur-[80px] pointer-events-none" />
 
-        <div className="relative z-20 text-center px-8 sm:px-10 md:px-12 lg:px-4 max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-5xl mx-auto w-full">
+        <div className="relative z-20 text-center px-10 sm:px-12 md:px-10 lg:px-4 max-w-[88vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-6">
             <Sparkles className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">413,000+ verified samples · Multi-model ensemble detection</span>
@@ -872,13 +864,13 @@ export default function HomePage() {
           </div>
 
           <motion.h1 initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
-            className="text-3xl sm:text-5xl lg:text-7xl font-black leading-[0.95] mb-6">
+            className="text-2xl sm:text-4xl lg:text-7xl font-black leading-[0.95] mb-4 sm:mb-6">
             <span className="gradient-text">Unmask AI-Generated Content</span>
-            <br /><span className="text-text-primary text-3xl sm:text-4xl lg:text-5xl">— Free Detector for Text, Images, Audio &amp; Video</span>
+            <br /><span className="text-text-primary text-xl sm:text-3xl lg:text-5xl">— Free Detector for Text, Images, Audio &amp; Video</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-base sm:text-xl text-text-muted max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
+            className="text-sm sm:text-lg text-text-muted max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed px-1">
             Detect AI-generated <strong className="text-text-secondary">text</strong>, <strong className="text-text-secondary">images</strong>, <strong className="text-text-secondary">audio</strong> &amp; <strong className="text-text-secondary">video</strong> with state-of-the-art models.
             Start free. No signup required.
           </motion.p>

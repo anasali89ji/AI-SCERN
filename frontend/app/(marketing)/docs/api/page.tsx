@@ -44,13 +44,13 @@ export default function ApiDocsPage() {
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
         <div>
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
-          <p className="text-text-muted">Programmatic access to Aiscern. Available on Pro and Enterprise plans.</p>
+          <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
         </div>
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">Authentication</h2>
           <p className="text-text-muted text-sm">Include your API key in every request using the <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">X-API-Key</code> header.</p>
-          <p className="text-text-muted text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> (Pro/Enterprise only).</p>
+          <p className="text-text-muted text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> — free for all users.</p>
         </section>
 
         <section className="card p-6 space-y-4">
@@ -85,7 +85,7 @@ export default function ApiDocsPage() {
                 {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-text-muted text-xs">{h}</th>)}
               </tr></thead>
               <tbody>
-                {[['Pro', '500/month', '60 req/min'], ['Enterprise', 'Unlimited', '300 req/min']].map(([plan, credits, limit]) => (
+                {[['Free', 'Unlimited', '60 req/min']].map(([plan, credits, limit]) => (
                   <tr key={plan} className="border-b border-border/50">
                     <td className="py-2 px-3 text-text-primary font-semibold">{plan}</td>
                     <td className="py-2 px-3 text-text-secondary">{credits}</td>

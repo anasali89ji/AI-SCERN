@@ -6,10 +6,10 @@ import { Shield, ArrowLeft, Brain, Cpu, Zap, Users, Globe, Lock, CheckCircle, Ta
 import { SiteFooter } from '@/components/site-footer'
 
 const STATS = [
-  { label: 'Detection Accuracy',  value: '94%+',  icon: Award,  color: 'text-primary bg-primary/10' },
+  { label: 'Training Samples',    value: '413K+', icon: Award,  color: 'text-primary bg-primary/10' },
   { label: 'Media Modalities',    value: '4',     icon: Cpu,    color: 'text-cyan bg-cyan/10' },
-  { label: 'Daily Scans',         value: '10K+',  icon: Zap,    color: 'text-amber bg-amber/10' },
-  { label: 'Enterprise Clients',  value: '50+',   icon: Users,  color: 'text-emerald bg-emerald/10' },
+  { label: 'Source Datasets',     value: '87',    icon: Zap,    color: 'text-amber bg-amber/10' },
+  { label: 'Detection Models',    value: '6',     icon: Users,  color: 'text-emerald bg-emerald/10' },
 ]
 
 const VALUES = [
@@ -24,8 +24,8 @@ const TIMELINE = [
   { year: 'Early 2024', event: 'First prototype: text-only detection with 78% accuracy' },
   { year: 'Mid 2024', event: 'Multi-modal expansion: added image, audio, and video detection' },
   { year: 'Late 2024', event: 'Vision detection achieved 97% accuracy on deepfake images' },
-  { year: '2025', event: 'Automated data system deployed — processing 259K+ samples/day' },
-  { year: '2026', event: '147K+ labeled samples · 50+ enterprise clients · Global launch' },
+  { year: '2025', event: 'Automated pipeline deployed across 15 Cloudflare Workers, continuously collecting and labeling samples' },
+  { year: '2026', event: '413,000+ labeled samples across 87 datasets · Multi-modal detection · Public launch at aiscern.com' },
 ]
 
 export default function AboutPage() {
