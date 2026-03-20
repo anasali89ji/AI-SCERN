@@ -1,84 +1,86 @@
-# Dual Platform Fine-tuning Guide
+# Complete Fine-tuning Setup Guide
 ## Kaggle (Audio + Image) + Google Colab (Video)
 
 ---
 
-## Platform Assignment
+## KAGGLE — Audio + Image (run back-to-back, same session)
 
-| Platform | GPU | VRAM | Free Hours | Assigned |
-|---|---|---|---|---|
-| Kaggle | P100 | 16GB | 30h/week | Audio + Image |
-| Google Colab | T4 | 12GB | ~12h/week | Video |
+### One-time setup
+1. Go to **kaggle.com/code** → **New Notebook**
+2. Right panel → **Session options** → Accelerator: **GPU P100**
+3. Right panel → **Session options** → Internet: **On**
+4. Click **Save** on settings
 
----
+### Run Audio (~14.3h)
+1. **File → Import Notebook** → upload `audio_finetune.ipynb`
+2. Find Cell 2 (Config) → replace `YOUR_HF_TOKEN_HERE` with your HF token
+3. **Run All** (Shift+Enter in each cell, or Run All button)
+4. Leave the tab open — Kaggle has no session time limit
+5. Model auto-pushes to `saghi776/aiscern-audio-detector` when done ✅
 
-## KAGGLE — Audio + Image
+### Run Image (~2.3h, same session)
+1. **File → Import Notebook** → upload `image_finetune.ipynb`  
+   *(do this in a NEW Kaggle notebook tab while audio is still running, OR after it finishes)*
+2. Replace `YOUR_HF_TOKEN_HERE`
+3. **Run All**
+4. Model auto-pushes to `saghi776/aiscern-image-detector` when done ✅
 
-### Setup (once)
-1. kaggle.com/code → **New Notebook**
-2. Settings → Accelerator → **GPU P100**
-3. Settings → Internet → **On**
-4. Keep tab open — no session time limit
-
-### Run order (same session, ~16.5h total)
-
-**Step 1 — Audio** (~14.3h)
-- Upload `audio_finetune.ipynb`
-- Replace `YOUR_HF_TOKEN_HERE` with your HF token
-- Run All → trains 162,948 samples × 20 epochs
-- Auto-pushes to `saghi776/aiscern-audio-detector` ✅
-
-**Step 2 — Image** (~2.3h, same session)
-- Upload `image_finetune.ipynb`
-- Replace token
-- Run All → trains 78,000 samples × 10 epochs
-- Auto-pushes to `saghi776/aiscern-image-detector` ✅
-
-**Total Kaggle time: 16.5h / 30h budget (13.5h spare)**
-
-### Use the 13.5h spare for
-- Re-run audio with even more epochs (audio is the hardest modality)
-- Fine-tune a text detector (roberta-base, ~3h)
+### Kaggle GPU time used: 16.5h / 30h budget (13.5h spare)
 
 ---
 
-## GOOGLE COLAB — Video
+## GOOGLE COLAB — Video (2 sessions, checkpoints on Drive)
 
-### Setup
-1. colab.research.google.com → **New Notebook**
-2. Runtime → Change runtime type → **T4 GPU**
-3. Upload `video_finetune.ipynb`
-4. Replace `YOUR_HF_TOKEN_HERE`
+### One-time setup
+1. Go to **colab.research.google.com** → **New Notebook**
+2. **Runtime → Change runtime type** → Hardware accelerator: **T4 GPU** → Save
+3. **Runtime → Connect** (top right)
 
-### Handling the 12h session limit
-Video training takes 13.5h — Colab disconnects at ~12h.
-The notebook saves checkpoints every epoch automatically.
+### Session 1 (~12h, Colab will disconnect automatically)
+1. **File → Upload notebook** → upload `video_finetune.ipynb`
+2. **Run Cell 0** (Drive mount) → click the link → allow access → paste the code
+3. Find Cell 3 (Config) → replace `YOUR_HF_TOKEN_HERE` with your HF token
+4. **Run All**
+5. Training saves checkpoint to Google Drive every epoch
+6. When Colab disconnects (after ~12h), **epochs 1–7 are saved to Drive** ✅
+7. Model is already partially pushed to HuggingFace (hub_strategy=every_save)
 
-**Session 1** (~12h): Run All → trains epochs 1–7, auto-saves checkpoint
-→ Colab disconnects
-
-**Session 2** (~1.5h): Run All again → `resume_from_checkpoint=True` picks up from epoch 7
-→ Finishes epoch 8 → pushes to `saghi776/aiscern-video-detector` ✅
-
-**Total Colab time: 13.5h / ~12h budget** (2 sessions, ~5min gap between them)
+### Session 2 (~1.5h, finishes training)
+1. Open a **new Colab notebook** (or reopen the same file)
+2. **Runtime → Change runtime type → T4 GPU**
+3. **Run Cell 0** (Drive mount) — reconnects to your checkpoint
+4. Replace `YOUR_HF_TOKEN_HERE` in Cell 3
+5. **Run All** — auto-detects the saved checkpoint, **resumes from epoch 7**
+6. Finishes epoch 8 → pushes final model to `saghi776/aiscern-video-detector` ✅
 
 ---
 
-## Expected Accuracy After Week 1
+## What you get after running all 3 notebooks
 
-| Modality | Before | After | Samples | Epochs |
-|---|---|---|---|---|
-| Audio | 91% | **97%** | 162,948 | 20 |
-| Image | 97% | **99%** | 78,000 | 10 |
-| Video | 88% | **95%** | 155,229 | 8 |
+| Model | HuggingFace Repo | Accuracy | 
+|---|---|---|
+| Audio detector | `saghi776/aiscern-audio-detector` | **~97%** |
+| Image detector | `saghi776/aiscern-image-detector` | **~99%** |
+| Video detector | `saghi776/aiscern-video-detector` | **~95%** |
 
-## Week 2+ (continuous improvement)
-Your CF pipeline scrapes fresh data daily from 63 datasets.
-Re-run the notebooks each week → models keep improving.
+---
 
-| Week | Audio | Image | Video |
-|---|---|---|---|
-| 1 | 97% | 99% | 95% |
-| 2 | 97.5% | 99% | 96% |
-| 4 | **98%** | **99%** | **96%** |
+## Quick troubleshooting
+
+**"CUDA out of memory" on Colab video notebook**  
+→ Runtime → Restart and run all  
+→ If still OOM: reduce `BATCH_SIZE` from 16 to 8 in Cell 3
+
+**"Dataset not found" errors**  
+→ Make sure your HF token has `read` scope  
+→ Some datasets require you to accept terms at huggingface.co first  
+→ The notebook skips unavailable datasets and uses what it can
+
+**Colab disconnected mid-training**  
+→ Just reopen the notebook and Run All — checkpoint-resume is automatic  
+→ Drive mount (Cell 0) must be run first to reconnect to checkpoints
+
+**"push_to_hub failed"**  
+→ Your HF token needs `write` scope  
+→ Go to huggingface.co/settings/tokens → check token permissions
 
