@@ -1,4 +1,4 @@
-name: Deploy Cloudflare Pipeline (5 Workers)
+name: Deploy Cloudflare Pipeline (16 Workers)
 
 on:
   push:
@@ -21,7 +21,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -34,38 +33,62 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      - name: Deploy 5 pipeline workers + set HF_TOKEN
+      - name: Deploy all 16 workers (W1-W15 scrape, W20 pushes)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          declare -A NAMES
-          NAMES["wrangler.toml"]="detectai-pipeline"
-          NAMES["wrangler-b.toml"]="detectai-pipeline-b"
-          NAMES["wrangler-c.toml"]="detectai-pipeline-c"
-          NAMES["wrangler-d.toml"]="detectai-pipeline-d"
-          NAMES["wrangler-e.toml"]="detectai-pipeline-e"
-
+          declare -A CFGS=(
+            [wrangler.toml]="detectai-pipeline"
+            [wrangler-b.toml]="detectai-pipeline-b"
+            [wrangler-c.toml]="detectai-pipeline-c"
+            [wrangler-d.toml]="detectai-pipeline-d"
+            [wrangler-e.toml]="detectai-pipeline-e"
+            [wrangler-f.toml]="detectai-pipeline-f"
+            [wrangler-g.toml]="detectai-pipeline-g"
+            [wrangler-h.toml]="detectai-pipeline-h"
+            [wrangler-i.toml]="detectai-pipeline-i"
+            [wrangler-j.toml]="detectai-pipeline-j"
+            [wrangler-k.toml]="detectai-pipeline-k"
+            [wrangler-l.toml]="detectai-pipeline-l"
+            [wrangler-m.toml]="detectai-pipeline-m"
+            [wrangler-n.toml]="detectai-pipeline-n"
+            [wrangler-o.toml]="detectai-pipeline-o"
+            [wrangler-p.toml]="detectai-pipeline-p"
+          )
           FAILED=0
-          for cfg in wrangler.toml wrangler-b.toml wrangler-c.toml wrangler-d.toml wrangler-e.toml; do
-            NAME="${NAMES[$cfg]}"
+          for cfg in wrangler.toml wrangler-b.toml wrangler-c.toml wrangler-d.toml \
+                     wrangler-e.toml wrangler-f.toml wrangler-g.toml wrangler-h.toml \
+                     wrangler-i.toml wrangler-j.toml wrangler-k.toml wrangler-l.toml \
+                     wrangler-m.toml wrangler-n.toml wrangler-o.toml wrangler-p.toml; do
+            NAME="${CFGS[$cfg]}"
             echo "▶ Deploying $cfg → $NAME"
             if npx wrangler deploy --config "$cfg"; then
               echo "${{ secrets.HUGGINGFACE_API_TOKEN }}" | npx wrangler secret put HF_TOKEN --name "$NAME" || true
-              echo "  ✅ $NAME deployed"
+              echo "  ✅ $NAME"
             else
               echo "  ❌ $cfg FAILED"
               FAILED=$((FAILED+1))
             fi
           done
-          [ "$FAILED" -gt 0 ] && exit 1 || echo "All 5 workers deployed ✅"
+          [ "$FAILED" -gt 0 ] && exit 1 || echo "All 16 workers deployed ✅"
 
       - name: Summary
         run: |
-          echo "════════════════════════════════════════"
-          echo "  detectai-pipeline   → scraper (W1)"
-          echo "  detectai-pipeline-b → scraper (W2)"
-          echo "  detectai-pipeline-c → scraper (W3)"
-          echo "  detectai-pipeline-d → scraper (W4)"
-          echo "  detectai-pipeline-e → HF push (W20)"
-          echo "  Status: https://detectai-pipeline.workers.dev/status"
-          echo "════════════════════════════════════════"
+          echo "════════════════════════════════════════════════"
+          echo "  W01 detectai-pipeline   → sources 1-6"
+          echo "  W02 detectai-pipeline-b → sources 7-12"
+          echo "  W03 detectai-pipeline-c → sources 13-18"
+          echo "  W04 detectai-pipeline-d → sources 19-24"
+          echo "  W05 detectai-pipeline-f → sources 25-30"
+          echo "  W06 detectai-pipeline-g → sources 31-36"
+          echo "  W07 detectai-pipeline-h → sources 37-42"
+          echo "  W08 detectai-pipeline-i → sources 43-48"
+          echo "  W09 detectai-pipeline-j → sources 49-54"
+          echo "  W10 detectai-pipeline-k → sources 55-60"
+          echo "  W11 detectai-pipeline-l → sources 61-66"
+          echo "  W12 detectai-pipeline-m → sources 67-72"
+          echo "  W13 detectai-pipeline-n → sources 73-78"
+          echo "  W14 detectai-pipeline-o → sources 79-84"
+          echo "  W15 detectai-pipeline-p → sources 85-87"
+          echo "  W20 detectai-pipeline-e → HF push + cleanup"
+          echo "════════════════════════════════════════════════"
