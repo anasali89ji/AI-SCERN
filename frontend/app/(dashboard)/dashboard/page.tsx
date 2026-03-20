@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
       {/* ── Welcome ── */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -104,7 +104,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {[
           { label: 'Total Scans',    value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,    color: 'bg-primary/10 text-primary' },
           { label: 'AI Detected',    value: loading ? '—' : `${aiPct}%`,                icon: AlertTriangle, color: 'bg-rose/10 text-rose' },
@@ -130,7 +130,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {TOOLS.map((t, i) => (
             <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>

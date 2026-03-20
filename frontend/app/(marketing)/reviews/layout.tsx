@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Aiscern Reviews 2025 — Real User Ratings & Testimonials',
-  description: 'Read verified reviews of Aiscern AI detection tools from editors, researchers, teachers and developers. See why thousands trust Aiscern to detect AI-generated content.',
+  title: 'Aiscern Reviews — Real User Ratings & Testimonials',
+  description: 'Read reviews of Aiscern AI detection tools from editors, researchers and developers.',
   keywords: ['aiscern review','ai detector review','best ai detector 2025','aiscern testimonials','ai content detector reviews'],
   alternates: { canonical: 'https://aiscern.com/reviews' },
   openGraph: {
-    title: 'Aiscern Reviews 2025 — What Users Say About Our AI Detector',
-    description: 'Verified reviews from 5,000+ users. Editors, teachers and researchers share how Aiscern helps them detect AI-generated content.',
+    title: 'Aiscern Reviews — What Users Say About Our AI Detector',
+    description: 'Real feedback from users about Aiscern AI detection tools.',
     url: 'https://aiscern.com/reviews',
   },
 }

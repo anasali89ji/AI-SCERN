@@ -121,7 +121,7 @@ export default function ReviewsPage() {
         </div>
       </nav>
 
-      <main className="pt-24 pb-20 px-4 max-w-6xl mx-auto">
+      <main className="pt-20 sm:pt-24 pb-20 px-4 max-w-6xl mx-auto">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -141,7 +141,7 @@ export default function ReviewsPage() {
         {/* Stats summary */}
         {!loading && reviews.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-2xl p-6 mb-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="flex items-center gap-5">
               <div className="text-center">
                 <div className="text-6xl font-black gradient-text">{avgRating}</div>
@@ -182,13 +182,13 @@ export default function ReviewsPage() {
         )}
 
         {/* Sort controls */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-5">
           <div className="flex items-center gap-2 text-sm text-text-muted">
             <Filter className="w-4 h-4" /> Sort by:
           </div>
           {SORT_OPTIONS.map(o => (
             <button key={o.value} onClick={() => { setSort(o.value); setPage(1) }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${sort === o.value ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${sort === o.value ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
               {o.label}
             </button>
           ))}
@@ -209,13 +209,13 @@ export default function ReviewsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
             <AnimatePresence mode="wait">
               {reviews.map((r, i) => (
                 <motion.div key={r.id}
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/30 transition-all">
+                  className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 hover:border-primary/30 transition-all">
 
                   {/* Header */}
                   <div className="flex items-start gap-3">
