@@ -9,6 +9,7 @@
  *  - Structured JSON logging for every event
  */
 
+// Pipeline v7.1 — 16 workers, cursor tracking, parallel scraping, backup push
 import {
   Env, ALL_SOURCES, getWorkerSources,
   scrapeSource, scrapeParallel, pushToHF, pushReadme, cleanupPushed, getStatus,
