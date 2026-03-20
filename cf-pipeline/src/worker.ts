@@ -111,12 +111,24 @@ export default {
       return
     }
 
-    // Workers 1–19: rotate through assigned sources each tick
+    // Workers 1–19: rotate through assigned sources + backup push every 5 ticks
     const sources = getWorkerSources(wnum)
     if (!sources.length) return
 
-    const src = sources[tick % sources.length]
-    const res = await scrapeSource(env.DB, src, env.HF_TOKEN, wid, 60)
-    console.log(`[W${wnum}] ${res.source} → inserted=${res.inserted} skipped=${res.skipped}${res.error ? ' ERR=' + res.error : ''}`)
+    // Scrape: use scrapeParallel for 3 sources per tick (v7 speed upgrade)
+    const results = await scrapeParallel(env.DB, sources, env.HF_TOKEN, wid, 3)
+    const totalIns = results.reduce((s, r) => s + r.inserted, 0)
+    console.log(`[W${wnum}] scraped=${results.length} inserted=${totalIns}`)
+
+    // Backup push: each worker pushes on a different tick offset to avoid D1 collisions
+    // W1 pushes on tick%5===0, W2 on tick%5===1, etc.
+    if (tick % 5 === (wnum % 5)) {
+      const push = await pushToHF(env.DB, env.HF_TOKEN, repo, 5000)
+      if (push.pushed > 0) {
+        console.log(`[W${wnum}] push: ${push.pushed} → ${push.commitId}`)
+      } else if (push.error) {
+        console.error(`[W${wnum}] push ERR: ${push.error}`)
+      }
+    }
   },
 }
