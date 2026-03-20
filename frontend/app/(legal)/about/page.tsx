@@ -21,11 +21,11 @@ const VALUES = [
 
 const TIMELINE = [
   { year: '2023', event: 'Research phase — studying detection gaps in commercial tools' },
-  { year: 'Early 2024', event: 'First prototype: text-only detection with 78% accuracy' },
+  { year: 'Early 2024', event: 'First prototype: text-only detection using RoBERTa-based classification' },
   { year: 'Mid 2024', event: 'Multi-modal expansion: added image, audio, and video detection' },
-  { year: 'Late 2024', event: 'Vision detection achieved 97% accuracy on deepfake images' },
-  { year: '2025', event: 'Automated pipeline deployed across 15 Cloudflare Workers, continuously collecting and labeling samples' },
-  { year: '2026', event: '413,000+ labeled samples across 87 datasets · Multi-modal detection · Public launch at aiscern.com' },
+  { year: 'Late 2024', event: 'Multi-model ensemble deployed — image, audio, and video detection added' },
+  { year: '2025', event: 'Automated data pipeline deployed — 15 Cloudflare Workers collecting and labeling samples across 87 datasets' },
+  { year: '2026', event: '413,000+ labeled samples across 87 datasets · Text, image, audio & video detection · Public launch at aiscern.com' },
 ]
 
 export default function AboutPage() {

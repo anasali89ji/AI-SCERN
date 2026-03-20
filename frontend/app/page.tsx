@@ -342,7 +342,7 @@ function FloatingCards() {
 
 // ─── Live Counter ───────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(target)  // Start at target — always visible
+  const [count, setCount] = useState(0)  // Start at 0, animate when visible
   const [animated, setAnimated] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -785,6 +785,7 @@ export default function HomePage() {
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
             </Link>
             <Link href="/reviews" className="hover:text-text-primary transition-colors" title="Aiscern User Reviews">Reviews</Link>
+            <Link href="/blog" className="hover:text-text-primary transition-colors" title="Aiscern Blog">Blog</Link>
             <Link href="/pricing" className="hover:text-text-primary transition-colors" title="View AI Detector Plans">Pricing</Link>
           </div>
 
