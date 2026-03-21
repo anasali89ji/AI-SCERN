@@ -1,6 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {},
+
+  // Suppress webpack cache serialization warning for large strings
+  webpack: (config, { isServer }) => {
+    // Increase the size limit for inline assets to avoid warning spam
+    config.performance = {
+      ...config.performance,
+      hints: false,
+    }
+    return config
+  },
+
   env: {
     NEXT_PUBLIC_SUPABASE_URL:      process.env.NEXT_PUBLIC_SUPABASE_URL      || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
@@ -10,6 +21,7 @@ const nextConfig = {
     NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: '/dashboard',
     NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: '/dashboard',
   },
+
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [360, 480, 640, 750, 828, 1080, 1200],
@@ -25,6 +37,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com'       },
     ],
   },
+
   headers: async () => [
     {
       source: '/:path*',

@@ -51,16 +51,16 @@ const MODELS = {
   // TEXT — RoBERTa ensemble (all fine-tuned on real AI vs human data)
   text_primary:   'openai-community/roberta-base-openai-detector',  // GPT-2 era, strong baseline
   text_secondary: 'Hello-SimpleAI/chatgpt-detector-roberta',         // ChatGPT-3.5/4 specialized
-  text_tertiary:  'andreas122001/roberta-mixed-detector',             // ↑ UPGRADED: mixed-source fine-tune, better on Claude/Gemini
+  text_tertiary:  'andreas122001/roberta-mixed-detector',             // mixed-source fine-tune, better on Claude/Gemini
 
-  // IMAGE — multi-generator ensemble
-  image_primary:  'umm-maybe/AI-image-detector',        // General AI image classifier
-  image_sdxl:     'Organika/sdxl-detector',             // SDXL/Stable Diffusion specialized
-  image_face:     'Nahrawy/AIorNot',                    // General AI vs real classifier
+  // IMAGE — multi-generator ensemble, covers DALL-E 3/MJ v6/Gemini/Grok/SD/Flux
+  image_primary:  'umm-maybe/AI-image-detector',        // returns: artificial/human labels
+  image_sdxl:     'Organika/sdxl-detector',             // returns: AI/Real labels — SDXL/Flux focused
+  image_modern:   'dima806/ai_vs_real_image_detection', // 2024-trained: covers modern generators
 
   // AUDIO — deepfake/TTS detection
   audio_primary:  'mo-thecreator/Deepfake-audio-detection',             // ElevenLabs/TTS focused
-  audio_asvspoof: 'MelodyMachine/Deepfake-audio-detection-V2',          // ↑ UPGRADED: V2 with ASVspoof5 data
+  audio_asvspoof: 'MelodyMachine/Deepfake-audio-detection-V2',          // V2 with ASVspoof5 data
 }
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
@@ -203,7 +203,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileNa
   const [r1, r2, r3] = await Promise.allSettled([
     hfInference(MODELS.image_primary, null, { binary: true, binaryData: imageBuffer }),
     hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: imageBuffer }),
-    hfInference(MODELS.image_face,    null, { binary: true, binaryData: imageBuffer }),
+    hfInference(MODELS.image_modern,  null, { binary: true, binaryData: imageBuffer }),
   ])
 
   const mlScores: { model: string; aiScore: number; weight: number }[] = []
@@ -211,16 +211,28 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileNa
     if (r.status !== 'fulfilled') return
     try {
       const raw = r.value as { label: string; score: number }[]
-      const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake|generated/i.test(s.label))
-      const huE = raw.find(s => /real|human|authentic|label_0|photo/i.test(s.label))
-      if (aiE || huE) {
-        mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
+      if (!Array.isArray(raw) || raw.length === 0) return
+      // Sort by score descending so top prediction is first
+      const sorted = [...raw].sort((a, b) => b.score - a.score)
+      // Broad AI label patterns — includes "artificial" which umm-maybe/AI-image-detector returns
+      const aiPattern  = /ai|fake|sdxl|synthetic|label_1|deepfake|generated|artificial|diffusion|machine/i
+      // Broad human/real label patterns — includes "Not" from some classifiers
+      const huPattern  = /real|human|authentic|label_0|photo|genuine|not.?ai|original/i
+      const aiE = sorted.find(s => aiPattern.test(s.label))
+      const huE = sorted.find(s => huPattern.test(s.label))
+      // If neither pattern matched, use rank: highest score = AI (most classifiers rank AI first if detected)
+      if (!aiE && !huE) {
+        // Last resort: if top label score > 0.6, treat as AI
+        if (sorted[0].score > 0.60) mlScores.push({ model: m, aiScore: sorted[0].score, weight: w })
+        return
       }
+      const aiScore = aiE?.score ?? (huE ? 1 - huE.score : 0.5)
+      mlScores.push({ model: m, aiScore, weight: w })
     } catch {}
   }
   parseImg(r1, 0.40, MODELS.image_primary)
   parseImg(r2, 0.35, MODELS.image_sdxl)
-  parseImg(r3, 0.25, MODELS.image_face)
+  parseImg(r3, 0.25, MODELS.image_modern)
 
   // Deterministic image signals (always available, catch what ML misses)
   let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)

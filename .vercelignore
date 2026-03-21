@@ -1,0 +1,6 @@
+# Fine-tuning notebooks - large files not needed for deployment
+finetune/
+*.ipynb
+cf-pipeline/
+.github/
+README.md

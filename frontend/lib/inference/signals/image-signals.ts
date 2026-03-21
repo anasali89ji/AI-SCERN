@@ -70,13 +70,15 @@ function calcEntropy(samples: number[]): number {
   return h
 }
 function entropyScore(entropy: number): number {
-  if (entropy < 6.2) return 0.90  // Gemini/Imagen: extremely clean
-  if (entropy < 6.8) return 0.80  // SDXL/Midjourney: very clean
-  if (entropy < 7.1) return 0.65  // DALL-E 3: moderately clean
-  if (entropy < 7.3) return 0.48  // Leonardo: mixed
-  if (entropy < 7.5) return 0.32  // real photo range
-  if (entropy < 7.7) return 0.18  // real photo with grain
-  return 0.10                      // heavy sensor noise
+  // Recalibrated for modern AI (2024+): DALL-E 3/MJ v6 have high entropy (7.2-7.5)
+  // Old SD 1.x was 6.2-6.8; modern generators look like real photos in entropy
+  if (entropy < 6.2) return 0.92  // old/compressed AI output
+  if (entropy < 6.8) return 0.82  // Gemini/Imagen: still quite clean
+  if (entropy < 7.1) return 0.70  // SD/SDXL
+  if (entropy < 7.3) return 0.56  // DALL-E 3 / MJ v6 lower end
+  if (entropy < 7.5) return 0.44  // DALL-E 3 / MJ v6 — borderline, not strongly human
+  if (entropy < 7.7) return 0.28  // real photo range
+  return 0.14                      // heavy sensor noise / DSLR RAW
 }
 
 // ── 2. Sensor Noise (Adjacent Byte Variance) ──────────────────────────────────
@@ -89,12 +91,14 @@ function calcNoise(samples: number[]): number {
   return diff / (samples.length - 1)
 }
 function noiseScore(noise: number): number {
-  if (noise < 2.5) return 0.92  // Gemini/Grok: near-zero noise
-  if (noise < 4.0) return 0.80  // SDXL/Midjourney
-  if (noise < 6.0) return 0.65  // DALL-E 3 / Leonardo
-  if (noise < 9.0) return 0.45  // edited real photo
-  if (noise < 13)  return 0.28  // real phone photo
-  return 0.12                    // DSLR with visible grain
+  // Modern AI adds intentional film grain (DALL-E 3, MJ v6, Adobe Firefly)
+  // Lower thresholds calibrated: only near-zero noise is definitively AI
+  if (noise < 2.0) return 0.92  // near-zero: definitely AI (Gemini/old SD)
+  if (noise < 3.5) return 0.78  // very low: probably AI (older generators)
+  if (noise < 5.5) return 0.58  // low: could be AI with grain filter
+  if (noise < 8.5) return 0.40  // moderate: DALL-E 3 grain / real phone
+  if (noise < 12)  return 0.25  // normal: likely real photo
+  return 0.12                    // heavy grain: DSLR / ISO push
 }
 
 // ── 3. Background Uniformity ──────────────────────────────────────────────────
@@ -127,11 +131,14 @@ function calcLuminance(samples: number[]): number {
   return samples.filter(b => b >= 90 && b <= 210).length / samples.length
 }
 function luminanceScore(fraction: number): number {
-  if (fraction > 0.85) return 0.88  // Gemini: extremely midtone-compressed
-  if (fraction > 0.78) return 0.74  // SDXL/Midjourney
-  if (fraction > 0.70) return 0.58  // DALL-E 3
-  if (fraction > 0.62) return 0.42
-  return 0.22                        // real photo: wide tonal range
+  // Modern AI (DALL-E 3, MJ v6) has full tonal range — luminance signal is weakened
+  // Only extreme midtone compression (old Gemini/SD) is reliably AI
+  if (fraction > 0.88) return 0.90  // extreme compression: old-style AI
+  if (fraction > 0.82) return 0.76  // high compression: likely AI (Gemini/old MJ)
+  if (fraction > 0.75) return 0.58  // moderate: could be AI or overexposed real
+  if (fraction > 0.65) return 0.44  // slight: borderline — DALL-E 3 range
+  if (fraction > 0.55) return 0.30  // normal: probably real
+  return 0.18                        // wide range: real photo with shadows/highlights
 }
 
 // ── 5. Color Channel Balance ──────────────────────────────────────────────────
@@ -188,13 +195,16 @@ function calcCompression(fileSize: number): number {
   return fileSize
 }
 function compressionScore(size: number): number {
+  // Recalibrated: Midjourney/DALL-E 3 full-quality downloads are 1-4MB
+  // File size is now a WEAK signal — only very small files are clearly AI
   const kb = size / 1024
-  if (kb < 80)   return 0.88  // tiny = AI thumbnail/compressed output
-  if (kb < 200)  return 0.75
-  if (kb < 500)  return 0.58
-  if (kb < 1200) return 0.42
-  if (kb < 3000) return 0.28
-  return 0.12                  // large file = real DSLR
+  if (kb < 60)   return 0.85  // tiny = definitely AI web output
+  if (kb < 150)  return 0.72  // small = probably AI
+  if (kb < 400)  return 0.58  // medium-small = leaning AI
+  if (kb < 1000) return 0.50  // medium = neutral (AI and real overlap here)
+  if (kb < 2500) return 0.46  // large = slightly human-leaning (but DALL-E can be this big)
+  if (kb < 5000) return 0.35  // very large = probably real phone/camera
+  return 0.18                  // huge = DSLR RAW/uncompressed
 }
 
 // ── 8. DCT Coefficient Distribution (JPEG artifact pattern) ──────────────────
@@ -299,16 +309,19 @@ export function extractImageSignals(buf: Buffer, fileSize: number): ImageSignalR
   const rawEdit       = calcEditSignature(bytes, samples)
 
   return [
-    { name: 'Byte Entropy',            score: entropyScore(rawEntropy),       rawValue: rawEntropy,     weight: 0.16, description: 'AI generators (Gemini, SDXL, DALL-E) produce lower-entropy images than real cameras' },
-    { name: 'Sensor Noise Absence',    score: noiseScore(rawNoise),           rawValue: rawNoise,       weight: 0.16, description: 'Camera sensor noise is absent in AI images — Grok and Gemini score highest here' },
-    { name: 'Background Uniformity',   score: bgScore(rawBg),                 rawValue: rawBg,          weight: 0.14, description: 'AI studio renders (Leonardo, Grok) have unnaturally smooth background gradients' },
-    { name: 'Luminance Clustering',    score: luminanceScore(rawLuminance),   rawValue: rawLuminance,   weight: 0.12, description: 'Diffusion models cluster pixel values in mid-tones; Gemini shows extreme clustering' },
-    { name: 'HF Detail Regularity',    score: hfDetailScore(rawHF),          rawValue: rawHF,          weight: 0.12, description: 'AI upsampling creates regular high-frequency patterns absent in real photographs' },
-    { name: 'Color Channel Balance',   score: colorBalanceScore(rawColor),    rawValue: rawColor,       weight: 0.10, description: 'AI generators produce suspiciously balanced RGB — real photos have natural color casts' },
-    { name: 'DCT Block Pattern',       score: rawDCT,                         rawValue: rawDCT,         weight: 0.10, description: 'JPEG block coefficient patterns differ between AI output and real camera captures' },
-    { name: 'Skin Tone Smoothing',     score: rawSkin,                        rawValue: rawSkin,        weight: 0.08, description: 'AI portrait generators produce unnaturally smooth skin — Midjourney v6 and Grok especially' },
-    { name: 'Compression Efficiency',  score: compressionScore(rawCompression), rawValue: rawCompression, weight: 0.06, description: 'AI output files are typically smaller than real photos at equivalent resolution' },
-    { name: 'Edit Signature',          score: rawEdit,                        rawValue: rawEdit,        weight: 0.04, description: 'Photoshop/Lightroom edits leave double-compression and clone-stamp patterns' },
+    // Reliable signals: work well even for modern AI (DALL-E 3, MJ v6, Gemini, Grok, Flux)
+    { name: 'HF Detail Regularity',    score: hfDetailScore(rawHF),           rawValue: rawHF,          weight: 0.22, description: 'AI upsampling creates unnaturally regular high-frequency patterns — most reliable signal' },
+    { name: 'DCT Block Pattern',       score: rawDCT,                         rawValue: rawDCT,         weight: 0.18, description: 'JPEG block coefficient patterns differ between AI diffusion output and real camera captures' },
+    { name: 'Skin Tone Smoothing',     score: rawSkin,                        rawValue: rawSkin,        weight: 0.15, description: 'AI portrait generators (Midjourney v6, Grok, Gemini) produce unnaturally smooth skin texture' },
+    { name: 'Background Uniformity',   score: bgScore(rawBg),                 rawValue: rawBg,          weight: 0.14, description: 'AI studio renders have unnaturally smooth gradients — reliable for portraits and product shots' },
+    // Moderate signals: somewhat reliable but weakened by modern AI sophistication
+    { name: 'Sensor Noise Absence',    score: noiseScore(rawNoise),           rawValue: rawNoise,       weight: 0.11, description: 'Near-zero sensor noise indicates AI — modern generators add grain but rarely match real cameras' },
+    { name: 'Byte Entropy',            score: entropyScore(rawEntropy),       rawValue: rawEntropy,     weight: 0.08, description: 'Modern AI has similar entropy to real photos — reliable only for old or compressed AI outputs' },
+    { name: 'Color Channel Balance',   score: colorBalanceScore(rawColor),    rawValue: rawColor,       weight: 0.07, description: 'Unnaturally balanced RGB channels — less reliable as modern AI adds natural color variation' },
+    // Weak signals: poor discriminators for 2024+ AI generators
+    { name: 'Luminance Clustering',    score: luminanceScore(rawLuminance),   rawValue: rawLuminance,   weight: 0.03, description: 'DALL-E 3 and MJ v6 have full tonal range like real photos — signal is weak for modern AI' },
+    { name: 'Compression Efficiency',  score: compressionScore(rawCompression), rawValue: rawCompression, weight: 0.02, description: 'Modern AI generates 1-4MB files — file size is no longer a reliable AI indicator' },
+    { name: 'Edit Signature',          score: rawEdit,                        rawValue: rawEdit,        weight: 0.00, description: 'Photoshop/Lightroom edits leave double-compression patterns — disabled to reduce false positives' },
   ]
 }
 

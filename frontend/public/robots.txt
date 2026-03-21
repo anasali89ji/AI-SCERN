@@ -1,3 +1,19 @@
+# *
 User-agent: *
 Allow: /
+
+# *
+User-agent: *
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /history
+Disallow: /pipeline
+Disallow: /scraper
+Disallow: /admin
+
+# Host
+Host: https://aiscern.com
+
+# Sitemaps
 Sitemap: https://aiscern.com/sitemap.xml
