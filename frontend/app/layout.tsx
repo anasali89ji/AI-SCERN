@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { AuthProvider } from '@/components/auth-provider'
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <AuthProvider>
             {children}
+            <ServiceWorkerRegistration />
             <Toaster richColors position="top-right" />
           </AuthProvider>
         </ClerkProvider>

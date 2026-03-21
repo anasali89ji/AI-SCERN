@@ -1,3 +1,4 @@
+export const revalidate = 300  // revalidate every 5 min
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'

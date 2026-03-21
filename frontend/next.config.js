@@ -40,6 +40,7 @@ const nextConfig = {
   },
 
   headers: async () => [
+    // ── Security headers on everything ──────────────────────────────────────
     {
       source: '/:path*',
       headers: [
@@ -64,6 +65,125 @@ const nextConfig = {
           ].join('; '),
         },
       ],
+    },
+
+    // ── Static assets — immutable, 1 year ───────────────────────────────────
+    // Next.js hashes filenames so content-addressed = safe to cache forever
+    {
+      source: '/_next/static/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    // Public folder assets (logo, favicons, manifests, blog images)
+    {
+      source: '/logo:path*',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    },
+    {
+      source: '/favicon:path*',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+    },
+    {
+      source: '/site.webmanifest',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+    },
+    {
+      source: '/og-image.png',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+    },
+    {
+      source: '/hero/:path*',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    },
+
+    // ── Detection API routes — never cache (results are user-specific) ───────
+    {
+      source: '/api/detect/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+        { key: 'Pragma',        value: 'no-cache' },
+      ],
+    },
+    // Auth, admin, billing, user data — never cache
+    {
+      source: '/api/auth/:path*',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+    {
+      source: '/api/admin/:path*',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+    {
+      source: '/api/billing/:path*',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+    {
+      source: '/api/profiles/:path*',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+
+    // ── Shared/public API data — short cache, CDN-safe ───────────────────────
+    // Reviews: public, change rarely — 5 min browser + CDN cache
+    {
+      source: '/api/reviews',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=300, stale-while-revalidate=600' },
+      ],
+    },
+    // Pipeline stats: polling dashboard — 60s cache
+    {
+      source: '/api/pipeline-stats',
+      headers: [
+        { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=120' },
+      ],
+    },
+    // Sitemap and robots
+    {
+      source: '/sitemap.xml',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+    },
+    {
+      source: '/robots.txt',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }],
+    },
+
+    // ── Marketing pages — cache at CDN, revalidate in background ─────────────
+    {
+      source: '/blog/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
+      ],
+    },
+    {
+      source: '/pricing',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
+      ],
+    },
+    {
+      source: '/about',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
+      ],
+    },
+
+    // ── Dashboard/auth pages — private, no CDN cache ─────────────────────────
+    {
+      source: '/dashboard/:path*',
+      headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+    },
+    {
+      source: '/detect/:path*',
+      headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+    },
+    {
+      source: '/login',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
+    },
+    {
+      source: '/signup',
+      headers: [{ key: 'Cache-Control', value: 'no-store' }],
     },
   ],
 }
