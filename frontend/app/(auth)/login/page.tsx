@@ -9,7 +9,6 @@ export default function LoginPage() {
   const { isSignedIn, isLoaded } = useAuth()
   const router = useRouter()
 
-  // Immediate redirect if already signed in
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace('/dashboard')
   }, [isLoaded, isSignedIn, router])
@@ -27,7 +26,6 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-[400px]">
         <SignIn
-          routing="hash"
           forceRedirectUrl="/dashboard"
           fallbackRedirectUrl="/dashboard"
           signUpUrl="/signup"
@@ -90,7 +88,7 @@ export default function LoginPage() {
           Create one free →
         </Link>
       </p>
-      <p className="mt-3 text-[11px] text-[#252535] relative z-10">© 2025 Aiscern · Secured by Clerk</p>
+      <p className="mt-3 text-[11px] text-[#252535] relative z-10">© 2026 Aiscern · Secured by Clerk</p>
     </div>
   )
 }

@@ -26,7 +26,6 @@ export default function SignUpPage() {
 
       <div className="relative z-10 w-full max-w-[400px]">
         <SignUp
-          routing="hash"
           forceRedirectUrl="/dashboard"
           fallbackRedirectUrl="/dashboard"
           signInUrl="/login"
@@ -89,7 +88,7 @@ export default function SignUpPage() {
           Sign in →
         </Link>
       </p>
-      <p className="mt-3 text-[11px] text-[#252535] relative z-10">© 2025 Aiscern · Secured by Clerk</p>
+      <p className="mt-3 text-[11px] text-[#252535] relative z-10">© 2026 Aiscern · Secured by Clerk</p>
     </div>
   )
 }

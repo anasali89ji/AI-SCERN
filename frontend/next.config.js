@@ -15,7 +15,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SUPABASE_URL:      process.env.NEXT_PUBLIC_SUPABASE_URL      || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '',
+    // Clerk env vars must NOT have fallbacks — they come from Vercel env at runtime
+    // Hardcoding fallback '' would override real values and break auth
     NEXT_PUBLIC_CLERK_SIGN_IN_URL:  '/login',
     NEXT_PUBLIC_CLERK_SIGN_UP_URL:  '/signup',
     NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: '/dashboard',

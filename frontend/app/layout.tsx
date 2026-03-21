@@ -84,6 +84,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
           signInUrl="/login"
           signUpUrl="/signup"
+          signInFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
+          afterSignOutUrl="/"
+          dynamic
         >
           <AuthProvider>
             {children}
