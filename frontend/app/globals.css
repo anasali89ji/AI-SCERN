@@ -337,3 +337,7 @@ html, body {
 img {
   max-width: 100%;
 }
+
+/* ── Hide scrollbar utility (for trust bar horizontal scroll) ── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
