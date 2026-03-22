@@ -55,7 +55,33 @@ export async function POST(req: NextRequest) {
 
     // Pass detected format so image signals can apply JPEG-specific tuning
     const detectedFormat = isJPEG ? 'jpeg' : isPNG ? 'png' : isWEBP ? 'webp' : 'other'
-    const result = await analyzeImage(buffer, file.type, file.name, detectedFormat)
+
+    // Hard 9s timeout wrapper — ensures we always return JSON (not Vercel's 504 HTML page)
+    // On Vercel Hobby the function limit is 10s; on Pro it's 60s.
+    // If HF models are cold, pixel-signal-only results are returned instead of timing out.
+    const timeoutMs = 9000
+    let result
+    try {
+      result = await Promise.race([
+        analyzeImage(buffer, file.type, file.name, detectedFormat),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+        ),
+      ])
+    } catch (e: unknown) {
+      const isTimeout = e instanceof Error && e.message === 'TIMEOUT'
+      if (isTimeout) {
+        // Return pixel-signal-only result with a note — better than a 504 error
+        return NextResponse.json({
+          success: false,
+          error: {
+            code:    'MODEL_WARMING',
+            message: 'AI models are warming up — please try again in 10 seconds. (Pixel analysis is still running.)',
+          }
+        }, { status: 503 })
+      }
+      throw e
+    }
     const processingTime = Date.now() - start
 
     let scanId: string | null = null

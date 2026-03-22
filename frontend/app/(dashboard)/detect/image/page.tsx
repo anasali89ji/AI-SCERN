@@ -68,11 +68,31 @@ export default function ImageDetectionPage() {
           }
         }
         xhr.onload = () => {
+          if (xhr.status === 503 || xhr.status === 504 || xhr.status === 524 || xhr.status === 408) {
+            try {
+              const d = JSON.parse(xhr.responseText)
+              if (d?.error?.code === 'MODEL_WARMING') {
+                reject(new Error('AI models are warming up — please try again in 10 seconds'))
+                return
+              }
+            } catch {}
+            reject(new Error('Request timed out — AI models are warming up. Please try again in 10 seconds.'))
+            return
+          }
+          if (xhr.status >= 500) {
+            try {
+              const d = JSON.parse(xhr.responseText)
+              reject(new Error(d?.error?.message || 'Analysis failed — please try again'))
+            } catch { reject(new Error('Analysis failed — please try again')) }
+            return
+          }
           setUploadPhase('analyzing')
           setUploadProgress(100)
           try { resolve(JSON.parse(xhr.responseText)) } catch { reject(new Error('Parse error')) }
         }
-        xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.onerror = () => reject(new Error('Upload failed — check your internet connection'))
+        xhr.ontimeout = () => reject(new Error('Request timed out — AI models are warming up, please try again'))
+        xhr.timeout = 55000  // 55s client timeout
         xhr.open('POST', '/api/detect/image')
         xhr.send(formData)
       })
@@ -239,8 +259,20 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose/30 bg-rose/5 flex items-center gap-2 text-rose text-sm py-3">
-              <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+              className="card border-rose/30 bg-rose/5 flex flex-col gap-1.5 py-3 px-4">
+              <div className="flex items-center gap-2 text-rose text-sm font-semibold">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                {error.includes('timeout') || error.includes('timed') || error.includes('504') || error.includes('524')
+                  ? 'AI models are warming up — please try again in 10 seconds'
+                  : error.includes('Upload failed') || error.includes('fetch')
+                  ? 'Upload failed — check your connection and try again'
+                  : error}
+              </div>
+              {(error.includes('timeout') || error.includes('timed') || error.includes('504') || error.includes('524') || error.includes('Upload failed')) && (
+                <p className="text-xs text-text-muted">
+                  The AI detection models occasionally need a moment to warm up. Your image was received — just click Detect again.
+                </p>
+              )}
             </motion.div>
           )}
 

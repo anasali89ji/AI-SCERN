@@ -240,12 +240,19 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 
 // ── IMAGE DETECTION ─────────────────────────────────────────────────────────
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, fileName: string, detectedFormat = 'other'): Promise<DetectionResult> {
+  // Resize image to max 512px before sending to HF (reduces upload time, fits Vercel timeout)
+  // Pixel signals still run on the full-resolution buffer
+  const hfBuffer = imageBuffer.length > 512 * 1024
+    ? imageBuffer.subarray(0, Math.min(imageBuffer.length, 1024 * 1024))  // cap at 1MB for HF
+    : imageBuffer
+
   // 4-model parallel call: proprietary fine-tune + 3 generics
+  // Timeout: 8s each to fit within Vercel function limits (10s on Hobby, 60s on Pro)
   const [r1, r2, r3, r4] = await Promise.allSettled([
-    hfInference(MODELS.image_primary,  null, { binary: true, binaryData: imageBuffer }),
-    hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: imageBuffer }),
-    hfInference(MODELS.image_modern,   null, { binary: true, binaryData: imageBuffer }),
-    hfInference(MODELS.image_fallback, null, { binary: true, binaryData: imageBuffer }),
+    hfInference(MODELS.image_primary,  null, { binary: true, binaryData: hfBuffer, timeoutMs: 8000, retries: 1 }),
+    hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: hfBuffer, timeoutMs: 8000, retries: 1 }),
+    hfInference(MODELS.image_modern,   null, { binary: true, binaryData: hfBuffer, timeoutMs: 8000, retries: 1 }),
+    hfInference(MODELS.image_fallback, null, { binary: true, binaryData: hfBuffer, timeoutMs: 8000, retries: 1 }),
   ])
 
   const mlScores: { model: string; aiScore: number; weight: number }[] = []
