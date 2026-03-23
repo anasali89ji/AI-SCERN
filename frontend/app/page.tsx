@@ -92,34 +92,34 @@ function DeferredParticleNetwork() {
 
 // ── Hero Root Network — responsive 3-tier (mobile 3+3 / tablet 6+6 / desktop 10+10) ──
 
-// ── Desktop nodes (full 10+10) ──
+// ── Desktop nodes (full 10+10) — kept tight to edges, centre 30–70% stays clear ──
 const AI_NODES_LG = [
-  { x: 3,  y: 12, delay: 0.00 }, { x: 14, y: 28, delay: 0.15 },
-  { x: 2,  y: 46, delay: 0.30 }, { x: 18, y: 60, delay: 0.45 },
-  { x: 7,  y: 76, delay: 0.60 }, { x: 28, y: 15, delay: 0.10 },
-  { x: 32, y: 36, delay: 0.25 }, { x: 24, y: 54, delay: 0.40 },
-  { x: 35, y: 70, delay: 0.55 }, { x: 20, y: 88, delay: 0.70 },
+  { x: 2,  y: 10, delay: 0.00 }, { x: 12, y: 26, delay: 0.15 },
+  { x: 1,  y: 44, delay: 0.30 }, { x: 14, y: 60, delay: 0.45 },
+  { x: 4,  y: 78, delay: 0.60 }, { x: 20, y: 14, delay: 0.10 },
+  { x: 18, y: 36, delay: 0.25 }, { x: 16, y: 55, delay: 0.40 },
+  { x: 22, y: 72, delay: 0.55 }, { x: 10, y: 90, delay: 0.70 },
 ]
 const REAL_NODES_LG = [
-  { x: 96, y: 12, delay: 0.00 }, { x: 83, y: 28, delay: 0.15 },
-  { x: 97, y: 46, delay: 0.30 }, { x: 79, y: 60, delay: 0.45 },
-  { x: 91, y: 76, delay: 0.60 }, { x: 68, y: 15, delay: 0.10 },
-  { x: 64, y: 36, delay: 0.25 }, { x: 73, y: 54, delay: 0.40 },
-  { x: 62, y: 70, delay: 0.55 }, { x: 77, y: 88, delay: 0.70 },
+  { x: 97, y: 10, delay: 0.00 }, { x: 86, y: 26, delay: 0.15 },
+  { x: 98, y: 44, delay: 0.30 }, { x: 84, y: 60, delay: 0.45 },
+  { x: 95, y: 78, delay: 0.60 }, { x: 78, y: 14, delay: 0.10 },
+  { x: 80, y: 36, delay: 0.25 }, { x: 82, y: 55, delay: 0.40 },
+  { x: 76, y: 72, delay: 0.55 }, { x: 88, y: 90, delay: 0.70 },
 ]
 const AI_EDGES_LG   = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
 const REAL_EDGES_LG = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
 
-// ── Tablet nodes (6+6, avoid centre x:28-42 and x:58-72) ──
+// ── Tablet nodes (6+6, clear centre x:28–72) ──
 const AI_NODES_MD = [
-  { x: 2,  y: 10, delay: 0.00 }, { x: 12, y: 28, delay: 0.15 },
-  { x: 3,  y: 50, delay: 0.30 }, { x: 15, y: 68, delay: 0.45 },
-  { x: 5,  y: 82, delay: 0.60 }, { x: 22, y: 42, delay: 0.25 },
+  { x: 1,  y: 10, delay: 0.00 }, { x: 10, y: 30, delay: 0.15 },
+  { x: 2,  y: 52, delay: 0.30 }, { x: 12, y: 70, delay: 0.45 },
+  { x: 3,  y: 85, delay: 0.60 }, { x: 18, y: 42, delay: 0.25 },
 ]
 const REAL_NODES_MD = [
-  { x: 97, y: 10, delay: 0.00 }, { x: 86, y: 28, delay: 0.15 },
-  { x: 96, y: 50, delay: 0.30 }, { x: 83, y: 68, delay: 0.45 },
-  { x: 93, y: 82, delay: 0.60 }, { x: 76, y: 42, delay: 0.25 },
+  { x: 98, y: 10, delay: 0.00 }, { x: 88, y: 30, delay: 0.15 },
+  { x: 97, y: 52, delay: 0.30 }, { x: 86, y: 70, delay: 0.45 },
+  { x: 96, y: 85, delay: 0.60 }, { x: 80, y: 42, delay: 0.25 },
 ]
 const AI_EDGES_MD   = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
 const REAL_EDGES_MD = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
@@ -526,7 +526,7 @@ const STATS = [
   { value: 413000, suffix: '+', label: 'Samples Collected', icon: Database  },
   { value: 87,     suffix: '',  label: 'Source Datasets',   icon: Globe     },
   { value: 4,      suffix: '',  label: 'Modalities Covered',icon: Layers    },
-  { value: 15,     suffix: '',  label: 'Scraper Workers',   icon: Zap       },
+  { value: 15,     suffix: '',  label: 'AI Models Used',    icon: Zap       },
 ]
 
 const REVIEWS = [
@@ -899,8 +899,13 @@ export default function HomePage() {
         <DeferredParticleNetwork />
         <FloatingCards />
 
-        {/* Dark overlay so text is always readable over floating cards */}
-        <div className="absolute inset-0 bg-background/40 pointer-events-none z-10" />
+        {/* Strong centre shield — keeps text readable over floating cards */}
+        <div className="absolute inset-0 pointer-events-none z-10">
+          {/* Full-screen dark base */}
+          <div className="absolute inset-0 bg-background/55" />
+          {/* Extra centre blur — fades cards that drift near text */}
+          <div className="absolute inset-y-0 left-[20%] right-[20%] bg-background/60 blur-2xl" />
+        </div>
 
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
         <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-secondary/8 blur-[80px] pointer-events-none" />
@@ -914,16 +919,16 @@ export default function HomePage() {
           </div>
 
           <motion.h1 initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
-            className="font-black leading-[0.95] mb-4 sm:mb-6">
-            {/* Mobile: short punchy headline */}
+            className="font-black leading-[1.0] mb-4 sm:mb-6">
+            {/* Mobile */}
             <span className="block sm:hidden text-[2rem] leading-tight gradient-text">Detect AI Content</span>
             <span className="block sm:hidden text-lg text-text-primary mt-2 font-semibold leading-snug">
               Text · Images · Audio · Video
             </span>
-            {/* Desktop: full headline */}
+            {/* Desktop */}
             <span className="hidden sm:block text-4xl lg:text-7xl gradient-text">Unmask AI-Generated Content</span>
-            <span className="hidden sm:block text-3xl lg:text-5xl text-text-primary mt-2">
-              — Free Detector for Text, Images, Audio &amp; Video
+            <span className="hidden sm:block text-2xl lg:text-4xl text-text-secondary font-semibold mt-3 leading-snug">
+              Free detector for text, images, audio &amp; video
             </span>
           </motion.h1>
 
@@ -1008,10 +1013,10 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
-              Detection <span className="gradient-text">Arsenal</span>
+              What We <span className="gradient-text">Detect</span>
             </h2>
             <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
-              Six powerful tools powered by proprietary multi-model AI powered by 413k+ verified samples.
+              Six tools built on a multi-model AI engine trained on 413k+ verified real-world samples.
             </p>
           </motion.div>
 
@@ -1136,7 +1141,7 @@ export default function HomePage() {
           {/* 4 trust pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {[
-              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '413,000+ Samples', desc: 'Built on 413,000+ verified samples spanning diverse AI-generated and authentic content from 57 curated HuggingFace sources.' },
+              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '413,000+ Samples', desc: 'Built on 413,000+ verified samples spanning AI-generated and authentic content, collected across 87 curated datasets from HuggingFace and direct sources.' },
               { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every detection signal and methodology is validated against real-world AI outputs.' },
               { icon: TrendingUp,  color: 'bg-amber/10 text-amber',       title: 'Ensemble Models',  desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 ensembles — no single model makes the final call.' },
               { icon: Zap,         color: 'bg-cyan/10 text-cyan',         title: 'Free Forever',     desc: 'No subscriptions, no scan limits, no paywalls. Core detection will always be free — always.' },

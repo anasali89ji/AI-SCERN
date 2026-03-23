@@ -59,9 +59,9 @@ export default function AboutPage() {
                 Defending Truth in the<br /><span className="gradient-text">Age of Synthetic Media</span>
               </h1>
               <p className="text-text-muted text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto">
-                Aiscern is an enterprise-grade, multi-modal AI content detection platform.
-                We help organizations, journalists, and individuals verify the authenticity
-                of media before it spreads.
+                Aiscern is a free, multi-modal AI content detection platform built for journalists,
+                researchers, educators, and anyone who needs to verify what's real.
+                We help people check the authenticity of text, images, audio, and video — before it spreads.
               </p>
             </motion.div>
           </div>
@@ -118,8 +118,8 @@ export default function AboutPage() {
                   <p className="text-text-muted text-sm leading-relaxed mb-5">
                     With a background spanning machine learning, cloud infrastructure, and product design,
                     Anas architected Aiscern's entire detection system — from the data infrastructure to the
-                    advanced vision models — with a single goal: make enterprise-grade media authentication
-                    accessible to everyone.
+                    fine-tuned vision and language models — with a single goal: make accurate, reliable
+                    media authentication accessible to everyone, not just large organizations.
                   </p>
 
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start mb-4">
