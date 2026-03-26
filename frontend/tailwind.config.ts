@@ -10,14 +10,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background:    '#0a0a0f',
-        surface:       '#111118',
-        'surface-active': '#161622',
-        border:        '#1e1e2e',
-        'text-primary':   '#e2e8f0',
-        'text-secondary': '#94a3b8',
-        'text-muted':     '#64748b',
-        'text-disabled':  '#334155',
+        background:    '#08080d',
+        surface:       '#0f0f17',
+        'surface-active': '#141420',
+        border:        '#1c1c2e',
+        'text-primary':   '#f1f5f9',   // brighter — better contrast
+        'text-secondary': '#a0aec0',   // slightly brighter secondary
+        'text-muted':     '#718096',   // up from 64748b — passes WCAG AA
+        'text-disabled':  '#4a5568',   // up from 334155 — visible on dark bg
         primary:       '#7c3aed',
         secondary:     '#2563eb',
         cyan:          '#06b6d4',

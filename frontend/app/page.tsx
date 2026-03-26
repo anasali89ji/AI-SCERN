@@ -484,14 +484,14 @@ const TRUST_CATS = [{ e:'📰',l:'Journalists' },{ e:'🎓',l:'Educators' },{ e:
 function TrustBar() {
   return (
     <div className="py-3 sm:py-4">
-      <p className="text-center text-[10px] sm:text-xs text-text-disabled uppercase tracking-widest mb-3 sm:mb-5 font-medium">
+      <p className="text-center text-[10px] sm:text-xs text-text-muted uppercase tracking-widest mb-3 sm:mb-5 font-semibold">
         Used by professionals in
       </p>
       {/* Mobile: single horizontally scrollable row — no wrapping */}
       <div className="sm:hidden overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
         <div className="flex gap-5 px-4 w-max">
           {TRUST_CATS.map((t) => (
-            <span key={t.l} className="flex items-center gap-1.5 text-xs font-medium text-text-muted whitespace-nowrap flex-shrink-0">
+            <span key={t.l} className="flex items-center gap-1.5 text-xs font-medium text-text-secondary whitespace-nowrap flex-shrink-0">
               <span>{t.e}</span>{t.l}
             </span>
           ))}
@@ -900,8 +900,8 @@ export default function HomePage() {
         <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-secondary/8 blur-[80px] pointer-events-none" />
         <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan/5 blur-[80px] pointer-events-none" />
 
-        <div className="relative z-20 text-center px-4 sm:px-8 md:px-10 lg:px-4 max-w-[100vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-[11px] sm:text-xs font-semibold mb-4 sm:mb-6">
+        <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-primary/40 bg-primary/15 text-primary text-[11px] sm:text-xs font-semibold mb-4 sm:mb-6">
             <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
             <span className="hidden sm:inline">413,000+ verified samples · Multi-model ensemble detection</span>
             <span className="sm:hidden">413k+ samples · Free forever</span>
@@ -921,16 +921,12 @@ export default function HomePage() {
             </span>
           </motion.h1>
 
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-sm sm:text-lg text-text-muted max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed">
-            {/* Mobile: ultra-minimal */}
-            <span className="sm:hidden">State-of-the-art AI detection. <strong className="text-text-secondary">Free forever.</strong> No signup required.</span>
-            {/* Desktop: full */}
-            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-secondary">text</strong>, <strong className="text-text-secondary">images</strong>, <strong className="text-text-secondary">audio</strong> &amp; <strong className="text-text-secondary">video</strong> with state-of-the-art models. Start free. No signup required.</span>
-          </motion.p>
+          <p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
+            <span className="sm:hidden">State-of-the-art AI detection. <strong className="text-text-primary">Free forever.</strong> No signup required.</span>
+            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-primary">text</strong>, <strong className="text-text-primary">images</strong>, <strong className="text-text-primary">audio</strong> &amp; <strong className="text-text-primary">video</strong> with state-of-the-art models. Start free. No signup required.</span>
+          </p>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-16 hero-fade-up" style={{ animationDelay: '0.1s' }}>
             {user ? (
               <>
                 <Link href="/dashboard"
@@ -959,12 +955,11 @@ export default function HomePage() {
                 </Link>
               </>
             )}
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            className="max-w-2xl mx-auto w-full px-0">
+          <div className="max-w-2xl mx-auto w-full hero-fade-up" style={{ animationDelay: '0.18s' }}>
             <LiveDemo isLoggedIn={!!user} />
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -983,10 +978,10 @@ export default function HomePage() {
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="text-center">
-                <div className="text-2xl sm:text-4xl lg:text-5xl font-black gradient-text mb-1.5">
+                <div className="text-[2rem] sm:text-4xl lg:text-5xl font-black gradient-text mb-1.5 tabular-nums">
                   <CountUp target={stat.value} suffix={stat.suffix} />
                 </div>
-                <p className="text-text-muted text-xs sm:text-sm font-medium">{stat.label}</p>
+                <p className="text-text-secondary text-xs sm:text-sm font-medium mt-1">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -1015,7 +1010,7 @@ export default function HomePage() {
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 whileHover={{ y: -4, scale: 1.02 }} className="group cursor-pointer">
                 <Link href={(!user && (tool.href === "/chat" || tool.href === "/batch" || tool.href === "/scraper")) ? "/signup" : tool.href} title={tool.label}>
-                  <div className={`relative overflow-hidden rounded-2xl border border-border p-5 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 transition-all duration-300 h-full`}>
+                  <div className={`relative overflow-hidden rounded-2xl border border-border p-4 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>
                         <tool.icon className="w-5 h-5 sm:w-6 sm:h-6" />

@@ -275,6 +275,17 @@ h1 {
   .animate-scroll-right { animation-duration: 22s; }
 }
 
+
+/* ── Hero text fade-up (replaces Framer Motion — no LCP penalty) ── */
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-fade-up {
+  opacity: 0;
+  animation: hero-fade-up 0.55s ease-out forwards;
+}
+
 /* ── Global mobile responsiveness fixes ── */
 
 /* Prevent horizontal overflow on all pages */
@@ -341,3 +352,98 @@ img {
 /* ── Hide scrollbar utility (for trust bar horizontal scroll) ── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Accessibility: contrast fixes ── 
+   text-disabled was #334155 (fails WCAG AA on #0a0a0f background)
+   text-muted was #64748b (borderline — upgrade for better legibility) */
+.text-text-disabled,
+[class*="text-text-disabled"] {
+  color: #475569 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE-FIRST PROFESSIONAL POLISH
+   Target: Moto G Power / 375-390px width / Slow 4G
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Typography scale on mobile ── */
+@media (max-width: 639px) {
+  /* Prevent orphan words in headings */
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* Better paragraph readability on small screens */
+  p { text-wrap: pretty; }
+
+  /* Ensure no horizontal scroll from any element */
+  * { max-width: 100%; }
+
+  /* Better tap targets */
+  a, button { min-height: 40px; }
+
+  /* Cards look cleaner with less padding on mobile */
+  .card { padding: 1rem !important; }
+
+  /* Tool grid cards — tighter on mobile */
+  section#tools .rounded-2xl { border-radius: 1rem; }
+}
+
+/* ── Buttons — cleaner on mobile ── */
+.btn-primary {
+  @apply bg-primary text-white font-bold rounded-xl transition-all duration-200;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+.btn-primary:hover { 
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* ── Card polish ── */
+.card {
+  @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
+  backdrop-filter: blur(8px);
+}
+.card:hover { border-color: rgba(124, 58, 237, 0.2); }
+
+/* ── Section spacing — tighter on mobile ── */
+@media (max-width: 639px) {
+  section { padding-left: 1rem; padding-right: 1rem; }
+  .max-w-6xl, .max-w-7xl, .max-w-5xl { padding-left: 1rem; padding-right: 1rem; }
+}
+
+/* ── Gradient badges — cleaner ── */
+.badge-ai   { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold; background-color: rgba(244, 63, 94, 0.12); color: #fc8093; border: 1px solid rgba(244,63,94,0.2); }
+.badge-human { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold; background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+
+/* ── Nav improvements ── */
+nav a { transition: color 0.15s ease; }
+
+/* ── Smooth page transitions ── */
+main { animation: page-in 0.3s ease-out; }
+@keyframes page-in {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
+}
+
+/* ── Focus styles — accessibility ── */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Text selection ── */
+::selection { background: rgba(124, 58, 237, 0.3); color: #f1f5f9; }
+
+/* ── Mobile safe area for bottom nav ── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  footer { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
+}
+
+/* ── Improved mobile scrolling ── */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-fade-up, .node-card-bob-a, .node-card-bob-b { animation: none !important; opacity: 1 !important; }
+}

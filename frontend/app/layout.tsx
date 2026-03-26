@@ -78,11 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
         <meta name="theme-color" content="#7c3aed" />
-        {/* Preconnect to Clerk CDN so auth JS loads faster */}
-        <link rel="preconnect" href="https://clerk.aiscern.com" crossOrigin="anonymous" />
+        {/* Preconnect to Clerk CDN — use credentials mode (no crossOrigin for Clerk) */}
+        <link rel="preconnect" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://clerk.aiscern.com" />
-        {/* Preconnect to fonts */}
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         {/* Skip to main content — keyboard accessibility */}
