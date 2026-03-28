@@ -1,15 +1,15 @@
 /**
- * Aiscern — Gemini 2.0 Flash Fallback Engine
+ * Aiscern — Gemini 2.0 Flash Detection Engine
  *
- * Replaces Amazon Bedrock. Fires ONLY when ALL HuggingFace models are
- * cold/unavailable. Gemini 2.0 Flash is fast, free-tier (1500 req/day),
- * and has native vision support for image analysis.
+ * Primary ML detection engine for text, image, and audio.
+ * Gemini 2.0 Flash: fast, no cold-start, 1500 free req/day.
+ * Native vision + audio support via inline base64 data.
  *
- * Required env var (add ONE key to Vercel):
+ * Required env var (set in Vercel dashboard):
  *   GEMINI_API_KEY  — from Google AI Studio (aistudio.google.com)
  *
- * Results are clearly labelled as "Gemini-Fallback" in model_used so
- * users know it's a fallback, not the fine-tuned HF classifier.
+ * File retained as 'bedrock-fallback.ts' for import compatibility.
+ * Internal name: Gemini Detection Engine.
  */
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
@@ -156,7 +156,75 @@ Respond ONLY with valid JSON:
   }
 }
 
-// ── Availability check ────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// AUDIO ANALYSIS
+// ════════════════════════════════════════════════════════════════
+export interface BedrockAudioResult {
+  aiScore:   number
+  verdict:   'AI' | 'HUMAN' | 'UNCERTAIN'
+  reasoning: string
+}
+
+const AUDIO_MIME_MAP: Record<string, string> = {
+  mp3:  'audio/mpeg',
+  wav:  'audio/wav',
+  ogg:  'audio/ogg',
+  flac: 'audio/flac',
+  m4a:  'audio/mp4',
+  aac:  'audio/aac',
+  webm: 'audio/webm',
+}
+
+export async function bedrockAnalyzeAudio(
+  audioBuffer: Buffer,
+  format: string,
+  _fileName: string,
+): Promise<BedrockAudioResult> {
+  const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
+
+  const mimeType = AUDIO_MIME_MAP[format.toLowerCase()] ?? 'audio/mpeg'
+
+  // Cap at 10MB for inline data — Gemini 2.0 Flash audio limit
+  const maxBytes = 10 * 1024 * 1024
+  const slice    = audioBuffer.length > maxBytes ? audioBuffer.slice(0, maxBytes) : audioBuffer
+
+  const audioPart = {
+    inlineData: {
+      data:     slice.toString('base64'),
+      mimeType,
+    },
+  }
+
+  const prompt = `You are an expert AI-generated audio / TTS / voice-clone detection system.
+
+Analyze this audio clip and determine if it was:
+- Synthesized by AI: ElevenLabs, PlayHT, XTTS, Bark, RVC, Vall-E, Tortoise TTS, Coqui, or similar
+- Cloned/deepfaked: voice conversion applied to a real recording
+- Authentic: genuine human speech recording
+
+Detection signals to check:
+1. PROSODY: Unnaturally consistent pitch, rhythm, and pacing (TTS has minimal variation)
+2. BREATH/SILENCE: Missing natural breath patterns, hesitations, or pauses
+3. ARTEFACTS: Electronic hiss, compression artefacts, buzzing at word boundaries
+4. EMOTION: Flat, affectless delivery without genuine emotional nuance
+5. BACKGROUND: Suspiciously clean audio — no room tone, handling noise, or ambience
+6. CONSONANTS: Slightly smeared or over-enunciated consonants typical of neural TTS
+7. FORMANTS: Unnatural vowel formant transitions
+
+Respond ONLY with valid JSON — no text outside the object:
+{"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "reasoning": "one sentence max"}`
+
+  const result  = await model.generateContent([prompt, audioPart])
+  const raw     = result.response.text()
+  const parsed  = parseGeminiJSON(raw)
+  const aiScore = Math.max(0, Math.min(1, parsed.ai_probability ?? 0.5))
+  const verdict = (['AI','HUMAN','UNCERTAIN'].includes(parsed.verdict)
+    ? parsed.verdict : toVerdict(aiScore)) as 'AI' | 'HUMAN' | 'UNCERTAIN'
+
+  return { aiScore, verdict, reasoning: parsed.reasoning ?? '' }
+}
+
+// ── Availability + health ─────────────────────────────────────────────────────
 export function bedrockAvailable(): boolean {
   return !!process.env.GEMINI_API_KEY
 }

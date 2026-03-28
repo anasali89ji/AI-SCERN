@@ -3,19 +3,19 @@ import { Check, X, Minus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const FEATURES = [
-  { name: 'Text AI Detection',           detectai: true,  gptzero: true,  turnitin: true,        originality: true  },
-  { name: 'Image Deepfake Detection',     detectai: true,  gptzero: false, turnitin: false,       originality: false },
-  { name: 'Audio AI Detection',           detectai: true,  gptzero: false, turnitin: false,       originality: false },
-  { name: 'Video Deepfake Detection',     detectai: true,  gptzero: false, turnitin: false,       originality: false },
-  { name: 'Multi-modal Batch Analysis',   detectai: true,  gptzero: false, turnitin: 'partial',   originality: false },
-  { name: 'Sentence-Level Heatmap',       detectai: true,  gptzero: true,  turnitin: false,       originality: true  },
-  { name: 'API Access',                   detectai: true,  gptzero: true,  turnitin: true,        originality: true  },
-  { name: 'Free Tier Available',          detectai: true,  gptzero: true,  turnitin: false,       originality: false },
-  { name: 'Starting Price',               detectai: 'Free', gptzero: '$10/mo', turnitin: '$30/mo', originality: '$14.95/mo' },
-  { name: 'Text Detection Accuracy',      detectai: '94%', gptzero: '98%', turnitin: '85%',       originality: '99%' },
-  { name: 'Real-time Detection',          detectai: true,  gptzero: true,  turnitin: false,       originality: true  },
-  { name: 'URL Scanner',                  detectai: true,  gptzero: false, turnitin: false,       originality: true  },
-  { name: 'PDF Export',                   detectai: true,  gptzero: true,  turnitin: true,        originality: true  },
+  { name: 'Text AI Detection',           aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },
+  { name: 'Image Deepfake Detection',     aiscern: true,  gptzero: false, turnitin: false,       originality: false },
+  { name: 'Audio AI Detection',           aiscern: true,  gptzero: false, turnitin: false,       originality: false },
+  { name: 'Video Deepfake Detection',     aiscern: true,  gptzero: false, turnitin: false,       originality: false },
+  { name: 'Multi-modal Batch Analysis',   aiscern: true,  gptzero: false, turnitin: 'partial',   originality: false },
+  { name: 'Sentence-Level Heatmap',       aiscern: true,  gptzero: true,  turnitin: false,       originality: true  },
+  { name: 'API Access',                   aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },
+  { name: 'Free Tier Available',          aiscern: true,  gptzero: true,  turnitin: false,       originality: false },
+  { name: 'Starting Price',               aiscern: 'Free', gptzero: '$10/mo', turnitin: '$30/mo', originality: '$14.95/mo' },
+  { name: 'Text Detection Accuracy',      aiscern: '85%+', gptzero: '98%', turnitin: '85%',      originality: '99%' },
+  { name: 'Real-time Detection',          aiscern: true,  gptzero: true,  turnitin: false,       originality: true  },
+  { name: 'URL Scanner',                  aiscern: true,  gptzero: false, turnitin: false,       originality: true  },
+  { name: 'PDF Export',                   aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },
 ]
 
 function Cell({ v, isDetectai }: { v: boolean | string; isDetectai?: boolean }) {
@@ -28,7 +28,7 @@ function Cell({ v, isDetectai }: { v: boolean | string; isDetectai?: boolean }) 
 }
 
 const COLS = [
-  { key: 'detectai',    label: 'Aiscern',      highlight: true  },
+  { key: 'aiscern',     label: 'Aiscern',      highlight: true  },
   { key: 'gptzero',     label: 'GPTZero',      highlight: false },
   { key: 'turnitin',    label: 'Turnitin',     highlight: false },
   { key: 'originality', label: 'Originality',  highlight: false },
