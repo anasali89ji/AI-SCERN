@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Free AI Voice & Audio Detector — Detect ElevenLabs & Voice Cloning',
-  description: 'Detect AI-synthesised voice, ElevenLabs audio, voice cloning and deepfake speech. 91% accuracy. Upload MP3, WAV or M4A — free, instant detection. No signup required.',
+  description: 'Detect AI-synthesised voice, ElevenLabs audio, voice cloning and deepfake speech. 79%+ accuracy. Upload MP3, WAV or M4A — free, instant detection. No credit card required.',
   keywords: [
     'ai audio detector','voice clone detector','elevenlabs detector',
     'deepfake audio detector','ai voice detector','synthetic voice detector',
@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://aiscern.com/detect/audio' },
   openGraph: {
     title: 'Free AI Audio & Voice Clone Detector — ElevenLabs, TTS | Aiscern',
-    description: 'Upload audio and detect if it is AI-synthesised or voice-cloned. Detects ElevenLabs, Suno, Udio. 91% accuracy. Free.',
+    description: 'Upload audio and detect if it is AI-synthesised or voice-cloned. Detects ElevenLabs, Suno, Udio. 79%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/audio',
     images: [{ url: '/og-audio.png', width: 1200, height: 630, alt: 'AI Audio & Voice Clone Detector' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Free AI Voice & Audio Detector — ElevenLabs, Voice Cloning',
-    description: 'Detect AI-synthesised voice and voice cloning. 91% accuracy. Free.',
+    description: 'Detect AI-synthesised voice and voice cloning. 79%+ accuracy. Free.',
   },
 }
 
@@ -32,7 +32,7 @@ const jsonLd = {
       '@id': 'https://aiscern.com/detect/audio',
       'url': 'https://aiscern.com/detect/audio',
       'name': 'AI Voice & Audio Detector | Aiscern',
-      'description': 'Detect ElevenLabs, voice cloning and AI-synthesised audio with 91% accuracy.',
+      'description': 'Detect ElevenLabs, voice cloning and AI-synthesised audio with 79%+ accuracy.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',
@@ -48,7 +48,7 @@ const jsonLd = {
                   {
                     "@type": "Question",
                     "name": "How do I detect ElevenLabs voice cloning?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Upload an MP3 or WAV file to Aiscern. Aiscern's audio detection engine analyzes prosody, spectral patterns and acoustic signatures to detect ElevenLabs and other AI voice synthesis with 91% accuracy." }
+                    "acceptedAnswer": { "@type": "Answer", "text": "Upload an MP3 or WAV file to Aiscern. Aiscern's audio detection engine analyzes prosody, spectral patterns and acoustic signatures to detect ElevenLabs and other AI voice synthesis with 79%+ accuracy." }
                   },
                   {
                     "@type": "Question",

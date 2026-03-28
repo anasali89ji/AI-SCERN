@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Free Deepfake Video Detector Online — Frame-by-Frame AI Analysis',
-  description: 'Detect deepfake videos with frame-by-frame AI analysis. Identify face swaps, synthetic faces and AI-generated video content. 88% accuracy. Free. No signup required.',
+  description: 'Detect deepfake videos with frame-by-frame AI analysis. Identify face swaps, synthetic faces and AI-generated video content. 76%+ accuracy. Free. No credit card required.',
   keywords: [
     'deepfake video detector','deepfake detector online free','ai video detector',
     'detect deepfake','face swap detector','synthetic video detector',
@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://aiscern.com/detect/video' },
   openGraph: {
     title: 'Free Deepfake Video Detector — Frame-by-Frame AI Analysis | Aiscern',
-    description: 'Upload a video and detect deepfakes frame by frame. Identifies face swaps and AI-generated content. 88% accuracy. Free.',
+    description: 'Upload a video and detect deepfakes frame by frame. Identifies face swaps and AI-generated content. 76%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/video',
     images: [{ url: '/og-video.png', width: 1200, height: 630, alt: 'Deepfake Video Detector' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Free Deepfake Video Detector — Frame Analysis',
-    description: 'Detect deepfake videos frame by frame. 88% accuracy. Free.',
+    description: 'Detect deepfake videos frame by frame. 76%+ accuracy. Free.',
   },
 }
 
@@ -32,7 +32,7 @@ const jsonLd = {
       '@id': 'https://aiscern.com/detect/video',
       'url': 'https://aiscern.com/detect/video',
       'name': 'Deepfake Video Detector | Aiscern',
-      'description': 'Detect deepfake videos with frame-by-frame AI analysis and 88% accuracy.',
+      'description': 'Detect deepfake videos with frame-by-frame AI analysis and 76%+ accuracy.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',

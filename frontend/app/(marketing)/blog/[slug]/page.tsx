@@ -304,7 +304,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
         <div className="mt-12 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center">
           <h3 className="font-bold text-text-primary mb-2">Try Aiscern Free</h3>
-          <p className="text-sm text-text-muted mb-4">Detect AI-generated text, images, audio, and video. No signup required.</p>
+          <p className="text-sm text-text-muted mb-4">Detect AI-generated text, images, audio, and video. Free — no credit card required.</p>
           <Link href="/detect/text" className="btn-primary px-6 py-2.5 text-sm inline-flex">
             Start Detecting Free →
           </Link>

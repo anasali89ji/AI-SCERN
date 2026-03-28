@@ -29,6 +29,17 @@ async function syncProfile(user: AuthUser) {
   } catch {}
 }
 
+
+async function trackSession(userId: string, email: string, event: string, page: string) {
+  try {
+    await fetch('/api/admin/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, email, event, page, sessionId: userId + Date.now() }),
+    })
+  } catch {}
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser()
   const { signOut: clerkSignOut } = useClerk()

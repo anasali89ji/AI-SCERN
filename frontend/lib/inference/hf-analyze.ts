@@ -172,7 +172,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     ? bedrockScore * 0.60 + lingScore * 0.40
     : lingScore
   const aiScore = rawAiScore
-  const verdict = toVerdict(aiScore, hasFinetuned)
+  const verdict = toVerdict(aiScore)
 
   // Build signals array for UI
   const signals: DetectionSignal[] = [

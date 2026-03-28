@@ -464,7 +464,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                     className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-rose' : result.verdict === 'HUMAN' ? 'bg-emerald' : 'bg-amber'}`} />
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
-                    <p className="text-xs text-text-muted">✓ Free to use — no signup required</p>
+                    <p className="text-xs text-text-muted">✓ Free to use · Sign in to save results</p>
                     <Link href="/detect/text" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
                       Full text detector <ArrowRight className="w-3 h-3" />
                     </Link>
@@ -910,7 +910,7 @@ export default function HomePage() {
           <motion.h1 initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
             className="font-black leading-[0.95] mb-4 sm:mb-6">
             {/* Mobile: short punchy headline */}
-            <span className="block sm:hidden text-[2rem] leading-tight gradient-text">Detect AI Content</span>
+            <span className="block sm:hidden text-[2rem] leading-tight gradient-text">Aiscern</span>
             <span className="block sm:hidden text-lg text-text-primary mt-2 font-semibold leading-snug">
               Text · Images · Audio · Video
             </span>
@@ -922,8 +922,8 @@ export default function HomePage() {
           </motion.h1>
 
           <p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
-            <span className="sm:hidden">State-of-the-art AI detection. <strong className="text-text-primary">Free forever.</strong> No signup required.</span>
-            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-primary">text</strong>, <strong className="text-text-primary">images</strong>, <strong className="text-text-primary">audio</strong> &amp; <strong className="text-text-primary">video</strong> with state-of-the-art models. Start free. No signup required.</span>
+            <span className="sm:hidden">State-of-the-art AI detection. <strong className="text-text-primary">Free forever.</strong> Free — no credit card required.</span>
+            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-primary">text</strong>, <strong className="text-text-primary">images</strong>, <strong className="text-text-primary">audio</strong> &amp; <strong className="text-text-primary">video</strong> with state-of-the-art models. Start free. Free — no credit card required.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-16 hero-fade-up" style={{ animationDelay: '0.1s' }}>
@@ -1125,7 +1125,7 @@ export default function HomePage() {
           {/* 4 trust pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {[
-              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '413,000+ Samples', desc: 'Built on 413,000+ verified samples spanning diverse AI-generated and authentic content from 57 curated HuggingFace sources.' },
+              { icon: Database,    color: 'bg-primary/10 text-primary',   title: '413,000+ Samples', desc: 'Built on 413,000+ verified samples spanning diverse AI-generated and authentic content from 87 curated datasets.' },
               { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every detection signal and methodology is validated against real-world AI outputs.' },
               { icon: TrendingUp,  color: 'bg-amber/10 text-amber',       title: 'Ensemble Models',  desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 ensembles — no single model makes the final call.' },
               { icon: Zap,         color: 'bg-cyan/10 text-cyan',         title: 'Free Forever',     desc: 'No subscriptions, no scan limits, no paywalls. Core detection will always be free — always.' },
