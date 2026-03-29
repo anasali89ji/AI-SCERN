@@ -62,18 +62,20 @@ export const onScanFeedback = inngest.createFunction(
 
     await step.run('queue-augment-job', async () => {
       const sb = getSupabaseAdmin()
-      await sb.from('pipeline_jobs').insert({
-        job_type: 'augment',
-        priority: 5,
-        payload: {
-          scan_id:    scan.id,
-          media_type: scan.media_type,
-          verdict,
-          confidence: scan.confidence_score,
-          feedback:   'incorrect',
-          r2_key:     scan.r2_key ?? null,
-        },
-      }).catch(() => {/* non-fatal */})
+      try {
+        await sb.from('pipeline_jobs').insert({
+          job_type: 'augment',
+          priority: 5,
+          payload: {
+            scan_id:    scan.id,
+            media_type: scan.media_type,
+            verdict,
+            confidence: scan.confidence_score,
+            feedback:   'incorrect',
+            r2_key:     scan.r2_key ?? null,
+          },
+        })
+      } catch { /* non-fatal */ }
     })
 
     return { queued: true, scan_id }
