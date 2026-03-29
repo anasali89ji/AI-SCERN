@@ -33,10 +33,9 @@ export default function AboutPage() {
       {/* Nav */}
       <header className="border-b border-border bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-white" />
-            </div>
+          <Link href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
             <span className="font-black gradient-text">Aiscern</span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
@@ -92,7 +91,7 @@ export default function AboutPage() {
               <p className="text-text-muted text-base max-w-xl mx-auto">The people building the future of AI content verification.</p>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 max-w-2xl mx-auto">
               {/* Founder Card */}
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 className="card border-primary/20 overflow-hidden">
@@ -111,9 +110,9 @@ export default function AboutPage() {
                     </div>
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <div className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">Founder &amp; CEO</div>
+                    <div className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">Founder & CEO</div>
                     <h2 className="text-xl sm:text-2xl font-black text-text-primary mb-0.5">Anas Ali</h2>
-                    <p className="text-text-muted text-xs mb-3">Mandi Bahauddin, Pakistan · AI Engineer &amp; Full-Stack Developer</p>
+                    <p className="text-text-muted text-xs mb-3">Mandi Bahauddin, Pakistan · AI Engineer & Full-Stack Developer</p>
                     <p className="text-text-muted text-sm leading-relaxed mb-4">
                       Self-taught developer and founder of Aiscern. Architected the entire detection system —
                       from the 413K-sample training pipeline to the multi-modal inference engine — with a single goal:
@@ -148,7 +147,7 @@ export default function AboutPage() {
                   <div className="flex-1 text-center sm:text-left">
                     <div className="text-xs text-cyan font-semibold uppercase tracking-wider mb-1">Project Manager</div>
                     <h2 className="text-xl sm:text-2xl font-black text-text-primary mb-0.5">Temah Nyanchama</h2>
-                    <p className="text-text-muted text-xs mb-3">Nairobi, Kenya · AI Workflow &amp; Operations Lead</p>
+                    <p className="text-text-muted text-xs mb-3">Nairobi, Kenya · AI Workflow & Operations Lead</p>
                     <p className="text-text-muted text-sm leading-relaxed mb-4">
                       AI-focused Project Manager with hands-on experience managing and delivering projects from
                       concept to completion. Skilled in structuring AI-driven workflows, coordinating teams, and

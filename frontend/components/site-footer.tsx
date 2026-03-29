@@ -19,7 +19,7 @@ export function SiteFooter() {
               Enterprise-grade multi-modal AI content detection. Detect deepfakes, synthetic text, AI audio, and more — in seconds.
             </p>
             <p className="text-xs text-text-muted">
-              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
             </p>
           </div>
 
@@ -49,7 +49,7 @@ export function SiteFooter() {
             <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">Company</h3>
             <ul className="space-y-2.5">
               {[
-                { label: 'About Aiscern',  href: '/about',    title: 'About Aiscern — AI Detection Built on 285k+ Samples' },
+                { label: 'About Aiscern',  href: '/about',    title: 'About Aiscern — AI Detection Built on 413K+ Samples' },
                 { label: 'Contact',        href: '/contact',  title: 'Contact Aiscern' },
                 { label: 'API Docs',       href: '/docs/api', title: 'Aiscern API — AI Detection REST API for Developers' },
                 { label: 'Free Forever', href: '/pricing', title: 'Aiscern is Free' },
@@ -111,7 +111,7 @@ export function SiteFooter() {
         {/* Bottom bar with social */}
         <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-disabled text-center sm:text-left">
-            © {new Date().getFullYear()} Aiscern · Built by <span className="text-text-muted">Anas Ali</span> · Islamabad, Pakistan
+            © {new Date().getFullYear()} Aiscern · Founded December 2025 · Mandi Bahauddin, Pakistan
           </p>
           <div className="flex items-center gap-4">
             <a href="https://twitter.com/aiscern" target="_blank" rel="noopener noreferrer"

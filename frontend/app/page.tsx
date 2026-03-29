@@ -917,13 +917,13 @@ export default function HomePage() {
             {/* Desktop: full headline */}
             <span className="hidden sm:block text-4xl lg:text-7xl gradient-text">Unmask AI-Generated Content</span>
             <span className="hidden sm:block text-3xl lg:text-5xl text-text-primary mt-2">
-              — Free Detector for Text, Images, Audio &amp; Video
+              — Free Detector for Text, Images, Audio & Video
             </span>
           </motion.h1>
 
           <p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
             <span className="sm:hidden">State-of-the-art AI detection. <strong className="text-text-primary">Free forever.</strong> Free — no credit card required.</span>
-            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-primary">text</strong>, <strong className="text-text-primary">images</strong>, <strong className="text-text-primary">audio</strong> &amp; <strong className="text-text-primary">video</strong> with state-of-the-art models. Start free. Free — no credit card required.</span>
+            <span className="hidden sm:inline">Detect AI-generated <strong className="text-text-primary">text</strong>, <strong className="text-text-primary">images</strong>, <strong className="text-text-primary">audio</strong> & <strong className="text-text-primary">video</strong> with state-of-the-art models. Start free. Free — no credit card required.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-16 hero-fade-up" style={{ animationDelay: '0.1s' }}>

@@ -16,10 +16,9 @@ export default function PrivacyPage() {
       {/* Nav */}
       <header className="border-b border-border bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-white" />
-            </div>
+          <Link href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
             <span className="font-black gradient-text">Aiscern</span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
@@ -163,7 +162,7 @@ export default function PrivacyPage() {
           <Section title="12. Contact Us">
             <p>
               For privacy-related questions or requests, contact:<br />
-              <strong>Anas Ali</strong> — Developer &amp; Data Controller<br />
+              <strong>Anas Ali</strong> — Developer & Data Controller<br />
               Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
               Website: <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>
             </p>

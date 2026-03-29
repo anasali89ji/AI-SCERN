@@ -184,7 +184,7 @@ export default function SettingsPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl text-emerald bg-emerald/10 flex items-center justify-center"><Shield className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Privacy &amp; Data</h3>
+          <h3 className="font-semibold text-text-primary">Privacy & Data</h3>
         </div>
         {[
           { label: 'Public profile',        sub: 'Allow others to see your scan statistics',                value: publicProfile, toggle: () => setPublicProfile(v => !v) },
@@ -231,7 +231,7 @@ export default function SettingsPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="card">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl text-secondary bg-secondary/10 flex items-center justify-center"><Palette className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Appearance &amp; Region</h3>
+          <h3 className="font-semibold text-text-primary">Appearance & Region</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }} className="card">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl text-primary bg-primary/10 flex items-center justify-center"><Download className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Data &amp; Export</h3>
+          <h3 className="font-semibold text-text-primary">Data & Export</h3>
         </div>
         <div className="space-y-2">
           <button onClick={exportData}
