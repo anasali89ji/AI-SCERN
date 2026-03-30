@@ -1,36 +1,22 @@
-/**
- * POST /api/detect/audio
- *
- * Accepts EITHER:
- *   a) JSON: { r2Key, fileName, fileSize, format } — file already in R2 (preferred)
- *   b) FormData: file field — direct upload (small files / dev mode)
- *
- * Detection: Gemini 2.0 Flash (primary) + wav2vec2 (if warm) + 5 acoustic signals.
- * Files are NOT stored in Supabase. R2 handles storage.
- */
-
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeAudio, checkRateLimit } from '@/lib/inference/hf-analyze'
+import { analyzeAudio }              from '@/lib/inference/hf-analyze'
+import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
+import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
-import { getSupabaseAdmin } from '@/lib/supabase/admin'
-import { getR2Buffer, r2Available } from '@/lib/storage/r2'
+import { getSupabaseAdmin }          from '@/lib/supabase/admin'
+import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
 
-export const dynamic    = 'force-dynamic'
-export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!checkRateLimit(ip, 15)) {
-    return NextResponse.json(
-      { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests. Please wait.' } },
-      { status: 429 }
-    )
-  }
+  const rl = await checkRateLimit('audio', ip)
+  if (rl.limited) return NextResponse.json(rateLimitResponse(), { status: 429 })
 
   let userId: string
   try {
     const guard = await creditGuard(req, 'audio')
-    userId = guard.userId
+    userId      = guard.userId
   } catch (err) {
     if (err instanceof HTTPError) return httpErrorResponse(err)
     return NextResponse.json({ success: false, error: { code: 'ERROR', message: 'Request failed' } }, { status: 500 })
@@ -46,7 +32,6 @@ export async function POST(req: NextRequest) {
     let format:   string
     let r2Key:    string | null = null
 
-    // ── Path A: R2 key provided (browser pre-uploaded the file) ──────────────
     if (contentType.includes('application/json')) {
       const body = await req.json()
       const { r2Key: key, fileName: fn, fileSize: fs, format: fmt } = body
@@ -62,12 +47,9 @@ export async function POST(req: NextRequest) {
       fileSize = fs || buffer.length
       format   = fmt || fileName.split('.').pop()?.toLowerCase() || 'mp3'
       r2Key    = key
-
-    // ── Path B: Direct FormData upload (dev / small files) ───────────────────
     } else {
       const form = await req.formData()
       const file = form.get('file') as File | null
-
       if (!file)
         return NextResponse.json({ success: false, error: { code: 'NO_FILE', message: 'No file provided' } }, { status: 400 })
       if (file.size > 25 * 1024 * 1024)
@@ -80,10 +62,22 @@ export async function POST(req: NextRequest) {
       format   = file.name.split('.').pop()?.toLowerCase() || 'mp3'
     }
 
+    // Cache check
+    const hashInput = buffer ?? Buffer.alloc(0)
+    const hash   = contentHash(hashInput.subarray(0, 65536))
+    const cached = buffer && buffer.length > 0 ? await getCachedDetection('audio', hash) : null
+    if (cached) {
+      return NextResponse.json({
+        success: true, scan_id: null, cached: true,
+        result:  { ...cached, processing_time: Date.now() - start, file_name: fileName },
+      })
+    }
+
     const result         = await analyzeAudio(fileName, fileSize, format, buffer)
     const processingTime = Date.now() - start
 
-    // Metadata only in Supabase
+    if (buffer && buffer.length > 0) await setCachedDetection('audio', hash, result)
+
     let scanId: string | null = null
     if (userId && !userId.startsWith('anon_')) {
       try {
@@ -111,8 +105,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      scan_id: scanId,
+      success: true, scan_id: scanId,
       result:  { ...result, processing_time: processingTime, file_name: fileName },
     })
   } catch (err) {

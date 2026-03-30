@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
+import { MobileNav } from '@/components/MobileNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const navGroups = [
@@ -262,10 +263,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <UserDropdown user={user} signOut={signOut} />
         </header>
         <ErrorBoundary>
-          <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full">{children}</div></main>
+          <main className="flex-1 overflow-y-auto pb-safe min-h-0"><div className="min-h-full pb-16 lg:pb-0">{children}</div></main>
         </ErrorBoundary>
       </div>
     </div>
+    <MobileNav />
     </AuthGuard>
   )
 }

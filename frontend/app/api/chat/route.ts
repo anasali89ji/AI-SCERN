@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { bedrockAnalyzeImage, bedrockAnalyzeText, bedrockAvailable } from '@/lib/inference/bedrock-fallback'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 120
@@ -64,18 +63,16 @@ async function analyzeImage(
   imageBase64: string, mediaType: string, userContext: string, apiKey: string
 ): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, any> }> {
 
-  const prompt = `You are an expert digital forensics analyst with knowledge of AI image generation, SynthID watermarking, and C2PA metadata standards.
+  const prompt = `You are an expert digital forensics analyst specializing in AI-generated image detection and deepfake identification.
 
 Perform a thorough authenticity analysis of this image:
 
 EXAMINE:
 1. AI generation signatures — diffusion artifacts, overly smooth textures, symmetric perfection, unnatural bokeh
-2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity
+2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity  
 3. Physical plausibility — lighting direction, shadow consistency, object proportions
-4. Fine detail stress-test — fingers (count them!), text, teeth, background objects (AI consistently fails here)
-5. Generator fingerprints — Midjourney hyper-detail, DALL-E 3 saturation, Stable Diffusion checkerboard, Gemini Imagen symmetry
-6. SynthID signals — Google Imagen outputs have subtle frequency-domain watermarks; look for unnaturally even pixel statistics in smooth regions
-7. C2PA/metadata — Adobe, Google, and Microsoft embed cryptographic Content Credentials in AI-generated images
+4. Fine detail stress-test — fingers, text, teeth, background objects (AI consistently fails here)
+5. Metadata consistency — if EXIF patterns suggest generation
 
 User context: ${userContext || 'General authenticity check requested.'}
 

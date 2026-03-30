@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
 import { ReviewSuggestion } from '@/components/ReviewSuggestion'
@@ -45,7 +44,6 @@ export default function BatchPage() {
   const pauseRef = useRef(false)
   const startTimeRef = useRef<number>(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const supabase = createClient()
 
   const completed = files.filter(f => f.status === 'done').length
   const errored   = files.filter(f => f.status === 'error').length
@@ -92,13 +90,7 @@ export default function BatchPage() {
       if (!data.success) return { status: 'error', error: data.error?.message || 'Failed' }
 
       const processingTime = Date.now() - start
-      if (uid) {
-        await (supabase as any).from('scans').insert({
-          user_id: uid, media_type: mediaType, file_name: bf.file.name, file_size: bf.file.size,
-          verdict: data.result?.verdict, confidence_score: data.result?.confidence,
-          signals: data.result?.signals, model_used: data.result?.model_used, status: 'complete'
-        })
-      }
+      // FIX: removed duplicate supabase.from('scans').insert() — API route already saves per scan
       return { status: 'done', verdict: data.result?.verdict, confidence: data.result?.confidence, processingTime }
     } catch (e: any) {
       return { status: 'error', error: e?.message || 'Network error' }

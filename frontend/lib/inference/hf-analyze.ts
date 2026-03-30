@@ -18,6 +18,7 @@ import { extractAudioSignals, aggregateAudioSignals, applyAudioCalibration } fro
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
 import { buildVideoSignals }                                                   from './signals/video-signals'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import {
   bedrockAnalyzeText,
   bedrockAnalyzeImage,
@@ -519,14 +520,9 @@ function analyzeVideoFallback(
 const _rlMap = new Map<string, { count: number; resetAt: number }>()
 
 export async function checkRateLimitAsync(ip: string, limit = 20, windowMinutes = 1): Promise<boolean> {
+  // FIX: use singleton admin client instead of creating a new client per call
   try {
-    const { createClient } = await import('@supabase/supabase-js')
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
-    const { data } = await sb.rpc('check_and_increment_rate_limit', {
+    const { data } = await getSupabaseAdmin().rpc('check_and_increment_rate_limit', {
       p_ip: ip, p_max: limit, p_window_minutes: windowMinutes,
     })
     return data === true

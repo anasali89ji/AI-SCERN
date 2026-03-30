@@ -1,0 +1,4 @@
+name = "aiscern-proxy"
+main = "proxy-worker.ts"
+compatibility_date = "2024-06-01"
+compatibility_flags = ["nodejs_compat"]

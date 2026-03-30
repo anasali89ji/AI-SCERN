@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -30,7 +29,6 @@ export default function ImageDetectionPage() {
   const [error, setError] = useState<string | null>(null)
   const [zoomed, setZoomed] = useState(false)
   const [imgDims, setImgDims] = useState<{w:number,h:number}|null>(null)
-  const supabase = createClient()
 
   const onDrop = useCallback((accepted: File[]) => {
     const f = accepted[0]; if (!f) return
@@ -57,20 +55,38 @@ export default function ImageDetectionPage() {
     if (!file) return
     setLoading(true); setError(null); setResult(null)
     try {
-      const formData = new FormData(); formData.append('file', file)
-      const res = await fetch('/api/detect/image', { method: 'POST', body: formData })
+      let r2Key: string | null = null
+
+      // Try R2 presigned upload first (bypasses Vercel 4.5MB body limit)
+      try {
+        const presignRes = await fetch('/api/upload', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size, mediaType: 'image' }),
+        })
+        const presignData = await presignRes.json()
+        if (presignData.success && presignData.uploadUrl) {
+          await fetch(presignData.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
+          r2Key = presignData.key
+        }
+      } catch { /* fallback to direct upload */ }
+
+      let res: Response
+      if (r2Key) {
+        res = await fetch('/api/detect/image', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ r2Key, fileName: file.name, fileSize: file.size, mimeType: file.type }),
+        })
+      } else {
+        const formData = new FormData(); formData.append('file', file)
+        res = await fetch('/api/detect/image', { method: 'POST', body: formData })
+      }
+
       const data = await res.json()
       if (!data.success) throw new Error(data.error?.message || 'Detection failed')
       setResult(data.result)
       setScanId(data.scan_id ?? null)
-      if (currentUser?.uid) {
-        await (supabase as any).from('scans').insert({
-          user_id: currentUser.uid, media_type: 'image', file_name: file.name,
-          file_size: file.size, verdict: data.result?.verdict,
-          confidence_score: data.result?.confidence, signals: data.result?.signals,
-          model_used: data.result?.model_used, status: 'complete'
-        })
-      }
+      // FIX: removed duplicate supabase.from('scans').insert() — API route already saves
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Detection failed')
     } finally { setLoading(false) }

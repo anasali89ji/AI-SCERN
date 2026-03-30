@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -57,7 +56,6 @@ export default function AudioDetectionPage() {
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     const audio = audioRef.current
@@ -102,20 +100,40 @@ export default function AudioDetectionPage() {
     if (!file) return
     setLoading(true); setError(null); setResult(null)
     try {
-      const formData = new FormData(); formData.append('file', file)
-      const res = await fetch('/api/detect/audio', { method: 'POST', body: formData })
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'mp3'
+      let r2Key: string | null = null
+
+      // Try R2 presigned upload first
+      try {
+        const presignRes = await fetch('/api/upload', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, mimeType: file.type || `audio/${ext}`, fileSize: file.size, mediaType: 'audio' }),
+        })
+        const presignData = await presignRes.json()
+        if (presignData.success && presignData.uploadUrl) {
+          await fetch(presignData.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type || `audio/${ext}` }, body: file })
+          r2Key = presignData.key
+        }
+      } catch { /* fallback to direct upload */ }
+
+      let res: Response
+      if (r2Key) {
+        res = await fetch('/api/detect/audio', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ r2Key, fileName: file.name, fileSize: file.size, format: ext }),
+        })
+      } else {
+        const formData = new FormData(); formData.append('file', file)
+        res = await fetch('/api/detect/audio', { method: 'POST', body: formData })
+      }
+
       const data = await res.json()
       if (!data.success) throw new Error(data.error?.message || 'Detection failed')
       setResult(data.result)
       setScanId(data.scan_id ?? null)
-      if (currentUser?.uid) {
-        await (supabase as any).from('scans').insert({
-          user_id: currentUser.uid, media_type: 'audio', file_name: file.name,
-          file_size: file.size, verdict: data.result?.verdict,
-          confidence_score: data.result?.confidence, signals: data.result?.signals,
-          model_used: data.result?.model_used, status: 'complete'
-        })
-      }
+      incrementGlobalScanCount()
+      window.dispatchEvent(new Event('aiscern:scan'))
+      // FIX: removed duplicate supabase.from('scans').insert() — API route already saves
     } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Detection failed') }
     finally { setLoading(false) }
   }

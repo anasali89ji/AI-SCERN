@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeText, checkRateLimit } from '@/lib/inference/hf-analyze'
+import { analyzeText }               from '@/lib/inference/hf-analyze'
+import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
+import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { sanitizeText } from '@/lib/utils/sanitize'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
@@ -8,15 +10,17 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!checkRateLimit(ip, 30)) {
-    return NextResponse.json(
-      { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests. Please wait and try again.' } },
-      { status: 429 }
-    )
+
+  const rl = await checkRateLimit('text', ip)
+  if (rl.limited) {
+    return NextResponse.json(rateLimitResponse(), {
+      status: 429,
+      headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rl.reset.toString() },
+    })
   }
 
   const internalSecret = req.headers.get('X-Internal-Secret')
-  const isInternal = internalSecret && internalSecret === process.env.INTERNAL_API_SECRET
+  const isInternal     = internalSecret && internalSecret === process.env.INTERNAL_API_SECRET
 
   let userId: string
   if (isInternal) {
@@ -24,7 +28,7 @@ export async function POST(req: NextRequest) {
   } else {
     try {
       const guard = await creditGuard(req, 'text')
-      userId = guard.userId
+      userId      = guard.userId
     } catch (err) {
       if (err instanceof HTTPError) return httpErrorResponse(err)
       return NextResponse.json({ success: false, error: { code: 'ERROR', message: 'Request failed' } }, { status: 500 })
@@ -43,10 +47,20 @@ export async function POST(req: NextRequest) {
     if (text.length > 10000)
       return NextResponse.json({ success: false, error: { code: 'TOO_LONG', message: 'Text must be under 10,000 characters' } }, { status: 400 })
 
-    const result = await analyzeText(text)
+    const hash   = contentHash(text)
+    const cached = await getCachedDetection('text', hash)
+    if (cached) {
+      return NextResponse.json({
+        success: true, scan_id: null, cached: true,
+        result:  { ...cached, processing_time: Date.now() - start },
+      })
+    }
+
+    const result         = await analyzeText(text)
     const processingTime = Date.now() - start
 
-    // Save scan to Supabase only for real signed-in users (not anon_, not internal)
+    await setCachedDetection('text', hash, result)
+
     let scanId: string | null = null
     if (userId !== 'internal' && !userId.startsWith('anon_')) {
       try {
@@ -67,7 +81,11 @@ export async function POST(req: NextRequest) {
       } catch { /* non-fatal */ }
     }
 
-    return NextResponse.json({ success: true, scan_id: scanId, result: { ...result, processing_time: processingTime } })
+    return NextResponse.json({
+      success: true,
+      scan_id: scanId,
+      result:  { ...result, processing_time: processingTime },
+    })
   } catch (err) {
     return NextResponse.json(
       { success: false, error: { code: 'ANALYSIS_FAILED', message: err instanceof Error ? err.message : 'Analysis failed' } },

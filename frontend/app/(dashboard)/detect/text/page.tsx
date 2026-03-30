@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence } from '@/lib/utils/helpers'
@@ -40,7 +39,6 @@ export default function TextDetectionPage() {
   const [pasteLoading, setPasteLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfMode, setPdfMode] = useState(false)
@@ -75,15 +73,7 @@ export default function TextDetectionPage() {
       if (data.result?.paragraph_scores) setParagraphScores(data.result?.paragraph_scores)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
-      window.dispatchEvent(new Event('aiscern:scan'))
-      if (currentUser?.uid) {
-        await (supabase as any).from('scans').insert({
-          user_id: currentUser.uid, media_type: 'text',
-          content_preview: `[PDF: ${file.name}]`,
-          verdict: data.result?.verdict, confidence_score: data.result?.confidence,
-          model_used: data.result?.model_used, processing_time: data.result?.processing_time, status: 'complete'
-        })
-      }
+      // FIX: removed duplicate dispatch + duplicate supabase insert — API route already saves
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'PDF analysis failed')
     } finally { setPdfLoading(false) }
@@ -103,17 +93,10 @@ export default function TextDetectionPage() {
       const data = await res.json()
       if (!data.success) throw new Error(data.error?.message || 'Detection failed')
       setResult(data.result)
+      setScanId(data.scan_id ?? null)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
-      if (currentUser?.uid) {
-        await (supabase as any).from('scans').insert({
-          user_id: currentUser.uid, media_type: 'text',
-          content_preview: text.substring(0, 200),
-          verdict: data.result?.verdict, confidence_score: data.result?.confidence,
-          signals: data.result?.signals, model_used: data.result?.model_used,
-          processing_time: data.result?.processing_time, status: 'complete'
-        })
-      }
+      // FIX: removed duplicate supabase insert — API route already saves
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally { setLoading(false) }

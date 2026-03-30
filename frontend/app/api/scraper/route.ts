@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { APIResponse } from '@/types'
 import { auth } from '@clerk/nextjs/server'
-import { geminiAnalyzeTextBatch, bedrockAvailable } from '@/lib/inference/bedrock-fallback'
-import { analyzeText } from '@/lib/inference/hf-analyze'
+import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
+import { fetchWithProxy } from '@/lib/proxy/fetch-with-proxy'
+
+const HF_API   = 'https://api-inference.huggingface.co/models'
+const HF_TOKEN   = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN || ''
+const TEXT_MODEL  = 'openai-community/roberta-base-openai-detector'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 30
@@ -14,8 +18,7 @@ async function fetchPageContent(url: string): Promise<{
   textBlocks: string[]
   imageUrls:  string[]
 }> {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Aiscern-Scanner/1.0)' },
+  const res = await fetchWithProxy(url, { maxRetries: 3, timeoutMs: 12000, headers: {
     signal: AbortSignal.timeout(10_000),
   })
   if (!res.ok) throw new Error(`Failed to fetch page: ${res.status}`)
@@ -51,19 +54,26 @@ async function fetchPageContent(url: string): Promise<{
   return { title, description, textBlocks, imageUrls }
 }
 
-/** Analyze a text block — Gemini primary, analyzeText fallback */
-async function analyzeTextBlock(text: string): Promise<{
-  verdict: string; confidence: number; reasoning?: string; synthidDetected?: boolean
-}> {
-  // Gemini primary: no cold start, SynthID-aware
-  if (bedrockAvailable()) {
-    const r = await geminiAnalyzeTextBatch(text)
-    return { verdict: r.verdict, confidence: r.confidence, reasoning: r.reasoning, synthidDetected: r.synthidDetected }
-  }
-  // Fallback: full HF ensemble (slower but available without Gemini key)
+/** Analyze a text block with HF */
+async function analyzeTextBlock(text: string): Promise<{ verdict: string; confidence: number }> {
   try {
-    const r = await analyzeText(text)
-    return { verdict: r.verdict, confidence: Math.round(r.confidence * 100) }
+    const res = await fetch(`${HF_API}/${TEXT_MODEL}`, {
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ inputs: text.slice(0, 512) }),
+      signal:  AbortSignal.timeout(15_000),
+    })
+    if (!res.ok) return { verdict: 'UNCERTAIN', confidence: 50 }
+    const data = await res.json() as { label: string; score: number }[][]
+    const flat  = Array.isArray(data[0]) ? data[0] : data as any
+    const aiE   = flat.find((s: any) => /fake|label_1/i.test(s.label))
+    const huE   = flat.find((s: any) => /real|label_0/i.test(s.label))
+    const score = aiE?.score ?? (huE ? 1 - huE.score : 0.5)
+    const pct   = Math.round(score * 100)
+    return {
+      verdict:    pct >= 62 ? 'AI' : pct <= 38 ? 'HUMAN' : 'UNCERTAIN',
+      confidence: pct,
+    }
   } catch {
     return { verdict: 'UNCERTAIN', confidence: 50 }
   }
@@ -105,18 +115,15 @@ export async function POST(req: NextRequest) {
     // Text assets
     textToAnalyze.forEach((text, i) => {
       const r = textResults[i]
-      const signals = [
-        { name: 'Gemini 2.0 Flash AI Classifier', flagged: r.verdict === 'AI' },
-        { name: 'Linguistic Pattern Analysis',     flagged: (r.confidence ?? 50) > 60 },
-      ]
-      if (r.synthidDetected) signals.push({ name: 'SynthID watermark detected', flagged: true })
       assets.push({
         type:       'text',
         content:    text.slice(0, 150) + (text.length > 150 ? '…' : ''),
         verdict:    r.verdict,
         confidence: r.confidence,
-        reasoning:  r.reasoning,
-        signals,
+        signals: [
+          { name: 'AI Content Classifier', flagged: r.verdict === 'AI' },
+          { name: 'Linguistic Pattern Analysis', flagged: r.confidence > 60 },
+        ],
       })
     })
 
