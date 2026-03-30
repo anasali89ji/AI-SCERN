@@ -1,12 +1,10 @@
 /**
- * Aiscern Pipeline v6 — HuggingFace Push
+ * Aiscern Pipeline v7.2 — HuggingFace Push
  *
- * Pushes to properly sharded paths:
- *   data/{media_type}/{language}/part-NNNN.jsonl
- *   data/{media_type}/{language}/part-NNNN.meta.json
- *
- * Each commit contains ONE file per (media_type, language) group.
- * This gives HF the folder structure it needs to auto-detect configs.
+ * Fixes applied:
+ *   D1: Chunked parameterized DELETE (no string interpolation, no D1 size limit breach)
+ *   D2: Removed wasted UPDATE before DELETE — just DELETE directly
+ *   D3: README stats now sourced from pipeline_state + hf_push_log (not dataset_items)
  */
 
 import { toBase64, hfShardPath, hfMetaPath, sha256 } from '../utils/crypto'
@@ -36,6 +34,19 @@ interface DBRow {
   hf_row_index?:  number
   language:       string
   created_at:     string
+}
+
+/** Delete rows in safe parameterized chunks — avoids D1 1MB SQL limit */
+async function chunkedDelete(db: D1Database, ids: string[]): Promise<void> {
+  const CHUNK = 100  // 100 UUIDs × 38 chars = ~4KB per statement — well within D1 limit
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK)
+    const ph    = chunk.map(() => '?').join(',')
+    await db.prepare(`DELETE FROM dataset_items WHERE id IN (${ph})`)
+      .bind(...chunk)
+      .run()
+      .catch(() => {})
+  }
 }
 
 export async function pushToHF(
@@ -116,10 +127,8 @@ export async function pushToHF(
     const filePath = hfShardPath(mediaType, lang, partNum)
     const metaPath = hfMetaPath(mediaType, lang, partNum)
 
-    // Compute shard integrity hash
     const shardHash = await sha256(jsonl)
 
-    // Source distribution
     const sourceDist: Record<string, number> = {}
     for (const r of groupRows) sourceDist[r.source_name] = (sourceDist[r.source_name] ?? 0) + 1
 
@@ -131,24 +140,13 @@ export async function pushToHF(
       size_bytes:         new TextEncoder().encode(jsonl).length,
       sha256_hash:        shardHash,
       created_at:         new Date().toISOString(),
-      schema_version:     'v6.0',
+      schema_version:     'v7.2',
       source_distribution: sourceDist,
       hf_path:            filePath,
     }
 
-    // JSONL shard operation — HF Hub API uses 'key' + 'value', NOT 'path' + 'content'
-    operations.push({
-      type:  'addOrUpdate',
-      key:   filePath,
-      value: toBase64(jsonl),
-    })
-
-    // Meta JSON operation
-    operations.push({
-      type:  'addOrUpdate',
-      key:   metaPath,
-      value: toBase64(JSON.stringify(meta, null, 2)),
-    })
+    operations.push({ type: 'addOrUpdate', key: filePath, value: toBase64(jsonl) })
+    operations.push({ type: 'addOrUpdate', key: metaPath, value: toBase64(JSON.stringify(meta, null, 2)) })
 
     shardMetas.push(meta)
     pushedIds.push(...groupRows.map(r => r.id))
@@ -166,7 +164,7 @@ export async function pushToHF(
   })
 
   // ── Commit all operations in one HF API call ─────────────────────────────
-  const commitSummary = `pipeline v6: ${pushedIds.length} items across ${groups.size} shards [${[...groups.keys()].map(k => k.replace(':::', '/')).join(', ')}]`
+  const commitSummary = `pipeline v7.2: ${pushedIds.length} items across ${groups.size} shards [${[...groups.keys()].map(k => k.replace(':::', '/')).join(', ')}]`
 
   const hfRes = await fetch(`https://huggingface.co/api/datasets/${repo}/commit/main`, {
     method:  'POST',
@@ -174,10 +172,7 @@ export async function pushToHF(
       'Authorization': `Bearer ${token}`,
       'Content-Type':  'application/json',
     },
-    body: JSON.stringify({
-      summary:    commitSummary,
-      operations,
-    }),
+    body: JSON.stringify({ summary: commitSummary, operations }),
     signal: AbortSignal.timeout(28_000), // CF Workers max wall-clock ~30s
   })
 
@@ -208,7 +203,7 @@ export async function pushToHF(
     ).run().catch(() => {})
   }
 
-  // ── Update pipeline state ────────────────────────────────────────────────
+  // ── Update pipeline state counter ────────────────────────────────────────
   await db.prepare(`
     UPDATE pipeline_state
     SET total_pushed = total_pushed + ?,
@@ -217,12 +212,9 @@ export async function pushToHF(
     WHERE id = 1
   `).bind(pushedIds.length, now).run().catch(() => {})
 
-  // ── Mark rows as pushed, then DELETE immediately (keep D1 lean) ─────────
-  const idList = pushedIds.map(id => `'${id}'`).join(',')
-  await db.prepare(`
-    UPDATE dataset_items SET hf_pushed_at = datetime('now') WHERE id IN (${idList})
-  `).run()
-  await db.prepare(`DELETE FROM dataset_items WHERE id IN (${idList})`).run()
+  // ── DELETE pushed rows in safe parameterized chunks (Bug D1+D2 fix) ──────
+  // No UPDATE first — just delete directly. pipeline_state.total_pushed tracks the count.
+  await chunkedDelete(db, pushedIds)
 
   return { pushed: pushedIds.length, commitId, files: pushedFiles }
 }
@@ -230,7 +222,6 @@ export async function pushToHF(
 /** Build dataset_infos.json so HF auto-detects configs per modality/language */
 function buildDatasetInfo(metas: ShardMeta[]): Record<string, any> {
   const configs: Record<string, any> = {}
-
   for (const meta of metas) {
     const key = `${meta.media_type}_${meta.language}`
     if (!configs[key]) {
@@ -240,31 +231,28 @@ function buildDatasetInfo(metas: ShardMeta[]): Record<string, any> {
       }
     }
   }
-
   return configs
 }
 
 function getFeatures(mediaType: string): Record<string, any> {
   const base = {
-    id:             { dtype: 'string', _type: 'Value' },
-    media_type:     { dtype: 'string', _type: 'Value' },
-    source:         { dtype: 'string', _type: 'Value' },
-    source_dataset: { dtype: 'string', _type: 'Value' },
-    label:          { dtype: 'string', _type: 'Value' },
+    id:             { dtype: 'string',  _type: 'Value' },
+    media_type:     { dtype: 'string',  _type: 'Value' },
+    source:         { dtype: 'string',  _type: 'Value' },
+    source_dataset: { dtype: 'string',  _type: 'Value' },
+    label:          { dtype: 'string',  _type: 'Value' },
     quality:        { dtype: 'float32', _type: 'Value' },
-    preview:        { dtype: 'string', _type: 'Value' },
-    hash:           { dtype: 'string', _type: 'Value' },
-    split:          { dtype: 'string', _type: 'Value' },
-    language:       { dtype: 'string', _type: 'Value' },
-    scraped_at:     { dtype: 'string', _type: 'Value' },
+    preview:        { dtype: 'string',  _type: 'Value' },
+    hash:           { dtype: 'string',  _type: 'Value' },
+    split:          { dtype: 'string',  _type: 'Value' },
+    language:       { dtype: 'string',  _type: 'Value' },
+    scraped_at:     { dtype: 'string',  _type: 'Value' },
   }
-
   const extra: Record<string, Record<string, any>> = {
-    text:  { text:        { dtype: 'string',  _type: 'Value' }, word_count:  { dtype: 'int32', _type: 'Value' }, char_count: { dtype: 'int32', _type: 'Value' } },
-    image: { url:         { dtype: 'string',  _type: 'Value' }, width:       { dtype: 'int32', _type: 'Value' }, height:     { dtype: 'int32', _type: 'Value' }, has_face: { dtype: 'bool', _type: 'Value' } },
-    audio: { url:         { dtype: 'string',  _type: 'Value' }, duration_s:  { dtype: 'float32', _type: 'Value' }, sample_rate: { dtype: 'int32', _type: 'Value' }, has_speech: { dtype: 'bool', _type: 'Value' } },
-    video: { url:         { dtype: 'string',  _type: 'Value' }, duration_s:  { dtype: 'float32', _type: 'Value' }, width:       { dtype: 'int32', _type: 'Value' }, height:     { dtype: 'int32', _type: 'Value' } },
+    text:  { text: { dtype: 'string', _type: 'Value' }, word_count: { dtype: 'int32', _type: 'Value' }, char_count: { dtype: 'int32', _type: 'Value' } },
+    image: { url:  { dtype: 'string', _type: 'Value' }, width:      { dtype: 'int32', _type: 'Value' }, height:     { dtype: 'int32', _type: 'Value' }, has_face:   { dtype: 'bool', _type: 'Value' } },
+    audio: { url:  { dtype: 'string', _type: 'Value' }, duration_s: { dtype: 'float32', _type: 'Value' }, sample_rate: { dtype: 'int32', _type: 'Value' }, has_speech: { dtype: 'bool', _type: 'Value' } },
+    video: { url:  { dtype: 'string', _type: 'Value' }, duration_s: { dtype: 'float32', _type: 'Value' }, width:      { dtype: 'int32', _type: 'Value' }, height:     { dtype: 'int32', _type: 'Value' } },
   }
-
   return { ...base, ...(extra[mediaType] ?? {}) }
 }

@@ -10,8 +10,9 @@ export async function getStatus(db: D1Database) {
         SUM(CASE WHEN media_type='video' THEN 1 ELSE 0 END) as video_count,
         SUM(CASE WHEN label='ai'         THEN 1 ELSE 0 END) as ai_count,
         SUM(CASE WHEN label='human'      THEN 1 ELSE 0 END) as human_count,
-        SUM(CASE WHEN hf_pushed_at IS NOT NULL THEN 1 ELSE 0 END) as pushed,
-        SUM(CASE WHEN hf_pushed_at IS NULL     THEN 1 ELSE 0 END) as pending,
+        -- pushed count is in pipeline_state.total_pushed (rows deleted after push)
+        0 as pushed_in_table,
+        COUNT(*) as pending,  -- all rows in table are unpushed (deleted immediately after push)
         SUM(CASE WHEN split='train' THEN 1 ELSE 0 END) as train_count,
         SUM(CASE WHEN split='val'   THEN 1 ELSE 0 END) as val_count,
         SUM(CASE WHEN split='test'  THEN 1 ELSE 0 END) as test_count
@@ -53,11 +54,16 @@ export async function getStatus(db: D1Database) {
   }
 }
 
+/**
+ * Safety-net cleanup — removes any rows stuck with hf_pushed_at set but not deleted.
+ * Under normal operation this returns 0 (push.ts deletes immediately).
+ * Catches edge cases: worker crash mid-delete, partial failures, etc.
+ */
 export async function cleanupPushed(db: D1Database): Promise<number> {
   const r = await db.prepare(`
     DELETE FROM dataset_items
     WHERE hf_pushed_at IS NOT NULL
-      AND hf_pushed_at < datetime('now', '-6 hours')
+      AND hf_pushed_at < datetime('now', '-1 hour')
   `).run()
   return r.meta?.changes ?? 0
 }

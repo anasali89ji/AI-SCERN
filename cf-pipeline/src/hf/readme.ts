@@ -1,6 +1,8 @@
 /**
- * Generates and pushes the HuggingFace dataset README.md card.
- * Called after every major push cycle.
+ * Aiscern Pipeline v7.2 — Dataset README Push
+ *
+ * Fix D3: Stats now sourced from pipeline_state + hf_push_log
+ * (dataset_items is always empty after push — rows are deleted immediately)
  */
 
 import { toBase64 } from '../utils/crypto'
@@ -10,19 +12,41 @@ export async function pushReadme(
   token: string,
   repo:  string,
 ): Promise<void> {
-  const st = await db.prepare(`
-    SELECT
-      COUNT(*) as total,
-      SUM(CASE WHEN media_type='text'  THEN 1 ELSE 0 END) as text_count,
-      SUM(CASE WHEN media_type='image' THEN 1 ELSE 0 END) as image_count,
-      SUM(CASE WHEN media_type='audio' THEN 1 ELSE 0 END) as audio_count,
-      SUM(CASE WHEN media_type='video' THEN 1 ELSE 0 END) as video_count,
-      SUM(CASE WHEN label='ai'         THEN 1 ELSE 0 END) as ai_count,
-      SUM(CASE WHEN label='human'      THEN 1 ELSE 0 END) as human_count
-    FROM dataset_items
-  `).first<any>()
+  // Pull stats from pipeline_state (persists after rows deleted) + hf_push_log per modality
+  const ps = await db.prepare(
+    `SELECT total_scraped, total_pushed, last_scrape_at, last_push_at FROM pipeline_state WHERE id=1`
+  ).first<any>()
 
-  const ps = await db.prepare(`SELECT total_pushed, last_push_at FROM pipeline_state WHERE id=1`).first<any>()
+  // Per-modality pushed counts from hf_push_log (survives post-delete)
+  const modStats = await db.prepare(`
+    SELECT media_type, SUM(item_count) as count
+    FROM hf_push_log
+    WHERE repo = ? AND status = 'success'
+    GROUP BY media_type
+  `).bind(repo).all()
+
+  // Pending (not yet pushed) from dataset_items — these DO exist
+  const pending = await db.prepare(`
+    SELECT media_type, COUNT(*) as count
+    FROM dataset_items
+    WHERE hf_pushed_at IS NULL
+    GROUP BY media_type
+  `).all()
+
+  const pushed: Record<string, number> = {}
+  for (const r of (modStats.results ?? []) as any[]) {
+    pushed[r.media_type] = r.count ?? 0
+  }
+  const pend: Record<string, number> = {}
+  for (const r of (pending.results ?? []) as any[]) {
+    pend[r.media_type] = r.count ?? 0
+  }
+
+  const textPushed  = pushed['text']  ?? 0
+  const imagePushed = pushed['image'] ?? 0
+  const audioPushed = pushed['audio'] ?? 0
+  const videoPushed = pushed['video'] ?? 0
+  const totalPushed = ps?.total_pushed ?? 0
 
   const content = `---
 language:
@@ -56,54 +80,45 @@ configs:
 
 # Aiscern Dataset
 
-**Multi-modal AI vs Human detection dataset** scraped from 57 real HuggingFace sources.
+**Multi-modal AI vs Human detection dataset** — scraped from 72 HuggingFace sources across text, image, audio, and video modalities.
 
-## 📊 Current Stats
+## 📊 Pushed to HuggingFace
 
-| Modality | Count |
-|----------|-------|
-| Text     | ${(st?.text_count  ?? 0).toLocaleString()} |
-| Image    | ${(st?.image_count ?? 0).toLocaleString()} |
-| Audio    | ${(st?.audio_count ?? 0).toLocaleString()} |
-| Video    | ${(st?.video_count ?? 0).toLocaleString()} |
-| **Total** | **${(st?.total ?? 0).toLocaleString()}** |
+| Modality | Pushed Samples |
+|----------|---------------|
+| Text     | ${textPushed.toLocaleString()} |
+| Image    | ${imagePushed.toLocaleString()} |
+| Audio    | ${audioPushed.toLocaleString()} |
+| Video    | ${videoPushed.toLocaleString()} |
+| **Total** | **${totalPushed.toLocaleString()}** |
 
-**AI samples:** ${(st?.ai_count ?? 0).toLocaleString()} | **Human samples:** ${(st?.human_count ?? 0).toLocaleString()}
-**Total pushed to HF:** ${(ps?.total_pushed ?? 0).toLocaleString()}
-**Last updated:** ${ps?.last_push_at ?? 'N/A'}
+**Pending (in D1, not yet pushed):** Text: ${pend['text'] ?? 0} | Image: ${pend['image'] ?? 0} | Audio: ${pend['audio'] ?? 0} | Video: ${pend['video'] ?? 0}
+**Total scraped:** ${(ps?.total_scraped ?? 0).toLocaleString()}
+**Last scrape:** ${ps?.last_scrape_at ?? 'N/A'}
+**Last HF push:** ${ps?.last_push_at ?? 'N/A'}
 
 ## 📁 Folder Structure
 
 \`\`\`
 data/
-├── text/
-│   ├── en/
-│   │   ├── part-0001.jsonl
-│   │   ├── part-0001.meta.json
-│   │   └── ...
-│   └── {lang}/...
-├── image/
-│   └── en/...
-├── audio/
-│   └── en/...
-└── video/
-    └── en/...
+├── text/en/part-0001.jsonl
+├── image/en/part-0001.jsonl
+├── audio/en/part-0001.jsonl
+└── video/en/part-0001.jsonl
 \`\`\`
 
 ## 🏷️ Label Schema
 
-Each JSONL row contains:
-
 \`\`\`json
 {
-  "id":           "uuid",
-  "media_type":   "text|image|audio|video",
-  "source":       "source-name",
-  "label":        "ai|human",
-  "quality":      0.85,
-  "language":     "en",
-  "split":        "train|val|test",
-  "scraped_at":   "2025-01-01T00:00:00Z"
+  "id":        "uuid",
+  "media_type": "text|image|audio|video",
+  "source":    "source-name",
+  "label":     "ai|human",
+  "quality":   0.85,
+  "language":  "en",
+  "split":     "train|val|test",
+  "scraped_at": "2025-01-01T00:00:00Z"
 }
 \`\`\`
 
@@ -112,17 +127,12 @@ Each JSONL row contains:
 \`\`\`python
 from datasets import load_dataset
 
-# Load text subset
+# Text subset
 ds = load_dataset("${repo}", name="text_en")
 
-# Load all modalities
+# All modalities
 ds = load_dataset("${repo}", name="default")
 \`\`\`
-
-## 🔑 Sources
-
-57 HuggingFace datasets including: HC3, RAID, DiffusionDB, FakeOrReal Audio,
-ASVspoof2019, FaceForensics, Kinetics-400, Wikipedia, LibriSpeech, and more.
 
 ## 📜 License
 
@@ -133,9 +143,9 @@ CC-BY-4.0. Individual source datasets retain their original licenses.
     method:  'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      summary:    'docs: update dataset card with latest stats',
+      summary:    'docs: update dataset card with latest pipeline stats',
       operations: [{ type: 'addOrUpdate', key: 'README.md', value: toBase64(content) }],
     }),
-    signal: AbortSignal.timeout(30_000),
-  }).catch(() => {}) // Non-fatal — README update failures don't block pipeline
+    signal: AbortSignal.timeout(25_000),
+  }).catch(() => {}) // Non-fatal — README failures don't block pipeline
 }
