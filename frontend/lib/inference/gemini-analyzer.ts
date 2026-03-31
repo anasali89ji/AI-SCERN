@@ -8,7 +8,7 @@
  * Required env var (set in Vercel dashboard):
  *   GEMINI_API_KEY  — from Google AI Studio (aistudio.google.com)
  *
- * File retained as 'bedrock-fallback.ts' for import compatibility.
+ * Renamed from bedrock-fallback.ts — all functions use Gemini 2.0 Flash.
  * Internal name: Gemini Detection Engine.
  */
 
@@ -67,7 +67,7 @@ export interface BedrockTextResult {
   reasoning: string
 }
 
-export async function bedrockAnalyzeText(text: string): Promise<BedrockTextResult> {
+export async function geminiAnalyzeText(text: string): Promise<BedrockTextResult> {
   const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
 
   const prompt = `You are an expert AI-generated text detection system.
@@ -111,7 +111,7 @@ export interface BedrockImageResult {
   signals:   string[]
 }
 
-export async function bedrockAnalyzeImage(imageBuffer: Buffer, mimeType: string): Promise<BedrockImageResult> {
+export async function geminiAnalyzeImage(imageBuffer: Buffer, mimeType: string): Promise<BedrockImageResult> {
   const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
 
   const validMime = (['image/jpeg','image/png','image/webp','image/gif'] as const)
@@ -175,7 +175,7 @@ const AUDIO_MIME_MAP: Record<string, string> = {
   webm: 'audio/webm',
 }
 
-export async function bedrockAnalyzeAudio(
+export async function geminiAnalyzeAudio(
   audioBuffer: Buffer,
   format: string,
   _fileName: string,
@@ -225,13 +225,13 @@ Respond ONLY with valid JSON — no text outside the object:
 }
 
 // ── Availability + health ─────────────────────────────────────────────────────
-export function bedrockAvailable(): boolean {
+export function geminiAvailable(): boolean {
   return !!process.env.GEMINI_API_KEY
 }
 
-export async function bedrockHealthCheck(): Promise<boolean> {
+export async function geminiHealthCheck(): Promise<boolean> {
   try {
-    const r = await bedrockAnalyzeText('The quick brown fox jumps over the lazy dog.')
+    const r = await geminiAnalyzeText('The quick brown fox jumps over the lazy dog.')
     return typeof r.aiScore === 'number'
   } catch {
     return false

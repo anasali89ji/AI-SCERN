@@ -20,11 +20,11 @@ import { analyzeVideoFrames }                                                  f
 import { buildVideoSignals }                                                   from './signals/video-signals'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import {
-  bedrockAnalyzeText,
-  bedrockAnalyzeImage,
-  bedrockAnalyzeAudio,
-  bedrockAvailable,
-} from './bedrock-fallback'
+  geminiAnalyzeText,
+  geminiAnalyzeImage,
+  geminiAnalyzeAudio,
+  geminiAvailable,
+} from './gemini-analyzer'
 
 export interface DetectionSignal {
   name:        string
@@ -119,8 +119,8 @@ function toVerdict(score: number): 'AI' | 'HUMAN' | 'UNCERTAIN' {
 // TEXT DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
 export async function analyzeText(text: string): Promise<DetectionResult> {
-  const geminiPromise = bedrockAvailable()
-    ? bedrockAnalyzeText(text).catch(() => null)
+  const geminiPromise = geminiAvailable()
+    ? geminiAnalyzeText(text).catch(() => null)
     : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
@@ -222,8 +222,8 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 // IMAGE DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileName: string): Promise<DetectionResult> {
-  const geminiPromise = bedrockAvailable()
-    ? bedrockAnalyzeImage(imageBuffer, mimeType).catch(() => null)
+  const geminiPromise = geminiAvailable()
+    ? geminiAnalyzeImage(imageBuffer, mimeType).catch(() => null)
     : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
@@ -332,8 +332,8 @@ export async function analyzeAudio(
   const durationEst = Math.round(fileSize / (128 * 1024 / 8))
   const hasBuffer   = !!(audioBuffer && audioBuffer.length > 0)
 
-  const geminiPromise = (bedrockAvailable() && hasBuffer)
-    ? bedrockAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null)
+  const geminiPromise = (geminiAvailable() && hasBuffer)
+    ? geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null)
     : Promise.resolve(null)
 
   const hfP1 = (hasBuffer && HF_TOKEN)
