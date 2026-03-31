@@ -14,6 +14,7 @@
 
 import { extractTextSignals, aggregateTextSignals }                          from './signals/text-signals'
 import { extractImageSignals, aggregateImageSignals, applyCalibration }      from './signals/image-signals'
+import { preprocessImage } from './preprocess-image'
 import { extractAudioSignals, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
@@ -222,16 +223,24 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 // IMAGE DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileName: string): Promise<DetectionResult> {
+  // Preprocess: resize to 1024px max, strip EXIF, normalise to JPEG 92%
+  // Use preprocessed buffer for all ML inference (stays under HF 10MB limit)
+  // Keep original buffer for pixel signal extraction (needs full fidelity)
+  const preprocessed   = await preprocessImage(imageBuffer, mimeType)
+  const inferenceBuffer = preprocessed.buffer
+  const inferenceMime   = preprocessed.mimeType
+
   const geminiPromise = geminiAvailable()
-    ? geminiAnalyzeImage(imageBuffer, mimeType).catch(() => null)
+    ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
     : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
-    hfInference(MODELS.image_primary, null, { binary: true, binaryData: imageBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: imageBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_face,    null, { binary: true, binaryData: imageBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_primary, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_face,    null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
   ])
 
+  // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
   let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
   const [geminiResult, hfResults] = await Promise.all([geminiPromise, hfPromise])
