@@ -1,0 +1,41 @@
+name: HuggingFace Model Warmup
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:           # allow manual trigger
+
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Warm text detection model
+        run: |
+          curl -sf -X POST \
+            https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"inputs":"warmup ping from Aiscern"}' \
+            --max-time 12 || true
+
+      - name: Warm image detection model
+        run: |
+          curl -sf -X POST \
+            https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+            --data-binary @/dev/null \
+            --max-time 12 || true
+
+      - name: Warm audio detection model
+        run: |
+          curl -sf -X POST \
+            https://api-inference.huggingface.co/models/mo-thecreator/Deepfake-audio-detection \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+            --data-binary @/dev/null \
+            --max-time 12 || true
+
+      - name: Ping Aiscern health endpoint
+        run: |
+          curl -sf https://aiscern.com/api/health --max-time 10 || true
