@@ -11,8 +11,9 @@
  * Vercel never buffers large video into memory when r2Key path is used.
  */
 
+import { checkRateLimitRedis } from '@/lib/cache/redis'
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeVideoWithFrames, analyzeVideo, checkRateLimit } from '@/lib/inference/hf-analyze'
+import { analyzeVideoWithFrames, analyzeVideo } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
@@ -21,7 +22,7 @@ export const maxDuration = 120
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!checkRateLimit(ip, 10)) {
+  if (!await checkRateLimitRedis(ip, 10, 60)) {
     return NextResponse.json(
       { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests. Please wait.' } },
       { status: 429 }

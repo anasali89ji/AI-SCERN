@@ -1,5 +1,6 @@
+import { checkRateLimitRedis } from '@/lib/cache/redis'
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeText, checkRateLimit } from '@/lib/inference/hf-analyze'
+import { analyzeText } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
@@ -60,7 +61,7 @@ function extractParagraphs(text: string): { text: string; start: number }[] {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!checkRateLimit(ip, 5)) {
+  if (!await checkRateLimitRedis(ip, 5, 60)) {
     return NextResponse.json({ success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests' } }, { status: 429 })
   }
 
