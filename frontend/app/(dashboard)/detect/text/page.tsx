@@ -179,10 +179,11 @@ Analyzed: ${new Date().toLocaleString()}`
               ref={textareaRef}
               value={text}
               onChange={e => setText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); handleDetect() } }}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleDetect() } }}
               placeholder="Paste or type any text here to analyze for AI generation patterns…"
               className="input-field h-56 resize-none font-mono text-sm"
             />
+            <p className="text-[11px] text-text-disabled mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
 
             {/* PDF Upload Zone */}
             <div className="flex items-center gap-2 mb-3">
@@ -402,6 +403,10 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs text-text-muted font-mono truncate">{result.model_used} · {result.processing_time}ms</span>
                   <div className="flex gap-2 shrink-0">
+                    <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
+                      className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5">
+                      <RotateCcw className="w-3.5 h-3.5" /> Detect Another
+                    </button>
                     <button onClick={copyResult}
                       className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5">
                       <Copy className="w-3.5 h-3.5" />

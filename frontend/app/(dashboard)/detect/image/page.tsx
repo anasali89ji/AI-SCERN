@@ -211,7 +211,8 @@ Analyzed: ${new Date().toLocaleString()}`
                     {imgDims && ` · ${(imgDims.w / (imgDims.h || 1)).toFixed(2)}:1 ratio`}
                   </p>
                 </div>
-                <button onClick={reset} className="text-text-muted hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose/10 shrink-0">
+                <button onClick={reset}
+              title="Detect Another" className="text-text-muted hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>

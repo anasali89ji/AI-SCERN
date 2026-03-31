@@ -211,7 +211,8 @@ export default function AudioDetectionPage() {
                       {duration > 0 && ` · ${formatDuration(duration)}`}
                     </p>
                   </div>
-                  <button onClick={reset} className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
+                  <button onClick={reset}
+              title="Detect Another" className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
