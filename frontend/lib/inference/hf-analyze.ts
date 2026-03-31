@@ -483,34 +483,28 @@ export async function analyzeVideo(
 }
 
 function analyzeVideoFallback(
-  _fileName: string, fileSize: number, format: string, durationEst: number
+  _fileName: string,
+  _fileSize: number,
+  _format: string,
+  _durationEst: number
 ): DetectionResult {
-  const sizeScore  = fileSize < 5 * 1024 * 1024 ? 0.54 : 0.46
-  const fmtScore   = format === 'webm' ? 0.52 : 0.48
-  const aiScore    = (sizeScore + fmtScore) / 2
-  const verdict    = toVerdict(aiScore)
-  const frameCount = Math.max(5, Math.min(24, durationEst * 2))
-
-  // Deterministic frame scores (sin wave, no random)
-  const frame_scores = Array.from({ length: frameCount }, (_, i) => ({
-    frame:    Math.floor(i * (durationEst * 24) / frameCount),
-    time_sec: Math.round((i / frameCount) * durationEst * 10) / 10,
-    ai_score: Math.max(0.01, Math.min(0.99,
-      Math.round((aiScore + Math.sin(i * 0.8) * 0.05) * 1000) / 1000
-    )),
-  }))
-
   return {
-    verdict,
-    confidence:    Math.round(aiScore * 1000) / 1000,
-    model_used:    'Aiscern-VideoHeuristic-v4(FramesRequired)',
+    verdict: 'UNCERTAIN' as const,
+    confidence: 0,
+    model_used: 'Aiscern-VideoFallback(FrameExtractionRequired)',
     model_version: '4.0.0',
     signals: [
-      { name: 'Frame Extraction Required', category: 'Visual',      description: 'Use browser video detection page to extract frames for NVIDIA NIM analysis', weight: 50, value: aiScore, flagged: false },
-      { name: 'File Metadata Analysis',    category: 'Statistical', description: 'File size and container format provide weak synthetic origin signals', weight: 40, value: aiScore, flagged: aiScore > 0.52 },
+      {
+        name: 'Frame Extraction Required',
+        category: 'System',
+        description: 'Video deepfake detection requires frame-by-frame analysis via NVIDIA NIM. Open the /detect/video page in Chrome or Edge to enable automatic frame extraction.',
+        weight: 100,
+        value: 0,
+        flagged: false,
+      },
     ],
-    summary: 'Frame extraction unavailable. For accurate deepfake detection, use the video detection page in a modern browser (Chrome/Edge) which captures canvas frames.',
-    frame_scores,
+    summary: 'Video analysis requires frame extraction. Please use the video detection page at aiscern.com/detect/video in a modern browser (Chrome/Edge) which captures canvas frames for NVIDIA NIM analysis. API video detection without pre-extracted frames is not supported.',
+    frame_scores: [],
   }
 }
 

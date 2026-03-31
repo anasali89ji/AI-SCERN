@@ -97,6 +97,14 @@ export async function POST(req: NextRequest) {
       // R2 key path — metadata-only analysis (no frame bytes on Vercel)
       if (r2Key) {
         const result         = await analyzeVideo(fileName, fileSize, format || 'mp4')
+
+        // Return 422 when NVIDIA NIM unavailable and frame extraction required
+        if (result.model_used.includes('FrameExtractionRequired')) {
+          return NextResponse.json(
+            { success: false, error: { code: 'FRAME_EXTRACTION_REQUIRED', message: result.summary } },
+            { status: 422 }
+          )
+        }
         const processingTime = Date.now() - start
 
         let scanId: string | null = null
@@ -148,6 +156,14 @@ export async function POST(req: NextRequest) {
 
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
     const result = await analyzeVideo(file.name, file.size, ext)
+
+        // Return 422 when NVIDIA NIM unavailable and frame extraction required
+        if (result.model_used.includes('FrameExtractionRequired')) {
+          return NextResponse.json(
+            { success: false, error: { code: 'FRAME_EXTRACTION_REQUIRED', message: result.summary } },
+            { status: 422 }
+          )
+        }
     const processingTime = Date.now() - start
 
     let scanId: string | null = null
