@@ -74,7 +74,7 @@ function ParticleNetwork() {
     window.addEventListener('resize', onResize)
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', onResize) }
   }, [])
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none opacity-60" />
+  return <canvas ref={canvasRef} aria-hidden="true" role="presentation" className="absolute inset-0 w-full h-full pointer-events-none opacity-60" />
 }
 
 // ─── Floating Nature Images (hero background trees/plants) ───────────────────
