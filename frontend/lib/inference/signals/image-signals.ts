@@ -282,6 +282,70 @@ function calcEditSignature(bytes: Uint8Array, samples: number[]): number {
   return Math.min(0.95, (evenness * 0.5 + repetitionScore * 0.5))
 }
 
+
+// ── JPEG Quality Factor (DQT marker parsing) ─────────────────────────────────
+// AI generators (DALL-E, Midjourney, SD) output at quality 95-100.
+// Real camera JPEGs are typically 75-92. Parse DQT marker directly from bytes.
+
+function extractJpegQuality(buf: Buffer): number | null {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf)
+  for (let i = 0; i < Math.min(bytes.length - 4, 65536); i++) {
+    if (bytes[i] === 0xFF && bytes[i + 1] === 0xDB) {          // DQT marker
+      const tableStart = i + 4                                   // skip marker(2) + length(2)
+      if (tableStart < bytes.length) {
+        const firstCoeff = bytes[tableStart + 1]                 // luma DC coefficient
+        if (firstCoeff > 0) {
+          return Math.max(1, Math.min(100, Math.round(100 - firstCoeff * 0.8)))
+        }
+      }
+      break
+    }
+  }
+  return null
+}
+
+function jpegQualityScore(quality: number | null): number {
+  if (quality === null) return 0.45   // non-JPEG or unreadable
+  if (quality >= 97) return 0.80      // 97-100: almost certainly AI generator default
+  if (quality >= 93) return 0.65      // 93-96: possibly AI (high-end cameras reach this)
+  if (quality >= 85) return 0.40      // 85-92: typical real camera range
+  if (quality >= 70) return 0.20      // 70-84: compressed photo, likely real
+  return 0.10                          // below 70: heavily compressed, definitely real
+}
+
+// ── Pixel Noise Variance (simplified SRM) ────────────────────────────────────
+// Real camera sensors produce pixel noise following Gaussian/Poisson distribution.
+// AI generators produce unnaturally smooth pixel distributions (too clean).
+// Operates on raw sampled pixel values from samplePixels().
+
+function noiseVarianceScore(pixelSamples: number[]): number {
+  if (pixelSamples.length < 100) return 0.45
+
+  // Compute local std-dev on consecutive 8-pixel blocks
+  const blockStdDevs: number[] = []
+  for (let i = 0; i < pixelSamples.length - 8; i += 8) {
+    const block = pixelSamples.slice(i, i + 8)
+    const mean  = block.reduce((a, b) => a + b, 0) / 8
+    const variance = block.reduce((a, b) => a + (b - mean) ** 2, 0) / 8
+    blockStdDevs.push(Math.sqrt(variance))
+  }
+
+  if (!blockStdDevs.length) return 0.45
+
+  // Use median to resist outliers from edges/saturated pixels
+  const sorted   = [...blockStdDevs].sort((a, b) => a - b)
+  const medianSD = sorted[Math.floor(sorted.length / 2)]
+
+  // Real camera photos: medianSD typically 6–20 in 8-pixel blocks
+  // AI images:          medianSD typically 1.5–7 (unnaturally smooth)
+  if (medianSD < 2)  return 0.88   // extremely smooth — almost certainly AI
+  if (medianSD < 4)  return 0.75   // very smooth — likely AI
+  if (medianSD < 6)  return 0.58   // smooth — possibly AI
+  if (medianSD < 10) return 0.38   // normal camera noise range
+  if (medianSD < 16) return 0.22   // noisy — likely real photo with grain
+  return 0.12                       // very noisy — film grain / high ISO, definitely real
+}
+
 // ── MAIN EXPORT ───────────────────────────────────────────────────────────────
 export function extractImageSignals(buf: Buffer, fileSize: number): ImageSignalResult[] {
   const bytes   = toUint8(buf)
@@ -309,6 +373,8 @@ export function extractImageSignals(buf: Buffer, fileSize: number): ImageSignalR
     { name: 'Skin Tone Smoothing',     score: rawSkin,                        rawValue: rawSkin,        weight: 0.08, description: 'AI portrait generators produce unnaturally smooth skin — Midjourney v6 and Grok especially' },
     { name: 'Compression Efficiency',  score: compressionScore(rawCompression), rawValue: rawCompression, weight: 0.06, description: 'AI output files are typically smaller than real photos at equivalent resolution' },
     { name: 'Edit Signature',          score: rawEdit,                        rawValue: rawEdit,        weight: 0.04, description: 'Photoshop/Lightroom edits leave double-compression and clone-stamp patterns' },
+    { name: 'JPEG Quality Factor',      score: jpegQualityScore(extractJpegQuality(buf)),  rawValue: extractJpegQuality(buf) ?? -1, weight: 0.08, description: 'AI generators (DALL-E, Midjourney, SD) output at JPEG quality 95-100; real cameras use 75-92' },
+    { name: 'Pixel Noise Pattern',      score: noiseVarianceScore(samples),    rawValue: 0,              weight: 0.10, description: 'AI images have unnaturally smooth pixel distributions; real camera sensors produce natural noise variance' },
   ]
 }
 
