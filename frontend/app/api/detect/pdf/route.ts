@@ -94,10 +94,11 @@ export async function POST(req: NextRequest) {
       // Extract PDF text using pdf-parse
       const bytes  = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      // Dynamic import to avoid build issues
+      // pdf-parse v2: use PDFParse class (named export, ESM compatible)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const pdfParse = require('pdf-parse')
-      const pdfData  = await pdfParse(buffer, {
+      const parser   = new pdfParse.PDFParse()
+      const pdfData  = await parser.pdf(buffer, {
         max: 0,  // parse all pages
         pagerender: (pageData: any) => {
           return pageData.getTextContent({ normalizeWhitespace: true })

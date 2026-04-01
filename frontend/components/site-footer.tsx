@@ -16,7 +16,7 @@ export function SiteFooter() {
               <span className="font-black text-lg gradient-text">Aiscern</span>
             </div>
             <p className="text-text-muted text-sm leading-relaxed mb-4">
-              Enterprise-grade multi-modal AI content detection. Detect deepfakes, synthetic text, AI audio, and more — in seconds.
+              Production-ready multi-modal AI content detection. Detect deepfakes, synthetic text, AI audio and video — free forever.
             </p>
             <p className="text-xs text-text-muted">
               Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
