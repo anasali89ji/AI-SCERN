@@ -1,0 +1,87 @@
+---
+title: "How to Detect AI-Generated Images in 2026"
+description: "A comprehensive guide to identifying Midjourney, DALL-E 3, and Stable Diffusion images using forensic signals and free tools."
+date: "2026-03-01"
+author: "Anas Ali"
+category: "Guides"
+tags: ["deepfake", "image detection", "midjourney", "dall-e"]
+readTime: "8 min read"
+---
+
+AI image generators have reached a level of photorealism that makes visual identification nearly impossible for human eyes alone. Midjourney v7, DALL-E 3, and Stable Diffusion XL can produce portrait photos, product shots, and news-style images that fool even experienced journalists.
+
+This guide explains the forensic signals that give AI images away — and how automated tools catch what our eyes miss.
+
+## Why Visual Detection Fails
+
+The human visual system is optimized to recognize faces and natural scenes, not pixel-level statistical anomalies. AI images exploit this: they produce textures, lighting, and composition that *feel* natural even when the underlying mathematics are completely artificial.
+
+In 2024, researchers at MIT found that people correctly identified AI images only 61% of the time — barely above random chance. By 2026, that number has likely dropped further as models improve.
+
+## Forensic Signals That Reveal AI Images
+
+### 1. Frequency Domain Anomalies
+
+Every image contains a hidden fingerprint in its frequency domain — the distribution of pixel intensity changes across different scales. AI generators leave characteristic patterns here.
+
+Tools like **Fourier Transform analysis** convert an image to frequency space and look for the regular grid artifacts that GANs and diffusion models produce. Real photographs have natural noise patterns; AI images have suspiciously smooth or periodically structured noise.
+
+### 2. Facial Geometry Inconsistencies
+
+Despite major improvements, AI still struggles with:
+- **Teeth**: Often unnaturally uniform, too many or too few, or blending into gums
+- **Ears**: Frequently asymmetric in ways that don't occur in real humans
+- **Eyes**: Catchlights (the reflection of light sources) are often identical in both eyes — physically impossible
+- **Hair strands**: Individual strands near the hairline often merge into each other or disappear entirely
+
+### 3. Background Coherence Failures
+
+AI generates the foreground subject and background somewhat independently. Signs of this:
+- Reflections in windows or mirrors that don't match the scene
+- Shadows cast in inconsistent directions relative to the apparent light source
+- Text in the background is almost always garbled or nonsensical
+- Objects in the distance become morphologically impossible (buildings with wrong geometries, trees with impossible branching)
+
+### 4. Metadata Analysis
+
+Real photographs carry EXIF metadata: camera make and model, lens focal length, GPS coordinates, shutter speed. AI-generated images are born without this data. A "photograph" with no EXIF metadata is a significant red flag.
+
+Tools like `exiftool` or online EXIF viewers can reveal this instantly.
+
+### 5. JPEG Compression Artifacts
+
+When a real photo is saved as JPEG, compression artifacts appear in predictable patterns based on the camera's compression algorithm. AI images saved as JPEG have different compression signatures — the blocking artifacts appear in unusual locations because the underlying image structure is fundamentally different.
+
+## How Aiscern Detects AI Images
+
+Aiscern's image detection pipeline combines multiple signals:
+
+1. **EfficientNet-based classifier** trained on 2M+ real/AI image pairs, fine-tuned on recent Midjourney and DALL-E 3 outputs
+2. **Frequency spectrum analysis** looking for GAN fingerprints and diffusion model artifacts
+3. **Facial landmark analysis** (for images containing faces) checking geometric consistency
+4. **Metadata examination** checking for missing or suspicious EXIF data
+5. **Ensemble confidence scoring** combining all signals into a single verdict
+
+The ensemble approach is crucial: no single signal is reliable enough alone. An AI image can pass any individual test; it's the combination that produces accurate verdicts.
+
+## Practical Tips for Manual Inspection
+
+When examining a suspicious image:
+
+1. **Zoom into the background** at 200%+ and look for text or repeated patterns
+2. **Check the edges of hair** where it meets the background
+3. **Look at hands** — AI still frequently produces six fingers or impossible finger geometry
+4. **Examine reflective surfaces** — eyes, glasses, wet surfaces — for inconsistent reflections
+5. **Run it through a reverse image search** — if it's a real stolen photograph, it'll appear
+6. **Check the EXIF data** — a modern smartphone photo without EXIF is suspicious
+
+## Limitations
+
+No detection method is perfect. Current limitations:
+
+- **Heavily compressed images** lose the frequency artifacts that signal AI generation
+- **Cropped images** may remove the background inconsistencies
+- **AI images that incorporate real photo elements** (inpainting/outpainting) are harder to detect
+- **Very small images** (under 256×256) lack the detail needed for reliable analysis
+
+Aiscern's current accuracy on images is approximately 82% across a diverse test set. For high-stakes decisions, combine automated detection with manual forensic review.

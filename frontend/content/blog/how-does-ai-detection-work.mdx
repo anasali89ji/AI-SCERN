@@ -1,0 +1,95 @@
+---
+title: "How Does AI Content Detection Work? The Technical Explanation"
+description: "A plain-English explanation of the machine learning techniques behind AI text and image detection — perplexity, frequency analysis, and ensemble models."
+date: "2026-03-22"
+author: "Anas Ali"
+category: "Technical"
+tags: ["how it works", "machine learning", "perplexity", "ensemble models"]
+readTime: "10 min read"
+---
+
+AI detection feels almost paradoxical: using AI to detect AI. Understanding how it works — and why it sometimes fails — requires a brief tour of the same concepts that underlie the generators themselves.
+
+## Text Detection: Exploiting the Generator's Signature
+
+Language models work by predicting the next token (roughly, the next word or word-piece) given everything that came before. At each step, the model assigns probabilities to every possible next token. The one with the highest probability is the most likely continuation.
+
+**The key insight**: AI models tend to choose high-probability tokens. Humans don't.
+
+Human writers make surprising, idiosyncratic choices. We use uncommon words when they fit the rhythm. We start sentences in unusual ways. We make errors, self-correct, and deviate from the most statistically probable path constantly.
+
+AI models — especially when asked to produce "good" writing — tend toward the center of the probability distribution. They are statistically conservative.
+
+### Perplexity Scoring
+
+To measure this, detectors run the text through a language model of their own and compute **perplexity**: how "surprised" the model is by each word choice.
+
+Low perplexity = the model wasn't surprised = high-probability word choices = more likely AI-generated.
+
+High perplexity = the model was frequently surprised = unusual word choices = more likely human-written.
+
+This works well in aggregate but has weaknesses. A short text doesn't have enough words for the signal to be statistically reliable. A human writing in a constrained formal style (legal documents, technical specifications) may naturally use predictable word choices. A non-native English speaker may use simpler vocabulary that scores as low-perplexity.
+
+### Burstiness
+
+A second signal is **burstiness**: the variation in sentence length and complexity throughout a passage.
+
+Human writing has high burstiness. We write long complex sentences, then short ones. Our paragraph lengths vary. Our complexity fluctuates.
+
+AI writing tends toward lower burstiness — more uniform sentence length, more consistent complexity level. Not because AI was programmed to be uniform, but because training on human feedback (RLHF) pushes models toward responses that humans rate as "good writing" — and readers often rate consistency highly.
+
+### Watermark Detection
+
+A separate (and more reliable, when available) technique is **watermark detection**. Some AI providers — Google with SynthID, and experimentally OpenAI — embed statistical patterns into generated text that are invisible to readers but detectable by software.
+
+These watermarks work by biasing token selection during generation toward a secret list of "green" tokens. Human-written text doesn't share this bias. The pattern is statistically detectable across hundreds of tokens even without access to the specific watermarking key.
+
+The limitation: watermarks only work for providers who implement them, and can be partially destroyed by paraphrasing.
+
+## Image Detection: Frequency Fingerprints and Geometric Inconsistencies
+
+AI image detection is fundamentally different from text detection because images don't have a "probability distribution" in the same sense.
+
+Instead, image detectors look for artifacts that current AI generators consistently produce.
+
+### Frequency Domain Analysis
+
+Every image, when analyzed in the frequency domain via Fourier Transform, reveals patterns in how pixel intensities vary at different spatial scales. Real photographs have one characteristic frequency signature. AI-generated images have another.
+
+**Why**: GANs (Generative Adversarial Networks) and diffusion models both produce images by working in the frequency domain implicitly. The upsampling steps in diffusion models leave characteristic high-frequency artifacts that natural photography doesn't produce. These appear as faint grid-like patterns in the Fourier transform — invisible to the naked eye, but detectable with software.
+
+### CNN-Based Classification
+
+Most practical image detectors are trained convolutional neural networks. They learn to recognize visual patterns associated with AI generation — not by explicit rules, but by seeing millions of examples.
+
+The challenge is generalization: a network trained primarily on Midjourney outputs may not generalize well to DALL-E 3, which produces artifacts in different image regions. This is why Aiscern continuously updates models with samples from new generators.
+
+### Facial Geometry Analysis
+
+For images containing faces, specialized detectors look for geometric inconsistencies that AI still struggles with:
+
+- Facial landmark symmetry that exceeds what's geometrically possible for real faces
+- Iris texture that repeats (a GAN artifact where the same pattern appears in both eyes)
+- Specular highlights (catchlights in eyes) that are physically inconsistent with the scene lighting
+
+## The Ensemble Approach
+
+No single signal is reliable enough alone. Aiscern's detection pipeline combines:
+
+1. Statistical text analysis (perplexity + burstiness) for text detection
+2. Fine-tuned HuggingFace models for pattern recognition
+3. Frequency domain analysis for images
+4. Geometric consistency checks for faces
+5. Metadata analysis for images (EXIF signatures)
+
+Each signal produces a confidence score. The ensemble aggregates these through a trained combining model that weights each signal based on its reliability for the specific content type.
+
+This approach is more robust than any single signal: an AI text that evades perplexity detection (by using uncommon vocabulary) may still fail the structural consistency check. An AI image that lacks frequency artifacts (because it was heavily compressed) may still have geometric inconsistencies in the facial regions.
+
+## Why Detection Will Always Be Imperfect
+
+Detection and generation are in a permanent arms race. As detectors improve, generators adjust — intentionally or through market pressure — to produce outputs that evade detection.
+
+Watermarking is the most promising long-term approach, but requires voluntary adoption by AI providers.
+
+For now, ensemble detection with transparent signal breakdown — knowing *why* content was flagged, not just *whether* — represents the responsible state of the art. That's what Aiscern is built to provide.
