@@ -50,6 +50,7 @@ export function SiteFooter() {
             <ul className="space-y-2.5">
               {[
                 { label: 'About Aiscern',  href: '/about',    title: 'About Aiscern — AI Detection Built on 413K+ Samples' },
+                { label: 'How It Works',   href: '/methodology', title: 'Aiscern Detection Methodology' },
                 { label: 'Contact',        href: '/contact',  title: 'Contact Aiscern' },
                 { label: 'API Docs',       href: '/docs/api', title: 'Aiscern API — AI Detection REST API for Developers' },
                 { label: 'Free Forever', href: '/pricing', title: 'Aiscern is Free' },
