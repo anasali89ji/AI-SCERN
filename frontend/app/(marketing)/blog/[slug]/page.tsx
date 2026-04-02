@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
 import { SiteFooter }                from '@/components/site-footer'
 import { getPostBySlug, getAllSlugs } from '@/lib/blog'
+import { SiteNav } from '@/components/SiteNav'
 
 // ── Static params for build-time generation ───────────────────────────────────
 export async function generateStaticParams() {
@@ -71,17 +72,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   return (
     <div className="min-h-screen bg-background text-text-primary">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto h-full px-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
-            <span className="font-black text-lg gradient-text">Aiscern</span>
-          </Link>
-          <Link href="/blog" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Blog
-          </Link>
-        </div>
-      </nav>
+      <SiteNav backHref="/blog" backLabel="Blog" />
 
       <main className="pt-24 pb-20 max-w-3xl mx-auto px-4">
         {/* Category badge */}

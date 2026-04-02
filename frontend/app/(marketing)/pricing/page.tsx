@@ -5,6 +5,7 @@ import { CheckCircle, Zap, Shield, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
+import { SiteNav } from '@/components/SiteNav'
 
 const features = [
   'AI Text Detection — unlimited scans',
@@ -25,42 +26,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Aiscern" width={36} height={25}
-              className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.4)]" priority />
-            <span className="font-black text-xl gradient-text">Aiscern</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
-            <Link href="/#tools" className="hover:text-text-primary transition-colors">Tools</Link>
-            <Link href="/reviews" className="hover:text-text-primary transition-colors">Reviews</Link>
-            <Link href="/docs/api" className="hover:text-text-primary transition-colors">API</Link>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user ? (
-              <Link href="/dashboard" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all">Dashboard →</Link>
-            ) : (
-              <>
-                <Link href="/login" className="hidden sm:flex px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-primary hover:bg-surface-hover transition-all">Sign In</Link>
-                <Link href="/signup" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all">
-                  <Zap className="w-3.5 h-3.5" /><span className="hidden sm:inline">Get Started</span><span className="sm:hidden">Join</span>
-                </Link>
-              </>
-            )}
-            <button className="md:hidden p-2 rounded-lg hover:bg-surface text-text-muted" onClick={() => setMobileOpen(o => !o)}>
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-        {mobileOpen && (
-          <div className="md:hidden border-t border-border/50 bg-background/95 px-4 py-4 flex flex-col gap-3">
-            <Link href="/#tools" onClick={() => setMobileOpen(false)} className="text-sm text-text-muted hover:text-text-primary py-2">Tools</Link>
-            <Link href="/reviews" onClick={() => setMobileOpen(false)} className="text-sm text-text-muted hover:text-text-primary py-2">Reviews</Link>
-            <Link href="/docs/api" onClick={() => setMobileOpen(false)} className="text-sm text-text-muted hover:text-text-primary py-2">API</Link>
-          </div>
-        )}
-      </nav>
+      <SiteNav />
 
       {/* Content */}
       <main className="pt-28 pb-20 px-4">

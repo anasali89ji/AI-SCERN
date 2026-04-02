@@ -6,6 +6,7 @@ import { Star, ThumbsUp, CheckCircle, PenLine, Filter, ChevronLeft, ChevronRight
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
 import { ReviewModal } from '@/components/ReviewModal'
+import { SiteNav } from '@/components/SiteNav'
 
 const TOOLS_FILTER = ['All Tools','AI Text Detector','Image Detector','Audio Detector','Video Detector','Batch Analyser','General']
 const SORT_OPTIONS = [
@@ -104,21 +105,7 @@ export default function ReviewsPage() {
     <div className="min-h-screen bg-background text-text-primary">
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto h-full px-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
-            <span className="font-black text-lg gradient-text">Aiscern</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Link href="/dashboard" className="btn-primary px-4 py-2 text-sm">Dashboard →</Link>
-            ) : (
-              <Link href="/signup" className="btn-primary px-4 py-2 text-sm">Get Started Free</Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <main className="pt-20 sm:pt-24 pb-20 px-4 max-w-6xl mx-auto">
 
