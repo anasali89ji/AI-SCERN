@@ -71,6 +71,7 @@ export function SiteFooter() {
             <ul className="space-y-2.5">
               {[
                 { label: 'Privacy Policy',    href: '/privacy', title: 'Aiscern Privacy Policy' },
+                { label: 'Security',           href: '/security', title: 'Aiscern Security' },
                 { label: 'Terms of Service',  href: '/terms',   title: 'Aiscern Terms of Service' },
                 { label: 'Security',          href: '/security', title: 'Aiscern Security Policy' },
               ].map(l => (
