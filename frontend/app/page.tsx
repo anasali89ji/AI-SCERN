@@ -4,7 +4,8 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/auth-provider'
+import { useAuth }           from '@/components/auth-provider'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
 import {
   Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3,
@@ -81,11 +82,12 @@ function ParticleNetwork() {
 // ── Deferred Particle Network — only starts after LCP ──────────────────────
 function DeferredParticleNetwork() {
   const [show, setShow] = useState(false)
+  const reduced = useReducedMotion()
   useEffect(() => {
-    // Defer until after first meaningful paint (~800ms)
+    if (reduced) return  // skip animation for users who prefer reduced motion
     const t = setTimeout(() => setShow(true), 800)
     return () => clearTimeout(t)
-  }, [])
+  }, [reduced])
   return show ? <ParticleNetwork /> : null
 }
 
