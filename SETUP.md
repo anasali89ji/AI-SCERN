@@ -138,7 +138,7 @@ RETURNS TABLE (
     COUNT(*) FILTER (WHERE verdict = 'AI')            AS ai_detected,
     COUNT(*) FILTER (WHERE verdict = 'HUMAN')         AS human_detected,
     COUNT(*) FILTER (WHERE verdict = 'UNCERTAIN')     AS uncertain_count,
-    ROUND(AVG(confidence_score) * 100, 1)             AS avg_confidence
+    ROUND(AVG(confidence_score)::numeric * 100, 1)    AS avg_confidence
   FROM scans
   WHERE user_id = p_user_id;
 $$;
