@@ -111,9 +111,55 @@ export const scheduledPipelineCheck = inngest.createFunction(
   }
 )
 
+
+// ── D.1 — Process feedback and log to training_feedback table ─────────────────
+export const processFeedbackJob = inngest.createFunction(
+  {
+    id:          'process-feedback-job',
+    name:        'Log scan feedback to training_feedback table',
+    retries:     2,
+    concurrency: { limit: 3 },
+  },
+  { event: 'scan/feedback' },
+  async ({ event, step }) => {
+    const { scan_id, user_id, feedback, verdict } = event.data
+
+    await step.run('log-feedback-to-training-table', async () => {
+      const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
+      const sb = getSupabaseAdmin()
+
+      const { data: scan } = await sb
+        .from('scans')
+        .select('content_preview, confidence_score, media_type')
+        .eq('id', scan_id)
+        .single()
+
+      if (!scan) return { skipped: true, reason: 'scan not found' }
+
+      // Infer what the user believes the correct label is
+      const userSays = feedback === 'incorrect'
+        ? (verdict === 'AI' ? 'HUMAN' : 'AI')
+        : verdict
+
+      await sb.from('training_feedback').upsert({
+        scan_id,
+        text_preview:  scan.content_preview ?? null,
+        model_verdict: verdict,
+        user_says:     userSays,
+        confidence:    scan.confidence_score,
+        media_type:    scan.media_type ?? 'text',
+        logged_at:     new Date().toISOString(),
+      }, { onConflict: 'scan_id' })
+
+      return { logged: true, scan_id, userSays }
+    })
+  }
+)
+
 // ── All functions export (registered in the serve route) ─────────────────────
 export const INNGEST_FUNCTIONS = [
   onScanCompleted,
   onScanFeedback,
   scheduledPipelineCheck,
+  processFeedbackJob,
 ]

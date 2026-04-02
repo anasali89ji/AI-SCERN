@@ -3,6 +3,7 @@ import { analyzeImage }              from '@/lib/inference/hf-analyze'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
+import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
 
@@ -113,6 +114,9 @@ export async function POST(req: NextRequest) {
         scanId = sr?.id ?? null
       } catch { /* non-fatal */ }
     }
+
+    // Fire Inngest background job (fire-and-forget, non-blocking)
+    if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'image', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
 
     return NextResponse.json({
       success: true, scan_id: scanId,

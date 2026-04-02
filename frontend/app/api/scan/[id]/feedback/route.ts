@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { inngest }                   from '@/lib/inngest/client'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -44,6 +45,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         })
       }
     }
+
+    // Fire Inngest scan/feedback event (non-blocking)
+    void (async () => {
+      try {
+        const scan = await getDb().from('scans').select('user_id, verdict').eq('id', id).single()
+        if (scan.data?.user_id) {
+          await inngest.send({
+            name: 'scan/feedback',
+            data: { scan_id: id, user_id: scan.data.user_id, feedback, verdict: scan.data.verdict ?? '' },
+          })
+        }
+      } catch { /* non-fatal */ }
+    })()
 
     return NextResponse.json({ success: true })
   } catch (err) {

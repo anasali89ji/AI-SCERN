@@ -15,6 +15,7 @@ import { checkRateLimitRedis } from '@/lib/cache/redis'
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeVideoWithFrames, analyzeVideo } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
+import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic    = 'force-dynamic'
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
           } catch { /* cleanup failure is non-fatal */ }
         }
 
+        if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'video', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
         return NextResponse.json({
           success: true,
           scan_id: scanId,
@@ -138,6 +140,7 @@ export async function POST(req: NextRequest) {
           } catch { /* non-fatal */ }
         }
 
+        if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'video', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
         return NextResponse.json({
           success: true,
           scan_id: scanId,
@@ -196,6 +199,7 @@ export async function POST(req: NextRequest) {
       } catch { /* non-fatal */ }
     }
 
+    if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'video', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
     return NextResponse.json({
       success: true,
       scan_id: scanId,

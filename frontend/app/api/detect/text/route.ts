@@ -3,6 +3,7 @@ import { analyzeText }               from '@/lib/inference/hf-analyze'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
+import { fireScanCompleted }                           from '@/lib/inngest/send-scan-event'
 import { sanitizeText } from '@/lib/utils/sanitize'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
@@ -80,6 +81,9 @@ export async function POST(req: NextRequest) {
         scanId = scanRow?.id ?? null
       } catch { /* non-fatal */ }
     }
+
+    // Fire Inngest background job (fire-and-forget, non-blocking)
+    if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'text', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
 
     return NextResponse.json({
       success: true,
