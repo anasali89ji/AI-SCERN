@@ -19,7 +19,6 @@ export default {
     const wnum = parseInt(env.WORKER_NUM ?? '1')
     const wid  = `worker-${wnum}`
     const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
-    const repo = env.HF_REPO ?? 'saghi776/detectai-dataset'
 
     if (url.pathname === '/status') {
       return Response.json(await getStatus(env.DB), { headers: cors })
@@ -48,7 +47,7 @@ export default {
     }
 
     if (url.pathname === '/trigger/push' && req.method === 'POST') {
-      const result = await pushToHF(env.DB, env.HF_TOKEN, repo, 5000)
+      const result = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
       return Response.json({ ok: true, worker: wid, push: result }, { headers: cors })
     }
 
@@ -78,12 +77,11 @@ export default {
 
     const wnum = parseInt(env.WORKER_NUM ?? '1')
     const wid  = `worker-${wnum}`
-    const repo = env.HF_REPO ?? 'saghi776/detectai-dataset'
     const tick = Math.floor(Date.now() / 60_000)
 
     if (wnum === 20) {
       // Every tick: push all pending items to HF (cron runs every minute)
-      const push = await pushToHF(env.DB, env.HF_TOKEN, repo, 5000)
+      const push = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
         if (push.pushed > 0) {
           console.log(`[W20] pushed ${push.pushed} → commit ${push.commitId} | files: ${push.files?.join(', ')}`)
         } else if (push.error) {
@@ -116,7 +114,7 @@ export default {
     // Backup push: each worker pushes on a different tick offset to avoid D1 collisions
     // W1 pushes on tick%5===0, W2 on tick%5===1, etc.
     if (tick % 5 === (wnum % 5)) {
-      const push = await pushToHF(env.DB, env.HF_TOKEN, repo, 5000)
+      const push = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
       if (push.pushed > 0) {
         console.log(`[W${wnum}] push: ${push.pushed} → ${push.commitId}`)
       } else if (push.error) {

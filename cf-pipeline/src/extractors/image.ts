@@ -20,7 +20,8 @@ export async function extractImageRow(
     if (typeof imgF === 'string') {
       url = imgF
     } else if (imgF && typeof imgF === 'object') {
-      url = imgF.path ?? imgF.url
+      // HF datasets-server returns CDN URL under 'src' key — check it first
+      url = imgF.src ?? imgF.path ?? imgF.url
       w   = imgF.width
       h   = imgF.height
       fmt = imgF.format?.toLowerCase()

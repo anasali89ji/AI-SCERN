@@ -18,7 +18,8 @@ export async function extractAudioRow(
     if (typeof af === 'string') {
       url = af
     } else if (af && typeof af === 'object') {
-      url = af.path ?? af.url
+      // HF datasets-server returns CDN URL under 'src' key — check it first
+      url = af.src ?? af.path ?? af.url
       sr  = af.sampling_rate
       // Compute duration from array length + sample rate
       if (af.array && af.sampling_rate) {

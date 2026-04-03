@@ -4,10 +4,13 @@
  */
 
 export interface Env {
-  DB:           D1Database
-  HF_TOKEN:     string
-  HF_REPO?:     string
-  WORKER_NUM?:  string   // "1"–"20"
+  DB:               D1Database
+  HF_TOKEN:         string
+  HF_REPO?:         string   // text dataset (default: saghi776/detectai-dataset)
+  HF_IMAGE_REPO?:   string   // image dataset (default: saghi776/aiscern-image-dataset)
+  HF_AUDIO_REPO?:   string   // audio dataset (default: saghi776/aiscern-audio-dataset)
+  HF_VIDEO_REPO?:   string   // video dataset (default: saghi776/aiscern-video-dataset)
+  WORKER_NUM?:      string   // "1"–"15" scraper | "20" push+cleanup
   PIPELINE_ENABLED?: string  // "false" to kill all workers
 }
 
