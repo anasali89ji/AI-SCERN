@@ -11,34 +11,23 @@ import type { Source } from '../types'
  * added 'answer' to text_fields so the nested object extractor picks it up.
  */
 export const TEXT_SOURCES: Source[] = [
-  // ── HC3 split into explicit ai / human to avoid broken label_field logic ─
-  {
-    name: 'hc3-ai',
-    id: 'Hello-SimpleAI/HC3',
-    config: 'en',
-    media_type: 'text', label: 'ai',
-    text_fields: ['chatgpt_answers'],
-  },
-  {
-    name: 'hc3-human',
-    id: 'Hello-SimpleAI/HC3',
-    config: 'en',
-    media_type: 'text', label: 'human',
-    text_fields: ['human_answers'],
-  },
+  // ── HC3 replaced — Hello-SimpleAI/HC3 returns 404 (dataset moved/removed) ─
+  // Replaced with verified working alternatives:
+  { name: 'no-robots',         id: 'HuggingFaceH4/no_robots',              media_type: 'text', label: 'ai',    text_fields: ['prompt', 'messages', 'response'] },
+  { name: 'truthfulqa-human',  id: 'truthful_qa',  config: 'generation',   media_type: 'text', label: 'human', text_fields: ['question', 'best_answer', 'correct_answers'] },
 
   // ── AI-detection benchmarks ──────────────────────────────────────────────
-  { name: 'raid-benchmark',    id: 'liamdugan/raid',                          config: 'default',       media_type: 'text', label: 'ai',    text_fields: ['generation', 'prompt', 'text'] },
+  // raid-benchmark removed — liamdugan/raid returns 404 (dataset removed); raid-v2 below covers it
+  // ghostbuster removed — vivek9patel/ghostbuster-data is private/inaccessible
   { name: 'ai-detection-pile', id: 'artem9k/ai-text-detection-pile',                                    media_type: 'text', label: 'mixed', label_field: 'label',    label_map: { '1': 'ai', '0': 'human', ai: 'ai', human: 'human' }, text_fields: ['text', 'document'] },
-  { name: 'ghostbuster',       id: 'vivek9patel/ghostbuster-data',                                       media_type: 'text', label: 'mixed', label_field: 'label',    label_map: { gpt: 'ai', human: 'human', '1': 'ai', '0': 'human' }, text_fields: ['text', 'essay', 'content'] },
-  { name: 'ai-vs-human',       id: 'shankarkarki/AI-Human-Text',                                         media_type: 'text', label: 'mixed', label_field: 'Generated', label_map: { '1': 'ai', '0': 'human' }, text_fields: ['Text', 'text'] },
-  { name: 'mage-benchmark',    id: 'ziweili/mage',                                                       media_type: 'text', label: 'mixed', label_field: 'label',    label_map: { '0': 'human', '1': 'ai' }, text_fields: ['text', 'article'] },
+  // ai-vs-human removed — shankarkarki/AI-Human-Text is private/inaccessible
+  // mage-benchmark removed — ziweili/mage is private/inaccessible; m4-ai below covers detection benchmarks
 
   // ── AI-generated instruction/chat datasets ───────────────────────────────
   { name: 'dolly-15k',         id: 'databricks/databricks-dolly-15k',                                    media_type: 'text', label: 'ai',    text_fields: ['response', 'context', 'instruction'] },
   { name: 'alpaca',            id: 'tatsu-lab/alpaca',                                                    media_type: 'text', label: 'ai',    text_fields: ['output', 'input', 'instruction'] },
   { name: 'open-orca',         id: 'Open-Orca/OpenOrca',                                                  media_type: 'text', label: 'ai',    text_fields: ['response', 'question', 'system_prompt'] },
-  { name: 'ultrachat',         id: 'HuggingFaceH4/ultrachat_200k',                                        media_type: 'text', label: 'ai',    text_fields: ['prompt', 'messages'] },
+  { name: 'ultrachat',         id: 'HuggingFaceH4/ultrachat_200k',            config: 'default', split: 'train_sft', media_type: 'text', label: 'ai',    text_fields: ['prompt', 'messages'] },
   { name: 'openhermes',        id: 'teknium/OpenHermes-2.5',                                               media_type: 'text', label: 'ai',    text_fields: ['conversations', 'text', 'output'] },
   { name: 'tiny-stories',      id: 'roneneldan/TinyStories',                                               media_type: 'text', label: 'ai',    text_fields: ['text', 'story'] },
   { name: 'gpt4-alpaca',       id: 'vicgalle/alpaca-gpt4',                                                 media_type: 'text', label: 'ai',    text_fields: ['output', 'input', 'instruction'] },
@@ -46,10 +35,11 @@ export const TEXT_SOURCES: Source[] = [
   { name: 'airoboros',         id: 'jondurbin/airoboros-3.1',                                              media_type: 'text', label: 'ai',    text_fields: ['response', 'output', 'instruction'] },
 
   // ── Human-written datasets ───────────────────────────────────────────────
-  { name: 'openwebtext',       id: 'Skylion007/openwebtext',                                               media_type: 'text', label: 'human', text_fields: ['text'] },
+  // openwebtext — Skylion007/openwebtext returns 404 (dataset removed); replaced with verified fork
+  { name: 'openwebtext',       id: 'stas/openwebtext-10k',                                                 media_type: 'text', label: 'human', text_fields: ['text'] },
   { name: 'wikipedia-en',      id: 'wikimedia/wikipedia',                      config: '20231101.en',     media_type: 'text', label: 'human', text_fields: ['text', 'abstract'], language: 'en' },
   { name: 'cnn-dailymail',     id: 'abisee/cnn_dailymail',                     config: '3.0.0',           media_type: 'text', label: 'human', text_fields: ['article', 'highlights'] },
-  { name: 'imdb-reviews',      id: 'stanfordnlp/imdb',                                                     media_type: 'text', label: 'human', text_fields: ['text', 'review'] },
+  { name: 'imdb-reviews',      id: 'stanfordnlp/imdb',                        config: 'plain_text',      media_type: 'text', label: 'human', text_fields: ['text', 'review'] },
   { name: 'yelp-reviews',      id: 'Yelp/yelp_review_full',                                                media_type: 'text', label: 'human', text_fields: ['text'] },
   { name: 'arxiv-abstracts',   id: 'gfissore/arxiv-abstracts-2021',                                         media_type: 'text', label: 'human', text_fields: ['abstract', 'text', 'title'] },
   { name: 'pubmedqa',          id: 'qiaojin/PubMedQA',                         config: 'pqa_unlabeled',   media_type: 'text', label: 'human', text_fields: ['abstract', 'question'] },
