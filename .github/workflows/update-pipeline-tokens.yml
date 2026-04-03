@@ -13,6 +13,28 @@ jobs:
           node-version: '20'
       - run: npm install -g wrangler@latest
 
+      - name: Ensure HF dataset repos exist (create if missing)
+        run: |
+          HF="${{ secrets.HUGGINGFACE_API_TOKEN }}"
+          REPOS=("saghi776/aiscern-image-dataset" "saghi776/aiscern-audio-dataset" "saghi776/aiscern-video-dataset")
+          for REPO in "${REPOS[@]}"; do
+            NAME="${REPO#*/}"
+            ORG="${REPO%/*}"
+            STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+              "https://huggingface.co/api/datasets/$REPO" \
+              -H "Authorization: Bearer $HF")
+            if [ "$STATUS" = "200" ]; then
+              echo "  ✅ $REPO already exists"
+            else
+              echo -n "  Creating $REPO ... "
+              curl -sf -X POST "https://huggingface.co/api/repos/create" \
+                -H "Authorization: Bearer $HF" \
+                -H "Content-Type: application/json" \
+                -d "{\"type\":\"dataset\",\"name\":\"$NAME\",\"organization\":\"$ORG\",\"private\":false}" \
+                && echo "✅ created" || echo "⚠️ check manually"
+            fi
+          done
+
       - name: Push HF_TOKEN to all 16 deployed workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

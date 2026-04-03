@@ -17,3 +17,6 @@ crons = ["*/1 * * * *"]
 [vars]
 WORKER_NUM = "14"
 HF_REPO    = "saghi776/detectai-dataset"
+HF_IMAGE_REPO = "saghi776/aiscern-image-dataset"
+HF_AUDIO_REPO = "saghi776/aiscern-audio-dataset"
+HF_VIDEO_REPO = "saghi776/aiscern-video-dataset"
