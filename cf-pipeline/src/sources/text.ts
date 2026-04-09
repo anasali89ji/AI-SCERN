@@ -14,7 +14,7 @@ export const TEXT_SOURCES: Source[] = [
   // ── HC3 replaced — Hello-SimpleAI/HC3 returns 404 (dataset moved/removed) ─
   // Replaced with verified working alternatives:
   { name: 'no-robots',         id: 'HuggingFaceH4/no_robots',              media_type: 'text', label: 'ai',    text_fields: ['prompt', 'messages', 'response'] },
-  { name: 'truthfulqa-human',  id: 'truthful_qa',  config: 'generation',   media_type: 'text', label: 'human', text_fields: ['question', 'best_answer', 'correct_answers'] },
+  { name: 'truthfulqa-human',  id: 'EleutherAI/truthful_qa', config: 'generation',   media_type: 'text', label: 'human', text_fields: ['question', 'best_answer', 'correct_answers'] },
 
   // ── AI-detection benchmarks ──────────────────────────────────────────────
   // raid-benchmark removed — liamdugan/raid returns 404 (dataset removed); raid-v2 below covers it
@@ -36,11 +36,11 @@ export const TEXT_SOURCES: Source[] = [
 
   // ── Human-written datasets ───────────────────────────────────────────────
   // openwebtext — Skylion007/openwebtext returns 404 (dataset removed); replaced with verified fork
-  { name: 'openwebtext',       id: 'stas/openwebtext-10k',                                                 media_type: 'text', label: 'human', text_fields: ['text'] },
+  { name: 'openwebtext',       id: 'monology/pile-uncopyrighted',                                                 media_type: 'text', label: 'human', text_fields: ['text'] },
   { name: 'wikipedia-en',      id: 'wikimedia/wikipedia',                      config: '20231101.en',     media_type: 'text', label: 'human', text_fields: ['text', 'abstract'], language: 'en' },
   { name: 'cnn-dailymail',     id: 'abisee/cnn_dailymail',                     config: '3.0.0',           media_type: 'text', label: 'human', text_fields: ['article', 'highlights'] },
   { name: 'imdb-reviews',      id: 'stanfordnlp/imdb',                        config: 'plain_text',      media_type: 'text', label: 'human', text_fields: ['text', 'review'] },
-  { name: 'yelp-reviews',      id: 'Yelp/yelp_review_full',                                                media_type: 'text', label: 'human', text_fields: ['text'] },
+  { name: 'yelp-reviews',      id: 'fancyzhx/yelp_review_full',                                                media_type: 'text', label: 'human', text_fields: ['text'] },
   { name: 'arxiv-abstracts',   id: 'gfissore/arxiv-abstracts-2021',                                         media_type: 'text', label: 'human', text_fields: ['abstract', 'text', 'title'] },
   { name: 'pubmedqa',          id: 'qiaojin/PubMedQA',                         config: 'pqa_unlabeled',   media_type: 'text', label: 'human', text_fields: ['abstract', 'question'] },
   {
