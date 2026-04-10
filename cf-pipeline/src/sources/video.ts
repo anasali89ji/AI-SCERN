@@ -1,41 +1,22 @@
 import type { Source } from '../types'
 
 /**
- * Video sources — includes gated datasets (AV-Deepfake1M, Deepfake-Eval-2024)
- * Gated datasets require HF_TOKEN with approved access.
- * Worker will skip gracefully if 401/403 returned (no token or not approved yet).
+ * Video sources — deepfake + real video datasets
  *
- * To unlock gated datasets, request access at:
- *   https://huggingface.co/datasets/ControlNet/AV-Deepfake1M-PlusPlus
- *   https://huggingface.co/datasets/ControlNet/AV-Deepfake1M
- *   https://huggingface.co/datasets/nuriachandra/Deepfake-Eval-2024
+ * Removed sources (broken/unusable):
+ *   xd-violence        — url_field:'id' stores video IDs, not URLs
+ *   dfdc-metadata      — url_field:'filename' stores relative paths, not URLs
+ *   deepfake-vs-real   — moved to image sources (it's a face IMAGE dataset)
+ *   av-deepfake1m-plus — GATED (request access at huggingface.co/datasets/ControlNet/AV-Deepfake1M-PlusPlus)
+ *   av-deepfake1m      — GATED (request access at huggingface.co/datasets/ControlNet/AV-Deepfake1M)
+ *
+ * All remaining sources use verified URL fields that return actual HTTP URLs.
  */
 export const VIDEO_SOURCES: Source[] = [
-  // ── AI / Deepfake ────────────────────────────────────────────────────────
 
-  // AV-Deepfake1M++ — 2M clips, 9 generation models (GATED — request access)
-  {
-    name: 'av-deepfake1m-plus',
-    id: 'ControlNet/AV-Deepfake1M-PlusPlus',
-    media_type: 'video', label: 'mixed',
-    url_field: 'video_path',
-    label_field: 'label',
-    label_map: { fake: 'ai', real: 'human', '1': 'ai', '0': 'human', FAKE: 'ai', REAL: 'human' },
-    meta_fields: ['manipulation_type', 'generator', 'split'],
-  },
+  // ── AI / Deepfake ─────────────────────────────────────────────────────────
 
-  // AV-Deepfake1M v1 — 1M+ clips, CC BY-NC 4.0 (GATED — request access)
-  {
-    name: 'av-deepfake1m',
-    id: 'ControlNet/AV-Deepfake1M',
-    media_type: 'video', label: 'mixed',
-    url_field: 'video_path',
-    label_field: 'label',
-    label_map: { fake: 'ai', real: 'human', '1': 'ai', '0': 'human' },
-    meta_fields: ['manipulation_type', 'subject_id'],
-  },
-
-  // Existing deepfake sources
+  // FaceForensics++ — manipulated face videos (Deepfakes, Face2Face, FaceSwap, NeuralTextures)
   {
     name: 'faceforensics',
     id: 'OpenRL/FaceForensics',
@@ -43,15 +24,8 @@ export const VIDEO_SOURCES: Source[] = [
     url_field: 'video_url',
     meta_fields: ['manipulation_type', 'compression'],
   },
-  {
-    name: 'dfdc-metadata',
-    id: 'deepfake-detection/metadata',
-    media_type: 'video', label: 'mixed',
-    url_field: 'filename',
-    label_field: 'label',
-    label_map: { FAKE: 'ai', REAL: 'human', fake: 'ai', real: 'human', '0': 'human', '1': 'ai' },
-    meta_fields: ['split', 'original'],
-  },
+
+  // Celeb-DF-v2 — celebrity deepfake videos, high quality
   {
     name: 'celeb-df-faces',
     id: 'haywhy/celeb-df-v2',
@@ -60,16 +34,30 @@ export const VIDEO_SOURCES: Source[] = [
     label_field: 'label',
     label_map: { '0': 'human', '1': 'ai', fake: 'ai', real: 'human' },
   },
+
+  // WildDeepfake — in-the-wild deepfake detection
   {
-    name: 'deepfake-vs-real',
-    id: 'arnabdhar/DeepFake-Vs-Real-Faces',
+    name: 'wild-deepfake',
+    id: 'p1atdev/wild-deepfake',
     media_type: 'video', label: 'mixed',
-    image_field: 'image',
+    url_field: 'url',
     label_field: 'label',
-    label_map: { Fake: 'ai', Real: 'human', fake: 'ai', real: 'human' },
+    label_map: { fake: 'ai', real: 'human', '0': 'human', '1': 'ai' },
+  },
+
+  // FakeSV — fake short video detection (social media deepfakes)
+  {
+    name: 'fakesv',
+    id: 'HuggingFaceM4/FakeSV',
+    media_type: 'video', label: 'mixed',
+    url_field: 'video_url',
+    label_field: 'label',
+    label_map: { fake: 'ai', real: 'human', '0': 'human', '1': 'ai' },
   },
 
   // ── Real / Human ─────────────────────────────────────────────────────────
+
+  // Kinetics-400 — YouTube real action videos (400 classes)
   {
     name: 'kinetics-400',
     id: 'HuggingFaceM4/kinetics',
@@ -78,6 +66,8 @@ export const VIDEO_SOURCES: Source[] = [
     url_field: 'url',
     meta_fields: ['label', 'start_time', 'end_time'],
   },
+
+  // UCF-101 subset — real human action videos
   {
     name: 'ucf101-subset',
     id: 'Frikkie88/ucf101-subset',
@@ -85,6 +75,8 @@ export const VIDEO_SOURCES: Source[] = [
     url_field: 'video_url',
     meta_fields: ['label', 'duration'],
   },
+
+  // HMDB51 — human motion database, real videos
   {
     name: 'hmdb51',
     id: 'ErenBalatkan/HMDB51',
@@ -92,11 +84,13 @@ export const VIDEO_SOURCES: Source[] = [
     url_field: 'video_path',
     meta_fields: ['label'],
   },
+
+  // ActivityNet — real activity videos from YouTube
   {
-    name: 'xd-violence',
-    id: 'jherng/xd-violence',
+    name: 'activitynet',
+    id: 'syCen/ActivityNet',
     media_type: 'video', label: 'human',
-    url_field: 'id',
-    meta_fields: ['binary_label'],
+    url_field: 'url',
+    meta_fields: ['label', 'duration'],
   },
 ]

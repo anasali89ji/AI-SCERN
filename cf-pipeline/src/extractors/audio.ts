@@ -44,10 +44,10 @@ export async function extractAudioRow(
     }
   }
 
+  // Reject rows with no usable URL — avoids inserting empty/garbage rows
+  if (!url) return null
+
   return {
-    label,
-    content_url:     url,
-    content_preview: transcript?.slice(0, 250) ?? `[Audio from ${src.name}]`,
     content_hash:    await sha256(`${src.name}:audio:${rowIdx}:${url ?? ''}`),
     quality_score:   qualityAudio(dur, sr),
     duration_seconds: dur,

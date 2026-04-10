@@ -1,10 +1,14 @@
 /**
- * Aiscern Pipeline v7.1 — Universal Worker
- * WORKER_NUM (1–15): scraper | WORKER_NUM 20: HF push + cleanup
+ * Aiscern Pipeline v7.3 — Universal Worker
+ * WORKER_NUM (1–14): scraper | WORKER_NUM 20: HF push + cleanup
  *
- * 16 deployed workers total:
- *   W1–W15  (wrangler.toml, -b through -p): scrape HF datasets into D1
+ * 15 deployed workers total:
+ *   W1–W14  (wrangler.toml, -b through -o): scrape HF datasets into D1
  *   W20     (wrangler-e.toml):              push D1 rows to HuggingFace + cleanup
+ *
+ * Source distribution (70 sources ÷ 14 workers = 5 each):
+ *   W01–W06: text  (30 sources)   W07–W09: image (15 sources)
+ *   W10–W12: audio (15 sources)   W13–W14: video  (8 sources + 2 audio)
  */
 import {
   Env, ALL_SOURCES, getWorkerSources,
@@ -25,7 +29,7 @@ export default {
     }
 
     if (url.pathname === '/health') {
-      const sources = wnum <= 4 ? getWorkerSources(wnum) : []
+      const sources = wnum <= 14 ? getWorkerSources(wnum) : []
       return Response.json({
         ok:      true,
         version: 'v7.1',
@@ -56,7 +60,7 @@ export default {
       return Response.json({ ok: true, worker: wid, deleted }, { headers: cors })
     }
 
-    const sources = wnum <= 15 ? getWorkerSources(wnum) : []
+    const sources = wnum <= 14 ? getWorkerSources(wnum) : []
     return Response.json({
       worker:  wid,
       version: 'v7.1',

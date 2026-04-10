@@ -13,9 +13,9 @@ export const ALL_SOURCES: Source[] = [
   ...VIDEO_SOURCES,
 ]
 
-// v7: 15 scraper workers (was 4) — each handles ~6 sources
+// 14 scraper workers (70 total sources ÷ 14 = exactly 5 per worker)
 // Worker 20 remains the push + cleanup worker
-export const TOTAL_SCRAPER_WORKERS = 15
+export const TOTAL_SCRAPER_WORKERS = 14
 
 export function getWorkerSources(workerNum: number): Source[] {
   if (workerNum < 1 || workerNum > TOTAL_SCRAPER_WORKERS) return []

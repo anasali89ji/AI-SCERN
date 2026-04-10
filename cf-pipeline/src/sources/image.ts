@@ -15,11 +15,13 @@ export const IMAGE_SOURCES: Source[] = [
 
   // ── NEW ADDITIONS ─────────────────────────────────────────────────────────
   // GenImage — 1.3M AI images from 8 generators (SDXL, DALL-E 3, Midjourney)
-  { name: 'genimage',        id: 'XXBluemn/genimage',                                            media_type: 'image', label: 'ai',    url_field: 'image',        meta_fields: ['class_id', 'model'] },
+  { name: 'genimage',        id: 'XXBluemn/genimage',                                            media_type: 'image', label: 'ai',    image_field: 'image',      meta_fields: ['class_id', 'model'] },
   // SDXL-generated images — high quality Stable Diffusion XL
-  { name: 'sdxl-images',     id: 'ehristoforu/ai-images-novel',                                  media_type: 'image', label: 'ai',    url_field: 'image',        meta_fields: ['prompt'] },
+  { name: 'sdxl-images',     id: 'ehristoforu/ai-images-novel',                                  media_type: 'image', label: 'ai',    image_field: 'image',      meta_fields: ['prompt'] },
   // COCO-val real photos (gold standard human images)
   { name: 'coco-real',       id: 'detection-datasets/coco',                 config: 'full',       media_type: 'image', label: 'human', image_field: 'image',      meta_fields: ['category'] },
   // Fake face detection (StyleGAN, ProGAN deepfakes)
   { name: 'fake-faces',      id: 'therealcyberlord/fake-face-detection-dataset',                 media_type: 'image', label: 'mixed', image_field: 'image',       label_field: 'label', label_map: { fake:'ai', real:'human', '1':'ai', '0':'human' } },
+  // DeepFake vs Real Faces — face image dataset (moved from video, uses image_field)
+  { name: 'deepfake-vs-real', id: 'arnabdhar/DeepFake-Vs-Real-Faces',                            media_type: 'image', label: 'mixed', image_field: 'image',       label_field: 'label', label_map: { Fake: 'ai', Real: 'human', fake: 'ai', real: 'human' } },
 ]
