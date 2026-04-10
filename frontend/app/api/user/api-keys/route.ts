@@ -1,30 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
-import { createClient }              from '@supabase/supabase-js'
+import { auth }                      from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
-async function getUserId(req: NextRequest): Promise<string | null> {
-  const token =
-    req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
-    req.cookies.get('sb-access-token')?.value
-
-  if (!token) return null
-
+// Auth helper — uses Clerk (project auth standard)
+async function getUserId(): Promise<string | null> {
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } },
-    )
-    const { data: { user } } = await sb.auth.getUser()
-    return user?.id ?? null
+    const { userId } = await auth()
+    return userId ?? null
   } catch {
     return null
   }
 }
 
+// ── Hash helper
 // ── Hash helper (matches public API route) ────────────────────────────────────
 function hashApiKey(key: string): string {
   let h = 5381
@@ -41,7 +31,7 @@ function generateRawKey(): string {
 
 // ── GET — list keys for authenticated user ────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const userId = await getUserId(req)
+  const userId = await getUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const sb = getSupabaseAdmin()
@@ -59,7 +49,7 @@ export async function GET(req: NextRequest) {
 
 // ── POST — generate a new key ─────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const userId = await getUserId(req)
+  const userId = await getUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))

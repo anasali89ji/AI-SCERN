@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Code2 } from 'lucide-react'
+import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Code2, Briefcase } from 'lucide-react'
 
 export const metadata = {
   title: 'About Aiscern — Free AI Content Detection',
@@ -11,10 +11,10 @@ export const metadata = {
 }
 
 const STATS = [
-  { label: 'Modalities',      value: '4',    sub: 'text, image, audio, video' },
-  { label: 'Detection models', value: '8+',  sub: 'in the ensemble pipeline'  },
-  { label: 'Always free',     value: '100%', sub: 'no paywalls, no limits'    },
-  { label: 'Accuracy',        value: '~85%', sub: 'on text; 82% images'       },
+  { label: 'Modalities',       value: '4',    sub: 'text, image, audio, video' },
+  { label: 'Detection models', value: '8+',   sub: 'in the ensemble pipeline'  },
+  { label: 'Always free',      value: '100%', sub: 'no paywalls, no limits'    },
+  { label: 'Accuracy',         value: '~85%', sub: 'on text; ~82% images'      },
 ]
 
 const VALUES = [
@@ -40,6 +40,70 @@ const VALUES = [
   },
 ]
 
+// Team members — ordered: Founder first, then PM
+const TEAM = [
+  {
+    name:     'Anas Ali',
+    role:     'Founder & CEO',
+    bio:      'Building Aiscern from Islamabad, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
+    photo:    '/anas-ali.jpg',
+    location: 'Islamabad, Pakistan',
+    skills:   'Full-Stack + AI/ML',
+    gradient: 'from-violet-600/30 via-indigo-600/20 to-purple-600/30',
+    ring:     'border-primary/30',
+  },
+  {
+    name:     'Temah',
+    role:     'Project Manager',
+    bio:      'Overseeing product quality, sprint planning, and cross-functional coordination at Aiscern. Ensuring every release meets the bar for reliability, design consistency, and user experience.',
+    photo:    null,
+    location: 'Remote',
+    skills:   'Product Management',
+    gradient: 'from-emerald-600/30 via-teal-600/20 to-cyan-600/30',
+    ring:     'border-emerald/30',
+  },
+]
+
+function TeamCard({ member }: { member: typeof TEAM[0] }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+      {/* Gradient header banner */}
+      <div className={`h-20 bg-gradient-to-br ${member.gradient} relative`}>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.12),transparent)]" />
+      </div>
+      <div className="px-6 pb-6 -mt-10">
+        {/* Avatar */}
+        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center`}>
+          {member.photo ? (
+            <Image
+              src={member.photo}
+              alt={`${member.name} — ${member.role}`}
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-2xl font-black text-white select-none">
+              {member.name.charAt(0)}
+            </span>
+          )}
+        </div>
+        <h3 className="text-lg font-black text-text-primary">{member.name}</h3>
+        <p className="text-sm text-primary font-bold mb-3">{member.role}</p>
+        <p className="text-sm text-text-muted leading-relaxed mb-4">{member.bio}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border">
+            <MapPin className="w-3 h-3 text-primary" /> {member.location}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border">
+            <Briefcase className="w-3 h-3 text-primary" /> {member.skills}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background text-text-primary">
@@ -52,7 +116,7 @@ export default function AboutPage() {
             <Users className="w-3 h-3" /> About us
           </div>
           <h1 className="text-3xl sm:text-5xl font-black mb-4">
-            AI detection that's <span className="gradient-text">actually free</span>
+            AI detection that&apos;s <span className="gradient-text">actually free</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
             Aiscern is a multi-modal AI content detection platform built to give everyone access to the tools they need to navigate a world full of synthetic media.
@@ -99,7 +163,20 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Tech stack */}
+        {/* ── Team — always before tech stack (1.3 fix) ── */}
+        <div className="mb-14">
+          <h2 className="text-xl font-black mb-2 text-center">The team</h2>
+          <p className="text-text-muted text-sm text-center mb-8 max-w-lg mx-auto">
+            A small, focused team building AI transparency tools from Pakistan.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
+            {TEAM.map(member => (
+              <TeamCard key={member.name} member={member} />
+            ))}
+          </div>
+        </div>
+
+        {/* Tech stack — moved after team (1.3 fix) */}
         <div className="rounded-2xl border border-border bg-surface p-6 mb-14">
           <div className="flex items-center gap-2 mb-4">
             <GitBranch className="w-5 h-5 text-primary" />
@@ -110,50 +187,10 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             {['Next.js 15', 'TypeScript', 'Supabase', 'Cloudflare R2', 'HuggingFace', 'NVIDIA NIM', 'Inngest', 'Vercel'].map(t => (
-              <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-surface-2 border border-border/50 text-text-muted">
+              <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-surface-active border border-border/50 text-text-muted">
                 {t}
               </span>
             ))}
-          </div>
-        </div>
-
-        {/* ── Founder / Team ── */}
-        <div className="mb-14">
-          <h2 className="text-xl font-black mb-6 text-center">The team</h2>
-          <div className="max-w-sm mx-auto">
-            <div className="rounded-2xl border border-border bg-surface overflow-hidden hover:border-primary/30 transition-colors">
-              {/* Gradient header */}
-              <div className="h-20 bg-gradient-to-br from-violet-600/30 via-indigo-600/20 to-purple-600/30 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.15),transparent)]" />
-              </div>
-              <div className="px-6 pb-6 -mt-10">
-                {/* Founder photo */}
-                <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 border-primary/30 mb-4 bg-gradient-to-br from-violet-600 to-indigo-700">
-                  <Image
-                    src="/anas-ali.jpg"
-                    alt="Anas Ali — Founder & CEO"
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-lg font-black text-text-primary">Anas Ali</h3>
-                <p className="text-sm text-primary font-bold mb-3">Founder & CEO</p>
-                <p className="text-sm text-text-muted leading-relaxed mb-4">
-                  Building Aiscern from Islamabad, Pakistan. Passionate about AI transparency,
-                  media literacy, and making powerful detection tools accessible to everyone —
-                  regardless of budget or geography.
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border">
-                    <MapPin className="w-3 h-3 text-primary" /> Islamabad, Pakistan
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border">
-                    <Code2 className="w-3 h-3 text-primary" /> Full-Stack + AI/ML
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -162,13 +199,13 @@ export default function AboutPage() {
           <h2 className="text-2xl font-black">Try it free</h2>
           <p className="text-text-muted">No account needed. All four modalities, free forever.</p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link href="/detect/text"  className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
+            <Link href="/detect/text" className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
               Detect Text →
             </Link>
             <Link href="/detect/image" className="px-5 py-2.5 rounded-xl border border-border bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
               Detect Images
             </Link>
-            <Link href="/methodology"  className="px-5 py-2.5 rounded-xl border border-border bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
+            <Link href="/methodology" className="px-5 py-2.5 rounded-xl border border-border bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
               How It Works
             </Link>
           </div>

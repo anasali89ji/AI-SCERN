@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
-import { createClient }              from '@supabase/supabase-js'
+import { auth }                      from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
 
-async function getUserId(req: NextRequest): Promise<string | null> {
-  const token =
-    req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
-    req.cookies.get('sb-access-token')?.value
-
-  if (!token) return null
-
+async function getUserId(): Promise<string | null> {
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } },
-    )
-    const { data: { user } } = await sb.auth.getUser()
-    return user?.id ?? null
+    const { userId } = await auth()
+    return userId ?? null
   } catch {
     return null
   }
@@ -29,7 +18,7 @@ export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId(req)
+  const userId = await getUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await context.params

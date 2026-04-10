@@ -27,7 +27,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className="card w-full max-w-md" onClick={e => e.stopPropagation()}>
+        className="card w-full max-w-md" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-text-primary">Scan Details</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors">

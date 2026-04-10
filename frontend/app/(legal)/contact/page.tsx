@@ -48,7 +48,7 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-5xl font-black mb-4">Get in <span className="gradient-text">Touch</span></h1>
           <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">
-            We respond to all inquiries within 24–48 hours.
+            We respond to all inquiries within 24–48 hours. For business and enterprise queries, contact our Project Manager directly.
           </p>
         </div>
 
@@ -78,6 +78,23 @@ export default function ContactPage() {
                 <span className="text-sm font-semibold text-text-primary">Response Time</span>
               </div>
               <p className="text-sm text-text-muted">We respond to all inquiries within <strong className="text-text-secondary">24–48 hours</strong>. Enterprise inquiries get priority.</p>
+            </div>
+
+            {/* Project Manager contact */}
+            <div className="p-4 rounded-xl border border-emerald/20 bg-emerald/5">
+              <p className="text-xs text-emerald/70 uppercase tracking-wider mb-3 font-semibold">Business & Enterprise</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+                  T
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-text-primary">Temah</p>
+                  <p className="text-xs text-text-muted">Project Manager · Aiscern</p>
+                </div>
+              </div>
+              <p className="text-xs text-text-muted mt-3 leading-relaxed">
+                For enterprise partnerships, volume agreements, and business inquiries — reach out via <a href="mailto:enterprise@aiscern.com" className="text-primary hover:underline font-medium">enterprise@aiscern.com</a> and Temah will respond within 24 hours.
+              </p>
             </div>
 
             <div className="p-4 rounded-xl border border-border bg-surface">

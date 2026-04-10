@@ -124,7 +124,7 @@ export async function getR2Object(key: string): Promise<{
   contentLength: number
 }> {
   const cmd = new GetObjectCommand({ Bucket: R2_BUCKET, Key: key })
-  const res = await getR2Client().send(cmd)
+  const res = await getR2Client().send(cmd) as any
 
   if (!res.Body) throw new Error(`R2 object not found: ${key}`)
 
@@ -141,7 +141,7 @@ export async function getR2Object(key: string): Promise<{
  */
 export async function getR2Buffer(key: string): Promise<{ buffer: Buffer; contentType: string }> {
   const cmd = new GetObjectCommand({ Bucket: R2_BUCKET, Key: key })
-  const res = await getR2Client().send(cmd)
+  const res = await getR2Client().send(cmd) as any
 
   if (!res.Body) throw new Error(`R2 object not found: ${key}`)
 

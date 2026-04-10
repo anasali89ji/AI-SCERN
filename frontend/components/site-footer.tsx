@@ -19,7 +19,7 @@ export function SiteFooter() {
               Production-ready multi-modal AI content detection. Detect deepfakes, synthetic text, AI audio and video — free forever.
             </p>
             <p className="text-xs text-text-muted">
-              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export function SiteFooter() {
         {/* Bottom bar with social */}
         <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-disabled text-center sm:text-left">
-            © {new Date().getFullYear()} Aiscern · Founded December 2025 · Mandi Bahauddin, Pakistan
+            © {new Date().getFullYear()} Aiscern · Founded December 2025 · Islamabad, Pakistan
           </p>
           <div className="flex items-center gap-4">
             <a href="https://twitter.com/aiscern" target="_blank" rel="noopener noreferrer"

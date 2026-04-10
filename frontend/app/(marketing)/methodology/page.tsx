@@ -63,9 +63,19 @@ export default function MethodologyPage() {
 
         {/* Accuracy benchmarks */}
         <section className="mb-14">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
+          <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2.5 py-1 rounded-full border border-border bg-surface text-text-muted font-mono">
+                v4.0.0
+              </span>
+              <span className="text-xs px-2.5 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary font-semibold">
+                Last validated: April 2026
+              </span>
+            </div>
           </div>
           <p className="text-text-muted text-sm mb-6 leading-relaxed">
             Benchmarks measured on held-out test sets not used during training. Figures represent overall accuracy (true positive rate + true negative rate averaged). Test sets include content from all major AI generators available at the time of evaluation.
@@ -87,7 +97,7 @@ export default function MethodologyPage() {
             ))}
           </div>
           <p className="text-xs text-text-disabled mt-4">
-            * Accuracy varies by content type, generator, and compression level. See Limitations section below.
+            * Accuracy varies by content type, generator, and compression level. Figures updated with each model version release. See Limitations section below.
           </p>
         </section>
 
