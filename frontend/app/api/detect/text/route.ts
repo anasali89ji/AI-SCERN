@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
     if (text.length > 10000)
       return NextResponse.json({ success: false, error: { code: 'TOO_LONG', message: 'Text must be under 10,000 characters' } }, { status: 400 })
 
-    const hash   = contentHash(text)
+    const sanitized = sanitizeText(text)
+    const hash   = contentHash(sanitized)
     const cached = await getCachedDetection('text', hash)
     if (cached) {
       return NextResponse.json({
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const result         = await analyzeText(text)
+    const result         = await analyzeText(sanitized)
     const processingTime = Date.now() - start
 
     await setCachedDetection('text', hash, result)

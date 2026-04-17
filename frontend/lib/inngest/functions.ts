@@ -162,4 +162,85 @@ export const INNGEST_FUNCTIONS = [
   onScanFeedback,
   scheduledPipelineCheck,
   processFeedbackJob,
+  hfModelWarmup,
+  vercelWarmup,
+  supabaseKeepAlive,
 ]
+
+// ── 5. Keep HuggingFace models warm (every 14 min) ───────────────────────────
+export const hfModelWarmup = inngest.createFunction(
+  { id: 'hf-model-warmup', name: 'Keep HuggingFace models warm' },
+  { cron: '*/14 * * * *' },
+  async ({ step }) => {
+    const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
+    if (!HF_TOKEN) return { skipped: true, reason: 'No HF token' }
+
+    const models = [
+      'openai-community/roberta-base-openai-detector',
+      'Hello-SimpleAI/chatgpt-detector-roberta',
+      'umm-maybe/AI-image-detector',
+      'Organika/sdxl-detector',
+      'mo-thecreator/Deepfake-audio-detection',
+    ]
+
+    const warmText = 'This is an automated warmup ping to keep the model warm for users.'
+
+    const results = await step.run('ping-hf-models', async () => {
+      const pings = await Promise.allSettled(models.map(model =>
+        fetch(`https://api-inference.huggingface.co/models/${model}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inputs: warmText }),
+          signal: AbortSignal.timeout(8000),
+        }).then(r => ({ model, status: r.status })).catch(e => ({ model, error: (e as Error).message }))
+      ))
+      return pings.map(p => p.status === 'fulfilled' ? p.value : { error: 'failed' })
+    })
+
+    return { warmed_at: new Date().toISOString(), results }
+  }
+)
+
+// ── 6. Self-ping to prevent Vercel cold starts (every 5 min) ─────────────────
+export const vercelWarmup = inngest.createFunction(
+  { id: 'vercel-warmup', name: 'Keep Vercel functions warm' },
+  { cron: '*/5 * * * *' },
+  async ({ step }) => {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aiscern.com'
+
+    await step.run('ping-health', async () => {
+      const res = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(5000) })
+      return { status: res.status, ok: res.ok }
+    })
+
+    await step.run('warm-text-endpoint', async () => {
+      const res = await fetch(`${baseUrl}/api/detect/text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
+        },
+        body: JSON.stringify({ text: 'This is an automated warmup request to prevent cold starts on the Vercel serverless function for Aiscern AI detection platform.' }),
+        signal: AbortSignal.timeout(10000),
+      })
+      return { status: res.status }
+    })
+
+    return { warmed_at: new Date().toISOString() }
+  }
+)
+
+// ── 7. Supabase keep-alive (every 3 days) ────────────────────────────────────
+export const supabaseKeepAlive = inngest.createFunction(
+  { id: 'supabase-keep-alive', name: 'Prevent Supabase free-tier pause' },
+  { cron: '0 12 */3 * *' },
+  async ({ step }) => {
+    await step.run('query-profiles', async () => {
+      const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
+      const sb = getSupabaseAdmin()
+      const { count } = await sb.from('profiles').select('id', { count: 'exact', head: true })
+      return { profile_count: count }
+    })
+    return { kept_alive_at: new Date().toISOString() }
+  }
+)

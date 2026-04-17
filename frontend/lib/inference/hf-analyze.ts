@@ -54,14 +54,24 @@ const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
 const HF_API   = 'https://api-inference.huggingface.co/models'
 
 const MODELS = {
-  text_primary:   'openai-community/roberta-base-openai-detector',
-  text_secondary: 'Hello-SimpleAI/chatgpt-detector-roberta',
-  text_tertiary:  'andreas122001/roberta-mixed-detector',
-  image_primary:  'umm-maybe/AI-image-detector',
-  image_sdxl:     'Organika/sdxl-detector',
-  image_face:     'Nahrawy/AIorNot',
-  audio_primary:  'mo-thecreator/Deepfake-audio-detection',
-  audio_asvspoof: 'MelodyMachine/Deepfake-audio-detection-V2',
+  // TEXT — 5-model ensemble
+  text_primary:    'openai-community/roberta-base-openai-detector',
+  text_secondary:  'Hello-SimpleAI/chatgpt-detector-roberta',
+  text_tertiary:   'andreas122001/roberta-mixed-detector',
+  text_quaternary: 'valurank/distilroberta-ai-text-detection',
+  text_quinary:    'TrustSafeAI/roberta-base-ai-detector',
+
+  // IMAGE — 5-model ensemble
+  image_primary:   'Organika/sdxl-detector',
+  image_sdxl:      'umm-maybe/AI-image-detector',
+  image_face:      'Nahrawy/AIorNot',
+  image_vit:       'haywoodsloan/ai-image-detector',
+  image_deepfake:  'dima806/deepfake_vs_real_image_detection',
+
+  // AUDIO — 3-model ensemble
+  audio_primary:   'mo-thecreator/Deepfake-audio-detection',
+  audio_asvspoof:  'MelodyMachine/Deepfake-audio-detection-V2',
+  audio_xlsr:      'facebook/wav2vec2-large-xlsr-53',
 }
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
@@ -111,10 +121,24 @@ function parseHFText(
   } catch { return null }
 }
 
-function toVerdict(score: number): 'AI' | 'HUMAN' | 'UNCERTAIN' {
-  if (score >= 0.58) return 'AI'
-  if (score <= 0.42) return 'HUMAN'
+function toVerdict(score: number, mediaType: 'text' | 'image' | 'audio' | 'video' = 'text'): 'AI' | 'HUMAN' | 'UNCERTAIN' {
+  const thresholds = {
+    text:  { ai: 0.62, human: 0.38 },
+    image: { ai: 0.55, human: 0.40 },
+    audio: { ai: 0.60, human: 0.40 },
+    video: { ai: 0.55, human: 0.38 },
+  }
+  const t = thresholds[mediaType]
+  if (score >= t.ai)    return 'AI'
+  if (score <= t.human) return 'HUMAN'
   return 'UNCERTAIN'
+}
+
+// Mild sharpening: pushes scores away from 0.5 toward 0 or 1 for more decisive results
+function calibrateScore(raw: number, beta: number = 1.15): number {
+  const centered = raw - 0.5
+  const sharpened = 0.5 + centered * beta
+  return Math.max(0.01, Math.min(0.99, sharpened))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,9 +150,11 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
-    hfInference(MODELS.text_primary,   { inputs: text.substring(0, 1800) }).catch(() => null),
-    hfInference(MODELS.text_secondary, { inputs: text.substring(0, 1800) }).catch(() => null),
-    hfInference(MODELS.text_tertiary,  { inputs: text.substring(0, 1800) }).catch(() => null),
+    hfInference(MODELS.text_primary,    { inputs: text.substring(0, 1800) }).catch(() => null),
+    hfInference(MODELS.text_secondary,  { inputs: text.substring(0, 1800) }).catch(() => null),
+    hfInference(MODELS.text_tertiary,   { inputs: text.substring(0, 1800) }).catch(() => null),
+    hfInference(MODELS.text_quaternary, { inputs: text.substring(0, 1800) }).catch(() => null),
+    hfInference(MODELS.text_quinary,    { inputs: text.substring(0, 1800) }).catch(() => null),
   ])
 
   const [geminiResult, hfResults, lingSignals] = await Promise.all([
@@ -143,9 +169,13 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   const s1 = parseHFText(rawHF[0], ['fake','label_1','1'], ['real','label_0','0'])
   const s2 = parseHFText(rawHF[1], ['chatgpt','ai','label_1','1'], ['human','label_0','0'])
   const s3 = parseHFText(rawHF[2], ['label_1','ai','fake','ai-generated'], ['label_0','human','real','human-written'])
-  if (s1 !== null) mlScores.push({ model: MODELS.text_primary,   aiScore: s1, weight: 0.40 })
-  if (s2 !== null) mlScores.push({ model: MODELS.text_secondary, aiScore: s2, weight: 0.35 })
-  if (s3 !== null) mlScores.push({ model: MODELS.text_tertiary,  aiScore: s3, weight: 0.25 })
+  const s4 = parseHFText(rawHF[3], ['label_1','ai','fake'], ['label_0','human','real'])
+  const s5 = parseHFText(rawHF[4], ['label_1','ai','fake'], ['label_0','human','real'])
+  if (s1 !== null) mlScores.push({ model: MODELS.text_primary,    aiScore: s1, weight: 0.30 })
+  if (s2 !== null) mlScores.push({ model: MODELS.text_secondary,  aiScore: s2, weight: 0.25 })
+  if (s3 !== null) mlScores.push({ model: MODELS.text_tertiary,   aiScore: s3, weight: 0.20 })
+  if (s4 !== null) mlScores.push({ model: MODELS.text_quaternary, aiScore: s4, weight: 0.15 })
+  if (s5 !== null) mlScores.push({ model: MODELS.text_quinary,    aiScore: s5, weight: 0.10 })
 
   const mlTotalW   = mlScores.reduce((s, m) => s + m.weight, 0) || 1
   const mlScore    = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
@@ -169,7 +199,8 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     engineDesc = 'Linguistic signal analysis only'
   }
 
-  const verdict   = toVerdict(aiScore)
+  const calibratedScore = calibrateScore(aiScore)
+  const verdict   = toVerdict(calibratedScore, "text")
   const modelStr  = geminiScore !== null ? 'Gemini2Flash' : mlScores.map(s => s.model.split('/').pop()).join('+') || 'Linguistic'
 
   const sentence_scores = text
@@ -188,7 +219,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 
   return {
     verdict,
-    confidence:    Math.round(aiScore * 1000) / 1000,
+    confidence:    Math.round(calibratedScore * 1000) / 1000,
     model_used:    `Aiscern-TextEnsemble(${modelStr}+7LingSignals)`,
     model_version: '4.0.0',
     signals: [
@@ -241,9 +272,11 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
     : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
-    hfInference(MODELS.image_primary, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_sdxl,    null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_face,    null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_primary,  null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_face,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_vit,      null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+    hfInference(MODELS.image_deepfake, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
   ])
 
   // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
@@ -267,9 +300,12 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
       if (aiE || huE) mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
     } catch {}
   }
-  parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.40, MODELS.image_primary)
-  parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.35, MODELS.image_sdxl)
-  parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.25, MODELS.image_face)
+  // image_vit uses 'AI'/'Real' labels; image_deepfake uses 'deepfake'/'real' labels — both handled by parseImg regex
+  parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.25, MODELS.image_primary)
+  parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.20, MODELS.image_sdxl)
+  parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.10, MODELS.image_face)
+  parseImg(hfResults[3].status === 'fulfilled' ? hfResults[3].value : null, 0.30, MODELS.image_vit)
+  parseImg(hfResults[4].status === 'fulfilled' ? hfResults[4].value : null, 0.15, MODELS.image_deepfake)
 
   const mlTotalW   = mlScores.reduce((s, m) => s + m.weight, 0) || 1
   const mlScore    = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
@@ -292,20 +328,17 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
     modelUsed = 'Aiscern-ImageSignals(10PixelSignals)'
   }
 
+  const calibratedImgScore = calibrateScore(aiScore)
   const editSig  = imgSignals.find(s => s.name === 'Edit Signature')
-  const isEdited = editSig && editSig.score > 0.65 && aiScore < 0.52 && aiScore > 0.30
-  const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' =
-    aiScore >= 0.50 ? 'AI'
-    : isEdited ? 'AI'
-    : aiScore <= 0.38 ? 'HUMAN'
-    : 'UNCERTAIN'
+  const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30
+  const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' = isEdited ? 'AI' : toVerdict(calibratedImgScore, 'image')
 
   const topSignal = [...imgSignals].sort((a, b) => b.score - a.score)[0]
   const geminiSigs = geminiResult?.signals ?? []
 
   return {
     verdict,
-    confidence:    Math.round(aiScore * 1000) / 1000,
+    confidence:    Math.round(calibratedImgScore * 1000) / 1000,
     model_used:    modelUsed,
     model_version: '4.0.0',
     signals: [
@@ -404,7 +437,8 @@ export async function analyzeAudio(
     modelUsed = 'Aiscern-AudioSignals(AcousticHeuristics)'
   }
 
-  const verdict  = toVerdict(aiScore)
+  const calibratedAudioScore = calibrateScore(aiScore)
+  const verdict  = toVerdict(calibratedAudioScore, "audio")
   const segCount = Math.max(3, Math.min(10, Math.ceil(durationEst / 5)))
 
   // Deterministic segment scores using sin wave (no Math.random)
@@ -419,7 +453,7 @@ export async function analyzeAudio(
 
   return {
     verdict,
-    confidence:    Math.round(aiScore * 1000) / 1000,
+    confidence:    Math.round(calibratedAudioScore * 1000) / 1000,
     model_used:    modelUsed,
     model_version: '4.0.0',
     signals: [
@@ -468,7 +502,7 @@ export async function analyzeVideoWithFrames(
     try {
       const nimResult = await analyzeVideoFrames(frames)
       const ensemble  = buildVideoSignals(nimResult)
-      const verdict   = toVerdict(ensemble.ai_score)
+      const verdict   = toVerdict(calibrateScore(ensemble.ai_score), "video")
       return {
         verdict,
         confidence:    Math.round(ensemble.ai_score * 1000) / 1000,
@@ -524,7 +558,8 @@ function analyzeVideoFallback(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RATE LIMITER
+// RATE LIMITER (use lib/ratelimit — functions below are DEPRECATED, kept only
+// for backward-compat. Do NOT import these from hf-analyze.ts in new routes.)
 // ─────────────────────────────────────────────────────────────────────────────
 const _rlMap = new Map<string, { count: number; resetAt: number }>()
 
