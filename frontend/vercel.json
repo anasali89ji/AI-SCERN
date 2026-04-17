@@ -16,6 +16,9 @@
     "app/api/chat/route.ts":           { "maxDuration": 120 },
     "app/api/upload/route.ts":         { "maxDuration": 30  },
     "app/api/inngest/route.ts":        { "maxDuration": 300 },
-    "app/api/pipeline/push/route.ts":  { "maxDuration": 300 }
+    "app/api/pipeline/push/route.ts":  { "maxDuration": 300 },
+    "app/api/scraper/route.ts":        { "maxDuration": 60  },
+    "app/api/warmup/route.ts":         { "maxDuration": 5   },
+    "app/api/health/route.ts":         { "maxDuration": 5   }
   }
 }

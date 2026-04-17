@@ -74,6 +74,12 @@ export default function PricingPage() {
                 Read the Docs →
               </Link>
             </div>
+            {!user && (
+              <p className="text-xs text-text-muted flex items-center gap-1 mt-1">
+                <CheckCircle className="w-3 h-3 text-emerald flex-shrink-0" />
+                No credit card required — free forever
+              </p>
+            )}
           </div>
           <p className="text-xs text-text-muted">
             We may add optional supporter tiers in the future to fund model training — but core detection will always remain free.

@@ -129,6 +129,7 @@ export async function analyzeVideoFrames(
   if (!NIM_KEY) throw new Error('NVIDIA_API_KEY not configured')
   if (!frames.length) throw new Error('No frames provided')
 
+  try {
   // Run all frames in parallel (6 frames = 6 NIM calls)
   const results = await Promise.allSettled(
     frames.map(f => analyzeFrame(f.base64, f.index, f.timeSec))
@@ -164,5 +165,9 @@ export async function analyzeVideoFrames(
     max_score:            Math.max(...scores),
     min_score:            Math.min(...scores),
     model:                NIM_MODEL,
+  }
+  } catch (err: unknown) {
+    const msg = (err as Error)?.message || 'NVIDIA NIM unavailable'
+    throw new Error(`NVIDIA NIM failed: ${msg}`)
   }
 }

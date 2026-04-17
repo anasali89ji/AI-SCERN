@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         const { data: scanRow } = await getSupabaseAdmin().from('scans').insert({
           user_id:          userId,
           media_type:       'text',
-          content_preview:  text.substring(0, 500),
+          content_preview:  sanitized.substring(0, 500),
           verdict:          result.verdict,
           confidence_score: result.confidence,
           signals:          result.signals,
@@ -77,10 +77,25 @@ export async function POST(req: NextRequest) {
           model_used:       result.model_used,
           model_version:    result.model_version,
           status:           'complete',
-          metadata:         { char_count: text.length, word_count: text.split(/\s+/).length },
+          metadata:         { char_count: sanitized.length, word_count: sanitized.split(/\s+/).length },
         }).select('id').single()
         scanId = scanRow?.id ?? null
       } catch { /* non-fatal */ }
+    } else if (userId.startsWith('anon_')) {
+      // Save anonymous scans without user_id for analytics
+      try {
+        await getSupabaseAdmin().from('scans').insert({
+          user_id:          null,
+          anon_id:          userId,
+          media_type:       'text',
+          content_preview:  sanitized.substring(0, 200),
+          verdict:          result.verdict,
+          confidence_score: result.confidence,
+          processing_time:  processingTime,
+          model_used:       result.model_used,
+          status:           'complete',
+        })
+      } catch { /* non-fatal — anon_id column may not exist yet */ }
     }
 
     // Fire Inngest background job (fire-and-forget, non-blocking)
