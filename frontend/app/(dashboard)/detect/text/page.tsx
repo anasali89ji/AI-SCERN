@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X , Share2 } from 'lucide-react'
+import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence } from '@/lib/utils/helpers'
@@ -190,7 +190,7 @@ Analyzed: ${new Date().toLocaleString()}`
               onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleDetect() } }}
               placeholder="Paste or type any text here to analyze for AI generation patterns…"
-              className="input-field h-56 resize-none font-mono text-sm"
+              className="input-field min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-sm"
             />
             <p className="text-[11px] text-text-disabled mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
 
@@ -198,12 +198,12 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setPdfMode(false)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!pdfMode ? 'bg-amber/15 text-amber border border-amber/30' : 'text-text-muted hover:text-text-secondary'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber/15 text-amber border border-amber/30' : 'text-text-muted hover:text-text-secondary'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
                 onClick={() => setPdfMode(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${pdfMode ? 'bg-primary/15 text-primary border border-primary/30' : 'text-text-muted hover:text-text-secondary'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-primary/15 text-primary border border-primary/30' : 'text-text-muted hover:text-text-secondary'}`}>
                 <BookOpen className="w-3.5 h-3.5" /> PDF Upload
               </button>
             </div>
@@ -236,7 +236,7 @@ Analyzed: ${new Date().toLocaleString()}`
             {!pdfMode && (
             <>
             {/* Live stats bar */}
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { label: 'Characters', value: charCount.toLocaleString() },
                 { label: 'Words', value: wordCount.toLocaleString() },
@@ -467,6 +467,34 @@ Analyzed: ${new Date().toLocaleString()}`
             </button>
           )}
         </div>
+      )}
+      {result && (
+        <details className="card mt-4 mx-4 mb-4">
+          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary" />
+            Detection Models &amp; Datasets
+          </summary>
+          <div className="mt-3 space-y-2 text-xs text-text-muted">
+            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {[
+                { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
+                { name: 'AI Text Detection Pile', desc: '500K+ labeled text samples', url: 'https://huggingface.co/datasets/artem9k/ai-text-detection-pile' },
+                { name: 'GPT-Wiki-Intro', desc: 'GPT-generated Wikipedia intros', url: 'https://huggingface.co/datasets/aadityaubhat/GPT-wiki-intro' },
+                { name: 'RAID Benchmark', desc: 'Robust AI text detection benchmark', url: 'https://huggingface.co/datasets/liamdugan/raid' },
+              ].map(d => (
+                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p>{d.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
       )}
     </div>
   </>

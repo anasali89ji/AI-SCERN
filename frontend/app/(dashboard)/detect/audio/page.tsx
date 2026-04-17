@@ -4,7 +4,7 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download , Share2 } from 'lucide-react'
+import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -181,7 +181,7 @@ export default function AudioDetectionPage() {
         <div className="space-y-4">
           {!file ? (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-64 flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-cyan bg-cyan/5 scale-[1.02]' : 'border-border hover:border-cyan/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
@@ -350,7 +350,7 @@ export default function AudioDetectionPage() {
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload Audio</h3>
               <p className="text-text-muted text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
-              <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-cyan/60 shrink-0" />{f}
@@ -375,6 +375,33 @@ export default function AudioDetectionPage() {
             </button>
           )}
         </div>
+      )}
+      {result && (
+        <details className="card mt-2 mx-4 mb-4">
+          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary" />
+            Detection Models &amp; Datasets
+          </summary>
+          <div className="mt-3 space-y-2 text-xs text-text-muted">
+            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {[
+                { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
+                { name: 'Deepfake Audio Detection', desc: 'morisaki deepfake audio dataset', url: 'https://huggingface.co/datasets/morisaki/deepfake-audio-detection' },
+                { name: 'MelodyMachine V2', desc: 'Deepfake audio detection dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
+              ].map(d => (
+                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p>{d.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
       )}
     </div>
     </>

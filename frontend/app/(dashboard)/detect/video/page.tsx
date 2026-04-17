@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Video, Upload, X, AlertTriangle, CheckCircle, HelpCircle,
-  Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2 } from 'lucide-react'
+  Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -86,7 +86,7 @@ function FrameStrip({
   return (
     <div className="space-y-2">
       <p className="text-xs text-text-muted font-medium">Extracted Frames ({frames.length})</p>
-      <div className="grid grid-cols-6 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {frames.map((f, i) => {
           const score = frameScores?.find(fs => fs.frame === f.index)
           const isSuspicious = score && score.ai_score > 0.55
@@ -314,7 +314,7 @@ export default function VideoDetectionPage() {
         <div className="space-y-4">
           {!file ? (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-64 flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.02]' : 'border-border hover:border-secondary/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
@@ -379,8 +379,8 @@ export default function VideoDetectionPage() {
               {/* File info */}
               <div className="flex items-center justify-between px-1">
                 <div className="min-w-0">
-                  <p className="text-sm text-text-secondary font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-text-muted">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
+                  <p className="text-xs sm:text-sm text-text-secondary font-medium truncate">{file.name}</p>
+                  <p className="text-[10px] sm:text-xs text-text-muted">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
                 <button onClick={reset} className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
@@ -563,6 +563,32 @@ export default function VideoDetectionPage() {
             </button>
           )}
         </div>
+      )}
+      {result && (
+        <details className="card mt-2 mx-4 mb-4">
+          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary" />
+            Detection Models &amp; Datasets
+          </summary>
+          <div className="mt-3 space-y-2 text-xs text-text-muted">
+            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {[
+                { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
+                { name: 'DFDC Dataset', desc: 'Meta DeepFake Detection Challenge', url: 'https://ai.meta.com/datasets/dfdc/' },
+              ].map(d => (
+                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p>{d.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
       )}
     </div>
   </>

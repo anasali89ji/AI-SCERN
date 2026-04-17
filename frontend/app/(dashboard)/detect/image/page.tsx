@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import ScanningLoader, { type ScanStage } from '@/components/ScanningLoader'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2 } from 'lucide-react'
+import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -165,7 +165,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4">
           {!file ? (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-64 flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
@@ -375,6 +375,34 @@ Analyzed: ${new Date().toLocaleString()}`
             </button>
           )}
         </div>
+      )}
+      {result && (
+        <details className="card mt-2 mx-4 mb-4">
+          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary" />
+            Detection Models &amp; Datasets
+          </summary>
+          <div className="mt-3 space-y-2 text-xs text-text-muted">
+            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {[
+                { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
+                { name: 'FAKE-images', desc: 'elsaEU synthetic image dataset', url: 'https://huggingface.co/datasets/elsaEU/FAKE-images' },
+                { name: 'AI and Real Art', desc: 'daviddvd AI vs real artwork dataset', url: 'https://huggingface.co/datasets/daviddvd/ai-and-real-art' },
+                { name: 'AI Image Detector Dataset', desc: 'haywoodsloan ViT training data', url: 'https://huggingface.co/datasets/haywoodsloan/ai-image-detector-dataset' },
+              ].map(d => (
+                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p>{d.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
       )}
     </div>
   </>

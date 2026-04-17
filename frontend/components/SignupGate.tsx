@@ -16,14 +16,24 @@ const STORAGE_KEY = 'aiscern_total_scans'
 
 export function getGlobalScanCount(): number {
   if (typeof window === 'undefined') return 0
-  return parseInt(localStorage.getItem(STORAGE_KEY) ?? '0', 10)
+  try {
+    return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0
+  } catch {
+    return 0
+  }
 }
 
 export function incrementGlobalScanCount(): number {
   if (typeof window === 'undefined') return 0
-  const next = getGlobalScanCount() + 1
-  localStorage.setItem(STORAGE_KEY, String(next))
-  return next
+  try {
+    const count = getGlobalScanCount()
+    const next  = count + 1
+    localStorage.setItem(STORAGE_KEY, String(next))
+    window.dispatchEvent(new CustomEvent('aiscern:count', { detail: next }))
+    return next
+  } catch {
+    return 0
+  }
 }
 
 const PERKS = [

@@ -2,40 +2,46 @@ name: HuggingFace Model Warmup
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # every 15 minutes
-  workflow_dispatch:           # allow manual trigger
+    # Every 15 minutes — keeps HF models warm, prevents cold starts
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Manual trigger for testing
 
 jobs:
   warmup:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
-
+    timeout-minutes: 5
     steps:
-      - name: Warm text detection model
+      - name: Ping Aiscern Health
         run: |
-          curl -sf -X POST \
-            https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector \
-            -H "Authorization: Bearer ${{ secrets.HUGGINGFACE_API_TOKEN }}" \
+          curl -s --max-time 10 https://aiscern.com/api/health || true
+
+      - name: Warm HF Text Model (RoBERTa)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          curl -s --max-time 15 \
+            -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"inputs":"warmup ping from Aiscern"}' \
-            --max-time 12 || true
+            -d '{"inputs":"Automated warmup ping for Aiscern AI detection platform."}' \
+            "https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector" || true
 
-      - name: Warm image detection model
+      - name: Warm HF ChatGPT Detector
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          curl -sf -X POST \
-            https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector \
-            -H "Authorization: Bearer ${{ secrets.HUGGINGFACE_API_TOKEN }}" \
-            --data-binary @/dev/null \
-            --max-time 12 || true
+          curl -s --max-time 15 \
+            -X POST \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"inputs":"Warmup request for Aiscern detection ensemble."}' \
+            "https://api-inference.huggingface.co/models/Hello-SimpleAI/chatgpt-detector-roberta" || true
 
-      - name: Warm audio detection model
+      - name: Warm Aiscern Text Endpoint
         run: |
-          curl -sf -X POST \
-            https://api-inference.huggingface.co/models/mo-thecreator/Deepfake-audio-detection \
-            -H "Authorization: Bearer ${{ secrets.HUGGINGFACE_API_TOKEN }}" \
-            --data-binary @/dev/null \
-            --max-time 12 || true
-
-      - name: Ping Aiscern health endpoint
-        run: |
-          curl -sf https://aiscern.com/api/health --max-time 10 || true
+          curl -s --max-time 20 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Internal-Secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            -d '{"text":"This is an automated warmup request from GitHub Actions to prevent Vercel cold starts on the Aiscern AI detection platform. Regular warmup pings ensure fast response times for all users."}' \
+            "https://aiscern.com/api/detect/text" || true
