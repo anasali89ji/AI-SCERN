@@ -5,44 +5,29 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-  VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-  VERCEL_PROJECT_ID: prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Create .vercel/project.json
+      - name: Check token
+        run: vercel whoami --token=${{ secrets.VERCEL_TOKEN }} --scope=anas-projects-0a7d1391 || echo "whoami failed - check token scope"
+
+      - name: Deploy
         working-directory: ./frontend
         run: |
-          mkdir -p .vercel
-          echo '{"projectId":"prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi","orgId":"team_sUVHUcrNUc6fWYVOF1cpD1Z1"}' > .vercel/project.json
-          cat .vercel/project.json
-
-      - name: Pull Vercel environment
-        working-directory: ./frontend
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build
-        working-directory: ./frontend
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Production
-        working-directory: ./frontend
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy \
+            --prod \
+            --yes \
+            --scope=anas-projects-0a7d1391 \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --debug 2>&1 | tail -50
