@@ -8,42 +8,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Trigger Vercel deployment via API
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          echo "Triggering deployment for commit $GITHUB_SHA..."
-
-          RESPONSE=$(curl -s -X POST \
-            "https://api.vercel.com/v13/deployments?teamId=team_sUVHUcrNUc6fWYVOF1cpD1Z1" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"name\": \"detect-ai\",
-              \"project\": \"prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi\",
-              \"target\": \"production\",
-              \"gitSource\": {
-                \"type\": \"github\",
-                \"repoId\": \"1173445283\",
-                \"ref\": \"main\",
-                \"sha\": \"$GITHUB_SHA\"
-              }
-            }")
-
-          echo "Vercel API response:"
-          echo $RESPONSE | python3 -m json.tool 2>/dev/null || echo $RESPONSE
-
-          # Check for error
-          ERROR=$(echo $RESPONSE | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('error',{}).get('message',''))" 2>/dev/null)
-          if [ -n "$ERROR" ] && [ "$ERROR" != "None" ]; then
-            echo "ERROR: $ERROR"
-            exit 1
-          fi
-
-          DEPLOY_URL=$(echo $RESPONSE | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('url','no-url'))" 2>/dev/null)
-          echo "Deployment URL: https://$DEPLOY_URL"
-          echo "Deployment triggered successfully!"
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          vercel-project-id: prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi
+          working-directory: ./frontend
+          vercel-args: '--prod'
+          scope: team_sUVHUcrNUc6fWYVOF1cpD1Z1
