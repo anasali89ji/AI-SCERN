@@ -5,50 +5,47 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-  VERCEL_PROJECT_ID: prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check VERCEL_TOKEN exists
-        run: |
-          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
-            echo "ERROR: VERCEL_TOKEN secret is not set!"
-            exit 1
-          fi
-          echo "VERCEL_TOKEN is set (length: ${#VERCEL_TOKEN})"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        working-directory: ./frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-
-      - name: Verify token with Vercel API
-        run: |
-          echo "Testing Vercel token..."
-          RESPONSE=$(curl -sf \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            "https://api.vercel.com/v2/user" 2>&1)
-          echo "Response: $RESPONSE"
-          echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print('Logged in as:', d.get('user',{}).get('email','unknown'))"
-
-      - name: Verify team access
-        run: |
-          echo "Checking team access..."
-          curl -sf \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            "https://api.vercel.com/v2/teams/team_sUVHUcrNUc6fWYVOF1cpD1Z1" \
-            | python3 -c "import json,sys; d=json.load(sys.stdin); print('Team:', d.get('name'), '| Slug:', d.get('slug'))"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_TELEMETRY_DISABLED: 1
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Deploy
+      - name: Link Vercel project
         working-directory: ./frontend
         run: |
-          vercel deploy --prod --yes \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=team_sUVHUcrNUc6fWYVOF1cpD1Z1 \
-            2>&1
+          vercel link --yes \
+            --project=prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi \
+            --token=${{ secrets.VERCEL_TOKEN }} 2>&1 || true
+
+      - name: Deploy prebuilt to Vercel
+        working-directory: ./frontend
+        run: |
+          vercel deploy --prebuilt --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} 2>&1
+        env:
+          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          VERCEL_PROJECT_ID: prj_R0OLbFaz8BVYMuToCXF4hGJTBoWi
