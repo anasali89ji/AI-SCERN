@@ -5,7 +5,6 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 120  // large PDFs need time
 
 const MAX_PDF_SIZE   = 20 * 1024 * 1024   // 20MB
 const CHUNK_SIZE     = 2000               // chars per chunk

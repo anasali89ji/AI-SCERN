@@ -11,6 +11,7 @@ const nextConfig = {
     NEXT_PUBLIC_R2_PUBLIC_URL:           process.env.NEXT_PUBLIC_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL || '',
   },
   images: {
+    unoptimized: process.env.CF_PAGES === '1',
     formats:         ['image/webp', 'image/avif'],
     deviceSizes:     [360, 480, 640, 750, 828, 1080, 1200],
     imageSizes:      [16, 32, 64, 96, 128, 256],

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 120
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
 const NVIDIA_BASE    = 'https://integrate.api.nvidia.com/v1'

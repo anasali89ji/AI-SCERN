@@ -45,7 +45,7 @@ export async function GET() {
     version:     '4.0.0',
     response_ms: Date.now() - start,
     services,
-    env:         process.env.VERCEL_ENV || 'development',
-    region:      process.env.VERCEL_REGION || 'unknown',
+    env:         process.env.CF_PAGES_BRANCH ? 'production' : (process.env.NODE_ENV || 'development'),
+    region:      process.env.CF_PAGES_COMMIT_SHA ? 'cloudflare-global' : 'local',
   })
 }

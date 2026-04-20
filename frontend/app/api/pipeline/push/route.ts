@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 60
 
 const HF_TOKEN   = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN || ''
 const HF_REPO    = process.env.HF_DATASET_REPO       || 'saghi776/detectai-dataset'

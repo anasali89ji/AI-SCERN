@@ -19,7 +19,6 @@ import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 120
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
