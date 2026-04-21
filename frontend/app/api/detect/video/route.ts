@@ -1,3 +1,5 @@
+export const maxDuration = 120
+
 /**
  * POST /api/detect/video
  *

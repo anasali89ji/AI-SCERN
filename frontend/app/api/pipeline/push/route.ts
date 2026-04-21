@@ -1,3 +1,5 @@
+export const maxDuration = 300
+
 /**
  * Direct HuggingFace Push — triggers from admin dashboard
  * Reads unpushed items from Cloudflare D1, commits to HF dataset

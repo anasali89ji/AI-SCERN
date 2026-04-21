@@ -13,8 +13,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
-    "pages:build": "npx @cloudflare/next-on-pages"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1018.0",

@@ -1,3 +1,5 @@
+export const maxDuration = 120
+
 import { checkRateLimitRedis } from '@/lib/cache/redis'
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText } from '@/lib/inference/hf-analyze'
