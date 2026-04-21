@@ -1,0 +1,12 @@
+{
+  "name": "aiscern",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm ci --legacy-peer-deps && npx @cloudflare/next-on-pages",
+    "install": "cd frontend && npm ci --legacy-peer-deps"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
