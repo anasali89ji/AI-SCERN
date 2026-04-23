@@ -277,14 +277,16 @@ export default function ScraperPage() {
 
                       {/* Meta grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
-                        {(([
-                          ['Domain', result.domain],
-                          ['Words', result.word_count.toLocaleString()],
-                          result.author       ? ['Author',     result.author]                       : null,
-                          result.publish_date ? ['Published',  result.publish_date.slice(0, 10)]    : null,
-                          result.language     ? ['Language',   result.language.toUpperCase()]       : null,
-                          ['Confidence', `${result.confidence}%`],
-                        ] as ([string, string] | null)[]).filter((x): x is [string, string] => x !== null).map(([label, value]) => (
+                        {(
+                          [
+                            ['Domain', result.domain] as [string, string],
+                            ['Words', result.word_count.toLocaleString()] as [string, string],
+                            result.author       ? ['Author',    result.author]                    as [string, string] : null,
+                            result.publish_date ? ['Published', result.publish_date.slice(0, 10)] as [string, string] : null,
+                            result.language     ? ['Language',  result.language.toUpperCase()]    as [string, string] : null,
+                            ['Confidence', `${result.confidence}%`] as [string, string],
+                          ] as ([string, string] | null)[]
+                        ).filter((x): x is [string, string] => x !== null).map(([label, value]) => (
                           <div key={label} className="flex justify-between gap-2">
                             <span className="text-slate-500 shrink-0">{label}</span>
                             <span className="text-slate-200 font-medium truncate text-right">{value}</span>
