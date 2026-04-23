@@ -73,17 +73,29 @@ export async function POST(req: NextRequest) {
     const hash   = contentHash(buffer.subarray(0, 65536))
     const cached = await getCachedDetection('image', hash)
     if (cached) {
-
-        // Delete file from R2 after analysis — non-fatal if it fails
-        if (r2Key) {
-          try {
-            const { deleteR2Object } = await import('@/lib/storage/r2')
-            await deleteR2Object(r2Key)
-          } catch { /* cleanup failure is non-fatal */ }
-        }
-
+      // Save scan to DB even on cache hit (user still did a scan)
+      let scanId: string | null = null
+      if (userId && !userId.startsWith('anon_')) {
+        try {
+          const { data: sr } = await getSupabaseAdmin().from('scans').insert({
+            user_id:          userId,
+            media_type:       'image',
+            file_name:        fileName,
+            file_size:        fileSize,
+            r2_key:           r2Key,
+            verdict:          cached.verdict,
+            confidence_score: cached.confidence,
+            signals:          cached.signals,
+            processing_time:  Date.now() - start,
+            model_used:       cached.model_used,
+            status:           'complete',
+            metadata:         { format: mimeType, size_kb: Math.round(fileSize / 1024), cached: true },
+          }).select('id').single()
+          scanId = sr?.id ?? null
+        } catch { /* non-fatal */ }
+      }
       return NextResponse.json({
-        success: true, scan_id: null, cached: true,
+        success: true, scan_id: scanId, cached: true,
         result:  { ...cached, processing_time: Date.now() - start, file_name: fileName, file_size: fileSize },
       })
     }

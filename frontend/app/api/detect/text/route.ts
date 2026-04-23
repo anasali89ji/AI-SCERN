@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
         scanId = scanRow?.id ?? null
       } catch { /* non-fatal */ }
     } else if (userId.startsWith('anon_')) {
-      // Save anonymous scans without user_id for analytics
+      // Save anonymous scans for analytics (anon_id column now exists)
       try {
         await getSupabaseAdmin().from('scans').insert({
           user_id:          null,
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
           model_used:       result.model_used,
           status:           'complete',
         })
-      } catch { /* non-fatal — anon_id column may not exist yet */ }
+      } catch { /* non-fatal */ }
     }
 
     // Fire Inngest background job (fire-and-forget, non-blocking)
