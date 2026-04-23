@@ -143,7 +143,7 @@ async function analyzeText(text: string, baseUrl: string): Promise<Record<string
   try {
     const r = await fetch(`${baseUrl}/api/detect/text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'aiscern-internal-2026' },
+      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'detectai-internal-2026' },
       body: JSON.stringify({ text }),
       signal: AbortSignal.timeout(35000),
     })

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const session        = req.cookies.get('__session')?.value
   const internalSecret = req.headers.get('x-internal-secret')
-  const validInternal  = internalSecret === (process.env.INTERNAL_API_SECRET || 'aiscern-internal-2026')
+  const validInternal  = internalSecret === (process.env.INTERNAL_API_SECRET || 'detectai-internal-2026')
 
   if (!session && !validInternal) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

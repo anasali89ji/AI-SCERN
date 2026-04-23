@@ -10,7 +10,7 @@ export async function GET() {
     fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?limit=1`,
       {
-        headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
+        headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
         signal: AbortSignal.timeout(3000),
       }
     ).then(r => ({ service: 'supabase', ok: r.ok, status: r.status })),
@@ -27,7 +27,7 @@ export async function GET() {
 
     Promise.resolve({
       service: 'r2',
-      ok: !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID),
+      ok: !!(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.R2_WORKER_SECRET),
     }),
   ])
 
