@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
@@ -56,32 +56,41 @@ export default function DashboardPage() {
   const supabase = createClient()
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
     if (!user?.uid) return
-    async function load() {
-      const [rpcRes, scansRes] = await Promise.all([
-        (supabase as any).rpc('get_user_stats', { p_user_id: user!.uid }),
-        (supabase as any).from('scans').select('id,media_type,verdict,confidence_score,created_at,content_preview')
-          .eq('user_id', user!.uid).order('created_at', { ascending: false }).limit(8),
-      ])
-
-      if (rpcRes.data && !rpcRes.error) {
-        const d = rpcRes.data as any
-        const avg = (d.avg_confidence ?? 0) <= 1 ? Math.round(d.avg_confidence * 100) : Math.round(d.avg_confidence)
-        setStats({ ...d, avg_confidence: avg })
-      } else if (scansRes.data) {
-        const rows = scansRes.data
-        setStats({
-          total_scans: rows.length, ai_detected: rows.filter((r: any) => r.verdict === 'AI').length,
-          human_detected: rows.filter((r: any) => r.verdict === 'HUMAN').length,
-          avg_confidence: rows.length ? Math.round(rows.reduce((a: number, r: any) => a + (r.confidence_score ?? 0), 0) / rows.length * 100) : 0,
-        })
-      }
-      if (scansRes.data) setScans(scansRes.data)
-      setLoading(false)
+    const [rpcRes, scansRes] = await Promise.all([
+      (supabase as any).rpc('get_user_stats', { p_user_id: user!.uid }),
+      (supabase as any).from('scans').select('id,media_type,verdict,confidence_score,created_at,content_preview')
+        .eq('user_id', user!.uid).order('created_at', { ascending: false }).limit(8),
+    ])
+    if (rpcRes.data && !rpcRes.error) {
+      const d = rpcRes.data as any
+      const avg = (d.avg_confidence ?? 0) <= 1 ? Math.round(d.avg_confidence * 100) : Math.round(d.avg_confidence)
+      setStats({ ...d, avg_confidence: avg })
+    } else if (scansRes.data) {
+      const rows = scansRes.data
+      setStats({
+        total_scans: rows.length, ai_detected: rows.filter((r: any) => r.verdict === 'AI').length,
+        human_detected: rows.filter((r: any) => r.verdict === 'HUMAN').length,
+        avg_confidence: rows.length ? Math.round(rows.reduce((a: number, r: any) => a + (r.confidence_score ?? 0), 0) / rows.length * 100) : 0,
+      })
     }
-    load()
+    if (scansRes.data) setScans(scansRes.data)
+    setLoading(false)
   }, [user?.uid]) // eslint-disable-line
+
+  // Initial load + auto-refresh when user returns to tab (after running a scan)
+  useEffect(() => {
+    loadDashboard()
+    const onVisible = () => { if (document.visibilityState === 'visible') loadDashboard() }
+    const onFocus   = () => loadDashboard()
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [loadDashboard])
 
   const totalScans = stats?.total_scans ?? 0
   const aiCount    = stats?.ai_detected  ?? 0

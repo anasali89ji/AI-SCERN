@@ -153,7 +153,7 @@ export default function AudioDetectionPage() {
 
   const exportReport = () => {
     if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${result.confidence}%\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nModel: ${result.model_used}\nAnalyzed: ${new Date().toLocaleString()}`
+    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${result.confidence}%\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
@@ -336,7 +336,7 @@ export default function AudioDetectionPage() {
               )}
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-text-muted font-mono truncate">{result.model_used} · {result.processing_time}ms</span>
+                <span className="text-xs text-text-muted font-mono truncate">{result.processing_time}ms</span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
                   <Download className="w-3.5 h-3.5" /> Export Report
                 </button>
@@ -383,7 +383,7 @@ export default function AudioDetectionPage() {
             Detection Models &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-text-muted">
-            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },

@@ -21,7 +21,7 @@ interface ScrapeResult {
   confidence: number; summary: string; reasoning?: string; writing_style?: string
   signals: Signal[]; screenshot_url?: string; image_urls: string[]
   headings?: string[]; sub_pages: SubPage[]; discovered_links: DiscoveredLink[]
-  total_links: number; status: string; engine_used: string
+  total_links: number; status: string; fetch_method?: string
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -89,6 +89,7 @@ export default function ScraperPage() {
       const data = await res.json()
       if (!data.success) { setError(data.error?.message || 'Scan failed'); return }
       setResult(data.data)
+      setScreenshotError(false)
 
       if (user && data.data) {
         try {
@@ -225,13 +226,22 @@ export default function ScraperPage() {
                         src={result.screenshot_url}
                         alt={`Screenshot of ${result.domain}`}
                         className="w-full object-cover"
-                        style={{ maxHeight: 220 }}
-                        onError={() => setScreenshotError(true)}
+                        style={{ maxHeight: 220, opacity: 0, transition: 'opacity 0.5s' }}
+                        onLoad={(e) => { (e.target as HTMLImageElement).style.opacity = '1' }}
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          if (!img.dataset.retried) {
+                            img.dataset.retried = '1'
+                            setTimeout(() => { img.src = result.screenshot_url + '&t=' + Date.now() }, 4500)
+                          } else {
+                            setScreenshotError(true)
+                          }
+                        }}
                       />
                     ) : (
                       <div className="w-full h-44 flex flex-col items-center justify-center bg-[#141420] text-slate-600">
                         <Monitor className="w-10 h-10 mb-2 opacity-30" />
-                        <p className="text-xs">Screenshot unavailable</p>
+                        <p className="text-xs">Screenshot loading…</p>
                       </div>
                     )}
                     {/* Overlay badge */}
@@ -271,7 +281,7 @@ export default function ScraperPage() {
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/25">
-                          {result.engine_used}
+                          Aiscern RAG Engine
                         </span>
                       </div>
 

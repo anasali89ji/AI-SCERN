@@ -76,12 +76,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
               </div>
             </div>
           )}
-          {scan.model_used && (
-            <div className="flex justify-between">
-              <span className="text-text-muted">Model</span>
-              <span className="text-text-disabled font-mono text-xs">{scan.model_used}</span>
-            </div>
-          )}
+
           <div className="flex justify-between">
             <span className="text-text-muted">Analyzed</span>
             <span className="text-text-secondary">{new Date(scan.created_at).toLocaleString()}</span>
@@ -120,7 +115,17 @@ export default function HistoryPage() {
     setRefreshing(false)
   }, [currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { loadScans() }, [loadScans])
+  useEffect(() => {
+    loadScans()
+    const onVisible = () => { if (document.visibilityState === 'visible') loadScans() }
+    const onFocus   = () => loadScans()
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [loadScans])
 
   async function deleteScan(id: string) {
     setDeleting(id)

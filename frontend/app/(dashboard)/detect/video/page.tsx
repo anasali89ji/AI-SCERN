@@ -262,7 +262,7 @@ export default function VideoDetectionPage() {
       '',
       `Verdict:    ${result.verdict}`,
       `Confidence: ${Math.round(result.confidence * 100)}%`,
-      `Model:      ${result.model_used}`,
+      `Engine:     Aiscern Detection Engine`,
       '',
       `Summary:    ${result.summary}`,
       '',
@@ -514,7 +514,7 @@ export default function VideoDetectionPage() {
               {/* Footer */}
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs text-text-muted font-mono truncate">
-                  {result.model_used} · {result.processing_time}ms
+                  {result.processing_time}ms
                 </span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
                   <Download className="w-3.5 h-3.5" /> Export Report
@@ -571,7 +571,7 @@ export default function VideoDetectionPage() {
             Detection Models &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-text-muted">
-            <p><span className="text-text-secondary font-medium">Model used:</span> {result.model_used}</p>
+            <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
