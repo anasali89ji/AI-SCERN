@@ -92,23 +92,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: { code: 'INVALID_TYPE', message: 'Only PDF files supported' } }, { status: 400 })
       }
 
-      // Extract PDF text — pdf-parse v2 ESM API
+      // Extract PDF text — pdf-parse v2 CJS API
       const bytes  = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
       let rawPdfText = ''
       try {
-        // pdf-parse v2: PDFParse is a class, constructor takes {data:Buffer}
+        // pdf-parse v2: main CJS export exposes { PDFParse }
+        // PDFParse constructor takes { data: Buffer, verbosity?: number }
+        // then call .getText() -> Promise<{ text: string }>
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const pdfMod = require('pdf-parse/dist/pdf-parse/esm/PDFParse.js')
-        const PDFParseClass = pdfMod.PDFParse ?? pdfMod.default
-        const parser = new PDFParseClass({ data: buffer, verbosity: 0 })
+        const { PDFParse } = require('pdf-parse')
+        const parser = new PDFParse({ data: buffer, verbosity: 0 })
         const textResult = await parser.getText()
-        rawPdfText = textResult?.text ?? textResult?.value ?? ''
+        rawPdfText = textResult?.text ?? ''
         if (typeof parser.destroy === 'function') await parser.destroy()
       } catch (pdfErr: any) {
-        console.warn('[pdf] pdf-parse failed:', pdfErr?.message)
-        // Hard fallback: strip binary, keep printable ASCII
+        console.warn('[pdf] pdf-parse failed, using latin1 fallback:', pdfErr?.message)
+        // Hard fallback for text-based PDFs: strip binary bytes
         rawPdfText = buffer.toString('latin1').replace(/[^\x20-\x7E\n]/g, ' ')
       }
 

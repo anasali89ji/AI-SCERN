@@ -277,35 +277,97 @@ async function analyzeTextHF(text: string): Promise<{ aiScore: number; verdict: 
   }
 }
 
+
+// ── NVIDIA NIM Fallback (Kimi K2 / meta-llama) ───────────────────────────────
+async function analyzeWithNVIDIA(
+  page:         PageData,
+  subPageTexts: string[],
+): Promise<ContentAnalysis | null> {
+  const apiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY
+  if (!apiKey) return null
+
+  const combinedText = [
+    page.textContent.slice(0, 2000),
+    ...subPageTexts.slice(0, 2).map(t => t.slice(0, 400)),
+  ].join('\n\n---\n\n')
+
+  const prompt = `Analyze this website content for AI generation. Respond ONLY in JSON:
+{"ai_probability":0.0,"verdict":"AI","summary":"2 sentence analysis","signals":[{"name":"Signal","flagged":true,"description":"evidence","weight":0.8}]}
+
+Evaluate: transition overuse, sentence uniformity, personal voice, hedging, structural perfection, keyword stuffing, factual vagueness, tonal flatness.
+
+Content: ${combinedText}`
+
+  try {
+    const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': \`Bearer \${apiKey}\`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: process.env.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 512,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { choices: { message: { content: string } }[] }
+    const raw = data.choices?.[0]?.message?.content ?? ''
+    const clean = raw.replace(/```json\n?|\n?```/g, '').trim()
+    const parsed = JSON.parse(clean)
+    const aiScore = Math.max(0, Math.min(1, parsed.ai_probability ?? 0.5))
+    return {
+      aiScore,
+      verdict:       aiScore >= 0.60 ? 'AI' : aiScore <= 0.38 ? 'HUMAN' : 'UNCERTAIN',
+      confidence:    Math.round(Math.abs(aiScore - 0.5) * 200),
+      contentQuality: scoreContentQuality(page.textContent, page.wordCount, page.headings),
+      signals:       Array.isArray(parsed.signals) ? parsed.signals.slice(0, 8) : [],
+      summary:       parsed.summary ?? \`NVIDIA analysis: \${Math.round(aiScore * 100)}% AI probability.\`,
+      reasoning:     '',
+      writingStyle:  '',
+    }
+  } catch {
+    return null
+  }
+}
+
 // ── Sub-page Crawler ──────────────────────────────────────────────────────────
+// Parallel sub-page crawler — all pages fetched simultaneously
 async function crawlSubPages(links: PageData['links'], maxPages = 5): Promise<SubPageResult[]> {
-  const results: SubPageResult[] = []
   const toVisit = links.filter(l => l.isInternal).slice(0, maxPages)
 
-  await Promise.allSettled(toVisit.map(async (link) => {
-    try {
-      // SSRF guard on each sub-page link
-      assertSafeUrl(link.url)
-      const res = await fetchWithProxy(link.url, { maxRetries: 1, timeoutMs: 8000 })
-      if (!res.ok) return
-      const html = await res.text()
-      const page = parseHTML(html, link.url)
-      if (page.wordCount < 80) return
+  const settled = await Promise.allSettled(
+    toVisit.map(async (link): Promise<SubPageResult | null> => {
+      try {
+        assertSafeUrl(link.url)
+        // Parallel fetch + parse + analyze all at once
+        const [res] = await Promise.all([
+          fetchWithProxy(link.url, { maxRetries: 0, timeoutMs: 7000 }),
+        ])
+        if (!res.ok) return null
+        const html = await res.text()
+        const page = parseHTML(html, link.url)
+        if (page.wordCount < 60) return null
+        const analysis = await analyzeTextHF(page.textContent.slice(0, 600))
+        return {
+          url:         link.url,
+          title:       page.title,
+          contentType: page.contentType,
+          wordCount:   page.wordCount,
+          aiScore:     analysis.aiScore,
+          verdict:     analysis.verdict,
+          snippet:     page.textContent.slice(0, 240) + (page.textContent.length > 240 ? '…' : ''),
+        }
+      } catch { return null }
+    })
+  )
 
-      const analysis = await analyzeTextHF(page.textContent.slice(0, 600))
-      results.push({
-        url:         link.url,
-        title:       page.title,
-        contentType: page.contentType,
-        wordCount:   page.wordCount,
-        aiScore:     analysis.aiScore,
-        verdict:     analysis.verdict,
-        snippet:     page.textContent.slice(0, 220) + (page.textContent.length > 220 ? '…' : ''),
-      })
-    } catch {}
-  }))
-
-  return results
+  return settled
+    .filter((r): r is PromiseFulfilledResult<SubPageResult> => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value)
 }
 
 // ── Main Handler ──────────────────────────────────────────────────────────────
@@ -400,14 +462,22 @@ export async function POST(req: NextRequest) {
       } catch (geminiErr: any) {
         const isQuota = /429|quota|rate.?limit|too many/i.test(geminiErr?.message ?? '')
         if (isQuota) {
-          // Try older model with separate quota
+          // Tier 2: gemini-1.5-flash (separate quota)
           try {
             console.warn('[scraper] gemini-2.0-flash quota — trying gemini-1.5-flash')
             analysis = await analyzeWithGemini(mainPage, subPageResults.map(s => s.snippet), 'gemini-1.5-flash')
             engineUsed = 'Gemini 1.5 Flash + Cheerio RAG'
           } catch {
-            console.warn('[scraper] All Gemini models quota-hit — falling back to HuggingFace')
-            analysis = await buildHFAnalysis()
+            // Tier 3: NVIDIA NIM (Kimi K2 / Llama)
+            const nvResult = await analyzeWithNVIDIA(mainPage, subPageResults.map(s => s.snippet))
+            if (nvResult) {
+              analysis = nvResult
+              engineUsed = \`NVIDIA \${process.env.NVIDIA_MODEL || 'Llama-3.1-8B'}\`
+            } else {
+              // Tier 4: HuggingFace RoBERTa
+              console.warn('[scraper] All AI engines exhausted — falling back to HuggingFace')
+              analysis = await buildHFAnalysis()
+            }
           }
         } else {
           throw geminiErr
