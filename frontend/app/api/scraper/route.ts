@@ -302,7 +302,7 @@ Content: ${combinedText}`
     const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': \`Bearer \${apiKey}\`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -325,7 +325,7 @@ Content: ${combinedText}`
       confidence:    Math.round(Math.abs(aiScore - 0.5) * 200),
       contentQuality: scoreContentQuality(page.textContent, page.wordCount, page.headings),
       signals:       Array.isArray(parsed.signals) ? parsed.signals.slice(0, 8) : [],
-      summary:       parsed.summary ?? \`NVIDIA analysis: \${Math.round(aiScore * 100)}% AI probability.\`,
+      summary:       parsed.summary ?? `NVIDIA analysis: ${Math.round(aiScore * 100)}% AI probability.`,
       reasoning:     '',
       writingStyle:  '',
     }
@@ -472,7 +472,7 @@ export async function POST(req: NextRequest) {
             const nvResult = await analyzeWithNVIDIA(mainPage, subPageResults.map(s => s.snippet))
             if (nvResult) {
               analysis = nvResult
-              engineUsed = \`NVIDIA \${process.env.NVIDIA_MODEL || 'Llama-3.1-8B'}\`
+              engineUsed = `NVIDIA ${process.env.NVIDIA_MODEL || 'Llama-3.1-8B'}`
             } else {
               // Tier 4: HuggingFace RoBERTa
               console.warn('[scraper] All AI engines exhausted — falling back to HuggingFace')
