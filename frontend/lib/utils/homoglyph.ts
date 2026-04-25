@@ -14,10 +14,10 @@
 // Cyrillic-to-Latin lookalike map (unicode → ASCII equivalent)
 const CYRILLIC_MAP: Record<string, string> = {
   '\u0430': 'a', '\u0435': 'e', '\u0456': 'i', '\u043E': 'o', '\u0440': 'r',
-  '\u0441': 'c', '\u0445': 'x', '\u0440': 'r', '\u0443': 'y', '\u0042': 'B',
+  '\u0441': 'c', '\u0445': 'x', '\u0443': 'y',
   '\u0410': 'A', '\u0412': 'B', '\u0415': 'E', '\u041A': 'K', '\u041C': 'M',
   '\u041D': 'H', '\u041E': 'O', '\u0420': 'R', '\u0421': 'C', '\u0422': 'T',
-  '\u0425': 'X', '\u0443': 'y', '\u0435': 'e',
+  '\u0425': 'X',
 }
 
 // Greek lookalikes
