@@ -406,3 +406,89 @@ export function applyCalibration(
     return { ...sig, score: calibrated }
   })
 }
+
+// ── Engineering Brief: New Deterministic Image Signals ───────────────────────
+
+/**
+ * High-Frequency Energy Ratio (§2.1)
+ * Diffusion models suppress high-frequency energy vs real photos.
+ * Approximated via pixel-level gradient magnitude without FFT.
+ */
+export function calcHFEnergyRatio(buf: Buffer): number {
+  const bytes   = toUint8(buf)
+  const start   = findPixelStart(bytes)
+  const pixels  = bytes.slice(start)
+  if (pixels.length < 200) return 0.5
+
+  // Approximate horizontal gradient (finite difference on sampled pixels)
+  const stride = 3  // RGB
+  let highFreqEnergy = 0
+  let totalEnergy    = 0
+  const sampleN = Math.min(pixels.length - stride, 3000)
+
+  for (let i = 0; i < sampleN; i += stride) {
+    const v     = pixels[i]
+    const vNext = pixels[Math.min(i + stride, pixels.length - 1)]
+    const grad  = Math.abs(v - vNext)
+    highFreqEnergy += grad * grad
+    totalEnergy    += v * v + 1
+  }
+
+  const ratio = highFreqEnergy / totalEnergy
+  // AI images: low ratio (smooth). Real photos: higher ratio (natural grain)
+  if (ratio < 0.003) return 0.85
+  if (ratio < 0.008) return 0.65
+  if (ratio < 0.015) return 0.45
+  return 0.20
+}
+
+/**
+ * Error Level Analysis (§2.4)
+ * Simulated via byte-level quantization noise measurement.
+ * AI images have uniform error levels; real photos show more variance.
+ */
+export function calcELAScore(buf: Buffer): number {
+  const bytes  = toUint8(buf)
+  const start  = findPixelStart(bytes)
+  const pixels = bytes.slice(start)
+  if (pixels.length < 200) return 0.5
+
+  const sampleN  = Math.min(pixels.length, 3000)
+  const sampled  = Array.from(pixels.slice(0, sampleN))
+  // Simulate re-quantization: quantize to 16-level steps, compute diff
+  const quantized = sampled.map(v => Math.round(v / 16) * 16)
+  const errors    = sampled.map((v, i) => Math.abs(v - quantized[i]))
+
+  const meanErr = errors.reduce((a, b) => a + b, 0) / errors.length
+  const stdErr  = Math.sqrt(errors.reduce((a, b) => a + Math.pow(b - meanErr, 2), 0) / errors.length)
+
+  // Low stdErr = uniform = AI. High stdErr = natural variance = human photo
+  if (stdErr < 1.5) return 0.82
+  if (stdErr < 2.5) return 0.62
+  if (stdErr < 4.0) return 0.42
+  return 0.22
+}
+
+/**
+ * Returns extended signal list including HF energy and ELA
+ */
+export function extractImageSignalsExtended(buf: Buffer, fileSize: number): ImageSignalResult[] {
+  const base = extractImageSignals(buf, fileSize)
+  return [
+    ...base,
+    {
+      name:        'HF Energy Ratio',
+      score:       calcHFEnergyRatio(buf),
+      rawValue:    0,
+      weight:      0.10,
+      description: 'Diffusion models suppress high-frequency image energy; real photos retain natural grain and detail',
+    },
+    {
+      name:        'Error Level Analysis',
+      score:       calcELAScore(buf),
+      rawValue:    0,
+      weight:      0.08,
+      description: 'AI images have suspiciously uniform re-quantization error; real photos show natural error variance',
+    },
+  ]
+}

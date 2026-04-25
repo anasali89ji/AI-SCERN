@@ -176,3 +176,122 @@ export function applyAudioCalibration(
     return { ...sig, score: calibrated }
   })
 }
+
+// ── Engineering Brief §3.1: Handcrafted Forensic Audio Signals ───────────────
+// These are deterministic byte-level approximations — no audio decode required.
+
+/**
+ * Spectral Flux Proxy
+ * AI TTS has unnaturally low frame-to-frame spectral change.
+ * Approximated via byte-sequence variance across overlapping windows.
+ */
+function spectralFluxProxy(audioBytes: Buffer): number {
+  const buf    = audioBytes.slice(Math.min(44, audioBytes.length))  // skip WAV header
+  const frameN = 256
+  const frames: number[] = []
+
+  for (let i = 0; i < Math.min(buf.length - frameN, 8000); i += frameN) {
+    const frame = Array.from(buf.slice(i, i + frameN))
+    const mean  = frame.reduce((a, b) => a + b, 0) / frame.length
+    frames.push(mean)
+  }
+  if (frames.length < 4) return 0.5
+
+  // Flux = mean of frame-to-frame absolute differences
+  const flux = frames.slice(1).reduce((sum, f, i) => sum + Math.abs(f - frames[i]), 0) / (frames.length - 1)
+
+  // Low flux = smooth = AI TTS. High flux = natural variation = human voice
+  if (flux < 2.0)  return 0.82
+  if (flux < 5.0)  return 0.62
+  if (flux < 10.0) return 0.42
+  return 0.22
+}
+
+/**
+ * Zero-Crossing Rate Variance
+ * AI TTS often has unnaturally consistent ZCR across the utterance.
+ */
+function zcrVarianceSignal(audioBytes: Buffer): number {
+  const buf    = audioBytes.slice(Math.min(44, audioBytes.length))
+  const frameN = 512
+  const zcrPerFrame: number[] = []
+
+  for (let i = 0; i < Math.min(buf.length - frameN, 10000); i += frameN) {
+    let crossings = 0
+    for (let j = i + 1; j < i + frameN && j < buf.length; j++) {
+      const prev = buf[j - 1] - 128
+      const curr = buf[j]     - 128
+      if ((prev >= 0) !== (curr >= 0)) crossings++
+    }
+    zcrPerFrame.push(crossings / frameN)
+  }
+  if (zcrPerFrame.length < 4) return 0.5
+
+  const mean   = zcrPerFrame.reduce((a, b) => a + b, 0) / zcrPerFrame.length
+  const stdDev = Math.sqrt(zcrPerFrame.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / zcrPerFrame.length)
+  const cv     = stdDev / Math.max(mean, 0.001)
+
+  // Low CV = mechanically consistent = AI TTS
+  if (cv < 0.08) return 0.82
+  if (cv < 0.15) return 0.62
+  if (cv < 0.25) return 0.40
+  return 0.22
+}
+
+/**
+ * High-Frequency Energy Ratio
+ * Energy above 8kHz / total. AI TTS tends to have less HF content.
+ * Approximated via byte-level high-pass differencing.
+ */
+function hfEnergyRatioAudio(audioBytes: Buffer): number {
+  const buf    = audioBytes.slice(Math.min(44, audioBytes.length))
+  const sampleN = Math.min(buf.length, 8000)
+  let hfEnergy  = 0
+  let totEnergy = 0
+
+  for (let i = 1; i < sampleN; i++) {
+    const v     = buf[i] - 128
+    const prev  = buf[i - 1] - 128
+    const diff  = v - prev   // high-pass approximation
+    hfEnergy   += diff * diff
+    totEnergy  += v * v + 1
+  }
+  const ratio = hfEnergy / totEnergy
+
+  // AI TTS: low HF ratio. Human voice: higher
+  if (ratio < 0.15) return 0.78
+  if (ratio < 0.30) return 0.58
+  if (ratio < 0.50) return 0.38
+  return 0.20
+}
+
+/**
+ * Returns extended audio signals including forensic signals from §3.1
+ */
+export function extractAudioSignalsExtended(buf: Buffer, fileSize: number): AudioSignalResult[] {
+  const base = extractAudioSignals(buf, fileSize)
+  return [
+    ...base,
+    {
+      name:        'Spectral Flux',
+      score:       spectralFluxProxy(buf),
+      rawValue:    0,
+      weight:      0.12,
+      description: 'AI TTS has unnaturally low frame-to-frame spectral change; human voice fluctuates naturally',
+    },
+    {
+      name:        'ZCR Consistency',
+      score:       zcrVarianceSignal(buf),
+      rawValue:    0,
+      weight:      0.10,
+      description: 'Zero-crossing rate is mechanically consistent in AI TTS; human speech shows natural ZCR variance',
+    },
+    {
+      name:        'HF Energy Ratio',
+      score:       hfEnergyRatioAudio(buf),
+      rawValue:    0,
+      weight:      0.08,
+      description: 'AI TTS suppresses energy above 8kHz relative to natural human voice recordings',
+    },
+  ]
+}

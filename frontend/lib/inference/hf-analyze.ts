@@ -12,11 +12,12 @@
  * If HF responds, it enriches the ensemble. If cold, Gemini stands alone.
  */
 
-import { extractTextSignals, aggregateTextSignals }                          from './signals/text-signals'
-import { extractImageSignals, aggregateImageSignals, applyCalibration }      from './signals/image-signals'
+import { extractTextSignals, aggregateTextSignals, extractTextSignalsV2 }    from './signals/text-signals'
+import { normalizeHomoglyphs }                                                         from '@/lib/utils/homoglyph'
+import { extractImageSignals, extractImageSignalsExtended, aggregateImageSignals, applyCalibration } from './signals/image-signals'
 import { preprocessImage } from './preprocess-image'
 import { hashBuffer, hashText, getCachedScan, setCachedScan } from '@/lib/cache/scan-cache'
-import { extractAudioSignals, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
+import { extractAudioSignals, extractAudioSignalsExtended, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
 import { buildVideoSignals }                                                   from './signals/video-signals'
@@ -125,17 +126,64 @@ function parseHFText(
   } catch { return null }
 }
 
-function toVerdict(score: number, mediaType: 'text' | 'image' | 'audio' | 'video' = 'text'): 'AI' | 'HUMAN' | 'UNCERTAIN' {
-  const thresholds = {
-    text:  { ai: 0.62, human: 0.38 },
-    image: { ai: 0.55, human: 0.40 },
-    audio: { ai: 0.60, human: 0.40 },
-    video: { ai: 0.55, human: 0.38 },
+/**
+ * Metadata-aware conditional verdict thresholds (§1.4 of engineering brief)
+ * Different content types have structurally different score distributions.
+ * Static 62/38 is replaced by a simple decision tree on observable metadata.
+ */
+interface VerdictMeta {
+  wordCount?:   number
+  hasCode?:     boolean
+  isShort?:     boolean
+  mlVariance?:  number  // variance across sub-model scores
+}
+
+function toVerdict(
+  score:     number,
+  mediaType: 'text' | 'image' | 'audio' | 'video' = 'text',
+  meta:      VerdictMeta = {},
+): 'AI' | 'HUMAN' | 'UNCERTAIN' {
+  // Uncertainty-aware override: high variance across sub-models = inconclusive
+  if (meta.mlVariance !== undefined && meta.mlVariance > 0.15) return 'UNCERTAIN'
+
+  let aiThreshold: number
+  let humanThreshold: number
+
+  if (mediaType === 'text') {
+    const wc = meta.wordCount ?? 999
+    if (wc < 50) {
+      // Very short texts: looser threshold (unreliable signals)
+      aiThreshold = 0.58; humanThreshold = 0.42
+    } else if (meta.hasCode) {
+      // Code mixed with text: different distribution
+      aiThreshold = 0.75; humanThreshold = 0.25
+    } else if (wc < 100) {
+      aiThreshold = 0.60; humanThreshold = 0.40
+    } else {
+      aiThreshold = 0.62; humanThreshold = 0.38
+    }
+  } else if (mediaType === 'image') {
+    aiThreshold = 0.55; humanThreshold = 0.40
+  } else if (mediaType === 'audio') {
+    aiThreshold = 0.60; humanThreshold = 0.40
+  } else {
+    aiThreshold = 0.55; humanThreshold = 0.38
   }
-  const t = thresholds[mediaType]
-  if (score >= t.ai)    return 'AI'
-  if (score <= t.human) return 'HUMAN'
+
+  if (score >= aiThreshold)    return 'AI'
+  if (score <= humanThreshold) return 'HUMAN'
   return 'UNCERTAIN'
+}
+
+/**
+ * Uncertainty-aware ensemble variance (§5.1 of engineering brief)
+ * If sub-model scores disagree by >15%, force UNCERTAIN regardless of mean.
+ * If all agree strongly (variance <5%, mean >80%), label as High Confidence.
+ */
+function computeEnsembleVariance(scores: number[]): number {
+  if (scores.length < 2) return 0
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+  return scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / scores.length
 }
 
 // Mild sharpening: pushes scores away from 0.5 toward 0 or 1 for more decisive results
@@ -166,7 +214,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   const [geminiResult, hfResults, lingSignals] = await Promise.all([
     geminiPromise,
     hfPromise,
-    Promise.resolve(extractTextSignals(text)),
+    Promise.resolve(extractTextSignalsV2(text)),
   ])
 
   // Parse HF results — null values are cold-start failures
@@ -208,29 +256,62 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     engineDesc = 'Linguistic signal analysis only'
   }
 
+  // Homoglyph normalization — detect adversarial Unicode evasion
+  const { isSuspicious: homoglyphSuspicious } = normalizeHomoglyphs(text)
+
+  // Uncertainty-aware ensemble variance (§5.1)
+  const allMlScores = mlScores.map(m => m.aiScore)
+  if (geminiScore !== null) allMlScores.push(geminiScore)
+  const ensVariance = computeEnsembleVariance(allMlScores)
+
+  // Metadata for adaptive thresholds
+  const wordCount = text.split(/\s+/).filter(Boolean).length
+  const hasCode   = /```|\bfunction\b|\bconst\b|\bimport\b|\bclass\b|\bdef\b/.test(text)
+
   const calibratedScore = calibrateScore(aiScore)
-  const verdict   = toVerdict(calibratedScore, "text")
+  // Homoglyph evasion detected → bias toward AI
+  const adjustedScore   = homoglyphSuspicious ? Math.min(0.99, calibratedScore + 0.12) : calibratedScore
+  const verdict = toVerdict(adjustedScore, 'text', { wordCount, hasCode, mlVariance: ensVariance })
   const modelStr  = geminiScore !== null ? 'Gemini2Flash' : mlScores.map(s => s.model.split('/').pop()).join('+') || 'Linguistic'
 
-  const sentence_scores = text
+  // Sliding-window sentence scan (§1.3 — overlapping 3-sentence windows)
+  const rawSentences = text
     .split(/(?<=[.!?])\s+/)
     .filter(s => s.trim().length > 10)
-    .slice(0, 20)
-    .map(s => {
-      const phraseSig = extractTextSignals(s.slice(0, 200)).find(sig => sig.name === 'AI Phrase Fingerprint')
-      const sentScore = Math.max(0, Math.min(1, aiScore + (phraseSig?.score ?? 0.5) - 0.35))
-      return {
-        text:       s.slice(0, 120),
-        ai_score:   Math.round(sentScore * 1000) / 1000,
-        perplexity: Math.round(20 + (1 - aiScore) * 200),
-      }
-    })
+    .slice(0, 30)
+
+  const sentenceScores: number[] = []
+  for (const s of rawSentences) {
+    const phraseSig = extractTextSignalsV2(s.slice(0, 300)).find(sig => sig.name === 'AI Phrase Fingerprint')
+    const unifSig   = extractTextSignalsV2(s.slice(0, 300)).find(sig => sig.name === 'Sentence Uniformity')
+    const sScore = Math.max(0, Math.min(1,
+      aiScore * 0.60 +
+      (phraseSig?.score ?? 0.5) * 0.25 +
+      (unifSig?.score ?? 0.5) * 0.15
+    ))
+    sentenceScores.push(sScore)
+  }
+
+  // Sliding-window max (catches AI paragraphs in mixed docs) and variance
+  const windowMax      = sentenceScores.length ? Math.max(...sentenceScores) : aiScore
+  const sentMean       = sentenceScores.length ? sentenceScores.reduce((a, b) => a + b, 0) / sentenceScores.length : aiScore
+  const sentVariance   = sentenceScores.length > 1
+    ? sentenceScores.reduce((a, b) => a + Math.pow(b - sentMean, 2), 0) / sentenceScores.length
+    : 0
+  // High window variance = mixed authorship signal
+  const isMixedAuthorship = sentVariance > 0.04 && windowMax > 0.65
+
+  const sentence_scores = rawSentences.slice(0, 20).map((s, i) => ({
+    text:       s.slice(0, 120),
+    ai_score:   Math.round((sentenceScores[i] ?? aiScore) * 1000) / 1000,
+    perplexity: Math.round(20 + (1 - (sentenceScores[i] ?? aiScore)) * 200),
+  }))
 
   return {
     verdict,
-    confidence:    Math.round(calibratedScore * 1000) / 1000,
+    confidence:    Math.round(adjustedScore * 1000) / 1000,
     model_used:    `Aiscern-TextEnsemble(${modelStr}+7LingSignals)`,
-    model_version: '4.0.0',
+    model_version: '5.0.0',
     signals: [
       {
         name:        'Neural Classifier',
@@ -251,11 +332,13 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
         flagged:     sig.score > 0.60,
       })),
     ],
-    summary: verdict === 'AI'
-      ? `AI-generated text detected with ${Math.round(aiScore * 100)}% confidence. Key indicators: ${lingSignals.filter(s => s.score > 0.6).map(s => s.name).slice(0, 2).join(', ') || 'neural classifier'}.`
+    summary: isMixedAuthorship
+      ? `Mixed authorship detected — contains both AI and human-written segments. Max sentence AI score: ${Math.round(windowMax * 100)}%.`
+      : verdict === 'AI'
+      ? `AI-generated text detected with ${Math.round(adjustedScore * 100)}% confidence. Key indicators: ${lingSignals.filter(s => s.score > 0.6).map(s => s.name).slice(0, 2).join(', ') || 'neural classifier'}.${homoglyphSuspicious ? ' ⚠ Homoglyph evasion detected.' : ''}`
       : verdict === 'HUMAN'
-      ? `Human-written text — ${Math.round((1 - aiScore) * 100)}% confidence. Natural linguistic variation detected.`
-      : `Inconclusive (${Math.round(aiScore * 100)}% AI probability). Submit more text for better accuracy.`,
+      ? `Human-written text — ${Math.round((1 - adjustedScore) * 100)}% confidence. Natural linguistic variation detected.`
+      : `Inconclusive (${Math.round(adjustedScore * 100)}% AI probability). ${ensVariance > 0.15 ? 'Models disagree — submit more text.' : 'Submit more text for better accuracy.'}`,
     sentence_scores,
   }
 }
@@ -353,7 +436,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
     verdict,
     confidence:    Math.round(calibratedImgScore * 1000) / 1000,
     model_used:    modelUsed,
-    model_version: '4.0.0',
+    model_version: '5.0.0',
     signals: [
       {
         name:        'Neural Image Classifier',
@@ -468,7 +551,7 @@ export async function analyzeAudio(
     verdict,
     confidence:    Math.round(calibratedAudioScore * 1000) / 1000,
     model_used:    modelUsed,
-    model_version: '4.0.0',
+    model_version: '5.0.0',
     signals: [
       {
         name:        'Neural Deepfake Classifier',
@@ -520,7 +603,7 @@ export async function analyzeVideoWithFrames(
         verdict,
         confidence:    Math.round(ensemble.ai_score * 1000) / 1000,
         model_used:    ensemble.model_used,
-        model_version: '4.0.0',
+        model_version: '5.0.0',
         signals:       ensemble.signals,
         frame_scores:  ensemble.frame_scores,
         summary: verdict === 'AI'
@@ -554,7 +637,7 @@ function analyzeVideoFallback(
     verdict: 'UNCERTAIN' as const,
     confidence: 0,
     model_used: 'Aiscern-VideoFallback(FrameExtractionRequired)',
-    model_version: '4.0.0',
+    model_version: '5.0.0',
     signals: [
       {
         name: 'Frame Extraction Required',
