@@ -224,7 +224,45 @@ The in-memory fallback rate limiter activates automatically if Redis is not conf
 
 ---
 
-## 7. Inngest — Background Jobs
+## 7. Vercel Deploy + Custom Domain (Fixes “No custom domains have been assigned”)
+
+If your deployment shows:
+
+> “No custom domains have been assigned. This will happen if there are none defined in Project Settings or a Vercel CLI deploy was made with `vercel deploy --skip-domain`.”
+
+that is a **project/domain configuration issue in Vercel**, not an application code error.
+
+### 7.1 Assign a domain in Vercel Dashboard
+
+1. Open **Vercel → Project → Settings → Domains**
+2. Add your domain (e.g. `aiscern.ai`)
+3. Set one domain as **Production Domain**
+4. Add required DNS records at your DNS provider:
+   - `A` record for apex/root → `76.76.21.21`
+   - `CNAME` for `www` → `cname.vercel-dns.com`
+
+### 7.2 Assign domain via Vercel CLI
+
+```bash
+# Link local repo to the correct Vercel project first
+vercel link
+
+# Add domains to the project
+vercel domains add aiscern.ai
+vercel domains add www.aiscern.ai
+
+# (Optional) verify domain configuration
+vercel domains inspect aiscern.ai
+```
+
+### 7.3 Avoid this on future deploys
+
+- Do **not** deploy with `--skip-domain` unless intentional.
+- Prefer `vercel --prod` from a linked project so production aliases/domains are automatically attached.
+
+---
+
+## 8. Inngest — Background Jobs
 
 1. Sign up at [inngest.com](https://inngest.com) and create an app named `aiscern`
 2. Copy the Event Key and Signing Key:
@@ -238,7 +276,7 @@ INNGEST_SIGNING_KEY=signkey-prod-xxx
 
 ---
 
-## 8. API Master Key
+## 9. API Master Key
 
 Generate a secure key for the public API:
 
@@ -250,7 +288,7 @@ Set as `API_MASTER_KEY` in your environment. This key bypasses Supabase api_keys
 
 ---
 
-## 9. Deploy to Vercel
+## 10. Deploy to Vercel
 
 ```bash
 # From the frontend/ directory:
@@ -262,7 +300,7 @@ Set all env vars in **Vercel Dashboard → Project → Settings → Environment 
 
 ---
 
-## 10. Verify Deployment
+## 11. Verify Deployment
 
 ```bash
 # Health check
@@ -281,7 +319,7 @@ curl https://aiscern.com/sitemap.xml | head -20
 
 ---
 
-## 11. Post-Deploy SQL
+## 12. Post-Deploy SQL
 
 Run these after the first deployment to wire up the Supabase cron jobs:
 
