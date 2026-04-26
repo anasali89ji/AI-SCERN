@@ -3,6 +3,12 @@ import { sha256 } from '../utils/crypto'
 import { qualityVideo } from '../utils/quality'
 import { extractLabel } from './text'
 
+/** BUG-FIX #6: validate URL is an actual HTTP URL */
+function isValidUrl(url: unknown): url is string {
+  if (typeof url !== 'string' || url.length < 8) return false
+  return url.startsWith('http://') || url.startsWith('https://')
+}
+
 export async function extractVideoRow(
   row:    Record<string, any>,
   src:    Source,
@@ -14,12 +20,13 @@ export async function extractVideoRow(
   let w: number | undefined
   let h: number | undefined
 
-  if (src.url_field && typeof row[src.url_field] === 'string') {
+  // BUG-FIX #6: only accept valid HTTP URLs from url_field
+  if (src.url_field && isValidUrl(row[src.url_field])) {
     url = row[src.url_field]
   }
   if (!url) {
     for (const f of ['video_url', 'url', 'path', 'video_path', 'file']) {
-      if (typeof row[f] === 'string') { url = row[f]; break }
+      if (isValidUrl(row[f])) { url = row[f]; break }
     }
   }
 
@@ -27,24 +34,29 @@ export async function extractVideoRow(
   for (const f of (src.meta_fields ?? [])) {
     if (row[f] != null) {
       meta[f] = row[f]
-      if (f === 'duration')  dur = Number(row[f])
-      if (f === 'width')     w   = Number(row[f])
-      if (f === 'height')    h   = Number(row[f])
-      if (f === 'end_time' && meta['start_time']) {
-        dur = Number(row[f]) - Number(meta['start_time'])
+      if (f === 'duration')  dur = Number(row[f]) || undefined
+      if (f === 'width')     w   = Number(row[f]) || undefined
+      if (f === 'height')    h   = Number(row[f]) || undefined
+      if (f === 'end_time' && meta['start_time'] != null) {
+        const computed = Number(row[f]) - Number(meta['start_time'])
+        if (computed > 0) dur = computed
       }
     }
   }
 
-  // Reject rows with no usable URL — avoids inserting empty/garbage rows
+  // BUG-FIX #6: no valid URL → discard immediately
   if (!url) return null
+
+  const quality = qualityVideo(url, dur)
+  // BUG-FIX #5: require at least a URL + minimal quality signal
+  if (quality < 0.30) return null
 
   return {
     label,
     content_url:      url,
-    content_preview:  `[Video from ${src.name}]${url ? ` — ${url.slice(0, 120)}` : ''}`,
-    content_hash:     await sha256(`${src.name}:video:${rowIdx}:${url ?? ''}`),
-    quality_score:    qualityVideo(url, dur),
+    content_preview:  `[Video from ${src.name}] — ${url.slice(0, 120)}`,
+    content_hash:     await sha256(`${src.name}:video:${rowIdx}:${url}`),
+    quality_score:    quality,
     duration_seconds: dur,
     resolution_w:     w,
     resolution_h:     h,

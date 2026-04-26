@@ -1,11 +1,14 @@
 /**
- * Aiscern Pipeline v8 — Core scraping engine
- * Fixes over v7:
- *   - Run ALL assigned sources per tick (not just 3)
- *   - Per-worker time-based jitter so workers don't all hit same source simultaneously
- *   - Skip dead sources (404/timeout) and sources in cooldown (>600 errors)
- *   - 429 now retries properly (handled in hf-api.ts)
- *   - Staggered parallel execution with small delays between sources
+ * Aiscern Pipeline v8.1 — Core scraping engine
+ *
+ * BUG-FIX #4: Cursor was advanced BEFORE fetchHFRows was called.
+ *   If fetchHFRows threw (timeout, 429, network error), the cursor already moved
+ *   → those 100 rows were permanently skipped.
+ *   FIX: Read current cursor offset, call fetch, advance cursor ONLY on success.
+ *        Roll cursor back (reset error count + restore offset) on failure.
+ *
+ * Minor fix #7: Stagger reduced from 1500ms → 800ms per worker so W14 starts
+ *   at 10.4s instead of 19.5s, leaving more time within the 60s cron window.
  */
 
 export type { Env } from './types'
@@ -27,7 +30,8 @@ import { log } from './types'
 
 const ROWS_PER_FETCH = 100
 
-async function getAndAdvanceCursor(db: D1Database, sourceName: string, advance: number): Promise<number> {
+/** Read current cursor offset WITHOUT advancing it */
+async function readCursor(db: D1Database, sourceName: string): Promise<number> {
   try {
     await db.prepare(`
       CREATE TABLE IF NOT EXISTS source_cursors (
@@ -45,21 +49,25 @@ async function getAndAdvanceCursor(db: D1Database, sourceName: string, advance: 
       `SELECT next_offset FROM source_cursors WHERE source_name = ? LIMIT 1`
     ).bind(sourceName).first<{ next_offset: number }>()
 
-    const current = row?.next_offset ?? 0
-
-    await db.prepare(
-      `INSERT INTO source_cursors (source_name, next_offset, total_fetched, last_updated)
-       VALUES (?, ?, ?, datetime('now'))
-       ON CONFLICT(source_name) DO UPDATE SET
-         next_offset = next_offset + excluded.total_fetched,
-         total_fetched = total_fetched + excluded.total_fetched,
-         last_updated = datetime('now')`
-    ).bind(sourceName, current + advance, advance).run().catch(() => {})
-
-    return current
+    return row?.next_offset ?? 0
   } catch {
     return 0
   }
+}
+
+/**
+ * BUG-FIX #4: Advance cursor AFTER a successful fetch.
+ * Upsert the row; if it doesn't exist yet, create it with the advanced offset.
+ */
+async function advanceCursor(db: D1Database, sourceName: string, advance: number): Promise<void> {
+  await db.prepare(`
+    INSERT INTO source_cursors (source_name, next_offset, total_fetched, last_updated)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(source_name) DO UPDATE SET
+      next_offset   = next_offset + excluded.total_fetched,
+      total_fetched = total_fetched + excluded.total_fetched,
+      last_updated  = datetime('now')
+  `).bind(sourceName, advance, advance).run().catch(() => {})
 }
 
 async function updateCursorInserted(db: D1Database, sourceName: string, inserted: number): Promise<void> {
@@ -76,23 +84,17 @@ async function recordCursorError(db: D1Database, sourceName: string, err: string
   ).bind(err.slice(0, 200), sourceName).run().catch(() => {})
 }
 
-/** Check if a source should be skipped (dead or in cooldown) */
 async function shouldSkipSource(db: D1Database, src: Source): Promise<string | null> {
-  // Hard-coded dead sources — always skip
   if (DEAD_SOURCES.has(src.name)) return `DEAD source: ${src.name}`
-
-  // Check error count in DB — skip sources in cooldown
   try {
     const row = await db.prepare(
       `SELECT error_count, last_error FROM source_cursors WHERE source_name = ? LIMIT 1`
     ).bind(src.name).first<{ error_count: number; last_error: string | null }>()
 
     if (row && row.error_count >= MAX_ERRORS_BEFORE_COOLDOWN) {
-      // Dead-source check: if last error is 404, skip permanently
       if (row.last_error?.includes('DEAD:404') || row.last_error?.includes('does not exist')) {
         return `PERM_DEAD: ${src.name} (${row.error_count} 404 errors)`
       }
-      // Rate limit / timeout cooldown — skip this tick, try again next minute
       return `COOLDOWN: ${src.name} (${row.error_count} errors, last: ${row.last_error?.slice(0, 60)})`
     }
   } catch {}
@@ -108,7 +110,6 @@ export async function scrapeSource(
 ): Promise<ScrapeResult> {
   const start = Date.now()
 
-  // Skip dead/cooldown sources immediately
   const skipReason = await shouldSkipSource(db, src)
   if (skipReason) {
     log({ event: 'SKIP', worker_id: wid, source_id: src.name, reason: skipReason,
@@ -117,19 +118,36 @@ export async function scrapeSource(
   }
 
   try {
-    const offset = await getAndAdvanceCursor(db, src.name, ROWS_PER_FETCH)
+    // BUG-FIX #4: read cursor first, do NOT advance yet
+    const offset = await readCursor(db, src.name)
 
-    const { rows } = await fetchHFRows(
-      src.id, src.config ?? 'default', src.split ?? 'train',
-      offset, ROWS_PER_FETCH, token,
-    )
+    let rows: { row_idx: number; row: Record<string, any> }[]
+    try {
+      const result = await fetchHFRows(
+        src.id, src.config ?? 'default', src.split ?? 'train',
+        offset, ROWS_PER_FETCH, token,
+      )
+      rows = result.rows
+    } catch (fetchErr: any) {
+      // BUG-FIX #4: fetch failed — do NOT advance cursor; record error instead
+      const errMsg = fetchErr?.message ?? 'fetch_failed'
+      await recordCursorError(db, src.name, errMsg)
+      log({ event: 'ERROR', worker_id: wid, source_id: src.name, error_message: `fetch failed: ${errMsg}`,
+            duration_ms: Date.now()-start, timestamp: new Date().toISOString() })
+      return { source: src.name, inserted: 0, skipped: 0, error: errMsg }
+    }
 
+    // BUG-FIX #4: fetch succeeded → advance cursor now
     if (!rows?.length) {
+      // Dataset exhausted — reset to 0 for next full cycle
       await db.prepare(
         `UPDATE source_cursors SET next_offset = 0, last_updated = datetime('now') WHERE source_name = ?`
       ).bind(src.name).run().catch(() => {})
       return { source: src.name, inserted: 0, skipped: 0 }
     }
+
+    // Advance cursor by the number of rows we fetched
+    await advanceCursor(db, src.name, rows.length)
 
     const d1Items: { src: Source; item: Extracted; rowIdx: number; wid: string }[] = []
     let skipped = 0
@@ -152,7 +170,6 @@ export async function scrapeSource(
     const inserted = await batchInsert(db, d1Items)
     await updateCursorInserted(db, src.name, inserted)
 
-    // Reset error count on success (source recovered from rate limit)
     if (inserted > 0) {
       await db.prepare(
         `UPDATE source_cursors SET error_count = 0, last_updated = datetime('now') WHERE source_name = ?`
@@ -164,6 +181,7 @@ export async function scrapeSource(
           timestamp: new Date().toISOString() })
 
     return { source: src.name, inserted, skipped: skipped + (d1Items.length - inserted) }
+
   } catch (e: any) {
     const errMsg = e?.message ?? 'unknown'
     await recordCursorError(db, src.name, errMsg)
@@ -174,9 +192,8 @@ export async function scrapeSource(
 }
 
 /**
- * Scrape ALL assigned sources for this worker — staggered to avoid simultaneous HF hits.
- * FIX: was "pick 3 by tick" — every worker picked same 3 sources simultaneously.
- * Now: ALL sources run, with per-worker offset jitter (workerNum * 2000ms stagger).
+ * Scrape ALL assigned sources for this worker.
+ * Minor fix #7: stagger reduced from 1500ms → 800ms so W14 starts at ~10.4s, not 19.5s.
  */
 export async function scrapeParallel(
   db:        D1Database,
@@ -187,17 +204,13 @@ export async function scrapeParallel(
 ): Promise<ScrapeResult[]> {
   if (!sources.length) return []
 
-  // Stagger start: each worker waits workerNum * 1.5s so they don't all hit HF at t=0
-  // Worker 1 starts at 0s, Worker 2 at 1.5s, Worker 3 at 3s, etc.
-  // This spreads 14 workers across 21 seconds instead of all hitting at once
-  const staggerMs = (workerNum - 1) * 1500
+  // Minor fix #7: 800ms stagger (was 1500ms) — W14 starts at 10.4s instead of 19.5s
+  const staggerMs = (workerNum - 1) * 800
   if (staggerMs > 0) await new Promise(r => setTimeout(r, staggerMs))
 
-  // Run ALL assigned sources — not just 3
-  // Each source gets 200ms gap to further spread HF API calls
   const results: ScrapeResult[] = []
   for (let i = 0; i < sources.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 200)) // 200ms between sources
+    if (i > 0) await new Promise(r => setTimeout(r, 200))
     results.push(await scrapeSource(db, sources[i], token, wid, 100))
   }
   return results

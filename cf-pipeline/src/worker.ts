@@ -1,14 +1,16 @@
 /**
- * Aiscern Pipeline v7.3 — Universal Worker
- * WORKER_NUM (1–14): scraper | WORKER_NUM 20: HF push + cleanup
+ * Aiscern Pipeline v8.1 — Universal Worker
+ * WORKER_NUM (1–14): scraper only | WORKER_NUM 20: HF push + cleanup (only pusher)
+ *
+ * BUG-FIX #2: Removed backup push from W1–W14.
+ *   OLD: Each scraper worker called pushToHF on tick%5===wnum%5, causing 3 workers
+ *        to push simultaneously (e.g. W1, W6, W11 all hit tick%5===1).
+ *   FIX: W1–W14 ONLY scrape. W20 is the sole pusher.
+ *        push.ts also has a D1 push lock as a second safety net.
  *
  * 15 deployed workers total:
- *   W1–W14  (wrangler.toml, -b through -o): scrape HF datasets into D1
- *   W20     (wrangler-e.toml):              push D1 rows to HuggingFace + cleanup
- *
- * Source distribution (70 sources ÷ 14 workers = 5 each):
- *   W01–W06: text  (30 sources)   W07–W09: image (15 sources)
- *   W10–W12: audio (15 sources)   W13–W14: video  (8 sources + 2 audio)
+ *   W1–W14  (wrangler-b through wrangler-o): scrape HF datasets into D1
+ *   W20     (wrangler-e.toml):               push D1 rows to HuggingFace + cleanup
  */
 import {
   Env, ALL_SOURCES, getWorkerSources,
@@ -32,9 +34,9 @@ export default {
       const sources = wnum <= 14 ? getWorkerSources(wnum) : []
       return Response.json({
         ok:      true,
-        version: 'v7.1',
+        version: 'v8.1',
         worker:  wid,
-        role:    wnum === 20 ? 'hf-push + cleanup' : 'scraper',
+        role:    wnum === 20 ? 'hf-push + cleanup (exclusive)' : 'scraper-only',
         pipeline_enabled: env.PIPELINE_ENABLED !== 'false',
         sources: sources.map(s => `${s.name} [${s.media_type}/${s.label}]`),
         ts:      new Date().toISOString(),
@@ -51,7 +53,8 @@ export default {
     }
 
     if (url.pathname === '/trigger/push' && req.method === 'POST') {
-      const result = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
+      // Only W20 should call this in production, but allow manual trigger from any worker
+      const result = await pushToHF(env.DB, env.HF_TOKEN, env, 5000, wid)
       return Response.json({ ok: true, worker: wid, push: result }, { headers: cors })
     }
 
@@ -63,8 +66,8 @@ export default {
     const sources = wnum <= 14 ? getWorkerSources(wnum) : []
     return Response.json({
       worker:  wid,
-      version: 'v7.1',
-      role:    wnum === 20 ? 'hf-push + cleanup' : 'scraper',
+      version: 'v8.1',
+      role:    wnum === 20 ? 'hf-push + cleanup (exclusive)' : 'scraper-only',
       hf_structure: 'data/{media_type}/{language}/part-NNNN.jsonl',
       sources: sources.map(s => `${s.name} [${s.media_type}]`),
       all_sources_total: ALL_SOURCES.length,
@@ -72,7 +75,6 @@ export default {
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    // ── Global kill switch ─────────────────────────────────────────────────
     if (env.PIPELINE_ENABLED === 'false') {
       const wid = `worker-${env.WORKER_NUM ?? '1'}`
       log({ event: 'KILL_SWITCH', worker_id: wid, timestamp: new Date().toISOString() })
@@ -83,22 +85,26 @@ export default {
     const wid  = `worker-${wnum}`
     const tick = Math.floor(Date.now() / 60_000)
 
+    // ── W20: push + cleanup ONLY ──────────────────────────────────────────
     if (wnum === 20) {
-      // Every tick: push all pending items to HF (cron runs every minute)
-      const push = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
-        if (push.pushed > 0) {
-          console.log(`[W20] pushed ${push.pushed} → commit ${push.commitId} | files: ${push.files?.join(', ')}`)
-        } else if (push.error) {
-          console.error(`[W20] push ERROR: ${push.error}`)
-        } else {
-          console.log('[W20] nothing pending to push')
-        }
-      // Every 50 ticks: update README with fresh stats
+      const push = await pushToHF(env.DB, env.HF_TOKEN, env, 5000, wid)
+      if (push.pushed > 0) {
+        console.log(`[W20] pushed ${push.pushed} → commit ${push.commitId} | files: ${push.files?.join(', ')}`)
+      } else if ((push as any).skipped === 'push_locked') {
+        console.log('[W20] push skipped — another worker holds the lock (should not happen)')
+      } else if (push.error) {
+        console.error(`[W20] push ERROR: ${push.error}`)
+      } else {
+        console.log('[W20] nothing pending to push')
+      }
+
+      // Every 50 ticks (~50 min): update README
       if (tick % 50 === 0) {
         await pushReadme(env.DB, env.HF_TOKEN, env)
         console.log('[W20] README updated')
       }
-      // Every 100 ticks: cleanup orphaned rows
+
+      // Every 100 ticks (~100 min): cleanup orphaned rows
       if (tick % 100 === 0) {
         const deleted = await cleanupPushed(env.DB)
         if (deleted > 0) console.log(`[W20] cleanup: removed ${deleted} orphaned records`)
@@ -106,24 +112,15 @@ export default {
       return
     }
 
-    // Workers 1–19: rotate through assigned sources + backup push every 5 ticks
+    // ── W1–W14: scrape ONLY — BUG-FIX #2: no backup push ─────────────────
     const sources = getWorkerSources(wnum)
     if (!sources.length) return
 
-    // Scrape: use scrapeParallel for 3 sources per tick (v7 speed upgrade)
-    const results = await scrapeParallel(env.DB, sources, env.HF_TOKEN, wid, wnum)
+    const results  = await scrapeParallel(env.DB, sources, env.HF_TOKEN, wid, wnum)
     const totalIns = results.reduce((s, r) => s + r.inserted, 0)
-    console.log(`[W${wnum}] scraped=${results.length} inserted=${totalIns}`)
+    const errors   = results.filter(r => r.error).map(r => `${r.source}: ${r.error}`).join('; ')
 
-    // Backup push: each worker pushes on a different tick offset to avoid D1 collisions
-    // W1 pushes on tick%5===0, W2 on tick%5===1, etc.
-    if (tick % 5 === (wnum % 5)) {
-      const push = await pushToHF(env.DB, env.HF_TOKEN, env, 5000)
-      if (push.pushed > 0) {
-        console.log(`[W${wnum}] push: ${push.pushed} → ${push.commitId}`)
-      } else if (push.error) {
-        console.error(`[W${wnum}] push ERR: ${push.error}`)
-      }
-    }
+    console.log(`[W${wnum}] tick=${tick} sources=${results.length} inserted=${totalIns}${errors ? ` ERRORS: ${errors}` : ''}`)
+    // NOTE: No pushToHF call here — W20 is the sole pusher (Bug #2 fix)
   },
 }

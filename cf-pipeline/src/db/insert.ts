@@ -6,14 +6,28 @@ export async function batchInsert(
 ): Promise<number> {
   if (!items.length) return 0
 
-  // Dedup check in one query
+  // Dedup check 1: current D1 table (hot dedup)
   const hashes = items.map(i => i.item.content_hash)
   const ph     = hashes.map(() => '?').join(',')
   const exist  = await db
     .prepare(`SELECT content_hash FROM dataset_items WHERE content_hash IN (${ph})`)
     .bind(...hashes)
     .all()
-  const seen  = new Set((exist.results ?? []).map((r: any) => r.content_hash))
+  const seen = new Set((exist.results ?? []).map((r: any) => r.content_hash))
+
+  // Minor fix #8: Dedup check 2 — permanent bloom filter (survives row deletion after HF push)
+  const unseenHashes = hashes.filter(h => !seen.has(h))
+  if (unseenHashes.length > 0) {
+    try {
+      const bloomPh    = unseenHashes.map(() => '?').join(',')
+      const bloomExist = await db
+        .prepare(`SELECT hash FROM content_hash_bloom WHERE hash IN (${bloomPh})`)
+        .bind(...unseenHashes)
+        .all()
+      for (const r of bloomExist.results ?? []) seen.add((r as any).hash)
+    } catch {}
+  }
+
   const novel = items.filter(i => !seen.has(i.item.content_hash))
   if (!novel.length) return 0
 
@@ -88,5 +102,36 @@ export async function batchInsert(
     `).bind(inserted).run().catch(() => {})
   }
 
+  // Minor fix #8: record newly inserted hashes in permanent bloom filter
+  if (inserted > 0) {
+    const newHashes = novel.slice(0, inserted).map(i => i.item.content_hash)
+    await recordPermanentHashes(db, newHashes)
+  }
+
   return inserted
+}
+
+/**
+ * Minor fix #8: Permanent content hash store to prevent cross-HF re-insertion.
+ * D1 dedup works by content_hash before insert, but rows are deleted after push.
+ * A re-scraped URL can re-enter D1 since its hash is gone. This table persists forever.
+ * Called by batchInsert — hashes are written after successful D1 insert.
+ */
+export async function recordPermanentHashes(db: D1Database, hashes: string[]): Promise<void> {
+  if (!hashes.length) return
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS content_hash_bloom (
+      hash       TEXT PRIMARY KEY,
+      first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run().catch(() => {})
+
+  const CHUNK = 50
+  for (let i = 0; i < hashes.length; i += CHUNK) {
+    const chunk = hashes.slice(i, i + CHUNK)
+    const values = chunk.map(() => '(?, datetime(\'now\'))').join(',')
+    await db.prepare(
+      `INSERT OR IGNORE INTO content_hash_bloom (hash, first_seen) VALUES ${values}`
+    ).bind(...chunk).run().catch(() => {})
+  }
 }

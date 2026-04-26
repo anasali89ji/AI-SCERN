@@ -21,7 +21,6 @@ function deepExtractText(v: unknown, depth = 0): string | null {
 
   if (v && typeof v === 'object') {
     const obj = v as Record<string, unknown>
-    // Common text field names in descending priority
     for (const key of ['text', 'content', 'answer', 'body', 'value', 'response', 'description', 'sentence']) {
       if (obj[key]) {
         const result = deepExtractText(obj[key], depth + 1)
@@ -55,12 +54,16 @@ export async function extractTextRow(
 ): Promise<Extracted | null> {
   const fields = src.text_fields ?? ['text', 'content', 'body', 'article', 'document', 'answer']
   const text   = extractText(row, fields)
-  if (!text || text.length < 80) return null
+
+  // BUG-FIX #5: raised min length from 80 → 150 chars (80 is often a single sentence with no signal)
+  if (!text || text.length < 150) return null
 
   const label   = extractLabel(row, src)
   const trimmed = text.slice(0, 5000)
   const quality = qualityText(trimmed)
-  if (quality < 0.4) return null
+
+  // BUG-FIX #5: threshold is now 0.45 (was 0.4 which equalled the base score — nothing ever failed)
+  if (quality < 0.45) return null
 
   const hash = await sha256(trimmed.slice(0, 400))
 
@@ -70,9 +73,9 @@ export async function extractTextRow(
     content_preview: trimmed.slice(0, 250).replace(/\s+/g, ' '),
     content_hash:    hash,
     quality_score:   quality,
-    word_count:      trimmed.split(/\s+/).length,
+    word_count:      trimmed.split(/\s+/).filter(w => w.length > 0).length,
     char_count:      trimmed.length,
-    sentence_count:  (trimmed.match(/[.!?]+\s/g) ?? []).length || 1,
+    sentence_count:  (trimmed.match(/[.!?]+[\s\n]/g) ?? []).length || 1,
     language:        src.language ?? 'en',
   }
 }

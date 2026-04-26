@@ -1,3 +1,19 @@
+/**
+ * BUG-FIX #3: Orphan cleanup was deleting un-pushed rows during HF outages.
+ *
+ * OLD behaviour:
+ *   DELETE FROM dataset_items WHERE created_at < datetime('now', '-2 hours')
+ *   → Any row > 2h old was silently wiped, even if HF had been down and the row was never pushed.
+ *
+ * NEW behaviour:
+ *   1. Check for a recent successful push in hf_push_log (within 3h).
+ *      - If yes → HF is up, use the normal 2h orphan window.
+ *      - If no  → HF may be down/slow, extend orphan window to 6h as a safety margin.
+ *   2. Add hf_push_log trim: trim to 2000 rows (not 500) so the audit trail is longer.
+ *      NOTE: part numbers now come from hf_shard_counters (never trimmed), so trimming
+ *            hf_push_log no longer causes part# collisions (Bug #1 already fixed).
+ */
+
 export async function getStatus(db: D1Database) {
   const [st, ct, ql, sr, pl] = await db.batch([
     db.prepare('SELECT * FROM pipeline_state WHERE id = 1'),
@@ -10,9 +26,8 @@ export async function getStatus(db: D1Database) {
         SUM(CASE WHEN media_type='video' THEN 1 ELSE 0 END) as video_count,
         SUM(CASE WHEN label='ai'         THEN 1 ELSE 0 END) as ai_count,
         SUM(CASE WHEN label='human'      THEN 1 ELSE 0 END) as human_count,
-        -- pushed count is in pipeline_state.total_pushed (rows deleted after push)
         0 as pushed_in_table,
-        COUNT(*) as pending,  -- all rows in table are unpushed (deleted immediately after push)
+        COUNT(*) as pending,
         SUM(CASE WHEN split='train' THEN 1 ELSE 0 END) as train_count,
         SUM(CASE WHEN split='val'   THEN 1 ELSE 0 END) as val_count,
         SUM(CASE WHEN split='test'  THEN 1 ELSE 0 END) as test_count
@@ -42,44 +57,55 @@ export async function getStatus(db: D1Database) {
   ])
 
   return {
-    pipeline:     'Aiscern Neural Pipeline v6 — Modular 20-Worker Edition',
-    version:      'v6.0',
-    data_mode:    'REAL (HuggingFace Datasets API)',
-    hf_structure: 'data/{media_type}/{language}/part-NNNN.jsonl',
-    state:        st.results[0],
-    dataset:      ct.results[0],
-    quality:      ql.results[0],
-    top_sources:  sr.results,
+    pipeline:      'Aiscern Neural Pipeline v8.1 — Bug-Fixed Edition',
+    version:       'v8.1',
+    data_mode:     'REAL (HuggingFace Datasets API)',
+    hf_structure:  'data/{media_type}/{language}/part-NNNN.jsonl',
+    state:         st.results[0],
+    dataset:       ct.results[0],
+    quality:       ql.results[0],
+    top_sources:   sr.results,
     recent_pushes: pl.results,
   }
 }
 
 /**
- * Safety-net cleanup — two passes:
+ * Safety-net cleanup — called by W20 every 100 ticks (~1.7 hours).
  *
- * Pass 1 (orphan guard): rows older than 2 hours are assumed pushed-but-not-deleted
- *   (worker crashed mid-delete). push.ts deletes rows immediately after HF commit,
- *   so any row sitting for 2h+ without being pushed is stale data.
- *   NOTE: hf_pushed_at is never set in push.ts (rows are deleted directly),
- *   so the old hf_pushed_at IS NOT NULL check would never match — fixed here.
+ * BUG-FIX #3: Orphan window is now adaptive:
+ *   - If HF push was successful in the last 3h → use 2h orphan window (normal)
+ *   - If no successful push in 3h (HF may be down) → extend to 6h
  *
- * Pass 2 (push log trim): keep only the last 500 push log entries to prevent
- *   hf_push_log from growing unboundedly (used for shard part-number counting).
+ * hf_push_log is trimmed to 2000 rows (was 500). Part numbers now live in
+ * hf_shard_counters and are never trimmed, so this trim is safe.
  */
 export async function cleanupPushed(db: D1Database): Promise<number> {
-  // Pass 1: delete rows older than 2 hours (orphaned by crashed worker mid-delete)
+  // Check for recent successful push (within 3h)
+  const recentPush = await db.prepare(`
+    SELECT COUNT(*) as cnt
+    FROM hf_push_log
+    WHERE status = 'success'
+      AND created_at > datetime('now', '-3 hours')
+  `).first<{ cnt: number }>().catch(() => null)
+
+  const hfIsReachable = (recentPush?.cnt ?? 0) > 0
+
+  // BUG-FIX #3: adaptive orphan window
+  const orphanWindow = hfIsReachable ? '-2 hours' : '-6 hours'
+
   const stale = await db.prepare(`
     DELETE FROM dataset_items
-    WHERE created_at < datetime('now', '-2 hours')
-  `).run().catch(() => ({ meta: { changes: 0 } }))
+    WHERE created_at < datetime('now', ?)
+  `).bind(orphanWindow).run().catch(() => ({ meta: { changes: 0 } }))
 
-  // Pass 2: trim hf_push_log — keep last 500 rows per repo
+  // Trim hf_push_log — now 2000 rows, not 500
+  // Safe because part numbers come from hf_shard_counters (Bug #1 fixed)
   await db.prepare(`
     DELETE FROM hf_push_log
     WHERE id NOT IN (
       SELECT id FROM hf_push_log
       ORDER BY created_at DESC
-      LIMIT 500
+      LIMIT 2000
     )
   `).run().catch(() => {})
 
