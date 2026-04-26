@@ -1,30 +1,57 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { RoleGuard } from '@/components/dashboard/RoleGuard'
-import { Search, Ban, CheckCircle, ShieldOff, ShieldCheck, RefreshCw, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import {
+  Search, Ban, CheckCircle, ShieldOff, ShieldCheck,
+  RefreshCw, ChevronLeft, ChevronRight, Crown, UserX,
+  RotateCcw, ChevronDown, Star,
+} from 'lucide-react'
 
 type User = {
   id: string; email: string; display_name: string | null; plan: string
   created_at: string; is_banned: boolean; dashboard_access: boolean
   access_revoked_at: string | null; scan_count: number; credits_remaining: number
+  daily_scans: number; daily_reset_at: string | null
+  plan_granted_by: string | null; plan_granted_at: string | null; plan_expires_at: string | null
+}
+
+const PLAN_COLOR: Record<string, string> = {
+  free:       'bg-slate/10 text-slate-400 border-slate/20',
+  pro:        'bg-primary/10 text-primary border-primary/30',
+  team:       'bg-violet/10 text-violet-400 border-violet/30',
+  enterprise: 'bg-amber/10 text-amber border-amber/30',
+}
+
+function PlanBadge({ plan, grantedBy }: { plan: string; grantedBy?: string | null }) {
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${PLAN_COLOR[plan] || PLAN_COLOR.free}`}>
+      {(plan === 'pro' || plan === 'team' || plan === 'enterprise') && <Crown className="w-2.5 h-2.5" />}
+      {plan.toUpperCase()}
+      {grantedBy && <span className="opacity-60 ml-0.5">★</span>}
+    </span>
+  )
 }
 
 function StatusBadge({ user }: { user: User }) {
-  if (user.is_banned) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose/10 text-rose border border-rose/20">Banned</span>
-  if (!user.dashboard_access) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber/10 text-amber border border-amber/20">Revoked</span>
+  if (user.is_banned)          return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose/10 text-rose border border-rose/20">Banned</span>
+  if (!user.dashboard_access)  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber/10 text-amber border border-amber/20">Revoked</span>
   return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20">Active</span>
 }
 
+type ModalAction = { userId: string; action: string; email: string; currentPlan?: string }
+
 export default function UsersAdmin() {
-  const [users, setUsers] = useState<User[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers]               = useState<User[]>([])
+  const [total, setTotal]               = useState(0)
+  const [page, setPage]                 = useState(1)
+  const [search, setSearch]             = useState('')
+  const [filter, setFilter]             = useState('all')
+  const [loading, setLoading]           = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [confirmAction, setConfirmAction] = useState<{ userId: string; action: string; email: string } | null>(null)
-  const [reason, setReason] = useState('')
+  const [modal, setModal]               = useState<ModalAction | null>(null)
+  const [reason, setReason]             = useState('')
+  const [planChoice, setPlanChoice]     = useState('pro')
+  const [expiryDays, setExpiryDays]     = useState('')
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -32,200 +59,306 @@ export default function UsersAdmin() {
       const params = new URLSearchParams({ page: String(page), filter })
       if (search) params.set('search', search)
       const res = await fetch(`/api/admin/users?${params}`)
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(data.users || [])
-        setTotal(data.total || 0)
-      }
+      if (res.ok) { const d = await res.json(); setUsers(d.users || []); setTotal(d.total || 0) }
     } catch {}
     setLoading(false)
   }, [page, search, filter])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
-  const doAction = async (userId: string, action: string) => {
-    setActionLoading(userId + action)
+  const doAction = async () => {
+    if (!modal) return
+    setActionLoading(modal.userId + modal.action)
     try {
+      const body: Record<string, any> = { userId: modal.userId, action: modal.action, reason }
+      if (modal.action === 'set_plan')  body.plan = planChoice
+      if (modal.action === 'grant_pro') body.plan = 'pro'
+      if (expiryDays && parseInt(expiryDays) > 0) body.expiresInDays = parseInt(expiryDays)
       const res = await fetch('/api/admin/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action, reason }),
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       })
-      if (res.ok) {
-        setConfirmAction(null)
-        setReason('')
-        await fetchUsers()
-      }
+      if (res.ok) { setModal(null); setReason(''); setExpiryDays(''); await fetchUsers() }
     } catch {}
     setActionLoading(null)
   }
 
+  const isPro = (u: User) => ['pro','team','enterprise'].includes(u.plan)
   const totalPages = Math.ceil(total / 25)
 
   return (
-    <RoleGuard required="MANAGER">
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
+    <RoleGuard>
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-xl font-black text-text-primary">User Management</h1>
-            <p className="text-xs text-text-muted">{total.toLocaleString()} total users</p>
+            <p className="text-xs text-text-muted mt-0.5">{total.toLocaleString()} total users</p>
           </div>
-          <button onClick={fetchUsers} className="p-2 rounded-lg border border-border hover:bg-surface-active transition-colors">
-            <RefreshCw className="w-4 h-4 text-text-muted" />
+          <button onClick={fetchUsers} className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary px-3 py-1.5 rounded-lg border border-border hover:border-border/80 transition-colors">
+            <RefreshCw className="w-3 h-3" /> Refresh
           </button>
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
-            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex-1 min-w-48 relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder="Search by email…"
-              className="w-full pl-8 pr-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary/40" />
+              className="w-full pl-8 pr-3 py-2 text-xs bg-surface border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+            />
           </div>
-          {['all', 'active', 'banned', 'revoked'].map(f => (
-            <button key={f} onClick={() => { setFilter(f); setPage(1) }}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${filter === f ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}>
+          {['all','active','free','pro','banned','revoked'].map(f => (
+            <button key={f}
+              onClick={() => { setFilter(f); setPage(1) }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary hover:border-border/80'}`}
+            >
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-border bg-surface/60 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-active/50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">User</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Plan</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Scans</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Joined</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      {Array.from({ length: 6 }).map((__, j) => (
-                        <td key={j} className="px-4 py-3"><div className="h-4 bg-surface-active animate-pulse rounded" /></td>
-                      ))}
-                    </tr>
-                  ))
-                ) : users.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-text-muted text-sm">No users found</td></tr>
-                ) : users.map(user => (
-                  <tr key={user.id} className="border-b border-border/40 hover:bg-surface-active/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary flex-shrink-0">
-                          {(user.email || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-text-primary">{user.email}</p>
-                          {user.display_name && <p className="text-[10px] text-text-muted">{user.display_name}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-text-secondary capitalize">{user.plan || 'free'}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-text-muted">{user.scan_count || 0}</span>
-                    </td>
-                    <td className="px-4 py-3"><StatusBadge user={user} /></td>
-                    <td className="px-4 py-3">
-                      <span className="text-[11px] text-text-muted">{new Date(user.created_at).toLocaleDateString()}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* Ban / Unban */}
-                        {user.is_banned ? (
-                          <button onClick={() => setConfirmAction({ userId: user.id, action: 'unban', email: user.email })}
-                            disabled={!!actionLoading}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-emerald/10 text-emerald hover:bg-emerald/20 transition-colors border border-emerald/20">
-                            <CheckCircle className="w-3 h-3" /> Unban
-                          </button>
-                        ) : (
-                          <button onClick={() => setConfirmAction({ userId: user.id, action: 'ban', email: user.email })}
-                            disabled={!!actionLoading}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-rose/10 text-rose hover:bg-rose/20 transition-colors border border-rose/20">
-                            <Ban className="w-3 h-3" /> Ban
-                          </button>
-                        )}
-                        {/* Revoke / Restore dashboard */}
-                        {user.dashboard_access !== false ? (
-                          <button onClick={() => setConfirmAction({ userId: user.id, action: 'revoke', email: user.email })}
-                            disabled={!!actionLoading}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-amber/10 text-amber hover:bg-amber/20 transition-colors border border-amber/20">
-                            <ShieldOff className="w-3 h-3" /> Revoke
-                          </button>
-                        ) : (
-                          <button onClick={() => setConfirmAction({ userId: user.id, action: 'restore', email: user.email })}
-                            disabled={!!actionLoading}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
-                            <ShieldCheck className="w-3 h-3" /> Restore
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="border-b border-border bg-surface/80">
+              <tr>
+                {['User','Plan','Status','Daily Scans','Joined','Actions'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-text-muted font-semibold uppercase tracking-wide text-[10px]">{h}</th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <span className="text-xs text-text-muted">Page {page} of {totalPages}</span>
-              <div className="flex gap-1">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="p-1.5 rounded-lg border border-border hover:bg-surface-active disabled:opacity-40">
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="p-1.5 rounded-lg border border-border hover:bg-surface-active disabled:opacity-40">
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-12 text-text-muted">Loading…</td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-12 text-text-muted">No users found</td></tr>
+              ) : users.map((u, i) => (
+                <tr key={u.id} className={`border-b border-border/40 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-text-primary truncate max-w-48">{u.email}</div>
+                    {u.display_name && <div className="text-text-muted text-[10px]">{u.display_name}</div>}
+                    {u.plan_granted_by && <div className="text-[9px] text-primary/60 mt-0.5">Pro granted by admin</div>}
+                    {u.plan_expires_at && <div className="text-[9px] text-amber/70">Expires {new Date(u.plan_expires_at).toLocaleDateString()}</div>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <PlanBadge plan={u.plan || 'free'} grantedBy={u.plan_granted_by} />
+                  </td>
+                  <td className="px-4 py-3"><StatusBadge user={u} /></td>
+                  <td className="px-4 py-3">
+                    <span className="font-mono text-text-secondary">{u.daily_scans ?? 0}</span>
+                    <span className="text-text-muted"> / {u.plan === 'enterprise' ? '∞' : u.plan === 'team' ? '500' : u.plan === 'pro' ? '100' : '10'}</span>
+                  </td>
+                  <td className="px-4 py-3 text-text-muted whitespace-nowrap">
+                    {new Date(u.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {/* Pro controls */}
+                      {!isPro(u) ? (
+                        <button
+                          onClick={() => { setModal({ userId: u.id, action: 'grant_pro', email: u.email, currentPlan: u.plan }); setExpiryDays('') }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                        >
+                          <Crown className="w-2.5 h-2.5" /> Grant Pro
+                        </button>
+                      ) : (
+                        <>
+                          {u.plan_granted_by && (
+                            <button
+                              onClick={() => setModal({ userId: u.id, action: 'revoke_pro', email: u.email })}
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                            >
+                              <UserX className="w-2.5 h-2.5" /> Revoke Pro
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setModal({ userId: u.id, action: 'set_plan', email: u.email, currentPlan: u.plan })}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-violet/10 text-violet-400 border border-violet/20 hover:bg-violet/20 transition-colors"
+                          >
+                            <ChevronDown className="w-2.5 h-2.5" /> Change Plan
+                          </button>
+                        </>
+                      )}
+                      {/* Daily reset */}
+                      <button
+                        onClick={() => setModal({ userId: u.id, action: 'reset_daily', email: u.email })}
+                        title="Reset daily scan count"
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-slate/10 text-slate-400 border border-slate/20 hover:bg-slate/20 transition-colors"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" /> Reset
+                      </button>
+                      {/* Ban / Unban */}
+                      {!u.is_banned ? (
+                        <button
+                          onClick={() => setModal({ userId: u.id, action: 'ban', email: u.email })}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                        >
+                          <Ban className="w-2.5 h-2.5" /> Ban
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setModal({ userId: u.id, action: 'unban', email: u.email })}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-colors"
+                        >
+                          <CheckCircle className="w-2.5 h-2.5" /> Unban
+                        </button>
+                      )}
+                      {/* Revoke / Restore dashboard */}
+                      {u.dashboard_access ? (
+                        <button
+                          onClick={() => setModal({ userId: u.id, action: 'revoke', email: u.email })}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-amber/10 text-amber border border-amber/20 hover:bg-amber/20 transition-colors"
+                        >
+                          <ShieldOff className="w-2.5 h-2.5" /> Revoke
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setModal({ userId: u.id, action: 'restore', email: u.email })}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-colors"
+                        >
+                          <ShieldCheck className="w-2.5 h-2.5" /> Restore
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Confirm modal */}
-        {confirmAction && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm mx-4">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="w-5 h-5 text-amber" />
-                <h3 className="font-bold text-text-primary capitalize">Confirm {confirmAction.action}</h3>
-              </div>
-              <p className="text-sm text-text-muted mb-4">
-                Are you sure you want to <strong className="text-text-primary">{confirmAction.action}</strong> the account for <strong className="text-text-primary">{confirmAction.email}</strong>?
-              </p>
-              {(confirmAction.action === 'ban' || confirmAction.action === 'revoke') && (
-                <input value={reason} onChange={e => setReason(e.target.value)}
-                  placeholder="Reason (optional)…"
-                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-xl text-text-primary mb-4 focus:outline-none focus:border-primary/40" />
-              )}
-              <div className="flex gap-2">
-                <button onClick={() => { setConfirmAction(null); setReason('') }}
-                  className="flex-1 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-active transition-colors">
-                  Cancel
-                </button>
-                <button onClick={() => doAction(confirmAction.userId, confirmAction.action)}
-                  disabled={!!actionLoading}
-                  className="flex-1 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
-                  {actionLoading ? 'Working…' : 'Confirm'}
-                </button>
-              </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-xs text-text-muted">
+              Showing {((page - 1) * 25) + 1}–{Math.min(page * 25, total)} of {total}
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border/80 disabled:opacity-30 transition-colors">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-xs text-text-muted px-2 py-1">{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border/80 disabled:opacity-30 transition-colors">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* ── Action Modal ─────────────────────────────────────────────────────── */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-start gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                modal.action === 'grant_pro' ? 'bg-primary/15' :
+                modal.action === 'revoke_pro' ? 'bg-rose/10' :
+                modal.action === 'ban' ? 'bg-rose/10' :
+                modal.action === 'reset_daily' ? 'bg-slate/10' :
+                'bg-amber/10'
+              }`}>
+                {modal.action === 'grant_pro' && <Crown className="w-5 h-5 text-primary" />}
+                {modal.action === 'revoke_pro' && <UserX className="w-5 h-5 text-rose" />}
+                {modal.action === 'set_plan'   && <Star className="w-5 h-5 text-violet-400" />}
+                {modal.action === 'reset_daily'&& <RotateCcw className="w-5 h-5 text-slate-400" />}
+                {modal.action === 'ban'        && <Ban className="w-5 h-5 text-rose" />}
+                {modal.action === 'unban'      && <CheckCircle className="w-5 h-5 text-emerald" />}
+                {modal.action === 'revoke'     && <ShieldOff className="w-5 h-5 text-amber" />}
+                {modal.action === 'restore'    && <ShieldCheck className="w-5 h-5 text-emerald" />}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-text-primary capitalize">
+                  {modal.action.replace('_', ' ')}
+                </h3>
+                <p className="text-xs text-text-muted mt-0.5 truncate max-w-xs">{modal.email}</p>
+              </div>
+            </div>
+
+            {/* Grant Pro / Set Plan controls */}
+            {(modal.action === 'grant_pro' || modal.action === 'set_plan') && (
+              <div className="space-y-3 mb-4">
+                {modal.action === 'set_plan' && (
+                  <div>
+                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">Plan</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {['free','pro','team','enterprise'].map(p => (
+                        <button key={p}
+                          onClick={() => setPlanChoice(p)}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-primary/50 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}
+                        >
+                          {p.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">
+                    Expires in (days) — leave blank for no expiry
+                  </label>
+                  <input
+                    type="number" min="1" max="3650"
+                    value={expiryDays} onChange={e => setExpiryDays(e.target.value)}
+                    placeholder="e.g. 30 (optional)"
+                    className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Reason for ban/revoke */}
+            {['ban','revoke'].includes(modal.action) && (
+              <div className="mb-4">
+                <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">Reason (optional)</label>
+                <textarea
+                  value={reason} onChange={e => setReason(e.target.value)}
+                  rows={2} placeholder="e.g. TOS violation"
+                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
+                />
+              </div>
+            )}
+
+            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-border/50">
+              {modal.action === 'grant_pro'   && 'User will get 100 scans/day + all 4 modalities. No charge to user.'}
+              {modal.action === 'revoke_pro'  && 'User will revert to free plan (10 scans/day, text + image only).'}
+              {modal.action === 'set_plan'    && `User will be set to ${planChoice} plan with matching limits.`}
+              {modal.action === 'reset_daily' && 'Daily scan counter resets to 0. User can scan again immediately.'}
+              {modal.action === 'ban'         && 'User will be blocked from all access immediately.'}
+              {modal.action === 'unban'       && 'User account will be restored.'}
+              {modal.action === 'revoke'      && 'Dashboard access removed. User cannot log in.'}
+              {modal.action === 'restore'     && 'Dashboard access restored.'}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setModal(null); setReason(''); setExpiryDays('') }}
+                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={doAction}
+                disabled={!!actionLoading}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
+                  ['ban','revoke','revoke_pro'].includes(modal.action)
+                    ? 'bg-rose text-white hover:bg-rose/90'
+                    : modal.action === 'grant_pro' || modal.action === 'set_plan'
+                    ? 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-emerald/90 text-white hover:bg-emerald'
+                }`}
+              >
+                {actionLoading ? 'Processing…' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </RoleGuard>
   )
 }
