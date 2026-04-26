@@ -67,6 +67,7 @@ export interface PushResult {
   commitId?: string
   error?:    string
   files?:    string[]
+  skipped?:  string   // reason push was skipped (e.g. 'push_locked')
 }
 
 export interface ShardMeta {
@@ -83,12 +84,13 @@ export interface ShardMeta {
 }
 
 export interface StructuredLog {
-  event:         'SCRAPE_COMPLETE' | 'LABEL_COMPLETE' | 'SHARD_PUSH' | 'ERROR' | 'RATE_LIMIT_HIT' | 'WORKER_TIMEOUT' | 'KILL_SWITCH'
+  event:         'SCRAPE_COMPLETE' | 'LABEL_COMPLETE' | 'SHARD_PUSH' | 'ERROR' | 'RATE_LIMIT_HIT' | 'WORKER_TIMEOUT' | 'KILL_SWITCH' | 'SKIP'
   worker_id:     string
   source_id?:    string
   sample_count?: number
   duration_ms?:  number
   error_message?: string
+  reason?:       string
   timestamp:     string
   extra?:        Record<string, any>
 }
