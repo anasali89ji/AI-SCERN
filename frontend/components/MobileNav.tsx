@@ -39,10 +39,8 @@ export function MobileNav() {
       <AnimatePresence>
         {moreOpen && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            <div
+              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
@@ -69,7 +67,7 @@ export function MobileNav() {
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95
                           ${active ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
                         <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider leading-none text-center">{label}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider leading-none text-center">{label}</span>
                       </Link>
                     )
                   })}
@@ -92,7 +90,7 @@ export function MobileNav() {
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0
                   ${active ? 'text-primary' : 'text-text-muted hover:text-text-secondary active:scale-95'}`}>
                 <Icon className={`w-5 h-5 transition-all ${active ? 'drop-shadow-[0_0_8px_rgba(124,58,237,0.7)]' : ''}`} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={`text-[9px] font-bold uppercase tracking-wider leading-none truncate w-full text-center ${active ? 'text-primary' : ''}`}>{label}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-wider leading-none truncate w-full text-center ${active ? 'text-primary' : ''}`}>{label}</span>
               </Link>
             )
           })}
@@ -100,7 +98,7 @@ export function MobileNav() {
             className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0 active:scale-95
               ${isMoreActive || moreOpen ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
             <MoreHorizontal className={`w-5 h-5 ${moreOpen ? 'drop-shadow-[0_0_8px_rgba(124,58,237,0.7)]' : ''}`} strokeWidth={1.8} />
-            <span className="text-[9px] font-bold uppercase tracking-wider leading-none">More</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider leading-none">More</span>
           </button>
         </div>
       </nav>
