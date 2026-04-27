@@ -767,8 +767,7 @@ function WhoNeedsSection() {
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 leading-tight">
-            Used by Professionals <span className="gradient-text">Across Industries</span><br className="hidden sm:block" />
-            <span className="text-text-secondary text-2xl sm:text-3xl lg:text-4xl font-bold"> That Demands Truth</span>
+            Used by Professionals <span className="gradient-text">Across Industries</span>
           </h2>
 
           <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
@@ -805,7 +804,7 @@ function WhoNeedsSection() {
           <Link href="/detect/text"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-all duration-200">
             <Brain className="w-4 h-4" />
-            Start Detecting Free
+            Start Free Scan
           </Link>
           <Link href="/methodology"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all duration-200">
@@ -1414,11 +1413,15 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="text-center mb-10 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl font-black mb-3">Early <span className="gradient-text">Feedback</span></h2>
-            <p className="text-xs text-text-muted">Real feedback from beta testers. Anonymous or first name only.</p>
+            <p className="text-sm text-text-muted max-w-lg mx-auto">We are collecting real feedback from beta testers. If you have used Aiscern, we would love to hear from you.</p>
           </motion.div>
           <HomepageReviews />
-          <div className="text-center mt-6">
-            <Link href="/reviews" className="text-sm text-primary hover:underline font-medium" title="Aiscern User Reviews">
+          <div className="text-center mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a href="mailto:contact@aiscern.com"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/40 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all">
+              Share Your Feedback
+            </a>
+            <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium" title="Aiscern User Reviews">
               See all reviews →
             </Link>
           </div>
@@ -1429,7 +1432,6 @@ export default function HomePage() {
       <section className="py-16 sm:py-20 px-4 border-t border-border/40">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3 block">Why people trust Aiscern</span>
             <h2 className="text-3xl sm:text-4xl font-black text-text-primary">Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span></h2>
           </div>
 
