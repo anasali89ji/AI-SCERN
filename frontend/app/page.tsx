@@ -1147,9 +1147,9 @@ export default function HomePage() {
             <Image
               src="/logo.png"
               alt="Aiscern logo"
-              width={36}
-              height={25}
-              className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.4)]"
+              width={24}
+              height={28}
+              className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_6px_rgba(245,100,0,0.4)]"
               priority
             />
             <span className="font-black text-xl gradient-text">Aiscern</span>
@@ -1485,9 +1485,9 @@ export default function HomePage() {
             <Image
               src="/logo.png"
               alt="Aiscern"
-              width={90}
-              height={62}
-              className="mx-auto mb-8 object-contain drop-shadow-[0_0_24px_rgba(245,100,0,0.5)]"
+              width={68}
+              height={80}
+              className="mx-auto mb-8 object-contain h-16 sm:h-20 w-auto drop-shadow-[0_0_24px_rgba(245,100,0,0.5)]"
             />
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6">
               Start <span className="gradient-text">Detecting</span><br />AI Content Free
