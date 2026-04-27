@@ -284,8 +284,13 @@ function FloatingCards() {
     <>
       {/* Root network — visible on ALL screen sizes */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#7c3aed" side="ai"   />
-        <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
+        {/* SVG network: hidden on mobile — saves Framer Motion budget */}
+        {bp !== 'sm' && (
+          <>
+            <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#7c3aed" side="ai"   />
+            <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
+          </>
+        )}
 
         {aiNodes.map((node, i) => (
           <RootNetworkNode key={`ai-${i}`} node={node}
@@ -1228,7 +1233,7 @@ export default function HomePage() {
 
       <main id="main-content">
       {/* ── HERO ── */}
-      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20 sm:pt-28 lg:pt-32">
+      <section className="relative min-h-[90svh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32">
         <DeferredParticleNetwork />
         <FloatingCards />
 
@@ -1264,16 +1269,16 @@ export default function HomePage() {
             </span>
           </motion.h1>
 
-          <p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
+          <p className="text-sm sm:text-lg text-text-secondary max-w-xs sm:max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
             <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required for basic scans.</span>
             <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Core features free during early access. No account required for basic scans.</span>
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-16 hero-fade-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex flex-col xs:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-6 sm:mb-16 hero-fade-up" style={{ animationDelay: '0.1s' }}>
             {user ? (
               <>
                 <Link href="/dashboard"
-                  className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-base font-bold flex items-center justify-center gap-3 shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02] transition-all duration-200 overflow-hidden"
+                  className="group relative w-full sm:w-auto px-5 py-3 sm:px-8 sm:py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm sm:text-base font-bold flex items-center justify-center gap-3 shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02] transition-all duration-200 overflow-hidden"
                   title="Go to your Aiscern dashboard">
                   <span className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-white/10 to-violet-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
@@ -1283,7 +1288,7 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link href="/chat"
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border bg-surface/60 backdrop-blur-sm text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-surface transition-all duration-200"
+                  className="w-full sm:w-auto px-5 py-3 sm:px-8 sm:py-4 rounded-2xl border border-border bg-surface/60 backdrop-blur-sm text-sm sm:text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-surface transition-all duration-200"
                   title="AI Detection Assistant">
                   <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
                 </Link>
@@ -1333,33 +1338,33 @@ export default function HomePage() {
       <LazyAIvsRealSection />
 
       {/* ── TOOLS GRID ── */}
-      <section id="tools" className="py-16 sm:py-24 px-4">
+      <section id="tools" className="py-12 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
+            className="text-center mb-8 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-4">
               Detection <span className="gradient-text">Tools</span>
             </h2>
-            <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
+            <p className="text-text-muted text-sm sm:text-lg max-w-2xl mx-auto">
               Six detection tools powered by an ensemble of open-source and fine-tuned models, benchmarked on public datasets.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
             {TOOLS.map((tool, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 whileHover={{ y: -4, scale: 1.02 }} className="group cursor-pointer">
                 <Link href={(!user && (tool.href === "/chat" || tool.href === "/batch" || tool.href === "/scraper")) ? "/signup" : tool.href} title={tool.label}>
-                  <div className={`relative overflow-hidden rounded-2xl border border-border p-4 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>
-                        <tool.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <div className={`relative overflow-hidden rounded-2xl border border-border p-3 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>
+                        <tool.icon className="w-4 h-4 sm:w-6 sm:h-6" />
                       </div>
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-background/80 ${tool.color}`}>{tool.accuracy}</span>
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-primary transition-colors">{tool.label}</h3>
-                    <p className="text-sm text-text-muted leading-relaxed">{tool.desc}</p>
+                    <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1.5 group-hover:text-primary transition-colors">{tool.label}</h3>
+                    <p className="text-xs sm:text-sm text-text-muted leading-relaxed">{tool.desc}</p>
                     <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors">
                       Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -1372,12 +1377,12 @@ export default function HomePage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how" className="py-16 sm:py-24 px-4 bg-surface/20">
+      <section id="how" className="py-12 sm:py-20 px-4 bg-surface/20">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4">How It <span className="gradient-text">Works</span></h2>
-            <p className="text-text-muted text-base sm:text-lg">From upload to verdict in seconds.</p>
+            className="text-center mb-8 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-4">How It <span className="gradient-text">Works</span></h2>
+            <p className="text-text-muted text-sm sm:text-lg">From upload to verdict in seconds.</p>
           </motion.div>
 
           <div className="relative">
@@ -1429,14 +1434,14 @@ export default function HomePage() {
       </section>
 
       {/* ── CREDIBILITY / TRUST SIGNALS ── */}
-      <section className="py-16 sm:py-20 px-4 border-t border-border/40">
+      <section className="py-10 sm:py-16 px-4 border-t border-border/40">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-text-primary">Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span></h2>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-4xl font-black text-text-primary">Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span></h2>
           </div>
 
           {/* 4 trust pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-10 sm:mb-16">
             {[
               { icon: Database,    color: 'bg-primary/10 text-primary',   title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.' },
               { icon: Shield,      color: 'bg-emerald/10 text-emerald',   title: 'Research-Backed', desc: 'Built on peer-reviewed detection research. Every detection signal and methodology is validated against real-world AI outputs.' },
@@ -1478,7 +1483,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-20 sm:py-28 px-4 relative overflow-hidden">
+      <section className="py-12 sm:py-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-background to-background pointer-events-none" />
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
