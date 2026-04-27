@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── COMPACT MOBILE TOKEN SYSTEM ──────────────────────────────────────────── */
+:root {
+  /* Section vertical padding */
+  --section-py:        clamp(2.5rem, 6vw, 5rem);
+  --section-py-tight:  clamp(1.5rem, 4vw, 3rem);
+
+  /* Card padding */
+  --card-p:            clamp(0.875rem, 2.5vw, 1.5rem);
+
+  /* Gap between grid items */
+  --grid-gap:          clamp(0.75rem, 2vw, 1.5rem);
+
+  /* Heading scale */
+  --h1-size:           clamp(1.75rem, 6vw, 4rem);
+  --h2-size:           clamp(1.375rem, 4vw, 2.75rem);
+  --h3-size:           clamp(1.125rem, 3vw, 1.75rem);
+
+  /* Button height */
+  --btn-h:             clamp(2.25rem, 5vw, 2.75rem);
+  --btn-px:            clamp(1rem, 3vw, 1.5rem);
+}
+
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -38,7 +60,8 @@
   }
 
   .card {
-    @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
+    @apply bg-surface border border-border rounded-2xl;
+    padding: var(--card-p);
   }
 
   .card-hover {
@@ -107,7 +130,32 @@
   .text-emerald { color: #10b981; }
   .text-amber   { color: #f59e0b; }
   .text-cyan    { color: #06b6d4; }
+
+  /* ── Compact section helpers ─────────────────────────────────────────────── */
+  .section-compact {
+    padding-top: var(--section-py-tight);
+    padding-bottom: var(--section-py-tight);
+  }
+  .section-standard {
+    padding-top: var(--section-py);
+    padding-bottom: var(--section-py);
+  }
+
+  /* ── Heading responsive scale ─────────────────────────────────────────────── */
+  .heading-hero  { font-size: var(--h1-size); line-height: 1.1; font-weight: 900; }
+  .heading-h2    { font-size: var(--h2-size); line-height: 1.2; font-weight: 800; }
+  .heading-h3    { font-size: var(--h3-size); line-height: 1.3; font-weight: 700; }
+
+  /* ── Grid compact gap ─────────────────────────────────────────────────────── */
+  .grid-compact  { gap: var(--grid-gap); }
+
+  /* ── Mobile-only show/hide helpers ───────────────────────────────────────── */
+  .mobile-only   { display: block; }
+  .desktop-only  { display: none; }
 }
+
+@media (min-width: 640px) { .mobile-only { display: none; } }
+@media (min-width: 640px) { .desktop-only { display: block; } }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -270,9 +318,17 @@ h1 {
 }
 
 /* ── Mobile: faster scroll animations so cards are visible ── */
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .animate-scroll-left  { animation-duration: 18s; }
   .animate-scroll-right { animation-duration: 22s; }
+
+  /* Reduce hero bob animation cost on mobile — snap to visible, stop bobbing */
+  .node-card-bob-a,
+  .node-card-bob-b {
+    animation-name: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 
@@ -294,11 +350,12 @@ html, body {
   max-width: 100vw;
 }
 
-/* Better touch targets on mobile */
+/* Better touch targets on mobile — explicit interactive controls only */
 @media (max-width: 640px) {
-  button, a, [role="button"] {
+  button:not(.link-inline),
+  [role="button"],
+  .touch-target {
     min-height: 44px;
-    min-width: 44px;
   }
 
   /* Input fields — prevent iOS zoom on focus */
@@ -374,14 +431,8 @@ img {
   /* Better paragraph readability on small screens */
   p { text-wrap: pretty; }
 
-  /* Ensure no horizontal scroll from any element */
-  * { max-width: 100%; }
-
   /* Better tap targets */
   a, button { min-height: 40px; }
-
-  /* Cards look cleaner with less padding on mobile */
-  .card { padding: 1rem !important; }
 
   /* Tool grid cards — tighter on mobile */
   section#tools .rounded-2xl { border-radius: 1rem; }
@@ -401,7 +452,6 @@ img {
 
 /* ── Card polish ── */
 .card {
-  @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
   backdrop-filter: blur(8px);
 }
 .card:hover { border-color: rgba(124, 58, 237, 0.2); }
@@ -540,7 +590,7 @@ html { scroll-behavior: smooth; }
 .nav-safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
 
 @media (max-width: 640px) {
-  button, a, [role="button"] { min-height: 36px; }
+  button:not(.link-inline) { min-height: 36px; }
   .touch-target { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
 }
 
@@ -581,13 +631,17 @@ html { scroll-behavior: smooth; }
 @keyframes bar-grow { from { width: 0; } }
 .signal-bar { animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-::-webkit-scrollbar       { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.3); }
-
 /* node-bob-a / node-bob-b removed — node-in-bob-a / node-in-bob-b (above) handle both
    fade-in and bob. Duplicate declarations here were overriding opacity and keeping cards invisible. */
+
+/* ── Mobile section spacing override ──────────────────────────────────────── */
+@media (max-width: 639px) {
+  section.py-16 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  section.py-20 { padding-top: 3rem !important;   padding-bottom: 3rem !important; }
+  section.py-24 { padding-top: 3rem !important;   padding-bottom: 3rem !important; }
+  section.py-28 { padding-top: 3.5rem !important; padding-bottom: 3.5rem !important; }
+  section.py-32 { padding-top: 4rem !important;   padding-bottom: 4rem !important; }
+}
 
 /* ── Clerk auth form deep overrides ───────────────────────── */
 
