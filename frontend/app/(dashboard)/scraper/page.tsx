@@ -11,7 +11,7 @@ import { useAuth } from '@/components/auth-provider'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Signal { name: string; flagged: boolean; description: string; weight?: number }
-interface SubPage { url: string; title: string; content_type: string; word_count: number; ai_score: number; verdict: string; snippet: string }
+interface SubPage { url: string; title: string; content_type: string; word_count: number; ai_score: number; verdict: string; snippet: string; fetch_method?: string }
 interface DiscoveredLink { url: string; text: string; is_internal: boolean }
 interface ScrapeResult {
   url: string; domain: string; title: string; description: string
@@ -20,6 +20,7 @@ interface ScrapeResult {
   overall_ai_score: number; verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'
   confidence: number; summary: string; reasoning?: string; writing_style?: string
   signals: Signal[]; og_image?: string; screenshot_url?: string; image_urls: string[]; agents_used?: number
+  tech_stack?: string[]; sitemap_pages?: number; fetch_tier?: string
   headings?: string[]; sub_pages: SubPage[]; discovered_links: DiscoveredLink[]
   total_links: number; status: string; fetch_method?: string
 }
@@ -84,7 +85,7 @@ export default function ScraperPage() {
       const res  = await fetch('/api/scraper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scanUrl, depth, maxSubPages: 5 }),
+        body: JSON.stringify({ url: scanUrl, depth, maxSubPages: 8 }),
       })
       const data = await res.json()
       if (!data.success) { setError(data.error?.message || 'Scan failed'); return }
@@ -160,7 +161,7 @@ export default function ScraperPage() {
                   </button>
                 ))}
               </div>
-              <span className="text-[10px] text-slate-500">{depth === 1 ? 'Main page only' : 'Follow internal links'}</span>
+              <span className="text-[10px] text-slate-500">{depth === 1 ? 'Main page only' : 'Sitemap + sub-page deep crawl'}</span>
             </div>
           </div>
 
@@ -205,7 +206,7 @@ export default function ScraperPage() {
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
-              Fetching page, extracting content, running Gemini RAG analysis…
+              Launching browser, deep-crawling site, running Gemini RAG analysis…
             </div>
           </div>
         )}
@@ -312,6 +313,9 @@ export default function ScraperPage() {
                             result.publish_date ? ['Published', result.publish_date.slice(0, 10)] as [string, string] : null,
                             result.language     ? ['Language',  result.language.toUpperCase()]    as [string, string] : null,
                             ['Confidence', `${result.confidence}%`] as [string, string],
+                            result.fetch_method ? ['Fetched via', result.fetch_method] as [string, string] : null,
+                            result.agents_used != null ? ['Sub-pages scanned', `${result.agents_used}`] as [string, string] : null,
+                            result.sitemap_pages != null && result.sitemap_pages > 0 ? ['Sitemap pages', `${result.sitemap_pages}`] as [string, string] : null,
                           ] as ([string, string] | null)[]
                         ).filter((x): x is [string, string] => x !== null).map(([label, value]) => (
                           <div key={label} className="flex justify-between gap-2">
@@ -320,6 +324,15 @@ export default function ScraperPage() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Tech stack badges */}
+                      {result.tech_stack && result.tech_stack.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {result.tech_stack.map(tech => (
+                            <span key={tech} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-medium">{tech}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

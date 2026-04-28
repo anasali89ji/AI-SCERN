@@ -19,8 +19,11 @@ interface PageData {
   links: { url: string; text: string; isInternal: boolean }[]
   imageUrls: string[]; ogImage?: string; publishDate?: string; author?: string
   language?: string; headings: string[]; metaKeywords?: string
-  fetchMethod: 'direct'|'jina'|'cache'
+  fetchMethod: FetchMethod
+  techStack?: string[]
+  structuredData?: Record<string, unknown>[]
 }
+type FetchMethod = 'browserbase'|'firecrawl'|'jina-auth'|'direct'|'jina'|'cache'
 interface DetectionSignal { name: string; flagged: boolean; description: string; weight: number }
 interface ContentAnalysis {
   aiScore: number; verdict: 'AI'|'HUMAN'|'UNCERTAIN'; confidence: number
@@ -28,14 +31,9 @@ interface ContentAnalysis {
   summary: string; reasoning: string; writingStyle: string
 }
 interface AgentResult { page: PageData; aiScore: number; verdict: string; snippet: string }
+interface SitemapEntry { url: string; priority?: number; changefreq?: string }
 
-const STEALTH: Record<string, string> = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9', 'Accept-Encoding': 'gzip, deflate, br',
-  'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none', 'Upgrade-Insecure-Requests': '1', 'DNT': '1',
-}
+// ── DOM noise / content selectors ────────────────────────────────────────────
 const NOISE_SELECTORS = [
   'script','style','nav','footer','header','aside',
   '.ads','.advertisement','.ad-container','#cookie-banner','.cookie','.gdpr',
@@ -49,8 +47,120 @@ const CONTENT_SELECTORS = [
   '.post-body','.article-body','.story-body','.blog-content','.page-content',
   '[class*="article"]','[class*="post-body"]','[class*="entry"]','#content','.content','#main',
 ]
+const STEALTH: Record<string, string> = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9', 'Accept-Encoding': 'gzip, deflate, br',
+  'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none', 'Upgrade-Insecure-Requests': '1', 'DNT': '1',
+}
 
-// ── Strategy: race Direct vs Jina (whichever wins first) ──────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 1 — BrowserBase (cloud browser, full JS rendering + screenshot)
+// Env: BROWSERBASE_API_KEY, BROWSERBASE_PROJECT_ID
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchBrowserBase(url: string): Promise<{ html: string; screenshotUrl?: string } | null> {
+  const apiKey    = process.env.BROWSERBASE_API_KEY
+  const projectId = process.env.BROWSERBASE_PROJECT_ID
+  if (!apiKey || !projectId) return null
+
+  try {
+    // Create a session
+    const sessionRes = await fetch('https://www.browserbase.com/v1/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-BB-API-Key': apiKey },
+      body: JSON.stringify({ projectId, browserSettings: { viewport: { width: 1440, height: 900 } } }),
+      signal: AbortSignal.timeout(8_000),
+    })
+    if (!sessionRes.ok) return null
+    const { id: sessionId } = await sessionRes.json() as { id: string }
+
+    // Fetch page via session (uses Selenium WebDriver protocol)
+    const pageRes = await fetch(`https://www.browserbase.com/v1/sessions/${sessionId}/navigate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-BB-API-Key': apiKey },
+      body: JSON.stringify({ url, waitFor: 'networkidle', timeout: 20000 }),
+      signal: AbortSignal.timeout(28_000),
+    })
+    if (!pageRes.ok) return null
+    const { html } = await pageRes.json() as { html: string }
+
+    // Request screenshot (non-blocking)
+    const ssRes = await fetch(`https://www.browserbase.com/v1/sessions/${sessionId}/screenshot`, {
+      headers: { 'X-BB-API-Key': apiKey }, signal: AbortSignal.timeout(10_000),
+    }).catch(() => null)
+    const screenshotUrl = ssRes?.ok ? (await ssRes.json() as { url?: string }).url : undefined
+
+    // Close session (fire-and-forget)
+    fetch(`https://www.browserbase.com/v1/sessions/${sessionId}`, {
+      method: 'DELETE', headers: { 'X-BB-API-Key': apiKey },
+    }).catch(() => {})
+
+    return html?.length > 300 ? { html, screenshotUrl } : null
+  } catch { return null }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 2 — Firecrawl (managed browser crawler — returns clean markdown + HTML)
+// Env: FIRECRAWL_API_KEY
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchFirecrawl(url: string): Promise<string | null> {
+  const apiKey = process.env.FIRECRAWL_API_KEY
+  if (!apiKey) return null
+
+  try {
+    const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        url,
+        formats: ['html', 'markdown'],
+        actions: [{ type: 'wait', milliseconds: 2000 }],
+        onlyMainContent: false,
+        includeTags: ['article', 'main', 'section', 'p', 'h1', 'h2', 'h3'],
+        timeout: 25000,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { success: boolean; data?: { html?: string; markdown?: string } }
+    if (!data.success) return null
+    const html = data.data?.html || (data.data?.markdown ? `<html><body>${data.data.markdown}</body></html>` : null)
+    return html && html.length > 300 ? html : null
+  } catch { return null }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 3 — Jina AI Reader (authenticated — higher rate limit + better extraction)
+// Env: JINA_API_KEY
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchJinaAuth(url: string): Promise<string | null> {
+  const apiKey = process.env.JINA_API_KEY
+  if (!apiKey) return null
+
+  try {
+    const res = await fetch(`https://r.jina.ai/${url}`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'text/html',
+        'X-Return-Format': 'html',
+        'X-Timeout': '25',
+        'X-No-Cache': 'true',
+        'X-With-Images-Summary': 'true',
+        'X-With-Links-Summary': 'true',
+      },
+      signal: AbortSignal.timeout(28_000),
+    })
+    if (!res.ok) return null
+    const text = await res.text()
+    if (text.length < 300) return null
+    return text.startsWith('<!') ? text : `<html><body>${text}</body></html>`
+  } catch { return null }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 4 — Direct fetch (fastest, fails on JS-heavy SPAs)
+// ═══════════════════════════════════════════════════════════════════════════════
 async function fetchDirect(url: string): Promise<string | null> {
   try {
     const res = await fetchWithProxy(url, { timeoutMs: 10000, maxRetries: 1, headers: STEALTH })
@@ -62,7 +172,10 @@ async function fetchDirect(url: string): Promise<string | null> {
   } catch { return null }
 }
 
-async function fetchJina(url: string): Promise<string | null> {
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 5 — Jina free (no key required, lower rate limit)
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchJinaFree(url: string): Promise<string | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: { 'Accept': 'text/html', 'X-Return-Format': 'html', 'X-Timeout': '18', 'X-No-Cache': 'true' },
@@ -75,7 +188,10 @@ async function fetchJina(url: string): Promise<string | null> {
   } catch { return null }
 }
 
-async function fetchCache(url: string): Promise<string | null> {
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIER 6 — Google Cache (last resort)
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchGoogleCache(url: string): Promise<string | null> {
   try {
     const res = await fetch(
       `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}&hl=en`,
@@ -87,50 +203,156 @@ async function fetchCache(url: string): Promise<string | null> {
   } catch { return null }
 }
 
-// Race Direct vs Jina concurrently — first success wins; fallback to cache
-async function fetchPage(url: string): Promise<{ html: string; fetchMethod: PageData['fetchMethod'] }> {
-  // Start both simultaneously
-  const directP = fetchDirect(url)
-  const jinaP   = fetchJina(url)
+// ── Master fetch orchestrator — tries each tier in order ─────────────────────
+async function fetchPage(url: string): Promise<{ html: string; fetchMethod: FetchMethod; screenshotUrl?: string }> {
+  // Tier 1: BrowserBase (full JS browser — best for SPAs and JS-heavy sites)
+  const bb = await fetchBrowserBase(url)
+  if (bb) return { html: bb.html, fetchMethod: 'browserbase', screenshotUrl: bb.screenshotUrl }
 
-  // Race them — first non-null result wins
+  // Tier 2 + 3 + 4: race Firecrawl vs Jina-auth vs Direct — first non-null wins
+  const [firecrawlP, jinaAuthP, directP] = [
+    fetchFirecrawl(url),
+    fetchJinaAuth(url),
+    fetchDirect(url),
+  ]
   const winner = await Promise.race([
-    directP.then(h => h ? { html: h, src: 'direct' as const } : null),
-    jinaP.then(h => h ? { html: h, src: 'jina' as const } : null),
-    new Promise<null>(r => setTimeout(() => r(null), 11_000)),
+    firecrawlP.then(h => h ? { html: h, src: 'firecrawl' as FetchMethod } : null),
+    jinaAuthP.then(h  => h ? { html: h, src: 'jina-auth' as FetchMethod } : null),
+    directP.then(h    => h ? { html: h, src: 'direct'    as FetchMethod } : null),
+    new Promise<null>(r => setTimeout(() => r(null), 14_000)),
   ])
-
   if (winner) return { html: winner.html, fetchMethod: winner.src }
 
-  // Wait for slower of the two
-  const [d, j] = await Promise.all([directP, jinaP])
-  if (d) return { html: d, fetchMethod: 'direct' }
-  if (j) return { html: j, fetchMethod: 'jina' }
+  // Settle remaining
+  const [fc, ja, d] = await Promise.all([firecrawlP, jinaAuthP, directP])
+  if (fc) return { html: fc, fetchMethod: 'firecrawl' }
+  if (ja) return { html: ja, fetchMethod: 'jina-auth' }
+  if (d)  return { html: d,  fetchMethod: 'direct' }
 
-  // Final: Google cache
-  const cached = await fetchCache(url)
-  if (cached) return { html: cached, fetchMethod: 'cache' }
+  // Tier 5: Jina free
+  const jf = await fetchJinaFree(url)
+  if (jf) return { html: jf, fetchMethod: 'jina' }
+
+  // Tier 6: Google Cache
+  const gc = await fetchGoogleCache(url)
+  if (gc) return { html: gc, fetchMethod: 'cache' }
 
   throw new Error('All fetch strategies failed — site may block automated access')
 }
 
+// ── Sitemap parser — discovers pages for deep crawl ──────────────────────────
+async function fetchSitemap(baseUrl: string): Promise<SitemapEntry[]> {
+  const origin = new URL(baseUrl).origin
+  const candidates = [`${origin}/sitemap.xml`, `${origin}/sitemap_index.xml`, `${origin}/sitemap-index.xml`]
+
+  for (const sitemapUrl of candidates) {
+    try {
+      const res = await fetch(sitemapUrl, {
+        headers: { 'User-Agent': STEALTH['User-Agent'] },
+        signal: AbortSignal.timeout(6_000),
+      })
+      if (!res.ok) continue
+      const xml = await res.text()
+      if (!xml.includes('<urlset') && !xml.includes('<sitemapindex')) continue
+
+      const $ = cheerio.load(xml, { xmlMode: true })
+      const entries: SitemapEntry[] = []
+
+      // Handle sitemap index — fetch first child sitemap
+      const childSitemaps: string[] = []
+      $('sitemap > loc').each((_, el) => { childSitemaps.push($(el).text().trim()) })
+      if (childSitemaps.length > 0) {
+        for (const child of childSitemaps.slice(0, 2)) {
+          try {
+            const cRes = await fetch(child, { headers: { 'User-Agent': STEALTH['User-Agent'] }, signal: AbortSignal.timeout(5_000) })
+            if (!cRes.ok) continue
+            const cXml = await cRes.text()
+            const c$ = cheerio.load(cXml, { xmlMode: true })
+            c$('url').each((_, el) => {
+              const loc  = c$(el).find('loc').text().trim()
+              const pri  = parseFloat(c$(el).find('priority').text()) || undefined
+              const freq = c$(el).find('changefreq').text().trim() || undefined
+              if (loc && entries.length < 80) entries.push({ url: loc, priority: pri, changefreq: freq })
+            })
+          } catch {}
+        }
+        if (entries.length > 0) return entries
+      }
+
+      // Regular sitemap
+      $('url').each((_, el) => {
+        const loc  = $(el).find('loc').text().trim()
+        const pri  = parseFloat($(el).find('priority').text()) || undefined
+        const freq = $(el).find('changefreq').text().trim() || undefined
+        if (loc && entries.length < 80) entries.push({ url: loc, priority: pri, changefreq: freq })
+      })
+      if (entries.length > 0) return entries
+    } catch {}
+  }
+  return []
+}
+
+// ── Tech stack detector ───────────────────────────────────────────────────────
+function detectTechStack(html: string, headers?: Record<string, string>): string[] {
+  const stack: string[] = []
+  const h = html.toLowerCase()
+
+  // JS frameworks
+  if (h.includes('__next') || h.includes('_next/static'))         stack.push('Next.js')
+  else if (h.includes('__nuxt') || h.includes('_nuxt/'))          stack.push('Nuxt.js')
+  else if (h.includes('ng-version') || h.includes('ng-app'))      stack.push('Angular')
+  else if (h.includes('data-reactroot') || h.includes('reactdom')) stack.push('React')
+  else if (h.includes('data-svelte') || h.includes('__svelte'))   stack.push('Svelte')
+
+  // CMS
+  if (h.includes('wp-content') || h.includes('wp-includes'))      stack.push('WordPress')
+  else if (h.includes('shopify') || h.includes('myshopify'))      stack.push('Shopify')
+  else if (h.includes('webflow') || h.includes('.webflow.io'))    stack.push('Webflow')
+  else if (h.includes('ghost.io') || h.includes('ghost-access'))  stack.push('Ghost')
+  else if (h.includes('squarespace'))                              stack.push('Squarespace')
+  else if (h.includes('wix.com') || h.includes('wixsite'))        stack.push('Wix')
+
+  // AI platforms
+  if (h.includes('jasper') || h.includes('jasper.ai'))            stack.push('Jasper AI')
+  if (h.includes('copy.ai') || h.includes('copyai'))              stack.push('Copy.ai')
+  if (h.includes('writesonic'))                                    stack.push('Writesonic')
+  if (h.includes('contentful'))                                    stack.push('Contentful')
+
+  // Analytics
+  if (h.includes('google-analytics') || h.includes('gtag('))      stack.push('Google Analytics')
+  if (h.includes('segment.com') || h.includes('analytics.js'))    stack.push('Segment')
+
+  return [...new Set(stack)].slice(0, 6)
+}
+
+// ── Structured data extractor (JSON-LD) ───────────────────────────────────────
+function extractStructuredData($: ReturnType<typeof cheerio.load>): Record<string, unknown>[] {
+  const results: Record<string, unknown>[] = []
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const data = JSON.parse($(el).html() || '{}')
+      if (data && typeof data === 'object') results.push(data)
+    } catch {}
+  })
+  return results.slice(0, 5)
+}
+
 // ── HTML Parser ───────────────────────────────────────────────────────────────
-function parseHTML(html: string, baseUrl: string, fetchMethod: PageData['fetchMethod']): PageData {
+function parseHTML(html: string, baseUrl: string, fetchMethod: FetchMethod): PageData {
   const url = new URL(baseUrl)
   const $ = cheerio.load(html)
   $(NOISE_SELECTORS.join(', ')).remove()
 
-  const ogImage     = $('meta[property="og:image"]').attr('content')?.trim() ||
-                      $('meta[name="twitter:image"]').attr('content')?.trim() || undefined
-  const title       = $('meta[property="og:title"]').attr('content')?.trim() || $('title').text().trim() || $('h1').first().text().trim() || url.hostname
-  const description = $('meta[property="og:description"]').attr('content')?.trim() || $('meta[name="description"]').attr('content')?.trim() || ''
-  const author      = $('meta[name="author"]').attr('content')?.trim() || $('[rel="author"]').first().text().trim() || $('[itemprop="author"]').first().text().trim() || undefined
-  const publishDate = $('meta[property="article:published_time"]').attr('content') || $('time[datetime]').first().attr('datetime') || undefined
-  const language    = $('html').attr('lang')?.slice(0, 5) || undefined
-  const metaKeywords= $('meta[name="keywords"]').attr('content')?.trim() || undefined
+  const ogImage      = $('meta[property="og:image"]').attr('content')?.trim() || $('meta[name="twitter:image"]').attr('content')?.trim() || undefined
+  const title        = $('meta[property="og:title"]').attr('content')?.trim() || $('title').text().trim() || $('h1').first().text().trim() || url.hostname
+  const description  = $('meta[property="og:description"]').attr('content')?.trim() || $('meta[name="description"]').attr('content')?.trim() || ''
+  const author       = $('meta[name="author"]').attr('content')?.trim() || $('[rel="author"]').first().text().trim() || $('[itemprop="author"]').first().text().trim() || undefined
+  const publishDate  = $('meta[property="article:published_time"]').attr('content') || $('time[datetime]').first().attr('datetime') || undefined
+  const language     = $('html').attr('lang')?.slice(0, 5) || undefined
+  const metaKeywords = $('meta[name="keywords"]').attr('content')?.trim() || undefined
 
   const headings: string[] = []
-  $('h1,h2,h3').each((_, el) => { const t = $(el).text().trim(); if (t.length > 3 && headings.length < 15) headings.push(t) })
+  $('h1,h2,h3').each((_, el) => { const t = $(el).text().trim(); if (t.length > 3 && headings.length < 20) headings.push(t) })
 
   let $main = $()
   for (const sel of CONTENT_SELECTORS) { if ($(sel).length) { $main = $(sel).first(); break } }
@@ -139,7 +361,7 @@ function parseHTML(html: string, baseUrl: string, fetchMethod: PageData['fetchMe
   const blocks: string[] = []
   $cont.find('p,h1,h2,h3,h4,blockquote,li,td').each((_, el) => {
     const t = $(el).text().replace(/\s+/g, ' ').trim()
-    if (t.length > 35 && blocks.length < 120) blocks.push(t.slice(0, 1200))
+    if (t.length > 35 && blocks.length < 150) blocks.push(t.slice(0, 1200))
   })
   const textContent = blocks.join('\n\n')
   const wordCount   = textContent.split(/\s+/).filter(Boolean).length
@@ -153,7 +375,7 @@ function parseHTML(html: string, baseUrl: string, fetchMethod: PageData['fetchMe
 
   const links: PageData['links'] = []
   $('a[href]').each((_, el) => {
-    if (links.length >= 60) return
+    if (links.length >= 80) return
     try {
       let href = $(el).attr('href')?.trim() || ''
       if (href.startsWith('//')) href = `https:${href}`
@@ -167,20 +389,23 @@ function parseHTML(html: string, baseUrl: string, fetchMethod: PageData['fetchMe
 
   const imageUrls: string[] = []
   $('img[src],img[data-src],img[data-lazy-src]').each((_, el) => {
-    if (imageUrls.length >= 12) return
+    if (imageUrls.length >= 16) return
     try {
       let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || ''
       if (src.startsWith('//')) src = `https:${src}`
       else if (src.startsWith('/')) src = `${url.origin}${src}`
-      if (src.startsWith('http') && !src.includes('tracking') && !src.includes('pixel') && !src.includes('1x1') && src.length < 500)
+      if (src.startsWith('http') && !src.includes('tracking') && !src.includes('pixel') && src.length < 500)
         imageUrls.push(src)
     } catch {}
   })
 
-  return { url: baseUrl, title, description, textContent, wordCount, contentType, links, imageUrls, ogImage, publishDate, author, language, headings, metaKeywords, fetchMethod }
+  const techStack     = detectTechStack(html)
+  const structuredData = extractStructuredData($)
+
+  return { url: baseUrl, title, description, textContent, wordCount, contentType, links, imageUrls, ogImage, publishDate, author, language, headings, metaKeywords, fetchMethod, techStack, structuredData }
 }
 
-// ── Screenshot — use og:image (instant) as primary, mshots as fallback ────────
+// ── Screenshot URL ────────────────────────────────────────────────────────────
 function getScreenshotUrl(targetUrl: string): string {
   return `https://s0.wp.com/mshots/v1/${encodeURIComponent(targetUrl)}?w=1200&h=750`
 }
@@ -204,32 +429,70 @@ async function quickScoreHF(text: string): Promise<{ aiScore: number; verdict: s
     if (!res.ok) return { aiScore: 0.5, verdict: 'UNCERTAIN' }
     const data = await res.json() as { label: string; score: number }[][]
     const flat = Array.isArray(data[0]) ? data[0] : data as unknown as { label: string; score: number }[]
-    const aiE = flat.find(s => /fake|label_1/i.test(s.label))
-    const huE = flat.find(s => /real|label_0/i.test(s.label))
+    const aiE  = flat.find(s => /fake|label_1/i.test(s.label))
+    const huE  = flat.find(s => /real|label_0/i.test(s.label))
     const score = aiE?.score ?? (huE ? 1 - huE.score : 0.5)
     return { aiScore: score, verdict: score >= 0.60 ? 'AI' : score <= 0.38 ? 'HUMAN' : 'UNCERTAIN' }
   } catch { return { aiScore: 0.5, verdict: 'UNCERTAIN' } }
 }
 
-// ── Parallel Sub-page Agents ──────────────────────────────────────────────────
-// Each agent fetches, parses, and quick-scores one page independently
+// ── Parallel sub-page agent ───────────────────────────────────────────────────
 async function runSubAgent(link: { url: string; text: string }): Promise<AgentResult | null> {
   try {
     assertSafeUrl(link.url)
-    const { html, fetchMethod } = await fetchPage(link.url)
-    const page = parseHTML(html, link.url, fetchMethod)
+    // Agents use lightweight fetch only (no BrowserBase — save quota for main page)
+    const html = await fetchJinaAuth(link.url) || await fetchDirect(link.url) || await fetchJinaFree(link.url)
+    if (!html) return null
+    const page = parseHTML(html, link.url, 'direct')
     if (page.wordCount < 50) return null
     const hf = await quickScoreHF(page.textContent.slice(0, 600))
     return { page, aiScore: hf.aiScore, verdict: hf.verdict, snippet: page.textContent.slice(0, 600) }
   } catch { return null }
 }
 
-async function runParallelAgents(links: PageData['links'], maxAgents = 4): Promise<AgentResult[]> {
-  const targets = links
-    .filter(l => l.isInternal && l.text.length > 8 &&
-      !/contact|about|privacy|terms|login|signup|cart|checkout|sitemap|feed|rss|tag|category|author\//i.test(l.text + l.url))
-    .slice(0, maxAgents)
+// ── Smart page selector — prioritises content pages from sitemap ──────────────
+function selectDeepCrawlTargets(
+  links: PageData['links'],
+  sitemap: SitemapEntry[],
+  origin: string,
+  maxAgents: number
+): { url: string; text: string }[] {
+  const SKIP = /contact|about|privacy|terms|login|signup|cart|checkout|sitemap|feed|rss|tag|category|author\//i
 
+  // Prefer sitemap entries (higher quality pages, sorted by priority)
+  const sitemapTargets = sitemap
+    .filter(e => {
+      try {
+        const u = new URL(e.url)
+        return u.origin === origin && !SKIP.test(e.url) && u.pathname !== '/'
+      } catch { return false }
+    })
+    .sort((a, b) => (b.priority ?? 0.5) - (a.priority ?? 0.5))
+    .slice(0, maxAgents)
+    .map(e => ({ url: e.url, text: e.url.split('/').filter(Boolean).pop() || e.url }))
+
+  if (sitemapTargets.length >= maxAgents) return sitemapTargets
+
+  // Supplement with internal links from main page
+  const linkTargets = links
+    .filter(l => l.isInternal && l.text.length > 8 && !SKIP.test(l.text + l.url))
+    .slice(0, maxAgents - sitemapTargets.length)
+
+  const seen = new Set(sitemapTargets.map(t => t.url))
+  const merged = [...sitemapTargets]
+  for (const l of linkTargets) {
+    if (!seen.has(l.url)) { seen.add(l.url); merged.push(l) }
+  }
+  return merged.slice(0, maxAgents)
+}
+
+async function runParallelAgents(
+  links: PageData['links'],
+  sitemap: SitemapEntry[],
+  origin: string,
+  maxAgents = 8
+): Promise<AgentResult[]> {
+  const targets = selectDeepCrawlTargets(links, sitemap, origin, maxAgents)
   if (targets.length === 0) return []
   const settled = await Promise.allSettled(targets.map(l => runSubAgent(l)))
   return settled
@@ -237,27 +500,35 @@ async function runParallelAgents(links: PageData['links'], maxAgents = 4): Promi
     .map(r => (r as PromiseFulfilledResult<AgentResult>).value)
 }
 
-// ── Gemini RAG — 12-signal deep analysis ─────────────────────────────────────
-async function analyzeWithGemini(main: PageData, agents: AgentResult[], model = 'gemini-2.0-flash'): Promise<ContentAnalysis> {
-  const genAI  = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  const mdl    = genAI.getGenerativeModel({ model })
+// ── Gemini RAG — 12-signal deep analysis with tech stack context ──────────────
+async function analyzeWithGemini(main: PageData, agents: AgentResult[], sitemap: SitemapEntry[], model = 'gemini-2.0-flash'): Promise<ContentAnalysis> {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const mdl   = genAI.getGenerativeModel({ model })
 
-  // Build rich multi-page context from all agents
-  const agentCtx = agents.slice(0, 4).map((a, i) =>
-    `AGENT ${i + 1} [${a.page.contentType}, ${a.page.wordCount}w, HF:${Math.round(a.aiScore*100)}%]:\n${a.snippet.slice(0, 700)}`
+  const agentCtx = agents.slice(0, 6).map((a, i) =>
+    `AGENT ${i + 1} [${a.page.contentType}, ${a.page.wordCount}w, HF:${Math.round(a.aiScore*100)}%, via:${a.page.fetchMethod}]:\n${a.snippet.slice(0, 600)}`
   ).join('\n\n---\n\n')
 
-  const prompt = `You are Aiscern's AI detection engine. ${agents.length} parallel agents have pre-analyzed this website.
+  const techCtx      = main.techStack?.length ? `Tech stack: ${main.techStack.join(', ')}` : ''
+  const sitemapCtx   = sitemap.length > 0 ? `Sitemap discovered ${sitemap.length} pages (deep crawl enabled)` : 'No sitemap found'
+  const structCtx    = main.structuredData?.length
+    ? `Structured data: ${JSON.stringify(main.structuredData.slice(0, 2)).slice(0, 400)}`
+    : ''
+
+  const prompt = `You are Aiscern's AI detection engine. ${agents.length} parallel deep-crawl agents have analyzed this website.
 
 MAIN PAGE: ${main.contentType} | ${main.wordCount} words | fetched via ${main.fetchMethod}
 Domain: ${new URL(main.url).hostname} | Lang: ${main.language||'en'} | Author: ${main.author||'unknown'} | Published: ${main.publishDate||'unknown'}
 Title: "${main.title}"
 Keywords: ${main.metaKeywords?.slice(0,80)||'none'}
-Headings: ${main.headings.slice(0,8).join(' | ')}
+Headings: ${main.headings.slice(0,10).join(' | ')}
+${techCtx}
+${sitemapCtx}
+${structCtx}
 
 MAIN CONTENT:
 ${main.textContent.slice(0, 3500)}
-${agentCtx ? '\n\nSUB-PAGE AGENT REPORTS:\n' + agentCtx : ''}
+${agentCtx ? '\n\nSUB-PAGE AGENT REPORTS (deep crawl):\n' + agentCtx : ''}
 
 Respond ONLY in JSON (no markdown):
 {"ai_probability":0.0,"verdict":"AI","content_quality":"high","writing_style":"one sentence","summary":"2-3 sentence verdict","reasoning":"key evidence","signals":[{"name":"s","flagged":true,"description":"d","weight":0.8}]}
@@ -321,7 +592,6 @@ async function analyzeWithNVIDIA(main: PageData, agents: AgentResult[]): Promise
 
 // ── Main POST ─────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Auth required — prevents free Gemini quota abuse
   const { userId } = await auth().catch(() => ({ userId: null as string | null }))
   if (!userId) return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Sign in to use the Web Scanner' } }, { status: 401 })
 
@@ -331,7 +601,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { url, depth = 1, maxSubPages = 4 } = body
+    const { url, depth = 1, maxSubPages = 8 } = body
     if (!url || typeof url !== 'string')
       return NextResponse.json({ success: false, error: { code: 'NO_URL', message: 'No URL provided' } }, { status: 400 })
 
@@ -342,10 +612,12 @@ export async function POST(req: NextRequest) {
     }
     assertSafeUrl(normalised)
 
-    // Fetch main page
-    let html: string; let fetchMethod: PageData['fetchMethod']
-    try { const f = await fetchPage(normalised); html = f.html; fetchMethod = f.fetchMethod }
-    catch {
+    // ── Fetch main page (tiered browser strategy) ─────────────────────────────
+    let html: string; let fetchMethod: FetchMethod; let browserScreenshot: string | undefined
+    try {
+      const f = await fetchPage(normalised)
+      html = f.html; fetchMethod = f.fetchMethod; browserScreenshot = f.screenshotUrl
+    } catch {
       return NextResponse.json({ success: false, error: { code: 'FETCH_FAILED', message: 'Could not fetch this page. The site may block automated access. Try a specific article or post URL.' } }, { status: 422 })
     }
 
@@ -353,13 +625,19 @@ export async function POST(req: NextRequest) {
     if (mainPage.wordCount < 30)
       return NextResponse.json({ success: false, error: { code: 'NO_CONTENT', message: 'Not enough readable text. Try a blog post or article URL.' } }, { status: 422 })
 
-    // ── PARALLEL: run sub-agents + HF quick-score concurrently ────────────────
-    const [agentResults, hfQuick] = await Promise.all([
-      depth > 0 ? runParallelAgents(mainPage.links, maxSubPages) : Promise.resolve([]),
+    // ── PARALLEL: sitemap discovery + sub-agents + HF quick-score ────────────
+    const [sitemap, agentResults, hfQuick] = await Promise.all([
+      depth > 0 ? fetchSitemap(normalised) : Promise.resolve([]),
+      Promise.resolve([]), // agents run after sitemap (needs sitemap targets)
       quickScoreHF(mainPage.textContent.slice(0, 800)),
     ])
 
-    // ── Deep analysis — Gemini (with fallback chain) ───────────────────────────
+    // ── Deep crawl agents (use sitemap + links together) ─────────────────────
+    const deepAgents = depth > 0
+      ? await runParallelAgents(mainPage.links, sitemap, urlObj.origin, maxSubPages)
+      : []
+
+    // ── Deep analysis — Gemini → NVIDIA → HF fallback ────────────────────────
     let analysis: ContentAnalysis
     let tier = 1
 
@@ -374,12 +652,12 @@ export async function POST(req: NextRequest) {
 
     if (geminiAvailable()) {
       try {
-        analysis = await analyzeWithGemini(mainPage, agentResults, 'gemini-2.0-flash'); tier = 1
+        analysis = await analyzeWithGemini(mainPage, deepAgents, sitemap, 'gemini-2.0-flash'); tier = 1
       } catch (e1: any) {
         if (/429|quota|rate.?limit|too many/i.test(e1?.message ?? '')) {
-          try { analysis = await analyzeWithGemini(mainPage, agentResults, 'gemini-1.5-flash'); tier = 2 }
+          try { analysis = await analyzeWithGemini(mainPage, deepAgents, sitemap, 'gemini-1.5-flash'); tier = 2 }
           catch {
-            const nv = await analyzeWithNVIDIA(mainPage, agentResults)
+            const nv = await analyzeWithNVIDIA(mainPage, deepAgents)
             if (nv) { analysis = nv; tier = 3 } else { analysis = hfFallback(); tier = 4 }
           }
         } else throw e1
@@ -388,20 +666,35 @@ export async function POST(req: NextRequest) {
       analysis = hfFallback(); tier = 4
     }
 
-    // Weighted cross-agent score (blend HF sub-scores with Gemini)
-    if (agentResults.length > 0) {
-      const agentAvg = agentResults.reduce((a, r) => a + r.aiScore, 0) / agentResults.length
+    // ── Weighted cross-agent score blend ─────────────────────────────────────
+    if (deepAgents.length > 0) {
+      const agentAvg = deepAgents.reduce((a, r) => a + r.aiScore, 0) / deepAgents.length
       analysis.aiScore = +(analysis.aiScore * 0.75 + agentAvg * 0.25).toFixed(3)
       analysis.verdict = analysis.aiScore >= 0.60 ? 'AI' : analysis.aiScore <= 0.38 ? 'HUMAN' : 'UNCERTAIN'
     }
 
-    // Save scan (fire-and-forget)
+    // ── Determine fetch tier label ────────────────────────────────────────────
+    const fetchTierLabel = {
+      'browserbase': 'BrowserBase (JS browser)',
+      'firecrawl':   'Firecrawl (managed browser)',
+      'jina-auth':   'Jina AI (authenticated)',
+      'direct':      'Direct HTTP',
+      'jina':        'Jina AI (free)',
+      'cache':       'Google Cache',
+    }[fetchMethod] ?? fetchMethod
+
+    // ── Save scan ─────────────────────────────────────────────────────────────
     getSupabaseAdmin().from('scans').insert({
       user_id: userId, media_type: 'url', source_url: normalised,
       content_preview: (mainPage.description || mainPage.title)?.slice(0, 300),
       verdict: analysis.verdict, confidence_score: analysis.aiScore,
       signals: analysis.signals, model_used: `rag-t${tier}`, status: 'complete',
-      metadata: { domain: urlObj.hostname, word_count: mainPage.wordCount, content_type: mainPage.contentType, fetch_method: fetchMethod, agents: agentResults.length },
+      metadata: {
+        domain: urlObj.hostname, word_count: mainPage.wordCount,
+        content_type: mainPage.contentType, fetch_method: fetchMethod,
+        agents: deepAgents.length, sitemap_pages: sitemap.length,
+        tech_stack: mainPage.techStack,
+      },
     }).then(({ error }) => { if (error) console.error('[scraper] DB save:', error.message) })
 
     return NextResponse.json({
@@ -416,19 +709,21 @@ export async function POST(req: NextRequest) {
         verdict:          analysis.verdict,      confidence:    analysis.confidence,
         summary:          analysis.summary,      reasoning:     analysis.reasoning,
         writing_style:    analysis.writingStyle, signals:       analysis.signals,
-        // Instant preview: og:image loads immediately, screenshot is background fallback
         og_image:         mainPage.ogImage,
-        screenshot_url:   getScreenshotUrl(normalised),
+        screenshot_url:   browserScreenshot || getScreenshotUrl(normalised),
         image_urls:       mainPage.imageUrls.slice(0, 8),
-        headings:         mainPage.headings.slice(0, 6),
-        fetch_method:     fetchMethod,
-        agents_used:      agentResults.length,
-        sub_pages: agentResults.map(a => ({
+        headings:         mainPage.headings.slice(0, 8),
+        tech_stack:       mainPage.techStack,
+        fetch_method:     fetchTierLabel,
+        fetch_tier:       fetchMethod,
+        agents_used:      deepAgents.length,
+        sitemap_pages:    sitemap.length,
+        sub_pages: deepAgents.map(a => ({
           url: a.page.url, title: a.page.title, content_type: a.page.contentType,
           word_count: a.page.wordCount, ai_score: Math.round(a.aiScore * 100),
-          verdict: a.verdict, snippet: a.snippet,
+          verdict: a.verdict, snippet: a.snippet, fetch_method: a.page.fetchMethod,
         })),
-        discovered_links: mainPage.links.slice(0, 20).map(l => ({ url: l.url, text: l.text, is_internal: l.isInternal })),
+        discovered_links: mainPage.links.slice(0, 25).map(l => ({ url: l.url, text: l.text, is_internal: l.isInternal })),
         total_links: mainPage.links.length, status: 'complete',
       },
     })
