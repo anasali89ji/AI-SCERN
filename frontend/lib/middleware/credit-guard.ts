@@ -57,10 +57,16 @@ export async function creditGuard(
       if (!result.allowed) {
         const reason = result.reason === 'modality_not_included'
           ? `Your ${result.plan} plan does not include ${media} detection. Upgrade to Pro to unlock all modalities.`
-          : `Daily scan limit reached (${result.daily_scans}/${result.daily_limit}). Resets every 24 hours.`
+          : result.reason === 'modality_credits_exhausted'
+            ? `You've used all 3 free ${media} detection credits. Upgrade to Pro for unlimited ${media} detection.`
+            : `Daily scan limit reached (${result.daily_scans}/${result.daily_limit}). Resets every 24 hours.`
+
+        const code = result.reason === 'modality_not_included' ? 'MODALITY_LOCKED'
+          : result.reason === 'modality_credits_exhausted' ? 'CREDITS_EXHAUSTED'
+          : 'DAILY_LIMIT_REACHED'
 
         throw new HTTPError(402, reason, {
-          code:             result.reason === 'modality_not_included' ? 'MODALITY_LOCKED' : 'DAILY_LIMIT_REACHED',
+          code,
           plan:             result.plan,
           daily_scans:      result.daily_scans,
           daily_limit:      result.daily_limit,

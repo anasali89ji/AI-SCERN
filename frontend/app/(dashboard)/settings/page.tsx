@@ -1,481 +1,351 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Bell, Shield, Save, Loader2, Trash2,
-  Sliders, Key, Palette, Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone
+  Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
+  Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
+  Moon, Sun, Monitor, FileText, Volume2, Zap, Eye, EyeOff,
+  RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
+  ChevronRight, Info, Star, BrainCircuit
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
+import { useClerk } from '@clerk/nextjs'
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+// ── Toggle ───────────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
-    <button onClick={onChange}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${checked ? 'bg-primary' : 'bg-border'}`}>
-      <motion.div animate={{ x: checked ? 22 : 2 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+    <button onClick={onChange} disabled={disabled}
+      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-primary' : 'bg-border'}`}>
+      <motion.div animate={{ x: checked ? 22 : 2 }} transition={{ type:'spring', stiffness:500, damping:30 }}
         className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm" />
     </button>
   )
 }
 
-function SliderInput({ value, onChange, min, max, label }: { value: number; onChange: (v: number) => void; min: number; max: number; label: string }) {
+// ── Setting Row ───────────────────────────────────────────────────────────────
+function SettingRow({ icon: Icon, label, description, action, badge }: {
+  icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
+}) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-text-muted">{label}</span>
-        <span className="text-xs font-bold text-primary">{value}%</span>
+    <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0 gap-4">
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-text-primary">{label}</span>
+            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 font-bold">{badge}</span>}
+          </div>
+          {description && <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{description}</p>}
+        </div>
       </div>
-      <input type="range" min={min} max={max} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded-full bg-border appearance-none cursor-pointer accent-primary" />
+      <div className="flex-shrink-0">{action}</div>
     </div>
   )
 }
 
+// ── Section ───────────────────────────────────────────────────────────────────
+function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+  return (
+    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
+      className="bg-surface border border-border rounded-2xl p-6">
+      <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-border/50">
+        <Icon className="w-4 h-4 text-primary" /> {title}
+      </h2>
+      {children}
+    </motion.div>
+  )
+}
+
 export default function SettingsPage() {
-  const { user: currentUser, signOut } = useAuth()
-  const supabase = createClient()
+  const { user, signOut }  = useAuth()
+  const { openUserProfile } = useClerk()
+  const supabase            = createClient()
 
-  // Notification prefs
-  const [emailNotif,   setEmailNotif]   = useState(true)
-  const [batchAlerts,  setBatchAlerts]  = useState(true)
-  const [weeklyReport, setWeeklyReport] = useState(false)
-  const [autoSave,     setAutoSave]     = useState(true)
+  // ── Notification settings ──────────────────────────────────────────────────
+  const [emailNotif,       setEmailNotif]       = useState(true)
+  const [batchAlerts,      setBatchAlerts]      = useState(true)
+  const [weeklyReport,     setWeeklyReport]     = useState(false)
+  const [autoSave,         setAutoSave]         = useState(true)
+  const [upgradeAlerts,    setUpgradeAlerts]    = useState(true)
 
-  // Privacy prefs
-  const [publicProfile, setPublicProfile] = useState(false)
-  const [saveHistory,   setSaveHistory]   = useState(true)
-  const [analytics,     setAnalytics]     = useState(true)
+  // ── Detection settings ─────────────────────────────────────────────────────
+  const [highAccMode,      setHighAccMode]      = useState(false)
+  const [saveHistory,      setSaveHistory]      = useState(true)
+  const [autoDownload,     setAutoDownload]     = useState(false)
+  const [showConfidence,   setShowConfidence]   = useState(true)
+  const [showSignals,      setShowSignals]      = useState(true)
+  const [defaultModality,  setDefaultModality]  = useState('text')
 
-  // Detection prefs
-  const [aiThreshold,    setAiThreshold]    = useState(65)
-  const [humanThreshold, setHumanThreshold] = useState(35)
-  const [deepScan,       setDeepScan]       = useState(false)
-  const [autoDetectType, setAutoDetectType] = useState(true)
+  // ── Privacy settings ───────────────────────────────────────────────────────
+  const [publicProfile,    setPublicProfile]    = useState(false)
+  const [shareAnon,        setShareAnon]        = useState(true)
+  const [cookieConsent,    setCookieConsent]    = useState(true)
+  const [analyticsOptOut,  setAnalyticsOptOut]  = useState(false)
+  const [dataRetention,    setDataRetention]    = useState('90')
 
-  // Appearance
-  const [language, setLanguage] = useState('en')
-  const [timezone, setTimezone] = useState('UTC+5')
+  // ── Interface settings ─────────────────────────────────────────────────────
+  const [theme,            setTheme]            = useState<'dark'|'light'|'system'>('dark')
+  const [language,         setLanguage]         = useState('en')
+  const [compactView,      setCompactView]      = useState(false)
+  const [animationsOff,    setAnimationsOff]    = useState(false)
 
-  // API key state — backed by real /api/user/api-keys routes
-  const [apiKeys,      setApiKeys]      = useState<any[]>([])
-  const [keysLoading,  setKeysLoading]  = useState(false)
-  const [newKeyName,   setNewKeyName]   = useState('')
-  const [generating,   setGenerating]   = useState(false)
-  const [revealedKey,  setRevealedKey]  = useState<string | null>(null)   // shown ONCE after generation
-  const [keyCopied,    setKeyCopied]    = useState(false)
-  const [revoking,     setRevoking]     = useState<string | null>(null)
+  // ── Security ───────────────────────────────────────────────────────────────
+  const [copied,           setCopied]           = useState(false)
+  const [showKey,          setShowKey]          = useState(false)
 
-  // Load keys on mount
-  useEffect(() => {
-    if (!currentUser) return
-    setKeysLoading(true)
-    fetch('/api/user/api-keys')
-      .then(r => r.json())
-      .then(d => { if (d.data) setApiKeys(d.data) })
-      .catch(() => {})
-      .finally(() => setKeysLoading(false))
-  }, [currentUser])
+  const [loading,  setLoading]  = useState(true)
+  const [saving,   setSaving]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const generateKey = async () => {
-    if (generating) return
-    setGenerating(true)
-    setRevealedKey(null)
+  const SETTINGS_KEY = `aiscern_settings_${user?.uid}`
+
+  const loadSettings = useCallback(() => {
+    if (!user?.uid) return
     try {
-      const res  = await fetch('/api/user/api-keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newKeyName.trim() || 'My API Key' }),
-      })
-      const data = await res.json()
-      if (!res.ok) { toast.error(data.error || 'Failed to generate key'); return }
-      setRevealedKey(data.data.key)        // show raw key ONCE
-      setApiKeys(prev => [data.data, ...prev])
-      setNewKeyName('')
-      toast.success('API key generated — copy it now, it won\'t be shown again')
-    } catch { toast.error('Failed to generate key') }
-    setGenerating(false)
-  }
+      const saved = localStorage.getItem(SETTINGS_KEY)
+      if (saved) {
+        const s = JSON.parse(saved)
+        if (s.emailNotif       !== undefined) setEmailNotif(s.emailNotif)
+        if (s.batchAlerts      !== undefined) setBatchAlerts(s.batchAlerts)
+        if (s.weeklyReport     !== undefined) setWeeklyReport(s.weeklyReport)
+        if (s.autoSave         !== undefined) setAutoSave(s.autoSave)
+        if (s.upgradeAlerts    !== undefined) setUpgradeAlerts(s.upgradeAlerts)
+        if (s.highAccMode      !== undefined) setHighAccMode(s.highAccMode)
+        if (s.saveHistory      !== undefined) setSaveHistory(s.saveHistory)
+        if (s.autoDownload     !== undefined) setAutoDownload(s.autoDownload)
+        if (s.showConfidence   !== undefined) setShowConfidence(s.showConfidence)
+        if (s.showSignals      !== undefined) setShowSignals(s.showSignals)
+        if (s.defaultModality  !== undefined) setDefaultModality(s.defaultModality)
+        if (s.publicProfile    !== undefined) setPublicProfile(s.publicProfile)
+        if (s.shareAnon        !== undefined) setShareAnon(s.shareAnon)
+        if (s.analyticsOptOut  !== undefined) setAnalyticsOptOut(s.analyticsOptOut)
+        if (s.dataRetention    !== undefined) setDataRetention(s.dataRetention)
+        if (s.theme            !== undefined) setTheme(s.theme)
+        if (s.language         !== undefined) setLanguage(s.language)
+        if (s.compactView      !== undefined) setCompactView(s.compactView)
+        if (s.animationsOff    !== undefined) setAnimationsOff(s.animationsOff)
+      }
+    } catch {}
+    setLoading(false)
+  }, [user?.uid]) // eslint-disable-line
 
-  const revokeKey = async (id: string) => {
-    setRevoking(id)
-    try {
-      const res = await fetch(`/api/user/api-keys/${id}`, { method: 'DELETE' })
-      if (!res.ok) { toast.error('Failed to revoke key'); return }
-      setApiKeys(prev => prev.filter(k => k.id !== id))
-      toast.success('API key revoked')
-    } catch { toast.error('Failed to revoke key') }
-    setRevoking(null)
-  }
+  useEffect(() => { loadSettings() }, [loadSettings])
 
-  const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key).then(() => {
-      setKeyCopied(true)
-      setTimeout(() => setKeyCopied(false), 2000)
-    })
-  }
-
-  const [saving, setSaving]             = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState(false)
-  const [deleting, setDeleting]           = useState(false)
-
-  const handleDeleteAccount = async () => {
-    setDeleting(true)
-    try {
-      const res = await fetch('/api/user/delete-account', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed')
-      toast.success('Account permanently deleted')
-      await signOut()
-    } catch {
-      toast.error('Failed to delete account — please contact support')
-      setDeleting(false)
-      setDeleteConfirm(false)
-    }
-  }
-
-  useEffect(() => {
-    if (!currentUser?.uid) return
-    (supabase as any).from('profiles').select('metadata').eq('id', currentUser.uid).single().then(({ data: p }: any) => {
-      const prefs = p?.metadata?.preferences || {}
-      if (prefs.emailNotif   !== undefined) setEmailNotif(prefs.emailNotif)
-      if (prefs.batchAlerts  !== undefined) setBatchAlerts(prefs.batchAlerts)
-      if (prefs.weeklyReport !== undefined) setWeeklyReport(prefs.weeklyReport)
-      if (prefs.autoSave     !== undefined) setAutoSave(prefs.autoSave)
-      if (prefs.publicProfile!== undefined) setPublicProfile(prefs.publicProfile)
-      if (prefs.saveHistory  !== undefined) setSaveHistory(prefs.saveHistory)
-      if (prefs.analytics    !== undefined) setAnalytics(prefs.analytics)
-      if (prefs.aiThreshold  !== undefined) setAiThreshold(prefs.aiThreshold)
-      if (prefs.humanThreshold!==undefined) setHumanThreshold(prefs.humanThreshold)
-      if (prefs.deepScan     !== undefined) setDeepScan(prefs.deepScan)
-      if (prefs.autoDetectType!==undefined) setAutoDetectType(prefs.autoDetectType)
-      if (prefs.language     !== undefined) setLanguage(prefs.language)
-    })
-  }, [currentUser])
-
-  const save = async () => {
-    if (!currentUser?.uid) return
-
-    // M9 — input validation before save
-    if (aiThreshold < 50 || aiThreshold > 95) {
-      toast.error('AI threshold must be between 50% and 95%'); return
-    }
-    if (humanThreshold < 5 || humanThreshold > 50) {
-      toast.error('Human threshold must be between 5% and 50%'); return
-    }
-    const validLanguages = ['en', 'ur', 'ar', 'fr', 'es']
-    if (!validLanguages.includes(language)) {
-      toast.error('Invalid language selection'); return
-    }
-
+  const handleSave = async () => {
+    if (!user?.uid) return
     setSaving(true)
-    try {
-      await (supabase as any).from('profiles').upsert({
-        id: currentUser.uid,
-        metadata: { preferences: {
-          emailNotif, batchAlerts, weeklyReport, autoSave,
-          publicProfile, saveHistory, analytics,
-          aiThreshold, humanThreshold, deepScan, autoDetectType,
-          language, timezone,
-        }},
-        updated_at: new Date().toISOString(),
-      })
-      toast.success('Settings saved!')
-    } catch { toast.error('Failed to save settings') }
+    const settings = {
+      emailNotif, batchAlerts, weeklyReport, autoSave, upgradeAlerts,
+      highAccMode, saveHistory, autoDownload, showConfidence, showSignals, defaultModality,
+      publicProfile, shareAnon, analyticsOptOut, dataRetention,
+      theme, language, compactView, animationsOff,
+    }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+    // Persist some to DB
+    await (supabase as any).from('profiles').update({
+      public_profile: publicProfile,
+      analytics_opt_out: analyticsOptOut,
+    }).eq('id', user.uid).catch(() => {})
     setSaving(false)
+    toast.success('Settings saved')
   }
-  const exportData = () => {
-    const data = { exported_at: new Date().toISOString(), preferences: { emailNotif, batchAlerts, autoSave, aiThreshold, publicProfile } }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = 'aiscern-settings.json'; a.click()
-    toast.success('Settings exported!')
+
+  const copyApiKey = () => {
+    navigator.clipboard.writeText(`aiscern_${user?.uid?.slice(0,16)}...`)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
+
+  const deleteAccount = async () => {
+    if (!confirmDelete || !user?.uid) return
+    setDeleting(true)
+    await fetch('/api/delete-account', { method:'POST' }).catch(() => {})
+    await signOut()
+  }
+
+  const exportData = async () => {
+    if (!user?.uid) return
+    const { data: scans } = await (supabase as any).from('scans').select('*').eq('user_id', user.uid)
+    const blob = new Blob([JSON.stringify({ scans, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aiscern-data.json'; a.click()
+    toast.success('Data exported')
+  }
+
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center min-h-64">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  )
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-5 pb-20">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-text-primary">Settings</h1>
-          <p className="text-text-muted text-sm mt-0.5">Customize your Aiscern experience</p>
+          <h1 className="text-xl font-black text-text-primary">Settings</h1>
+          <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
         </div>
-        <button onClick={save} disabled={saving}
-          className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
+          style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save
+          Save All
         </button>
       </div>
 
       {/* Notifications */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-amber bg-amber/10 flex items-center justify-center"><Bell className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Notifications</h3>
-        </div>
-        {[
-          { label: 'Email notifications',    sub: 'Get emailed when batch jobs complete',             value: emailNotif,   toggle: () => setEmailNotif(v => !v) },
-          { label: 'Batch completion alerts', sub: 'In-app alert when large scans finish',            value: batchAlerts,  toggle: () => setBatchAlerts(v => !v) },
-          { label: 'Weekly usage report',    sub: 'Summary of your detection activity each week',     value: weeklyReport, toggle: () => setWeeklyReport(v => !v) },
-          { label: 'Auto-save scan results', sub: 'Automatically save all scans to History',          value: autoSave,     toggle: () => setAutoSave(v => !v) },
-        ].map((item, ii, arr) => (
-          <div key={ii} className={`flex items-center justify-between py-3 ${ii < arr.length - 1 ? 'border-b border-border' : ''}`}>
-            <div><p className="text-sm font-medium text-text-primary">{item.label}</p><p className="text-xs text-text-muted mt-0.5">{item.sub}</p></div>
-            <Toggle checked={item.value} onChange={item.toggle} />
-          </div>
-        ))}
-      </motion.div>
+      <Section title="Notifications" icon={Bell}>
+        <SettingRow icon={Mail}       label="Email notifications" description="Scan summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
+        <SettingRow icon={Bell}       label="Batch scan alerts"   description="Notify when bulk scan results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
+        <SettingRow icon={Star}       label="Upgrade alerts"      description="Get notified of plan changes from admin"         action={<Toggle checked={upgradeAlerts}  onChange={() => setUpgradeAlerts(v => !v)} />} />
+        <SettingRow icon={FileText}   label="Weekly report"       description="Weekly digest of your detection activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
+        <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every scan result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
+      </Section>
 
-      {/* Detection Preferences */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="card">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 rounded-xl text-primary bg-primary/10 flex items-center justify-center"><Sliders className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Detection Preferences</h3>
-        </div>
+      {/* Detection */}
+      <Section title="Detection Preferences" icon={BrainCircuit}>
+        <SettingRow icon={Zap}    label="High-accuracy mode"   description="Use slower but more precise ensemble analysis" badge="PRO"  action={<Toggle checked={highAccMode}    onChange={() => setHighAccMode(v => !v)} />} />
+        <SettingRow icon={Database} label="Save scan history"  description="Keep all scan results in your history tab"             action={<Toggle checked={saveHistory}    onChange={() => setSaveHistory(v => !v)} />} />
+        <SettingRow icon={Download} label="Auto-download PDF"  description="Automatically download PDF report after each scan"     action={<Toggle checked={autoDownload}   onChange={() => setAutoDownload(v => !v)} />} />
+        <SettingRow icon={Sliders}  label="Show confidence %"  description="Display confidence scores on all results"              action={<Toggle checked={showConfidence} onChange={() => setShowConfidence(v => !v)} />} />
+        <SettingRow icon={Eye}      label="Show signal details" description="Show individual detection signals on results"          action={<Toggle checked={showSignals}    onChange={() => setShowSignals(v => !v)} />} />
+        <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
+          action={
+            <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
+              className="text-xs bg-surface-active border border-border rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
+            </select>
+          } />
+      </Section>
 
-        <div className="space-y-5 mb-5">
-          <SliderInput value={aiThreshold}    onChange={setAiThreshold}    min={50} max={95} label="AI detection threshold" />
-          <SliderInput value={humanThreshold} onChange={setHumanThreshold} min={5}  max={50} label="Human confidence threshold" />
-        </div>
-
-        {[
-          { label: 'Deep scan mode',        sub: 'Run additional models for higher accuracy (slower)',     value: deepScan,       toggle: () => setDeepScan(v => !v) },
-          { label: 'Auto-detect media type', sub: 'Automatically route uploads to the correct detector',  value: autoDetectType, toggle: () => setAutoDetectType(v => !v) },
-        ].map((item, ii, arr) => (
-          <div key={ii} className={`flex items-center justify-between py-3 ${ii < arr.length - 1 ? 'border-b border-border' : ''}`}>
-            <div><p className="text-sm font-medium text-text-primary">{item.label}</p><p className="text-xs text-text-muted mt-0.5">{item.sub}</p></div>
-            <Toggle checked={item.value} onChange={item.toggle} />
-          </div>
-        ))}
-      </motion.div>
+      {/* Interface */}
+      <Section title="Interface" icon={Palette}>
+        <SettingRow icon={Moon} label="Theme" description="Choose your preferred color scheme"
+          action={
+            <div className="flex gap-1">
+              {(['dark','light','system'] as const).map(t => (
+                <button key={t} onClick={() => setTheme(t)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-secondary'}`}>
+                  {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
+                  {t.charAt(0).toUpperCase()+t.slice(1)}
+                </button>
+              ))}
+            </div>
+          } />
+        <SettingRow icon={Languages} label="Language" description="Interface display language"
+          action={
+            <select value={language} onChange={e => setLanguage(e.target.value)}
+              className="text-xs bg-surface-active border border-border rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              <option value="en">English</option>
+              <option value="ur">اردو (Urdu)</option>
+              <option value="ar">العربية (Arabic)</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          } />
+        <SettingRow icon={Monitor}     label="Compact view"      description="Reduce padding for a denser layout"          action={<Toggle checked={compactView}    onChange={() => setCompactView(v => !v)} />} />
+        <SettingRow icon={Zap}         label="Reduce animations" description="Disable motion effects for accessibility"    action={<Toggle checked={animationsOff}  onChange={() => setAnimationsOff(v => !v)} />} />
+      </Section>
 
       {/* Privacy */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-emerald bg-emerald/10 flex items-center justify-center"><Shield className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Privacy & Data</h3>
-        </div>
-        {[
-          { label: 'Public profile',        sub: 'Allow others to see your scan statistics',                value: publicProfile, toggle: () => setPublicProfile(v => !v) },
-          { label: 'Save scan history',     sub: 'Store past detection results in your account',            value: saveHistory,   toggle: () => setSaveHistory(v => !v) },
-          { label: 'Usage analytics',       sub: 'Help improve Aiscern by sharing anonymous usage data',   value: analytics,     toggle: () => setAnalytics(v => !v) },
-        ].map((item, ii, arr) => (
-          <div key={ii} className={`flex items-center justify-between py-3 ${ii < arr.length - 1 ? 'border-b border-border' : ''}`}>
-            <div><p className="text-sm font-medium text-text-primary">{item.label}</p><p className="text-xs text-text-muted mt-0.5">{item.sub}</p></div>
-            <Toggle checked={item.value} onChange={item.toggle} />
-          </div>
-        ))}
-      </motion.div>
-
-      {/* API Key Management */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-cyan bg-cyan/10 flex items-center justify-center"><Key className="w-4 h-4" /></div>
-          <div>
-            <h3 className="font-semibold text-text-primary">API Keys</h3>
-            <p className="text-xs text-text-muted">Max 5 active keys · 1,000 calls/day each</p>
-          </div>
-        </div>
-
-        {/* Revealed key banner — shown once after generation */}
-        {revealedKey && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald/8 border border-emerald/25">
-            <p className="text-xs font-semibold text-emerald mb-2">✓ Key generated — copy it now, it won't be shown again</p>
-            <div className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 font-mono text-xs text-text-primary border border-border">
-              <span className="flex-1 truncate select-all">{revealedKey}</span>
-              <button onClick={() => copyKey(revealedKey)} className="text-text-muted hover:text-text-primary transition-colors shrink-0">
-                {keyCopied ? <Check className="w-4 h-4 text-emerald" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Generate new key */}
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={newKeyName}
-            onChange={e => setNewKeyName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && generateKey()}
-            placeholder="Key name (e.g. Production)"
-            maxLength={64}
-            className="input-field flex-1 py-2 text-sm"
-          />
-          <button
-            onClick={generateKey}
-            disabled={generating || apiKeys.length >= 5}
-            className="btn-primary flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-40 shrink-0"
-          >
-            {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Key className="w-3.5 h-3.5" />}
-            Generate
-          </button>
-        </div>
-
-        {/* Keys list */}
-        {keysLoading ? (
-          <div className="space-y-2">
-            {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-surface-active animate-pulse" />)}
-          </div>
-        ) : apiKeys.length === 0 ? (
-          <div className="text-center py-8 text-text-muted text-sm border border-dashed border-border rounded-xl">
-            No API keys yet — generate one above to get started
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {apiKeys.map(k => (
-              <div key={k.id} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-surface hover:border-primary/30 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-medium text-text-primary truncate">{k.name || 'Unnamed Key'}</span>
-                    {k.is_active
-                      ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald/10 text-emerald font-semibold shrink-0">Active</span>
-                      : <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose/10 text-rose font-semibold shrink-0">Revoked</span>
-                    }
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    {k.calls_today ?? 0}/{k.daily_limit ?? 1000} calls today
-                    {k.last_used_at
-                      ? ` · Last used ${new Date(k.last_used_at).toLocaleDateString()}`
-                      : ' · Never used'
-                    }
-                  </p>
-                </div>
-                {k.is_active && (
-                  <button
-                    onClick={() => revokeKey(k.id)}
-                    disabled={revoking === k.id}
-                    className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border text-xs text-text-muted hover:border-rose/40 hover:text-rose hover:bg-rose/5 transition-all disabled:opacity-40"
-                  >
-                    {revoking === k.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                    Revoke
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-3 pt-3 border-t border-border">
-          <a href="/docs/api" className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium w-fit">
-            <Globe className="w-3 h-3" /> View API documentation →
-          </a>
-        </div>
-      </motion.div>
-
-      {/* Appearance */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-secondary bg-secondary/10 flex items-center justify-center"><Palette className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Appearance & Region</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-text-muted block mb-1.5">Language</label>
-            <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="input-field w-full py-2 text-sm">
-              <option value="en">English</option>
-              <option value="ur">Urdu</option>
-              <option value="ar">Arabic</option>
-              <option value="fr">French</option>
-              <option value="es">Spanish</option>
+      <Section title="Privacy" icon={Shield}>
+        <SettingRow icon={Globe}       label="Public profile"      description="Allow others to see your username and stats"      action={<Toggle checked={publicProfile}   onChange={() => setPublicProfile(v => !v)} />} />
+        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized scan results to improve accuracy" action={<Toggle checked={shareAnon}      onChange={() => setShareAnon(v => !v)} />} />
+        <SettingRow icon={Eye}         label="Opt out of analytics" description="Disable usage analytics collection"              action={<Toggle checked={analyticsOptOut} onChange={() => setAnalyticsOptOut(v => !v)} />} />
+        <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
+          action={
+            <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
+              className="text-xs bg-surface-active border border-border rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              <option value="30">30 days</option>
+              <option value="90">90 days</option>
+              <option value="365">1 year</option>
+              <option value="forever">Forever</option>
             </select>
-          </div>
-          <div>
-            <label className="text-xs text-text-muted block mb-1.5">Timezone</label>
-            <select value={timezone} onChange={e => setTimezone(e.target.value)}
-              className="input-field w-full py-2 text-sm">
-              <option value="UTC+5">UTC+5 (PKT)</option>
-              <option value="UTC+0">UTC+0 (GMT)</option>
-              <option value="UTC-5">UTC-5 (EST)</option>
-              <option value="UTC-8">UTC-8 (PST)</option>
-              <option value="UTC+1">UTC+1 (CET)</option>
-            </select>
-          </div>
-        </div>
-      </motion.div>
+          } />
+      </Section>
 
       {/* Security */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-amber bg-amber/10 flex items-center justify-center"><Lock className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Account Security</h3>
-        </div>
-        <div className="space-y-2">
-          <button onClick={() => toast.info('Password change link sent to your email')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/30 text-sm text-text-secondary hover:text-text-primary transition-all text-left">
-            <Lock className="w-4 h-4 text-text-muted" />
-            <div className="flex-1">
-              <p className="font-medium">Change Password</p>
-              <p className="text-xs text-text-muted">Send a password reset link to your email</p>
-            </div>
-          </button>
-          <button onClick={() => toast.info('2FA setup coming soon')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/30 text-sm text-text-secondary hover:text-text-primary transition-all text-left">
-            <Smartphone className="w-4 h-4 text-text-muted" />
-            <div className="flex-1">
-              <p className="font-medium">Two-Factor Authentication</p>
-              <p className="text-xs text-text-muted">Add an extra layer of security to your account</p>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber/10 border border-amber/20 text-amber font-medium">Soon</span>
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Data & Export */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }} className="card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-primary bg-primary/10 flex items-center justify-center"><Download className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Data & Export</h3>
-        </div>
-        <div className="space-y-2">
-          <button onClick={exportData}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/30 text-sm text-text-secondary hover:text-text-primary transition-all text-left">
-            <Download className="w-4 h-4 text-text-muted" />
-            <div>
-              <p className="font-medium">Export Settings</p>
-              <p className="text-xs text-text-muted">Download your preferences as JSON</p>
-            </div>
-          </button>
-          <button onClick={() => toast.info('History export coming soon')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-primary/30 text-sm text-text-secondary hover:text-text-primary transition-all text-left">
-            <Download className="w-4 h-4 text-text-muted" />
-            <div>
-              <p className="font-medium">Export Scan History</p>
-              <p className="text-xs text-text-muted">Download all scan results as CSV</p>
-            </div>
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Danger Zone */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card border-rose/20">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl text-rose bg-rose/10 flex items-center justify-center"><AlertTriangle className="w-4 h-4" /></div>
-          <h3 className="font-semibold text-text-primary">Danger Zone</h3>
-        </div>
-        {!deleteConfirm ? (
-          <button onClick={() => setDeleteConfirm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-rose/30 text-rose text-sm hover:bg-rose/5 transition-colors">
-            <Trash2 className="w-4 h-4" /> Delete Account
-          </button>
-        ) : (
-          <div className="p-4 rounded-xl bg-rose/5 border border-rose/20">
-            <p className="text-sm text-rose font-medium mb-3">This will permanently delete your account and all data. Are you sure?</p>
-            <div className="flex gap-2">
-              <button onClick={handleDeleteAccount} disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-rose text-white text-sm font-medium hover:bg-rose/90 transition-colors disabled:opacity-60 flex items-center gap-2">
-                {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Yes, Delete My Account
+      <Section title="Security & API" icon={Lock}>
+        <SettingRow icon={Smartphone} label="Manage 2FA & password"  description="Update security settings via Clerk"
+          action={
+            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline">
+              Manage <ChevronRight className="w-3 h-3" />
+            </button>
+          } />
+        <SettingRow icon={Key} label="API key (beta)" description="For programmatic access — Team/Enterprise only"
+          action={
+            <div className="flex items-center gap-2">
+              <code className="text-[10px] text-text-muted font-mono">
+                {showKey ? `aiscern_${user?.uid?.slice(0,16)}...` : '••••••••••••••••'}
+              </code>
+              <button onClick={() => setShowKey(v => !v)} className="text-text-muted hover:text-text-primary transition-colors">
+                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
-              <button onClick={() => setDeleteConfirm(false)}
-                className="px-4 py-2 rounded-xl border border-border text-sm hover:bg-surface-hover transition-colors">
+              <button onClick={copyApiKey} className="text-text-muted hover:text-text-primary transition-colors">
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          } />
+      </Section>
+
+      {/* Data */}
+      <Section title="Data & Storage" icon={Database}>
+        <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
+          action={
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
+              <Download className="w-3 h-3" /> Export
+            </button>
+          } />
+        <SettingRow icon={Trash2} label="Clear scan history" description="Delete all saved detection results permanently"
+          action={
+            <button onClick={async () => {
+              if (!user?.uid) return
+              await (supabase as any).from('scans').delete().eq('user_id', user.uid)
+              toast.success('History cleared')
+            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              <Trash2 className="w-3 h-3" /> Clear
+            </button>
+          } />
+      </Section>
+
+      {/* Danger zone */}
+      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-6">
+        <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-4 h-4" /> Danger Zone
+        </h2>
+        {!confirmDelete ? (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Delete account</p>
+              <p className="text-xs text-text-muted mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
+            </div>
+            <button onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              <Trash2 className="w-3 h-3" /> Delete
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-rose-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)}
+                className="flex-1 py-2 rounded-xl border border-border text-xs text-text-muted hover:text-text-primary">
                 Cancel
+              </button>
+              <button onClick={deleteAccount} disabled={deleting}
+                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
+                {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>
           </div>
         )}
       </motion.div>
-          <ScrollToTop />
+
+      <ScrollToTop />
     </div>
   )
 }

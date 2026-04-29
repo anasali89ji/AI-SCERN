@@ -1,149 +1,202 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { motion } from 'framer-motion'
 import {
   Mail, Shield, BarChart3, Calendar, Edit3, Save, X,
   Loader2, Check, FileText, Image as ImageIcon, Music, Video,
-  Brain, User, Zap
+  Brain, User, Zap, AtSign, Upload, Camera, Globe, Crown, ChevronRight
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 
-function Avatar({ user, size = 24 }: { user: any; size?: number }) {
-  const initials = user?.displayName
-    ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : user?.email?.[0]?.toUpperCase() || 'U'
-
-  if (user?.photoURL) {
-    return (
-      <img
-        src={user.photoURL}
-        alt={initials}
-        style={{ width: size * 4, height: size * 4 }}
-        className="rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20"
-        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-      />
-    )
+// ── Avatar ────────────────────────────────────────────────────────────────────
+function Avatar({ name, photoURL, avatarUrl, size = 96 }: { name: string; photoURL?: string|null; avatarUrl?: string|null; size?: number }) {
+  const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) || 'U'
+  const src = avatarUrl || photoURL
+  if (src) {
+    return <img src={src} alt={initials} style={{ width:size, height:size }}
+      className="rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20"
+      onError={e => { (e.target as HTMLImageElement).style.display='none' }} />
   }
   return (
     <div
-      style={{ width: size * 4, height: size * 4, fontSize: size * 1.2 }}
-      className="rounded-full bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-700 flex items-center justify-center text-white font-black ring-4 ring-primary/30 shadow-xl shadow-primary/20 select-none"
-    >
+      style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)', width:size, height:size, fontSize:size*0.32 }}
+      className="rounded-full flex items-center justify-center font-black text-white ring-4 ring-primary/30 shadow-xl shadow-primary/20">
       {initials}
     </div>
   )
 }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number|string; color: string }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-      className="bg-surface border border-border rounded-2xl p-5 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <div>
-        <p className="text-2xl font-black text-text-primary">{value ?? 0}</p>
-        <p className="text-xs text-text-muted mt-0.5">{label}</p>
-      </div>
-    </motion.div>
+    <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-2">
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4 h-4" /></div>
+      <p className="text-2xl font-black text-text-primary tabular-nums">{value}</p>
+      <p className="text-xs text-text-muted">{label}</p>
+    </div>
   )
 }
 
-export default function ProfilePage() {
-  const { user: clerkUser } = useUser()
-  const { user } = useAuth()
-  const [stats,       setStats]       = useState<any>(null)
-  const [editing,     setEditing]     = useState(false)
-  const [displayName, setDisplayName] = useState('')
-  const [saving,      setSaving]      = useState(false)
-  const [loading,     setLoading]     = useState(true)
-  const [saved,       setSaved]       = useState(false)
-  const supabase = createClient()
+function CreditBar({ label, used, total, color }: { label: string; used: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.min(100, (used/total)*100) : 0
+  const left = total - used
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-text-muted font-medium">{label}</span>
+        <span className="font-bold text-text-primary">{left} / {total} left</span>
+      </div>
+      <div className="h-1.5 bg-border rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width:`${pct}%`, background:color }} />
+      </div>
+    </div>
+  )
+}
 
-  useEffect(() => {
+// ── Main Page ─────────────────────────────────────────────────────────────────
+export default function ProfilePage() {
+  const { user }          = useAuth()
+  const { user: clerkUser } = useUser()
+  const supabase          = createClient()
+
+  const [profile, setProfile]       = useState<any>(null)
+  const [stats,   setStats]         = useState<any>(null)
+  const [loading, setLoading]       = useState(true)
+  const [editing, setEditing]       = useState(false)
+  const [saving,  setSaving]        = useState(false)
+
+  // Editable fields
+  const [displayName, setDisplayName] = useState('')
+  const [username,    setUsername]    = useState('')
+  const [bio,         setBio]         = useState('')
+  const [avatarUrl,   setAvatarUrl]   = useState('')
+
+  // Username check
+  const [uStatus, setUStatus] = useState<'idle'|'checking'|'available'|'taken'>('idle')
+  const [suggestions, setSugg] = useState<string[]>([])
+  const debounceRef = useRef<NodeJS.Timeout|null>(null)
+
+  const loadProfile = useCallback(async () => {
     if (!user?.uid) return
-    setDisplayName(user.displayName || user.email?.split('@')[0] || '')
-    async function load() {
-      const { data: s, error } = await (supabase as any).rpc('get_user_stats', { p_user_id: user!.uid })
-      if (s && !error) {
-        const avg = (s.avg_confidence ?? 0) <= 1
-          ? Math.round(s.avg_confidence * 100)
-          : Math.round(s.avg_confidence)
-        setStats({ ...s, avg_confidence: avg })
-      } else {
-        const { data: rows } = await (supabase as any)
-          .from('scans').select('verdict,confidence_score,media_type').eq('user_id', user!.uid)
-        if (rows) {
-          const total = rows.length
-          setStats({
-            total_scans:    total,
-            ai_detected:    rows.filter((r: any) => r.verdict === 'AI').length,
-            human_detected: rows.filter((r: any) => r.verdict === 'HUMAN').length,
-            uncertain:      rows.filter((r: any) => r.verdict === 'UNCERTAIN').length,
-            avg_confidence: total > 0 ? Math.round(rows.reduce((a: number, r: any) => a + (r.confidence_score ?? 0), 0) / total * 100) : 0,
-            text_scans:     rows.filter((r: any) => r.media_type === 'text').length,
-            image_scans:    rows.filter((r: any) => r.media_type === 'image').length,
-            audio_scans:    rows.filter((r: any) => r.media_type === 'audio').length,
-            video_scans:    rows.filter((r: any) => r.media_type === 'video').length,
-          })
-        }
-      }
-      setLoading(false)
+    const { data } = await (supabase as any).from('profiles').select('*').eq('id', user.uid).single()
+    if (data) {
+      setProfile(data)
+      setDisplayName(data.display_name || user.displayName || '')
+      setUsername(data.username || '')
+      setBio(data.bio || '')
+      setAvatarUrl(data.avatar_url || '')
     }
-    load()
+    // Stats
+    const { data: s } = await (supabase as any).rpc('get_user_stats', { p_user_id: user.uid })
+    if (s) {
+      setStats({ ...s, avg_confidence: s.avg_confidence <= 1 ? Math.round(s.avg_confidence*100) : Math.round(s.avg_confidence) })
+    } else {
+      const { data: rows } = await (supabase as any).from('scans').select('verdict,confidence_score,media_type').eq('user_id', user.uid)
+      if (rows) {
+        const total = rows.length
+        setStats({
+          total_scans: total,
+          ai_detected: rows.filter((r:any) => r.verdict==='AI').length,
+          human_detected: rows.filter((r:any) => r.verdict==='HUMAN').length,
+          uncertain: rows.filter((r:any) => r.verdict==='UNCERTAIN').length,
+          avg_confidence: total>0 ? Math.round(rows.reduce((a:number,r:any) => a+(r.confidence_score??0),0)/total*100) : 0,
+          text_scans: rows.filter((r:any) => r.media_type==='text').length,
+          image_scans: rows.filter((r:any) => r.media_type==='image').length,
+          audio_scans: rows.filter((r:any) => r.media_type==='audio').length,
+          video_scans: rows.filter((r:any) => r.media_type==='video').length,
+        })
+      }
+    }
+    setLoading(false)
   }, [user?.uid]) // eslint-disable-line
 
-  const handleSave = async () => {
-    if (!user?.uid || !displayName.trim()) return
-    setSaving(true)
-    await (supabase as any).from('profiles').upsert({ id: user.uid, display_name: displayName.trim() })
-    setSaving(false)
-    setSaved(true)
-    setEditing(false)
-    toast.success('Profile updated')
-    setTimeout(() => setSaved(false), 2000)
+  useEffect(() => { loadProfile() }, [loadProfile])
+
+  const checkUsername = (val: string) => {
+    const clean = val.toLowerCase().replace(/[^a-z0-9_]/g,'')
+    setUsername(clean)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!clean || clean.length < 3) { setUStatus('idle'); return }
+    setUStatus('checking')
+    debounceRef.current = setTimeout(async () => {
+      const res  = await fetch(`/api/profiles/username?username=${encodeURIComponent(clean)}`)
+      const data = await res.json()
+      setUStatus(data.available ? 'available' : 'taken')
+      setSugg(data.suggestions || [])
+    }, 400)
   }
 
-  const name      = displayName || user?.displayName || user?.email?.split('@')[0] || 'User'
-  const joinedAt  = clerkUser?.createdAt
-    ? new Date(clerkUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : 'Unknown'
+  const handleSave = async () => {
+    if (!user?.uid) return
+    if (username && uStatus === 'taken') { toast.error('That username is taken'); return }
+    setSaving(true)
+    const res = await fetch('/api/profiles/update', {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ display_name: displayName.trim(), username: username||null, bio: bio||null, avatar_url: avatarUrl||null }),
+    })
+    if (!res.ok) {
+      const d = await res.json()
+      toast.error(d.error || 'Failed to save')
+    } else {
+      toast.success('Profile saved!')
+      setEditing(false)
+      loadProfile()
+    }
+    setSaving(false)
+  }
+
+  const plan      = profile?.plan || 'free'
+  const planLabel = { free:'Free', pro:'Pro', team:'Team', enterprise:'Enterprise' }[plan] || 'Free'
+  const isPro     = ['pro','team','enterprise'].includes(plan)
+  const joinedAt  = clerkUser?.createdAt ? new Date(clerkUser.createdAt).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '—'
+
+  const audioCredits     = profile?.audio_credits ?? 3
+  const videoCredits     = profile?.video_credits ?? 3
+  const audioCreditsUsed = profile?.audio_credits_used ?? 0
+  const videoCreditsUsed = profile?.video_credits_used ?? 0
+  const dailyUsed        = profile?.daily_scans ?? 0
+  const dailyLimit       = plan==='enterprise' ? Infinity : plan==='team' ? 500 : plan==='pro' ? 100 : 10
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
 
-      {/* ── Profile card ── */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      {/* ── Profile Card ─────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
         className="bg-surface border border-border rounded-3xl overflow-hidden">
-
         {/* Banner */}
-        <div className="h-28 bg-gradient-to-r from-violet-600/30 via-indigo-600/20 to-purple-600/30 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.15),transparent)]" />
+        <div className="h-28 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
+          <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(124,58,237,0.2) 0%, transparent 60%)' }} />
         </div>
-
-        {/* Avatar + info */}
         <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 sm:-mt-14">
-            {/* Avatar circle */}
-            <div className="relative">
-              <Avatar user={{ ...user, displayName: displayName || user?.displayName }} size={14} />
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-14">
+            {/* Avatar with upload overlay */}
+            <div className="relative group w-24 h-24">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-2xl ring-4 ring-surface"
+                style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                {(displayName||user?.displayName||user?.email||'U')[0]?.toUpperCase()}
+              </div>
+              {editing && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+              )}
               <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald border-2 border-surface" />
             </div>
 
-            {/* Edit / Save buttons */}
-            <div className="flex gap-2 mt-2 sm:mt-0">
+            {/* Action buttons */}
+            <div className="flex gap-2 sm:mb-2">
               {editing ? (
                 <>
                   <button onClick={handleSave} disabled={saving}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-60">
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60"
+                    style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
-                  <button onClick={() => { setEditing(false); setDisplayName(user?.displayName || '') }}
+                  <button onClick={() => setEditing(false)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-hover transition-all">
                     <X className="w-4 h-4" /> Cancel
                   </button>
@@ -151,103 +204,165 @@ export default function ProfilePage() {
               ) : (
                 <button onClick={() => setEditing(true)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:border-primary/40 transition-all">
-                  {saved ? <Check className="w-4 h-4 text-emerald" /> : <Edit3 className="w-4 h-4" />}
-                  {saved ? 'Saved!' : 'Edit Profile'}
+                  <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
             </div>
           </div>
 
-          {/* Name + email */}
-          <div className="mt-4 space-y-1">
+          {/* Name / username / email */}
+          <div className="mt-4 space-y-3">
             {editing ? (
-              <input
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSave()}
-                className="text-2xl font-black bg-surface-active border border-primary/40 rounded-xl px-3 py-1 text-text-primary focus:outline-none focus:border-primary w-full max-w-xs"
-                autoFocus
-              />
+              <div className="space-y-3 max-w-sm">
+                {/* Display name */}
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Display Name</label>
+                  <input value={displayName} onChange={e => setDisplayName(e.target.value)}
+                    className="w-full bg-surface-active border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                    placeholder="Your full name" />
+                </div>
+                {/* Username */}
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Username</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">@</span>
+                    <input value={username} onChange={e => checkUsername(e.target.value)}
+                      className="w-full bg-surface-active border border-border rounded-xl pl-7 pr-9 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                      placeholder="yourname" maxLength={30} />
+                    {uStatus==='checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-border border-t-primary animate-spin" />}
+                    {uStatus==='available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald" />}
+                    {uStatus==='taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400" />}
+                  </div>
+                  {uStatus==='taken' && suggestions.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span className="text-[11px] text-text-muted">Try:</span>
+                      {suggestions.map(s => (
+                        <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
+                          className="text-[11px] px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20">
+                          @{s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {uStatus==='available' && username && <p className="text-[11px] text-emerald mt-1">@{username} is available</p>}
+                </div>
+                {/* Bio */}
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Bio</label>
+                  <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
+                    className="w-full bg-surface-active border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary resize-none"
+                    placeholder="A short bio (optional)" maxLength={160} />
+                  <p className="text-[10px] text-text-muted text-right mt-0.5">{bio.length}/160</p>
+                </div>
+              </div>
             ) : (
-              <h1 className="text-2xl font-black text-text-primary">{name}</h1>
+              <>
+                <h1 className="text-2xl font-black text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
+                {profile?.username && <p className="text-sm text-text-muted">@{profile.username}</p>}
+                {profile?.bio      && <p className="text-sm text-text-secondary">{profile.bio}</p>}
+                <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
+                  <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" />{user?.email}</span>
+                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Joined {joinedAt}</span>
+                  <span className="flex items-center gap-1.5 text-emerald"><Shield className="w-4 h-4" />Verified</span>
+                </div>
+              </>
             )}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted mt-1">
-              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" />{user?.email}</span>
-              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Joined {joinedAt}</span>
-              <span className="flex items-center gap-1.5 text-emerald">
-                <Shield className="w-4 h-4" />Verified account
-              </span>
-            </div>
 
             {/* Plan badge */}
-            <div className="flex items-center gap-2 mt-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
-                <Zap className="w-3.5 h-3.5" /> Free Plan — Unlimited Scans
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${isPro ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
+                {isPro ? <Crown className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
+                {planLabel} Plan
               </span>
+              {!isPro && (
+                <a href="/pricing" className="text-xs text-text-muted hover:text-primary transition-colors flex items-center gap-1">
+                  Upgrade <ChevronRight className="w-3 h-3" />
+                </a>
+              )}
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ── Stats grid ── */}
+      {/* ── Credits & Usage ─────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0, transition:{delay:0.05} }}
+        className="bg-surface border border-border rounded-2xl p-6">
+        <h2 className="font-bold text-text-primary flex items-center gap-2 mb-5">
+          <Zap className="w-4 h-4 text-primary" /> Credits & Usage
+        </h2>
+        <div className="space-y-4">
+          <CreditBar
+            label={`Daily Scans (${planLabel} — ${dailyLimit === Infinity ? 'Unlimited' : dailyLimit}/day)`}
+            used={dailyUsed} total={dailyLimit === Infinity ? dailyUsed+1 : dailyLimit}
+            color="linear-gradient(90deg,#7c3aed,#2563eb)" />
+          {!isPro && (
+            <>
+              <CreditBar label="Audio Detection Credits (Free Trial)" used={audioCreditsUsed} total={audioCreditsUsed+audioCredits} color="#06b6d4" />
+              <CreditBar label="Video Detection Credits (Free Trial)" used={videoCreditsUsed} total={videoCreditsUsed+videoCredits} color="#f59e0b" />
+              {(audioCredits === 0 || videoCredits === 0) && (
+                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-400">
+                  Some credits exhausted.{' '}
+                  <a href="/pricing" className="font-semibold underline">Upgrade to Pro</a> for 100 scans/day across all modalities.
+                </div>
+              )}
+            </>
+          )}
+          {isPro && (
+            <div className="flex items-center gap-2 p-3 bg-emerald/5 border border-emerald/20 rounded-xl text-xs text-emerald">
+              <Check className="w-4 h-4 flex-shrink-0" />
+              Full access to all detection modalities included in your {planLabel} plan.
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── Stats ───────────────────────────────────────────────────────────── */}
       <div>
         <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">Detection Stats</h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-surface border border-border rounded-2xl p-5 h-20 animate-pulse" />
-            ))}
+            {[...Array(8)].map((_,i) => <div key={i} className="bg-surface border border-border rounded-2xl h-24 animate-pulse" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-primary/10 text-primary" />
-            <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose/10 text-rose" />
-            <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald/10 text-emerald" />
-            <StatCard icon={BarChart3} label="Avg Confidence" value={stats?.avg_confidence ?? 0} color="bg-amber/10 text-amber" />
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+              <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-primary/10 text-primary" />
+              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500/10 text-rose-400" />
+              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald/10 text-emerald" />
+              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500/10 text-amber-400" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
+              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-violet-500/10 text-violet-400" />
+              <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-cyan-500/10 text-cyan-400" />
+              <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
+            </div>
+          </>
         )}
       </div>
 
-      {/* ── By modality ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">By Modality</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard icon={FileText}  label="Text Scans"  value={stats?.text_scans  ?? 0} color="bg-amber/10 text-amber" />
-          <StatCard icon={ImageIcon} label="Image Scans" value={stats?.image_scans ?? 0} color="bg-violet/10 text-violet-400" />
-          <StatCard icon={Music}     label="Audio Scans" value={stats?.audio_scans ?? 0} color="bg-cyan/10 text-cyan" />
-          <StatCard icon={Video}     label="Video Scans" value={stats?.video_scans ?? 0} color="bg-secondary/10 text-secondary" />
-        </div>
-      </div>
-
-      {/* ── Account details ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-surface border border-border rounded-2xl p-6 space-y-4">
-        <h2 className="font-bold text-text-primary flex items-center gap-2">
+      {/* ── Account Details ─────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
+        className="bg-surface border border-border rounded-2xl p-6 space-y-3">
+        <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1">
           <Shield className="w-5 h-5 text-primary" /> Account Details
         </h2>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
-            <span className="text-text-muted">Email address</span>
-            <span className="font-medium text-text-primary">{user?.email}</span>
+        {[
+          ['Email address',  user?.email,                  ''],
+          ['Username',       profile?.username ? `@${profile.username}` : '—', ''],
+          ['Display name',   displayName || '—',           ''],
+          ['Joined',         joinedAt,                     ''],
+          ['Plan',           planLabel,                    isPro ? 'text-yellow-400' : 'text-primary'],
+          ['Status',         'Active',                     'text-emerald'],
+        ].map(([label, value, cls]) => (
+          <div key={label as string} className="flex justify-between items-center py-2.5 border-b border-border/50 last:border-0 text-sm">
+            <span className="text-text-muted">{label}</span>
+            <span className={`font-medium text-text-primary ${cls}`}>{value}</span>
           </div>
-          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
-            <span className="text-text-muted">Display name</span>
-            <span className="font-medium text-text-primary">{name}</span>
-          </div>
-          <div className="flex justify-between items-center py-2.5 border-b border-border/50">
-            <span className="text-text-muted">Account status</span>
-            <span className="text-emerald font-semibold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald" /> Active
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-text-muted">Plan</span>
-            <span className="font-semibold text-primary">Free Tier</span>
-          </div>
-        </div>
+        ))}
       </motion.div>
 
-          <ScrollToTop />
+      <ScrollToTop />
     </div>
   )
 }

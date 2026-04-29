@@ -13,6 +13,8 @@ import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
 import { MobileNav } from '@/components/MobileNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { OnboardingWizard } from '@/components/OnboardingWizard'
+import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
 
 const navGroups = [
   {
@@ -341,6 +343,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <MobileNav />
+      <OnboardingWizard />
+      <UpgradeNotificationProvider />
     </AuthGuard>
   )
 }

@@ -124,6 +124,25 @@ export async function PATCH(req: NextRequest) {
       })
     } catch { /* non-fatal */ }
 
+
+    // Send upgrade notification to user
+    if (action === 'grant_pro' || action === 'set_plan') {
+      const grantedPlan = action === 'grant_pro' ? 'pro' : plan
+      const planLabels: Record<string,string> = { pro:'Pro', team:'Team', enterprise:'Enterprise' }
+      const label = planLabels[grantedPlan] || grantedPlan
+      try {
+        await db.from('user_notifications').insert({
+          user_id: targetId,
+          type: 'plan_upgrade',
+          title: `🎉 You've been upgraded to ${label}!`,
+          message: action === 'grant_pro'
+            ? `Your account has been upgraded to Aiscern ${label} by an admin. You now have access to all detection modalities and ${grantedPlan === 'pro' ? '100' : grantedPlan === 'team' ? '500' : 'unlimited'} scans per day.`
+            : `Your plan has been changed to ${label} by an admin.`,
+          data: { plan: grantedPlan, expires_at: update.plan_expires_at || null },
+          read: false,
+        })
+      } catch { /* non-fatal */ }
+    }
     return NextResponse.json({ success: true, action, update })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
