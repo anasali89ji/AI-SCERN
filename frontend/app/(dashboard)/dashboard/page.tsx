@@ -7,7 +7,6 @@ import {
   Zap, ArrowRight, Shield, CheckCircle, AlertTriangle,
   HelpCircle, Image as ImageIcon, Video, Music, Sparkles, Layers
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 
 const TOOLS = [
@@ -53,42 +52,41 @@ export default function DashboardPage() {
   const [stats,   setStats]   = useState<any>(null)
   const [scans,   setScans]   = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const loadDashboard = useCallback(async () => {
     if (!user?.uid) return
-    const [rpcRes, scansRes] = await Promise.all([
-      (supabase as any).rpc('get_user_stats', { p_user_id: user!.uid }),
-      (supabase as any).from('scans').select('id,media_type,verdict,confidence_score,created_at,content_preview')
-        .eq('user_id', user!.uid).order('created_at', { ascending: false }).limit(8),
-    ])
-    if (rpcRes.data && !rpcRes.error) {
-      const d = rpcRes.data as any
-      const avg = (d.avg_confidence ?? 0) <= 1 ? Math.round(d.avg_confidence * 100) : Math.round(d.avg_confidence)
-      setStats({ ...d, avg_confidence: avg })
-    } else if (scansRes.data) {
-      const rows = scansRes.data
-      setStats({
-        total_scans: rows.length, ai_detected: rows.filter((r: any) => r.verdict === 'AI').length,
-        human_detected: rows.filter((r: any) => r.verdict === 'HUMAN').length,
-        avg_confidence: rows.length ? Math.round(rows.reduce((a: number, r: any) => a + (r.confidence_score ?? 0), 0) / rows.length * 100) : 0,
-      })
-    }
-    if (scansRes.data) setScans(scansRes.data)
+    try {
+      const [statsRes, scansRes] = await Promise.all([
+        fetch('/api/user/stats'),
+        fetch('/api/user/scans?limit=8&sort=newest'),
+      ])
+      if (statsRes.ok) {
+        const d = await statsRes.json()
+        const avg = (d.avg_confidence ?? 0) <= 1 ? Math.round(d.avg_confidence * 100) : Math.round(d.avg_confidence)
+        setStats({ ...d, avg_confidence: avg })
+      }
+      if (scansRes.ok) {
+        const { data } = await scansRes.json()
+        if (data) setScans(data)
+      }
+    } catch { /* silent */ }
     setLoading(false)
-  }, [user?.uid]) // eslint-disable-line
+  }, [user?.uid])
 
   // Initial load + auto-refresh when user returns to tab (after running a scan)
   useEffect(() => {
     loadDashboard()
-    const onVisible = () => { if (document.visibilityState === 'visible') loadDashboard() }
-    const onFocus   = () => loadDashboard()
+    const onVisible   = () => { if (document.visibilityState === 'visible') loadDashboard() }
+    const onFocus     = () => loadDashboard()
+    const onScanSaved = () => loadDashboard()
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onFocus)
+    window.addEventListener('aiscern:scan-saved', onScanSaved)
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)
+      window.removeEventListener('aiscern:scan-saved', onScanSaved)
     }
   }, [loadDashboard])
 

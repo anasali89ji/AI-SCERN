@@ -93,7 +93,8 @@ export default function ImageDetectionPage() {
       setScanStage('complete')
       setResult(data.result)
       setScanId(data.scan_id ?? null)
-      // FIX: removed duplicate supabase.from('scans').insert() — API route already saves
+      // Notify dashboard/history pages to refresh scan list
+      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
     } catch (e: unknown) {
       setError(e instanceof Error ? toUserError(undefined, e.message) : toUserError())
     } finally { setLoading(false); setScanStage('idle') }

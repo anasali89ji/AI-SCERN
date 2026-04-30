@@ -144,6 +144,7 @@ export default function AudioDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setResult(data.result)
       setScanId(data.scan_id ?? null)
+      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
       // FIX: removed duplicate supabase.from('scans').insert() — API route already saves

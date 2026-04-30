@@ -239,6 +239,7 @@ export default function VideoDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setResult(data.result)
       setScanId(data.scan_id ?? null)
+      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
     } catch (e: unknown) {
       setError(e instanceof Error ? toUserError(undefined, e.message) : toUserError())
     } finally {

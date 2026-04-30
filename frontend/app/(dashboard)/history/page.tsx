@@ -3,7 +3,6 @@ import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
@@ -100,44 +99,47 @@ export default function HistoryPage() {
   const [selectedScan, setSelectedScan] = useState<Scan | null>(null)
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 20
-  const supabase = createClient()
 
   const loadScans = useCallback(async (showRefresh = false) => {
-    const uid = currentUser?.uid
-    if (!uid) { setLoading(false); return }
+    if (!currentUser?.uid) { setLoading(false); return }
     if (showRefresh) setRefreshing(true)
 
-    const { data } = await supabase
-      .from('scans').select('*').eq('user_id', uid)
-      .order('created_at', { ascending: false }).limit(200)
-    if (data) setScans(data as any)
+    try {
+      const res = await fetch('/api/user/scans?limit=200')
+      if (res.ok) {
+        const { data } = await res.json()
+        if (data) setScans(data as any)
+      }
+    } catch { /* silent */ }
     setLoading(false)
     setRefreshing(false)
-  }, [currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUser?.uid])
 
   useEffect(() => {
     loadScans()
-    const onVisible = () => { if (document.visibilityState === 'visible') loadScans() }
-    const onFocus   = () => loadScans()
+    const onVisible  = () => { if (document.visibilityState === 'visible') loadScans() }
+    const onFocus    = () => loadScans()
+    const onScanSaved = () => loadScans()
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onFocus)
+    window.addEventListener('aiscern:scan-saved', onScanSaved)
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)
+      window.removeEventListener('aiscern:scan-saved', onScanSaved)
     }
   }, [loadScans])
 
   async function deleteScan(id: string) {
     setDeleting(id)
-    await (supabase as any).from('scans').delete().eq('id', id)
+    await fetch(`/api/user/scans?id=${id}`, { method: 'DELETE' })
     setScans(prev => prev.filter(s => s.id !== id))
     setDeleting(null)
   }
 
   async function deleteAll() {
     if (!confirm(`Delete all ${scans.length} scans? This cannot be undone.`)) return
-    const uid = currentUser?.uid; if (!uid) return
-    await (supabase as any).from('scans').delete().eq('user_id', uid)
+    await fetch('/api/user/scans', { method: 'DELETE' })
     setScans([])
   }
 

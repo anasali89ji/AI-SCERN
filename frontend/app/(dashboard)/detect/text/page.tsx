@@ -75,7 +75,7 @@ export default function TextDetectionPage() {
       if (payload?.paragraph_scores) setParagraphScores(payload.paragraph_scores)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
-      // FIX: removed duplicate dispatch + duplicate supabase insert — API route already saves
+      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
     } catch (err: unknown) {
       setError(err instanceof Error ? toUserError(undefined, err.message) : toUserError())
     } finally { setPdfLoading(false) }
@@ -98,7 +98,7 @@ export default function TextDetectionPage() {
       setScanId(data.scan_id ?? null)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
-      // FIX: removed duplicate supabase insert — API route already saves
+      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
     } catch (err: unknown) {
       setError(err instanceof Error ? toUserError(undefined, err.message) : toUserError())
     } finally { setLoading(false) }
