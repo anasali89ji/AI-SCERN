@@ -629,12 +629,15 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           style={{ background: `linear-gradient(145deg, ${card.color}60, ${card.color}25)` }}
         />
 
-        {/* Layer 2 — actual photo, fills entire panel */}
-        <img
+        {/* Layer 2 — actual photo, Next/Image for auto WebP/AVIF + responsive sizing */}
+        <Image
           src={card.img}
           alt={card.role}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
+          fill
+          className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
           loading="lazy"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          quality={72}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
 
@@ -999,6 +1002,8 @@ function ComparisonCard({ card }: { card: { type: string; label: string; verdict
           <img src={card.img} alt={card.label}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10"
             loading="lazy"
+            width={288}
+            height={176}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
@@ -1243,8 +1248,7 @@ export default function HomePage() {
             <span className="sm:hidden">8+ models · Free tier available</span>
           </div>
 
-          <motion.h1 initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }}
-            className="font-black leading-[0.95] mb-4 sm:mb-6">
+          <h1 className="font-black leading-[0.95] mb-4 sm:mb-6">
             {/* Mobile: short punchy headline */}
             <span className="block sm:hidden text-[2rem] leading-tight gradient-text">Aiscern</span>
             <span className="block sm:hidden text-lg text-text-primary mt-2 font-semibold leading-snug">
@@ -1262,7 +1266,7 @@ export default function HomePage() {
               <span className="text-secondary font-black">Video</span>
               <span className="text-text-secondary font-semibold ml-1">Across Four Modalities</span>
             </span>
-          </motion.h1>
+          </h1>
 
           <p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-6 sm:mb-10 leading-relaxed hero-fade-up" style={{ animationDelay: '0.05s' }}>
             <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required for basic scans.</span>

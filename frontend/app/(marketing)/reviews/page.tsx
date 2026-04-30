@@ -1,18 +1,29 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { Star, ThumbsUp, CheckCircle, PenLine, Filter, ChevronLeft, ChevronRight, EyeOff, Loader2 } from 'lucide-react'
+import { Star, ThumbsUp, CheckCircle, PenLine, Filter, ChevronLeft, ChevronRight, EyeOff, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
-import { ReviewModal } from '@/components/ReviewModal'
 import { SiteNav } from '@/components/SiteNav'
 
-const TOOLS_FILTER = ['All Tools','AI Text Detector','Image Detector','Audio Detector','Video Detector','Batch Analyser','General']
+// Lazy-load the modal — heavy framer-motion dialog, only needed on user action
+const ReviewModal = lazy(() => import('@/components/ReviewModal').then(m => ({ default: m.ReviewModal })))
+
 const SORT_OPTIONS = [
   { value: 'helpful', label: 'Most Helpful' },
   { value: 'newest',  label: 'Newest First' },
-  { value: 'top',     label: 'Top Rated' },
+  { value: 'top',     label: 'Top Rated'    },
+  { value: 'lowest',  label: 'Lowest Rated' },
+]
+
+const STAR_FILTERS = [
+  { value: 0,  label: 'All Stars' },
+  { value: 5,  label: '5 ★' },
+  { value: 4,  label: '4 ★' },
+  { value: 3,  label: '3 ★' },
+  { value: 2,  label: '2 ★' },
+  { value: 1,  label: '1 ★' },
 ]
 
 interface Review {
@@ -60,6 +71,28 @@ function timeAgo(ts: string) {
   return `${Math.floor(days/365)} years ago`
 }
 
+// Expandable review body — shows full text with "Show more/less"
+function ReviewBody({ body }: { body: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = body.length > 280
+
+  return (
+    <div>
+      <p className="text-sm text-text-muted leading-relaxed">
+        {isLong && !expanded ? body.slice(0, 280) + '…' : body}
+      </p>
+      {isLong && (
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="mt-1.5 flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+        >
+          {expanded ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Read full review</>}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function ReviewsPage() {
   const { user }  = useAuth()
   const [reviews, setReviews]         = useState<Review[]>([])
@@ -68,21 +101,35 @@ export default function ReviewsPage() {
   const [loading, setLoading]         = useState(true)
   const [page,    setPage]            = useState(1)
   const [sort,    setSort]            = useState('helpful')
+  const [starFilter, setStarFilter]   = useState(0)
   const [modalOpen, setModalOpen]     = useState(false)
   const [helpfulSet, setHelpfulSet]   = useState<Set<string>>(new Set())
+
+  // Real aggregate stats fetched separately (not computed from current page)
+  const [stats, setStats] = useState<{ avg: string; breakdown: { n: number; count: number; pct: number }[]; total: number } | null>(null)
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/reviews/stats')
+      if (res.ok) setStats(await res.json())
+    } catch {}
+  }, [])
 
   const fetchReviews = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/reviews?page=${page}&sort=${sort}`)
+      const params = new URLSearchParams({ page: String(page), sort })
+      if (starFilter > 0) params.set('rating', String(starFilter))
+      const res = await fetch(`/api/reviews?${params}`)
       const d   = await res.json()
       setReviews(d.data ?? [])
       setTotal(d.total ?? 0)
       setPages(d.pages ?? 1)
     } catch {}
     setLoading(false)
-  }, [page, sort])
+  }, [page, sort, starFilter])
 
+  useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => { fetchReviews() }, [fetchReviews])
 
   const toggleHelpful = async (id: string) => {
@@ -92,19 +139,17 @@ export default function ReviewsPage() {
     await fetch(`/api/reviews/${id}/helpful`, { method: 'POST' }).catch(() => {})
   }
 
-  // Compute aggregate stats from loaded reviews
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : '5.0'
-  const breakdown = [5,4,3,2,1].map(n => ({
-    n, count: reviews.filter(r => r.rating === n).length,
-    pct: reviews.length > 0 ? Math.round(reviews.filter(r => r.rating === n).length / reviews.length * 100) : 0
-  }))
+  const displayStats = stats ?? {
+    avg: reviews.length > 0 ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length).toFixed(1) : '5.0',
+    total,
+    breakdown: [5,4,3,2,1].map(n => ({
+      n, count: reviews.filter(r => r.rating === n).length,
+      pct: reviews.length > 0 ? Math.round(reviews.filter(r => r.rating === n).length / reviews.length * 100) : 0
+    }))
+  }
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-
-      {/* Nav */}
       <SiteNav />
 
       <main className="pt-20 sm:pt-24 pb-20 px-4 max-w-6xl mx-auto">
@@ -116,7 +161,7 @@ export default function ReviewsPage() {
             User <span className="gradient-text">Reviews</span>
           </h1>
           <p className="text-text-muted text-lg max-w-xl mx-auto mb-6">
-            Real feedback from real users. Unfiltered, unsponsored.
+            Real feedback from real users. Every review — 1 star to 5 stars — published unfiltered.
           </p>
           <button onClick={() => setModalOpen(true)}
             className="inline-flex items-center gap-2 btn-primary px-6 py-3 text-sm font-bold">
@@ -125,18 +170,20 @@ export default function ReviewsPage() {
         </motion.div>
 
         {/* Stats summary */}
-        {!loading && reviews.length > 0 && (
+        {displayStats.total > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="flex items-center gap-5">
               <div className="text-center">
-                <div className="text-6xl font-black gradient-text">{avgRating}</div>
-                <StarRow rating={Math.round(parseFloat(avgRating))} size="md" />
-                <p className="text-xs text-text-muted mt-1">{total} review{total !== 1 ? 's' : ''}</p>
+                <div className="text-6xl font-black gradient-text">{displayStats.avg}</div>
+                <StarRow rating={Math.round(parseFloat(displayStats.avg))} size="md" />
+                <p className="text-xs text-text-muted mt-1">{displayStats.total} review{displayStats.total !== 1 ? 's' : ''}</p>
               </div>
               <div className="flex-1 space-y-1.5">
-                {breakdown.map(b => (
-                  <div key={b.n} className="flex items-center gap-2">
+                {displayStats.breakdown.map(b => (
+                  <button key={b.n}
+                    onClick={() => { setStarFilter(starFilter === b.n ? 0 : b.n); setPage(1) }}
+                    className={`w-full flex items-center gap-2 rounded-lg px-1 py-0.5 transition-all ${starFilter === b.n ? 'bg-primary/10' : 'hover:bg-surface-active'}`}>
                     <span className="text-xs text-text-muted w-3">{b.n}</span>
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
                     <div className="flex-1 bg-border rounded-full h-1.5 overflow-hidden">
@@ -144,16 +191,16 @@ export default function ReviewsPage() {
                         style={{ width: `${b.pct}%` }} />
                     </div>
                     <span className="text-xs text-text-disabled w-6 text-right">{b.count}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
               {[
-                { label: 'Verified Users', value: reviews.filter(r => r.verified).length, icon: CheckCircle, color: 'text-emerald' },
-                { label: 'Anonymous', value: reviews.filter(r => r.is_anonymous).length, icon: EyeOff, color: 'text-text-muted' },
-                { label: 'Helpful votes', value: reviews.reduce((s,r) => s+r.helpful_count, 0), icon: ThumbsUp, color: 'text-primary' },
-                { label: '5-star reviews', value: reviews.filter(r => r.rating === 5).length, icon: Star, color: 'text-amber-400' },
+                { label: 'Verified Users',  value: stats?.verified ?? '—', icon: CheckCircle, color: 'text-emerald' },
+                { label: 'Anonymous',       value: stats?.anonymous ?? '—', icon: EyeOff, color: 'text-text-muted' },
+                { label: 'Helpful votes',   value: stats?.helpfulVotes ?? '—', icon: ThumbsUp, color: 'text-primary' },
+                { label: '5-star reviews',  value: displayStats.breakdown.find(b => b.n === 5)?.count ?? 0, icon: Star, color: 'text-amber-400' },
               ].map(s => (
                 <div key={s.label} className="bg-surface-active rounded-xl p-3 flex items-center gap-2.5">
                   <s.icon className={`w-5 h-5 flex-shrink-0 ${s.color}`} />
@@ -167,10 +214,10 @@ export default function ReviewsPage() {
           </motion.div>
         )}
 
-        {/* Sort controls */}
+        {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <div className="flex items-center gap-2 text-sm text-text-muted">
-            <Filter className="w-4 h-4" /> Sort by:
+            <Filter className="w-4 h-4" /> Sort:
           </div>
           {SORT_OPTIONS.map(o => (
             <button key={o.value} onClick={() => { setSort(o.value); setPage(1) }}
@@ -178,7 +225,21 @@ export default function ReviewsPage() {
               {o.label}
             </button>
           ))}
+          <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
+          {STAR_FILTERS.map(f => (
+            <button key={f.value} onClick={() => { setStarFilter(f.value); setPage(1) }}
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-400 text-black' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
+              {f.label}
+            </button>
+          ))}
         </div>
+
+        {starFilter > 0 && (
+          <p className="text-xs text-text-muted mb-4">
+            Showing {total} {starFilter}-star review{total !== 1 ? 's' : ''}.{' '}
+            <button onClick={() => { setStarFilter(0); setPage(1) }} className="text-primary hover:underline">Clear filter</button>
+          </p>
+        )}
 
         {/* Reviews grid */}
         {loading ? (
@@ -188,11 +249,19 @@ export default function ReviewsPage() {
         ) : reviews.length === 0 ? (
           <div className="text-center py-24">
             <Star className="w-12 h-12 text-text-disabled mx-auto mb-4" />
-            <p className="text-text-muted font-medium mb-2">No reviews yet</p>
-            <p className="text-text-disabled text-sm mb-6">Be the first to share your experience.</p>
-            <button onClick={() => setModalOpen(true)} className="btn-primary px-6 py-2.5 text-sm">
-              Write First Review
-            </button>
+            <p className="text-text-muted font-medium mb-2">{starFilter > 0 ? `No ${starFilter}-star reviews yet` : 'No reviews yet'}</p>
+            {starFilter > 0 ? (
+              <button onClick={() => { setStarFilter(0); setPage(1) }} className="btn-primary px-6 py-2.5 text-sm">
+                Clear Filter
+              </button>
+            ) : (
+              <>
+                <p className="text-text-disabled text-sm mb-6">Be the first to share your experience.</p>
+                <button onClick={() => setModalOpen(true)} className="btn-primary px-6 py-2.5 text-sm">
+                  Write First Review
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
@@ -234,10 +303,10 @@ export default function ReviewsPage() {
                     )}
                   </div>
 
-                  {/* Content */}
+                  {/* Content — full text, expandable if long */}
                   <div>
                     <h3 className="font-bold text-text-primary text-sm mb-1">{r.title}</h3>
-                    <p className="text-sm text-text-muted leading-relaxed line-clamp-4">{r.body}</p>
+                    <ReviewBody body={r.body} />
                   </div>
 
                   {/* Helpful */}
@@ -277,7 +346,9 @@ export default function ReviewsPage() {
         {/* CTA */}
         <div className="text-center mt-16 p-8 rounded-2xl border border-border bg-surface/40">
           <h2 className="text-2xl font-black text-text-primary mb-2">Share Your Experience</h2>
-          <p className="text-text-muted mb-5">Tried Aiscern? Help others by sharing your honest feedback — anonymously or with your name.</p>
+          <p className="text-text-muted mb-5">
+            Tried Aiscern? Help others by sharing your honest feedback — 1 star or 5 stars, anonymously or with your name.
+          </p>
           <button onClick={() => setModalOpen(true)}
             className="btn-primary px-8 py-3 font-bold inline-flex items-center gap-2">
             <Star className="w-4 h-4" /> Write a Review
@@ -287,10 +358,12 @@ export default function ReviewsPage() {
 
       <SiteFooter />
 
-      <ReviewModal
-        isOpen={modalOpen}
-        onClose={() => { setModalOpen(false); fetchReviews() }}
-      />
+      <Suspense fallback={null}>
+        <ReviewModal
+          isOpen={modalOpen}
+          onClose={() => { setModalOpen(false); fetchReviews(); fetchStats() }}
+        />
+      </Suspense>
     </div>
   )
 }

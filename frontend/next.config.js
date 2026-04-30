@@ -2,6 +2,26 @@
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
+
+  // ── Compiler optimisations ───────────────────────────────────────────────
+  compiler: {
+    // Strip all console.* calls from the production bundle
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
+
+  // ── Experimental ────────────────────────────────────────────────────────
+  experimental: {
+    // Tree-shake large icon/animation libraries — big JS savings
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip',
+    ],
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL:            process.env.NEXT_PUBLIC_SUPABASE_URL            || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY:       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY       || '',
@@ -30,6 +50,27 @@ const nextConfig = {
     ],
   },
   headers: async () => [
+    // ── Cache static assets aggressively ─────────────────────────────────
+    {
+      source: '/trust/:file*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        { key: 'Vary',          value: 'Accept' },
+      ],
+    },
+    {
+      source: '/hero/:file*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    {
+      source: '/fonts/:file*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    // ── Security headers on everything ───────────────────────────────────
     {
       source: '/:path*',
       headers: [
@@ -37,7 +78,7 @@ const nextConfig = {
         { key: 'X-XSS-Protection',          value: '1; mode=block'                   },
         { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy',        value: 'camera=(), microphone=(), geolocation=()' },
-        { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         { key: 'X-Frame-Options',           value: 'SAMEORIGIN'                      },
         { key: 'X-DNS-Prefetch-Control',    value: 'on'                              },
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups'       },

@@ -12,12 +12,20 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit
     const sort  = searchParams.get('sort') ?? 'helpful'
 
+    const ratingFilter = parseInt(searchParams.get('rating') ?? '0')
+
     const db = getSupabaseAdmin()
     let query = db.from('reviews').select('*', { count: 'exact' }).eq('published', true)
 
-    if (sort === 'newest')  query = query.order('created_at', { ascending: false })
-    else if (sort === 'top') query = query.order('rating', { ascending: false }).order('helpful_count', { ascending: false })
-    else                     query = query.order('helpful_count', { ascending: false })
+    // Star filter — show ALL ratings (1-5), not just positive ones
+    if (ratingFilter >= 1 && ratingFilter <= 5) {
+      query = query.eq('rating', ratingFilter)
+    }
+
+    if (sort === 'newest')       query = query.order('created_at', { ascending: false })
+    else if (sort === 'top')     query = query.order('rating', { ascending: false }).order('helpful_count', { ascending: false })
+    else if (sort === 'lowest')  query = query.order('rating', { ascending: true }).order('created_at', { ascending: false })
+    else                         query = query.order('helpful_count', { ascending: false })
 
     const { data, error, count } = await query.range(offset, offset + limit - 1)
     if (error) throw error

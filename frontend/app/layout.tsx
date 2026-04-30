@@ -77,9 +77,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
         <meta name="theme-color" content="#7c3aed" />
-        {/* Preconnect to Clerk CDN — use credentials mode (no crossOrigin for Clerk) */}
+
+        {/* ── Preload critical fonts — eliminates render-blocking FOUT ── */}
+        <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+
+        {/* ── Preconnect / DNS-prefetch for all third-party origins ──── */}
         <link rel="preconnect" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://clerk.aiscern.com" />
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         {/* Skip to main content — keyboard accessibility */}

@@ -317,11 +317,14 @@ html, body {
   }
 }
 
-/* ── Hero node cards — smooth pop-in ── */
+/* ── Hero node cards — smooth pop-in with zero CLS ── */
 .node-card-bob-a,
 .node-card-bob-b {
   will-change: transform, opacity;
   backface-visibility: hidden;
+  /* contain: layout ensures the translateY never causes document reflow */
+  contain: layout style;
+  transform-style: preserve-3d;
 }
 
 /* ── Comparison scrolling rows — smooth on all devices ── */
