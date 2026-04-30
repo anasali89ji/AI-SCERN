@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -27,10 +27,11 @@ function ParticleNetwork() {
     let W = window.innerWidth, H = window.innerHeight
     canvas.width = W; canvas.height = H
 
-    // BUG-27: respect reduced motion + reduce nodes on mobile for perf
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const isMobile = W < 640
-    const NODES = isMobile ? 20 : 50
+    // Mobile: reduce node count AND connection distance for huge TBT savings
+    const NODES = isMobile ? 12 : 40
+    const DIST  = isMobile ? 100 : 140
     const nodes = Array.from({ length: NODES }, () => ({
       x: Math.random() * W, y: Math.random() * H,
       vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
@@ -39,6 +40,8 @@ function ParticleNetwork() {
     }))
 
     function draw() {
+      // Pause when tab hidden — saves battery + main-thread
+      if (document.hidden) { animId = requestAnimationFrame(draw); return }
       ctx.clearRect(0, 0, W, H)
       for (const n of nodes) {
         n.x += n.vx; n.y += n.vy
@@ -50,8 +53,8 @@ function ParticleNetwork() {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y
           const dist = Math.sqrt(dx*dx + dy*dy)
-          if (dist < 140) {
-            const alpha = (1 - dist / 140) * 0.18
+          if (dist < DIST) {
+            const alpha = (1 - dist / DIST) * 0.18
             ctx.beginPath()
             ctx.strokeStyle = `rgba(124,58,237,${alpha})`
             ctx.lineWidth = 0.8
@@ -210,7 +213,7 @@ function RootNetworkNode({ node, file, side, index, size }: {
         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         decoding="async"
         loading={index < 2 ? 'eager' : 'lazy'}
-        fetchPriority={index < 2 ? 'high' : 'auto' as 'high'|'auto'|'low'}
+        fetchPriority={index === 0 ? 'high' : 'low'}
       />
 
       {/* 40% black overlay so images are subtle background elements */}
@@ -1131,8 +1134,6 @@ function HeroScrollIndicator() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function HomePage() {
   const { user, loading } = useAuth()
-  const { scrollY } = useScroll()
-  const heroY = useTransform(scrollY, [0, 500], [0, -80])
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   return (
@@ -1313,10 +1314,10 @@ export default function HomePage() {
       </section>
 
       {/* ── WHO NEEDS AISCERN ── */}
-      <WhoNeedsSection />
+      <div className="cv-auto"><WhoNeedsSection /></div>
 
       {/* ── STATS ── */}
-      <section className="py-10 sm:py-20 border-y border-border/50 bg-surface/30">
+      <section className="cv-auto py-10 sm:py-20 border-y border-border/50 bg-surface/30">
         <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {STATS.map((stat, i) => (
@@ -1334,10 +1335,10 @@ export default function HomePage() {
       </section>
 
       {/* ── AI VS REAL COMPARISON CARDS — lazy loaded below fold ── */}
-      <LazyAIvsRealSection />
+      <div className="cv-auto"><LazyAIvsRealSection /></div>
 
       {/* ── TOOLS GRID ── */}
-      <section id="tools" className="py-16 sm:py-24 px-4">
+      <section id="tools" className="cv-auto py-16 sm:py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16">
@@ -1376,7 +1377,7 @@ export default function HomePage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how" className="py-16 sm:py-24 px-4 bg-surface/20">
+      <section id="how" className="cv-auto py-16 sm:py-24 px-4 bg-surface/20">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16">

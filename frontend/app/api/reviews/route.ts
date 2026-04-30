@@ -44,7 +44,10 @@ export async function GET(req: NextRequest) {
       created_at:   r.created_at,
     }))
 
-    return NextResponse.json({ data: sanitized, total: count ?? 0, pages: Math.ceil((count ?? 0) / limit) })
+    return NextResponse.json(
+      { data: sanitized, total: count ?? 0, pages: Math.ceil((count ?? 0) / limit) },
+      { headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=60' } }
+    )
   } catch {
     return NextResponse.json({ data: [], total: 0, pages: 0 })
   }
