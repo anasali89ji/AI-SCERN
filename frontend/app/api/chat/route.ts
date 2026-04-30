@@ -228,6 +228,210 @@ function detectIntent(message: string, history: any[]): Intent {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GRAPH RAG — Lightweight conversation knowledge graph for ARIA
+// Extracts entities + relationships from history, scores relevance via graph
+// traversal, injects most-relevant context into the system prompt
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GraphNode {
+  id:         string
+  type:       'tool'|'verdict'|'topic'|'entity'|'action'|'media'
+  value:      string
+  confidence: number    // 0-1
+  msgIndex:   number    // which message it came from
+}
+
+interface GraphEdge {
+  from:   string
+  to:     string
+  rel:    'triggered'|'produced'|'about'|'followup_of'|'same_topic'|'contradicts'
+  weight: number
+}
+
+interface KnowledgeGraph {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+// Extract entity nodes from a single message
+function extractNodes(content: string, msgIndex: number, role: string): GraphNode[] {
+  const nodes: GraphNode[] = []
+  const lower = content.toLowerCase()
+  const id = (t: string, v: string) => `${t}:${v.replace(/\s+/g,'_').slice(0,40)}`
+
+  // Detection tools mentioned
+  const toolMap: Record<string,string> = {
+    'image detection':'detect_image','deepfake':'detect_image','text detection':'detect_text',
+    'audio detection':'detect_audio','voice clone':'detect_audio','video detection':'detect_video',
+    'batch':'batch_analysis','pipeline':'pipeline_stats','web scanner':'web_scan'
+  }
+  for (const [kw, tool] of Object.entries(toolMap)) {
+    if (lower.includes(kw)) nodes.push({ id: id('tool', tool), type:'tool', value:tool, confidence:0.9, msgIndex })
+  }
+
+  // Verdict mentions
+  const verdictMap: Record<string,string> = {
+    'ai-generated':'AI','ai generated':'AI','is ai':'AI','looks ai':'AI',
+    'human':'HUMAN','authentic':'HUMAN','real':'HUMAN',
+    'uncertain':'UNCERTAIN','borderline':'UNCERTAIN','mixed signals':'UNCERTAIN'
+  }
+  for (const [kw, verdict] of Object.entries(verdictMap)) {
+    if (lower.includes(kw)) nodes.push({ id: id('verdict', verdict), type:'verdict', value:verdict, confidence:0.85, msgIndex })
+  }
+
+  // Media types
+  const mediaTypes = ['image','audio','video','text','document','pdf'] as const
+  for (const m of mediaTypes) {
+    if (lower.includes(m)) nodes.push({ id: id('media', m), type:'media', value:m, confidence:0.7, msgIndex })
+  }
+
+  // Action topics from ARIA knowledge domain
+  const topics: [string,string][] = [
+    ['confidence score','confidence'],['confidence','confidence'],
+    ['accuracy','accuracy'],['false positive','false_positive'],
+    ['explain','explanation'],['how it works','mechanism'],
+    ['what is aiscern','platform_info'],['who built','founder_info'],
+    ['pricing','pricing'],['api','api_usage'],['batch','batch'],
+    ['upload','file_upload'],['result','result_interpretation']
+  ]
+  for (const [kw, topic] of topics) {
+    if (lower.includes(kw)) nodes.push({ id: id('topic', topic), type:'topic', value:topic, confidence:0.75, msgIndex })
+  }
+
+  return nodes
+}
+
+// Build edges between nodes across messages
+function buildEdges(nodes: GraphNode[]): GraphEdge[] {
+  const edges: GraphEdge[] = []
+  const byMsg = new Map<number, GraphNode[]>()
+  for (const n of nodes) {
+    const arr = byMsg.get(n.msgIndex) || []; arr.push(n); byMsg.set(n.msgIndex, arr)
+  }
+
+  // Same-message nodes are related
+  for (const [, msgNodes] of byMsg) {
+    for (let i = 0; i < msgNodes.length; i++) {
+      for (let j = i+1; j < msgNodes.length; j++) {
+        const a = msgNodes[i], b = msgNodes[j]
+        if (a.type === 'tool' && b.type === 'verdict') {
+          edges.push({ from: a.id, to: b.id, rel: 'produced', weight: 0.9 })
+        } else if (a.type === 'topic' && b.type === 'tool') {
+          edges.push({ from: a.id, to: b.id, rel: 'about', weight: 0.8 })
+        } else {
+          edges.push({ from: a.id, to: b.id, rel: 'same_topic', weight: 0.6 })
+        }
+      }
+    }
+  }
+
+  // Cross-message follow-up edges (consecutive messages)
+  const msgIndices = Array.from(byMsg.keys()).sort((a,b) => a-b)
+  for (let k = 1; k < msgIndices.length; k++) {
+    const prevNodes = byMsg.get(msgIndices[k-1]) || []
+    const currNodes = byMsg.get(msgIndices[k]) || []
+    for (const p of prevNodes) {
+      for (const c of currNodes) {
+        if (p.type === c.type && p.value === c.value) {
+          edges.push({ from: p.id, to: c.id, rel: 'same_topic', weight: 0.85 })
+        } else if (c.type === 'topic' && c.value === 'result_interpretation') {
+          edges.push({ from: p.id, to: c.id, rel: 'followup_of', weight: 0.9 })
+        }
+      }
+    }
+  }
+
+  return edges
+}
+
+// Graph traversal — score nodes by relevance to current query using BFS
+function scoreNodesForQuery(graph: KnowledgeGraph, queryNodes: GraphNode[]): Map<string, number> {
+  const scores = new Map<string, number>()
+
+  // Seed scores from direct query matches
+  for (const qn of queryNodes) {
+    scores.set(qn.id, qn.confidence)
+    // Find same-value nodes from history
+    for (const hn of graph.nodes) {
+      if (hn.value === qn.value && hn.id !== qn.id) {
+        scores.set(hn.id, Math.max(scores.get(hn.id) || 0, qn.confidence * 0.9))
+      }
+    }
+  }
+
+  // BFS propagation — spread relevance through edges (2 hops)
+  for (let hop = 0; hop < 2; hop++) {
+    for (const edge of graph.edges) {
+      const fromScore = scores.get(edge.from) || 0
+      const toScore   = scores.get(edge.to)   || 0
+      if (fromScore > 0) scores.set(edge.to,   Math.max(toScore,   fromScore * edge.weight * 0.7))
+      if (toScore   > 0) scores.set(edge.from, Math.max(fromScore, toScore   * edge.weight * 0.7))
+    }
+  }
+
+  return scores
+}
+
+// Main Graph RAG function — returns a concise context block
+function buildGraphRAGContext(history: any[], currentMsg: string): string {
+  if (!history?.length) return ''
+
+  const graph: KnowledgeGraph = { nodes: [], edges: [] }
+
+  // Extract nodes from all history messages
+  for (let i = 0; i < history.length; i++) {
+    const msg     = history[i]
+    const content = typeof msg.content === 'string' ? msg.content : ''
+    if (!content) continue
+    const nodes = extractNodes(content, i, msg.role || 'user')
+    graph.nodes.push(...nodes)
+  }
+
+  if (!graph.nodes.length) return ''
+  graph.edges = buildEdges(graph.nodes)
+
+  // Score nodes against current query
+  const queryNodes = extractNodes(currentMsg, 999, 'user')
+  const scores     = scoreNodesForQuery(graph, queryNodes)
+
+  // Collect top-scored nodes (threshold 0.5)
+  const topNodes = graph.nodes
+    .map(n => ({ ...n, score: scores.get(n.id) || 0 }))
+    .filter(n => n.score >= 0.5)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+
+  if (!topNodes.length) return ''
+
+  // Group by type for readable output
+  const byType: Record<string, string[]> = {}
+  for (const n of topNodes) {
+    if (!byType[n.type]) byType[n.type] = []
+    byType[n.type].push(n.value)
+  }
+
+  const lines: string[] = ['[GRAPH RAG — Conversation Knowledge Context]']
+
+  if (byType.tool)    lines.push(`Prior tools used: ${[...new Set(byType.tool)].join(', ')}`)
+  if (byType.verdict) lines.push(`Prior verdicts: ${[...new Set(byType.verdict)].join(', ')}`)
+  if (byType.media)   lines.push(`Media types discussed: ${[...new Set(byType.media)].join(', ')}`)
+  if (byType.topic)   lines.push(`Topics in focus: ${[...new Set(byType.topic)].map(t => t.replace(/_/g,' ')).join(', ')}`)
+
+  // Find most recent detection result in history for follow-up awareness
+  for (let i = history.length - 1; i >= 0; i--) {
+    const c = typeof history[i]?.content === 'string' ? history[i].content : ''
+    if (c.includes('Verdict:') && c.includes('Confidence:')) {
+      const verdictLine = c.match(/Verdict:\s*(.+)/)?.[1]?.slice(0,60)
+      const confLine    = c.match(/Confidence:\s*(.+)/)?.[1]?.slice(0,20)
+      if (verdictLine) lines.push(`Most recent result → Verdict: ${verdictLine}${confLine ? ` | Confidence: ${confLine}` : ''}`)
+      break
+    }
+  }
+
+  return lines.join('\n')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 // ARIA — AISCERN AI ASSISTANT v3.0
 // Production system prompt — fully private, zero internal disclosure
@@ -517,10 +721,14 @@ export async function POST(req: NextRequest) {
     const imageAttachments = (attachments || []).filter((a: any) => a.type?.startsWith('image/'))
     const lastUserMsg      = messages[messages.length - 1]?.content || ''
     const history          = messages.slice(0, -1)
-    const intent           = detectIntent(lastUserMsg, history)
+    const intent = detectIntent(lastUserMsg, history)
+
+    // ── GRAPH RAG — build conversation knowledge graph & inject context ────────
+    const graphContext = buildGraphRAGContext(history, lastUserMsg)
 
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
+    if (graphContext) contextParts.push(graphContext)
     const toolEvents: Array<{ tool: string; result: any }> = []
 
     // 1. Image → Vision Engine analysis

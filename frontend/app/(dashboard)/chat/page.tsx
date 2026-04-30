@@ -51,12 +51,12 @@ const TOOL_META: Record<string,{label:string;color:string;Ic:()=>React.ReactElem
   analyze_url:            { label:'URL Analysis',     color:'#d97706', Ic: Ico.Globe    },
 }
 
-// ── Aiscern logo avatar for ARIA ────────────────────────────────────────────
+// ── Aiscern logo avatar for ARIA — black bg ─────────────────────────────────
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
-    <div className={`${cls} bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/25 overflow-hidden`}>
-      <Image src="/logo.png" alt="ARIA" width={20} height={20} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
+    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20 overflow-hidden border border-white/10`}>
+      <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
     </div>
   )
 }
@@ -664,7 +664,7 @@ export default function ChatPage() {
           </button>
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0 overflow-hidden">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/10 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0 overflow-hidden">
               <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
             </div>
             <div className="min-w-0">
@@ -705,38 +705,30 @@ export default function ChatPage() {
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
           {!activeChat || activeChat.messages.length===0 ? (
-            <div className="h-full flex flex-col items-center justify-center px-4 py-6 sm:py-8 max-w-2xl mx-auto w-full">
-              {/* Welcome logo — Aiscern logo inside glowing pill */}
-              <div className="relative mb-5">
-                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-2xl shadow-violet-500/30 overflow-hidden">
-                  <Image src="/logo.png" alt="ARIA" width={36} height={36} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.8)]" />
+            <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl mx-auto w-full">
+              {/* Welcome logo — BLACK bg with Aiscern logo */}
+              <div className="relative mb-3 shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-black border border-white/10 flex items-center justify-center shadow-2xl shadow-violet-500/20 overflow-hidden">
+                  <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#09090f] flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#09090f] flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse" />
                 </div>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-black text-white mb-1.5 tracking-tight">ARIA</h1>
-              <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-3">Aiscern AI Detection Assistant</p>
-              <p className="text-gray-600 text-sm text-center mb-6 sm:mb-8 max-w-sm leading-relaxed">
+              <h1 className="text-2xl font-black text-white mb-0.5 tracking-tight">ARIA</h1>
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">Aiscern AI Detection Assistant</p>
+              <p className="text-gray-600 text-xs sm:text-sm text-center mb-4 max-w-sm leading-relaxed">
                 Ask anything about AI detection, upload media for deepfake analysis, or explore Aiscern's capabilities.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8">
-                {[
-                  ['AI Text Detection', Ico.FileText],
-                  ['Deepfake Analysis', Ico.Image],
-                  ['Voice Clone Detection', Ico.Music],
-                  ['Video Deepfakes', Ico.Video],
-                  ['General Questions', Ico.Globe],
-                  ['Dataset Insights', Ico.DB],
-                ].map(([l, I]) => {
-                  const Icon = I as () => React.ReactElement
+              <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                {[['Text Detection',Ico.FileText],['Deepfake Analysis',Ico.Image],['Voice Cloning',Ico.Music],['Video Deepfakes',Ico.Video],['General Q&A',Ico.Globe],['Dataset Insights',Ico.DB]].map(([l,I])=>{
+                  const Icon = I as ()=>React.ReactElement
                   return (
-                    <div key={l as string} className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-white/8 bg-white/[0.03] text-xs text-gray-500">
-                      <span className="opacity-60"><Icon /></span>
-                      <span className="hidden sm:inline">{l as string}</span>
-                      <span className="sm:hidden">{(l as string).split(' ')[0]}</span>
+                    <div key={l as string} className="flex items-center gap-1 px-2 py-1 rounded-full border border-white/8 bg-white/[0.02] text-[11px] text-gray-500">
+                      <span className="opacity-50" style={{transform:'scale(0.8)'}}><Icon /></span>
+                      <span>{l as string}</span>
                     </div>
                   )
                 })}
@@ -745,13 +737,13 @@ export default function ChatPage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SUGGESTIONS.map(({Ic: I, text, cat})=>(
                   <button key={text} onClick={()=>send(text)}
-                    className="flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.07] hover:border-violet-500/25 text-left transition-all group cursor-pointer"
+                    className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-500/20 text-left transition-all group cursor-pointer"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-violet-500/12 text-violet-400/80 flex items-center justify-center shrink-0 group-hover:bg-violet-500/20 transition-colors">
+                    <div className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-400/70 flex items-center justify-center shrink-0 group-hover:bg-violet-500/20 transition-colors mt-0.5">
                       <I />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">{cat}</div>
+                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-0.5">{cat}</div>
                       <div className="text-xs text-gray-400 leading-relaxed">{text}</div>
                     </div>
                   </button>
