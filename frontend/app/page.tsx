@@ -27,7 +27,7 @@ function ParticleNetwork() {
     let W = window.innerWidth, H = window.innerHeight
     canvas.width = W; canvas.height = H
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {}
     const isMobile = W < 640
     // Mobile: reduce node count AND connection distance for huge TBT savings
     const NODES = isMobile ? 12 : 40
@@ -1135,6 +1135,7 @@ function HeroScrollIndicator() {
 export default function HomePage() {
   const { user, loading } = useAuth()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const reduced = useReducedMotion()
 
   return (
     <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
@@ -1354,7 +1355,7 @@ export default function HomePage() {
             {TOOLS.map((tool, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                whileHover={{ y: -4, scale: 1.02 }} className="group cursor-pointer">
+                whileHover={reduced ? undefined : { y: -4, scale: 1.02 }} className="group cursor-pointer">
                 <Link href={(!user && (tool.href === "/chat" || tool.href === "/batch" || tool.href === "/scraper")) ? "/signup" : tool.href} title={tool.label}>
                   <div className={`relative overflow-hidden rounded-2xl border border-border p-4 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
                     <div className="flex items-start justify-between mb-4">

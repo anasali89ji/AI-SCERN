@@ -7,6 +7,7 @@
  */
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, Brain, Cpu, CheckCircle, type LucideIcon } from 'lucide-react'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 export type ScanStage = 'idle' | 'uploading' | 'analyzing' | 'processing' | 'complete'
 
@@ -35,18 +36,19 @@ export default function ScanningLoader({
   mediaType,
   className = '',
 }: ScanningLoaderProps) {
+  const reduced = useReducedMotion()
   if (stage === 'idle') return null
 
   const currentIdx = STAGES.findIndex(s => s.id === stage)
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
-        key="scanning-loader"
-        initial={{ opacity: 0, y: 8 }}
+        key={`scanning-loader-${stage}`}
+        initial={{ opacity: 0, y: reduced ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.2 }}
+        exit={{ opacity: 0, y: reduced ? 0 : -8 }}
+        transition={{ duration: reduced ? 0 : 0.2 }}
         className={`rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-5 space-y-4 ${className}`}
       >
         {/* Header */}
@@ -84,7 +86,7 @@ export default function ScanningLoader({
                   }}
                 >
                   {/* Spinning ring for active stage */}
-                  {isCurrent && (
+                  {isCurrent && !reduced && (
                     <motion.div
                       className="absolute inset-[-3px] rounded-full border-2 border-transparent border-t-primary"
                       animate={{ rotate: 360 }}
@@ -135,8 +137,8 @@ export default function ScanningLoader({
                           key={d}
                           className="w-1 h-1 rounded-full"
                           style={{ background: s.color }}
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 1.2, repeat: Infinity, delay: d * 0.25 }}
+                          animate={reduced ? { opacity: 1 } : { opacity: [0.3, 1, 0.3] }}
+                          transition={reduced ? {} : { duration: 1.2, repeat: Infinity, delay: d * 0.25 }}
                         />
                       ))}
                     </div>
