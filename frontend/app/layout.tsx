@@ -1,16 +1,9 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import dynamic from 'next/dynamic'
+import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
-
-// Lazy-load ClerkProvider post-LCP — saves 262 KiB blocking JS, TBT -200ms
-// Middleware (middleware.ts) handles server-side route protection independently
-const ClerkProvider = dynamic(
-  () => import('@clerk/nextjs').then(mod => ({ default: mod.ClerkProvider })),
-  { ssr: false }
-)
 
 const inter = localFont({
   src: [
@@ -99,16 +92,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
           Skip to main content
         </a>
-        <ClerkProvider
+        <ClerkClientProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
-          signInUrl="/login"
-          signUpUrl="/signup"
         >
           <AuthProvider>
             {children}
             <Toaster richColors position="top-right" />
           </AuthProvider>
-        </ClerkProvider>
+        </ClerkClientProvider>
       </body>
     </html>
   )
