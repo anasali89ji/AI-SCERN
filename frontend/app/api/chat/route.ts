@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server'
 import { webSearch, fetchPageContent } from '@/lib/graph-rag/web-search'
 import { extractEntities, generateSearchTerms } from '@/lib/graph-rag/entity-extractor'
 import { buildGraph, traverseGraph, formatGraphContext } from '@/lib/graph-rag/graph-builder'
+import { runMiniAgents } from '@/lib/graph-rag/agent-orchestrator'
 
 export const dynamic    = 'force-dynamic'
 
@@ -416,7 +417,12 @@ async function fetchLiveContext(userMsg: string): Promise<string> {
       const topNodes = traverseGraph(graph, 15)
 
       // 7. Format into LLM-injectable context string
-      return formatGraphContext(topNodes, webResults, userMsg, 'chat')
+      const graphCtx   = formatGraphContext(topNodes, webResults, userMsg, 'chat')
+
+      // 8. Run mini-agents in parallel with formatting (non-blocking)
+      const agentCtx   = await runMiniAgents(userMsg, graph, webResults, 'chat').catch(() => '')
+
+      return [graphCtx, agentCtx].filter(Boolean).join('\n\n')
     })()
 
     return await Promise.race([work, timeout])
