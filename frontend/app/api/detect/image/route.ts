@@ -6,6 +6,10 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
+import { webSearch }               from '@/lib/graph-rag/web-search'
+import { extractEntities, generateSearchTerms } from '@/lib/graph-rag/entity-extractor'
+import { buildGraph, traverseGraph, formatGraphContext } from '@/lib/graph-rag/graph-builder'
+import { runMiniAgents }           from '@/lib/graph-rag/agent-orchestrator'
 
 export const dynamic = 'force-dynamic'
 
@@ -130,9 +134,39 @@ export async function POST(req: NextRequest) {
     // Fire Inngest background job (fire-and-forget, non-blocking)
     if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'image', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
 
+    // ── Graph RAG web verification for image (non-blocking, 10s timeout) ──────
+    let graph_context: string | null = null
+    if (result.verdict === 'AI' || result.confidence > 0.55) {
+      try {
+        const verifyTimeout = new Promise<null>(res => setTimeout(() => res(null), 10_000))
+        const verifyWork = (async () => {
+          // Use filename + key findings as the query basis
+          const keyFindings: string[] = (result.signals?.slice(0, 3) || []).map(String)
+          const queryBase = [fileName, ...keyFindings].filter(Boolean).join(' ')
+          const entities  = extractEntities(queryBase, 6)
+          const terms     = generateSearchTerms(
+            `AI generated image ${result.verdict} ${queryBase}`,
+            entities,
+            'scan',
+            fileName,
+          )
+          if (!terms.length) return null
+          const webResults = await webSearch(terms, 3)
+          if (!webResults.length) return null
+          const graph    = buildGraph(queryBase, webResults, [])
+          const topNodes = traverseGraph(graph, 8)
+          const ctx      = formatGraphContext(topNodes, webResults, queryBase, 'scan')
+          const agentCtx = await runMiniAgents(queryBase, graph, webResults, 'scan').catch(() => '')
+          return [ctx, agentCtx].filter(Boolean).join('\n\n') || null
+        })()
+        graph_context = await Promise.race([verifyWork, verifyTimeout])
+      } catch { /* non-fatal */ }
+    }
+
     return NextResponse.json({
       success: true, scan_id: scanId,
       result:  { ...result, processing_time: processingTime, file_name: fileName, file_size: fileSize },
+      ...(graph_context ? { graph_context } : {}),
     })
   } catch (err) {
     console.error('[detect/image]', err)

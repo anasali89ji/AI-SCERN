@@ -6,6 +6,10 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { fireScanCompleted }                           from '@/lib/inngest/send-scan-event'
 import { sanitizeText } from '@/lib/utils/sanitize'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { webSearch }               from '@/lib/graph-rag/web-search'
+import { extractEntities, generateSearchTerms } from '@/lib/graph-rag/entity-extractor'
+import { buildGraph, traverseGraph, formatGraphContext } from '@/lib/graph-rag/graph-builder'
+import { runMiniAgents }           from '@/lib/graph-rag/agent-orchestrator'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,10 +105,33 @@ export async function POST(req: NextRequest) {
     // Fire Inngest background job (fire-and-forget, non-blocking)
     if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'text', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
 
+    // ── Graph RAG web verification (non-blocking, 10s timeout) ────────────────
+    let graph_context: string | null = null
+    if (result.verdict === 'AI' || result.confidence > 0.55) {
+      try {
+        const verifyTimeout = new Promise<null>(res => setTimeout(() => res(null), 10_000))
+        const verifyWork = (async () => {
+          const snippet  = sanitized.slice(0, 300)
+          const entities = extractEntities(snippet, 8)
+          const terms    = generateSearchTerms(snippet, entities, 'scan')
+          if (!terms.length) return null
+          const webResults = await webSearch(terms, 3)
+          if (!webResults.length) return null
+          const graph    = buildGraph(snippet, webResults, [])
+          const topNodes = traverseGraph(graph, 8)
+          const ctx      = formatGraphContext(topNodes, webResults, snippet, 'scan')
+          const agentCtx = await runMiniAgents(snippet, graph, webResults, 'scan').catch(() => '')
+          return [ctx, agentCtx].filter(Boolean).join('\n\n') || null
+        })()
+        graph_context = await Promise.race([verifyWork, verifyTimeout])
+      } catch { /* non-fatal */ }
+    }
+
     return NextResponse.json({
       success: true,
       scan_id: scanId,
       result:  { ...result, processing_time: processingTime },
+      ...(graph_context ? { graph_context } : {}),
     })
   } catch (err) {
     return NextResponse.json(
