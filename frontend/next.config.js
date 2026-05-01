@@ -15,6 +15,7 @@ const nextConfig = {
     optimizePackageImports: [
       'lucide-react',
       'framer-motion',
+      '@clerk/nextjs',
       '@radix-ui/react-avatar',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',

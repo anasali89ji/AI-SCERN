@@ -1,9 +1,16 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import { ClerkProvider } from '@clerk/nextjs'
+import dynamic from 'next/dynamic'
 import { AuthProvider } from '@/components/auth-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
+
+// Lazy-load ClerkProvider post-LCP — saves 262 KiB blocking JS, TBT -200ms
+// Middleware (middleware.ts) handles server-side route protection independently
+const ClerkProvider = dynamic(
+  () => import('@clerk/nextjs').then(mod => ({ default: mod.ClerkProvider })),
+  { ssr: false }
+)
 
 const inter = localFont({
   src: [
