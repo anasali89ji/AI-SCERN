@@ -2,9 +2,26 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
+  ],
+  safelist: [
+    // Verdict color classes — used via verdictConfig objects in detect pages
+    'text-rose', 'border-rose', 'bg-rose',
+    'text-emerald', 'border-emerald', 'bg-emerald',
+    'text-amber', 'border-amber', 'bg-amber',
+    // Dynamic opacity modifiers on verdict borders/backgrounds
+    'border-rose/30', 'bg-rose/5',
+    'border-emerald/30', 'bg-emerald/5',
+    'border-amber/30', 'bg-amber/5',
+    // Scan stage badge colors
+    'bg-primary/10', 'bg-cyan/10', 'bg-emerald/10', 'bg-rose/10',
+    'text-primary', 'text-cyan', 'text-emerald', 'text-rose',
+    // Dynamic color patterns from WHO_NEEDS card CTAs and trust cards
+    {
+      pattern: /^(bg|border|text)-(primary|secondary|cyan|emerald|rose|amber)\/(5|8|10|12|14|18|25|28|30|60|80)$/,
+    },
   ],
   darkMode: 'class',
   theme: {
