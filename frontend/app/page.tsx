@@ -734,7 +734,9 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
         </div>
 
         {/* CTA */}
-        <Link href={card.href}
+        <Link
+          href={card.href}
+          aria-label={`Start free AI detection for ${card.role}`}
           className="mt-auto flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-200 group/btn hover:brightness-110"
           style={{
             background: `${card.color}14`,
@@ -742,11 +744,8 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
             color: card.color,
           }}
         >
-          <span className="font-black">Detect free now</span>
-          <div className="flex items-center gap-0.5">
-            <span className="text-[9px] opacity-60 font-semibold">free</span>
-            <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
-          </div>
+          <span className="font-black">Try free</span>
+          <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true" />
         </Link>
       </div>
     </motion.div>
