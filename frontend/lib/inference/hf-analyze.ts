@@ -28,6 +28,8 @@ import {
   geminiAnalyzeAudio,
   geminiAvailable,
 } from './gemini-analyzer'
+import { analyzeTextWithBrain }  from '@/lib/graph-rag/text-detection-brain'
+import { analyzeImageWithBrain } from '@/lib/graph-rag/image-detection-brain'
 
 export interface DetectionSignal {
   name:        string
@@ -201,9 +203,19 @@ function calibrateScore(raw: number, beta: number = 1.15): number {
 // TEXT DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
 export async function analyzeText(text: string): Promise<DetectionResult> {
-  const geminiPromise = geminiAvailable()
-    ? geminiAnalyzeText(text).catch(() => null)
-    : Promise.resolve(null)
+  // ── TEXT DETECTION ENGINE v6.0 ─────────────────────────────────────────────
+  // Priority stack:
+  //   1. Graph RAG Detection Brain (PRIMARY, 50%) — embedded knowledge, zero latency, 50k char support
+  //   2. HF transformer ensemble (25%) — 6 models in parallel, fail-fast 12s
+  //   3. Linguistic signals (25%) — 7 heuristic signals
+  //   Gemini is now a supplementary fallback (only if brain confidence < 0.55)
+
+  // Full text up to 50,000 chars for brain (PDFs, long documents supported)
+  const MAX_TEXT_CHARS   = 50_000
+  const truncated        = text.slice(0, MAX_TEXT_CHARS)
+
+  // Run brain + HF + linguistic signals in parallel — brain is instant
+  const brainResult  = analyzeTextWithBrain(truncated)
 
   const hfPromise = Promise.allSettled([
     // Aiscern fine-tuned DeBERTa (PRIMARY — highest weight 0.45)
@@ -215,23 +227,28 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     hfInference(MODELS.text_quinary,    { inputs: text.substring(0, 1800) }).catch(() => null),
   ])
 
-  const [geminiResult, hfResults, lingSignals] = await Promise.all([
-    geminiPromise,
+  // Only call Gemini as supplementary if brain is uncertain (0.42–0.58 range)
+  const brainUncertain   = brainResult.score > 0.42 && brainResult.score < 0.58
+  const geminiPromise    = (brainUncertain && geminiAvailable())
+    ? geminiAnalyzeText(text.slice(0, 8000)).catch(() => null)
+    : Promise.resolve(null)
+
+  const [hfResults, geminiResult, lingSignals] = await Promise.all([
     hfPromise,
-    Promise.resolve(extractTextSignalsV2(text)),
+    geminiPromise,
+    Promise.resolve(extractTextSignalsV2(truncated)),
   ])
 
   // Parse HF results — null values are cold-start failures
   const rawHF = hfResults.map(r => r.status === 'fulfilled' ? r.value : null)
   const mlScores: { model: string; aiScore: number; weight: number }[] = []
-  // Fine-tuned model uses 'ai'/'human' labels (DeBERTa trained with id2label={0:'human',1:'ai'})
   const s0 = parseHFText(rawHF[0], ['ai','label_1','1','fake'],     ['human','label_0','0','real'])
   const s1 = parseHFText(rawHF[1], ['fake','label_1','1'],          ['real','label_0','0'])
   const s2 = parseHFText(rawHF[2], ['chatgpt','ai','label_1','1'],  ['human','label_0','0'])
   const s3 = parseHFText(rawHF[3], ['label_1','ai','fake','ai-generated'], ['label_0','human','real','human-written'])
   const s4 = parseHFText(rawHF[4], ['label_1','ai','fake'],         ['label_0','human','real'])
   const s5 = parseHFText(rawHF[5], ['label_1','ai','fake'],         ['label_0','human','real'])
-  if (s0 !== null) mlScores.push({ model: MODELS.text_finetuned,  aiScore: s0, weight: 0.45 }) // fine-tuned = dominant
+  if (s0 !== null) mlScores.push({ model: MODELS.text_finetuned,  aiScore: s0, weight: 0.45 })
   if (s1 !== null) mlScores.push({ model: MODELS.text_primary,    aiScore: s1, weight: 0.20 })
   if (s2 !== null) mlScores.push({ model: MODELS.text_secondary,  aiScore: s2, weight: 0.15 })
   if (s3 !== null) mlScores.push({ model: MODELS.text_tertiary,   aiScore: s3, weight: 0.10 })
@@ -243,21 +260,24 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   const lingScore  = aggregateTextSignals(lingSignals)
   const geminiScore = geminiResult?.aiScore ?? null
 
+  // ── ENSEMBLE v6.0 scoring ──────────────────────────────────────────────────
+  // Brain is always primary (50%). HF + linguistic split remaining 50%.
+  // Gemini adds 15% when active, displacing from HF allocation.
   let aiScore: number
   let engineDesc: string
 
   if (geminiScore !== null && mlScore !== null) {
-    aiScore    = geminiScore * 0.50 + mlScore * 0.25 + lingScore * 0.25
-    engineDesc = `Gemini 2.0 Flash + ${mlScores.length} HF models + 7 linguistic signals`
-  } else if (geminiScore !== null) {
-    aiScore    = geminiScore * 0.70 + lingScore * 0.30
-    engineDesc = `Gemini 2.0 Flash + 7 linguistic signals`
+    // Full ensemble: Brain(50%) + HF(15%) + Linguistic(20%) + Gemini(15%)
+    aiScore    = brainResult.score * 0.50 + mlScore * 0.15 + lingScore * 0.20 + geminiScore * 0.15
+    engineDesc = `Graph RAG Brain (50%) + Gemini 2.0 Flash (15%) + ${mlScores.length} HF models (15%) + 7 linguistic signals (20%)`
   } else if (mlScore !== null) {
-    aiScore    = mlScore * 0.70 + lingScore * 0.30
-    engineDesc = `${mlScores.length} HF transformer models + 7 linguistic signals`
+    // Brain(50%) + HF(25%) + Linguistic(25%)
+    aiScore    = brainResult.score * 0.50 + mlScore * 0.25 + lingScore * 0.25
+    engineDesc = `Graph RAG Brain (50%) + ${mlScores.length} HF transformer models (25%) + 7 linguistic signals (25%)`
   } else {
-    aiScore    = lingScore
-    engineDesc = 'Linguistic signal analysis only'
+    // Brain(60%) + Linguistic(40%) — HF cold
+    aiScore    = brainResult.score * 0.60 + lingScore * 0.40
+    engineDesc = `Graph RAG Brain (60%) + 7 linguistic signals (40%) — HF models cold-starting`
   }
 
   // Homoglyph normalization — detect adversarial Unicode evasion
@@ -266,20 +286,19 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   // Uncertainty-aware ensemble variance (§5.1)
   const allMlScores = mlScores.map(m => m.aiScore)
   if (geminiScore !== null) allMlScores.push(geminiScore)
+  allMlScores.push(brainResult.score)
   const ensVariance = computeEnsembleVariance(allMlScores)
 
-  // Metadata for adaptive thresholds
-  const wordCount = text.split(/\s+/).filter(Boolean).length
-  const hasCode   = /```|\bfunction\b|\bconst\b|\bimport\b|\bclass\b|\bdef\b/.test(text)
+  const wordCount = truncated.split(/\s+/).filter(Boolean).length
+  const hasCode   = /```|\bfunction\b|\bconst\b|\bimport\b|\bclass\b|\bdef\b/.test(truncated)
 
   const calibratedScore = calibrateScore(aiScore)
-  // Homoglyph evasion detected → bias toward AI
   const adjustedScore   = homoglyphSuspicious ? Math.min(0.99, calibratedScore + 0.12) : calibratedScore
   const verdict = toVerdict(adjustedScore, 'text', { wordCount, hasCode, mlVariance: ensVariance })
-  const modelStr  = geminiScore !== null ? 'Gemini2Flash' : mlScores.map(s => s.model.split('/').pop()).join('+') || 'Linguistic'
+  const modelStr  = `Brain+${mlScores.map(s => s.model.split('/').pop()).join('+') || 'LingOnly'}${geminiScore !== null ? '+Gemini' : ''}`
 
-  // Sliding-window sentence scan (§1.3 — overlapping 3-sentence windows)
-  const rawSentences = text
+  // Sliding-window sentence scan (§1.3)
+  const rawSentences = truncated
     .split(/(?<=[.!?])\s+/)
     .filter(s => s.trim().length > 10)
     .slice(0, 30)
@@ -296,13 +315,11 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     sentenceScores.push(sScore)
   }
 
-  // Sliding-window max (catches AI paragraphs in mixed docs) and variance
   const windowMax      = sentenceScores.length ? Math.max(...sentenceScores) : aiScore
   const sentMean       = sentenceScores.length ? sentenceScores.reduce((a, b) => a + b, 0) / sentenceScores.length : aiScore
   const sentVariance   = sentenceScores.length > 1
     ? sentenceScores.reduce((a, b) => a + Math.pow(b - sentMean, 2), 0) / sentenceScores.length
     : 0
-  // High window variance = mixed authorship signal
   const isMixedAuthorship = sentVariance > 0.04 && windowMax > 0.65
 
   const sentence_scores = rawSentences.slice(0, 20).map((s, i) => ({
@@ -311,38 +328,53 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     perplexity: Math.round(20 + (1 - (sentenceScores[i] ?? aiScore)) * 200),
   }))
 
+  // Brain findings as additional signals
+  const brainSignalsFormatted = brainResult.signals
+    .sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
+    .slice(0, 5)
+    .map(sig => ({
+      name:        sig.name,
+      category:    'Graph RAG Brain',
+      description: sig.evidence,
+      weight:      Math.round(sig.weight * 50),
+      value:       Math.round(sig.score * 1000) / 1000,
+      flagged:     sig.score > 0.60,
+    }))
+
+  const charCount = truncated.length
+  const truncNote = text.length > MAX_TEXT_CHARS ? ` (truncated to ${MAX_TEXT_CHARS.toLocaleString()} chars for analysis)` : ''
+
   return {
     verdict,
     confidence:    Math.round(adjustedScore * 1000) / 1000,
-    model_used:    `Aiscern-TextEnsemble(${modelStr}+7LingSignals)`,
-    model_version: '5.0.0',
+    model_used:    `Aiscern-TextEngine-v6(${modelStr})`,
+    model_version: '6.0.0',
     signals: [
       {
-        name:        'Neural Classifier',
+        name:        'Graph RAG Detection Brain',
         category:    'ML',
-        description: geminiScore !== null
-          ? `${engineDesc}${geminiResult?.reasoning ? ` — ${geminiResult.reasoning}` : ''}`
-          : engineDesc,
-        weight:  geminiScore !== null || mlScore !== null ? 70 : 0,
-        value:   Math.round((geminiScore ?? mlScore ?? lingScore) * 1000) / 1000,
-        flagged: (geminiScore ?? mlScore ?? lingScore) > 0.58,
+        description: `${engineDesc}${truncNote}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). Top signals: ${brainResult.findings.slice(0, 3).join(' | ')}${geminiResult?.reasoning ? ` | Gemini: ${geminiResult.reasoning}` : ''}`,
+        weight:  50,
+        value:   Math.round(brainResult.score * 1000) / 1000,
+        flagged: brainResult.score > 0.58,
       },
+      ...brainSignalsFormatted,
       ...lingSignals.map(sig => ({
         name:        sig.name,
         category:    'Linguistic',
         description: sig.description,
-        weight:      Math.round(sig.weight * 30),
+        weight:      Math.round(sig.weight * 25),
         value:       sig.score,
         flagged:     sig.score > 0.60,
       })),
     ],
     summary: isMixedAuthorship
-      ? `Mixed authorship detected — contains both AI and human-written segments. Max sentence AI score: ${Math.round(windowMax * 100)}%.`
+      ? `Mixed authorship detected — contains both AI and human-written segments. Analyzed ${charCount.toLocaleString()} chars${truncNote}. Max sentence AI score: ${Math.round(windowMax * 100)}%.`
       : verdict === 'AI'
-      ? `AI-generated text detected with ${Math.round(adjustedScore * 100)}% confidence. Key indicators: ${lingSignals.filter(s => s.score > 0.6).map(s => s.name).slice(0, 2).join(', ') || 'neural classifier'}.${homoglyphSuspicious ? ' ⚠ Homoglyph evasion detected.' : ''}`
+      ? `AI-generated text detected with ${Math.round(adjustedScore * 100)}% confidence${truncNote}. Brain signals: ${brainResult.findings[0] ?? 'neural pattern match'}.${homoglyphSuspicious ? ' ⚠ Homoglyph evasion detected.' : ''}`
       : verdict === 'HUMAN'
-      ? `Human-written text — ${Math.round((1 - adjustedScore) * 100)}% confidence. Natural linguistic variation detected.`
-      : `Inconclusive (${Math.round(adjustedScore * 100)}% AI probability). ${ensVariance > 0.15 ? 'Models disagree — submit more text.' : 'Submit more text for better accuracy.'}`,
+      ? `Human-written text — ${Math.round((1 - adjustedScore) * 100)}% confidence. Analyzed ${charCount.toLocaleString()} chars. Natural linguistic variation detected.`
+      : `Inconclusive (${Math.round(adjustedScore * 100)}% AI probability). Analyzed ${charCount.toLocaleString()} chars${truncNote}. ${ensVariance > 0.15 ? 'Models disagree — may be mixed authorship.' : 'Submit more text for better accuracy.'}`,
     sentence_scores,
   }
 }
@@ -363,7 +395,12 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const inferenceBuffer = preprocessed.buffer
   const inferenceMime   = preprocessed.mimeType
 
-  const geminiPromise = geminiAvailable()
+  // ── IMAGE BRAIN (PRIMARY) — runs in parallel, instant, zero API calls ──────
+  const brainResult = analyzeImageWithBrain(imageBuffer, imageBuffer.length)
+
+  // Gemini now supplementary (only when brain uncertain 0.42–0.58)
+  const brainUncertain = brainResult.score > 0.42 && brainResult.score < 0.58
+  const geminiPromise  = (brainUncertain && geminiAvailable())
     ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
     : Promise.resolve(null)
 
@@ -407,25 +444,31 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   parseImg(hfResults[4].status === 'fulfilled' ? hfResults[4].value : null, 0.08, MODELS.image_vit)
   parseImg(hfResults[5].status === 'fulfilled' ? hfResults[5].value : null, 0.04, MODELS.image_deepfake)
 
-  const mlTotalW   = mlScores.reduce((s, m) => s + m.weight, 0) || 1
-  const mlScore    = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
+  const mlTotalW    = mlScores.reduce((s, m) => s + m.weight, 0) || 1
+  const mlScore     = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
   const geminiScore = geminiResult?.aiScore ?? null
 
-  let aiScore: number
+  // ── IMAGE ENSEMBLE v6.0 ────────────────────────────────────────────────────
+  // Brain (50%) → Pixel signals (20%) → HF models (20%) → Gemini if uncertain (10%)
+  let aiScore:   number
   let modelUsed: string
+  let engineDesc: string
 
   if (geminiScore !== null && mlScore !== null) {
-    aiScore   = geminiScore * 0.50 + mlScore * 0.25 + imgSignalScore * 0.25
-    modelUsed = `Aiscern-ImageEnsemble(Gemini2Flash+${mlScores.map(s => s.model.split('/').pop()).join('+')}+10PixelSignals)`
-  } else if (geminiScore !== null) {
-    aiScore   = geminiScore * 0.65 + imgSignalScore * 0.35
-    modelUsed = 'Aiscern-ImageGemini(Gemini2Flash+10PixelSignals)'
+    // Full ensemble — Brain(50%) + HF(20%) + PixelSig(20%) + Gemini(10%)
+    aiScore    = brainResult.score * 0.50 + mlScore * 0.20 + imgSignalScore * 0.20 + geminiScore * 0.10
+    modelUsed  = `Aiscern-ImageEngine-v6(Brain+Gemini+${mlScores.length}HF+10Pixel)`
+    engineDesc = `Image Brain (50%) + ${mlScores.length} HF ViT models (20%) + 10 pixel signals (20%) + Gemini 2.0 Flash (10%)`
   } else if (mlScore !== null) {
-    aiScore   = mlScore * 0.65 + imgSignalScore * 0.35
-    modelUsed = `Aiscern-ImageEnsemble(${mlScores.map(s => s.model.split('/').pop()).join('+')}+10PixelSignals)`
+    // Brain(50%) + HF(25%) + PixelSig(25%)
+    aiScore    = brainResult.score * 0.50 + mlScore * 0.25 + imgSignalScore * 0.25
+    modelUsed  = `Aiscern-ImageEngine-v6(Brain+${mlScores.length}HF+10Pixel)`
+    engineDesc = `Image Brain (50%) + ${mlScores.length} HF ViT models (25%) + 10 pixel signals (25%)`
   } else {
-    aiScore   = imgSignalScore
-    modelUsed = 'Aiscern-ImageSignals(10PixelSignals)'
+    // Brain(60%) + PixelSig(40%)
+    aiScore    = brainResult.score * 0.60 + imgSignalScore * 0.40
+    modelUsed  = 'Aiscern-ImageEngine-v6(Brain+10Pixel)'
+    engineDesc = `Image Brain (60%) + 10 pixel signals (40%) — HF models cold-starting`
   }
 
   const calibratedImgScore = calibrateScore(aiScore)
@@ -433,41 +476,58 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30
   const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' = isEdited ? 'AI' : toVerdict(calibratedImgScore, 'image')
 
-  const topSignal = [...imgSignals].sort((a, b) => b.score - a.score)[0]
+  const topSignal  = [...imgSignals].sort((a, b) => b.score - a.score)[0]
   const geminiSigs = geminiResult?.signals ?? []
+
+  // Format brain signals for output
+  const brainSignalsFormatted = brainResult.signals
+    .sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
+    .slice(0, 5)
+    .map(sig => ({
+      name:        sig.name,
+      category:    'Image Brain',
+      description: sig.evidence,
+      weight:      Math.round(sig.weight * 50),
+      value:       Math.round(sig.score * 1000) / 1000,
+      flagged:     sig.score > 0.62,
+    }))
 
   return {
     verdict,
     confidence:    Math.round(calibratedImgScore * 1000) / 1000,
     model_used:    modelUsed,
-    model_version: '5.0.0',
+    model_version: '6.0.0',
     signals: [
       {
-        name:        'Neural Image Classifier',
+        name:        'Image Detection Brain',
         category:    'ML',
-        description: geminiScore !== null
-          ? `Gemini 2.0 Flash vision${geminiSigs.length ? ` — detected: ${geminiSigs.slice(0, 3).join(', ')}` : ''}${mlScore !== null ? ` + ${mlScores.length} HF models` : ' (HF cold)'}`
-          : mlScore !== null
-          ? `${mlScores.length} HF vision models: AI-image-detector, SDXL-detector, AIorNot`
-          : 'ML unavailable — pixel signal analysis only',
-        weight:  geminiScore !== null || mlScore !== null ? 65 : 0,
-        value:   Math.round((geminiScore ?? mlScore ?? imgSignalScore) * 1000) / 1000,
-        flagged: (geminiScore ?? mlScore ?? imgSignalScore) > 0.50,
+        description: `${engineDesc}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). ` +
+          (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '') +
+          `Top: ${brainResult.findings[0] ?? 'pixel pattern analysis'}` +
+          (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : ''),
+        weight:  50,
+        value:   Math.round(brainResult.score * 1000) / 1000,
+        flagged: brainResult.score > 0.60,
       },
+      ...brainSignalsFormatted,
       ...imgSignals.map(sig => ({
         name:        sig.name,
         category:    'Pixel Analysis',
         description: sig.description,
-        weight:      Math.round(sig.weight * 35),
+        weight:      Math.round(sig.weight * 20),
         value:       sig.score,
         flagged:     sig.score > 0.58,
       })),
     ],
     summary: verdict === 'AI'
-      ? `Image detected as AI-generated with ${Math.round(aiScore * 100)}% confidence. Key signal: ${topSignal?.name ?? 'neural classifier'}.`
+      ? `AI-generated image detected with ${Math.round(calibratedImgScore * 100)}% confidence. ` +
+        (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '') +
+        `Key signals: ${brainResult.findings.slice(0, 2).join(' | ')}.`
       : verdict === 'HUMAN'
-      ? `Image appears authentic — ${Math.round((1 - aiScore) * 100)}% confidence.`
-      : `Analysis inconclusive (${Math.round(aiScore * 100)}% AI probability). Try a higher-resolution image.`,
+      ? `Image appears authentic — ${Math.round((1 - calibratedImgScore) * 100)}% confidence. ` +
+        `Natural camera characteristics: ${topSignal?.name ?? 'organic noise floor detected'}.`
+      : `Analysis inconclusive (${Math.round(calibratedImgScore * 100)}% AI probability). ` +
+        `${brainResult.generatorHints.length ? `Possible generator: ${brainResult.generatorHints[0]}.` : 'Try a higher-resolution original image for accuracy.'}`,
   }
 }
 
