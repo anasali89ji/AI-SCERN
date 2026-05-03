@@ -12,9 +12,9 @@ import type { ForensicScanRecord }   from '@/types/forensic'
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { scanId: string } },
+  { params }: { params: Promise<{ scanId: string }> },
 ): Promise<NextResponse> {
-  const { scanId } = params
+  const { scanId } = await params
 
   if (!scanId || !/^[0-9a-f-]{36}$/.test(scanId)) {
     return NextResponse.json(
