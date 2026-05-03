@@ -30,7 +30,7 @@ import { NextRequest, NextResponse }    from 'next/server'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { analyzeText, analyzeImage }    from '@/lib/inference/hf-analyze'
-import { fetchPageContent }             from '@/lib/graph-rag/web-search'
+import { fetchPageContent }             from '@/lib/utils/fetch-page'
 import { getSupabaseAdmin }             from '@/lib/supabase/admin'
 import { fireScanCompleted }            from '@/lib/inngest/send-scan-event'
 

@@ -3,12 +3,6 @@ export const maxDuration = 60
 
 import { NextRequest } from 'next/server'
 
-// ── Real-time Graph RAG — web search + knowledge graph ───────────────────────
-import { webSearch, fetchPageContent } from '@/lib/graph-rag/web-search'
-import { extractEntities, generateSearchTerms } from '@/lib/graph-rag/entity-extractor'
-import { buildGraph, traverseGraph, formatGraphContext } from '@/lib/graph-rag/graph-builder'
-import { runMiniAgents } from '@/lib/graph-rag/agent-orchestrator'
-
 export const dynamic    = 'force-dynamic'
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
@@ -379,59 +373,7 @@ function scoreNodesForQuery(graph: KnowledgeGraph, queryNodes: GraphNode[]): Map
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LIVE GRAPH RAG — Real-time web search + knowledge graph for ARIA
-// Runs in parallel with intent detection, timeout-guarded at 12s
-// Injects live web context into the system prompt before calling the LLM
-// ─────────────────────────────────────────────────────────────────────────────
-async function fetchLiveContext(userMsg: string): Promise<string> {
-  try {
-    const timeout = new Promise<string>(resolve =>
-      setTimeout(() => resolve(''), 12_000)
-    )
-    const work = (async () => {
-      // 1. Extract entities from user message
-      const entities = extractEntities(userMsg, 8)
-
-      // 2. Generate targeted search queries
-      const searchTerms = generateSearchTerms(userMsg, entities, 'chat')
-      if (!searchTerms.length) return ''
-
-      // 3. Run web search (max 5 results per query, up to 4 queries in parallel)
-      const webResults = await webSearch(searchTerms, 5)
-      if (!webResults.length) return ''
-
-      // 4. Fetch top 2 pages for richer content (in parallel, skip social media)
-      const topUrls = webResults.slice(0, 3).map(r => r.url)
-      const pages = await Promise.all(
-        topUrls.map(async url => {
-          const content = await fetchPageContent(url, 2500)
-          return content ? { url, content } : null
-        })
-      )
-      const fetchedPages = pages.filter((p): p is { url: string; content: string } => p !== null)
-
-      // 5. Build knowledge graph from search results + fetched pages
-      const graph = buildGraph(userMsg, webResults, fetchedPages)
-
-      // 6. Traverse graph to extract top relevant nodes
-      const topNodes = traverseGraph(graph, 15)
-
-      // 7. Format into LLM-injectable context string
-      const graphCtx   = formatGraphContext(topNodes, webResults, userMsg, 'chat')
-
-      // 8. Run mini-agents in parallel with formatting (non-blocking)
-      const agentCtx   = await runMiniAgents(userMsg, graph, webResults, 'chat').catch(() => '')
-
-      return [graphCtx, agentCtx].filter(Boolean).join('\n\n')
-    })()
-
-    return await Promise.race([work, timeout])
-  } catch {
-    return ''
-  }
-}
-
-// Main Graph RAG function — returns a concise context block
+// ═══════════════════════════════════════════════════════════════════════════════
 function buildGraphRAGContext(history: any[], currentMsg: string): string {
   if (!history?.length) return ''
 
@@ -469,7 +411,7 @@ function buildGraphRAGContext(history: any[], currentMsg: string): string {
     byType[n.type].push(n.value)
   }
 
-  const lines: string[] = ['[GRAPH RAG — Conversation Knowledge Context]']
+  const lines: string[] = ['[CONVERSATION CONTEXT — Prior Session Knowledge]']
 
   if (byType.tool)    lines.push(`Prior tools used: ${[...new Set(byType.tool)].join(', ')}`)
   if (byType.verdict) lines.push(`Prior verdicts: ${[...new Set(byType.verdict)].join(', ')}`)
@@ -781,11 +723,8 @@ export async function POST(req: NextRequest) {
     const lastUserMsg      = messages[messages.length - 1]?.content || ''
     const history          = messages.slice(0, -1)
 
-    // ── Run intent detection + live Graph RAG web search IN PARALLEL ──────────
-    const [intent, liveContext] = await Promise.all([
-      Promise.resolve(detectIntent(lastUserMsg, history)),
-      fetchLiveContext(lastUserMsg),
-    ])
+    // ── Run intent detection ──────────────────────────────────────────────────
+    const intent = detectIntent(lastUserMsg, history)
 
     // ── GRAPH RAG — build conversation knowledge graph & inject context ────────
     const graphContext = buildGraphRAGContext(history, lastUserMsg)
@@ -794,8 +733,6 @@ export async function POST(req: NextRequest) {
     const contextParts: string[] = []
     // Conversation graph (history-based) first
     if (graphContext) contextParts.push(graphContext)
-    // Live web graph RAG (real-time internet) second
-    if (liveContext) contextParts.push(`[LIVE GRAPH RAG — Real-time Web Knowledge]\n${liveContext}`)
     const toolEvents: Array<{ tool: string; result: any }> = []
 
     // 1. Image → Vision Engine analysis
@@ -821,27 +758,6 @@ export async function POST(req: NextRequest) {
         `Technical analysis: ${result.analysis}\n` +
         (result.details.recommendation ? `Recommendation: ${result.details.recommendation}` : '')
       )
-
-      // BUG 8 FIX: Web-verify image verdict via Graph RAG (non-blocking, 8s timeout)
-      try {
-        const imgVerifTimeout = new Promise<string>(res => setTimeout(() => res(''), 8_000))
-        const imgVerifWork = (async () => {
-          const keyFindings: string[] = result.details.key_findings || []
-          const imgQueries = [
-            `AI generated image detection ${result.verdict}`,
-            ...keyFindings.slice(0, 2),
-          ].filter(Boolean)
-          const imgWebResults = await webSearch(imgQueries, 4)
-          if (!imgWebResults.length) return ''
-          const imgGraph = buildGraph(lastUserMsg, imgWebResults, [])
-          const imgNodes = traverseGraph(imgGraph, 8)
-          return formatGraphContext(imgNodes, imgWebResults, lastUserMsg, 'scan')
-        })()
-        const imgVerifCtx = await Promise.race([imgVerifWork, imgVerifTimeout])
-        if (imgVerifCtx) {
-          contextParts.push(`[IMAGE VERIFICATION CONTEXT — Web Sources]\n${imgVerifCtx}`)
-        }
-      } catch { /* non-blocking, never fail the request */ }
     }
 
     // 2. Pipeline stats

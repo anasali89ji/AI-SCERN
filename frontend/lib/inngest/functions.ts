@@ -234,6 +234,10 @@ export const supabaseKeepAlive = inngest.createFunction(
   }
 )
 
+// ── Forensic cascade (v2) ─────────────────────────────────────────────────────
+import { imageForensicCascade } from './forensic-cascade'
+export { imageForensicCascade }
+
 // ── All functions export (registered in the serve route) ─────────────────────
 export const INNGEST_FUNCTIONS = [
   onScanCompleted,
@@ -243,4 +247,5 @@ export const INNGEST_FUNCTIONS = [
   hfModelWarmup,
   vercelWarmup,
   supabaseKeepAlive,
+  imageForensicCascade,
 ]

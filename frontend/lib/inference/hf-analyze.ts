@@ -28,8 +28,8 @@ import {
   geminiAnalyzeAudio,
   geminiAvailable,
 } from './gemini-analyzer'
-import { analyzeTextWithBrain }  from '@/lib/graph-rag/text-detection-brain'
-import { analyzeImageWithBrain } from '@/lib/graph-rag/image-detection-brain'
+import { analyzeTextWithBrain }  from '@/lib/inference/text-detection-brain'
+import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
 
 export interface DetectionSignal {
   name:        string

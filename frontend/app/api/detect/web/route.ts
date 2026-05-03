@@ -20,11 +20,8 @@ import { NextRequest, NextResponse }    from 'next/server'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { analyzeText }                  from '@/lib/inference/hf-analyze'
-import { fetchPageContent, webSearch }  from '@/lib/graph-rag/web-search'
-import { analyzeTextWithBrain }         from '@/lib/graph-rag/text-detection-brain'
-import { extractEntities, generateSearchTerms } from '@/lib/graph-rag/entity-extractor'
-import { buildGraph, traverseGraph, formatGraphContext } from '@/lib/graph-rag/graph-builder'
-import { runMiniAgents }                from '@/lib/graph-rag/agent-orchestrator'
+import { analyzeTextWithBrain }         from '@/lib/inference/text-detection-brain'
+import { fetchPageContent }             from '@/lib/utils/fetch-page'
 import { getSupabaseAdmin }             from '@/lib/supabase/admin'
 
 export const dynamic     = 'force-dynamic'
@@ -227,27 +224,7 @@ export async function POST(req: NextRequest) {
     // Step 5: Text Brain direct analysis for raw brain signals
     const brainResult = analyzeTextWithBrain(content.slice(0, 50000))
 
-    // Step 6: Graph RAG web verification
-    let graph_context: string | null = null
-    try {
-      const verifyTimeout = new Promise<null>(r => setTimeout(() => r(null), 10_000))
-      const verifyWork = (async () => {
-        const entities = extractEntities(content.slice(0, 2000), 6)
-        const terms    = generateSearchTerms(
-          `AI generated blog post ${pageMeta.title} ${pageMeta.domain}`,
-          entities, 'scan', pageMeta.title,
-        )
-        if (!terms.length) return null
-        const webResults = await webSearch(terms, 4)
-        if (!webResults.length) return null
-        const graph    = buildGraph(content.slice(0, 2000), webResults, [])
-        const topNodes = traverseGraph(graph, 10)
-        const ctx      = formatGraphContext(topNodes, webResults, content.slice(0, 2000), 'scan')
-        const agentCtx = await runMiniAgents(content.slice(0, 2000), graph, webResults, 'scan').catch(() => '')
-        return [ctx, agentCtx].filter(Boolean).join('\n\n') || null
-      })()
-      graph_context = await Promise.race([verifyWork, verifyTimeout])
-    } catch { /* non-fatal */ }
+    // Step 6: Removed (Graph RAG replaced by forensic cascade pipeline)
 
     // Step 7: Final blended verdict
     // Weights: textResult(50%) + blogPatterns(30%) + brainResult(20%)
@@ -322,9 +299,6 @@ export async function POST(req: NextRequest) {
         verdict:  brainResult.verdict,
         findings: brainResult.findings?.slice(0, 6) ?? [],
       },
-
-      // Graph RAG context
-      ...(graph_context ? { graph_context } : {}),
     })
   } catch (err) {
     console.error('[detect/web]', err)
