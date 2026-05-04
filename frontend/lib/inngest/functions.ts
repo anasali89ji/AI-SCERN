@@ -186,7 +186,23 @@ export const hfModelWarmup = inngest.createFunction(
       return pings.map(p => p.status === 'fulfilled' ? p.value : { error: 'failed' })
     })
 
-    return { warmed_at: new Date().toISOString(), results }
+    // ── Signal Worker keepalive (HuggingFace Space) ───────────────────────────
+    // Ping every 14 min to prevent cold starts on the Python forensic worker.
+    const signalWorkerResult = await step.run('ping-signal-worker', async () => {
+      const workerUrl = process.env.SIGNAL_WORKER_URL
+      if (!workerUrl) return { skipped: true, reason: 'SIGNAL_WORKER_URL not set' }
+      try {
+        const res = await fetch(`${workerUrl}/health`, {
+          signal: AbortSignal.timeout(30_000),
+        })
+        const body = await res.json().catch(() => ({}))
+        return { status: res.status, ok: res.ok, body }
+      } catch (e) {
+        return { ok: false, error: (e as Error).message }
+      }
+    })
+
+    return { warmed_at: new Date().toISOString(), results, signal_worker: signalWorkerResult }
   }
 )
 
