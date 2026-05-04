@@ -49,7 +49,7 @@ export default function ScanningLoader({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: reduced ? 0 : -8 }}
         transition={{ duration: reduced ? 0 : 0.2 }}
-        className={`rounded-2xl border border-white/8 bg-white/[0.03] backdrop-blur-sm p-5 space-y-4 ${className}`}
+        className={`rounded-2xl border border-white/[0.05] bg-white/[0.03] backdrop-blur-sm p-5 space-y-4 ${className}`}
       >
         {/* Header */}
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">

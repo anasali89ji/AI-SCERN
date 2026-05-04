@@ -623,7 +623,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/8 hover:border-white/18 transition-all duration-500 hover:-translate-y-1.5"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-500 hover:-translate-y-1.5"
       style={{
         boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)`,
       }}
@@ -754,7 +754,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
 
 function WhoNeedsSection() {
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/40 overflow-hidden">
+    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 overflow-hidden">
       {/* Subtle bg glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px]" />
@@ -817,7 +817,7 @@ function WhoNeedsSection() {
             Start Free Scan
           </Link>
           <Link href="/methodology"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all duration-200">
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border/50 text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all duration-200">
             <Eye className="w-4 h-4" />
             See How It Works
           </Link>
@@ -999,7 +999,7 @@ function AIvsRealSection() {
 function ComparisonCard({ card }: { card: { type: string; label: string; verdict: string; color: string; tag: string; preview?: string; img?: string } }) {
   const isAI = card.verdict === 'AI'
   return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group">
+    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border/60 rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group">
       {/* Top — image or text */}
       {card.type === 'image' && card.img ? (
         <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
@@ -1089,7 +1089,7 @@ function HomepageReviews() {
         <motion.div key={r.id || i}
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-          className="card border-border/50 hover:border-primary/20 transition-colors">
+          className="card border-border/30 hover:border-primary/20 transition-colors">
           <div className="flex gap-0.5 mb-4">
             {Array.from({ length: r.rating || r.stars || 5 }).map((_: unknown, j: number) => (
               <span key={j} className="text-amber text-sm">★</span>
@@ -1189,7 +1189,7 @@ export default function HomePage() {
               </Link>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/40 transition-all">
+                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/40 transition-all">
                   Sign In
                 </Link>
                 <Link href="/signup" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all">
@@ -1293,7 +1293,7 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link href="/chat"
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border bg-surface/60 backdrop-blur-sm text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-surface transition-all duration-200"
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface/60 backdrop-blur-sm text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/50 hover:bg-surface transition-all duration-200"
                   title="AI Detection Assistant">
                   <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
                 </Link>
@@ -1322,7 +1322,7 @@ export default function HomePage() {
       <div className="cv-auto"><WhoNeedsSection /></div>
 
       {/* ── STATS ── */}
-      <section className="cv-auto py-10 sm:py-20 border-y border-border/50 bg-surface/30">
+      <section className="cv-auto py-10 sm:py-20 border-y border-border/25 bg-surface/30">
         <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {STATS.map((stat, i) => (
@@ -1361,7 +1361,7 @@ export default function HomePage() {
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 whileHover={reduced ? undefined : { y: -4, scale: 1.02 }} className="group cursor-pointer">
                 <Link href={(!user && (tool.href === "/chat" || tool.href === "/batch" || tool.href === "/scraper")) ? "/signup" : tool.href} title={tool.label}>
-                  <div className={`relative overflow-hidden rounded-2xl border border-border p-4 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
+                  <div className={`relative overflow-hidden rounded-2xl border border-border/60 p-4 sm:p-6 bg-gradient-to-br ${tool.bg} hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full`}>
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-background/80 flex items-center justify-center ${tool.color}`}>
                         <tool.icon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -1439,7 +1439,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CREDIBILITY / TRUST SIGNALS ── */}
-      <section className="py-16 sm:py-20 px-4 border-t border-border/40">
+      <section className="py-16 sm:py-20 px-4 border-t border-border/20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black text-text-primary">Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span></h2>

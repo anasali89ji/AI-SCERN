@@ -98,7 +98,7 @@ const FAQS = [
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-border/60 last:border-0">
+    <div className="border-b border-border/30 last:border-0">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between py-4 text-left gap-3 hover:text-text-primary transition-colors"
@@ -186,7 +186,7 @@ export default function PricingPage() {
         </div>
 
         {/* Why We Charge */}
-        <div className="max-w-2xl mx-auto mb-16 p-6 rounded-2xl border border-border/60 bg-surface/40 text-center">
+        <div className="max-w-2xl mx-auto mb-16 p-6 rounded-2xl border border-border/35 bg-surface/40 text-center">
           <h2 className="text-lg font-black text-text-primary mb-3">Why We Charge</h2>
           <p className="text-sm text-text-muted leading-relaxed">
             Running ensemble AI models across text, image, audio, and video requires significant GPU compute.
@@ -200,7 +200,7 @@ export default function PricingPage() {
           <h2 className="text-2xl font-black text-text-primary text-center mb-8">
             Frequently Asked <span className="gradient-text">Questions</span>
           </h2>
-          <div className="rounded-2xl border border-border bg-surface px-6">
+          <div className="rounded-2xl border border-border/60 bg-surface px-6">
             {FAQS.map((item) => (
               <FAQItem key={item.q} q={item.q} a={item.a} />
             ))}

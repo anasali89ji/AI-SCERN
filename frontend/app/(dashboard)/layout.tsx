@@ -286,7 +286,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop sidebar */}
         <motion.aside animate={{ width: collapsed ? 72 : 260 }}
           transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="hidden lg:flex flex-col bg-surface border-r border-border relative flex-shrink-0">
+          className="hidden lg:flex flex-col bg-surface border-r border-border/50 relative flex-shrink-0">
           <Sidebar
             user={user} signOut={signOut}
             collapsed={collapsed} pathname={pathname}
@@ -307,7 +307,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-border z-50 flex flex-col">
+                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-border/50 z-50 flex flex-col">
                 <Sidebar
                   user={user} signOut={signOut}
                   collapsed={false} pathname={pathname}
@@ -319,7 +319,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-14 sm:h-16 border-b border-border flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-surface/50 flex-shrink-0 backdrop-blur-sm sticky top-0 z-30">
+          <header className="h-14 sm:h-16 border-b border-border/40 flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-surface/50 flex-shrink-0 backdrop-blur-sm sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
                 <Menu className="w-6 h-6" />

@@ -120,7 +120,7 @@ export default function DashboardPage() {
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-surface border border-border rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
+            className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
             <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
               <s.icon className="w-5 h-5" />
             </div>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
             <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>
               <Link href={t.href}
-                className={`flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border hover:border-primary/30 transition-all text-center group`}>
+                className={`flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
                 <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
                   <t.icon className="w-5 h-5" />
                 </div>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
       {/* ── AI/Human balance bar ── */}
       {totalScans > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="bg-surface border border-border rounded-2xl p-5">
+          className="bg-surface border border-border/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
             <span className="text-xs text-text-muted">{totalScans} total scans</span>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
             {scans.map((scan, i) => (
               <motion.div key={scan.id} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
+                className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-text-primary truncate">

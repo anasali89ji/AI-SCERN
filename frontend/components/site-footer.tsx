@@ -5,7 +5,7 @@ import { Mail } from 'lucide-react'
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-surface/30 backdrop-blur-sm">
+    <footer className="border-t border-border/30 bg-surface/30 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 mb-10">
 
@@ -120,7 +120,7 @@ export function SiteFooter() {
         </div>
 
         {/* Disclaimer */}
-        <div className="border-t border-border pt-6 mb-4">
+        <div className="border-t border-border/30 pt-6 mb-4">
           <p className="text-xs text-text-disabled text-center leading-relaxed max-w-2xl mx-auto">
             Detection results are probabilistic, not definitive. Use human judgment for high-stakes decisions.
             Aiscern is an early-access product — accuracy benchmarks reflect current model performance and will improve over time.

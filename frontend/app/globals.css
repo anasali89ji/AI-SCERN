@@ -743,3 +743,51 @@ html { scroll-behavior: smooth; }
 [class*="font-black"][class*="text-amber"] {
   font-variant-numeric: tabular-nums;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODULE F: Border polish & section separator minimal fade
+   Applied: May 2026 — border audit pass
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+  The `border` token is #1c1c2e (dark purple-gray).
+  At full opacity it reads as a clear hard line on #08080d bg.
+  Section separators (border-t, border-b, border-y) should be
+  nearly invisible — just enough to give structure without weight.
+  These overrides handle any missed instances globally.
+*/
+
+/* Section-level horizontal separators — always minimal */
+section + section,
+section > .max-w-6xl > .border-t,
+section > .max-w-7xl > .border-t {
+  border-color: rgba(28, 28, 46, 0.35);
+}
+
+/* Dashboard sidebar border — already subtle, keep it */
+.bg-surface.border-r.border-border {
+  border-color: rgba(28, 28, 46, 0.8);
+}
+
+/* Dashboard header border */
+.bg-surface\/50.border-b.border-border {
+  border-color: rgba(28, 28, 46, 0.6);
+}
+
+/* Detect page .card borders — ensure they never look harsh */
+.card {
+  border-color: rgba(28, 28, 46, 0.9);
+}
+
+/* On hover, cards reveal primary tint naturally via Tailwind — no override needed */
+
+/* Chat page: all border-white/N values should be uniform and very subtle */
+/* These are already handled per-element above in Module B */
+
+/* Prevent any border from using pure white above 12% opacity on dark surfaces */
+@media (prefers-color-scheme: dark) {
+  [class*="border-white/1"]:not([class*="border-white/[0."]) {
+    /* border-white/10, /18, /14, /12, /13, /16 — cap at equivalent of /8 */
+    opacity: 0.8;
+  }
+}

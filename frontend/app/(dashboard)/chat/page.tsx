@@ -346,7 +346,7 @@ function MessageBubble({
 
         {/* Typing dots while waiting for first token */}
         {showTypingDots && (
-          <div className="rounded-2xl rounded-bl-sm bg-[#131328] border border-white/8">
+          <div className="rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05]">
             <TypingDots />
           </div>
         )}
@@ -356,7 +356,7 @@ function MessageBubble({
           <div className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
               ? 'bg-gradient-to-br from-violet-600 to-blue-600 text-white rounded-br-sm shadow-lg shadow-violet-500/15'
-              : 'bg-[#131328] border border-white/8 rounded-bl-sm'
+              : 'bg-[#131328] border border-white/[0.05] rounded-bl-sm'
           }`}>
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
@@ -608,7 +608,7 @@ export default function ChatPage() {
             <input
               value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
               placeholder="Search…" autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-violet-500/40"
+              className="w-full px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-violet-500/40"
             />
           )}
         </div>
@@ -622,7 +622,7 @@ export default function ChatPage() {
           {filteredChats.map(c=>(
             <div key={c.id}
               className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all text-xs ${
-                activeChatId===c.id ? 'bg-white/8 text-white border border-white/10' : 'text-gray-600 hover:text-gray-300 hover:bg-white/[0.04]'
+                activeChatId===c.id ? 'bg-white/8 text-white border border-white/[0.07]' : 'text-gray-600 hover:text-gray-300 hover:bg-white/[0.04]'
               }`}
               onClick={()=>{setActiveChatId(c.id);setSidebarOpen(false)}}
             >
@@ -664,7 +664,7 @@ export default function ChatPage() {
           </button>
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/10 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0 overflow-hidden">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0 overflow-hidden">
               <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
             </div>
             <div className="min-w-0">
@@ -708,7 +708,7 @@ export default function ChatPage() {
             <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
-                <div className="w-14 h-14 rounded-2xl bg-black border border-white/10 flex items-center justify-center shadow-2xl shadow-violet-500/20 overflow-hidden">
+                <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-violet-500/20 overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#09090f] flex items-center justify-center">
@@ -737,7 +737,7 @@ export default function ChatPage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SUGGESTIONS.map(({Ic: I, text, cat})=>(
                   <button key={text} onClick={()=>send(text)}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-500/20 text-left transition-all group cursor-pointer"
+                    className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-500/20 text-left transition-all group cursor-pointer"
                   >
                     <div className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-400/70 flex items-center justify-center shrink-0 group-hover:bg-violet-500/20 transition-colors mt-0.5">
                       <I />
@@ -772,7 +772,7 @@ export default function ChatPage() {
             {attachments.length>0 && (
               <div className="flex flex-wrap gap-2 mb-2.5">
                 {attachments.map((a,i)=>(
-                  <div key={i} className="relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/6 border border-white/10 text-xs text-gray-500 max-w-[180px]">
+                  <div key={i} className="relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 max-w-[180px]">
                     {a.type.startsWith('image/') ? <Ico.Image /> : a.type.startsWith('audio/') ? <Ico.Music /> : a.type.startsWith('video/') ? <Ico.Video /> : <Ico.FileText />}
                     <span className="truncate">{a.name}</span>
                     <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} className="hover:text-red-400 transition-colors ml-0.5 shrink-0"><Ico.Close /></button>
@@ -781,7 +781,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-1.5 sm:gap-2 px-2 py-2 rounded-2xl border border-white/10 bg-[#111128] focus-within:border-violet-500/40 focus-within:shadow-lg focus-within:shadow-violet-500/8 transition-all">
+            <div className="flex items-end gap-1.5 sm:gap-2 px-2 py-2 rounded-2xl border border-white/[0.07] bg-[#111128] focus-within:border-violet-500/40 focus-within:shadow-lg focus-within:shadow-violet-500/8 transition-all">
               <button onClick={()=>fileRef.current?.click()}
                 className="p-2 rounded-xl text-gray-700 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0 mb-0.5"
                 title="Attach image, audio or video">
