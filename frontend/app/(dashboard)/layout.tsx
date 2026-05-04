@@ -284,7 +284,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AuthGuard>
       <div className="flex h-screen bg-background overflow-hidden">
         {/* Desktop sidebar */}
-        <motion.aside animate={{ width: collapsed ? 72 : 260 }} transition={{ duration: 0.3 }}
+        <motion.aside animate={{ width: collapsed ? 72 : 260 }}
+          transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           className="hidden lg:flex flex-col bg-surface border-r border-border relative flex-shrink-0">
           <Sidebar
             user={user} signOut={signOut}
@@ -302,8 +303,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {mobileOpen && (
             <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+                transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
                 className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-border z-50 flex flex-col">
                 <Sidebar
                   user={user} signOut={signOut}
@@ -335,7 +338,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <ErrorBoundary>
             {/* BUG-05 fixed: pb-safe → env(safe-area-inset-bottom) */}
-            <main className="flex-1 overflow-y-auto min-h-0"
+            <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
               <div className="min-h-full pb-16 lg:pb-0">{children}</div>
             </main>

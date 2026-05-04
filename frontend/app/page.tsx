@@ -445,7 +445,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full h-24 sm:h-28 md:h-32 bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors" />
+          className="w-full min-w-0 h-24 sm:h-28 md:h-32 bg-background border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 transition-colors" />
 
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '✓'}</span>
@@ -461,16 +461,16 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
             <motion.div initial={{ opacity: 0, y: 8, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
               <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose/5 border-rose/20' : result.verdict === 'HUMAN' ? 'bg-emerald/5 border-emerald/20' : 'bg-amber/5 border-amber/20'}`}>
-                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald" /> : <HelpCircle className="w-5 h-5 text-amber" />}
-                    <span className={`font-bold text-base sm:text-lg ${result.verdict === 'AI' ? 'text-rose' : result.verdict === 'HUMAN' ? 'text-emerald' : 'text-amber'}`}>
+                <div className="flex items-center justify-between mb-3 gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {result.verdict === 'AI' ? <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose shrink-0" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald shrink-0" /> : <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber shrink-0" />}
+                    <span className={`font-bold text-sm sm:text-lg leading-tight ${result.verdict === 'AI' ? 'text-rose' : result.verdict === 'HUMAN' ? 'text-emerald' : 'text-amber'}`}>
                       {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-black text-text-primary">{Math.round(result.confidence || 0)}%</div>
-                    <div className="text-xs text-text-muted">confidence</div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xl sm:text-2xl font-black text-text-primary tabular-nums">{Math.round(result.confidence || 0)}%</div>
+                    <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
                   </div>
                 </div>
                 <div className="h-2 rounded-full bg-background overflow-hidden">
@@ -1239,7 +1239,7 @@ export default function HomePage() {
 
       <main id="main-content">
       {/* ── HERO ── */}
-      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20 sm:pt-28 lg:pt-32">
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20 sm:pt-28 lg:pt-32 pb-16 sm:pb-20">
         <DeferredParticleNetwork />
         <FloatingCards />
 

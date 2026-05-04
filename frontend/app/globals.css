@@ -691,3 +691,55 @@ html { scroll-behavior: smooth; }
 .aria-msg-in {
   animation: aria-msg-in 0.22s ease-out both;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODULE 10: Mobile overflow guards & UX polish
+   Applied: after full codebase audit (May 2026)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Force all direct children of detect-page result panels to stay in-flow */
+.space-y-4.w-full.min-w-0 > * { max-width: 100%; }
+
+/* Signal list: momentum scroll on iOS, hide scrollbar */
+.overflow-y-auto.max-h-\[300px\],
+.overflow-y-auto.max-h-\[280px\] {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.overflow-y-auto.max-h-\[300px\]::-webkit-scrollbar,
+.overflow-y-auto.max-h-\[280px\]::-webkit-scrollbar {
+  display: none;
+}
+
+/* dashboard <main>: belt-and-suspenders x-overflow guard */
+@media (max-width: 1023px) {
+  [class*="overflow-y-auto"][class*="overflow-x-hidden"] {
+    overflow-x: hidden !important;
+  }
+}
+
+/* iOS bottom safe area for detect result pages */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .detect-page-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Remove min-width:44px from icon-only tight buttons — keep min-height only */
+@media (max-width: 640px) {
+  .btn-ghost {
+    min-width: unset !important;
+  }
+  /* Preserve 44px min touch target on primary actions only */
+  .btn-primary {
+    min-height: 44px;
+  }
+}
+
+/* tabular-nums on all confidence values — prevents width jitter during animation */
+[class*="font-black"][class*="gradient-text"],
+[class*="font-black"][class*="text-rose"],
+[class*="font-black"][class*="text-emerald"],
+[class*="font-black"][class*="text-amber"] {
+  font-variant-numeric: tabular-nums;
+}

@@ -91,7 +91,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             style={{ touchAction: 'none' }}
           />
           {/* Dropdown panel */}
-          <div className="sm:hidden fixed top-16 left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border px-4 py-4 space-y-3 z-50 shadow-2xl">
+          <div className="sm:hidden fixed top-16 left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border px-4 py-4 space-y-3 z-50 shadow-2xl max-h-[calc(100svh-4rem)] overflow-y-auto">
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
                 className="block text-sm text-text-muted hover:text-text-primary transition-colors font-medium py-2 px-2 rounded-lg hover:bg-surface active:scale-95">

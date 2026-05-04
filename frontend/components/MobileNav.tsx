@@ -47,7 +47,7 @@ export function MobileNav() {
             />
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 360 }}
+              transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
               className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border rounded-t-3xl"
               style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}
             >

@@ -427,26 +427,28 @@ export default function VideoDetectionPage() {
         {/* Right: Results */}
         <AnimatePresence mode="wait">
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="space-y-4 w-full min-w-0">
               {/* Verdict card */}
-              <div className={`card border ${cfg.border} ${cfg.bg}`}>
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
-                    <cfg.icon className={`w-7 h-7 ${cfg.color}`} />
+              <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                  <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
+                    <cfg.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${cfg.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`text-xl font-black ${cfg.color} mb-1`}>{cfg.label}</h3>
+                    <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>{cfg.label}</h3>
                     <p className="text-text-muted text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
 
                 {/* Confidence bar */}
                 <div className="mt-5">
-                  <div className="flex justify-between text-xs text-text-muted mb-2">
-                    <span>Confidence</span>
-                    <span className={`font-black text-xl ${cfg.color}`}>{formatConfidence(result.confidence)}</span>
+                  <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
+                    <span className="shrink-0">Confidence</span>
+                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-3 bg-border rounded-full overflow-hidden">
+                  <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence * 100}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className="h-full rounded-full bg-gradient-to-r from-secondary to-primary" />
@@ -484,17 +486,17 @@ export default function VideoDetectionPage() {
                   <span className="w-2 h-2 rounded-full bg-secondary" />
                   Detection Signals ({result.signals.length})
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
                     <motion.div key={s.name}
-                      initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-surface-active/50 border border-border/50">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05, ease: 'easeOut' }}
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-text-secondary font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full
+                        <div className="flex justify-between mb-1 gap-2">
+                          <span className="text-xs sm:text-sm text-text-secondary font-medium truncate">{s.name}</span>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
                             ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>
                             {s.weight}%
                           </span>

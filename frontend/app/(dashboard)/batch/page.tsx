@@ -416,7 +416,7 @@ export default function BatchPage() {
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary truncate font-medium">{bf.file.name}</p>
+                    <p className="text-sm text-text-primary truncate font-medium min-w-0">{bf.file.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-text-muted">{formatFileSize(bf.file.size)}</span>
                       <span className="text-xs text-text-disabled uppercase">{detectType(bf.file)}</span>

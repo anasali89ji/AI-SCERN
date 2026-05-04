@@ -353,23 +353,25 @@ Analyzed: ${new Date().toLocaleString()}`
               <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Verdict Banner */}
                 <div className={`card border ${verdictStyles[result.verdict]}`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
                       {result.verdict === 'AI'
-                        ? <AlertTriangle className="w-7 h-7 text-rose" />
+                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-rose" />
                         : result.verdict === 'HUMAN'
-                        ? <CheckCircle className="w-7 h-7 text-emerald" />
-                        : <HelpCircle className="w-7 h-7 text-amber" />}
+                        ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-emerald" />
+                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-amber" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-2xl font-black ${verdictColor[result.verdict]} mb-1`}>
-                        {result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
-                      </h3>
-                      <p className="text-text-muted text-sm leading-relaxed">{result.summary}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-4xl font-black gradient-text">{formatConfidence(result.confidence)}</div>
-                      <div className="text-xs text-text-muted">confidence</div>
+                      <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+                        <h3 className={`text-base sm:text-2xl font-black ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
+                          {result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
+                        </h3>
+                        <div className="text-right shrink-0">
+                          <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
+                          <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
+                        </div>
+                      </div>
+                      <p className="text-text-muted text-xs sm:text-sm leading-relaxed">{result.summary}</p>
                     </div>
                   </div>
 
@@ -394,11 +396,11 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className="w-2 h-2 rounded-full bg-primary" />
                     Detection Signals ({result.signals.length})
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                     {result.signals.map((signal, i) => (
-                      <motion.div key={signal.name} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.08 }}
-                        className="p-3 rounded-xl bg-surface-active/50 border border-border/50">
+                      <motion.div key={signal.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05, ease: 'easeOut' }}
+                        className="p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                           <span className="text-sm text-text-secondary flex-1 font-medium">{signal.name}</span>
@@ -437,20 +439,20 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 )}
                 {/* Actions footer */}
-                <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs text-text-muted font-mono truncate">{result.processing_time}ms</span>
-                  <div className="flex gap-2 shrink-0">
+                <div className="card py-3 px-4 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+                  <span className="text-xs text-text-muted font-mono">{result.processing_time}ms</span>
+                  <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
                     <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
-                      className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5">
+                      className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
                       <RotateCcw className="w-3.5 h-3.5" /> Detect Another
                     </button>
                     <button onClick={copyResult}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5">
+                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
                       <Copy className="w-3.5 h-3.5" />
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                     <button onClick={exportReport}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5">
+                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
                       <Download className="w-3.5 h-3.5" />
                       Export
                     </button>
