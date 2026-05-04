@@ -23,6 +23,43 @@ const nextConfig = {
       '@radix-ui/react-tooltip',
     ],
   },
+
+  // ── Bundle splitting ─────────────────────────────────────────────────────
+  // Split vendor libraries into stable long-cached chunks.
+  // framer-motion, lucide-react, @clerk/nextjs are large and change rarely —
+  // keeping them in a separate chunk means users cache them across navigations.
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...(config.optimization.splitChunks?.cacheGroups ?? {}),
+          // Framer Motion — animation library, ~70KB gzipped
+          framerMotion: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'vendor-framer-motion',
+            chunks: 'all',
+            priority: 30,
+          },
+          // Lucide icons — only what's imported (tree-shaken), but split for caching
+          lucide: {
+            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+            name: 'vendor-lucide',
+            chunks: 'all',
+            priority: 29,
+          },
+          // Clerk auth — large SDK, rarely changes
+          clerk: {
+            test: /[\\/]node_modules[\\/]@clerk[\\/]/,
+            name: 'vendor-clerk',
+            chunks: 'all',
+            priority: 28,
+          },
+        },
+      }
+    }
+    return config
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL:            process.env.NEXT_PUBLIC_SUPABASE_URL            || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY:       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY       || '',

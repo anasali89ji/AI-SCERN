@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -7,6 +8,25 @@ import { useRouter } from 'next/navigation'
 import { useAuth }           from '@/components/auth-provider'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
+
+// ─── Lazy-loaded below-fold sections (separate JS chunks) ────────────────────
+// Each section is only fetched when the user scrolls near it.
+const DynamicWhoNeedsSection = dynamic(
+  () => import('@/components/home/WhoNeedsSection'),
+  { ssr: false, loading: () => <div className="min-h-[560px] sm:min-h-[700px]" /> }
+)
+const DynamicAIvsRealSection = dynamic(
+  () => import('@/components/home/AIvsRealSection'),
+  { ssr: false, loading: () => <div className="min-h-[320px]" /> }
+)
+const DynamicHomepageReviews = dynamic(
+  () => import('@/components/home/HomepageReviews'),
+  { ssr: false, loading: () => (
+    <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+      {[0, 1, 2].map(i => <div key={i} className="card border-border/50 h-40 animate-pulse bg-surface/60 rounded-2xl" />)}
+    </div>
+  )}
+)
 import {
   Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3,
   ArrowRight, CheckCircle, XCircle, HelpCircle,
@@ -495,338 +515,6 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 
 // ─── Who Needs Aiscern — Card Section ────────────────────────────────────────
 // ─── Who Needs Aiscern — enriched data ───────────────────────────────────────
-const WHO_NEEDS = [
-  {
-    role: 'Journalists & Fact-Checkers',
-    icon: Globe,
-    img: '/trust/journalists.jpg',
-    tag: 'Media & Press',
-    tagColor: '#7c3aed',
-    problem: 'AI-fabricated quotes, deepfake press photos and synthetic sources arriving faster than ever.',
-    value: 'Verify every image, audio clip and statement before it publishes — in under 10 seconds.',
-    stats: [{ label: 'Image verification', value: '~82%' }, { label: 'Audio deepfake', value: '~79%' }],
-    href: '/detect/image',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
-  },
-  {
-    role: 'Educators & Schools',
-    icon: Award,
-    img: '/trust/educators.jpg',
-    tag: 'Education',
-    tagColor: '#2563eb',
-    problem: 'Students submitting ChatGPT essays — academic integrity eroding class by class.',
-    value: 'Sentence-level AI heatmaps and confidence scores catch generated text other tools miss.',
-    stats: [{ label: 'Text detection', value: '~85%' }, { label: 'Avg scan time', value: '<3s' }],
-    href: '/detect/text',
-    color: '#2563eb',
-    glow: 'rgba(37,99,235,0.22)',
-  },
-  {
-    role: 'HR & Recruiters',
-    icon: Users,
-    img: '/trust/hr.jpg',
-    tag: 'Talent & Hiring',
-    tagColor: '#0891b2',
-    problem: 'AI-polished CVs and cover letters that mask the real candidate behind perfect prose.',
-    value: 'Screen written applications and video-interview transcripts for synthetic content before hiring.',
-    stats: [{ label: 'CV text scan', value: '~85%' }, { label: 'Video analysis', value: '~76%' }],
-    href: '/detect/text',
-    color: '#0891b2',
-    glow: 'rgba(8,145,178,0.22)',
-  },
-  {
-    role: 'Legal Professionals',
-    icon: Shield,
-    img: '/trust/legal.jpg',
-    tag: 'Law & Compliance',
-    tagColor: '#059669',
-    problem: 'Deepfake evidence, AI-drafted contracts and forged audio recordings entering proceedings.',
-    value: 'Detection reports for documents, images and audio — shareable with one link. Results are probabilistic; use alongside human judgment.',
-    stats: [{ label: 'Audio detection', value: '~79%' }, { label: 'Image analysis', value: '~82%' }],
-    href: '/detect/audio',
-    color: '#059669',
-    glow: 'rgba(5,150,105,0.22)',
-  },
-  {
-    role: 'Security & Trust & Safety',
-    icon: Lock,
-    img: '/trust/security.jpg',
-    tag: 'Cybersecurity',
-    tagColor: '#dc2626',
-    problem: 'Voice-cloned fraud calls, synthetic ID photos and AI-generated phishing content at scale.',
-    value: 'Batch-scan hundreds of files simultaneously — text, image, audio and video in one queue.',
-    stats: [{ label: 'Batch capacity', value: '20×' }, { label: 'Voice clone det.', value: '~79%' }],
-    href: '/batch',
-    color: '#dc2626',
-    glow: 'rgba(220,38,38,0.22)',
-  },
-  {
-    role: 'Content Creators',
-    icon: Sparkles,
-    img: '/trust/creators.jpg',
-    tag: 'Creative Work',
-    tagColor: '#d97706',
-    problem: 'Clients doubting originality while competitors flood feeds with AI-generated content.',
-    value: 'Authenticate your work with a shareable proof-of-authenticity link — instantly and free.',
-    stats: [{ label: 'Multi-modal', value: '4 types' }, { label: 'Shareable report', value: '1-click' }],
-    href: '/detect/image',
-    color: '#d97706',
-    glow: 'rgba(217,119,6,0.22)',
-  },
-  {
-    role: 'Academic Researchers',
-    icon: Brain,
-    img: '/trust/researchers.jpg',
-    tag: 'Research & Science',
-    tagColor: '#7c3aed',
-    problem: 'AI-generated papers, hallucinated citations and synthetic datasets corrupting research.',
-    value: 'Validate source material and peer submissions using methodology-backed multi-model detection.',
-    stats: [{ label: 'Text accuracy', value: '~85%' }, { label: 'Datasets used', value: '87' }],
-    href: '/methodology',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
-  },
-  {
-    role: 'Marketing & Brand Teams',
-    icon: TrendingUp,
-    img: '/trust/marketing.jpg',
-    tag: 'Brand Safety',
-    tagColor: '#2563eb',
-    problem: 'UGC campaigns flooded with AI images, fake reviews and synthetic testimonials harming trust.',
-    value: 'Audit every piece of user-generated content before it goes live — protect brand credibility.',
-    stats: [{ label: 'Image detection', value: '~82%' }, { label: 'Batch UGC scan', value: '20×' }],
-    href: '/detect/image',
-    color: '#2563eb',
-    glow: 'rgba(37,99,235,0.22)',
-  },
-  {
-    role: 'Healthcare Professionals',
-    icon: Activity,
-    img: '/trust/healthcare.jpg',
-    tag: 'Medicine & Health',
-    tagColor: '#059669',
-    problem: 'AI-fabricated medical reports, synthetic scans and health misinformation spreading fast.',
-    value: 'Verify medical documents, imagery and audio records across all four modalities — free.',
-    stats: [{ label: 'Multi-modal', value: '4 types' }, { label: 'Confidence score', value: 'Full' }],
-    href: '/detect/image',
-    color: '#059669',
-    glow: 'rgba(5,150,105,0.22)',
-  },
-]
-
-function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
-  const CardIcon = card.icon
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-500 hover:-translate-y-1.5"
-      style={{
-        boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)`,
-      }}
-    >
-      {/* ── Image panel ── */}
-      <div className="relative h-36 sm:h-40 overflow-hidden flex-shrink-0">
-
-        {/* Layer 1 — colour fallback (shown only when image fails to load) */}
-        <div
-          className="absolute inset-0"
-          style={{ background: `linear-gradient(145deg, ${card.color}60, ${card.color}25)` }}
-        />
-
-        {/* Layer 2 — actual photo, Next/Image for auto WebP/AVIF + responsive sizing */}
-        <Image
-          src={card.img}
-          alt={card.role}
-          fill
-          className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
-          loading="lazy"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          quality={72}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
-
-        {/* Layer 3 — subtle colour tint overlay (lets image show through) */}
-        <div
-          className="absolute inset-0"
-          style={{ background: `${card.color}28` }}
-        />
-
-        {/* Layer 4 — bottom vignette for text legibility only — NOT full cover */}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-        {/* Layer 5 — top accent shimmer bar */}
-        <div
-          className="absolute top-0 left-0 right-0 h-[2px]"
-          style={{ background: `linear-gradient(90deg, transparent, ${card.color}, transparent)` }}
-        />
-
-        {/* Tag badge — top left, above all layers */}
-        <div className="absolute top-2.5 left-3 z-10">
-          <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md"
-            style={{ background: 'rgba(0,0,0,0.55)', border: `1px solid ${card.color}70`, color: '#fff' }}
-          >
-            <CardIcon className="w-2.5 h-2.5" />
-            {card.tag}
-          </span>
-        </div>
-
-        {/* Hover colour glow from bottom */}
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ background: `radial-gradient(ellipse at 50% 120%, ${card.glow} 0%, transparent 65%)` }}
-        />
-
-        {/* Role title — pinned to bottom, above vignette */}
-        <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3 z-10">
-          <h3 className="text-[13px] sm:text-sm font-black text-white leading-snug drop-shadow-lg">
-            {card.role}
-          </h3>
-        </div>
-      </div>
-
-      {/* ── Content panel ── */}
-      <div className="bg-surface/96 backdrop-blur-sm flex flex-col flex-1 p-3.5 sm:p-4 gap-3">
-
-        {/* Problem row */}
-        <div className="flex gap-2.5 items-start">
-          <div className="w-5 h-5 rounded-lg bg-rose/12 border border-rose/25 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <AlertTriangle className="w-2.5 h-2.5 text-rose" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-black text-rose/60 uppercase tracking-widest mb-0.5">The Problem</p>
-            <p className="text-[11px] sm:text-xs text-text-muted leading-relaxed">{card.problem}</p>
-          </div>
-        </div>
-
-        {/* Separator */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-px bg-border/50" />
-          <div className="w-1 h-1 rounded-full" style={{ background: card.color }} />
-          <div className="flex-1 h-px bg-border/50" />
-        </div>
-
-        {/* Solution row */}
-        <div className="flex gap-2.5 items-start">
-          <div className="w-5 h-5 rounded-lg bg-emerald/12 border border-emerald/25 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <CheckCircle className="w-2.5 h-2.5 text-emerald" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-black text-emerald/60 uppercase tracking-widest mb-0.5">Aiscern Solves It</p>
-            <p className="text-[11px] sm:text-xs text-text-muted leading-relaxed">{card.value}</p>
-          </div>
-        </div>
-
-        {/* Stat chips */}
-        <div className="flex gap-1.5 flex-wrap min-w-0">
-          {card.stats.map(s => (
-            <span key={s.label}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black"
-              style={{ background: `${card.color}12`, border: `1px solid ${card.color}25`, color: card.color }}>
-              <span className="font-black">{s.value}</span>
-              <span className="font-medium opacity-70">· {s.label}</span>
-            </span>
-          ))}
-        </div>
-
-        {/* CTA */}
-        <Link
-          href={card.href}
-          aria-label={`Start free AI detection for ${card.role}`}
-          className="mt-auto flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-200 group/btn hover:brightness-110"
-          style={{
-            background: `${card.color}14`,
-            border: `1px solid ${card.color}30`,
-            color: card.color,
-          }}
-        >
-          <span className="font-black">Try free</span>
-          <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true" />
-        </Link>
-      </div>
-    </motion.div>
-  )
-}
-
-function WhoNeedsSection() {
-  return (
-    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 overflow-hidden">
-      {/* Subtle bg glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px]" />
-      </div>
-
-      <div className="max-w-6xl mx-auto relative z-10">
-
-        {/* ── Section header ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-[11px] sm:text-xs font-black uppercase tracking-widest mb-5">
-            <Users className="w-3 h-3" />
-            Who Uses Aiscern
-          </div>
-
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 leading-tight">
-            Used by Professionals <span className="gradient-text">Across Industries</span>
-          </h2>
-
-          <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            <strong className="text-text-secondary">AI-generated content</strong> is a problem in every field.
-            Aiscern gives professionals detection tools to identify it —{' '}
-            <strong className="text-primary">free tier available</strong>, across all four modalities.
-          </p>
-
-          {/* Quick industry count row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
-            {['Media', 'Education', 'Legal', 'HR', 'Security', 'Research', 'Healthcare', 'Marketing'].map(tag => (
-              <span key={tag} className="text-[10px] sm:text-xs font-semibold text-text-muted px-2.5 py-1 rounded-full border border-border/50 hover:border-primary/30 hover:text-primary transition-all duration-200 cursor-default">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── Card grid: 1→2→3 cols ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5">
-          {WHO_NEEDS.map((card, i) => (
-            <WhoNeedsCard key={card.role} card={card} i={i} />
-          ))}
-        </div>
-
-        {/* ── Bottom CTA strip ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
-        >
-          <Link href="/detect/text"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-all duration-200">
-            <Brain className="w-4 h-4" />
-            Start Free Scan
-          </Link>
-          <Link href="/methodology"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border/50 text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all duration-200">
-            <Eye className="w-4 h-4" />
-            See How It Works
-          </Link>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
 // ─── How It Works Icons ───────────────────────────────────────────────────────
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
@@ -856,264 +544,28 @@ const HOW_IT_WORKS = [
   { n: '04', title: 'Export & Share',   desc: 'Save history, share results, export PDF reports' },
 ]
 
-
-// ─── AI vs Real Comparison Cards ─────────────────────────────────────────────
-// All images from Unsplash (free commercial license: https://unsplash.com/license)
-const COMPARISON_CARDS = [
-  // Text AI vs Human
-  { type: 'text', label: 'AI-Generated Text',  verdict: 'AI', color: '#f43f5e',
-    preview: 'The implementation of advanced machine learning algorithms has fundamentally transformed the paradigm of data processing...',
-    tag: 'GPT-4', icon: 'text' },
-  { type: 'text', label: 'Human Writing',       verdict: 'HUMAN', color: '#10b981',
-    preview: "I burned my toast again this morning. Third time this week. My smoke alarm and I have a complicated relationship at this point...",
-    tag: 'Authentic', icon: 'text' },
-  // Image AI vs Real
-  { type: 'image', label: 'AI-Generated Portrait', verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-portrait-01.webp',
-    tag: 'Midjourney', icon: 'image' },
-  { type: 'image', label: 'Authentic Photo',        verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-portrait-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  { type: 'image', label: 'DALL-E 3 Landscape',    verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-city-01.webp',
-    tag: 'DALL-E 3', icon: 'image' },
-  { type: 'image', label: 'Real Landscape',         verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-mountain-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  { type: 'image', label: 'Stable Diffusion Art',  verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-abstract-01.webp',
-    tag: 'SD XL', icon: 'image' },
-  { type: 'image', label: 'Real Urban Photo',       verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-street-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  // More text
-  { type: 'text', label: 'AI Essay',            verdict: 'AI', color: '#f43f5e',
-    preview: 'Furthermore, the multifaceted implications of this technological advancement necessitate a comprehensive reevaluation of existing frameworks and paradigms...',
-    tag: 'Claude 3', icon: 'text' },
-  { type: 'text', label: 'Student Writing',     verdict: 'HUMAN', color: '#10b981',
-    preview: "ok so i know this essay is due tomorrow but i literally just figured out what my thesis even means. starting over at midnight feels bad but here we are lol",
-    tag: 'Authentic', icon: 'text' },
-  // More images
-  { type: 'image', label: 'AI Nature Scene',    verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-nature-01.webp',
-    tag: 'Firefly', icon: 'image' },
-  { type: 'image', label: 'Real Forest',        verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-forest-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  { type: 'image', label: 'AI Portrait',        verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-face-01.webp',
-    tag: 'ThisPersonDoesNotExist', icon: 'image' },
-  { type: 'image', label: 'Real Portrait',      verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-face-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  { type: 'image', label: 'AI Architecture',    verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-architecture-01.webp',
-    tag: 'Midjourney', icon: 'image' },
-  { type: 'image', label: 'Real Architecture',  verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-architecture-01.webp',
-    tag: 'Authentic', icon: 'image' },
-  { type: 'text', label: 'AI Product Desc.',    verdict: 'AI', color: '#f43f5e',
-    preview: 'Experience unparalleled innovation with our cutting-edge solution that seamlessly integrates advanced AI-powered functionality to deliver exceptional results...',
-    tag: 'GPT-3.5', icon: 'text' },
-  { type: 'text', label: 'Real Review',         verdict: 'HUMAN', color: '#10b981',
-    preview: "shipped faster than expected, packaging was a bit beat up but the actual item inside was totally fine. would buy again if the price drops",
-    tag: 'Authentic', icon: 'text' },
-  { type: 'image', label: 'AI Food Photo',      verdict: 'AI', color: '#f43f5e',
-    img: '/compare/ai-food-01.webp',
-    tag: 'DALL-E 3', icon: 'image' },
-  { type: 'image', label: 'Real Food Photo',    verdict: 'HUMAN', color: '#10b981',
-    img: '/compare/real-food-01.webp',
-    tag: 'Authentic', icon: 'image' },
-]
-
-function LazyAIvsRealSection() {
+// ─── LazySection — IntersectionObserver viewport guard ───────────────────────
+// Renders children only when the section approaches the viewport.
+// Combined with next/dynamic, this means the JS chunk isn't even fetched
+// until the user scrolls near the section.
+function LazySection({ children, minHeight = '400px', rootMargin = '400px' }: {
+  children: React.ReactNode
+  minHeight?: string
+  rootMargin?: string
+}) {
   const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } },
-      { rootMargin: '400px' }  // start loading 400px before it enters viewport
+      { rootMargin }
     )
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
-  }, [])
+  }, [rootMargin])
   return (
-    <div ref={ref} style={{ minHeight: visible ? 'auto' : '400px' }}>
-      {visible && <AIvsRealSection />}
-    </div>
-  )
-}
-
-function AIvsRealSection() {
-  return (
-    <section className="py-10 sm:py-16 lg:py-24 overflow-hidden">
-      <div className="max-w-7xl 2xl:max-w-[1400px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
-
-        {/* ── Header ── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose/30 bg-rose/5 text-rose text-[11px] sm:text-xs font-semibold mb-3">
-            <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-            Real-World Detection Examples
-          </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black mb-3">
-            AI vs <span className="gradient-text">Authentic</span>
-          </h2>
-          <p className="text-text-muted text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-2">
-            See how Aiscern tells AI-generated content apart from authentic human work.
-          </p>
-        </motion.div>
-
-        {/* ── ALL SCREENS: auto-scrolling rows (mobile gets smaller cards) ── */}
-        <div className="space-y-2 sm:space-y-3">
-          {/* Row 1 — scrolls left */}
-          <div className="relative overflow-hidden">
-            <div className="flex gap-2 sm:gap-3 animate-scroll-left" style={{ width: 'max-content' }}>
-              {[...COMPARISON_CARDS.slice(0, 10), ...COMPARISON_CARDS.slice(0, 10)].map((card, i) => (
-                <ComparisonCard key={i} card={card} />
-              ))}
-            </div>
-            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          </div>
-          {/* Row 2 — scrolls right */}
-          <div className="relative overflow-hidden">
-            <div className="flex gap-2 sm:gap-3 animate-scroll-right" style={{ width: 'max-content' }}>
-              {[...COMPARISON_CARDS.slice(10), ...COMPARISON_CARDS.slice(10)].map((card, i) => (
-                <ComparisonCard key={i} card={card} />
-              ))}
-            </div>
-            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          </div>
-          <p className="text-center text-xs text-text-muted pt-2">⚠️ Illustrative examples — not real detection results. Try the live detector above.</p>
-        </div>
-
-      </div>
-    </section>
-  )
-}
-
-// ── Mobile card: horizontal layout, full-width ──────────────────────────────
-// ── Desktop / tablet scrolling card ─────────────────────────────────────────
-function ComparisonCard({ card }: { card: { type: string; label: string; verdict: string; color: string; tag: string; preview?: string; img?: string } }) {
-  const isAI = card.verdict === 'AI'
-  return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border/60 rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group">
-      {/* Top — image or text */}
-      {card.type === 'image' && card.img ? (
-        <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
-          <div className="absolute inset-0" style={{
-            background: isAI ? 'linear-gradient(135deg,#4c1d9580,#1e1b4b50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
-          }} />
-          <img src={card.img} alt={card.label}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10"
-            loading="lazy"
-            width={288}
-            height={176}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
-          <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white backdrop-blur-sm ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
-            {card.verdict}
-          </div>
-        </div>
-      ) : (
-        <div className="h-28 sm:h-36 lg:h-44 p-2 sm:p-4 bg-surface-active flex flex-col justify-center relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-1 h-full ${isAI ? 'bg-rose' : 'bg-emerald'}`} />
-          <p className="text-xs sm:text-sm text-text-muted leading-relaxed line-clamp-4 italic pl-3">
-            "{card.preview}"
-          </p>
-          <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5" /> : <CheckCircle className="w-2.5 h-2.5" />}
-            {card.verdict}
-          </div>
-        </div>
-      )}
-      {/* Footer */}
-      <div className="p-3 flex items-center justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] sm:text-sm font-semibold text-text-primary truncate">{card.label}</p>
-          <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 ${isAI ? 'bg-rose/10 text-rose' : 'bg-emerald/10 text-emerald'}`}>
-            {card.tag}
-          </span>
-        </div>
-        <div className="flex-shrink-0 ml-2">
-          <span className={`text-xs font-bold px-2 py-1 rounded-full ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
-            {isAI ? '⚠ AI' : '✓ Real'}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-
-// ─── HomepageReviews — live data from /api/reviews ───────────────────────────
-const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg,#7c3aed,#2563eb)',
-  'linear-gradient(135deg,#0ea5e9,#06b6d4)',
-  'linear-gradient(135deg,#10b981,#16a34a)',
-  'linear-gradient(135deg,#f43f5e,#dc2626)',
-  'linear-gradient(135deg,#f59e0b,#d97706)',
-  'linear-gradient(135deg,#8b5cf6,#6d28d9)',
-]
-
-function HomepageReviews() {
-  const [reviews, setReviews] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/reviews?page=1&sort=top&limit=3')
-      .then(r => r.json())
-      .then(d => { if (d.data?.length) setReviews(d.data.slice(0, 3)) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return (
-    <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
-      {[0,1,2].map(i => (
-        <div key={i} className="card border-border/50 h-40 animate-pulse bg-surface/60 rounded-2xl" />
-      ))}
-    </div>
-  )
-
-  if (!reviews.length) return null
-
-  return (
-    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-      {reviews.map((r: any, i: number) => (
-        <motion.div key={r.id || i}
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-          className="card border-border/30 hover:border-primary/20 transition-colors">
-          <div className="flex gap-0.5 mb-4">
-            {Array.from({ length: r.rating || r.stars || 5 }).map((_: unknown, j: number) => (
-              <span key={j} className="text-amber text-sm">★</span>
-            ))}
-          </div>
-          <p className="text-text-secondary text-sm leading-relaxed mb-4">
-            &ldquo;{r.body || r.text}&rdquo;
-          </p>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              style={{ background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length] }}
-            >
-              {r.is_anonymous ? '?' : (r.display_name?.charAt(0) || 'U').toUpperCase()}
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-text-primary">
-                {r.is_anonymous ? 'Anonymous' : (r.display_name || 'Aiscern User')}
-              </div>
-              <div className="text-xs text-text-muted">{r.tool_used || 'Aiscern User'}</div>
-            </div>
-          </div>
-        </motion.div>
-      ))}
+    <div ref={ref} style={{ minHeight: visible ? undefined : minHeight }}>
+      {visible && children}
     </div>
   )
 }
@@ -1318,8 +770,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── WHO NEEDS AISCERN ── */}
-      <div className="cv-auto"><WhoNeedsSection /></div>
+      {/* ── WHO NEEDS AISCERN — lazy loaded, separate chunk ── */}
+      <LazySection minHeight="560px" rootMargin="300px">
+        <DynamicWhoNeedsSection />
+      </LazySection>
 
       {/* ── STATS ── */}
       <section className="cv-auto py-10 sm:py-20 border-y border-border/25 bg-surface/30">
@@ -1339,8 +793,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── AI VS REAL COMPARISON CARDS — lazy loaded below fold ── */}
-      <div className="cv-auto"><LazyAIvsRealSection /></div>
+      {/* ── AI VS REAL — lazy loaded chunk + intersection guard ── */}
+      <LazySection minHeight="320px" rootMargin="400px">
+        <DynamicAIvsRealSection />
+      </LazySection>
 
       {/* ── TOOLS GRID ── */}
       <section id="tools" className="cv-auto py-16 sm:py-24 px-4">
@@ -1425,7 +881,9 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-3xl font-black mb-3">Early <span className="gradient-text">Feedback</span></h2>
             <p className="text-sm text-text-muted max-w-lg mx-auto">We are collecting real feedback from beta testers. If you have used Aiscern, we would love to hear from you.</p>
           </motion.div>
-          <HomepageReviews />
+          <LazySection minHeight="200px" rootMargin="200px">
+            <DynamicHomepageReviews />
+          </LazySection>
           <div className="text-center mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <a href="mailto:contact@aiscern.com"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/40 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all">

@@ -3,7 +3,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
-import { ReviewSuggestion } from '@/components/ReviewSuggestion'
+import dynamic from 'next/dynamic'
+
+// ── Post-session component — only shown after first message ───────────────────
+const LazyReviewSuggestion = dynamic(
+  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
+  { ssr: false }
+)
 
 const STORAGE_KEY = 'aiscern_chats_v2'
 
@@ -819,7 +825,7 @@ export default function ChatPage() {
       </main>
     </div>
     <div className="px-4 pb-4 max-w-full">
-      <ReviewSuggestion toolName="AI Detection Assistant" />
+      <LazyReviewSuggestion toolName="AI Detection Assistant" />
     </div>
   </>
   )

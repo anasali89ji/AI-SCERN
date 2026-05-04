@@ -8,9 +8,18 @@ import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, Rotate
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
+import dynamic from 'next/dynamic'
+
+// ── Post-scan components — loaded only after a result arrives ─────────────────
+const LazyReviewSuggestion = dynamic(
+  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
+  { ssr: false }
+)
+const LazyFeedbackBar = dynamic(
+  () => import('@/components/FeedbackBar').then(m => ({ default: m.FeedbackBar })),
+  { ssr: false }
+)
 import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
-import { ReviewSuggestion } from '@/components/ReviewSuggestion'
-import { FeedbackBar } from '@/components/FeedbackBar'
 
 
 
@@ -367,10 +376,10 @@ export default function AudioDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pb-6">
       
-      <ReviewSuggestion toolName="Audio Detector" />
+      <LazyReviewSuggestion toolName="Audio Detector" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
-          <FeedbackBar scanId={scanId} verdict={result.verdict} />
+          <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">

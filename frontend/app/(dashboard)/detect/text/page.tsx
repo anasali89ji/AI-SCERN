@@ -6,9 +6,18 @@ import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Load
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence } from '@/lib/utils/helpers'
-import { ReviewSuggestion } from '@/components/ReviewSuggestion'
-import { FeedbackBar } from '@/components/FeedbackBar'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
+import dynamic from 'next/dynamic'
+
+// ── Post-scan components — loaded only after a result arrives ─────────────────
+const LazyReviewSuggestion = dynamic(
+  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
+  { ssr: false }
+)
+const LazyFeedbackBar = dynamic(
+  () => import('@/components/FeedbackBar').then(m => ({ default: m.FeedbackBar })),
+  { ssr: false }
+)
 
 
 
@@ -503,10 +512,10 @@ Analyzed: ${new Date().toLocaleString()}`
         </motion.div>
       )}
 
-      <ReviewSuggestion toolName="AI Text Detector" />
+      <LazyReviewSuggestion toolName="AI Text Detector" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
-          <FeedbackBar scanId={scanId} verdict={result.verdict} />
+          <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">

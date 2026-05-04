@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import {
   LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe,
   Layers, Clock, User, Settings, ChevronLeft,
@@ -13,8 +14,13 @@ import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
 import { MobileNav } from '@/components/MobileNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { OnboardingWizard } from '@/components/OnboardingWizard'
 import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
+
+// ── Lazy-loaded modals — not needed until after first render ──────────────────
+const OnboardingWizard = dynamic(
+  () => import('@/components/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })),
+  { ssr: false }
+)
 
 const navGroups = [
   {
