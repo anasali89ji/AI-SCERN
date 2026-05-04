@@ -130,8 +130,59 @@ export async function POST(req: NextRequest) {
     // Fire Inngest background job (fire-and-forget, non-blocking)
     if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'image', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
 
+    // ── Fire forensic cascade (non-blocking, parallel to response) ────────────
+    // Runs the 6-layer pipeline in the background. User gets instant result now,
+    // forensic deep-analysis is ready ~10s later at /forensic/[forensicScanId].
+    let forensicScanId: string | null = null
+    if (r2Key) {
+      try {
+        const { inngest }    = await import('@/lib/inngest/client')
+        const { getR2PublicUrl } = await import('@/lib/storage/r2')
+        forensicScanId = crypto.randomUUID()
+        const imageUrl = getR2PublicUrl(r2Key)
+
+        // Insert forensic_scans pending row so the UI can poll immediately
+        await getSupabaseAdmin().from('forensic_scans').insert({
+          id:                       forensicScanId,
+          image_url:                imageUrl,
+          r2_key:                   r2Key,
+          user_id:                  userId && !userId.startsWith('anon_') ? userId : null,
+          status:                   'pending',
+          layers:                   [],
+          semantic_agents:          [],
+          provenance:               null,
+          final_verdict:            null,
+          existing_ensemble_result: {
+            confidence: result.confidence / 100,
+            label:      result.verdict === 'AI' ? 'ai' : result.verdict === 'HUMAN' ? 'human' : 'uncertain',
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        // Fire Inngest cascade — runs in background, never blocks this response
+        await inngest.send({
+          name: 'scan/image.forensic-cascade' as any,
+          data: {
+            scanId:   forensicScanId,
+            imageUrl,
+            r2Key,
+            existingEnsembleResult: {
+              confidence: result.confidence / 100,
+              label:      result.verdict === 'AI' ? 'ai' : result.verdict === 'HUMAN' ? 'human' : 'uncertain',
+            },
+          },
+        })
+      } catch (e) {
+        // Never block the response — forensic cascade is best-effort
+        console.warn('[detect/image] forensic cascade fire failed:', e)
+        forensicScanId = null
+      }
+    }
+
     return NextResponse.json({
       success: true, scan_id: scanId,
+      forensic_scan_id: forensicScanId,
       result:  { ...result, processing_time: processingTime, file_name: fileName, file_size: fileSize },
     })
   } catch (err) {

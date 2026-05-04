@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import ScanningLoader, { type ScanStage } from '@/components/ScanningLoader'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database } from 'lucide-react'
+import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
@@ -28,6 +28,7 @@ export default function ImageDetectionPage() {
   const [result, setResult] = useState<DetectionResult | null>(null)
   const [graphContext, setGraphContext] = useState<string | null>(null)
   const [scanId, setScanId] = useState<string | null>(null)
+  const [forensicScanId, setForensicScanId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [zoomed, setZoomed] = useState(false)
   const [imgDims, setImgDims] = useState<{w:number,h:number}|null>(null)
@@ -57,7 +58,7 @@ export default function ImageDetectionPage() {
 
   const handleDetect = async () => {
     if (!file) return
-    setLoading(true); setError(null); setResult(null); setScanStage('uploading')
+    setLoading(true); setError(null); setResult(null); setForensicScanId(null); setScanStage('uploading')
     try {
       let r2Key: string | null = null
 
@@ -94,6 +95,7 @@ export default function ImageDetectionPage() {
       setScanStage('complete')
       setResult(data.result)
       setScanId(data.scan_id ?? null)
+      setForensicScanId(data.forensic_scan_id ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
       // Notify dashboard/history pages to refresh scan list
       window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
@@ -320,9 +322,25 @@ Analyzed: ${new Date().toLocaleString()}`
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs text-text-muted font-mono truncate">{result.processing_time}ms</span>
-                <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-                  <Download className="w-3.5 h-3.5" /> Export Report
-                </button>
+                <div className="flex items-center gap-2">
+                  {forensicScanId && (
+                    <motion.a
+                      href={`/forensic/${forensicScanId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 }}
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 transition-colors font-medium"
+                    >
+                      <Microscope className="w-3.5 h-3.5" />
+                      Deep Forensic Analysis
+                    </motion.a>
+                  )}
+                  <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                    <Download className="w-3.5 h-3.5" /> Export Report
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : loading && !result ? (
