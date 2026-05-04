@@ -471,6 +471,15 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
     engineDesc = `Image Brain (60%) + 10 pixel signals (40%) — HF models cold-starting`
   }
 
+  // ── Generator Override Floor ───────────────────────────────────────────────
+  // When the brain identified a SPECIFIC AI generator (Midjourney, Gemini, Grok,
+  // Flux, DALL-E) with high confidence, pixel-level signals can misfire on
+  // artistic/fantasy AI images (sparkles, fabric detail, particles mimic real
+  // camera noise). Apply a floor to prevent pixel drag reversing a solid verdict.
+  if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0) {
+    aiScore = Math.max(aiScore, brainResult.score * 0.88)
+  }
+
   const calibratedImgScore = calibrateScore(aiScore)
   const editSig  = imgSignals.find(s => s.name === 'Edit Signature')
   const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30

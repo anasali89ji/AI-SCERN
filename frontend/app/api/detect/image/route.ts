@@ -142,7 +142,10 @@ export async function POST(req: NextRequest) {
         const imageUrl = getR2PublicUrl(r2Key)
 
         // Insert forensic_scans pending row so the UI can poll immediately
-        await getSupabaseAdmin().from('forensic_scans').insert({
+        // IMPORTANT: Supabase .insert() returns {data,error} — it does NOT throw.
+        // Must check error explicitly or the row is silently missing and the user
+        // gets "Scan not found" when they click the Deep Forensic Analysis button.
+        const { error: insertErr } = await getSupabaseAdmin().from('forensic_scans').insert({
           id:                       forensicScanId,
           image_url:                imageUrl,
           r2_key:                   r2Key,
@@ -159,6 +162,10 @@ export async function POST(req: NextRequest) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
+        if (insertErr) {
+          console.error('[detect/image] forensic_scans insert failed:', insertErr.message, insertErr.code)
+          throw new Error('forensic_scans insert failed: ' + insertErr.message)
+        }
 
         // Fire Inngest cascade — runs in background, never blocks this response
         await inngest.send({

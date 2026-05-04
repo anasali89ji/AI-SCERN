@@ -811,8 +811,28 @@ export async function analyzeImageWithBrain(
   const highAI  = allSignals.filter(s => s.score > 0.75).length
   const highHu  = allSignals.filter(s => s.score < 0.25).length
   const boost   = highAI >= 8 ? 0.10 : highAI >= 5 ? 0.06 : highHu >= 8 ? -0.10 : highHu >= 5 ? -0.06 : 0
-  const score   = clamp(rawSc + boost, 0.01, 0.99)
-  const verdict = score > 0.62 ? 'AI' : score < 0.36 ? 'HUMAN' : 'UNCERTAIN'
+
+  // ── Artistic / Fantasy AI Override ────────────────────────────────────────
+  // Texture, frequency, and gradient signals are calibrated for photorealistic
+  // AI images (smooth skin, clean backgrounds). For artistic/fantasy AI images
+  // (Midjourney illustrations, Gemini art, Grok Aurora paintings) these signals
+  // falsely fire REAL because sparkles + complex fabric + particle effects create
+  // high texture variance indistinguishable from a real camera at signal level.
+  //
+  // Solution: when generator fingerprint AND hue ring BOTH strongly identify a
+  // specific AI generator, they are far more reliable than the texture signals.
+  // Apply a correction boost that overrides the false-REAL texture drag.
+  const artStyleAI = genSig.score > 0.78 && hueSig.score > 0.68
+  const artBoost   = artStyleAI ? 0.25 : genSig.score > 0.75 && satSig.score > 0.65 ? 0.18 : 0
+
+  // Purple/violet dominant palette is statistically near-impossible in real
+  // photographs — real cameras produce warm or neutral casts. A purple-dominated
+  // image with AI generator statistics is almost certainly AI art.
+  const isPurpleDom  = genHints.some(h => /midjourney|grok|gemini/i.test(h)) && hueSig.score > 0.62
+  const purpleBoost  = isPurpleDom ? 0.12 : 0
+
+  const score   = clamp(rawSc + boost + artBoost + purpleBoost, 0.01, 0.99)
+  const verdict = score > 0.55 ? 'AI' : score < 0.36 ? 'HUMAN' : 'UNCERTAIN'
 
   // Step 4: Findings
   const sorted   = [...allSignals].sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
