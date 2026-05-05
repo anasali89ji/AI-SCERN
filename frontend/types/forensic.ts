@@ -101,3 +101,105 @@ export interface TargetRegion {
   height: number
   reason: string
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// v2.0 Extensions — 9-Agent Image Pipeline + Audio Pipeline Types
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Extended SemanticAgentReport — covers base 4 agents + 5 new agents.
+ * Extra fields are optional so the v1.0 contract still type-checks.
+ */
+export interface SemanticAgentReportV2 extends SemanticAgentReport {
+  // GENERATOR_FINGERPRINT agent extra fields
+  topGeneratorMatch?:    string
+  generatorConfidence?:  number
+  alternativeMatches?:   Array<{ generator: string; confidence: number }>
+  provenanceSignals?: {
+    c2paDetected:     boolean
+    c2paSigner:       string | null
+    synthidLikely:    boolean
+    watermarkVisible: boolean
+  }
+  // SEMANTIC_LOGIC agent extra fields
+  textAnomalies?:   string[]
+  logicViolations?: string[]
+  // GEOMETRIC agent extra fields
+  vanishingPointConsistent?: boolean
+  shadowsConsistent?:        boolean
+  reflectionsAccurate?:      boolean
+  // COLOR_SCIENCE agent extra fields
+  generatorColorMatch?:   string
+  channelBiasDetected?:   boolean
+  colorBandingDetected?:  boolean
+}
+
+// ── Audio Detection Types ─────────────────────────────────────────────────────
+
+export type AudioVerdict = 'AI_AUDIO' | 'HUMAN_AUDIO' | 'UNCERTAIN'
+
+export interface AudioSignalReport {
+  name:        string
+  score:       number
+  rawValue:    number
+  weight:      number
+  description: string
+}
+
+export interface AudioAgentReport {
+  agentName:           string
+  agentSuspicionScore: number
+  evidence: Array<{
+    category:     string
+    artifactType: string
+    status:       'anomalous' | 'normal' | 'inconclusive'
+    confidence:   number
+    detail:       string
+  }>
+  rawResponse: string
+}
+
+export interface AudioTemporalResult {
+  breathingScore:       number
+  prosodyScore:         number
+  formantScore:         number
+  overallTemporalScore: number
+  violations:           string[]
+}
+
+export interface AudioFusionResult {
+  verdict:              AudioVerdict
+  overallScore:         number
+  confidence:           number
+  confidenceInterval:   [number, number]
+  generatorAttribution: string | null
+  l1Score:              number
+  l2Score:              number
+  l3Score:              number
+  primaryEvidence:      string[]
+  processingTimeMs:     number
+  layerScores: {
+    signalFingerprint: number
+    semanticRAG:       number
+    temporalGraph:     number
+  }
+}
+
+export interface AudioScanRecord {
+  id:               string
+  createdAt:        string
+  fileName:         string
+  fileSize:         number
+  format:           string
+  durationSeconds?: number
+  status:           'pending' | 'processing' | 'completed' | 'failed'
+  // HF ensemble result (existing pipeline)
+  hfVerdict?:       string
+  hfConfidence?:    number
+  // Forensic pipeline result (new)
+  forensic?:        AudioFusionResult | null
+  // Blended final verdict
+  verdict:          string
+  confidence:       number
+  processingTimeMs: number
+}
