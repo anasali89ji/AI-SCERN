@@ -1,4 +1,5 @@
 import { checkRateLimit } from '@/lib/ratelimit'
+import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 export const maxDuration = 60
 
 import { NextRequest } from 'next/server'
@@ -61,17 +62,107 @@ async function fetchPipelineStats(cfToken: string): Promise<Record<string, any>>
 // ─────────────────────────────────────────────────────────────────────────────
 // VISION ANALYSIS — referred to as "Aiscern Vision Engine" externally
 // ─────────────────────────────────────────────────────────────────────────────
-async function analyzeImage(
-  imageBase64: string, mediaType: string, userContext: string, apiKey: string
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, any> }> {
+// IMAGE ANALYSIS — 9-Agent Forensic Pipeline (Aiscern Vision Engine)
+// When imageUrl is provided: routes directly to runSemanticRAG (all 9 agents).
+// When only base64 is provided: attempts R2 upload first, then falls back to
+// NVIDIA vision model as a single-prompt check.
+// ─────────────────────────────────────────────────────────────────────────────
 
+// Aria's forensic capability context (injected into system prompt)
+const ARIA_FORENSIC_CAPABILITY = `
+When a user shares an image for analysis, you have access to a 9-layer forensic pipeline that runs:
+- Generator Fingerprint Agent (highest weight): identifies which AI model created the image — Gemini/Imagen 3, Grok/Aurora, DALL-E 3, GPT-4o, Midjourney v6/niji, SDXL, Flux, Adobe Firefly, Ideogram, Leonardo AI, or a real photograph.
+- Facial Forensics Agent: eyes, nose, ears, mouth, skin texture with generator-specific tells.
+- Physics & Lighting Agent: shadow consistency, specular highlights, depth-of-field, reflection logic.
+- Background & Edge Agent: hair boundaries, text/signage coherence, crowd faces, architecture perspective.
+- Anatomical Integrity Agent: finger count, joint anatomy, clothing drape physics.
+- Semantic Logic Agent: scene coherence, scale consistency, temporal consistency, text coherence.
+- Micro-Texture Agent: fabric weave, skin pores, metal anisotropy, wood grain, water caustics.
+- Geometric Integrity Agent: vanishing point consistency, shadow geometry, occlusion logic.
+- Color Science Agent: RGB channel statistics, generator color fingerprints, gamut anomalies.
+
+When presenting results:
+- ALWAYS state which generator was attributed (e.g., "This image was attributed to Gemini/Imagen 3 with 87% confidence").
+- Mention specific artifacts found (e.g., "The Facial agent detected iris symmetry inconsistency and lip border sharpness typical of Gemini/Imagen 3").
+- Always state the overall AI probability and confidence level.
+- Before starting analysis, tell the user: "I'm running a forensic scan using the Aiscern 9-agent pipeline..." — never silently analyze.
+`
+
+// Aria's audio forensic capability context
+const ARIA_AUDIO_CAPABILITY = `
+When a user shares audio for analysis, you have access to a 4-layer audio forensic pipeline:
+- Signal Layer (L1): spectral flatness, phase linearity, pitch jitter, formant transition rate, MFCC patterns — physics-based signals that differ between real speech and neural TTS.
+- Semantic Layer (L2): prosody analysis, voice forensics, environment forensics, linguistic forensics — 4 parallel LLM agents analyzing transcription + acoustic description.
+- Temporal Layer (L3): breathing pattern state machine, prosody transition graph, physiological constraint checking — real speakers breathe and have physiological limits TTS violates.
+- Fusion Layer (L4): Bayesian combination with confidence intervals and TTS generator attribution.
+
+When presenting results: explain which specific artifacts were found (e.g., "The prosody agent detected unnaturally uniform speaking rate with absent breathing sounds — consistent with ElevenLabs TTS"). Always state which TTS system was attributed if AI is detected.
+`
+
+async function analyzeImageForensic(
+  imageBase64: string,
+  mediaType:   string,
+  imageUrl:    string | null,
+  userContext: string,
+  apiKey:      string,
+): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
+
+  // ── Path A: direct URL → 9-agent forensic RAG ────────────────────────────
+  if (imageUrl) {
+    try {
+      const { layerReport, agents, generatorAttribution, detectionState } = await runSemanticRAG(imageUrl)
+
+      const generatorAgent = agents.find(
+        a => a.agentName === 'GeneratorFingerprintAgent' || a.agentName === 'GENERATOR_FINGERPRINT'
+      ) as (typeof agents[number] & Record<string, unknown>) | undefined
+
+      const generatorMatch = (generatorAgent?.topGeneratorMatch as string | null) ?? generatorAttribution ?? 'Unknown'
+      const generatorConf  = (generatorAgent?.generatorConfidence as number | null) ?? 0
+      const isAI           = layerReport.layerSuspicionScore > 0.65
+      const confidence_pct = Math.round(
+        (isAI ? layerReport.layerSuspicionScore : 1 - layerReport.layerSuspicionScore) * 100
+      )
+
+      // Collect top evidence from the highest-suspicion agents
+      const keyFindings = agents
+        .filter(a => a.agentSuspicionScore > 0.5 && a.modelUsed !== 'failed')
+        .sort((a, b) => b.agentSuspicionScore - a.agentSuspicionScore)
+        .flatMap(a => a.evidence.filter(e => e.status === 'anomalous').slice(0, 2))
+        .map(e => e.detail)
+        .slice(0, 6)
+
+      const analysis = isAI
+        ? `Forensic analysis indicates AI generation. Generator attributed to: ${generatorMatch} (${Math.round(generatorConf * 100)}% confidence). Key artifacts: ${keyFindings.join('; ')}.`
+        : `Image appears to be a real photograph (${detectionState}). ${keyFindings.join('; ')}.`
+
+      return {
+        verdict:       isAI ? 'AI-Generated' : 'Likely Authentic',
+        confidence_pct,
+        analysis,
+        details: {
+          layer6Score:          layerReport.layerSuspicionScore,
+          generatorAttribution: generatorMatch,
+          generatorConfidence:  generatorConf,
+          detectionState,
+          agentScores:          Object.fromEntries(agents.map(a => [a.agentName, a.agentSuspicionScore])),
+          processingMs:         layerReport.processingTimeMs,
+          keyFindings,
+        },
+      }
+    } catch (err) {
+      console.warn('[analyzeImageForensic] Semantic RAG failed, falling back to NVIDIA vision:', err)
+      // fall through to base64 / NVIDIA path
+    }
+  }
+
+  // ── Path B: base64 → NVIDIA vision fallback ───────────────────────────────
   const prompt = `You are an expert digital forensics analyst specializing in AI-generated image detection and deepfake identification.
 
 Perform a thorough authenticity analysis of this image:
 
 EXAMINE:
 1. AI generation signatures — diffusion artifacts, overly smooth textures, symmetric perfection, unnatural bokeh
-2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity  
+2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity
 3. Physical plausibility — lighting direction, shadow consistency, object proportions
 4. Fine detail stress-test — fingers, text, teeth, background objects (AI consistently fails here)
 5. Metadata consistency — if EXIF patterns suggest generation
@@ -91,7 +182,7 @@ RECOMMENDATION: [What the user should do with this information]`
   const tryModel = async (model: string) => {
     const r = await fetch(`${NVIDIA_BASE}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
         messages: [{ role: 'user', content: [
@@ -118,7 +209,7 @@ RECOMMENDATION: [What the user should do with this information]`
     const verdictM = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
     const verdict  = verdictM?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
     const findingsM = text.match(/KEY_FINDINGS:([\s\S]*?)(?:ANALYSIS:|$)/i)
-    const findings  = findingsM?.[1]?.trim().split('\n').map(l => l.replace(/^-\s*/, '').trim()).filter(Boolean) || []
+    const findings  = findingsM?.[1]?.trim().split('\n').map((l: string) => l.replace(/^-\s*/, '').trim()).filter(Boolean) || []
     const analysisM = text.match(/ANALYSIS:\s*([\s\S]*?)(?:RECOMMENDATION:|$)/i)
     const recM      = text.match(/RECOMMENDATION:\s*([\s\S]*?)$/i)
 
@@ -130,12 +221,21 @@ RECOMMENDATION: [What the user should do with this information]`
         key_findings:   findings,
         recommendation: recM?.[1]?.trim() || '',
         raw:            text,
-      }
+        pipeline:       'nvidia_vision_fallback',
+      },
     }
   } catch (err: any) {
     return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${err?.message}`, details: {} }
   }
 }
+
+// Keep the old analyzeImage export alias for any remaining callers during migration
+async function analyzeImage(
+  imageBase64: string, mediaType: string, userContext: string, apiKey: string
+): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
+  return analyzeImageForensic(imageBase64, mediaType, null, userContext, apiKey)
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXT ANALYSIS — calls /api/detect/text (referred to as "Aiscern Text Engine")
@@ -690,6 +790,16 @@ ETHICAL CONSTRAINTS
 • NEVER confirm or deny whether a specific person's content is AI-generated in a way that could be defamatory
 • Detection results are probabilistic — always note that human review is recommended for high-stakes decisions
 • ALWAYS maintain user privacy — do not reference, store, or repeat uploaded content beyond the immediate conversation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMAGE FORENSIC PIPELINE CAPABILITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${ARIA_FORENSIC_CAPABILITY}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUDIO FORENSIC PIPELINE CAPABILITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${ARIA_AUDIO_CAPABILITY}
 ${detectionGuide}
 ${followupGuide}
 ${urgencyGuide}
