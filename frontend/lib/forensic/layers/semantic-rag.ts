@@ -294,8 +294,15 @@ async function callVisionAPI(imageUrl: string, systemPrompt: string): Promise<Vi
     }
   }
 
-  // Final fallback: OpenRouter
-  return callOpenRouterVision(imageUrl, systemPrompt)
+  // Final fallback: OpenRouter (guarded — throws clear error if key missing)
+  if (process.env.OPENROUTER_API_KEY) {
+    return callOpenRouterVision(imageUrl, systemPrompt)
+  }
+
+  throw new Error(
+    '[semantic-rag] No vision API key configured. ' +
+    'Set at least one of: GROK_API_KEY, GEMINI_API_KEY, or OPENROUTER_API_KEY in your environment variables.'
+  )
 }
 
 // ── Response Parser ───────────────────────────────────────────────────────────
