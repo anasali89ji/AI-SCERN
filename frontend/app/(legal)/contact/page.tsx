@@ -61,7 +61,7 @@ export default function ContactPage() {
               { icon: MessageSquare, label: 'Enterprise', val: 'enterprise@aiscern.com', href: 'mailto:enterprise@aiscern.com' },
             ].map(item => (
               <a key={item.label} href={item.href}
-                className="flex items-center gap-3 p-4 rounded-xl border border-border bg-surface hover:border-primary/30 transition-all">
+                className="flex items-center gap-3 p-4 rounded-xl border border-border/55 bg-surface hover:border-primary/30 transition-all">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <item.icon className="w-4 h-4 text-primary" />
                 </div>
@@ -72,7 +72,7 @@ export default function ContactPage() {
               </a>
             ))}
 
-            <div className="p-4 rounded-xl border border-border bg-surface">
+            <div className="p-4 rounded-xl border border-border/55 bg-surface">
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-text-primary">Response Time</span>
@@ -97,7 +97,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="p-4 rounded-xl border border-border bg-surface">
+            <div className="p-4 rounded-xl border border-border/55 bg-surface">
               <p className="text-xs text-text-muted uppercase tracking-wider mb-3 font-semibold">Follow Us</p>
               <div className="flex gap-3">
                 {[
@@ -106,7 +106,7 @@ export default function ContactPage() {
                   { Icon: Github,   href: 'https://github.com/saghirahmed9067-png/DETECT-AI', label: 'GitHub' },
                 ].map(({ Icon, href, label }) => (
                   <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-lg border border-border bg-surface-active hover:border-primary/40 hover:bg-primary/5 transition-all flex items-center justify-center"
+                    className="w-9 h-9 rounded-lg border border-border/55 bg-surface-active hover:border-primary/40 hover:bg-primary/5 transition-all flex items-center justify-center"
                     title={label}>
                     <Icon className="w-4 h-4 text-text-muted" />
                   </a>
@@ -124,26 +124,26 @@ export default function ContactPage() {
                 <p className="text-text-muted text-sm">We'll get back to you within 24–48 hours.</p>
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6 space-y-4">
+              <div className="rounded-2xl border border-border/55 bg-surface p-5 sm:p-6 space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Name *</label>
                     <input value={form.name} onChange={e => set('name', e.target.value)}
                       placeholder="Your name"
-                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary/60 transition-colors" />
+                      className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary/60 transition-colors" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Email *</label>
                     <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
                       placeholder="your@email.com"
-                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary/60 transition-colors" />
+                      className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary/60 transition-colors" />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Subject</label>
                   <select value={form.subject} onChange={e => set('subject', e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary/60 transition-colors">
+                    className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary/60 transition-colors">
                     {SUBJECTS.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
@@ -152,7 +152,7 @@ export default function ContactPage() {
                   <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Message *</label>
                   <textarea value={form.message} onChange={e => set('message', e.target.value)}
                     placeholder="Tell us how we can help…" rows={5}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled resize-none focus:outline-none focus:border-primary/60 transition-colors" />
+                    className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled resize-none focus:outline-none focus:border-primary/60 transition-colors" />
                 </div>
 
                 {error && <p className="text-rose text-sm px-1">{error}</p>}

@@ -89,7 +89,7 @@ export default function PipelinePage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border text-text-muted hover:text-text-primary text-sm transition-all">
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border/55 text-text-muted hover:text-text-primary text-sm transition-all">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             Refresh
           </button>
@@ -119,7 +119,7 @@ export default function PipelinePage() {
               { label: 'Pending Push',  value: fmt(stats.pending_push),  icon: Clock,    color: stats.pending_push > 5000 ? 'text-amber' : 'text-text-primary', sub: 'Waiting to push' },
               { label: 'Push Rate',     value: `${stats.push_rate}%`,    icon: TrendingUp, color: 'text-secondary', sub: 'Scraped → HF' },
             ].map(({ label, value, icon: Icon, color, sub }) => (
-              <div key={label} className="bg-surface border border-border rounded-xl p-4">
+              <div key={label} className="bg-surface border border-border/55 rounded-xl p-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-text-muted uppercase tracking-wider mb-1">{label}</p>
@@ -134,7 +134,7 @@ export default function PipelinePage() {
 
           {/* By Media Type */}
           {byType.length > 0 && (
-            <div className="bg-surface border border-border rounded-xl p-5">
+            <div className="bg-surface border border-border/55 rounded-xl p-5">
               <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" /> Breakdown by Type
               </h3>
@@ -153,7 +153,7 @@ export default function PipelinePage() {
           )}
 
           {/* Workers */}
-          <div className="bg-surface border border-border rounded-xl p-5">
+          <div className="bg-surface border border-border/55 rounded-xl p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
               <Radio className="w-4 h-4" /> Workers
             </h3>
@@ -182,7 +182,7 @@ export default function PipelinePage() {
 
           {/* Recent Pushes */}
           {pushLog.length > 0 && (
-            <div className="bg-surface border border-border rounded-xl p-5">
+            <div className="bg-surface border border-border/55 rounded-xl p-5">
               <h3 className="text-sm font-bold text-text-primary mb-4 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald" /> Recent Pushes to HuggingFace
               </h3>
@@ -207,7 +207,7 @@ export default function PipelinePage() {
           )}
 
           {/* HF Dataset link */}
-          <div className="bg-surface/50 border border-border/60 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-surface/50 border border-border/40 rounded-xl p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-text-primary">HuggingFace Dataset</p>
               <p className="text-xs text-text-muted">saghi776/detectai-dataset</p>

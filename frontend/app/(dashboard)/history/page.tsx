@@ -25,7 +25,9 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
   const conf = normalizeConf(scan.confidence_score)
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+      <motion.div initial={{ opacity: 0, scale: 0.97, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+        transition={{ type: 'tween', duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         className="card w-full max-w-md" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-text-primary">Scan Details</h3>
@@ -221,7 +223,7 @@ export default function HistoryPage() {
               <Filter className="w-3.5 h-3.5 text-text-muted shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
                   {f}
                 </button>
               ))}
@@ -233,7 +235,7 @@ export default function HistoryPage() {
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
                   {f}
                 </button>
               ))}
@@ -242,7 +244,7 @@ export default function HistoryPage() {
             {/* Sort */}
             <div className="ml-auto">
               <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
+                className="text-xs bg-surface border border-border/55 rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="confidence">By confidence</option>
@@ -300,8 +302,8 @@ export default function HistoryPage() {
                   return (
                     <motion.div key={scan.id}
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: Math.min(i * 0.02, 0.15) }}
+                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                      transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
                       className="card flex items-center gap-3 sm:gap-4 py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
                       onClick={() => setSelectedScan(scan)}>
 

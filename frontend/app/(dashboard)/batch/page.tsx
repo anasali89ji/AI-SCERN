@@ -263,7 +263,7 @@ export default function BatchPage() {
 
       {/* Drop Zone */}
       <div {...getRootProps()} className={`card border-2 border-dashed cursor-pointer transition-all mb-5 py-8 flex flex-col items-center gap-3
-        ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-border hover:border-secondary/50'}`}>
+        ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-border/60 hover:border-secondary/50'}`}>
         <input {...getInputProps()} />
         <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center">
           <Upload className={`w-7 h-7 ${isDragActive ? 'text-secondary' : 'text-text-muted'}`} />
@@ -395,7 +395,7 @@ export default function BatchPage() {
             <AnimatePresence initial={false}>
               {filteredFiles.map((bf, i) => (
                 <motion.div key={bf.id}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
                   transition={{ delay: Math.min(i * 0.02, 0.2) }}
                   className={`card flex items-center gap-3 py-3 px-4 transition-all ${
                     bf.status === 'processing' ? 'border-primary/40 bg-primary/3' :

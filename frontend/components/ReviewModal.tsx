@@ -98,7 +98,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
             initial={{ y: '100%', scale: 0.98 }}
             animate={{ y: 0, scale: 1 }}
             exit={{ y: '100%', scale: 0.98 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
           >
             {/* Top accent */}
             <div className="h-1 w-full bg-gradient-to-r from-violet-600 via-primary to-amber-500 rounded-t-2xl flex-shrink-0" />

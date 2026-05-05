@@ -32,7 +32,7 @@ function Avatar({ name, photoURL, avatarUrl, size = 96 }: { name: string; photoU
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number|string; color: string }) {
   return (
-    <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-2">
+    <div className="bg-surface border border-border/55 rounded-2xl p-5 flex flex-col gap-2">
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4 h-4" /></div>
       <p className="text-2xl font-black text-text-primary tabular-nums">{value}</p>
       <p className="text-xs text-text-muted">{label}</p>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
 
       {/* ── Profile Card ─────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-        className="bg-surface border border-border rounded-3xl overflow-hidden">
+        className="bg-surface border border-border/55 rounded-3xl overflow-hidden">
         {/* Banner */}
         <div className="h-28 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
           <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(124,58,237,0.2) 0%, transparent 60%)' }} />
@@ -197,13 +197,13 @@ export default function ProfilePage() {
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
                   <button onClick={() => setEditing(false)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:bg-surface-hover transition-all">
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/55 text-sm text-text-muted hover:bg-surface-hover transition-all">
                     <X className="w-4 h-4" /> Cancel
                   </button>
                 </>
               ) : (
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:border-primary/40 transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/55 text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:border-primary/40 transition-all">
                   <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Display Name</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    className="w-full bg-surface-active border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                    className="w-full bg-surface-active border border-border/55 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
                     placeholder="Your full name" />
                 </div>
                 {/* Username */}
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">@</span>
                     <input value={username} onChange={e => checkUsername(e.target.value)}
-                      className="w-full bg-surface-active border border-border rounded-xl pl-7 pr-9 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                      className="w-full bg-surface-active border border-border/55 rounded-xl pl-7 pr-9 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
                       placeholder="yourname" maxLength={30} />
                     {uStatus==='checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-border border-t-primary animate-spin" />}
                     {uStatus==='available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald" />}
@@ -250,7 +250,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Bio</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
-                    className="w-full bg-surface-active border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary resize-none"
+                    className="w-full bg-surface-active border border-border/55 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary resize-none"
                     placeholder="A short bio (optional)" maxLength={160} />
                   <p className="text-[10px] text-text-muted text-right mt-0.5">{bio.length}/160</p>
                 </div>
@@ -286,7 +286,7 @@ export default function ProfilePage() {
 
       {/* ── Credits & Usage ─────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0, transition:{delay:0.05} }}
-        className="bg-surface border border-border rounded-2xl p-6">
+        className="bg-surface border border-border/55 rounded-2xl p-6">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-5">
           <Zap className="w-4 h-4 text-primary" /> Credits & Usage
         </h2>
@@ -321,7 +321,7 @@ export default function ProfilePage() {
         <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">Detection Stats</h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[...Array(8)].map((_,i) => <div key={i} className="bg-surface border border-border rounded-2xl h-24 animate-pulse" />)}
+            {[...Array(8)].map((_,i) => <div key={i} className="bg-surface border border-border/55 rounded-2xl h-24 animate-pulse" />)}
           </div>
         ) : (
           <>
@@ -343,7 +343,7 @@ export default function ProfilePage() {
 
       {/* ── Account Details ─────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-        className="bg-surface border border-border rounded-2xl p-6 space-y-3">
+        className="bg-surface border border-border/55 rounded-2xl p-6 space-y-3">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1">
           <Shield className="w-5 h-5 text-primary" /> Account Details
         </h2>
