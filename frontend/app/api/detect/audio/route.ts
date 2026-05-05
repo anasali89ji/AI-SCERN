@@ -6,6 +6,7 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
+import { analyzeAudio as runForensicPipeline } from '@/lib/forensic/audio/pipeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,7 +95,56 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const result         = await analyzeAudio(fileName, fileSize, format, buffer)
+    // ── Run HF model pipeline and forensic pipeline in parallel ───────────────
+    const estimatedDurationSec = Math.round(fileSize / (128 * 1024 / 8))
+    const transcription = '' // populated by STT service (Whisper) when integrated
+
+    const [hfSettled, forensicSettled] = await Promise.allSettled([
+      analyzeAudio(fileName, fileSize, format, buffer),
+      runForensicPipeline({
+        transcription,
+        durationSeconds:     estimatedDurationSec,
+        precomputedFeatures: {},
+      }),
+    ])
+
+    const hfResult = hfSettled.status === 'fulfilled' ? hfSettled.value : null
+    if (!hfResult) throw new Error('HF audio analysis failed')
+
+    const forensicData = forensicSettled.status === 'fulfilled' ? forensicSettled.value : null
+    if (forensicSettled.status === 'rejected') {
+      console.warn('[detect/audio] Forensic pipeline non-fatal error:', forensicSettled.reason)
+    }
+
+    // Blend HF + forensic when forensic data is available
+    let blendedConfidence = hfResult.confidence
+    let blendedVerdict    = hfResult.verdict
+    let forensicSummary:  Record<string, unknown> | null = null
+
+    if (forensicData) {
+      const forensicAIScore = forensicData.overallScore
+      const hfAIScore       = hfResult.verdict === 'AI'    ? hfResult.confidence
+                            : hfResult.verdict === 'HUMAN' ? 1 - hfResult.confidence
+                            : 0.5
+      const blendedScore = 0.60 * hfAIScore + 0.40 * forensicAIScore
+      blendedVerdict     = blendedScore > 0.65 ? 'AI' : blendedScore < 0.35 ? 'HUMAN' : 'UNCERTAIN'
+      blendedConfidence  = blendedVerdict === 'AI'    ? blendedScore
+                         : blendedVerdict === 'HUMAN' ? 1 - blendedScore
+                         : 0.5
+      forensicSummary = {
+        l1Score:              forensicData.l1Score,
+        l2Score:              forensicData.l2Score,
+        l3Score:              forensicData.l3Score,
+        overallScore:         forensicData.overallScore,
+        confidence:           forensicData.confidence,
+        confidenceInterval:   forensicData.confidenceInterval,
+        generatorAttribution: forensicData.generatorAttribution,
+        primaryEvidence:      forensicData.primaryEvidence,
+        layerScores:          forensicData.layerScores,
+      }
+    }
+
+    const result         = { ...hfResult, confidence: blendedConfidence, verdict: blendedVerdict }
     const processingTime = Date.now() - start
 
     if (buffer && buffer.length > 0) await setCachedDetection('audio', hash, result)
@@ -117,8 +167,9 @@ export async function POST(req: NextRequest) {
           status:           'complete',
           metadata: {
             format,
-            estimated_duration_sec: Math.round(fileSize / (128 * 1024 / 8)),
+            estimated_duration_sec: estimatedDurationSec,
             r2: !!r2Key,
+            forensic: forensicSummary ?? undefined,
           },
         }).select('id').single()
         scanId = sr?.id ?? null
@@ -130,7 +181,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true, scan_id: scanId,
-      result:  { ...result, processing_time: processingTime, file_name: fileName },
+      result:  { ...result, processing_time: processingTime, file_name: fileName, forensic: forensicSummary },
     })
   } catch (err) {
     console.error('[detect/audio]', err)
