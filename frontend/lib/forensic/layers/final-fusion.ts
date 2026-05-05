@@ -55,14 +55,56 @@ function buildEvidenceSummary(
     }
   }
 
-  // Semantic agents
+  // Semantic agents (9-agent system: Facial, Physics, Background, Anatomical,
+  // GeneratorFingerprint, SemanticLogic, MicroTexture, Geometric, ColorScience)
   if (agents.length) {
-    lines.push('\n=== SEMANTIC AGENT FINDINGS ===')
+    lines.push('\n=== SEMANTIC AGENT FINDINGS (9-Agent Forensic Pipeline) ===')
+
+    // Surface generator attribution first if available (highest-weight agent)
+    const genAgent = agents.find(a =>
+      a.agentName === 'GeneratorFingerprintAgent' || a.agentName === 'GENERATOR_FINGERPRINT'
+    ) as (typeof agents[number] & Record<string, unknown>) | undefined
+    if (genAgent) {
+      const match = genAgent.topGeneratorMatch as string | undefined
+      const conf  = genAgent.generatorConfidence as number | undefined
+      if (match) {
+        lines.push(`  ★ GENERATOR ATTRIBUTION: ${match} (confidence=${((conf ?? 0) * 100).toFixed(0)}%)`)
+      }
+      const altMatches = genAgent.alternativeMatches as Array<{generator: string; confidence: number}> | undefined
+      if (altMatches?.length) {
+        lines.push(`    Alternatives: ${altMatches.map(m => `${m.generator}(${(m.confidence * 100).toFixed(0)}%)`).join(', ')}`)
+      }
+      const prov = genAgent.provenanceSignals as Record<string, unknown> | undefined
+      if (prov?.c2paDetected) lines.push(`    C2PA signer: ${prov.c2paSigner ?? 'unknown'}`)
+      if (prov?.synthidLikely) lines.push('    SynthID watermark detected')
+    }
+
+    // All agents with their top anomalous evidence
     for (const agent of agents) {
-      lines.push(`[${agent.agentName}]: score=${agent.agentSuspicionScore.toFixed(2)} via ${agent.modelUsed}`)
+      const label = `[${agent.agentName}]`
+      lines.push(`${label}: score=${agent.agentSuspicionScore.toFixed(2)} via ${agent.modelUsed}`)
       for (const ev of agent.evidence.filter(e => e.status === 'anomalous').slice(0, 3)) {
         lines.push(`  ⚠ ${ev.artifactType}: ${ev.detail}`)
       }
+      // SemanticLogic extra fields
+      const agentExt = agent as typeof agent & Record<string, unknown>
+      if (agentExt.logicViolations && Array.isArray(agentExt.logicViolations)) {
+        for (const v of (agentExt.logicViolations as string[]).slice(0, 2)) {
+          lines.push(`  ⚠ LOGIC VIOLATION: ${v}`)
+        }
+      }
+      if (agentExt.textAnomalies && Array.isArray(agentExt.textAnomalies)) {
+        for (const t of (agentExt.textAnomalies as string[]).slice(0, 2)) {
+          lines.push(`  ⚠ TEXT ANOMALY: ${t}`)
+        }
+      }
+      // Geometric extra fields
+      if (agentExt.vanishingPointConsistent === false) lines.push('  ⚠ GEOMETRIC: Inconsistent vanishing points detected')
+      if (agentExt.shadowsConsistent === false) lines.push('  ⚠ GEOMETRIC: Shadow directions inconsistent')
+      if (agentExt.reflectionsAccurate === false) lines.push('  ⚠ GEOMETRIC: Reflections do not match scene geometry')
+      // Color science extra fields
+      if (agentExt.generatorColorMatch) lines.push(`  → Color fingerprint matches: ${agentExt.generatorColorMatch}`)
+      if (agentExt.colorBandingDetected) lines.push('  ⚠ COLOR: VAE decoder banding detected')
     }
   }
 
