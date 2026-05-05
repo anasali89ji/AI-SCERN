@@ -23,9 +23,78 @@ import { analyzeText }                  from '@/lib/inference/hf-analyze'
 import { analyzeTextWithBrain }         from '@/lib/inference/text-detection-brain'
 import { fetchPageContent }             from '@/lib/utils/fetch-page'
 import { getSupabaseAdmin }             from '@/lib/supabase/admin'
+import { runSemanticRAG }               from '@/lib/forensic/layers/semantic-rag'
 
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 60
+
+// ── Image URL Extraction ───────────────────────────────────────────────────────
+// Extracts up to 5 image URLs from raw HTML: og:image, twitter:image, then <img> tags.
+// Max 5 per scan for cost control. Skips tiny icons/tracking pixels.
+
+function extractImageUrls(html: string, _pageUrl: string): string[] {
+  const urls: Set<string> = new Set()
+
+  // Priority 1: og:image meta tag
+  const ogMatch = html.match(/property="og:image"\s+content="([^"]+)"/)
+                ?? html.match(/content="([^"]+)"\s+property="og:image"/)
+  if (ogMatch?.[1]) urls.add(ogMatch[1])
+
+  // Priority 2: twitter:image
+  const twMatch = html.match(/name="twitter:image"\s+content="([^"]+)"/)
+                ?? html.match(/content="([^"]+)"\s+name="twitter:image"/)
+  if (twMatch?.[1]) urls.add(twMatch[1])
+
+  // Priority 3: regular <img> tags — only absolute URLs, only common image formats
+  if (urls.size < 5) {
+    const imgMatches = html.matchAll(/src="(https?:\/\/[^"]{10,500}\.(jpg|jpeg|png|webp))(?:\?[^"]*)?"(?:[^>]{0,100})?>/gi)
+    for (const m of imgMatches) {
+      if (urls.size >= 5) break
+      const src = m[1]
+      // Skip tracking pixels, icons, logos (heuristic: path contains 'icon', 'logo', 'pixel', '1x1')
+      if (/icon|logo|pixel|1x1|avatar|emoji/i.test(src)) continue
+      urls.add(src)
+    }
+  }
+
+  return [...urls].slice(0, 5)
+}
+
+// ── Web Scanner Image Analysis ─────────────────────────────────────────────────
+// Runs the 9-agent semantic RAG on each image URL found on the scanned page.
+// Max 5 images per scan (cost control per Part IX constraint 5).
+
+interface PageImageResult {
+  url:           string
+  aiScore:       number
+  generator?:    string
+  agentsSummary: string
+  error?:        string
+}
+
+async function analyzePageImages(imageUrls: string[]): Promise<PageImageResult[]> {
+  const results = await Promise.allSettled(
+    imageUrls.map(async (url): Promise<PageImageResult> => {
+      const { layerReport, agents, generatorAttribution } = await runSemanticRAG(url)
+
+      return {
+        url,
+        aiScore:    layerReport.layerSuspicionScore,
+        generator:  generatorAttribution ?? undefined,
+        agentsSummary: agents
+          .filter(a => a.agentSuspicionScore > 0.6 && a.modelUsed !== 'failed')
+          .map(a => `${a.agentName}(${a.agentSuspicionScore.toFixed(2)})`)
+          .join(', ') || 'No strong signals',
+      }
+    })
+  )
+
+  return results.map((r, i) =>
+    r.status === 'fulfilled'
+      ? r.value
+      : { url: imageUrls[i], aiScore: 0.5, agentsSummary: 'Analysis failed', error: String((r as PromiseRejectedResult).reason) }
+  )
+}
 
 // ── Blog Post Pattern Analyzer ─────────────────────────────────────────────────
 // Detects structural and linguistic AI patterns specific to blog posts / articles.
@@ -224,7 +293,18 @@ export async function POST(req: NextRequest) {
     // Step 5: Text Brain direct analysis for raw brain signals
     const brainResult = analyzeTextWithBrain(content.slice(0, 50000))
 
-    // Step 6: Removed (Graph RAG replaced by forensic cascade pipeline)
+    // Step 6: Image analysis — extract image URLs from page and run 9-agent forensic RAG
+    // includeImages must be explicitly true; max 5 images per scan (cost control)
+    const includeImages = body?.includeImages === true
+    const pageImageUrls  = extractImageUrls(content, url)
+    let imageAnalysisResults: PageImageResult[] = []
+    if (includeImages && pageImageUrls.length > 0) {
+      try {
+        imageAnalysisResults = await analyzePageImages(pageImageUrls)
+      } catch (imgErr) {
+        console.warn('[detect/web] Image analysis failed (non-fatal):', imgErr)
+      }
+    }
 
     // Step 7: Final blended verdict
     // Weights: textResult(50%) + blogPatterns(30%) + brainResult(20%)
@@ -299,6 +379,10 @@ export async function POST(req: NextRequest) {
         verdict:  brainResult.verdict,
         findings: brainResult.findings?.slice(0, 6) ?? [],
       },
+
+      // Image analysis (only populated when includeImages: true)
+      images:      imageAnalysisResults,
+      imageCount:  pageImageUrls.length,
     })
   } catch (err) {
     console.error('[detect/web]', err)
