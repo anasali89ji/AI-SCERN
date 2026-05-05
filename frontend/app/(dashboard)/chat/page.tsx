@@ -61,7 +61,7 @@ const TOOL_META: Record<string,{label:string;color:string;Ic:()=>React.ReactElem
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
-    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20 overflow-hidden border border-white/10`}>
+    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20 overflow-hidden border border-white/[0.06]`}>
       <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
     </div>
   )
@@ -74,7 +74,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
 
   if (imageUrl) {
     return (
-      <div className={`${cls} shrink-0 overflow-hidden border border-white/10 mt-0.5`}>
+      <div className={`${cls} shrink-0 overflow-hidden border border-white/[0.06] mt-0.5`}>
         <img src={imageUrl} alt={name || 'User'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
       </div>
     )
@@ -327,7 +327,7 @@ function MessageBubble({
       <div className={`flex flex-col gap-1 max-w-[88%] sm:max-w-[82%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
         {/* Attachments */}
         {msg.attachments?.map((att,i) => (
-          <div key={i} className="rounded-xl overflow-hidden border border-white/10 max-w-[240px] sm:max-w-[280px]">
+          <div key={i} className="rounded-xl overflow-hidden border border-white/[0.06] max-w-[240px] sm:max-w-[280px]">
             {att.type?.startsWith('image/') && att.preview
               ? <img src={att.preview} alt={att.name} className="max-h-40 sm:max-h-48 object-cover w-full" />
               : <div className="flex items-center gap-2 px-3 py-2 bg-white/5 text-xs text-gray-400"><Ico.Clip />{att.name}</div>
@@ -339,7 +339,7 @@ function MessageBubble({
         {!isUser && msg.toolEvents?.filter(t=>t.status==='running').map((te,i) => {
           const m = TOOL_META[te.tool]
           return (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/8 text-xs text-gray-500">
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05] text-xs text-gray-500">
               <Ico.Spin />
               <span>Running {m?.label || te.tool}…</span>
             </div>
@@ -600,7 +600,7 @@ export default function ChatPage() {
       {/* ── Sidebar ── */}
       <aside className={`
         fixed lg:relative z-30 lg:z-auto w-[15.5rem] sm:w-[17rem] h-full flex flex-col
-        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-300
+        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-4 border-b border-white/[0.06] space-y-2">
@@ -664,7 +664,7 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-13 sm:h-14 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl">
+        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl">
           <button onClick={()=>setSidebarOpen(s=>!s)} className="lg:hidden p-2 rounded-lg hover:bg-white/8 text-gray-500 hover:text-white transition-colors shrink-0">
             <Ico.Menu />
           </button>

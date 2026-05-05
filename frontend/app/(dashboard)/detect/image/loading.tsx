@@ -1,6 +1,6 @@
 export default function ImageDetectLoading() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 pt-20">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header skeleton */}
       <div className="space-y-2">
         <div className="h-8 w-64 rounded-xl bg-white/5 animate-pulse" />

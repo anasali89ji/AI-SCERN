@@ -21,6 +21,10 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-tabs',
       '@radix-ui/react-tooltip',
+      'recharts',
+      'd3',
+      'react-dropzone',
+      'date-fns',
     ],
   },
 

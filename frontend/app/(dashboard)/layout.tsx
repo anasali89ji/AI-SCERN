@@ -117,6 +117,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick }: SidebarProp
                   (item.href !== '/dashboard' && !item.href.includes('#') && pathname.startsWith(item.href))
                 return (
                   <Link key={item.href} href={item.href} onClick={onNavClick}
+                    prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                       ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
@@ -144,6 +145,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick }: SidebarProp
               const active = pathname === item.href
               return (
                 <Link key={item.href} href={item.href} onClick={onNavClick}
+                  prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                     ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}

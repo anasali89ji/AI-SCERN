@@ -127,7 +127,7 @@ export default function ScraperPage() {
         </div>
 
         {/* Input */}
-        <div className="bg-[#0f0f17] border border-white/10 rounded-2xl p-4 sm:p-5 mb-5">
+        <div className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-4 sm:p-5 mb-5">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -136,7 +136,7 @@ export default function ScraperPage() {
                 onChange={e => setUrl(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleScrape()}
                 placeholder="https://example.com/article"
-                className="w-full bg-[#141420] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
+                className="w-full bg-[#141420] border border-white/[0.07] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
               />
             </div>
             <button
@@ -189,23 +189,43 @@ export default function ScraperPage() {
           )}
         </AnimatePresence>
 
-        {/* Loading skeleton */}
+        {/* Loading skeleton — mirrors result layout */}
         {loading && (
-          <div className="space-y-4">
-            <div className="bg-[#0f0f17] border border-white/10 rounded-2xl p-5 animate-pulse">
-              <div className="flex gap-4">
-                <div className="w-36 h-36 rounded-xl bg-white/5 shrink-0" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-4 bg-white/5 rounded w-3/4" />
-                  <div className="h-3 bg-white/5 rounded w-1/2" />
-                  <div className="h-3 bg-white/5 rounded w-2/3" />
-                  <div className="h-3 bg-white/5 rounded w-1/3" />
+          <div className="space-y-4 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2 bg-[#0f0f17] border border-white/[0.06] rounded-2xl overflow-hidden">
+                <div className="w-full h-44 bg-white/[0.04] rounded-t-2xl" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+                  <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
                 </div>
               </div>
+              <div className="md:col-span-3 bg-[#0f0f17] border border-white/[0.06] rounded-2xl p-5 space-y-4">
+                <div className="flex gap-5">
+                  <div className="w-[120px] h-[120px] rounded-full bg-white/[0.04] shrink-0" />
+                  <div className="flex-1 space-y-2 pt-2">
+                    <div className="flex gap-2">
+                      <div className="h-5 bg-white/[0.04] rounded-full w-20" />
+                      <div className="h-5 bg-white/[0.04] rounded-full w-24" />
+                    </div>
+                    <div className="h-3 bg-white/[0.04] rounded w-full mt-3" />
+                    <div className="h-3 bg-white/[0.04] rounded w-4/5" />
+                    <div className="h-3 bg-white/[0.04] rounded w-2/3" />
+                  </div>
+                </div>
+                <div className="h-3 bg-white/[0.04] rounded w-full" />
+                <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
-              Fetching page, extracting content, running Gemini RAG analysis…
+            <div className="bg-[#0f0f17] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+              <div className="h-4 bg-white/[0.04] rounded w-36" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[0,1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-xl bg-white/[0.04]" />)}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600 py-1">
+              <Loader2 className="w-4 h-4 animate-spin text-violet-400/60" />
+              <span>Fetching page · extracting content · running Gemini RAG analysis…</span>
             </div>
           </div>
         )}
@@ -216,10 +236,10 @@ export default function ScraperPage() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
 
               {/* Screenshot + Score row */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
 
                 {/* Screenshot panel */}
-                <div className="lg:col-span-2 bg-[#0f0f17] border border-white/10 rounded-2xl overflow-hidden">
+                <div className="md:col-span-2 bg-[#0f0f17] border border-white/[0.07] rounded-2xl overflow-hidden">
                   <div className="relative">
                     {/* og:image loads instantly from the site's own CDN */}
                     {result.og_image && !screenshotError ? (
@@ -282,13 +302,13 @@ export default function ScraperPage() {
                 </div>
 
                 {/* Score + meta panel */}
-                <div className="lg:col-span-3 bg-[#0f0f17] border border-white/10 rounded-2xl p-5">
+                <div className="md:col-span-3 bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-5">
                   <div className="flex items-start gap-5">
                     <ScoreRing score={result.overall_ai_score} />
                     <div className="flex-1 min-w-0 space-y-2">
                       {/* Badges */}
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 border border-white/10">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 border border-white/[0.06]">
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -340,7 +360,7 @@ export default function ScraperPage() {
 
               {/* Signals grid */}
               {result.signals.length > 0 && (
-                <div className="bg-[#0f0f17] border border-white/10 rounded-2xl p-5">
+                <div className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-5">
                   <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
                     <Shield className="w-4 h-4 text-violet-400" />
                     Detection Signals
@@ -365,7 +385,7 @@ export default function ScraperPage() {
 
               {/* Sub-pages */}
               {result.sub_pages.length > 0 && (
-                <div className="bg-[#0f0f17] border border-white/10 rounded-2xl p-5">
+                <div className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-5">
                   <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-violet-400" />
                     Sub-pages Analyzed
@@ -394,7 +414,7 @@ export default function ScraperPage() {
 
               {/* Headings preview */}
               {result.headings && result.headings.length > 0 && (
-                <div className="bg-[#0f0f17] border border-white/10 rounded-2xl p-4">
+                <div className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-4">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5" />Page Structure
                   </h3>
@@ -409,7 +429,7 @@ export default function ScraperPage() {
               )}
 
               {/* Discovered Links */}
-              <details className="bg-[#0f0f17] border border-white/10 rounded-2xl p-4 group">
+              <details className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-4 group">
                 <summary className="cursor-pointer text-sm font-semibold text-slate-300 flex items-center gap-2 list-none select-none">
                   <Link2 className="w-4 h-4 text-violet-400" />
                   Discovered Links
@@ -435,7 +455,7 @@ export default function ScraperPage() {
               </details>
 
               {/* Datasets info */}
-              <details className="bg-[#0f0f17] border border-white/10 rounded-2xl p-4">
+              <details className="bg-[#0f0f17] border border-white/[0.07] rounded-2xl p-4">
                 <summary className="cursor-pointer text-sm font-semibold text-slate-300 flex items-center gap-2 list-none select-none">
                   <Info className="w-4 h-4 text-violet-400" />Detection Models &amp; Reference Datasets
                   <ChevronDown className="w-4 h-4 text-slate-500 ml-auto" />

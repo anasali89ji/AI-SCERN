@@ -86,6 +86,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
+        <link rel="preconnect"   href="https://api-inference.huggingface.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api-inference.huggingface.co" />
+        <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         {/* Skip to main content — keyboard accessibility */}

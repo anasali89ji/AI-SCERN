@@ -77,11 +77,11 @@ export default function ScanningLoader({
                       ? '#10b981'
                       : isCurrent
                       ? s.color
-                      : 'rgba(255,255,255,0.1)',
+                      : 'rgba(255,255,255,0.07)',
                     background: isDone
                       ? 'rgba(16,185,129,0.12)'
                       : isCurrent
-                      ? `${s.color}18`
+                      ? `${s.color}15`
                       : 'transparent',
                   }}
                 >
