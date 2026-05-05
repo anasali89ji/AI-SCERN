@@ -284,7 +284,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
               className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-border/55 overflow-hidden"
-              onClick={e => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
