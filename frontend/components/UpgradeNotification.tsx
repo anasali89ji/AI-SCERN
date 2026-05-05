@@ -23,11 +23,11 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
       <motion.div
         initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+        transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
         className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#7c3aed40] rounded-3xl p-8 shadow-2xl shadow-purple-950/40 overflow-hidden"
       >
         {/* Glow */}
@@ -77,11 +77,22 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           </p>
         )}
 
-        <button onClick={onDismiss}
-          className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background:'linear-gradient(135deg, #7c3aed, #2563eb)' }}>
-          Start Using {plan.charAt(0).toUpperCase()+plan.slice(1)} →
-        </button>
+        <div className="flex flex-col gap-2">
+          <a
+            href="/pricing"
+            onClick={onDismiss}
+            className="w-full py-3.5 rounded-2xl font-bold text-sm text-white text-center transition-all hover:scale-[1.02] active:scale-[0.98] block"
+            style={{ background:'linear-gradient(135deg, #7c3aed, #2563eb)' }}
+          >
+            View Pricing &amp; Upgrade →
+          </a>
+          <button
+            onClick={onDismiss}
+            className="w-full py-2.5 rounded-2xl text-sm text-[#64748b] hover:text-[#94a3b8] transition-colors font-medium"
+          >
+            Not now
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   )

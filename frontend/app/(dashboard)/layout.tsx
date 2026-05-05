@@ -256,28 +256,53 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
         <ChevronDown className={`w-4 h-4 text-text-muted transition-transform hidden sm:block ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && (
-        <>
-          {/* Desktop dropdown */}
-          <div className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-border rounded-2xl shadow-2xl shadow-black/50 z-[200] overflow-hidden">
+      {/* Desktop dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ type: 'tween', duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
+            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-border/55 rounded-2xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
+          >
             {menuContent}
-          </div>
-          {/* Mobile full-screen bottom sheet */}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile full-screen bottom sheet */}
+      <AnimatePresence>
+        {open && (
           <div className="sm:hidden fixed inset-0 z-[200]" onClick={() => setOpen(false)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div
-              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-border overflow-hidden"
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-border/55 overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
+              {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
-              {menuContent}
-              <div style={{ height: 'max(1rem, env(safe-area-inset-bottom))' }} />
-            </div>
+              {/* Scrollable content — prevents overflow on short phones */}
+              <div
+                className="overflow-y-auto"
+                style={{ maxHeight: 'calc(85dvh - 4rem)' }}
+              >
+                {menuContent}
+              </div>
+              {/* Space above MobileNav (h-16 = 64px) + safe area */}
+              <div style={{ height: 'max(5rem, calc(4rem + env(safe-area-inset-bottom)))' }} />
+            </motion.div>
           </div>
-        </>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   )
 }

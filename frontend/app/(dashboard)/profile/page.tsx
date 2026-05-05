@@ -89,27 +89,19 @@ export default function ProfilePage() {
       setBio(data.bio || '')
       setAvatarUrl(data.avatar_url || '')
     }
-    // Stats
-    const { data: s } = await (supabase as any).rpc('get_user_stats', { p_user_id: user.uid })
-    if (s) {
-      setStats({ ...s, avg_confidence: s.avg_confidence <= 1 ? Math.round(s.avg_confidence*100) : Math.round(s.avg_confidence) })
-    } else {
-      const { data: rows } = await (supabase as any).from('scans').select('verdict,confidence_score,media_type').eq('user_id', user.uid)
-      if (rows) {
-        const total = rows.length
+    // Stats — use server API route (admin client bypasses Supabase RLS for Clerk users)
+    try {
+      const statsRes = await fetch('/api/user/stats')
+      if (statsRes.ok) {
+        const s = await statsRes.json()
         setStats({
-          total_scans: total,
-          ai_detected: rows.filter((r:any) => r.verdict==='AI').length,
-          human_detected: rows.filter((r:any) => r.verdict==='HUMAN').length,
-          uncertain: rows.filter((r:any) => r.verdict==='UNCERTAIN').length,
-          avg_confidence: total>0 ? Math.round(rows.reduce((a:number,r:any) => a+(r.confidence_score??0),0)/total*100) : 0,
-          text_scans: rows.filter((r:any) => r.media_type==='text').length,
-          image_scans: rows.filter((r:any) => r.media_type==='image').length,
-          audio_scans: rows.filter((r:any) => r.media_type==='audio').length,
-          video_scans: rows.filter((r:any) => r.media_type==='video').length,
+          ...s,
+          avg_confidence: (s.avg_confidence ?? 0) <= 1
+            ? Math.round(s.avg_confidence * 100)
+            : Math.round(s.avg_confidence),
         })
       }
-    }
+    } catch { /* silent — stats section shows 0 gracefully */ }
     setLoading(false)
   }, [user?.uid]) // eslint-disable-line
 
@@ -168,7 +160,7 @@ export default function ProfilePage() {
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
         className="bg-surface border border-border/55 rounded-3xl overflow-hidden">
         {/* Banner */}
-        <div className="h-28 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
+        <div className="h-28 sm:h-32 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
           <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(124,58,237,0.2) 0%, transparent 60%)' }} />
         </div>
         <div className="px-6 pb-6">
@@ -260,10 +252,10 @@ export default function ProfilePage() {
                 <h1 className="text-2xl font-black text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
                 {profile?.username && <p className="text-sm text-text-muted">@{profile.username}</p>}
                 {profile?.bio      && <p className="text-sm text-text-secondary">{profile.bio}</p>}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
-                  <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" />{user?.email}</span>
-                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Joined {joinedAt}</span>
-                  <span className="flex items-center gap-1.5 text-emerald"><Shield className="w-4 h-4" />Verified</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
+                  <span className="flex items-center gap-1.5 min-w-0"><Mail className="w-4 h-4 shrink-0" /><span className="truncate max-w-[200px] sm:max-w-none">{user?.email}</span></span>
+                  <span className="flex items-center gap-1.5 shrink-0"><Calendar className="w-4 h-4" />Joined {joinedAt}</span>
+                  <span className="flex items-center gap-1.5 text-emerald shrink-0"><Shield className="w-4 h-4" />Verified</span>
                 </div>
               </>
             )}
@@ -321,7 +313,7 @@ export default function ProfilePage() {
         <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">Detection Stats</h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[...Array(8)].map((_,i) => <div key={i} className="bg-surface border border-border/55 rounded-2xl h-24 animate-pulse" />)}
+            {[...Array(8)].map((_,i) => <div key={i} className="bg-surface border border-border/55 rounded-2xl h-20 sm:h-24 animate-pulse" />)}
           </div>
         ) : (
           <>
@@ -355,9 +347,9 @@ export default function ProfilePage() {
           ['Plan',           planLabel,                    isPro ? 'text-yellow-400' : 'text-primary'],
           ['Status',         'Active',                     'text-emerald'],
         ].map(([label, value, cls]) => (
-          <div key={label as string} className="flex justify-between items-center py-2.5 border-b border-border/50 last:border-0 text-sm">
-            <span className="text-text-muted">{label}</span>
-            <span className={`font-medium text-text-primary ${cls}`}>{value}</span>
+          <div key={label as string} className="flex justify-between items-center gap-4 py-2.5 border-b border-border/50 last:border-0 text-sm min-w-0">
+            <span className="text-text-muted shrink-0">{label}</span>
+            <span className={`font-medium text-text-primary truncate text-right min-w-0 ${cls}`}>{value}</span>
           </div>
         ))}
       </motion.div>

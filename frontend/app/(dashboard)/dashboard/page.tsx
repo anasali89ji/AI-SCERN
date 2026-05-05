@@ -125,8 +125,8 @@ export default function DashboardPage() {
               <s.icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl sm:text-2xl font-black text-text-primary">{s.value}</p>
-              <p className="text-xs text-text-muted truncate">{s.label}</p>
+              <p className="text-lg sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
+              <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
             </div>
           </motion.div>
         ))}
@@ -144,7 +144,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-text-primary mb-1">Welcome to Aiscern! 🎉</h3>
-                <p className="text-sm text-text-muted mb-3">
+                <p className="text-xs sm:text-sm text-text-muted mb-3 leading-relaxed">
                   You're all set. Pick a detection tool below to run your first scan — completely free, no limits.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -173,7 +173,7 @@ export default function DashboardPage() {
             <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>
               <Link href={t.href}
-                className={`flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
+                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
                 <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
                   <t.icon className="w-5 h-5" />
                 </div>
@@ -238,8 +238,8 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-2">
             {scans.map((scan, i) => (
-              <motion.div key={scan.id} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.03 }}
+              <motion.div key={scan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, ease: 'easeOut' }}
                 className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">

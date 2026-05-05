@@ -81,10 +81,10 @@ export function MobileNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/96 backdrop-blur-xl border-t border-border"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/96 backdrop-blur-xl border-t border-border/40"
         style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       >
-        <div className="flex items-center justify-around h-14 px-2">
+        <div className="flex items-center justify-around px-2" style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           {PRIMARY_NAV.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
             return (

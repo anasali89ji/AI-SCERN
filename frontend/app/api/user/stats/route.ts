@@ -31,16 +31,15 @@ export async function GET() {
 
     const rows = scans ?? []
     return NextResponse.json({
-      total_scans:   rows.length,
-      ai_detected:   rows.filter(r => r.verdict === 'AI').length,
-      human_content: rows.filter(r => r.verdict === 'HUMAN').length,
-      uncertain:     rows.filter(r => r.verdict === 'UNCERTAIN').length,
-      by_modality: {
-        text:  rows.filter(r => r.media_type === 'text').length,
-        image: rows.filter(r => r.media_type === 'image').length,
-        audio: rows.filter(r => r.media_type === 'audio').length,
-        video: rows.filter(r => r.media_type === 'video').length,
-      },
+      total_scans:    rows.length,
+      ai_detected:    rows.filter(r => r.verdict === 'AI').length,
+      human_detected: rows.filter(r => r.verdict === 'HUMAN').length,
+      uncertain:      rows.filter(r => r.verdict === 'UNCERTAIN').length,
+      // Flat field names — consumed by dashboard/page.tsx and profile/page.tsx
+      text_scans:  rows.filter(r => r.media_type === 'text').length,
+      image_scans: rows.filter(r => r.media_type === 'image').length,
+      audio_scans: rows.filter(r => r.media_type === 'audio').length,
+      video_scans: rows.filter(r => r.media_type === 'video').length,
       avg_confidence: rows.length
         ? Math.round(rows.reduce((s, r) => s + (r.confidence_score ?? 0), 0) / rows.length * 100)
         : 0,
