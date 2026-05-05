@@ -862,11 +862,11 @@ export async function POST(req: NextRequest) {
         `[IMAGE ANALYSIS — Aiscern Vision Engine]\n` +
         `Verdict: ${result.verdict}\n` +
         `Confidence: ${result.confidence_pct}%\n` +
-        (result.details.key_findings?.length
-          ? `Key findings:\n${result.details.key_findings.map((f: string) => `  • ${f}`).join('\n')}\n`
+        (((result.details as Record<string, unknown>)['key_findings'] as string[] | undefined)?.length
+          ? `Key findings:\n${((result.details as Record<string, unknown>)['key_findings'] as string[]).map((f: string) => `  • ${f}`).join('\n')}\n`
           : '') +
         `Technical analysis: ${result.analysis}\n` +
-        (result.details.recommendation ? `Recommendation: ${result.details.recommendation}` : '')
+        ((result.details as Record<string, unknown>)['recommendation'] ? `Recommendation: ${(result.details as Record<string, unknown>)['recommendation']}` : '')
       )
     }
 
