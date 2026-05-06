@@ -27,7 +27,7 @@ import { runFinalFusion }            from '@/lib/forensic/layers/final-fusion'
 import { SIGNAL_WORKER_TIMEOUT_MS }  from '@/lib/forensic/constants'
 
 import type {
-  LayerReport, SemanticAgentReport, ProvenanceReport, TargetRegion,
+  LayerReport, SemanticAgentReport, ProvenanceReport, TargetRegion, EvidenceNode,
 } from '@/types/forensic'
 
 // ── Python Signal Worker caller ───────────────────────────────────────────────
@@ -215,7 +215,7 @@ export const imageForensicCascade = inngest.createFunction(
             layerReport: {
               layer: 6, layerName: 'Semantic Vector-Less RAG',
               processingTimeMs: 0, status: 'failure' as const,
-              evidence: [], layerSuspicionScore: 0.5,
+              evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
             },
             agents: [] as SemanticAgentReport[],
           }
@@ -283,7 +283,7 @@ export const imageForensicCascade = inngest.createFunction(
           layerReport: {
             layer: 7, layerName: 'Provenance & Traceability',
             processingTimeMs: 0, status: 'failure' as const,
-            evidence: [], layerSuspicionScore: 0.5,
+            evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
           },
           provenance: null as ProvenanceReport | null,
         }
