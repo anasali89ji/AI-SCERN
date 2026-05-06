@@ -24,6 +24,8 @@ import { analyzeCompressionAndExif } from '@/lib/forensic/layers/compression-ana
 import { runSemanticRAG }            from '@/lib/forensic/layers/semantic-rag'
 import { runProvenanceCheck }        from '@/lib/forensic/layers/provenance'
 import { runFinalFusion }            from '@/lib/forensic/layers/final-fusion'
+import { runDiffusionInversion }     from '@/lib/forensic/layers/diffusion-inversion'
+import { runEnsembleClassifier }     from '@/lib/forensic/layers/ensemble-classifier'
 import { SIGNAL_WORKER_TIMEOUT_MS }  from '@/lib/forensic/constants'
 
 import type {
