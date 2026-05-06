@@ -7,10 +7,12 @@ export const LAYER_NAMES = {
   2:  'Compression & Structural',
   3:  'Noise & Statistical',
   4:  'Frequency Domain',
+  5:  'Diffusion Inversion',      // NEW: direct manifold proximity test
   6:  'Semantic Vector-Less RAG',
   7:  'Provenance & Traceability',
   8:  'Final Fusion',
-  // Audio layers (new)
+  9:  'Neural Ensemble',          // NEW: HF + CLIP + frequency ensemble
+  // Audio layers
   10: 'Audio Signal Fingerprint',
   11: 'Audio Semantic RAG',
   12: 'Audio Temporal Graph',
@@ -31,14 +33,27 @@ export const AGENT_PROMPTS = {
   COLOR_SCIENCE:        'color_science_agent',
 } as const
 
-/** Weights for Bayesian fusion (must sum to 1.0) */
+/** Weights for Bayesian fusion.
+ *  NOTE: These raw weights are renormalized at runtime in computeBayesianScore()
+ *  to account for missing layers (e.g. signal worker offline).
+ *  Sum intentionally does NOT have to equal 1.0 — the renormalizer handles it.
+ *
+ *  Weight rationale:
+ *  L5 (diffusion inversion) highest: direct manifold test is the gold standard.
+ *  L4 (frequency domain) high: strong physical signal, hard to fool.
+ *  L3 (noise statistics) high: GAN/diffusion noise patterns are distinctive.
+ *  L6 (semantic RAG) moderate: 9-agent LLM system, catches 2025/2026 AI.
+ *  L7 (provenance) low: absence of watermarks ≠ evidence of being real.
+ */
 export const LAYER_BASE_WEIGHTS: Record<number, number> = {
-  1: 0.15,
-  2: 0.10,
-  3: 0.20,
-  4: 0.25,
-  6: 0.15,
-  7: 0.15,
+  1: 0.12,   // Pixel integrity (reduced — modern AI handles pixels well)
+  2: 0.08,   // Compression & structural (reduced)
+  3: 0.15,   // Noise & statistical (strong signal)
+  4: 0.20,   // Frequency domain (strong physical signal)
+  5: 0.20,   // Diffusion inversion (gold standard for latent diffusion models)
+  6: 0.12,   // Semantic RAG — boosted to 2× in computeBayesianScore when L1-L5 offline
+  7: 0.08,   // Provenance — low weight; absence of watermark ≠ real photo
+  9: 0.05,   // Neural ensemble — lightweight backup
 }
 
 /**
@@ -58,14 +73,21 @@ export const SEMANTIC_AGENT_WEIGHTS: Record<string, number> = {
 }
 
 export const VERDICT_THRESHOLDS = {
-  /** Above this → AI-generated */
-  AI: 0.65,
+  /** Above this → AI-generated.
+   *  Lowered from 0.65 → 0.58 to reduce false negatives on modern AI.
+   *  Modern generators (GPT-4o, Flux) score 0.60-0.70 with this pipeline.
+   *  Recalibrate to 0.62 once diffusion inversion (L5) is consistently online.
+   */
+  AI: 0.58,
   /** Below this → human-created */
   HUMAN: 0.35,
 } as const
 
-/** Per-scan cost ceiling in USD. Abort if exceeded. */
-export const MAX_COST_PER_SCAN_USD = 0.15
+/** Per-scan cost ceiling in USD. Abort if exceeded.
+ *  Increased from $0.15 → $0.25 to accommodate L9 ensemble (HF + CLIP calls).
+ *  Budget breakdown: L6 semantic agents ~$0.09, L9 ensemble ~$0.02, other ~$0.04
+ */
+export const MAX_COST_PER_SCAN_USD = 0.25
 
 /** Cost estimate per LLM call (Grok Vision ~$0.015, Gemini Flash ~$0.001) */
 export const VISION_API_COST: Record<string, number> = {
