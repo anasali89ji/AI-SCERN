@@ -16,7 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
 
-from analyzers.pixel_integrity  import analyze_pixel_integrity
+from analyzers.pixel_integrity      import analyze_pixel_integrity
+from analyzers.diffusion_inversion  import diffusion_inversion_score
 from analyzers.noise_stats      import analyze_noise_stats
 from analyzers.frequency_domain import analyze_frequency_domain
 from analyzers.synthid_local    import check_synthid
@@ -39,6 +40,9 @@ class AnalyzeRequest(BaseModel):
     imageUrl:      str
     jobId:         str
     targetRegions: list[TargetRegion] = []
+
+class DiffusionRequest(BaseModel):
+    imageUrl: str
 
 class AnalyzeResponse(BaseModel):
     jobId:            str
@@ -74,7 +78,58 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "aiscern-signal-worker"}
+    import torch
+    gpu_available = torch.cuda.is_available() if True else False
+    try:
+        import torch
+        gpu_available = torch.cuda.is_available()
+        gpu_name      = torch.cuda.get_device_name(0) if gpu_available else None
+        vram_gb       = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 1) if gpu_available else 0
+    except Exception:
+        gpu_available = False
+        gpu_name      = None
+        vram_gb       = 0
+    return {
+        "status":  "healthy",
+        "service": "aiscern-signal-worker",
+        "version": "2.0.0",
+        "layers": {
+            "l1_pixel":            "available",
+            "l3_noise":            "available",
+            "l4_frequency":        "available",
+            "l5_diffusion":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
+        },
+        "gpu": {
+            "available": gpu_available,
+            "name":      gpu_name,
+            "vram_gb":   vram_gb,
+        },
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+    }
+
+@app.post("/diffusion-inversion")
+async def diffusion_inversion_endpoint(req: DiffusionRequest):
+    """
+    Layer 5: DDIM inversion manifold test.
+    Requires GPU with >=4GB VRAM. Returns 503 if GPU unavailable.
+    """
+    import torch
+    if not torch.cuda.is_available():
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"error": "GPU not available", "score": 0.5, "confidence": 0.0}
+        )
+    try:
+        result = diffusion_inversion_score(req.imageUrl)
+        return result
+    except Exception as e:
+        logger.error(f"[L5] Diffusion inversion failed: {e}", exc_info=True)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "score": 0.5, "confidence": 0.0}
+        )
 
 @app.post("/analyze-signals", response_model=AnalyzeResponse)
 async def analyze_signals(req: AnalyzeRequest):
