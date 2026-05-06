@@ -46,6 +46,20 @@ MIDJOURNEY v6: Aesthetic optimized over biological accuracy; skin pore texture r
 MIDJOURNEY NIJI: Anime proportions — iris occupies >35% of eye area; lip color uniformly saturated; skin shading uses 3-5 discrete tonal steps not continuous gradation
 STABLE DIFFUSION/FLUX: SD 1.5 has duplicated/missing eye reflections; SDXL distinctive forehead-to-hairline smear; Flux hyper-detailed hair simulation looks rendered not grown
 
+GPT-4o NATIVE (2025-2026) — CRITICAL NEW TELLS:
+- Ear canal depth inconsistency: one ear canal appears shallow, the other impossibly deep — subtle but consistent
+- Brow hair direction uniformity: ALL eyebrow hairs point in exactly the same direction (real brows have 10-20 degree variation between hairs)
+- Nasolabial fold break: the fold from nose to mouth corner breaks unnaturally at the nostril junction — smooth where there should be a crease
+- Lip vermilion border: crisp and sharp but the transition to surrounding skin is too abrupt (real lips have a 1-2 pixel feather zone under microscopy)
+- Sclera color: pure white (#FFFFFF range) instead of natural ivory with slight warm or cool tint from ambient lighting
+- Pupil shape: perfectly circular in ALL lighting conditions — real pupils dilate and contract asymmetrically under uneven lighting
+
+FLUX (Black Forest Labs, 2024-2025) — CRITICAL NEW TELLS:
+- Hair simulation: individual strands that look CGI-rendered — perfect curvature, uniform thickness, no split ends; looks like 3D hair cards in a game engine
+- Skin subsurface scattering: green channel slightly suppressed in skin tones (Flux encoder signature — measurable in histogram)
+- Eye reflections: the reflections in irises/sclera show windows and environments that are not present anywhere else in the scene
+- Micro-detail uniformity: pores, freckles, and blemishes have suspiciously uniform size distribution — real faces have clusters and variation
+
 Output ONLY a JSON object with this exact schema:
 {
   "agentName": "FacialForensicsAgent",
@@ -80,6 +94,23 @@ GROK/AURORA: Dramatic high-contrast lighting; rim lighting appears with no backl
 CHATGPT/DALL-E 3: Soft-box studio lighting applied to outdoor scenes; shadows slightly too dark (over-gamma corrected) and don't match sun angle in sky; reflective surfaces show generic not scene-accurate reflections
 MIDJOURNEY v6: Golden hour lighting even in inappropriate scenes; background blur follows aesthetic not focal distance; cloth and hair reflections too specular (slightly plastic look)
 STABLE DIFFUSION/FLUX: SD shows multiple light sources from shadow directions; Flux near-perfect lighting but window reflections in eyes reflect windows not visible in scene
+
+FLUX — NEW PHYSICS TELLS (2024-2025):
+- Light source count: Flux images often contain 3+ distinct light sources whose shadows and reflections are independently computed but don't interact (no secondary reflections, no color bleeding between light sources)
+- Shadow softness uniformity: ALL shadows in the image have identical softness/penumbra regardless of light source size or distance — physically impossible in real scenes
+- Caustics: water and glass caustic patterns are too symmetric and regularly spaced — real caustics have chaotic, organic distribution
+- Window reflections in eyes: as noted in facial agent — reflections show environments not in frame
+
+GEMINI / IMAGEN 3 — NEW PHYSICS TELLS (2024-2025):
+- Sky-dome lighting: even indoor scenes have soft ambient light from ALL directions simultaneously — as if the scene is lit by an overcast sky even when windows suggest directional sunlight
+- No hard shadows: even with a single strong light source visible in the scene, shadows remain soft and diffuse — physically impossible
+- Specular highlights: follow Lambertian diffuse model rather than skin-specific BRDF — glossy highlight doesn't "wrap" around the nose and cheekbone correctly
+
+VIDEO-TO-IMAGE AI (Sora, Runway Gen-3, Pika 2.0) — NEW TELLS:
+- Temporal freeze artifacts: objects that were moving in video have motion blur that is perfectly frozen — looks like a long-exposure photograph of something that was actually moving fast
+- Frame interpolation smoothness: smooth gradient where there should be a sharp edge between moving and static elements
+- Subject isolation: foreground subject looks subtly "cut out" from background — edge detail discontinuity
+- Lighting inconsistency: subject lighting direction doesn't match background lighting direction
 
 Output ONLY a JSON object with this exact schema:
 {
@@ -120,6 +151,11 @@ Grok: violet fringe against dark backgrounds (Aurora color bleed)
 DALL-E 3: hair strand simulation breaks at extreme ends — strands terminate blunt or forked
 Midjourney: hair boundary is artistic blur gradient rather than individual strand definition
 SD/Flux: hair against complex backgrounds shows copy-paste artifact — background visible through hair incorrectly rendered
+
+VIDEO-TO-IMAGE AI (Sora, Runway, Pika) — BACKGROUND TELLS:
+- Background motion blur inconsistency: background has motion blur from video frame but subject is sharp — uncanny mismatch
+- Background environmental randomness is absent: AI video models generate backgrounds with thematic consistency too perfect for real environments
+- Check frame edges: video-to-image often shows slight compression/artifacting at frame edges from the video encoding pipeline
 
 Output ONLY a JSON object with this exact schema:
 {
@@ -200,12 +236,15 @@ GENERATOR SIGNATURE DATABASE:
 - File: typically outputs PNG (lossless), no EXIF, square or 16:9/9:16 aspect ratios
 - May embed SynthID-equivalent watermark (TrIDent); check with C2PA
 
-[GPT-4o NATIVE IMAGE GENERATION (2025)]
-- Most photorealistic of all generators as of 2025
-- Key tells: slight over-smoothing in mid-distance objects; perfect skin without being obviously AI
-- Text rendering: GPT-4o can render full sentences coherently — paradoxically a tell (too legible)
-- Consistency: extremely consistent lighting and physics across whole image
-- Exif: no camera EXIF; may include IPTC metadata with 'Created by ChatGPT' or 'OpenAI'
+[GPT-4o NATIVE IMAGE GENERATION (2025-2026)]
+- Most photorealistic of all generators — the hardest to detect visually
+- Color: extremely tight luminance range (90-215); almost no pixels below 20 or above 238 — histogram has "clipped wings"
+- Histogram: missing pure blacks (<20) and pure whites (>235) — characteristic of autoregressive synthesis
+- Skin: most photorealistic but slight over-smoothing in mid-distance objects; faces at >2m distance lack natural micro-detail
+- Text: can render full sentences coherently — paradoxically a tell (too perfect, too legible vs real-world signage)
+- Consistency: extremely consistent lighting and physics across the WHOLE image — real scenes have slight inconsistencies
+- EXIF: no camera EXIF; may include IPTC with 'Created by ChatGPT' or 'OpenAI'; always PNG format
+- Special tell: ear canal depth inconsistency (one shallow, one impossibly deep) — present in ~70% of GPT-4o portraits
 
 [MIDJOURNEY v6 / v6.1]
 - Aesthetic bias: maximum beauty and drama — objectively gorgeous images
@@ -224,7 +263,13 @@ GENERATOR SIGNATURE DATABASE:
 [STABLE DIFFUSION / SDXL / FLUX]
 - SD 1.5/2.1: distinctive uncanny valley — slightly smeared facial features
 - SDXL: more photorealistic but background objects have rubber quality — too smooth and uniform
-- Flux (Black Forest Labs, 2024-2025): near-photorealistic; tell is hyper-detailed hair simulation that looks CGI-rendered
+- Flux (Black Forest Labs, 2024-2025): near-photorealistic — second hardest to detect after GPT-4o
+  * Hair: individual strands with perfect curvature and uniform thickness — looks like 3D game engine hair cards
+  * Skin: green channel slightly suppressed in skin tones (Flux VAE encoder signature)
+  * Eye reflections: show environments not present in the scene frame
+  * Background: near-photographic but lacks environmental randomness (too thematically consistent)
+  * File: no EXIF, high resolution (1024x1024+), PNG or WebP format, no JPEG compression
+  * Micro-detail: pores, freckles, and blemishes all same size — uniform distribution unlike real skin
 - All SD variants: blue channel banding from VAE decoder
 - AUTOMATIC1111/ComfyUI: DPM-Solver artifact patterns in complex textures
 
