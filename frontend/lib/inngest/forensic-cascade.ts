@@ -41,14 +41,37 @@ interface SignalWorkerResponse {
   error?:          string
 }
 
+// ── Signal worker health check ────────────────────────────────────────────────
+
+async function checkSignalWorkerHealth(workerUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${workerUrl}/health`, {
+      signal: AbortSignal.timeout(5_000),
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    return data.status === 'healthy' || data.status === 'ok'
+  } catch {
+    return false
+  }
+}
+
+// ── Signal worker caller with exponential backoff retry ───────────────────────
+// Retries 3 times with 1s, 2s, 4s delays.
+// Always returns a valid SignalWorkerResponse — never throws.
+// When the worker is consistently offline, the Bayesian fusion
+// absence-boost for L6 compensates automatically.
+
 async function callSignalWorker(
   imageUrl:      string,
   jobId:         string,
   targetRegions: TargetRegion[] = [],
+  maxRetries:    number = 3,
+  baseDelayMs:   number = 1_000,
 ): Promise<SignalWorkerResponse> {
   const workerUrl = process.env.SIGNAL_WORKER_URL
   if (!workerUrl) {
-    // Worker not deployed — return empty result so cascade continues
+    console.warn('[signal-worker] SIGNAL_WORKER_URL not configured — L1-L4 skipped')
     return {
       jobId, status: 'error',
       processingTimeMs: 0, layers: [],
@@ -57,23 +80,59 @@ async function callSignalWorker(
     }
   }
 
-  const res = await fetch(`${workerUrl}/analyze-signals`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ imageUrl, jobId, targetRegions }),
-    signal:  AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
-  })
-
-  if (!res.ok) {
+  // Health check before committing to retries
+  const healthy = await checkSignalWorkerHealth(workerUrl)
+  if (!healthy) {
+    console.warn('[signal-worker] Health check failed — L1-L4 skipped (L6 absence boost active)')
     return {
       jobId, status: 'error',
       processingTimeMs: 0, layers: [],
       synthid: { detected: false, confidence: 0 },
-      error: `Signal worker returned ${res.status}`,
+      error: 'Signal worker health check failed',
     }
   }
 
-  return res.json() as Promise<SignalWorkerResponse>
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(`${workerUrl}/analyze-signals`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ imageUrl, jobId, targetRegions }),
+        signal:  AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Signal worker returned HTTP ${res.status}`)
+      }
+
+      const data = await res.json() as SignalWorkerResponse
+      if (data.status === 'success') return data
+      throw new Error(`Signal worker error: ${data.error ?? 'unknown'}`)
+
+    } catch (err) {
+      const isLastAttempt = attempt === maxRetries - 1
+      if (isLastAttempt) {
+        console.warn(`[signal-worker] All ${maxRetries} attempts failed:`, (err as Error).message)
+        return {
+          jobId, status: 'error',
+          processingTimeMs: 0, layers: [],
+          synthid: { detected: false, confidence: 0 },
+          error: (err as Error).message,
+        }
+      }
+      const delay = baseDelayMs * Math.pow(2, attempt)
+      console.warn(`[signal-worker] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`)
+      await new Promise(r => setTimeout(r, delay))
+    }
+  }
+
+  // Unreachable — TypeScript requires a return here
+  return {
+    jobId, status: 'error',
+    processingTimeMs: 0, layers: [],
+    synthid: { detected: false, confidence: 0 },
+    error: 'Retry loop exhausted',
+  }
 }
 
 // ── Extract anomalous regions from semantic agents for targeted signal re-run ─
@@ -182,9 +241,10 @@ export const imageForensicCascade = inngest.createFunction(
     // ── STEP 3: Parallel fan-out (4 tracks) ────────────────────────────────
     // Each track is isolated — a failure in one does NOT abort others.
 
-    const [signalResult, compressionResult, semanticResult] = await Promise.allSettled([
+    const [signalResult, compressionResult, semanticResult, diffusionResult, ensembleResult] =
+      await Promise.allSettled([
 
-      // Track A: Python signal worker (Layers 1, 3, 4 + SynthID)
+      // Track A: Python signal worker (Layers 1, 3, 4 + SynthID) — with retry
       step.run('layer-signals-python', async () => {
         try {
           return await callSignalWorker(imageUrl, scanId)
@@ -205,7 +265,7 @@ export const imageForensicCascade = inngest.createFunction(
         return analyzeCompressionAndExif(imgBuf, imageBuffer.size, imageBuffer.contentType)
       }),
 
-      // Track C: Semantic vector-less RAG (Layer 6, 4 agents in parallel)
+      // Track C: Semantic vector-less RAG (Layer 6 — 9 agents in parallel)
       step.run('layer-semantic-rag', async () => {
         try {
           return await runSemanticRAG(imageUrl)
@@ -221,12 +281,42 @@ export const imageForensicCascade = inngest.createFunction(
           }
         }
       }),
+
+      // Track D: Diffusion Inversion (Layer 5) — requires GPU, gracefully skipped if unavailable
+      step.run('layer-diffusion-inversion', async () => {
+        try {
+          return await runDiffusionInversion(imageUrl)
+        } catch (err) {
+          logger.warn(`[forensic-cascade] L5 diffusion inversion failed: ${err}`)
+          return {
+            layer: 5, layerName: 'Diffusion Inversion',
+            processingTimeMs: 0, status: 'failure' as const,
+            evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
+          }
+        }
+      }),
+
+      // Track E: Neural Ensemble Classifier (Layer 9) — HF + CLIP + JPEG analysis
+      step.run('layer-ensemble-classifier', async () => {
+        try {
+          return await runEnsembleClassifier(imageUrl)
+        } catch (err) {
+          logger.warn(`[forensic-cascade] L9 ensemble classifier failed: ${err}`)
+          return {
+            layer: 9, layerName: 'Neural Ensemble',
+            processingTimeMs: 0, status: 'failure' as const,
+            evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
+          }
+        }
+      }),
     ])
 
-    // Unpack results safely
-    const signalData     = signalResult.status     === 'fulfilled' ? signalResult.value     : null
-    const compressionRpt = compressionResult.status === 'fulfilled' ? compressionResult.value : null
-    const semanticData   = semanticResult.status   === 'fulfilled' ? semanticResult.value   : null
+    // Unpack all 5 parallel results safely
+    const signalData      = signalResult.status     === 'fulfilled' ? signalResult.value     : null
+    const compressionRpt  = compressionResult.status === 'fulfilled' ? compressionResult.value : null
+    const semanticData    = semanticResult.status   === 'fulfilled' ? semanticResult.value   : null
+    const diffusionRpt    = diffusionResult.status  === 'fulfilled' ? diffusionResult.value  : null
+    const ensembleRpt     = ensembleResult.status   === 'fulfilled' ? ensembleResult.value   : null
 
     const pythonLayers: LayerReport[]  = signalData?.layers      ?? []
     const synthidResult                = signalData?.synthid      ?? null
@@ -295,7 +385,9 @@ export const imageForensicCascade = inngest.createFunction(
       const allLayers: LayerReport[] = [
         ...targetedPythonLayers,
         ...(compressionRpt      ? [compressionRpt]              : []),
+        ...(diffusionRpt        ? [diffusionRpt]                : []),  // L5
         ...(semanticLayerReport ? [semanticLayerReport]         : []),
+        ...(ensembleRpt         ? [ensembleRpt]                 : []),  // L9
         ...(provenanceResult.layerReport.status === 'success'
              ? [provenanceResult.layerReport] : []),
       ]
