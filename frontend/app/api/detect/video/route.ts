@@ -1,4 +1,4 @@
-export const maxDuration = 120
+export const maxDuration = 55
 
 /**
  * POST /api/detect/video
@@ -13,7 +13,7 @@ export const maxDuration = 120
  * Vercel never buffers large video into memory when r2Key path is used.
  */
 
-import { checkRateLimitRedis } from '@/lib/cache/redis'
+import { checkRateLimitDB } from '@/lib/ratelimit-db'
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeVideoWithFrames, analyzeVideo } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
@@ -24,10 +24,11 @@ export const dynamic    = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!await checkRateLimitRedis(ip, 10, 60)) {
+  const rl = await checkRateLimitDB('video', ip)
+  if (rl.limited) {
     return NextResponse.json(
-      { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests. Please wait.' } },
-      { status: 429 }
+      { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.reset) } }
     )
   }
 

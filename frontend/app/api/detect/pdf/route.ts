@@ -1,6 +1,6 @@
-export const maxDuration = 120
+export const maxDuration = 55
 
-import { checkRateLimitRedis } from '@/lib/cache/redis'
+import { checkRateLimitDB } from '@/lib/ratelimit-db'
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
@@ -62,8 +62,12 @@ function extractParagraphs(text: string): { text: string; start: number }[] {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  if (!await checkRateLimitRedis(ip, 5, 60)) {
-    return NextResponse.json({ success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests' } }, { status: 429 })
+  const rl = await checkRateLimitDB('video', ip)
+  if (rl.limited) {
+    return NextResponse.json(
+      { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.reset) } }
+    )
   }
 
   let userId = 'unknown'

@@ -1,0 +1,33 @@
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"
+  DEPLOYMENT_PLATFORM     = "netlify"
+  NODE_VERSION            = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Netlify free functions hard-timeout at 10s.
+# All /api/* routes proxy to Vercel via the CF Worker load balancer.
+# Netlify serves static pages only.
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://aiscern.vercel.app/api/:splat"
+  status = 200
+  force  = true
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Deployment-Platform = "netlify"
+    X-Frame-Options       = "DENY"
+    X-Content-Type-Options = "nosniff"

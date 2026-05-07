@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText }               from '@/lib/inference/hf-analyze'
-import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
+import { checkRateLimitDB } from '@/lib/ratelimit-db'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { fireScanCompleted }                           from '@/lib/inngest/send-scan-event'
@@ -12,12 +12,12 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
 
-  const rl = await checkRateLimit('text', ip)
+  const rl = await checkRateLimitDB('text', ip)
   if (rl.limited) {
-    return NextResponse.json(rateLimitResponse(), {
-      status: 429,
-      headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': rl.reset.toString() },
-    })
+    return NextResponse.json(
+      { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.reset) } }
+    )
   }
 
   const internalSecret = req.headers.get('X-Internal-Secret')
