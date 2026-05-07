@@ -60,16 +60,40 @@ export const LAYER_BASE_WEIGHTS: Record<number, number> = {
  * Per-agent weights within Layer 6 Semantic RAG (9 agents, sum = 1.06 → normalized).
  * GENERATOR_FINGERPRINT has highest weight — directly identifies source.
  */
+/** Per-agent weights within Layer 6 Semantic RAG (20 agents).
+ *  Weights sum to ~1.90 — always renormalized at runtime.
+ *  Generator specialists carry highest weight (direct attribution).
+ *  Anatomy specialists (eye, hand) are highly reliable tells.
+ *  Supplementary agents (noise, frequency, metadata) are lower weight.
+ */
 export const SEMANTIC_AGENT_WEIGHTS: Record<string, number> = {
-  FACIAL:               0.133,
-  PHYSICS:              0.114,
-  BACKGROUND:           0.095,
-  ANATOMICAL:           0.095,
-  GENERATOR_FINGERPRINT: 0.210,
-  SEMANTIC_LOGIC:       0.114,
-  MICRO_TEXTURE:        0.095,
-  GEOMETRIC:            0.067,
-  COLOR_SCIENCE:        0.086,
+  // Generator specialists — direct attribution (Tier 1)
+  GENERATOR_FINGERPRINT: 0.160,
+  GEMINI_SPECIALIST:     0.140,
+  DALLE_SPECIALIST:      0.140,
+  FLUX_SPECIALIST:       0.120,
+
+  // High-reliability anatomy (Tier 1)
+  FACIAL:                0.100,
+  EYE_ANATOMY:           0.090,
+
+  // Anatomical + boundary (Tier 2)
+  PHYSICS:               0.080,
+  BACKGROUND:            0.070,
+  ANATOMICAL:            0.070,
+  HAND_ANATOMY:          0.080,
+  FACE_BOUNDARY:         0.060,
+  SCENE_PHYSICS:         0.050,
+
+  // Supplementary signals (Tier 3)
+  SEMANTIC_LOGIC:        0.070,
+  MICRO_TEXTURE:         0.060,
+  GEOMETRIC:             0.050,
+  COLOR_SCIENCE:         0.060,
+  NOISE_STATISTICS:      0.050,
+  TEXT_FORENSICS:        0.060,
+  FREQUENCY_ARTIFACTS:   0.050,
+  METADATA_FORENSICS:    0.040,
 }
 
 export const VERDICT_THRESHOLDS = {
