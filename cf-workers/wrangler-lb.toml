@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [[kv_namespaces]]
 binding = "HEALTH_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "04ec46d9d2814f9c9f8e5a577eac650f"
 
 [vars]
 VERCEL_URL    = "https://aiscern.vercel.app"
