@@ -25,6 +25,7 @@ import { runSemanticRAG }            from '@/lib/forensic/layers/semantic-rag'
 import { runProvenanceCheck }        from '@/lib/forensic/layers/provenance'
 import { runFinalFusion }            from '@/lib/forensic/layers/final-fusion'
 import { runDiffusionInversion }     from '@/lib/forensic/layers/diffusion-inversion'
+import { runDiffusionSnapBack }     from '@/lib/forensic/layers/diffusion-snapback'
 import { runEnsembleClassifier }     from '@/lib/forensic/layers/ensemble-classifier'
 import { SIGNAL_WORKER_TIMEOUT_MS }  from '@/lib/forensic/constants'
 
@@ -284,14 +285,30 @@ export const imageForensicCascade = inngest.createFunction(
         }
       }),
 
-      // Track D: Diffusion Inversion (Layer 5) — requires GPU, gracefully skipped if unavailable
-      step.run('layer-diffusion-inversion', async () => {
+      // Track D: Diffusion analysis (Layer 5) — runs BOTH variants in parallel.
+      // Snap-back (multi-strength dynamics) is more discriminating than single-shot inversion.
+      // If both succeed, take the one with higher confidence. Both degrade gracefully without GPU.
+      step.run('layer-diffusion-analysis', async () => {
         try {
-          return await runDiffusionInversion(imageUrl)
-        } catch (err) {
-          logger.warn(`[forensic-cascade] L5 diffusion inversion failed: ${err}`)
+          const [invResult, snapResult] = await Promise.allSettled([
+            runDiffusionInversion(imageUrl),
+            runDiffusionSnapBack(imageUrl),
+          ])
+          const inv  = invResult.status  === 'fulfilled' ? invResult.value  : null
+          const snap = snapResult.status === 'fulfilled' ? snapResult.value : null
+
+          // Prefer snap-back (higher AUROC) if it succeeded; fall back to inversion; else failure
+          if (snap?.status === 'success') return snap
+          if (inv?.status  === 'success') return inv
           return {
-            layer: 5, layerName: 'Diffusion Inversion',
+            layer: 5, layerName: 'Diffusion Analysis',
+            processingTimeMs: 0, status: 'failure' as const,
+            evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
+          }
+        } catch (err) {
+          logger.warn(`[forensic-cascade] L5 diffusion analysis failed: ${err}`)
+          return {
+            layer: 5, layerName: 'Diffusion Analysis',
             processingTimeMs: 0, status: 'failure' as const,
             evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
           }
