@@ -18,6 +18,7 @@ from typing import Optional
 
 from analyzers.pixel_integrity      import analyze_pixel_integrity
 from analyzers.diffusion_inversion  import diffusion_inversion_score
+from analyzers.diffusion_snapback   import diffusion_snapback_score
 from analyzers.noise_stats      import analyze_noise_stats
 from analyzers.frequency_domain import analyze_frequency_domain
 from analyzers.synthid_local    import check_synthid
@@ -98,6 +99,7 @@ async def health():
             "l3_noise":            "available",
             "l4_frequency":        "available",
             "l5_diffusion":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
+            "l5b_snapback":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
         },
         "gpu": {
             "available": gpu_available,
@@ -129,6 +131,30 @@ async def diffusion_inversion_endpoint(req: DiffusionRequest):
         return JSONResponse(
             status_code=500,
             content={"error": str(e), "score": 0.5, "confidence": 0.0}
+        )
+
+@app.post("/diffusion-snapback")
+async def diffusion_snapback_endpoint(req: DiffusionRequest):
+    """
+    Layer 5b: Diffusion snap-back multi-strength reconstruction dynamics.
+    Runs 4 img2img passes. Requires GPU with >=4GB VRAM. Returns 503 if unavailable.
+    """
+    import torch
+    if not torch.cuda.is_available():
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"error": "GPU not available", "snapBackScore": 0.5, "confidence": 0.0}
+        )
+    try:
+        result = diffusion_snapback_score(req.imageUrl)
+        return result
+    except Exception as e:
+        logger.error(f"[L5b] Snap-back failed: {e}", exc_info=True)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "snapBackScore": 0.5, "confidence": 0.0}
         )
 
 @app.post("/analyze-signals", response_model=AnalyzeResponse)
