@@ -36,7 +36,7 @@ const SAFETY = [
 const MODEL = 'gemini-2.0-flash'
 
 // ── Shared JSON parser ────────────────────────────────────────────────────────
-function parseGeminiJSON(raw: string): { ai_probability: number; verdict: string; reasoning: string; signals?: string[] } {
+function parseGeminiJSON(raw: string): { ai_probability: number; verdict: string; reasoning: string; signals?: string[]; matched_tells?: string[]; generator?: string } {
   try {
     const clean = raw.replace(/```json\n?|\n?```/g, '').trim()
     return JSON.parse(clean)
@@ -105,10 +105,12 @@ Respond ONLY with valid JSON — no preamble, no text outside the JSON:
 // IMAGE FALLBACK
 // ════════════════════════════════════════════════════════════════
 export interface BedrockImageResult {
-  aiScore:   number
-  verdict:   'AI' | 'HUMAN' | 'UNCERTAIN'
-  reasoning: string
-  signals:   string[]
+  aiScore:      number
+  verdict:      'AI' | 'HUMAN' | 'UNCERTAIN'
+  reasoning:    string
+  signals:      string[]
+  matchedTells: string[]
+  generator:    string
 }
 
 export async function geminiAnalyzeImage(imageBuffer: Buffer, mimeType: string): Promise<BedrockImageResult> {
