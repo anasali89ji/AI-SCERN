@@ -16,10 +16,25 @@ jobs:
       - name: Trigger W20 push endpoint
         run: |
           echo "=== Triggering W20 (detectai-pipeline-e) HF push ==="
-          RESP=$(curl -sf -X POST \
+          HTTP_CODE=$(curl -s -o /tmp/w20_resp.json -w "%{http_code}" \
+            -X POST \
             "https://detectai-pipeline-e.workers.dev/trigger/push" \
-            --max-time 60) || { echo "W20 push call failed"; exit 1; }
-          echo "$RESP"
+            --max-time 60) || HTTP_CODE="000"
+
+          echo "HTTP status: $HTTP_CODE"
+          cat /tmp/w20_resp.json 2>/dev/null || true
+
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "⚠️  W20 unreachable (network timeout). Worker may be offline."
+            echo "worker_status=offline" >> "$GITHUB_OUTPUT"
+          elif [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ W20 push triggered successfully."
+            echo "worker_status=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️  W20 returned HTTP $HTTP_CODE — push may have failed."
+            echo "worker_status=error" >> "$GITHUB_OUTPUT"
+          fi
+        id: w20
 
       - name: Check pipeline status
         run: |
@@ -32,4 +47,9 @@ ds=d.get('dataset',{}); ps=d.get('state',{})
 print(f'  Pending: {ds.get(\"pending\",0):,}')
 print(f'  Pushed:  {ps.get(\"total_pushed\",0):,}')
 print(f'  Scraped: {ps.get(\"total_scraped\",0):,}')
-" 2>/dev/null || echo "  Could not fetch stats"
+" 2>/dev/null || echo "  Could not fetch pipeline stats (worker may be starting up)"
+
+      - name: Summary
+        run: |
+          echo "Worker status: ${{ steps.w20.outputs.worker_status }}"
+          echo "If worker shows offline: check https://dash.cloudflare.com → Workers → detectai-pipeline-e"

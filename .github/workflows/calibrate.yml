@@ -55,7 +55,7 @@ jobs:
       - name: Run image calibration
         run: node .github/scripts/calibrate-images.js
         env:
-          HF_TOKEN:            ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
           SUPABASE_URL:        ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY:${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SAMPLE_COUNT:        ${{ github.event.inputs.sample_count || '500' }}
@@ -82,7 +82,7 @@ jobs:
       - name: Run audio calibration
         run: node .github/scripts/calibrate-audio.js
         env:
-          HF_TOKEN:            ${{ secrets.HUGGINGFACE_API_TOKEN }}
+          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
           SUPABASE_URL:        ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY:${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SAMPLE_COUNT:        ${{ github.event.inputs.audio_sample_count || '300' }}

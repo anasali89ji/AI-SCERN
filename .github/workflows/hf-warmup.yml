@@ -2,13 +2,13 @@ name: HuggingFace Model Warmup — Full Suite
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # Every 5 minutes (was 15)
+    - cron: '*/15 * * * *'   # Every 15 minutes (was 5 — too aggressive, caused job collisions)
   workflow_dispatch:
 
 jobs:
   warmup:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 8
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       INTERNAL_SECRET: ${{ secrets.INTERNAL_API_SECRET }}

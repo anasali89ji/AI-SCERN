@@ -2,6 +2,12 @@ name: Deploy Load Balancer Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'cf-workers/load-balancer.ts'
+      - 'cf-workers/wrangler-lb.toml'
+      - '.github/workflows/deploy-lb.yml'
 
 jobs:
   deploy:

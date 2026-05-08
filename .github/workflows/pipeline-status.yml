@@ -32,32 +32,41 @@ jobs:
           )
           ALIVE=0; DEAD=0
           for W in "${WORKERS[@]}"; do
-            RESP=$(curl -sf --max-time 10 "https://${W}.workers.dev/health" 2>/dev/null)
-            if [ $? -eq 0 ]; then
-              ROLE=$(echo "$RESP" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('role','?'))" 2>/dev/null)
-              WNUM=$(echo "$RESP" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('worker','?'))" 2>/dev/null)
-              echo "  ✅ $W ($WNUM) — $ROLE"
+            HTTP_CODE=$(curl -s -o /tmp/hresp.json -w "%{http_code}" \
+              --max-time 10 "https://${W}.workers.dev/health" 2>/dev/null) || HTTP_CODE="000"
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] 2>/dev/null; then
+              ROLE=$(python3 -c "import json,sys; d=json.load(open('/tmp/hresp.json')); print(d.get('role','?'))" 2>/dev/null || echo "?")
+              WNUM=$(python3 -c "import json,sys; d=json.load(open('/tmp/hresp.json')); print(d.get('worker','?'))" 2>/dev/null || echo "?")
+              echo "  ✅ ${W} (${WNUM}) — ${ROLE}"
               ALIVE=$((ALIVE+1))
             else
-              echo "  ❌ $W — OFFLINE"
+              echo "  ❌ ${W} — OFFLINE (HTTP ${HTTP_CODE})"
               DEAD=$((DEAD+1))
             fi
           done
-          echo "── $ALIVE alive, $DEAD offline ──"
+          echo "── ${ALIVE} alive, ${DEAD} offline ──"
 
       - name: D1 stats
+        continue-on-error: true
         run: |
-          curl -sf --max-time 15 "https://detectai-pipeline.workers.dev/status" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-ds=d.get('dataset',{}); ps=d.get('state',{})
-print(f'  Total scraped: {ps.get(\"total_scraped\",0):,}')
-print(f'  Total pushed:  {ps.get(\"total_pushed\",0):,}')
-print(f'  Pending:       {ds.get(\"pending\",0):,}')
-print(f'  Text:          {ds.get(\"text_count\",0):,}')
-print(f'  Image:         {ds.get(\"image_count\",0):,}')
-print(f'  Audio:         {ds.get(\"audio_count\",0):,}')
-print(f'  Video:         {ds.get(\"video_count\",0):,}')
-print(f'  Last scrape:   {ps.get(\"last_scrape_at\",\"never\")}')
-print(f'  Last push:     {ps.get(\"last_push_at\",\"never\")}')
-" 2>/dev/null || echo "  Could not fetch stats"
+          echo "=== D1 Dataset Stats ==="
+          HTTP_CODE=$(curl -s -o /tmp/stats.json -w "%{http_code}" \
+            --max-time 15 "https://detectai-pipeline.workers.dev/status") || HTTP_CODE="000"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] 2>/dev/null; then
+            python3 - < /tmp/stats.json <<'PYEOF'
+import json, sys
+d = json.load(sys.stdin)
+ds = d.get('dataset', {}); ps = d.get('state', {})
+print(f'  Total scraped: {ps.get("total_scraped", 0):,}')
+print(f'  Total pushed:  {ps.get("total_pushed", 0):,}')
+print(f'  Pending:       {ds.get("pending", 0):,}')
+print(f'  Text:          {ds.get("text_count", 0):,}')
+print(f'  Image:         {ds.get("image_count", 0):,}')
+print(f'  Audio:         {ds.get("audio_count", 0):,}')
+print(f'  Video:         {ds.get("video_count", 0):,}')
+print(f'  Last scrape:   {ps.get("last_scrape_at", "never")}')
+print(f'  Last push:     {ps.get("last_push_at", "never")}')
+PYEOF
+          else
+            echo "  ⚠️  Could not fetch D1 stats (HTTP ${HTTP_CODE})"
+          fi
