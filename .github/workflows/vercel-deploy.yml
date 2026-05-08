@@ -11,10 +11,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-          vercel-project-id: prj_AeOP4rCryZnSzqfUYRC2M62AZRbT
-          vercel-args: '--prod'
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        run: |
+          vercel pull --yes \
+            --environment=production \
+            --cwd frontend \
+            --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
+
+      - name: Build project
+        run: |
+          vercel build --prod \
+            --cwd frontend \
+            --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod \
+            --cwd frontend \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "✅ Deployed: $URL"
+        env:
+          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
