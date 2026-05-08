@@ -437,8 +437,94 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
         })()
       : Promise.resolve(null)
 
+  // Shared forensic prompt reused across NIM, OpenRouter, and Grok
+  const NIM_OPENROUTER_FORENSIC_PROMPT = `Is this image AI-generated? You are a paranoid forensic expert. Check these in order:
+1. HISTOGRAM: Are pixel values suspiciously clustered (85-215 range, missing pure blacks/whites)? GPT-4o/DALL-E signature.
+2. SKIN: Perfectly smooth with zero grain in shadows? Pores identical density everywhere? AI signature.
+3. EYES: Iris is tiled/stamped texture? Catchlight doesn't match scene lights? Sclera pure white not ivory? AI.
+4. HANDS: Count every finger. 4 or 6 fingers? Fused? No knuckle protrusion? No veins? AI.
+5. HAIR: Individual strands are perfect Bezier curves, uniform thickness, no split ends? Flux signature.
+6. PHYSICS: Shadows from different directions? Bokeh too uniform? No chromatic aberration at corners? AI.
+7. LENS: Perfectly straight lines everywhere (no barrel/pincushion distortion)? No vignetting at corners? AI.
+8. COMPOSITION: Rule-of-thirds perfectly applied? Background too harmonious? No accidental imperfections? AI.
+Default to AI if uncertain. Only call HUMAN if you see real camera evidence (lens distortion + chromatic aberration + irregular noise + composition imperfections).
+Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evidence in one sentence"}`
+
+  // ── NVIDIA NIM Vision (Llama 3.2 90B) ────────────────────────────────────
+  const nimPromise: Promise<{aiScore: number} | null> =
+    process.env.NVIDIA_API_KEY
+      ? (async () => {
+          try {
+            const b64 = inferenceBuffer.toString('base64')
+            const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'meta/llama-3.2-90b-vision-instruct',
+                max_tokens: 120,
+                temperature: 0.1,
+                stream: false,
+                messages: [{ role: 'user', content: [
+                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}` } },
+                  { type: 'text',      text: NIM_OPENROUTER_FORENSIC_PROMPT },
+                ]}],
+              }),
+              signal: AbortSignal.timeout(25_000),
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            const txt  = (data.choices?.[0]?.message?.content ?? '') as string
+            const m    = txt.match(/\{[\s\S]*?\}/)
+            if (!m) return null
+            const p    = JSON.parse(m[0])
+            const s    = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+            return { aiScore: s < 0.45 ? s : Math.max(s, 0.50) }
+          } catch { return null }
+        })()
+      : Promise.resolve(null)
+
+  // ── OpenRouter Vision (Qwen2.5-VL 72B — free tier) ────────────────────────
+  const openRouterVisionPromise: Promise<{aiScore: number} | null> =
+    process.env.OPENROUTER_API_KEY
+      ? (async () => {
+          try {
+            const b64 = inferenceBuffer.toString('base64')
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://aiscern.com',
+                'X-Title': 'Aiscern Forensic',
+              },
+              body: JSON.stringify({
+                model: 'qwen/qwen2.5-vl-72b-instruct:free',
+                max_tokens: 120,
+                temperature: 0.1,
+                messages: [{ role: 'user', content: [
+                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}` } },
+                  { type: 'text',      text: NIM_OPENROUTER_FORENSIC_PROMPT },
+                ]}],
+              }),
+              signal: AbortSignal.timeout(25_000),
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            const txt  = (data.choices?.[0]?.message?.content ?? '') as string
+            const m    = txt.match(/\{[\s\S]*?\}/)
+            if (!m) return null
+            const p    = JSON.parse(m[0])
+            const s    = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+            return { aiScore: s < 0.45 ? s : Math.max(s, 0.50) }
+          } catch { return null }
+        })()
+      : Promise.resolve(null)
+
   const hfPromise = Promise.allSettled([
-    // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.45)
+    // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.40)
     hfInference(MODELS.image_finetuned, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 15000 }).catch(() => null),
     hfInference(MODELS.image_primary,  null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
     hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
@@ -450,7 +536,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
   let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-  const [geminiResult, grokResult, hfResults] = await Promise.all([geminiPromise, grokPromise, hfPromise])
+  const [geminiResult, grokResult, nimResult, orResult, hfResults] = await Promise.all([geminiPromise, grokPromise, nimPromise, openRouterVisionPromise, hfPromise])
 
   try {
     const cal = await getCalibrationStats()
@@ -496,10 +582,29 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   // LLM score computation: if both Gemini and Grok run, average them.
   // If only one runs, use that one. If neither runs, drop to legacy path.
 
+  // Collect all available LLM vision scores
+  const nimScore = (nimResult as {aiScore: number} | null)?.aiScore ?? null
+  const orScore  = (orResult  as {aiScore: number} | null)?.aiScore ?? null
+
   const llmScores: number[] = []
   if (geminiScore !== null) llmScores.push(geminiScore)
   if (grokScore   !== null) llmScores.push(grokScore)
-  const llmScore  = llmScores.length ? llmScores.reduce((a, b) => a + b, 0) / llmScores.length : null
+  if (nimScore    !== null) llmScores.push(nimScore)
+  if (orScore     !== null) llmScores.push(orScore)
+
+  // Weighted LLM average — Gemini and Grok carry more weight (stronger forensic prompts)
+  // NIM and OpenRouter carry slightly less (generic vision models, same prompt)
+  const llmWeightedScore = llmScores.length === 0 ? null : (() => {
+    const weights: number[] = []
+    const vals:    number[] = []
+    if (geminiScore !== null) { vals.push(geminiScore); weights.push(0.35) }
+    if (grokScore   !== null) { vals.push(grokScore);   weights.push(0.30) }
+    if (nimScore    !== null) { vals.push(nimScore);     weights.push(0.20) }
+    if (orScore     !== null) { vals.push(orScore);      weights.push(0.15) }
+    const totalW = weights.reduce((a, b) => a + b, 0)
+    return vals.reduce((sum, v, i) => sum + v * (weights[i] / totalW), 0)
+  })()
+  const llmScore = llmWeightedScore
 
   let aiScore:   number
   let modelUsed: string
@@ -508,13 +613,13 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   if (llmScore !== null && mlScore !== null) {
     // Full ensemble: LLM(45%) + HF(25%) + Brain(20%) + Pixels(10%)
     aiScore    = llmScore * 0.45 + mlScore * 0.25 + brainResult.score * 0.20 + imgSignalScore * 0.10
-    modelUsed  = `Aiscern-ImageEngine-v7(LLM${llmScores.length}+${mlScores.length}HF+Brain+Pixel)`
-    engineDesc = `LLM Vision (${llmScores.length} models, 45%) + ${mlScores.length} HF ViT (25%) + Brain (20%) + Pixel signals (10%)`
+    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+${mlScores.length}HF+Brain+Pixel)`
+    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (45%) + ${mlScores.length} HF ViT (25%) + Brain (20%) + Pixel (10%)`
   } else if (llmScore !== null) {
     // LLM-only + Brain + Pixels: LLM(55%) + Brain(30%) + Pixels(15%)
     aiScore    = llmScore * 0.55 + brainResult.score * 0.30 + imgSignalScore * 0.15
-    modelUsed  = `Aiscern-ImageEngine-v7(LLM${llmScores.length}+Brain+Pixel)`
-    engineDesc = `LLM Vision (${llmScores.length} models, 55%) + Brain (30%) + Pixel signals (15%) — HF models cold-starting`
+    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+Brain+Pixel)`
+    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (55%) + Brain (30%) + Pixel (15%) — HF cold-starting`
   } else if (mlScore !== null) {
     // Legacy path — no LLM: HF(40%) + Brain(40%) + Pixels(20%)
     aiScore    = mlScore * 0.40 + brainResult.score * 0.40 + imgSignalScore * 0.20
