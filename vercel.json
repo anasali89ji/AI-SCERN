@@ -3,38 +3,78 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm ci --legacy-peer-deps",
-  "regions": ["iad1", "sfo1", "cdg1", "sin1", "bom1"],
+  "regions": [
+    "iad1",
+    "sfo1",
+    "cdg1",
+    "sin1",
+    "bom1"
+  ],
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1",
     "DEPLOYMENT_PLATFORM": "vercel"
   },
   "functions": {
-    "app/api/detect/text/route.ts":       { "maxDuration": 45 },
-    "app/api/detect/image/route.ts":      { "maxDuration": 45 },
-    "app/api/detect/audio/route.ts":      { "maxDuration": 45 },
-    "app/api/detect/video/route.ts":      { "maxDuration": 55 },
-    "app/api/detect/pdf/route.ts":        { "maxDuration": 55 },
-    "app/api/chat/route.ts":              { "maxDuration": 55 },
-    "app/api/upload/route.ts":            { "maxDuration": 30 },
-    "app/api/inngest/route.ts":           { "maxDuration": 55 },
-    "app/api/pipeline/push/route.ts":     { "maxDuration": 55 },
-    "app/api/scraper/route.ts":           { "maxDuration": 45 },
-    "app/api/warmup/route.ts":            { "maxDuration": 5  },
-    "app/api/health/route.ts":            { "maxDuration": 5  }
+    "app/api/detect/text/route.ts": {
+      "maxDuration": 45
+    },
+    "app/api/detect/image/route.ts": {
+      "maxDuration": 45
+    },
+    "app/api/detect/audio/route.ts": {
+      "maxDuration": 45
+    },
+    "app/api/detect/video/route.ts": {
+      "maxDuration": 55
+    },
+    "app/api/detect/pdf/route.ts": {
+      "maxDuration": 55
+    },
+    "app/api/chat/route.ts": {
+      "maxDuration": 55
+    },
+    "app/api/upload/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/inngest/route.ts": {
+      "maxDuration": 55
+    },
+    "app/api/pipeline/push/route.ts": {
+      "maxDuration": 55
+    },
+    "app/api/scraper/route.ts": {
+      "maxDuration": 45
+    },
+    "app/api/warmup/route.ts": {
+      "maxDuration": 5
+    },
+    "app/api/health/route.ts": {
+      "maxDuration": 5
+    }
   },
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "X-Deployment-Platform", "value": "vercel" },
-        { "key": "Cache-Control", "value": "no-store" }
+        {
+          "key": "X-Deployment-Platform",
+          "value": "vercel"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
       ]
     },
     {
       "source": "/_next/static/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
-  ]
+  ],
+  "rootDirectory": "frontend"
 }
