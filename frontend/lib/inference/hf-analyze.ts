@@ -398,11 +398,44 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   // ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
   const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length, mimeType)
 
-  // Gemini now supplementary (only when brain uncertain 0.42–0.58)
-  const brainUncertain = brainResult.score > 0.42 && brainResult.score < 0.58
-  const geminiPromise  = (brainUncertain && geminiAvailable())
+  // ── LLM Vision Analysis — ALWAYS runs (not conditional on brain score) ──────
+  // Gemini + Grok run in parallel with the HF models. Modern AI images fool
+  // pixel-based brain analysis but are reliably caught by vision LLMs with
+  // forensic prompts. These carry 45% combined weight in the final ensemble.
+  const geminiPromise = geminiAvailable()
     ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
     : Promise.resolve(null)
+
+  // Grok Vision as second LLM opinion (uses same cascade as semantic-rag agents)
+  const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string} | null> =
+    process.env.GROK_API_KEY
+      ? (async () => {
+          try {
+            const b64  = inferenceBuffer.toString('base64')
+            const res  = await fetch('https://api.x.ai/v1/chat/completions', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
+                messages: [{ role: 'user', content: [
+                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
+                  { type: 'text', text: 'Is this image AI-generated? Check: skin pore uniformity, iris texture tiling, finger count, catchlight source, hair strand regularity, shadow consistency, chromatic aberration presence, histogram clipping. PARANOID mode: bias toward AI. Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence found"}' },
+                ]}],
+              }),
+              signal: AbortSignal.timeout(20_000),
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            const txt  = data.choices?.[0]?.message?.content ?? ''
+            const m    = txt.match(/\{[\s\S]*\}/)
+            if (!m) return null
+            const p    = JSON.parse(m[0])
+            const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+            // Grok paranoid floor: never below 0.50 unless clearly real
+            return { aiScore: aiScore < 0.45 ? aiScore : Math.max(aiScore, 0.50), verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
+          } catch { return null }
+        })()
+      : Promise.resolve(null)
 
   const hfPromise = Promise.allSettled([
     // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.45)
@@ -417,7 +450,7 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
   let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-  const [geminiResult, hfResults] = await Promise.all([geminiPromise, hfPromise])
+  const [geminiResult, grokResult, hfResults] = await Promise.all([geminiPromise, grokPromise, hfPromise])
 
   try {
     const cal = await getCalibrationStats()
@@ -435,11 +468,9 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
       if (aiE || huE) mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
     } catch {}
   }
-  // image_finetuned uses 'ai'/'real' labels (ViT-Large trained with id2label={0:'real',1:'ai'})
-  // image_vit uses 'AI'/'Real' labels; image_deepfake uses 'deepfake'/'real' labels — both handled by parseImg regex
-  parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.45, MODELS.image_finetuned) // fine-tuned = dominant
-  parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.20, MODELS.image_primary)
-  parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.15, MODELS.image_sdxl)
+  parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.40, MODELS.image_finetuned)
+  parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.22, MODELS.image_primary)
+  parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.18, MODELS.image_sdxl)
   parseImg(hfResults[3].status === 'fulfilled' ? hfResults[3].value : null, 0.08, MODELS.image_face)
   parseImg(hfResults[4].status === 'fulfilled' ? hfResults[4].value : null, 0.08, MODELS.image_vit)
   parseImg(hfResults[5].status === 'fulfilled' ? hfResults[5].value : null, 0.04, MODELS.image_deepfake)
@@ -447,35 +478,68 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const mlTotalW    = mlScores.reduce((s, m) => s + m.weight, 0) || 1
   const mlScore     = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
   const geminiScore = geminiResult?.aiScore ?? null
+  const grokScore   = grokResult?.aiScore   ?? null
 
-  // ── IMAGE ENSEMBLE v6.0 ────────────────────────────────────────────────────
-  // Brain (50%) → Pixel signals (20%) → HF models (20%) → Gemini if uncertain (10%)
+  // ── IMAGE ENSEMBLE v7.0 — LLM-first architecture ──────────────────────────
+  //
+  // WEIGHT RATIONALE (sums to 1.0 per path):
+  //   LLM Vision (Gemini + Grok): 45% — catches modern AI that fools pixels
+  //   HF ViT ensemble:            25% — strong for diffusion-era images
+  //   Image Brain (pixel-based):  20% — still useful for texture/noise signals
+  //   Pixel signals:              10% — supplementary physical signals
+  //
+  // Why reduce Brain from 50% → 20%:
+  //   Brain is calibrated on GAN/CIFAKE-era images (StyleGAN2, SD 1.4).
+  //   Modern AI (GPT-4o, Flux, Gemini) passes pixel tests with near-100% success.
+  //   LLM vision with forensic prompts is the only reliable detector for 2025/2026.
+  //
+  // LLM score computation: if both Gemini and Grok run, average them.
+  // If only one runs, use that one. If neither runs, drop to legacy path.
+
+  const llmScores: number[] = []
+  if (geminiScore !== null) llmScores.push(geminiScore)
+  if (grokScore   !== null) llmScores.push(grokScore)
+  const llmScore  = llmScores.length ? llmScores.reduce((a, b) => a + b, 0) / llmScores.length : null
+
   let aiScore:   number
   let modelUsed: string
   let engineDesc: string
 
-  if (geminiScore !== null && mlScore !== null) {
-    // Full ensemble — Brain(50%) + HF(20%) + PixelSig(20%) + Gemini(10%)
-    aiScore    = brainResult.score * 0.50 + mlScore * 0.20 + imgSignalScore * 0.20 + geminiScore * 0.10
-    modelUsed  = `Aiscern-ImageEngine-v6(Brain+Gemini+${mlScores.length}HF+10Pixel)`
-    engineDesc = `Image Brain (50%) + ${mlScores.length} HF ViT models (20%) + 10 pixel signals (20%) + Gemini 2.0 Flash (10%)`
+  if (llmScore !== null && mlScore !== null) {
+    // Full ensemble: LLM(45%) + HF(25%) + Brain(20%) + Pixels(10%)
+    aiScore    = llmScore * 0.45 + mlScore * 0.25 + brainResult.score * 0.20 + imgSignalScore * 0.10
+    modelUsed  = `Aiscern-ImageEngine-v7(LLM${llmScores.length}+${mlScores.length}HF+Brain+Pixel)`
+    engineDesc = `LLM Vision (${llmScores.length} models, 45%) + ${mlScores.length} HF ViT (25%) + Brain (20%) + Pixel signals (10%)`
+  } else if (llmScore !== null) {
+    // LLM-only + Brain + Pixels: LLM(55%) + Brain(30%) + Pixels(15%)
+    aiScore    = llmScore * 0.55 + brainResult.score * 0.30 + imgSignalScore * 0.15
+    modelUsed  = `Aiscern-ImageEngine-v7(LLM${llmScores.length}+Brain+Pixel)`
+    engineDesc = `LLM Vision (${llmScores.length} models, 55%) + Brain (30%) + Pixel signals (15%) — HF models cold-starting`
   } else if (mlScore !== null) {
-    // Brain(50%) + HF(25%) + PixelSig(25%)
-    aiScore    = brainResult.score * 0.50 + mlScore * 0.25 + imgSignalScore * 0.25
-    modelUsed  = `Aiscern-ImageEngine-v6(Brain+${mlScores.length}HF+10Pixel)`
-    engineDesc = `Image Brain (50%) + ${mlScores.length} HF ViT models (25%) + 10 pixel signals (25%)`
+    // Legacy path — no LLM: HF(40%) + Brain(40%) + Pixels(20%)
+    aiScore    = mlScore * 0.40 + brainResult.score * 0.40 + imgSignalScore * 0.20
+    modelUsed  = `Aiscern-ImageEngine-v7(Legacy-${mlScores.length}HF+Brain+Pixel)`
+    engineDesc = `${mlScores.length} HF ViT models (40%) + Brain (40%) + Pixel signals (20%) — no LLM available`
   } else {
-    // Brain(60%) + PixelSig(40%)
+    // Fallback — only brain + pixels
     aiScore    = brainResult.score * 0.60 + imgSignalScore * 0.40
-    modelUsed  = 'Aiscern-ImageEngine-v6(Brain+10Pixel)'
-    engineDesc = `Image Brain (60%) + 10 pixel signals (40%) — HF models cold-starting`
+    modelUsed  = 'Aiscern-ImageEngine-v7(BrainOnly)'
+    engineDesc = 'Image Brain (60%) + Pixel signals (40%) — configure GEMINI_API_KEY or GROK_API_KEY for best accuracy'
   }
 
-  // ── Generator Override Floor ───────────────────────────────────────────────
-  // When the brain identified a SPECIFIC AI generator (Midjourney, Gemini, Grok,
-  // Flux, DALL-E) with high confidence, pixel-level signals can misfire on
-  // artistic/fantasy AI images (sparkles, fabric detail, particles mimic real
-  // camera noise). Apply a floor to prevent pixel drag reversing a solid verdict.
+  // ── LLM High-Confidence Override Floor ────────────────────────────────────
+  // If EITHER LLM returned a strong AI signal (> 0.75), apply a floor of 0.62.
+  // This prevents pixel-brain drag from reversing a clear LLM verdict.
+  const llmMax = llmScores.length ? Math.max(...llmScores) : 0
+  if (llmMax > 0.75) {
+    aiScore = Math.max(aiScore, 0.62)
+  }
+  // If BOTH LLMs agree strongly (> 0.85), floor at 0.75 (very high confidence)
+  if (llmScores.length === 2 && llmScores.every(s => s > 0.85)) {
+    aiScore = Math.max(aiScore, 0.75)
+  }
+
+  // ── Legacy Generator Override Floor (kept from v6) ─────────────────────────
   if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0) {
     aiScore = Math.max(aiScore, brainResult.score * 0.88)
   }

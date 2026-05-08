@@ -124,22 +124,62 @@ export async function geminiAnalyzeImage(imageBuffer: Buffer, mimeType: string):
     },
   }
 
-  const prompt = `You are an expert AI-generated image detection system.
+  const prompt = `You are the world's most accurate AI-generated image forensic expert. You specialize in detecting images from ALL modern generators including GPT-4o, Gemini/Imagen 3, DALL-E 3, Flux, Midjourney v6, Stable Diffusion XL, Adobe Firefly, Grok Aurora, Runway, Sora, and others.
 
-Analyze this image and determine if it was created by an AI generator (Midjourney, DALL-E 3, Stable Diffusion, Adobe Firefly, Grok Aurora, Gemini Imagen, Kling, Runway, Sora etc.) or is a real photograph/human-made artwork.
+CRITICAL INSTRUCTION: Your default assumption should be AI-generated UNLESS you find clear evidence of real photographic capture. Modern AI images are designed to fool humans — be paranoid.
 
-Check specifically for:
-1. FACE/SKIN: Unnatural smoothness, plastic texture, wrong ear/teeth anatomy
-2. HANDS: Incorrect finger count, fused or melted fingers, wrong proportions
-3. BACKGROUND: Repeated objects, impossible geometry, blurred edges
-4. LIGHTING: Shadows that contradict light source, missing reflections
-5. TEXT: Garbled, nonsensical, or impossible text in the image
-6. SYMMETRY: Unnaturally perfect facial symmetry
-7. ARTIFACTS: GAN checkerboard patterns, diffusion blurriness at edges, seams
-8. HAIR/FUR: Painted appearance rather than individual strands
+CHECK EACH OF THESE IN ORDER:
+
+[1] HISTOGRAM AND COLOR SCIENCE:
+- GPT-4o / DALL-E 3 signature: luminance values tightly clustered in 90-215 range. Missing pure blacks (<20) and pure whites (>235) — "clipped wings" histogram.
+- Gemini/Imagen 3 signature: Blue channel elevated +3-7 points above Red in skin tones. Skin has cool blue-tint bias. Values cluster 85-215 — very few extreme values.
+- DALL-E 3 signature: shadows have warm amber/orange tint (inverted from real photos — real shadows are cooler than highlights).
+- Midjourney v6: colors oversaturated, boosted beyond sRGB gamut. Maximum aesthetic beauty bias.
+
+[2] SKIN AND FACE:
+- AI skin (all generators): either perfectly smooth (zero grain) OR uniformly pored (same pore density everywhere — real faces are denser on nose/forehead).
+- GPT-4o specific: ear canal depth inconsistency (one ear shallow, other deep). Brow hairs ALL point same direction. Sclera pure white not ivory.
+- Gemini specific: skin looks like HD stock photo — zero grain even in shadows. Lip highlight at cupid's bow follows standard specular model.
+- Flux specific: individual hair strands have perfect Bezier curve shape, uniform thickness, no split ends — looks like 3D game engine hair.
+
+[3] HANDS (most reliable tell):
+- Count ALL fingers. AI failure modes: 4 fingers, 6 fingers, fused fingers, extra knuckles.
+- Real hands: knuckle protrusions visible, irregular wrinkle pattern, visible veins.
+- AI hands: smooth joint transitions, uniform knuckle spacing, no veins.
+
+[4] EYES:
+- Real iris: unique radial fiber pattern with crypts and collarette ring.
+- AI iris: stamped/tiled texture, too-perfect bilateral symmetry, missing crypts.
+- Real catchlight: reflects actual light sources in scene (window shapes, lamp shapes).
+- AI catchlight: generic circles not matching any scene light source.
+
+[5] PHYSICS AND LIGHTING:
+- All shadows in scene must point to same light source. AI often has conflicting shadow angles.
+- Depth of field must follow lens physics — blur increases continuously with distance.
+- Real lenses: slight chromatic aberration at frame corners, slight barrel/pincushion distortion.
+- AI images: perfectly straight lines everywhere, no lens artifacts — a strong tell.
+
+[6] METADATA VISIBLE IN IMAGE:
+- Vignetting (corner darkening): always present in real photos, absent in AI.
+- Chromatic aberration: red/cyan fringes at high-contrast edges near corners — real cameras only.
+- AI images: uniformly sharp, perfect exposure, perfect composition — no accidents.
+
+[7] HAIR-BACKGROUND BOUNDARY:
+- Real hair: individual strands at boundary, semi-transparent tips.
+- Gemini: luminance halo around subject against bright backgrounds.
+- DALL-E/GPT-4o: hair strands terminate blunt or forked at extremes.
+- Flux/SDXL: background color visible THROUGH hair strands (copy-paste artifact).
+
+SCORING RULES:
+- If you find 4+ specific tells from any single generator: ai_probability = 0.92-0.98
+- If you find 2-3 specific tells: ai_probability = 0.75-0.90
+- If you find 1 specific tell: ai_probability = 0.62-0.75
+- If you find clear real-camera evidence (chromatic aberration + vignetting + irregular noise + candid imperfection): ai_probability = 0.05-0.25
+- If uncertain: ai_probability = 0.55 (bias toward AI, not human)
+- NEVER output ai_probability < 0.40 unless you have strong specific photographic evidence.
 
 Respond ONLY with valid JSON:
-{"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "reasoning": "one sentence", "signals": ["signal1", "signal2"]}`
+{"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "generator": "GPT4o|DALLE3|Gemini|Flux|Midjourney|SDXL|Firefly|Grok|Unknown|None", "matched_tells": ["tell1", "tell2"], "reasoning": "one sentence with specific evidence", "signals": ["signal1", "signal2"]}`
 
   const result  = await model.generateContent([prompt, imagePart])
   const raw     = result.response.text()
@@ -148,11 +188,19 @@ Respond ONLY with valid JSON:
   const verdict = (['AI','HUMAN','UNCERTAIN'].includes(parsed.verdict)
     ? parsed.verdict : toVerdict(aiScore)) as 'AI' | 'HUMAN' | 'UNCERTAIN'
 
+  // Paranoid floor: if Gemini found specific tells, never return < 0.55
+  const matchedTells = Array.isArray(parsed.matched_tells) ? parsed.matched_tells : []
+  const flooredScore = matchedTells.length >= 1
+    ? Math.max(aiScore, 0.55)
+    : aiScore
+
   return {
-    aiScore,
-    verdict,
+    aiScore:   flooredScore,
+    verdict:   flooredScore >= 0.55 ? 'AI' : verdict,
     reasoning: parsed.reasoning ?? '',
     signals:   Array.isArray(parsed.signals) ? parsed.signals : [],
+    matchedTells,
+    generator: parsed.generator ?? 'Unknown',
   }
 }
 
