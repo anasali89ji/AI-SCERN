@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
+// Edge runtime: always dynamic by nature — no `force-dynamic` needed
 export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
 
 const START_TIME = Date.now()
 

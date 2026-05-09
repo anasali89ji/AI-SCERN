@@ -28,7 +28,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.1018.0",
     "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/s3-request-presigner": "^3.600.0",
-    "@clerk/nextjs": "^7.2.3",
+    "@clerk/nextjs": "^7.3.3",
     "@fontsource/inter": "^5.2.8",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.3.4",
@@ -89,8 +89,14 @@
     "autoprefixer": "10.4.19",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",
-    "postcss": "8.4.38",
+    "postcss": "8.5.10",
     "tailwindcss": "3.4.4",
-    "typescript": "5.4.5"
+    "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "whatwg-encoding": "^3.1.1",
+    "serialize-error-cjs": "^0.2.0",
+    "fast-xml-parser": "^5.7.2",
+    "fast-xml-builder": "^1.2.0"
   }
 }
