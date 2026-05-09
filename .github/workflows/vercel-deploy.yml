@@ -14,21 +14,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Guard: fail loudly if the required secret is missing ──────────────
       - name: Verify VERCEL_TOKEN secret is set
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
-            echo "❌  VERCEL_TOKEN secret is not set."
-            echo ""
-            echo "Fix:"
-            echo "  1. Go to GitHub → Settings → Secrets → Actions"
-            echo "  2. Add VERCEL_TOKEN with your Vercel personal access token"
-            echo "  3. Get a token at https://vercel.com/account/tokens"
+            echo "❌ VERCEL_TOKEN secret is not set."
+            echo "Fix: GitHub → Settings → Secrets → Actions → Add VERCEL_TOKEN"
+            echo "Get token at: https://vercel.com/account/tokens"
             exit 1
           fi
-          echo "✅ VERCEL_TOKEN is present (${#VERCEL_TOKEN} chars)"
+          echo "✅ VERCEL_TOKEN present (${#VERCEL_TOKEN} chars)"
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
@@ -44,36 +40,29 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      # ── Link project (creates .vercel/project.json) ───────────────────────
-      - name: Link Vercel project
-        working-directory: ./frontend
+      # Create project.json so CLI knows which project to deploy to (no interactive link needed)
+      - name: Configure Vercel project
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          # Use secrets if set, otherwise fall back to the known hardcoded IDs.
-          # To override: add VERCEL_ORG_ID / VERCEL_PROJECT_ID to GitHub Secrets.
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_sUVHUcrNUc6fWYVOF1cpD1Z1' }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9' }}
         run: |
-          vercel link --yes --token="$VERCEL_TOKEN"
-          echo "✅ Project linked"
+          mkdir -p frontend/.vercel
+          echo "{\"projectId\":\"$VERCEL_PROJECT_ID\",\"orgId\":\"$VERCEL_ORG_ID\"}" > frontend/.vercel/project.json
+          echo "✅ Vercel project config written"
 
-      # ── Production deploy ─────────────────────────────────────────────────
       - name: Deploy to Vercel (production)
         id: deploy
         working-directory: ./frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_sUVHUcrNUc6fWYVOF1cpD1Z1' }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9' }}
           NEXT_TELEMETRY_DISABLED: '1'
         run: |
-          DEPLOY_URL=$(vercel deploy --prod \
-            --yes \
-            --token="$VERCEL_TOKEN" \
-            2>&1 | tee /tmp/vercel-output.txt | grep -E "^https://" | tail -1)
+          vercel deploy --prod --yes --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/vercel-output.txt
+
+          DEPLOY_URL=$(grep -E "^https://" /tmp/vercel-output.txt | tail -1)
 
           if [ -z "$DEPLOY_URL" ]; then
-            echo "❌ Deploy failed — Vercel CLI output:"
+            echo "❌ Deploy failed — Vercel output:"
             cat /tmp/vercel-output.txt
             exit 1
           fi
