@@ -180,10 +180,9 @@ export const imageForensicCascade = inngest.createFunction(
     name:        'Image Forensic Cascade Detection (6-Layer)',
     concurrency: { limit: 10 },
     retries:     2,
+    triggers:    [{ event: 'scan/image.forensic-cascade' as any }],
   },
-  { event: 'scan/image.forensic-cascade' as any },
-
-  async ({ event, step, logger }) => {
+  async ({ event, step }) => {
     const { scanId, imageUrl, r2Key, existingEnsembleResult } = event.data as {
       scanId:   string
       imageUrl: string
@@ -192,7 +191,7 @@ export const imageForensicCascade = inngest.createFunction(
     }
 
     const startTime = Date.now()
-    logger.info(`[forensic-cascade] Starting scan ${scanId}`)
+    console.info(`[forensic-cascade] Starting scan ${scanId}`)
 
     // ── STEP 1: Init scan record ────────────────────────────────────────────
     await step.run('init-scan-record', async () => {
@@ -227,7 +226,7 @@ export const imageForensicCascade = inngest.createFunction(
           contentType: 'image/jpeg',
         }
       } catch (err) {
-        logger.warn(`[forensic-cascade] R2 buffer fetch failed for ${r2Key}: ${err}`)
+        console.warn(`[forensic-cascade] R2 buffer fetch failed for ${r2Key}: ${err}`)
         // Fallback: try to fetch from public URL
         const res = await fetch(imageUrl, { signal: AbortSignal.timeout(10_000) })
         if (!res.ok) throw new Error('Cannot download image from R2 or URL')
@@ -252,7 +251,7 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await callSignalWorker(imageUrl, scanId)
         } catch (err) {
-          logger.warn(`[forensic-cascade] Signal worker failed: ${err}`)
+          console.warn(`[forensic-cascade] Signal worker failed: ${err}`)
           return {
             jobId: scanId, status: 'error' as const,
             processingTimeMs: 0, layers: [] as LayerReport[],
@@ -273,7 +272,7 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runSemanticRAG(imageUrl)
         } catch (err) {
-          logger.warn(`[forensic-cascade] Semantic RAG failed: ${err}`)
+          console.warn(`[forensic-cascade] Semantic RAG failed: ${err}`)
           return {
             layerReport: {
               layer: 6, layerName: 'Semantic Vector-Less RAG',
@@ -306,7 +305,7 @@ export const imageForensicCascade = inngest.createFunction(
             evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
           }
         } catch (err) {
-          logger.warn(`[forensic-cascade] L5 diffusion analysis failed: ${err}`)
+          console.warn(`[forensic-cascade] L5 diffusion analysis failed: ${err}`)
           return {
             layer: 5, layerName: 'Diffusion Analysis',
             processingTimeMs: 0, status: 'failure' as const,
@@ -320,7 +319,7 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runEnsembleClassifier(imageUrl)
         } catch (err) {
-          logger.warn(`[forensic-cascade] L9 ensemble classifier failed: ${err}`)
+          console.warn(`[forensic-cascade] L9 ensemble classifier failed: ${err}`)
           return {
             layer: 9, layerName: 'Neural Ensemble',
             processingTimeMs: 0, status: 'failure' as const,
@@ -387,7 +386,7 @@ export const imageForensicCascade = inngest.createFunction(
           imageUrl, imgBuf, synthidResult ?? undefined, exifSW, exifCam
         )
       } catch (err) {
-        logger.warn(`[forensic-cascade] Provenance check failed: ${err}`)
+        console.warn(`[forensic-cascade] Provenance check failed: ${err}`)
         return {
           layerReport: {
             layer: 7, layerName: 'Provenance & Traceability',
@@ -447,7 +446,7 @@ export const imageForensicCascade = inngest.createFunction(
       return { notified: true }
     })
 
-    logger.info(
+    console.info(
       `[forensic-cascade] Scan ${scanId} complete in ${Date.now() - startTime}ms — ${finalVerdict.label} (${(finalVerdict.confidence * 100).toFixed(0)}%)`
     )
 

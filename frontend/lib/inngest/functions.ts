@@ -11,8 +11,9 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 // ── 1. Scan completed → update user stats ────────────────────────────────────
 export const onScanCompleted = inngest.createFunction(
-  { id: 'scan-completed', name: 'Update user stats on scan complete' },
-  { event: 'scan/completed' },
+  { id: 'scan-completed', name: 'Update user stats on scan complete',
+    triggers: [{ event: 'scan/completed' }],
+  },
   async ({ event, step }) => {
     const { user_id, media_type, verdict, confidence } = event.data
 
@@ -31,8 +32,7 @@ export const onScanCompleted = inngest.createFunction(
 
       return { user_id, verdict, confidence }
     })
-  }
-)
+  })
 
 // ── 2. Incorrect feedback → queue augmentation sample ────────────────────────
 export const onScanFeedback = inngest.createFunction(
@@ -41,8 +41,8 @@ export const onScanFeedback = inngest.createFunction(
     name:        'Queue augmentation sample on incorrect feedback',
     retries:     3,
     concurrency: { limit: 5 },
+    triggers: [{ event: 'scan/feedback' }],
   },
-  { event: 'scan/feedback' },
   async ({ event, step }) => {
     const { scan_id, feedback, verdict } = event.data
 
@@ -79,13 +79,14 @@ export const onScanFeedback = inngest.createFunction(
     })
 
     return { queued: true, scan_id }
-  }
-)
+  })
 
 // ── 3. Scheduled pipeline health check ───────────────────────────────────────
 export const scheduledPipelineCheck = inngest.createFunction(
-  { id: 'pipeline-health-check', name: 'Daily pipeline health check' },
-  { cron: '0 6 * * *' }, // 6AM UTC daily
+  { id: 'pipeline-health-check', name: 'Daily pipeline health check',
+    triggers: [{ cron: '0 6 * * *' }],
+  },
+  // 6AM UTC daily
   async ({ step }) => {
     const stats = await step.run('check-d1-stats', async () => {
       const cfAccount = process.env.CLOUDFLARE_ACCOUNT_ID
@@ -108,8 +109,7 @@ export const scheduledPipelineCheck = inngest.createFunction(
     })
 
     return { checked_at: new Date().toISOString(), stats }
-  }
-)
+  })
 
 
 // ── D.1 — Process feedback and log to training_feedback table ─────────────────
@@ -119,8 +119,8 @@ export const processFeedbackJob = inngest.createFunction(
     name:        'Log scan feedback to training_feedback table',
     retries:     2,
     concurrency: { limit: 3 },
+    triggers: [{ event: 'scan/feedback' }],
   },
-  { event: 'scan/feedback' },
   async ({ event, step }) => {
     const { scan_id, user_id, feedback, verdict } = event.data
 
@@ -153,13 +153,13 @@ export const processFeedbackJob = inngest.createFunction(
 
       return { logged: true, scan_id, userSays }
     })
-  }
-)
+  })
 
 // ── 5. Keep HuggingFace models warm (every 14 min) ───────────────────────────
 export const hfModelWarmup = inngest.createFunction(
-  { id: 'hf-model-warmup', name: 'Keep HuggingFace models warm' },
-  { cron: '*/14 * * * *' },
+  { id: 'hf-model-warmup', name: 'Keep HuggingFace models warm',
+    triggers: [{ cron: '*/14 * * * *' }],
+  },
   async ({ step }) => {
     const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
     if (!HF_TOKEN) return { skipped: true, reason: 'No HF token' }
@@ -203,13 +203,13 @@ export const hfModelWarmup = inngest.createFunction(
     })
 
     return { warmed_at: new Date().toISOString(), results, signal_worker: signalWorkerResult }
-  }
-)
+  })
 
 // ── 6. Self-ping to prevent Vercel cold starts (every 5 min) ─────────────────
 export const vercelWarmup = inngest.createFunction(
-  { id: 'vercel-warmup', name: 'Keep Vercel functions warm' },
-  { cron: '*/5 * * * *' },
+  { id: 'vercel-warmup', name: 'Keep Vercel functions warm',
+    triggers: [{ cron: '*/5 * * * *' }],
+  },
   async ({ step }) => {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aiscern.com'
 
@@ -232,13 +232,13 @@ export const vercelWarmup = inngest.createFunction(
     })
 
     return { warmed_at: new Date().toISOString() }
-  }
-)
+  })
 
 // ── 7. Supabase keep-alive (every 3 days) ────────────────────────────────────
 export const supabaseKeepAlive = inngest.createFunction(
-  { id: 'supabase-keep-alive', name: 'Prevent Supabase free-tier pause' },
-  { cron: '0 12 */3 * *' },
+  { id: 'supabase-keep-alive', name: 'Prevent Supabase free-tier pause',
+    triggers: [{ cron: '0 12 */3 * *' }],
+  },
   async ({ step }) => {
     await step.run('query-profiles', async () => {
       const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
@@ -247,8 +247,7 @@ export const supabaseKeepAlive = inngest.createFunction(
       return { profile_count: count }
     })
     return { kept_alive_at: new Date().toISOString() }
-  }
-)
+  })
 
 // ── Forensic cascade (v2) ─────────────────────────────────────────────────────
 import { imageForensicCascade } from './forensic-cascade'
