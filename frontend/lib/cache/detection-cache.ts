@@ -24,7 +24,7 @@ function getRedis(): Redis | null {
 
 export function contentHash(content: string | Buffer): string {
   const input = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8')
-  return createHash('sha256').update(input).digest('hex').slice(0, 40)
+  return createHash('sha256').update(input as unknown as string).digest('hex').slice(0, 40)
 }
 
 export async function getCachedDetection(

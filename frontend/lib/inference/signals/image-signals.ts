@@ -42,7 +42,7 @@ function findPixelStart(bytes: Uint8Array | Buffer): number {
 }
 
 function toUint8(buf: Buffer | Uint8Array): Uint8Array {
-  return buf instanceof Uint8Array ? buf : new Uint8Array(buf)
+  return new Uint8Array(buf.buffer as ArrayBuffer, buf.byteOffset, buf.byteLength)
 }
 
 function samplePixels(bytes: Uint8Array, count = 3000): number[] {

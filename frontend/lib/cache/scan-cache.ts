@@ -18,7 +18,7 @@ const CACHE_TTL_SECONDS = 86400  // 24 hours
  */
 export function hashBuffer(buffer: Buffer): string {
   return createHash('sha256')
-    .update(buffer.subarray(0, Math.min(buffer.length, 65536)))
+    .update(buffer.subarray(0, Math.min(buffer.length, 65536)) as unknown as string)
     .digest('hex')
     .slice(0, 32)   // 32 hex chars = 128-bit prefix — sufficient uniqueness
 }

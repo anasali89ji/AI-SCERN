@@ -99,7 +99,7 @@ async function hfInference(
     try {
       const headers: Record<string, string> = { Authorization: `Bearer ${HF_TOKEN}` }
       let body: BodyInit
-      if (binary && binaryData) { headers['Content-Type'] = 'application/octet-stream'; body = binaryData }
+      if (binary && binaryData) { headers['Content-Type'] = 'application/octet-stream'; body = binaryData as unknown as BodyInit }
       else { headers['Content-Type'] = 'application/json'; body = JSON.stringify(payload) }
       const res = await fetch(`${HF_API}/${model}`, {
         method: 'POST', headers, body,

@@ -53,8 +53,8 @@ async function checkC2PA(imageBuffer: Buffer): Promise<C2PAResult> {
     // Simplified structural check — not cryptographic verification
 
     const sigJPEG = Buffer.from([0xFF, 0xEB])
-    const sigBox  = Buffer.from('jumb', 'ascii')
-    const sigC2PA = Buffer.from('c2pa', 'ascii')
+    const sigBox  = new Uint8Array(Buffer.from('jumb', 'ascii'))
+    const sigC2PA = new Uint8Array(Buffer.from('c2pa', 'ascii'))
 
     // Scan first 64KB for C2PA markers
     const scan = imageBuffer.subarray(0, Math.min(imageBuffer.length, 65536))

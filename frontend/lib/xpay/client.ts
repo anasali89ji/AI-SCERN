@@ -125,7 +125,7 @@ export function verifyXPayWebhook(payload: XPayWebhookPayload, rawBody: string):
       .map(k => String((rest as unknown as Record<string, unknown>)[k] || ''))
       .join('|')
     const expected = crypto.createHmac('sha256', XPAY_SECRET).update(sigString).digest('hex')
-    return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'))
+    const a = Buffer.from(signature, 'hex'); const b = Buffer.from(expected, 'hex'); return a.length === b.length && crypto.timingSafeEqual(new Uint8Array(a), new Uint8Array(b))
   } catch { return false }
 }
 
