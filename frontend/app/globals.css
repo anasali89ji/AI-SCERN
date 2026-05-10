@@ -791,3 +791,323 @@ section > .max-w-7xl > .border-t {
     opacity: 0.8;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM UI OVERHAUL — Phase 2.5 (May 2026)
+   Enterprise-grade animations, spotlight effects, bento grid
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── CSS Design Tokens ──────────────────────────────────────────────────── */
+:root {
+  --brand-purple: #8B5CF6;
+  --brand-purple-glow: #A78BFA;
+  --brand-orange: #F97316;
+  --border-subtle: rgba(139, 92, 246, 0.12);
+  --border-glow: rgba(139, 92, 246, 0.4);
+}
+
+/* ── Noise texture overlay (subtle grain over whole site) ──────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ── Spotlight card effect (mouse-tracking glow) ──────────────────────── */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--spotlight-color, rgba(139,92,246,0.12)),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+.spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Enhanced gradient-text variants ───────────────────────────────────── */
+.gradient-text-warm {
+  background: linear-gradient(135deg, #f97316, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-cool {
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Nav scroll-hide animation ──────────────────────────────────────────── */
+.nav-hidden {
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-visible {
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Hero mesh gradient animation ──────────────────────────────────────── */
+@keyframes mesh-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -30px) scale(1.08); }
+  66%       { transform: translate(-30px, 20px) scale(0.95); }
+}
+.hero-mesh-1 {
+  animation: mesh-drift 18s ease-in-out infinite;
+  will-change: transform;
+}
+.hero-mesh-2 {
+  animation: mesh-drift 22s ease-in-out infinite reverse;
+  will-change: transform;
+}
+.hero-mesh-3 {
+  animation: mesh-drift 15s ease-in-out infinite 5s;
+  will-change: transform;
+}
+
+/* ── Bento grid shimmer border on large card ──────────────────────────── */
+@keyframes border-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.bento-shimmer {
+  position: relative;
+}
+.bento-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(139,92,246,0.6) 0%,
+    rgba(37,99,235,0.4) 25%,
+    rgba(139,92,246,0.2) 50%,
+    rgba(249,115,22,0.3) 75%,
+    rgba(139,92,246,0.6) 100%
+  );
+  background-size: 300% 300%;
+  animation: border-shimmer 6s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Stagger entrance animation classes ──────────────────────────────── */
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-enter {
+  animation: slide-up-fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-enter-delay-1 { animation-delay: 0.1s; }
+.animate-enter-delay-2 { animation-delay: 0.2s; }
+.animate-enter-delay-3 { animation-delay: 0.3s; }
+.animate-enter-delay-4 { animation-delay: 0.4s; }
+.animate-enter-delay-5 { animation-delay: 0.5s; }
+
+/* ── Tool card icon hover animations ────────────────────────────────── */
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.icon-typing::after {
+  content: '|';
+  display: inline-block;
+  animation: typing-cursor 1s ease-in-out infinite;
+  margin-left: 1px;
+}
+
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+.eq-bar { transform-origin: bottom; animation: eq-bar 0.8s ease-in-out infinite; }
+.eq-bar:nth-child(2) { animation-delay: 0.15s; }
+.eq-bar:nth-child(3) { animation-delay: 0.3s; }
+.eq-bar:nth-child(4) { animation-delay: 0.45s; }
+
+/* ── Timeline draw animation ─────────────────────────────────────────── */
+@keyframes line-draw {
+  from { stroke-dashoffset: 1000; opacity: 0; }
+  to   { stroke-dashoffset: 0; opacity: 1; }
+}
+.timeline-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+}
+.timeline-line.in-view {
+  animation: line-draw 1.5s ease-out forwards;
+}
+
+/* ── Circular progress ring ─────────────────────────────────────────── */
+@keyframes ring-fill {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: var(--ring-offset, 70); }
+}
+.progress-ring-circle {
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Marquee CSS fallback (for reduced motion) ────────────────────────── */
+@keyframes marquee-left  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+.marquee-track { display: flex; width: max-content; }
+.marquee-left  { animation: marquee-left  30s linear infinite; }
+.marquee-right { animation: marquee-right 35s linear infinite; }
+.marquee-left:hover,
+.marquee-right:hover { animation-play-state: paused; }
+
+/* ── Card lift & glow on hover ──────────────────────────────────────── */
+.tool-card {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+}
+.tool-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.08),
+              0 0 0 1px rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* ── Trust badge pulse ─────────────────────────────────────────────── */
+@keyframes trust-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+}
+.trust-pulse { animation: trust-pulse 2s ease-in-out infinite; }
+
+/* ── Scan line for image card hover ───────────────────────────────── */
+@keyframes scanline-sweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  5%   { opacity: 0.6; }
+  95%  { opacity: 0.6; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.group:hover .scanline {
+  animation: scanline-sweep 1.8s ease-in-out infinite;
+}
+.scanline {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(139,92,246,0.15) 45%,
+    rgba(139,92,246,0.15) 55%,
+    transparent 100%
+  );
+  transform: translateY(-100%);
+}
+
+/* ── Text reveal (typewriter) effect ─────────────────────────────── */
+@keyframes typewriter {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+.typewriter {
+  animation: typewriter 2s steps(40) 0.5s both;
+}
+
+/* ── Number counter odometer feel ─────────────────────────────────── */
+.counter-value {
+  font-variant-numeric: tabular-nums;
+  transition: none;
+}
+
+/* ── Testimonial card glass effect ────────────────────────────────── */
+.testimonial-card {
+  background: rgba(17, 17, 24, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  backdrop-filter: blur(20px);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.testimonial-card:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  transform: translateY(-2px);
+}
+
+/* ── Professionals list item hover ────────────────────────────────── */
+.prof-item {
+  transition: color 0.2s ease, border-color 0.2s ease,
+              transform 0.2s ease, box-shadow 0.2s ease;
+}
+.prof-item:hover {
+  transform: scale(1.05);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #f1f5f9;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+}
+
+/* ── Section reveal — scroll-triggered via IntersectionObserver ─── */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.section-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Reduced motion overrides for ALL new animations ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh-1, .hero-mesh-2, .hero-mesh-3,
+  .marquee-left, .marquee-right,
+  .bento-shimmer::before,
+  .spotlight-card::before,
+  .eq-bar,
+  .scanline,
+  .typewriter,
+  .trust-pulse {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .section-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
