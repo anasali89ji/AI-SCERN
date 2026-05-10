@@ -1,3 +1,4 @@
 -e 
 # Vercel (removed)
 .vercel
+!.vercel/project.json

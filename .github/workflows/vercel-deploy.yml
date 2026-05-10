@@ -9,103 +9,49 @@ jobs:
   deploy:
     name: Deploy frontend → Vercel
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Strategy: Deploy Hook (recommended, no token needed) ──────────────
-      # If VERCEL_DEPLOY_HOOK secret is set, just trigger it and done.
-      # Get URL: Vercel Dashboard → Project → Settings → Git → Deploy Hooks
-      # Add hook for "main" branch, copy URL → add as VERCEL_DEPLOY_HOOK secret in GitHub.
-      - name: Trigger via Deploy Hook
-        if: ${{ env.VERCEL_DEPLOY_HOOK != '' }}
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-        run: |
-          echo "🪝 Triggering Vercel Deploy Hook..."
-          RESPONSE=$(curl -sf -X POST "$VERCEL_DEPLOY_HOOK")
-          echo "✅ Deploy triggered: $RESPONSE"
-
-      # ── Strategy: CLI deploy (fallback — needs VERCEL_TOKEN secret) ───────
-      - name: Setup Node.js 20
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' }}
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-
-      - name: Check VERCEL_TOKEN
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' && env.VERCEL_TOKEN == '' }}
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          echo "❌ Neither VERCEL_DEPLOY_HOOK nor VERCEL_TOKEN secret is set."
-          echo ""
-          echo "Option A (recommended — no token needed):"
-          echo "  1. Open Vercel Dashboard → your project → Settings → Git → Deploy Hooks"
-          echo "  2. Create a hook for branch: main"
-          echo "  3. Copy the URL"
-          echo "  4. GitHub repo → Settings → Secrets → Actions → New secret"
-          echo "     Name: VERCEL_DEPLOY_HOOK   Value: <the URL>"
-          echo ""
-          echo "Option B (CLI deploy):"
-          echo "  1. Vercel Dashboard → Account → Settings → Tokens → Create"
-          echo "  2. GitHub repo → Settings → Secrets → Actions → New secret"
-          echo "     Name: VERCEL_TOKEN   Value: <the token>"
-          exit 1
-
-      - name: Install dependencies
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' }}
-        working-directory: ./frontend
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-        run: npm ci --legacy-peer-deps
 
       - name: Install Vercel CLI
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' }}
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-        run: npm install --global vercel@latest
+        run: npm install -g vercel@latest
 
-      - name: Configure Vercel project
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' }}
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'team_sUVHUcrNUc6fWYVOF1cpD1Z1' }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9' }}
-        run: |
-          mkdir -p frontend/.vercel
-          echo "{\"projectId\":\"$VERCEL_PROJECT_ID\",\"orgId\":\"$VERCEL_ORG_ID\"}" > frontend/.vercel/project.json
-          echo "✅ Project config written"
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci --legacy-peer-deps
 
-      - name: Deploy via CLI
-        id: deploy
-        if: ${{ env.VERCEL_DEPLOY_HOOK == '' }}
+      - name: Deploy
         working-directory: ./frontend
         env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          # VERCEL_TOKEN must be set in GitHub repo secrets.
+          # Token owner must have access to team: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          # Create at: https://vercel.com/account/tokens
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           NEXT_TELEMETRY_DISABLED: '1'
         run: |
-          vercel deploy --prod --yes --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/vercel-out.txt
-          DEPLOY_URL=$(grep -E "^https://" /tmp/vercel-out.txt | tail -1)
-          if [ -z "$DEPLOY_URL" ]; then
-            echo "❌ Deploy failed:"
-            cat /tmp/vercel-out.txt
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "❌ VERCEL_TOKEN secret is not set."
+            echo ""
+            echo "Fix: Go to https://vercel.com/account/tokens → Create token"
+            echo "     Then: GitHub repo → Settings → Secrets → Actions → VERCEL_TOKEN"
             exit 1
           fi
-          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
-          echo "✅ Deployed → $DEPLOY_URL"
+          vercel deploy --prod --yes --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/deploy.log
+          URL=$(grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' /tmp/deploy.log | tail -1)
+          echo "✅ Deployed → ${URL:-aiscern.com}"
 
       - name: Summary
         if: always()
         run: |
-          echo "## 🚀 Vercel Deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Branch | \`${{ github.ref_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🚀 Deployment: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch: \`${{ github.ref_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/deploy.log 2>/dev/null | tail -10 >> "$GITHUB_STEP_SUMMARY" || true
