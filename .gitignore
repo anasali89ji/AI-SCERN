@@ -44,3 +44,5 @@ ml-training/data/processed/
 .netlify/
 setup-secrets.sh
 .vercel/
+.vercel
+!.vercel/project.json
