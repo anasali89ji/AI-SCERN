@@ -63,7 +63,10 @@ export default function DashboardPage() {
       ])
       if (statsRes.ok) {
         const d = await statsRes.json()
-        const avg = (d.avg_confidence ?? 0) <= 1 ? Math.round(d.avg_confidence * 100) : Math.round(d.avg_confidence)
+        // FIX: use coalesced value for both the comparison AND the multiplication
+        // to prevent undefined * 100 = NaN when avg_confidence is missing
+        const rawAvg = d.avg_confidence ?? 0
+        const avg = rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg)
         setStats({ ...d, avg_confidence: avg })
       }
       if (scansRes.ok) {
@@ -75,6 +78,7 @@ export default function DashboardPage() {
   }, [user?.uid])
 
   // Initial load + auto-refresh when user returns to tab (after running a scan)
+  // Also poll every 30 s so results appear even without a custom event
   useEffect(() => {
     loadDashboard()
     const onVisible   = () => { if (document.visibilityState === 'visible') loadDashboard() }
@@ -83,10 +87,15 @@ export default function DashboardPage() {
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onFocus)
     window.addEventListener('aiscern:scan-saved', onScanSaved)
+
+    // Polling fallback — refreshes every 30 s so new scans always surface
+    const poll = setInterval(loadDashboard, 30_000)
+
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('aiscern:scan-saved', onScanSaved)
+      clearInterval(poll)
     }
   }, [loadDashboard])
 
