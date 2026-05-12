@@ -56,7 +56,11 @@ function formatDuration(secs: number) {
 }
 
 export default function AudioDetectionPage() {
-  const { user: _currentUser } = useAuth()
+  const { user: currentUser } = useAuth()
+  const displayName: string | null =
+    currentUser?.displayName?.split(' ')[0] ||
+    currentUser?.email?.split('@')[0] ||
+    null
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [_uploadProgress, setUploadProgress] = useState(0)
@@ -264,12 +268,24 @@ export default function AudioDetectionPage() {
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
+                {displayName && (
+                  <div className="mb-3 text-xs font-medium text-text-muted">
+                    Hey <span className="text-text-primary font-semibold">{displayName}</span>, here's what we found
+                    {file ? <> for <span className="text-text-primary font-medium">"{file.name}"</span></> : null}:
+                  </div>
+                )}
                 <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                   <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
                     <cfg.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${cfg.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>{cfg.label}</h3>
+                    <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>
+                      {displayName
+                        ? result.verdict === 'AI' ? `${displayName}, this audio is AI Generated`
+                          : result.verdict === 'HUMAN' ? `${displayName}, this is an Authentic Human Voice`
+                          : `${displayName}, this audio is Uncertain`
+                        : cfg.label}
+                    </h3>
                     <p className="text-text-muted text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>

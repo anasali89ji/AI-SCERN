@@ -511,7 +511,7 @@ const HOW_IT_WORKS = [
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,   color: 'text-primary', bg: 'from-primary/10 to-transparent', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '400', statSuffix: 'k+', statLabel: 'training samples' },
+  { icon: Database,   color: 'text-primary', bg: 'from-primary/10 to-transparent', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
   { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/10 to-transparent', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
   { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/10 to-transparent',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
   { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/10 to-transparent',     title: 'Free Tier Available',   desc: 'Core detection features are free during early access. No account needed for basic scans.',                              large: false, stat: '0',   statSuffix: '',   statLabel: 'cost to start' },
@@ -978,13 +978,16 @@ export default function HomePage() {
                 // Override dataset stat with live HF count
                 const isDataset = title === 'Benchmarked Datasets'
                 const liveStat = isDataset && datasetRows
-                  ? datasetRows >= 1000
+                  ? datasetRows >= 1_000_000
+                    ? { val: Math.round(datasetRows / 100_000) / 10, suffix: 'M+', label: 'training samples' }
+                    : datasetRows >= 1000
                     ? { val: Math.round(datasetRows / 1000), suffix: 'k+', label: 'training samples' }
                     : { val: datasetRows, suffix: '+', label: 'training samples' }
                   : null
-                const displayStat  = liveStat ? String(liveStat.val) : stat
+                const displayStat   = liveStat ? String(liveStat.val) : stat
                 const displaySuffix = liveStat ? liveStat.suffix : statSuffix
                 const displayLabel  = liveStat ? liveStat.label : statLabel
+                const displayTarget = parseFloat(displayStat) || 0
                 return (
                 <motion.div key={title}
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
@@ -1000,7 +1003,7 @@ export default function HomePage() {
                       <div className="mb-3">
                         <div className="text-3xl sm:text-4xl font-black tabular-nums"
                           style={{ background: 'linear-gradient(135deg, #ffffff, #d8b4fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                          <CountUp target={parseInt(displayStat) || 0} suffix={displaySuffix} />
+                          <CountUp target={displayTarget} suffix={displaySuffix} />
                         </div>
                         <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
                       </div>

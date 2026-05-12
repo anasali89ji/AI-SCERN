@@ -33,6 +33,10 @@ function normalizeConf(c: number | undefined) {
 
 export default function BatchPage() {
   const { user: currentUser } = useAuth()
+  const displayName: string | null =
+    currentUser?.displayName?.split(' ')[0] ||
+    currentUser?.email?.split('@')[0] ||
+    null
   const [files, setFiles] = useState<BatchFile[]>([])
   const [running, setRunning] = useState(false)
   const [correlation, setCorrelation] = useState<{score:number;pattern:string}|null>(null)
@@ -307,6 +311,15 @@ export default function BatchPage() {
           {/* Summary stats */}
           {(completed + errored) > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {displayName && completed > 0 && !running && (
+                <div className="col-span-2 sm:col-span-4 text-xs text-text-muted mb-1">
+                  Hey <span className="text-text-primary font-semibold">{displayName}</span> — batch scan complete.{' '}
+                  {aiCount > 0
+                    ? <span className="text-rose font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
+                    : <span className="text-emerald font-medium">No AI-generated content detected</span>}
+                  {humanCount > 0 && aiCount > 0 && <>, <span className="text-emerald font-medium">{humanCount} authentic</span></>}.
+                </div>
+              )}
               {[
                 { label: 'Completed', value: completed, color: 'text-text-primary' },
                 { label: 'AI Detected', value: aiCount, color: 'text-rose' },
