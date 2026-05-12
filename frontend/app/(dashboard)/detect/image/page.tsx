@@ -32,8 +32,7 @@ const verdictConfig = {
 export default function ImageDetectionPage() {
   const { user: currentUser } = useAuth()
   const displayName: string | null =
-    currentUser?.user_metadata?.full_name?.split(' ')[0] ||
-    currentUser?.user_metadata?.name?.split(' ')[0] ||
+    currentUser?.displayName?.split(' ')[0] ||
     currentUser?.email?.split('@')[0] ||
     null
   const [file, setFile] = useState<File | null>(null)

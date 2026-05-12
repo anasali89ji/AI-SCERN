@@ -42,8 +42,7 @@ export default function TextDetectionPage() {
   const { user: currentUser } = useAuth()
   // Derive first name for personalized messages
   const displayName: string | null =
-    currentUser?.user_metadata?.full_name?.split(' ')[0] ||
-    currentUser?.user_metadata?.name?.split(' ')[0] ||
+    currentUser?.displayName?.split(' ')[0] ||
     currentUser?.email?.split('@')[0] ||
     null
   const [text, setText] = useState('')
