@@ -1009,7 +1009,8 @@ export default function HomePage() {
                     <p className="text-sm text-text-muted leading-relaxed">{desc}</p>
                   </SpotlightCard>
                 </motion.div>
-              )})
+              )
+              })}
             </div>
 
             {/* Professionals list */}
