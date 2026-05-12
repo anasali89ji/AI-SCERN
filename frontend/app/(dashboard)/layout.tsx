@@ -297,8 +297,8 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
               >
                 {menuContent}
               </div>
-              {/* Space above MobileNav (h-16 = 64px) + safe area */}
-              <div style={{ height: 'max(5rem, calc(4rem + env(safe-area-inset-bottom)))' }} />
+              {/* Space above MobileNav: 4rem (nav) + safe area */}
+              <div style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }} />
             </motion.div>
           </div>
         )}
@@ -315,7 +315,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-[100dvh] bg-background overflow-hidden">
         {/* Desktop sidebar */}
         <motion.aside animate={{ width: collapsed ? 72 : 260 }}
           transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
@@ -370,10 +370,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           <ErrorBoundary>
-            {/* BUG-05 fixed: pb-safe → env(safe-area-inset-bottom) */}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-              <div className="min-h-full pb-16 lg:pb-0">{children}</div>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+              {/* pb clears the MobileNav (4rem) + safe area on mobile; desktop has no nav */}
+              <div className="min-h-full pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+                {children}
+              </div>
             </main>
           </ErrorBoundary>
         </div>

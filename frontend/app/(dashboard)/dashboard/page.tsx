@@ -1,11 +1,13 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Brain, FileText, Mic, BarChart3,
   Zap, ArrowRight, Shield, CheckCircle, AlertTriangle,
-  HelpCircle, Image as ImageIcon, Video, Music, Sparkles, Layers
+  HelpCircle, Image as ImageIcon, Video, Music, Sparkles, Layers,
+  RefreshCw
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
@@ -49,38 +51,51 @@ function mediaIcon(type: string) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [stats,   setStats]   = useState<any>(null)
   const [scans,   setScans]   = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const mountedRef = useRef(false)
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const loadDashboard = useCallback(async () => {
     if (!user?.uid) return
     try {
+      setFetchError(false)
       const [statsRes, scansRes] = await Promise.all([
-        fetch('/api/user/stats'),
-        fetch('/api/user/scans?limit=8&sort=newest'),
+        fetch('/api/user/stats',                   { cache: 'no-store' }),
+        fetch('/api/user/scans?limit=8&sort=newest', { cache: 'no-store' }),
       ])
       if (statsRes.ok) {
         const d = await statsRes.json()
-        // FIX: use coalesced value for both the comparison AND the multiplication
-        // to prevent undefined * 100 = NaN when avg_confidence is missing
         const rawAvg = d.avg_confidence ?? 0
         const avg = rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg)
         setStats({ ...d, avg_confidence: avg })
       }
       if (scansRes.ok) {
-        const { data } = await scansRes.json()
-        if (data) setScans(data)
+        const json = await scansRes.json()
+        // API returns { data: [...], total: n }
+        setScans(json.data ?? [])
       }
-    } catch { /* silent */ }
-    setLoading(false)
+      if (!statsRes.ok && !scansRes.ok) setFetchError(true)
+    } catch {
+      setFetchError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [user?.uid])
 
-  // Initial load + auto-refresh when user returns to tab (after running a scan)
-  // Also poll every 30 s so results appear even without a custom event
   useEffect(() => {
+    // Bust Next.js router segment cache on every mount so navigating back
+    // always fetches fresh data instead of showing a stale cached page.
+    if (!mountedRef.current) {
+      mountedRef.current = true
+      router.refresh()
+    }
+
     loadDashboard()
+
     const onVisible   = () => { if (document.visibilityState === 'visible') loadDashboard() }
     const onFocus     = () => loadDashboard()
     const onScanSaved = () => loadDashboard()
@@ -88,8 +103,8 @@ export default function DashboardPage() {
     window.addEventListener('focus', onFocus)
     window.addEventListener('aiscern:scan-saved', onScanSaved)
 
-    // Polling fallback — refreshes every 30 s so new scans always surface
-    const poll = setInterval(loadDashboard, 30_000)
+    // Poll every 10 s — fast enough to feel live, cheap enough to run
+    const poll = setInterval(loadDashboard, 10_000)
 
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
@@ -97,7 +112,7 @@ export default function DashboardPage() {
       window.removeEventListener('aiscern:scan-saved', onScanSaved)
       clearInterval(poll)
     }
-  }, [loadDashboard])
+  }, [loadDashboard, router])
 
   const totalScans = stats?.total_scans ?? 0
   const aiCount    = stats?.ai_detected  ?? 0
@@ -221,11 +236,17 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Recent Scans</h2>
-          {scans.length > 0 && (
-            <Link href="/history" className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            <button onClick={loadDashboard} title="Refresh"
+              className="text-text-disabled hover:text-text-muted transition-colors p-1 rounded-lg hover:bg-surface-hover">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+            {scans.length > 0 && (
+              <Link href="/history" className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -233,6 +254,16 @@ export default function DashboardPage() {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
             ))}
+          </div>
+        ) : fetchError ? (
+          <div className="bg-surface border border-border rounded-2xl p-8 text-center">
+            <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
+            <p className="text-text-muted text-sm font-medium">Couldn't load scan history</p>
+            <p className="text-text-disabled text-xs mt-1 mb-4">Check your connection and try again</p>
+            <button onClick={loadDashboard}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
+              <RefreshCw className="w-4 h-4" /> Retry
+            </button>
           </div>
         ) : scans.length === 0 ? (
           <div className="bg-surface border border-border rounded-2xl p-10 text-center">

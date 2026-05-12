@@ -49,7 +49,7 @@ export function MobileNav() {
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
               className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border rounded-t-3xl"
-              style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}
+              style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-border" />
@@ -82,9 +82,9 @@ export function MobileNav() {
 
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/96 backdrop-blur-xl border-t border-border/40"
-        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="flex items-center justify-around px-2" style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="flex items-center justify-around px-2 h-16">
           {PRIMARY_NAV.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
             return (
