@@ -4,11 +4,7 @@
   "outputDirectory": ".next",
   "installCommand": "npm ci --legacy-peer-deps",
   "regions": [
-    "iad1",
-    "sfo1",
-    "cdg1",
-    "sin1",
-    "bom1"
+    "iad1"
   ],
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1",
