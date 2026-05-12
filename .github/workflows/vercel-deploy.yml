@@ -18,19 +18,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      # PRIMARY: Deploy hook — no token needed, just a URL
-      # To set up: Vercel Dashboard → detect-ai → Settings → Git → Deploy Hooks
-      # Create hook: name="github-actions" branch="main" → copy the URL
-      # Add to GitHub: repo → Settings → Secrets → VERCEL_DEPLOY_HOOK
-      - name: Trigger via deploy hook
-        if: ${{ secrets.VERCEL_DEPLOY_HOOK != '' }}
-        run: |
-          RESULT=$(curl -sf -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}")
-          echo "Deploy triggered: $RESULT"
-
-      # FALLBACK: CLI with token if hook not set
-      - name: Deploy via CLI (fallback)
-        if: ${{ secrets.VERCEL_DEPLOY_HOOK == '' }}
+      - name: Deploy to Vercel
         run: vercel deploy --prod --yes --cwd frontend --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
