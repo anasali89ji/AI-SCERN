@@ -39,7 +39,13 @@ function avgSentenceLen(text: string) {
 }
 
 export default function TextDetectionPage() {
-  const { user: _currentUser } = useAuth()
+  const { user: currentUser } = useAuth()
+  // Derive first name for personalized messages
+  const displayName: string | null =
+    currentUser?.user_metadata?.full_name?.split(' ')[0] ||
+    currentUser?.user_metadata?.name?.split(' ')[0] ||
+    currentUser?.email?.split('@')[0] ||
+    null
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DetectionResult | null>(null)
@@ -362,6 +368,13 @@ Analyzed: ${new Date().toLocaleString()}`
               <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Verdict Banner */}
                 <div className={`card border ${verdictStyles[result.verdict]}`}>
+                  {/* Personalized greeting */}
+                  {displayName && (
+                    <div className="mb-3 text-xs font-medium text-text-muted">
+                      Hey <span className="text-text-primary font-semibold">{displayName}</span>, here's what we found
+                      {pdfFile ? <> for <span className="text-text-primary font-medium">"{pdfFile.name}"</span></> : text.trim() ? <> for your submitted text</> : null}:
+                    </div>
+                  )}
                   <div className="flex items-start gap-3 min-w-0">
                     <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
                       {result.verdict === 'AI'
@@ -373,7 +386,13 @@ Analyzed: ${new Date().toLocaleString()}`
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
                         <h3 className={`text-base sm:text-2xl font-black ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
-                          {result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
+                          {displayName
+                            ? result.verdict === 'AI'
+                              ? `${displayName}, this is AI Generated`
+                              : result.verdict === 'HUMAN'
+                              ? `${displayName}, this is Human Written`
+                              : `${displayName}, this is Uncertain`
+                            : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
                         </h3>
                         <div className="text-right shrink-0">
                           <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>

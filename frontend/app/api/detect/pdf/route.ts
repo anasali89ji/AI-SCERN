@@ -48,13 +48,31 @@ function chunkText(text: string, size: number, overlap: number): { text: string;
   return chunks
 }
 
+/** Check if a string looks like real human/AI readable text (not binary PDF structure) */
+function isReadableParagraph(text: string): boolean {
+  if (text.length < 80) return false
+  // Reject PDF structure artifacts
+  if (/^%PDF|^endobj|^xref|^startxref|^trailer/.test(text)) return false
+  if (/<<\s*\/\w+|obj\s*<<|\bobj\b.*\bendobj\b/s.test(text)) return false
+  // Must have mostly printable ASCII letter/digit characters
+  const alphaCount = (text.match(/[a-zA-Z]/g) || []).length
+  const ratio = alphaCount / text.length
+  if (ratio < 0.4) return false // less than 40% letters = binary/junk
+  // Reject strings with suspicious short token density (binary noise)
+  const weirdTokens = (text.match(/[A-Za-z]{1,2}\s+[A-Za-z]{1,2}\s+[A-Za-z]{1,2}/g) || []).length
+  const wordCount = (text.match(/\b\w{3,}\b/g) || []).length
+  if (wordCount < 5) return false
+  if (weirdTokens > wordCount * 0.6) return false
+  return true
+}
+
 /** Extract paragraphs from text for per-paragraph scoring */
 function extractParagraphs(text: string): { text: string; start: number }[] {
   const paras: { text: string; start: number }[] = []
   let pos = 0
   for (const para of text.split(/\n{2,}/)) {
     const clean = para.trim()
-    if (clean.length >= 80) paras.push({ text: clean, start: pos })
+    if (isReadableParagraph(clean)) paras.push({ text: clean, start: pos })
     pos += para.length + 2
   }
   return paras
@@ -114,7 +132,12 @@ export async function POST(req: NextRequest) {
       } catch (pdfErr: any) {
         console.warn('[pdf] pdf-parse failed, using latin1 fallback:', pdfErr?.message)
         // Hard fallback for text-based PDFs: strip binary bytes
-        rawPdfText = buffer.toString('latin1').replace(/[^\x20-\x7E\n]/g, ' ')
+        rawPdfText = buffer.toString('latin1')
+          .replace(/[^\x20-\x7E\n]/g, ' ')
+          .replace(/\d+ \d+ obj[\s\S]*?endobj/g, ' ')
+          .replace(/<<[\s\S]{0,500}>>/g, ' ')
+          .replace(/stream[\s\S]*?endstream/g, ' ')
+          .replace(/xref[\s\S]*?%%EOF/g, ' ')
       }
 
       if (!rawPdfText.trim()) {

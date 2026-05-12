@@ -535,6 +535,14 @@ export default function HomePage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const reduced = useReducedMotion()
   const { scrolled, hidden } = useNavScrollBehavior()
+  const [datasetRows, setDatasetRows] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/dataset-stats')
+      .then(r => r.json())
+      .then(d => { if (d.rows) setDatasetRows(d.rows) })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
@@ -966,7 +974,18 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel }, idx) => (
+              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel }, idx) => {
+                // Override dataset stat with live HF count
+                const isDataset = title === 'Benchmarked Datasets'
+                const liveStat = isDataset && datasetRows
+                  ? datasetRows >= 1000
+                    ? { val: Math.round(datasetRows / 1000), suffix: 'k+', label: 'training samples' }
+                    : { val: datasetRows, suffix: '+', label: 'training samples' }
+                  : null
+                const displayStat  = liveStat ? String(liveStat.val) : stat
+                const displaySuffix = liveStat ? liveStat.suffix : statSuffix
+                const displayLabel  = liveStat ? liveStat.label : statLabel
+                return (
                 <motion.div key={title}
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }} transition={{ delay: idx * 0.1, duration: 0.5 }}
@@ -977,20 +996,20 @@ export default function HomePage() {
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />
                     </div>
-                    {stat !== undefined && (
+                    {displayStat !== undefined && (
                       <div className="mb-3">
                         <div className="text-3xl sm:text-4xl font-black tabular-nums"
                           style={{ background: 'linear-gradient(135deg, #ffffff, #d8b4fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                          <CountUp target={parseInt(stat) || 0} suffix={statSuffix} />
+                          <CountUp target={parseInt(displayStat) || 0} suffix={displaySuffix} />
                         </div>
-                        <div className="text-xs text-text-muted font-medium">{statLabel}</div>
+                        <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
                       </div>
                     )}
                     <h3 className="font-bold text-text-primary text-base mb-2">{title}</h3>
                     <p className="text-sm text-text-muted leading-relaxed">{desc}</p>
                   </SpotlightCard>
                 </motion.div>
-              ))}
+              )})
             </div>
 
             {/* Professionals list */}
