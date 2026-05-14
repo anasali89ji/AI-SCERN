@@ -21,10 +21,16 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500
+    @apply bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600
            text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
            active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
   }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
 
   .btn-ghost {
     @apply hover:bg-white/5 text-text-muted hover:text-text-primary px-4 py-2
@@ -161,7 +167,13 @@
   pre, code { max-width: 100%; overflow-x: auto; }
 
   /* Fix hero text on mobile */
-  .hero-title { font-size: clamp(2rem, 8vw, 4rem); }
+  /* Fix hero text on mobile — smaller clamp to prevent overflow */
+  .hero-title { font-size: clamp(1.75rem, 7vw, 3.5rem); }
+
+  /* Larger scrollbar grab area on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+  }
 
   /* Dashboard sidebar - always collapse on mobile */
   .sidebar-mobile-hidden { display: none; }
@@ -361,7 +373,7 @@ img {
    text-muted was #64748b (borderline — upgrade for better legibility) */
 .text-text-disabled,
 [class*="text-text-disabled"] {
-  color: #475569 !important;
+  color: #64748b !important; /* upgraded from #475569 — better WCAG AA contrast */
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -389,18 +401,6 @@ img {
   /* Tool grid cards — tighter on mobile */
   section#tools .rounded-2xl { border-radius: 1rem; }
 }
-
-/* ── Buttons — cleaner on mobile ── */
-.btn-primary {
-  @apply bg-primary text-white font-bold rounded-xl transition-all duration-200;
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
-}
-.btn-primary:hover { 
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
-  transform: translateY(-1px);
-}
-.btn-primary:active { transform: translateY(0); }
 
 /* ── Card polish ── */
 .card {
@@ -777,6 +777,11 @@ section > .max-w-7xl > .border-t {
 /* Detect page .card borders — ensure they never look harsh */
 .card {
   border-color: rgba(28, 28, 46, 0.9);
+}
+
+/* Softer card borders on mobile */
+@media (max-width: 640px) {
+  .card { border-color: rgba(28, 28, 46, 0.6); }
 }
 
 /* On hover, cards reveal primary tint naturally via Tailwind — no override needed */

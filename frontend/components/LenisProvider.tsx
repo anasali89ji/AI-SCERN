@@ -13,7 +13,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
           lerp: 0.1,
           duration: 1.2,
           smoothWheel: true,
-          syncTouch: false,
+          syncTouch: true,
         })
 
         function raf(time: number) {

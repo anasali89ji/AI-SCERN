@@ -42,13 +42,13 @@ export function MobileNav() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              className="lg:hidden fixed inset-0 bg-black/70 z-[55]"
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border rounded-t-3xl"
+              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-[#0a0a12] border-t border-border rounded-t-3xl"
               style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               <div className="flex justify-center pt-3 pb-2">

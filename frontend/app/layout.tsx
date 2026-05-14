@@ -99,7 +99,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
-            {children}
+            <main id="main-content" className="mobile-safe">
+              {children}
+            </main>
             <Toaster richColors position="top-right" />
           </AuthProvider>
         </ClerkClientProvider>
