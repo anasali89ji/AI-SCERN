@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { Toaster } from 'sonner'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const inter = localFont({
@@ -105,6 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster richColors position="top-right" />
           </AuthProvider>
         </ClerkClientProvider>
+        <Analytics />
       </body>
     </html>
   )
