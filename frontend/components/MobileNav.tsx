@@ -81,7 +81,7 @@ export function MobileNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/96 backdrop-blur-xl border-t border-border/40"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-border/40"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="flex items-center justify-around px-2 h-16">

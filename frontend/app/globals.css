@@ -336,7 +336,8 @@ html, body {
   backface-visibility: hidden;
   /* contain: layout ensures the translateY never causes document reflow */
   contain: layout style;
-  transform-style: preserve-3d;
+  /* preserve-3d removed — promotes full 3D GPU layer, causes scanline glitches on mobile */
+  transform-style: flat;
 }
 
 /* ── Comparison scrolling rows — smooth on all devices ── */
@@ -405,7 +406,7 @@ img {
 /* ── Card polish ── */
 .card {
   @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
-  backdrop-filter: blur(8px);
+  /* backdrop-filter removed — causes GPU compositing glitches on mobile */
 }
 .card:hover { border-color: rgba(124, 58, 237, 0.2); }
 
@@ -659,12 +660,20 @@ html { scroll-behavior: smooth; }
   contain-intrinsic-size: 0 300px;
 }
 
-/* ── Mobile performance: disable heavy backdrop-blur on slow devices ─────── */
-/* backdrop-filter is GPU-intensive. On mobile it contributes to TBT.         */
-@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
-  [class*="backdrop-blur"] {
+/* ── Mobile performance: disable ALL backdrop-blur on mobile ─────────────── */
+/* backdrop-filter is the #1 cause of GPU compositing overflow on mobile.     */
+/* Purple/blue scanline artifacts = stacked compositing layers crashing GPU.  */
+@media (max-width: 640px) {
+  [class*="backdrop-blur"],
+  .testimonial-card,
+  .glass {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+  /* Ensure near-transparent bg elements become opaque on mobile */
+  [class*="bg-surface/"],
+  [class*="bg-background/"] {
+    background-color: #0f0f17 !important;
   }
 }
 
@@ -1054,9 +1063,9 @@ section > .max-w-7xl > .border-t {
 
 /* ── Testimonial card glass effect ────────────────────────────────── */
 .testimonial-card {
-  background: rgba(17, 17, 24, 0.7);
+  background: rgba(17, 17, 24, 0.95);
   border: 1px solid rgba(139, 92, 246, 0.1);
-  backdrop-filter: blur(20px);
+  /* backdrop-filter removed — use opaque bg instead to avoid GPU layer glitches */
   transition: border-color 0.25s ease, transform 0.25s ease;
 }
 .testimonial-card:hover {

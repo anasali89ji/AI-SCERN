@@ -39,73 +39,21 @@ const DynamicHomepageReviews = dynamic(
 )
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
-function ParticleNetwork() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d')!
-    let animId: number
-    let W = window.innerWidth, H = window.innerHeight
-    canvas.width = W; canvas.height = H
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {}
-    const isMobile = W < 640
-    const NODES = isMobile ? 12 : 40
-    const DIST  = isMobile ? 100 : 140
-    const nodes = Array.from({ length: NODES }, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
-      r: 1.5 + Math.random() * 1.5,
-      pulse: Math.random() * Math.PI * 2,
-    }))
-    function draw() {
-      if (document.hidden) { animId = requestAnimationFrame(draw); return }
-      ctx.clearRect(0, 0, W, H)
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy
-        if (n.x < 0 || n.x > W) n.vx *= -1
-        if (n.y < 0 || n.y > H) n.vy *= -1
-        n.pulse += 0.02
-      }
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y
-          const dist = Math.sqrt(dx*dx + dy*dy)
-          if (dist < DIST) {
-            ctx.beginPath()
-            ctx.strokeStyle = `rgba(139,92,246,${(1 - dist / DIST) * 0.15})`
-            ctx.lineWidth = 0.6
-            ctx.moveTo(nodes[i].x, nodes[i].y)
-            ctx.lineTo(nodes[j].x, nodes[j].y)
-            ctx.stroke()
-          }
-        }
-      }
-      for (const n of nodes) {
-        const alpha = 0.4 + Math.sin(n.pulse) * 0.25
-        ctx.beginPath()
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(139,92,246,${alpha})`
-        ctx.fill()
-      }
-      animId = requestAnimationFrame(draw)
-    }
-    draw()
-    const onResize = () => { W = window.innerWidth; H = window.innerHeight; canvas.width = W; canvas.height = H }
-    window.addEventListener('resize', onResize)
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', onResize) }
-  }, [])
-  return <canvas ref={canvasRef} aria-hidden="true" role="presentation" className="absolute inset-0 w-full h-full pointer-events-none opacity-50" />
-}
-
-function DeferredParticleNetwork() {
-  const [show, setShow] = useState(false)
-  const reduced = useReducedMotion()
-  useEffect(() => {
-    if (reduced) return
-    const t = setTimeout(() => setShow(true), 800)
-    return () => clearTimeout(t)
-  }, [reduced])
-  return show ? <ParticleNetwork /> : null
+// ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
+// The canvas requestAnimationFrame + filter:blur combo on mobile causes GPU
+// compositing overflow → purple/blue scanline glitch artifacts on Android/iOS.
+function NetworkBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.08)_0%,transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06)_0%,transparent_50%)]" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/[0.03] rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-indigo-600/[0.03] rounded-full blur-[100px]" />
+      {/* Static dot grid — zero GPU cost, simulates network feel */}
+      <div className="absolute inset-0 opacity-[0.025]"
+           style={{ backgroundImage: 'radial-gradient(circle, rgba(139,92,246,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+    </div>
+  )
 }
 
 // ─── Root Network (preserved from original) ───────────────────────────────────
@@ -253,12 +201,12 @@ function FloatingCards() {
             file={`/hero/real/real-${String(i+1).padStart(2,'0')}.webp`}
             side="real" index={i} size={cardSize} />
         ))}
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8 backdrop-blur-sm"
+        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8"
           style={{ top: 72, left: 8 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
           <Bot className="w-2.5 h-2.5 text-rose" />
           <span className="text-[8px] font-bold text-rose/80 uppercase tracking-wide hidden md:inline">AI Generated</span>
         </motion.div>
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8 backdrop-blur-sm"
+        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8"
           style={{ top: 72, right: 8 }} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
           <CheckCircle className="w-2.5 h-2.5 text-emerald" />
           <span className="text-[8px] font-bold text-emerald/80 uppercase tracking-wide hidden md:inline">Authentic</span>
@@ -268,7 +216,7 @@ function FloatingCards() {
         const Icon = item.Icon; const pos = badgePositions[i]
         return (
           <motion.div key={i}
-            className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border backdrop-blur-xl select-none"
+            className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border select-none"
             style={{ left: pos.x, top: pos.y, zIndex: 10, background: `${item.color}12`, borderColor: `${item.color}30` }}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }}
             transition={{ opacity: { delay: item.delay + 1.0, duration: 0.5 }, y: { delay: item.delay, duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }}>
@@ -341,7 +289,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
   ]
   return (
     <div className="relative">
-      <div className="rounded-2xl border border-purple-500/20 bg-surface/80 backdrop-blur-xl p-4 sm:p-5 shadow-2xl shadow-purple-500/5">
+      <div className="rounded-2xl border border-purple-500/20 bg-surface p-4 sm:p-5 shadow-2xl shadow-purple-500/5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
@@ -558,8 +506,8 @@ export default function HomePage() {
       <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-purple-500/10 bg-background/88 backdrop-blur-2xl shadow-lg shadow-black/20'
-          : 'border-b border-transparent bg-background/60 backdrop-blur-xl'
+          ? 'border-b border-purple-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
+          : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
         }`}>
         <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
 
@@ -629,7 +577,7 @@ export default function HomePage() {
         <AnimatePresence>
           {mobileNavOpen && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="md:hidden border-t border-white/5 bg-background/98 backdrop-blur-2xl overflow-hidden">
+              className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden">
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
                   { href: '#tools', label: 'Tools', Icon: Cpu },
@@ -677,7 +625,7 @@ export default function HomePage() {
               style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', filter: 'blur(80px)' }} />
           </div>
 
-          <DeferredParticleNetwork />
+          <NetworkBackground />
           <FloatingCards />
 
           {/* Center glow */}
@@ -689,7 +637,7 @@ export default function HomePage() {
 
             {/* Animated badge */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-[11px] sm:text-xs font-semibold mb-5 sm:mb-7 backdrop-blur-sm">
+              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-[11px] sm:text-xs font-semibold mb-5 sm:mb-7">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400" />
@@ -744,7 +692,7 @@ export default function HomePage() {
                     Go to Dashboard
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface/60 backdrop-blur-sm text-base font-semibold flex items-center justify-center gap-2 hover:border-purple-500/40 transition-all duration-200">
+                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-purple-500/40 transition-all duration-200">
                     <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
                   </Link>
                 </>
@@ -1031,7 +979,7 @@ export default function HomePage() {
 
             {/* Methodology note */}
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface/40 backdrop-blur-sm">
+              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <FlaskConical className="w-4 h-4 text-purple-400" />
                 <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">How our detection works</span>
