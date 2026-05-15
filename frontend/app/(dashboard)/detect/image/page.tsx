@@ -1,5 +1,6 @@
 'use client'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
@@ -40,6 +41,7 @@ function ImageDetectionPage() {
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DetectionResult | null>(null)
+  const [showMobileResult, setShowMobileResult] = useState(false)
   const [graphContext, setGraphContext] = useState<string | null>(null)
   const [scanId, setScanId] = useState<string | null>(null)
   const [forensicScanId, setForensicScanId] = useState<string | null>(null)
@@ -107,7 +109,7 @@ function ImageDetectionPage() {
       const data = await res.json()
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setScanStage('complete')
-      setResult(data.result)
+      setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       setForensicScanId(data.forensic_scan_id ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
@@ -493,6 +495,18 @@ Analyzed: ${new Date().toLocaleString()}`
         </details>
       )}
     </div>
+    {{/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}}
+    <MobileResultSheet isOpen={{showMobileResult}} onClose={{() => setShowMobileResult(false)}} title="Detection Result">
+      {{result && (
+        <div className="space-y-4 pb-4">
+          <div className={{`card border ${{result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'}} p-4 rounded-2xl`}}>
+            <p className="font-black text-xl">{{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}}</p>
+            <p className="text-text-muted text-sm mt-1">{{Math.round(result.confidence_pct ?? (result.confidence <= 1 ? result.confidence * 100 : result.confidence))}}% confidence</p>
+            {{result.summary && <p className="text-sm mt-2 text-text-secondary">{{result.summary}}</p>}}
+          </div>
+        </div>
+      )}}
+    </MobileResultSheet>
   </>
   )
 }

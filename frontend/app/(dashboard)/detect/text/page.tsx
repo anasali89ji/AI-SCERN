@@ -1,5 +1,6 @@
 'use client'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useRef } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -49,6 +50,7 @@ function TextDetectionPage() {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DetectionResult | null>(null)
+  const [showMobileResult, setShowMobileResult] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [graphContext, setGraphContext] = useState<string | null>(null)
@@ -86,7 +88,7 @@ function TextDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       // PDF API returns { success, data: {...} }; text API returns { success, result: {...} }
       const payload = data.data ?? data.result
-      setResult(payload)
+      setResult(payload); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       if (payload?.paragraph_scores) setParagraphScores(payload.paragraph_scores)
       incrementGlobalScanCount()
@@ -110,7 +112,7 @@ function TextDetectionPage() {
       })
       const data = await res.json()
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
-      setResult(data.result)
+      setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
       incrementGlobalScanCount()
@@ -572,6 +574,18 @@ Analyzed: ${new Date().toLocaleString()}`
         </details>
       )}
     </div>
+    {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+      {result && (
+        <div className="space-y-4 pb-4">
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
+            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
+            <p className="text-text-muted text-sm mt-1">{Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence)}% confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
+          </div>
+        </div>
+      )}
+    </MobileResultSheet>
   </>
   )
 }

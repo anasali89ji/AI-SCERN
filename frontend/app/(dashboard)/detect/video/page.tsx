@@ -1,5 +1,6 @@
 'use client'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
@@ -251,7 +252,7 @@ function VideoDetectionPage() {
 
       const data = await res.json()
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
-      setResult(data.result)
+      setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
     } catch (e: unknown) {
@@ -620,6 +621,18 @@ function VideoDetectionPage() {
         </details>
       )}
     </div>
+    {{/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}}
+    <MobileResultSheet isOpen={{showMobileResult}} onClose={{() => setShowMobileResult(false)}} title="Detection Result">
+      {{result && (
+        <div className="space-y-4 pb-4">
+          <div className={{`card border ${{result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'}} p-4 rounded-2xl`}}>
+            <p className="font-black text-xl">{{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}}</p>
+            <p className="text-text-muted text-sm mt-1">{{Math.round(result.confidence_pct ?? (result.confidence <= 1 ? result.confidence * 100 : result.confidence))}}% confidence</p>
+            {{result.summary && <p className="text-sm mt-2 text-text-secondary">{{result.summary}}</p>}}
+          </div>
+        </div>
+      )}}
+    </MobileResultSheet>
   </>
   )
 }
