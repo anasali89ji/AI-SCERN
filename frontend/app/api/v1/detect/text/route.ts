@@ -4,11 +4,25 @@ import { checkRateLimitRedis }       from '@/lib/cache/redis'
 
 export const dynamic = 'force-dynamic'
 
-// ── simple deterministic hash for API key lookup ─────────────────────────────
-function hashApiKey(key: string): string {
-  let h = 5381
-  for (let i = 0; i < key.length; i++) h = ((h << 5) + h) ^ key.charCodeAt(i)
-  return (h >>> 0).toString(16).padStart(8, '0')
+// ── Secure SHA-256 hash for API key lookup (replaces insecure djb2) ──────────
+// BUG-05 FIX: djb2 is a 32-bit non-cryptographic hash — trivially brute-forceable.
+// SHA-256 provides 256-bit output, safe for storage in Supabase.
+async function hashApiKey(key: string): Promise<string> {
+  const encoder    = new TextEncoder()
+  const data       = encoder.encode(key)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray  = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// ── Constant-time string comparison to prevent timing side-channel attacks ────
+function timingSafeEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a)
+  const bBytes = new TextEncoder().encode(b)
+  if (aBytes.length !== bBytes.length) return false
+  let diff = 0
+  for (let i = 0; i < aBytes.length; i++) diff |= aBytes[i] ^ bBytes[i]
+  return diff === 0
 }
 
 // ── resolve & validate the incoming API key ───────────────────────────────────
@@ -16,16 +30,16 @@ async function resolveKey(
   apiKey: string,
 ): Promise<{ valid: false } | { valid: true; owner: string; keyHash: string }> {
 
-  // 1. Master key (env — for internal/testing use)
+  // 1. Master key (env — for internal/testing use) — BUG-05: use constant-time compare
   const masterKey = process.env.API_MASTER_KEY
-  if (masterKey && apiKey === masterKey) {
+  if (masterKey && timingSafeEqual(apiKey, masterKey)) {
     return { valid: true, owner: 'master', keyHash: '' }
   }
 
   // 2. User-issued key stored in Supabase
   try {
     const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
-    const keyHash = hashApiKey(apiKey)
+    const keyHash = await hashApiKey(apiKey)
     const { data } = await getSupabaseAdmin()
       .from('api_keys')
       .select('user_id, is_active, calls_today, daily_limit')
@@ -71,7 +85,7 @@ export async function POST(req: NextRequest) {
       const { data } = await getSupabaseAdmin()
         .from('api_keys')
         .select('calls_today, daily_limit')
-        .eq('key_hash', hashApiKey(apiKey))
+        .eq('key_hash', await hashApiKey(apiKey))
         .eq('is_active', true)
         .single()
       if (data && data.daily_limit != null && data.calls_today >= data.daily_limit) {

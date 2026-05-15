@@ -88,24 +88,26 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
 
 // ── localStorage helpers ────────────────────────────────────────────────────
 function saveChats(chats: Chat[]) {
-  try {
-    const slim = chats.map(c => ({
-      ...c,
-      messages: c.messages.map(m => ({
-        ...m,
-        isStreaming: false,
-        attachments: m.attachments?.map(a => ({ name: a.name, type: a.type, size: a.size })),
-      }))
+  // BUG-04 FIX: Handle QuotaExceededError gracefully — prune on failure then last-resort clear
+  const slim = chats.map(c => ({
+    ...c,
+    messages: c.messages.slice(-30).map(m => ({
+      ...m,
+      isStreaming: false,
+      attachments: m.attachments?.map(a => ({ name: a.name, type: a.type, size: a.size })),
     }))
+  }))
+  try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(slim))
   } catch {
+    // QuotaExceededError — prune to 3 most recent chats and retry
+    const pruned = slim.slice(-3)
     try {
-      const trimmed = chats.slice(0, 20).map(c => ({
-        ...c,
-        messages: c.messages.slice(-30).map(m => ({ ...m, isStreaming: false, attachments: undefined }))
-      }))
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
-    } catch { /* silent */ }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned))
+    } catch {
+      // Last resort: clear storage entirely to unblock the UI
+      try { localStorage.removeItem(STORAGE_KEY) } catch { /* silent */ }
+    }
   }
 }
 

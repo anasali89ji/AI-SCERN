@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText }               from '@/lib/inference/hf-analyze'
-import { checkRateLimitDB } from '@/lib/ratelimit-db'
+import { checkRateLimit } from '@/lib/ratelimit'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { fireScanCompleted }                           from '@/lib/inngest/send-scan-event'
@@ -12,11 +12,14 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
 
-  const rl = await checkRateLimitDB('text', ip)
-  if (rl.limited) {
+  // BUG-06 FIX: Removed duplicate checkRateLimitDB('text') call. creditGuard already handles
+  // per-user rate limiting for both auth and anon users. We only keep a lightweight DOS guard
+  // at a high threshold (30/min shared) to prevent total IP saturation.
+  const dosRl = await checkRateLimit('upload', ip) // 30/min — shared DOS protection only
+  if (dosRl.limited) {
     return NextResponse.json(
       { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
-      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.reset) } }
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(dosRl.reset) } }
     )
   }
 

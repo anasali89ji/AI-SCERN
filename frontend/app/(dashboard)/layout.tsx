@@ -66,15 +66,19 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() || 'U'
-  if (user?.photoURL) {
+  // BUG-08 FIX: Static class strings — Tailwind JIT cannot analyze template literals
+  const sizeClass = size === 11 ? 'w-11 h-11' : size === 9 ? 'w-9 h-9' : size === 8 ? 'w-8 h-8' : 'w-7 h-7'
+  // BUG-13 FIX: Standardize on Clerk's imageUrl field (photoURL was Firebase naming)
+  const avatarUrl = user?.imageUrl || user?.photoURL
+  if (avatarUrl) {
     return (
-      <img src={user.photoURL} alt={initials}
-        className={`w-${size} h-${size} rounded-full object-cover ring-2 ring-primary/40 flex-shrink-0`}
+      <img src={avatarUrl} alt={initials}
+        className={`${sizeClass} rounded-full object-cover ring-2 ring-primary/40 flex-shrink-0`}
         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
     )
   }
   return (
-    <div className={`w-${size} h-${size} rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/40 flex-shrink-0 select-none`}>
+    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/40 flex-shrink-0 select-none`}>
       {initials}
     </div>
   )
