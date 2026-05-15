@@ -304,7 +304,7 @@ function detectIntent(message: string, history: any[]): Intent {
   // Extract pasted text for analysis
   let extractedText: string | null = null
   const quoteMatch  = message.match(/["""''](.{80,})["""'']/s)
-  const colonMatch  = message.match(/(?:analyze|check|detect|scan|is this ai)[:\s]+(.{80,})/is)
+  const colonMatch  = message.match(/(?:analyze|check|detect|scan|is this ai)[:\s]+(.{50,})/is)
   if (quoteMatch)  extractedText = quoteMatch[1]
   else if (colonMatch) extractedText = colonMatch[1]
   else if (wantsTextAnalysis && message.length > 200) extractedText = message
@@ -479,14 +479,19 @@ function buildGraphRAGContext(history: any[], currentMsg: string): string {
 
   const graph: KnowledgeGraph = { nodes: [], edges: [] }
 
-  // Extract nodes from all history messages
+  // FIX 3.3 — Deduplicate nodes by id (keep most recent msgIndex) to prevent score inflation
+  const nodeMap = new Map<string, typeof graph.nodes[number]>()
   for (let i = 0; i < history.length; i++) {
     const msg     = history[i]
     const content = typeof msg.content === 'string' ? msg.content : ''
     if (!content) continue
     const nodes = extractNodes(content, i, msg.role || 'user')
-    graph.nodes.push(...nodes)
+    for (const node of nodes) {
+      const existing = nodeMap.get(node.id)
+      if (!existing || node.msgIndex > existing.msgIndex) nodeMap.set(node.id, node)
+    }
   }
+  graph.nodes.push(...nodeMap.values())
 
   if (!graph.nodes.length) return ''
   graph.edges = buildEdges(graph.nodes)
@@ -494,6 +499,17 @@ function buildGraphRAGContext(history: any[], currentMsg: string): string {
   // Score nodes against current query
   const queryNodes = extractNodes(currentMsg, 999, 'user')
   const scores     = scoreNodesForQuery(graph, queryNodes)
+
+  // FIX 3.1 — Apply temporal decay (~50% weight at 9 messages ago)
+  const CURRENT_MSG_INDEX = history.length
+  for (const [nodeId, score] of scores.entries()) {
+    const node = graph.nodes.find(n => n.id === nodeId)
+    if (node) {
+      const ageInMessages = CURRENT_MSG_INDEX - node.msgIndex
+      const decayFactor   = Math.exp(-0.08 * ageInMessages)
+      scores.set(nodeId, score * decayFactor)
+    }
+  }
 
   // Collect top-scored nodes (threshold 0.5)
   const topNodes = graph.nodes
@@ -511,25 +527,25 @@ function buildGraphRAGContext(history: any[], currentMsg: string): string {
     byType[n.type].push(n.value)
   }
 
-  const lines: string[] = ['[CONVERSATION CONTEXT — Prior Session Knowledge]']
-
-  if (byType.tool)    lines.push(`Prior tools used: ${[...new Set(byType.tool)].join(', ')}`)
-  if (byType.verdict) lines.push(`Prior verdicts: ${[...new Set(byType.verdict)].join(', ')}`)
-  if (byType.media)   lines.push(`Media types discussed: ${[...new Set(byType.media)].join(', ')}`)
-  if (byType.topic)   lines.push(`Topics in focus: ${[...new Set(byType.topic)].map(t => t.replace(/_/g,' ')).join(', ')}`)
+  // FIX 3.2 — Structured XML context injection for better LLM comprehension
+  const xmlLines: string[] = ['<conversation_context>']
+  if (byType.tool)    xmlLines.push(`  <tools_used>${[...new Set(byType.tool)].join(', ')}</tools_used>`)
+  if (byType.verdict) xmlLines.push(`  <verdicts_seen>${[...new Set(byType.verdict)].join(', ')}</verdicts_seen>`)
+  if (byType.media)   xmlLines.push(`  <media_types>${[...new Set(byType.media)].join(', ')}</media_types>`)
+  if (byType.topic)   xmlLines.push(`  <topics>${[...new Set(byType.topic)].map(t => t.replace(/_/g,' ')).join(', ')}</topics>`)
 
   // Find most recent detection result in history for follow-up awareness
   for (let i = history.length - 1; i >= 0; i--) {
     const c = typeof history[i]?.content === 'string' ? history[i].content : ''
     if (c.includes('Verdict:') && c.includes('Confidence:')) {
-      const verdictLine = c.match(/Verdict:\s*(.+)/)?.[1]?.slice(0,60)
-      const confLine    = c.match(/Confidence:\s*(.+)/)?.[1]?.slice(0,20)
-      if (verdictLine) lines.push(`Most recent result → Verdict: ${verdictLine}${confLine ? ` | Confidence: ${confLine}` : ''}`)
+      const verdict = c.match(/Verdict:\s*(.+)/)?.[1]?.slice(0, 60) || ''
+      const conf    = c.match(/Confidence:\s*(.+)/)?.[1]?.slice(0, 20) || ''
+      xmlLines.push(`  <last_scan verdict="${verdict}" confidence="${conf}" messages_ago="${history.length - 1 - i}" />`)
       break
     }
   }
-
-  return lines.join('\n')
+  xmlLines.push('</conversation_context>')
+  return xmlLines.join('\n')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -811,7 +827,7 @@ ${resultsBlock}`
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  const chatRl = await checkRateLimit('batch', ip)
+  const chatRl = await checkRateLimit('chat', ip)
   if (chatRl.limited) return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429 })
 
   try {
@@ -847,8 +863,11 @@ export async function POST(req: NextRequest) {
 
     // 1. Image → Vision Engine analysis
     if (imageAttachments.length > 0) {
-      const img    = imageAttachments[0]
-      const result = await analyzeImage(img.data, img.type, lastUserMsg, apiKey)
+      const img = imageAttachments[0]
+      // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
+      // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
+      const dataUrl = `data:${img.type};base64,${img.data}`
+      const result = await analyzeImageForensic(img.data, img.type, dataUrl, lastUserMsg, apiKey)
 
       toolEvents.push({ tool: 'detect_image', result: {
         verdict:        result.verdict,
@@ -910,8 +929,18 @@ export async function POST(req: NextRequest) {
     // ── ASSEMBLE API MESSAGES ─────────────────────────────────────────────────
     const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent)
 
+    // FIX 3.4 — Truncate conversation history to last 12 messages to prevent context overflow
+    const MAX_HISTORY = 12
+    const truncatedMessages = messages.length > MAX_HISTORY
+      ? [
+          messages[0],
+          { role: 'assistant', content: `[Earlier conversation context: ${messages.length - MAX_HISTORY} messages summarized — user has been discussing AI detection topics]` },
+          ...messages.slice(-(MAX_HISTORY - 2)),
+        ]
+      : messages
+
     // Build conversation — include history for multi-turn awareness
-    const apiMessages = messages.map((m: any) => ({
+    const apiMessages = truncatedMessages.map((m: any) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
       content: typeof m.content === 'string'
         ? m.content
@@ -965,9 +994,29 @@ export async function POST(req: NextRequest) {
           const dec    = new TextDecoder()
           let   buf    = ''
 
+          // Per-chunk timeout guard (BUG-02): prevents infinite hang if NVIDIA stalls mid-stream
+          const readWithTimeout = (r: ReadableStreamDefaultReader<Uint8Array>, ms: number) =>
+            Promise.race([
+              r.read(),
+              new Promise<never>((_, rej) =>
+                setTimeout(() => rej(new Error('stream_timeout')), ms)
+              ),
+            ])
+
           let inThinkBlock = false  // stateful DeepSeek <think> stripper
           while (true) {
-            const { done, value } = await reader.read()
+            let done: boolean, value: Uint8Array | undefined
+            try {
+              ;({ done, value } = await readWithTimeout(reader, 30_000))
+            } catch (e: any) {
+              if (e?.message === 'stream_timeout') {
+                send({ type: 'text', text: '\n\n⚠️ Response timed out — please try again.' })
+                send({ type: 'done' })
+                controller.close()
+                return
+              }
+              throw e
+            }
             if (done) break
             buf += dec.decode(value, { stream: true })
             const lines = buf.split('\n')
