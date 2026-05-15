@@ -422,15 +422,29 @@ export default function ChatPage() {
   const [hydrated, setHydrated]         = useState(false)
   const [searchQuery, setSearchQuery]   = useState('')
   const [showSearch, setShowSearch]     = useState(false)
-  const endRef  = useRef<HTMLDivElement>(null)
-  const taRef   = useRef<HTMLTextAreaElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
-  const activeChat = chats.find(c=>c.id===activeChatId)
+  const endRef       = useRef<HTMLDivElement>(null)
+  const taRef        = useRef<HTMLTextAreaElement>(null)
+  const fileRef      = useRef<HTMLInputElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const activeChat   = chats.find(c=>c.id===activeChatId)
 
   useEffect(() => {
     const saved = loadChats()
     if (saved.length > 0) { setChats(saved); setActiveChatId(saved[0].id) }
     setHydrated(true)
+  }, [])
+
+  // Fix 4.1: iOS keyboard avoidance — visualViewport shrinks when keyboard opens
+  // Without this, the keyboard covers the chat input on iPhone Safari
+  useEffect(() => {
+    const handleResize = () => {
+      const vv = window.visualViewport
+      if (vv && chatContainerRef.current) {
+        chatContainerRef.current.style.height = `${vv.height}px`
+      }
+    }
+    window.visualViewport?.addEventListener('resize', handleResize)
+    return () => window.visualViewport?.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => { if (!hydrated) return; saveChats(chats) }, [chats, hydrated])
@@ -593,7 +607,7 @@ export default function ChatPage() {
 
   return (
     <>
-    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#09090f]">
+    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#09090f]">
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/70 z-20 lg:hidden" onClick={()=>setSidebarOpen(false)} />
@@ -605,7 +619,7 @@ export default function ChatPage() {
         bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-3 pt-4 border-b border-white/[0.06] space-y-2">
+        <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
           <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-violet-500/20">
             <Ico.Plus /><span>New conversation</span>
           </button>
@@ -774,7 +788,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl px-3 sm:px-4 py-3 sm:py-4">
+        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl px-3 sm:px-4 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <div className="max-w-3xl mx-auto">
 
             {attachments.length>0 && (
@@ -804,6 +818,8 @@ export default function ChatPage() {
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
                 placeholder="Ask anything, or upload media to analyze…"
                 rows={1}
+                inputMode="text"
+                enterKeyHint="send"
                 className="flex-1 bg-transparent text-sm text-gray-200 placeholder:text-gray-700 resize-none outline-none leading-relaxed py-2 min-h-[36px] max-h-[160px]"
               />
 

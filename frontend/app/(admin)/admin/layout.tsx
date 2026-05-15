@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -9,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { useClerk } from '@clerk/nextjs'
+
+const ADMIN_ROLES = new Set(['ADMIN', 'OWNER', 'EXECUTIVE', 'MANAGER', 'ANALYST', 'MARKETING', 'SUPPORT'])
 
 const NAV = [
   { href: '/admin',            label: 'Overview',          icon: LayoutDashboard, role: 'MANAGER'   },
@@ -25,8 +28,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname          = usePathname()
   const { user }          = useAuth()
   const { signOut }       = useClerk()
+  const router            = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // BUG-14 FIX: Client-side role guard — redirect before any admin UI renders.
+  // API routes also verify admin via verifyAdmin(), but this prevents the UI shell
+  // from being visible to non-admins even for a frame.
+  useEffect(() => {
+    if (!user) return // still loading
+    const role = ((user as any)?.publicMetadata?.role as string | undefined)?.toUpperCase() ?? ''
+    const allowedIds = (process.env.NEXT_PUBLIC_ADMIN_USER_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean)
+    if (!ADMIN_ROLES.has(role) && !allowedIds.includes((user as any)?.id ?? '')) {
+      router.replace('/unauthorized')
+    }
+  }, [user, router])
 
   const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 

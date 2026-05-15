@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
 import { useState, useRef } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
@@ -38,7 +39,7 @@ function avgSentenceLen(text: string) {
   return Math.round(words / sentences.length)
 }
 
-export default function TextDetectionPage() {
+function TextDetectionPage() {
   const { user: currentUser } = useAuth()
   // Derive first name for personalized messages
   const displayName: string | null =
@@ -573,4 +574,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
   </>
   )
+}-e 
+export default function TextDetectionPageWrapper() {
+  return <ErrorBoundary><TextDetectionPage /></ErrorBoundary>
 }

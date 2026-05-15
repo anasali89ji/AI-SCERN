@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
@@ -55,7 +56,7 @@ function formatDuration(secs: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export default function AudioDetectionPage() {
+function AudioDetectionPage() {
   const { user: currentUser } = useAuth()
   const displayName: string | null =
     currentUser?.displayName?.split(' ')[0] ||
@@ -434,4 +435,7 @@ export default function AudioDetectionPage() {
     </div>
     </>
   )
+}-e 
+export default function AudioDetectionPageWrapper() {
+  return <ErrorBoundary><AudioDetectionPage /></ErrorBoundary>
 }

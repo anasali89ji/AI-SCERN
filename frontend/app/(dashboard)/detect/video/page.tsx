@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
@@ -135,7 +136,7 @@ function FrameStrip({
   )
 }
 
-export default function VideoDetectionPage() {
+function VideoDetectionPage() {
   const { user: currentUser } = useAuth()
   const displayName: string | null =
     currentUser?.displayName?.split(' ')[0] ||
@@ -621,4 +622,7 @@ export default function VideoDetectionPage() {
     </div>
   </>
   )
+}-e 
+export default function VideoDetectionPageWrapper() {
+  return <ErrorBoundary><VideoDetectionPage /></ErrorBoundary>
 }

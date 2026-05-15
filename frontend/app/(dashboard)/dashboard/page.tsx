@@ -56,7 +56,9 @@ export default function DashboardPage() {
   const [scans,   setScans]   = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
-  const mountedRef = useRef(false)
+  const [isPulling, setIsPulling] = useState(false)
+  const mountedRef    = useRef(false)
+  const touchStartY   = useRef(0)
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const loadDashboard = useCallback(async () => {
@@ -103,6 +105,18 @@ export default function DashboardPage() {
     window.addEventListener('focus', onFocus)
     window.addEventListener('aiscern:scan-saved', onScanSaved)
 
+    // Fix 4.5: Pull-to-refresh on mobile — trigger loadDashboard on 80px+ downward pull at top
+    const onTouchStart = (e: TouchEvent) => { touchStartY.current = e.touches[0].clientY }
+    const onTouchEnd   = (e: TouchEvent) => {
+      const pullDistance = e.changedTouches[0].clientY - touchStartY.current
+      if (pullDistance > 80 && window.scrollY === 0) {
+        setIsPulling(true)
+        loadDashboard().finally(() => setIsPulling(false))
+      }
+    }
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend',   onTouchEnd,   { passive: true })
+
     // Poll every 10 s — fast enough to feel live, cheap enough to run
     const poll = setInterval(loadDashboard, 10_000)
 
@@ -110,6 +124,8 @@ export default function DashboardPage() {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('aiscern:scan-saved', onScanSaved)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
       clearInterval(poll)
     }
   }, [loadDashboard, router])
@@ -123,6 +139,19 @@ export default function DashboardPage() {
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
+
+      {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
+      {isPulling && (
+        <div className="flex items-center justify-center py-2 lg:hidden">
+          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border/40">
+            <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Refreshing…
+          </div>
+        </div>
+      )}
 
       {/* ── Welcome ── */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>

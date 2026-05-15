@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
 import { useState, useCallback } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
@@ -29,7 +30,7 @@ const verdictConfig = {
   UNCERTAIN: { icon: HelpCircle,   color: 'text-amber',   border: 'border-amber/30',   bg: 'bg-amber/5',   label: 'UNCERTAIN' },
 }
 
-export default function ImageDetectionPage() {
+function ImageDetectionPage() {
   const { user: currentUser } = useAuth()
   const displayName: string | null =
     currentUser?.displayName?.split(' ')[0] ||
@@ -181,6 +182,28 @@ Analyzed: ${new Date().toLocaleString()}`
         {/* Upload Panel */}
         <div className="space-y-4">
           {!file ? (
+            // Fix 4.2: On touch devices, show a large tap-to-capture button with camera access
+            // On desktop, keep the drag-and-drop zone
+            typeof window !== 'undefined' && 'ontouchstart' in window ? (
+              <div className="space-y-3">
+                <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-primary text-base">Tap to Take Photo or Choose File</p>
+                    <p className="text-xs text-text-muted mt-1">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }}
+                  />
+                </label>
+              </div>
+            ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-surface-hover/30'}`}>
@@ -197,6 +220,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <p className="text-xs text-text-disabled mt-2">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
               </div>
             </div>
+            )
           ) : (
             <div className="card space-y-4">
               <div className="relative rounded-xl overflow-hidden bg-surface-active group">
@@ -471,4 +495,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
   </>
   )
+}-e 
+export default function ImageDetectionPageWrapper() {
+  return <ErrorBoundary><ImageDetectionPage /></ErrorBoundary>
 }
