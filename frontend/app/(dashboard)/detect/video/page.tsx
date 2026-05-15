@@ -329,6 +329,19 @@ function VideoDetectionPage() {
         {/* Left: Upload + Video Player */}
         <div className="space-y-4">
           {!file ? (
+            typeof window !== 'undefined' && 'ontouchstart' in window ? (
+              // FIX B.4: Mobile tap-to-upload
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-secondary/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-secondary/15 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-secondary" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-secondary text-base">Tap to Choose Video File</p>
+                  <p className="text-xs text-text-muted mt-1">MP4 · WEBM · MOV · AVI · Max 100MB</p>
+                </div>
+                <input type="file" accept="video/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
+              </label>
+            ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.02]' : 'border-border hover:border-secondary/50 hover:bg-surface-hover/30'}`}>
@@ -343,6 +356,7 @@ function VideoDetectionPage() {
                 <p className="text-xs text-text-disabled mt-2">MP4 · WEBM · MOV · AVI · Max 100MB</p>
               </div>
             </div>
+            )
           ) : (
             <div className="card space-y-4">
               <div className="relative rounded-xl overflow-hidden bg-black">
