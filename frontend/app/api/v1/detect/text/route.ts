@@ -25,38 +25,75 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
+// ── Legacy djb2 hash — used ONLY for migration fallback lookup ────────────────
+// FIX A.1: Retained so existing rows (stored as djb2) can still be found.
+// Once all rows have sha256_hash populated this function and its usage can be removed.
+function djb2Hash(key: string): string {
+  let h = 5381
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h) ^ key.charCodeAt(i)
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+
 // ── resolve & validate the incoming API key ───────────────────────────────────
+// FIX A.1: Dual-lookup strategy for zero-downtime migration from djb2 → SHA-256.
+//
+//  1. Try SHA-256 lookup first (newly created keys / already migrated rows)
+//  2. Fall back to djb2 lookup (old rows not yet migrated)
+//  3. On successful djb2 hit → asynchronously write sha256_hash + hash_version='sha256'
+//     so the row migrates after the user's very next API call.
 async function resolveKey(
   apiKey: string,
 ): Promise<{ valid: false } | { valid: true; owner: string; keyHash: string }> {
 
-  // 1. Master key (env — for internal/testing use) — BUG-05: use constant-time compare
   const masterKey = process.env.API_MASTER_KEY
   if (masterKey && timingSafeEqual(apiKey, masterKey)) {
     return { valid: true, owner: 'master', keyHash: '' }
   }
 
-  // 2. User-issued key stored in Supabase
   try {
     const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
-    const keyHash = await hashApiKey(apiKey)
-    const { data } = await getSupabaseAdmin()
+    const db      = getSupabaseAdmin()
+    const sha256  = await hashApiKey(apiKey)
+    const legacy  = djb2Hash(apiKey)
+
+    // ── Pass 1: SHA-256 lookup (new keys and migrated rows) ──────────────────
+    const { data: sha256Row } = await db
       .from('api_keys')
-      .select('user_id, is_active, calls_today, daily_limit')
-      .eq('key_hash', keyHash)
+      .select('id, user_id, is_active, calls_today, daily_limit')
+      .eq('sha256_hash', sha256)
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
 
-    if (!data) return { valid: false }
-
-    // Daily quota check
-    if (data.daily_limit != null && data.calls_today >= data.daily_limit) {
-      return { valid: false }   // caller receives 429 with specific message
+    if (sha256Row) {
+      if (sha256Row.daily_limit != null && sha256Row.calls_today >= sha256Row.daily_limit) {
+        return { valid: false }
+      }
+      return { valid: true, owner: sha256Row.user_id, keyHash: sha256 }
     }
 
-    return { valid: true, owner: data.user_id, keyHash }
+    // ── Pass 2: Legacy djb2 lookup (unmigrated rows) ─────────────────────────
+    const { data: djb2Row } = await db
+      .from('api_keys')
+      .select('id, user_id, is_active, calls_today, daily_limit')
+      .eq('key_hash', legacy)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (!djb2Row) return { valid: false }
+    if (djb2Row.daily_limit != null && djb2Row.calls_today >= djb2Row.daily_limit) {
+      return { valid: false }
+    }
+
+    // Auto-migrate: write SHA-256 hash asynchronously (fire-and-forget)
+    // This does NOT block the current request — user gets 200 immediately.
+    db.from('api_keys')
+      .update({ sha256_hash: sha256, hash_version: 'sha256' })
+      .eq('id', djb2Row.id)
+      .then(() => { /* migration complete for this key */ })
+      .catch(() => { /* non-fatal — will retry on next call */ })
+
+    return { valid: true, owner: djb2Row.user_id, keyHash: legacy }
   } catch {
-    // api_keys table not yet created — reject all non-master keys
     return { valid: false }
   }
 }
