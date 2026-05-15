@@ -1,5 +1,5 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useState, useCallback } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
@@ -495,7 +495,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
   </>
   )
-}-e 
+}
 export default function ImageDetectionPageWrapper() {
   return <ErrorBoundary><ImageDetectionPage /></ErrorBoundary>
 }

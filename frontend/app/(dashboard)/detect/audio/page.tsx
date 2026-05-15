@@ -1,5 +1,5 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
@@ -435,7 +435,7 @@ function AudioDetectionPage() {
     </div>
     </>
   )
-}-e 
+}
 export default function AudioDetectionPageWrapper() {
   return <ErrorBoundary><AudioDetectionPage /></ErrorBoundary>
 }

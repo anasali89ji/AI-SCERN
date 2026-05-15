@@ -1,5 +1,5 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useState, useRef } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -574,7 +574,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
   </>
   )
-}-e 
+}
 export default function TextDetectionPageWrapper() {
   return <ErrorBoundary><TextDetectionPage /></ErrorBoundary>
 }

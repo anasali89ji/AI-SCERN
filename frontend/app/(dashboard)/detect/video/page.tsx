@@ -1,5 +1,5 @@
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 'use client'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
@@ -622,7 +622,7 @@ function VideoDetectionPage() {
     </div>
   </>
   )
-}-e 
+}
 export default function VideoDetectionPageWrapper() {
   return <ErrorBoundary><VideoDetectionPage /></ErrorBoundary>
 }
