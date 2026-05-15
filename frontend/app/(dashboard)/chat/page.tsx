@@ -302,11 +302,12 @@ function TypingDots() {
 
 // ── Message bubble ─────────────────────────────────────────────────────────
 function MessageBubble({
-  msg, onCopy,
+  msg, onCopy, onSend,
   userImageUrl, userName,
 }: {
   msg: Message
   onCopy: (t: string) => void
+  onSend: (t: string) => void
   userImageUrl?: string | null
   userName?: string | null
 }) {
@@ -400,6 +401,23 @@ function MessageBubble({
             </button>
           )}
         </div>
+
+        {/* FIX B.7: Post-detection follow-up suggestion chips */}
+        {!isUser && !msg.isStreaming && msg.toolEvents?.some(te => te.status === 'done') && (
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {[
+              'What does this confidence score mean?',
+              'How do I cite this result?',
+              'Explain the key signals found',
+              'Scan another piece of content',
+            ].map(chip => (
+              <button key={chip} onClick={() => onSend(chip)}
+                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all">
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* User avatar — Clerk profile photo or initials */}
@@ -791,6 +809,7 @@ export default function ChatPage() {
                 <MessageBubble
                   key={msg.id} msg={msg}
                   onCopy={t=>navigator.clipboard?.writeText(t)}
+                  onSend={t=>{ setInput(t); setTimeout(()=>send(t), 0) }}
                   userImageUrl={userImageUrl}
                   userName={userName}
                 />
