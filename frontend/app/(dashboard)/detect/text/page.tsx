@@ -115,6 +115,16 @@ function TextDetectionPage() {
       setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
+      // FIX B.6: Map sentence_scores from hf-analyze into paragraphScores for heatmap
+      if (data.result?.sentence_scores?.length) {
+        setParagraphScores(
+          data.result.sentence_scores.map((s: { text: string; ai_score: number }) => ({
+            text:       s.text,
+            confidence: Math.round(s.ai_score * 100),
+            verdict:    s.ai_score >= 0.55 ? 'AI' : 'HUMAN',
+          }))
+        )
+      }
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
       window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
@@ -449,21 +459,34 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 </div>
 
-                {/* Paragraph-level scores */}
+                {/* FIX B.6: Sentence-level AI probability heatmap */}
                 {paragraphScores.length > 0 && (
                   <div className="card">
-                    <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2 text-sm">
+                    <h3 className="font-semibold text-text-primary mb-1 flex items-center gap-2 text-sm">
                       <span className="w-2 h-2 rounded-full bg-rose" />
-                      Top AI-Probable Paragraphs
+                      Sentence Heatmap
+                      <span className="text-xs font-normal text-text-muted ml-1">— red = AI-likely, green = human-likely</span>
                     </h3>
-                    <div className="space-y-3">
-                      {paragraphScores.map((p, i) => (
-                        <div key={i} className={`p-3 rounded-xl border text-xs ${p.verdict === 'AI' ? 'border-rose/20 bg-rose/5' : 'border-border/50 bg-surface-active/30'}`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className={`font-bold text-xs px-2 py-0.5 rounded-full ${p.verdict === 'AI' ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>{p.confidence}% AI</span>
-                          </div>
-                          <p className="text-text-muted leading-relaxed line-clamp-3">{p.text}</p>
-                        </div>
+                    <p className="text-xs text-text-muted mb-3 leading-relaxed">
+                      {paragraphScores.map((s, i) => {
+                        const pct = s.confidence
+                        const bg =
+                          pct >= 80 ? 'bg-rose/30 text-rose-200' :
+                          pct >= 60 ? 'bg-amber/20 text-amber-200' :
+                          pct >= 40 ? 'bg-yellow-900/20 text-text-secondary' :
+                                      'bg-emerald/10 text-emerald-300'
+                        return (
+                          <span key={i} title={`${pct}% AI probability`}
+                            className={`${bg} rounded px-0.5 mr-0.5 cursor-help transition-colors`}>
+                            {s.text}
+                          </span>
+                        )
+                      })}
+                    </p>
+                    {/* Legend */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {[['bg-emerald/10 text-emerald-300','< 40% AI'],['bg-yellow-900/20 text-text-secondary','40–59%'],['bg-amber/20 text-amber-200','60–79%'],['bg-rose/30 text-rose-200','≥ 80%']].map(([cls, label]) => (
+                        <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
                       ))}
                     </div>
                   </div>
