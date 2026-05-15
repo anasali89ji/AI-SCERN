@@ -303,7 +303,7 @@ function detectIntent(message: string, history: any[]): Intent {
 
   // Extract pasted text for analysis
   let extractedText: string | null = null
-  const quoteMatch  = message.match(/["""''](.{80,})["""'']/s)
+  const quoteMatch  = message.match(/["""''](.{50,})["""'']/s)
   const colonMatch  = message.match(/(?:analyze|check|detect|scan|is this ai)[:\s]+(.{50,})/is)
   if (quoteMatch)  extractedText = quoteMatch[1]
   else if (colonMatch) extractedText = colonMatch[1]
