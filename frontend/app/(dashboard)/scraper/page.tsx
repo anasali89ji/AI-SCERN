@@ -92,16 +92,22 @@ export default function ScraperPage() {
       setScreenshotError(false)
 
       if (user && data.data) {
+        // FIX A.3: Removed `as any` cast. Table now created in v9_scraper_sessions.sql.
+        // try/catch retained so a DB error never breaks the scan result display.
         try {
-          await (supabase as any).from('scraper_sessions').insert({
-            user_id: user.uid, target_url: scanUrl, domain: data.data.domain,
-            page_title: data.data.title, page_description: data.data.description,
-            total_assets: (data.data.sub_pages?.length ?? 0) + 1,
-            ai_asset_count: data.data.verdict === 'AI' ? 1 : 0,
+          await supabase.from('scraper_sessions').insert({
+            user_id:          user.uid,
+            target_url:       scanUrl,
+            domain:           data.data.domain,
+            page_title:       data.data.title,
+            page_description: data.data.description,
+            total_assets:     (data.data.sub_pages?.length ?? 0) + 1,
+            ai_asset_count:   data.data.verdict === 'AI' ? 1 : 0,
             overall_ai_score: data.data.overall_ai_score,
-            scraped_content: data.data.signals, status: 'complete',
+            scraped_content:  data.data.signals,
+            status:           'complete',
           })
-        } catch {}
+        } catch { /* non-fatal — result still displayed to user */ }
       }
     } catch (e: unknown) {
       setError((e as Error)?.message || 'Unexpected error')
