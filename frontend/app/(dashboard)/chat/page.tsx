@@ -44,7 +44,7 @@ const Ico = {
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Attachment  { name: string; type: string; data: string; preview?: string; size: number }
 interface ToolEvent   { tool: string; status: 'running'|'done'; result?: any }
-interface Message     { id: string; role: 'user'|'assistant'; content: string; timestamp: string; attachments?: Attachment[]; toolEvents?: ToolEvent[]; isStreaming?: boolean }
+interface Message     { id: string; role: 'user'|'assistant'; content: string; timestamp: string; attachments?: Attachment[]; toolEvents?: ToolEvent[]; isStreaming?: boolean; isThinking?: boolean }
 interface Chat        { id: string; title: string; messages: Message[]; createdAt: string; updatedAt: string }
 
 const TOOL_META: Record<string,{label:string;color:string;Ic:()=>React.ReactElement}> = {
@@ -313,7 +313,7 @@ function MessageBubble({
   const [copied, setCopied] = useState(false)
   const isUser = msg.role === 'user'
   const copy = () => { onCopy(msg.content); setCopied(true); setTimeout(()=>setCopied(false),1800) }
-  const showTypingDots = !isUser && msg.isStreaming && !msg.content && !msg.toolEvents?.some(t => t.status === 'running')
+  const showTypingDots = !isUser && msg.isStreaming && !msg.content && !msg.toolEvents?.some(t => t.status === 'running') && !msg.isThinking
 
   return (
     <div
@@ -351,6 +351,17 @@ function MessageBubble({
         {!isUser && msg.toolEvents?.filter(t=>t.status==='done'&&t.result).map((te,i) => (
           <ToolCard key={i} tool={te.tool} result={te.result} />
         ))}
+
+        {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
+        {!isUser && msg.isThinking && !msg.content && (
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05] text-xs text-gray-500">
+            <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span className="text-gray-500">Connecting to ARIA…</span>
+          </div>
+        )}
 
         {/* Typing dots while waiting for first token */}
         {showTypingDots && (
@@ -570,9 +581,11 @@ export default function ChatPage() {
             if(!raw || raw==='[DONE]') continue
             try{
               const ev = JSON.parse(raw)
-              if(ev.type==='text')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,content:m.content+ev.text}:m)}:c))
+              // FIX B.2: 'thinking' event sets isThinking flag; cleared on first 'text' chunk
+              if(ev.type==='thinking')    setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:true}:m)}:c))
+              if(ev.type==='text')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,content:m.content+ev.text}:m)}:c))
               if(ev.type==='tool_result') setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,toolEvents:[...(m.toolEvents||[]).filter(t=>t.tool!==ev.tool),{tool:ev.tool,status:'done',result:ev.result}]}:m)}:c))
-              if(ev.type==='done')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isStreaming:false}:m),updatedAt:now()}:c))
+              if(ev.type==='done')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,isStreaming:false}:m),updatedAt:now()}:c))
             }catch(_){ /* skip malformed SSE */ }
           }
         }

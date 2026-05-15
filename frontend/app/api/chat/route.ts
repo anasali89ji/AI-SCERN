@@ -960,6 +960,11 @@ export async function POST(req: NextRequest) {
             send({ type: 'tool_result', tool: te.tool, result: te.result })
           }
 
+          // FIX B.2: Send thinking indicator before NVIDIA fetch so the UI can
+          // show "Connecting to ARIA…" during cold-start delays (30-60s on NIM).
+          // The client must cancel this state on the first 'text' chunk it receives.
+          send({ type: 'thinking', message: 'Connecting to ARIA…' })
+
           // Try primary model, fallback if needed
           let chatRes: Response | null = null
           for (const model of [CHAT_MODEL, CHAT_FALLBACK]) {
