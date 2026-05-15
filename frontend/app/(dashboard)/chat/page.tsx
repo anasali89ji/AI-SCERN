@@ -39,6 +39,7 @@ const Ico = {
   Home:      () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   Download:  () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
   Search:    () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  Mic:       () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/></svg>,
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -451,11 +452,48 @@ export default function ChatPage() {
   const [hydrated, setHydrated]         = useState(false)
   const [searchQuery, setSearchQuery]   = useState('')
   const [showSearch, setShowSearch]     = useState(false)
+  // FIX B.8: Voice input state
+  const [isListening, setIsListening]   = useState(false)
+  const recognitionRef = useRef<any>(null)
   const endRef       = useRef<HTMLDivElement>(null)
   const taRef        = useRef<HTMLTextAreaElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const activeChat   = chats.find(c=>c.id===activeChatId)
+
+  // FIX B.8: Start/stop Web Speech API voice recognition
+  const toggleVoice = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return   // browser doesn't support it — button hidden via feature detect
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      return
+    }
+
+    const rec = new SpeechRecognition()
+    rec.lang          = 'en-US'
+    rec.interimResults = true
+    rec.maxAlternatives = 1
+    recognitionRef.current = rec
+
+    rec.onstart  = () => setIsListening(true)
+    rec.onend    = () => setIsListening(false)
+    rec.onerror  = () => setIsListening(false)
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results as SpeechRecognitionResultList)
+        .map((r: any) => r[0].transcript)
+        .join('')
+      setInput(transcript)
+      // Auto-submit on final result
+      if (e.results[e.results.length - 1].isFinal) {
+        rec.stop()
+        setTimeout(() => send(transcript), 100)
+      }
+    }
+    rec.start()
+  }, [isListening])
 
   useEffect(() => {
     const saved = loadChats()
@@ -844,11 +882,24 @@ export default function ChatPage() {
               <input ref={fileRef} type="file" className="hidden" multiple accept="image/*,audio/*,video/*,.txt,.pdf"
                 onChange={e=>handleFiles(e.target.files)} />
 
+              {/* FIX B.8: Voice input — hidden if Web Speech API unavailable */}
+              {typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) && (
+                <button onClick={toggleVoice}
+                  title={isListening ? 'Stop recording' : 'Voice input'}
+                  className={`p-2 rounded-xl transition-all shrink-0 mb-0.5 ${
+                    isListening
+                      ? 'text-rose-400 bg-rose-500/15 animate-pulse'
+                      : 'text-gray-700 hover:text-gray-400 hover:bg-white/8'
+                  }`}>
+                  <Ico.Mic />
+                </button>
+              )}
+
               <textarea
                 ref={taRef} value={input}
                 onChange={e=>setInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
-                placeholder="Ask anything, or upload media to analyze…"
+                placeholder={isListening ? 'Listening…' : 'Ask anything, or upload media to analyze…'}
                 rows={1}
                 inputMode="text"
                 enterKeyHint="send"
