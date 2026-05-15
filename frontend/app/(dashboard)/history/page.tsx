@@ -1,11 +1,63 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
+
+// ── FIX B.5: Swipe-to-delete row wrapper (mobile only) ──────────────────────
+// On touch devices, swipe left > 72px reveals a full-height delete button.
+// On desktop, the existing hover-reveal Trash2 button is used instead.
+function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; children: React.ReactNode }) {
+  const startX  = useRef(0)
+  const offsetX = useRef(0)
+  const rowRef  = useRef<HTMLDivElement>(null)
+  const [swiped, setSwiped] = useState(false)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX
+    offsetX.current = 0
+  }
+  const onTouchMove = (e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - startX.current
+    if (dx > 0) return   // ignore rightward swipe
+    offsetX.current = Math.max(dx, -100)
+    if (rowRef.current) rowRef.current.style.transform = `translateX(${offsetX.current}px)`
+  }
+  const onTouchEnd = () => {
+    const committed = offsetX.current < -60
+    if (rowRef.current) {
+      rowRef.current.style.transition = 'transform 0.2s ease'
+      rowRef.current.style.transform  = committed ? 'translateX(-80px)' : 'translateX(0)'
+    }
+    setSwiped(committed)
+    setTimeout(() => { if (rowRef.current) rowRef.current.style.transition = '' }, 200)
+  }
+  const reset = () => {
+    setSwiped(false)
+    if (rowRef.current) { rowRef.current.style.transition = 'transform 0.2s ease'; rowRef.current.style.transform = 'translateX(0)' }
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Delete reveal — shown when swiped */}
+      {swiped && (
+        <div className="absolute right-0 top-0 h-full flex">
+          <button onClick={reset} className="px-3 bg-surface-active text-text-muted text-xs">Cancel</button>
+          <button onClick={onDelete} className="px-4 bg-rose text-white font-bold flex items-center gap-1.5 text-sm">
+            <Trash2 className="w-4 h-4" /> Delete
+          </button>
+        </div>
+      )}
+      {/* Row content */}
+      <div ref={rowRef} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
 const mediaColors = {
@@ -300,7 +352,8 @@ export default function HistoryPage() {
                   const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-text-muted bg-surface'
                   const conf = normalizeConf(scan.confidence_score)
                   return (
-                    <motion.div key={scan.id}
+                    <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
+                    <motion.div
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
@@ -349,6 +402,7 @@ export default function HistoryPage() {
                         </div>
                       </div>
                     </motion.div>
+                    </SwipeToDeleteRow>
                   )
                 })}
               </AnimatePresence>
