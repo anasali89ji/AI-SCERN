@@ -228,7 +228,8 @@ RECOMMENDATION: [What the user should do with this information]`
       },
     }
   } catch (err: unknown) {
-    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${err?.message}`, details: {} }
+    const msg = err instanceof Error ? err.message : String(err)
+    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${msg}`, details: {} }
   }
 }
 
@@ -807,7 +808,8 @@ export async function POST(req: NextRequest) {
             try {
               ;({ done, value } = await readWithTimeout(reader, 30_000))
             } catch (e: unknown) {
-              if (e?.message === 'stream_timeout') {
+              const eMsg = e instanceof Error ? e.message : String(e)
+              if (eMsg === 'stream_timeout') {
                 send({ type: 'text', text: '\n\n⚠️ Response timed out — please try again.' })
                 send({ type: 'done' })
                 controller.close()
@@ -855,8 +857,10 @@ export async function POST(req: NextRequest) {
 
           send({ type: 'done' })
         } catch (e: unknown) {
-          if (e?.name !== 'AbortError') {
-            send({ type: 'text', text: `\n⚠️ ${e?.message || 'Connection error — please retry.'}` })
+          const eName = e instanceof Error ? e.name    : ''
+          const eMsg  = e instanceof Error ? e.message : 'Connection error — please retry.'
+          if (eName !== 'AbortError') {
+            send({ type: 'text', text: `\n⚠️ ${eMsg}` })
           }
           send({ type: 'done' })
         } finally {
@@ -873,6 +877,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (e: unknown) {
-    return new Response(JSON.stringify({ error: e?.message }), { status: 500 })
+    const eMsg = e instanceof Error ? e.message : 'Internal server error'
+    return new Response(JSON.stringify({ error: eMsg }), { status: 500 })
   }
 }
