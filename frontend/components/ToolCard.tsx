@@ -70,7 +70,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
       </button>
       {open && (
         <div className="px-3 sm:px-4 pb-4 border-t" style={{ borderColor:`${meta.color}18` }}>
-          {(result?.key_findings as string[] | undefined)?.length && (
+          {Boolean((result?.key_findings as string[] | undefined)?.length) && (
             <div className="mt-3 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:`${meta.color}cc`}}>Key Findings</div>
               <div className="space-y-1.5">
@@ -82,7 +82,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
               </div>
             </div>
           )}
-          {result?.recommendation && (
+          {Boolean(result?.recommendation) && (
             <div className="mt-2 mb-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 border" style={{background:`${meta.color}0a`,borderColor:`${meta.color}20`}}>
               <span className="font-semibold" style={{color:meta.color}}>Recommendation: </span>{result.recommendation as string}
             </div>
