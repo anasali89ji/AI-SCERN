@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
+import { ToolCard } from '@/components/ToolCard'
 import dynamic from 'next/dynamic'
 
 // ── Post-session component — only shown after first message ───────────────────
@@ -47,16 +48,6 @@ interface Attachment  { name: string; type: string; data: string; preview?: stri
 interface ToolEvent   { tool: string; status: 'running'|'done'; result?: any }
 interface Message     { id: string; role: 'user'|'assistant'; content: string; timestamp: string; attachments?: Attachment[]; toolEvents?: ToolEvent[]; isStreaming?: boolean; isThinking?: boolean }
 interface Chat        { id: string; title: string; messages: Message[]; createdAt: string; updatedAt: string }
-
-const TOOL_META: Record<string,{label:string;color:string;Ic:()=>React.ReactElement}> = {
-  detect_image_with_vila: { label:'Vision Analysis',  color:'#7c3aed', Ic: Ico.Image    },
-  detect_text:            { label:'Text Analysis',    color:'#7c3aed', Ic: Ico.FileText },
-  detect_image:           { label:'Image Analysis',   color:'#2563eb', Ic: Ico.Image    },
-  detect_audio:           { label:'Audio Analysis',   color:'#0891b2', Ic: Ico.Music    },
-  detect_video:           { label:'Video Analysis',   color:'#059669', Ic: Ico.Video    },
-  get_pipeline_stats:     { label:'Detection Stats',  color:'#d97706', Ic: Ico.DB       },
-  analyze_url:            { label:'URL Analysis',     color:'#d97706', Ic: Ico.Globe    },
-}
 
 // ── Aiscern logo avatar for ARIA — black bg ─────────────────────────────────
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
@@ -173,119 +164,6 @@ function Markdown({ content }: { content: string }) {
     <div className="text-sm leading-relaxed text-gray-300"
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
     />
-  )
-}
-
-// ── Tool result card ─────────────────────────────────────────────────────────
-function ToolCard({ tool, result }: { tool: string; result: any }) {
-  const [open, setOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const meta = TOOL_META[tool] || { label: tool, color: '#6b7280', Ic: Ico.Scan }
-  const { Ic: TIc } = meta
-  const verdict = result?.verdict || result?.result || 'Analysis complete'
-  const conf    = result?.confidence_pct ?? result?.confidence
-  const bad     = verdict?.toLowerCase().match(/ai-|deepfake|synthetic|clone/)
-
-  const copyResult = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const text = `${meta.label}\nVerdict: ${verdict}${conf != null ? `\nConfidence: ${conf}%` : ''}\n${JSON.stringify(result, null, 2)}`
-    navigator.clipboard?.writeText(text)
-    setCopied(true); setTimeout(() => setCopied(false), 1800)
-  }
-
-  return (
-    <div className="my-3 rounded-xl border overflow-hidden" style={{ borderColor:`${meta.color}28`, background:`${meta.color}07` }}>
-      <button className="w-full flex items-center justify-between px-3 sm:px-4 py-3.5 hover:bg-white/4 transition-colors text-left" onClick={() => setOpen(o => !o)}>
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background:`${meta.color}18`, color:meta.color }}>
-            <TIc />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wider" style={{ color:`${meta.color}cc` }}>{meta.label}</div>
-            <div className="text-sm font-bold text-white mt-0.5 truncate">{verdict}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
-          {conf != null && (
-            <div className="text-right">
-              <div className="text-xs text-gray-600 hidden sm:block">Confidence</div>
-              <div className="text-lg sm:text-xl font-black tabular-nums" style={{ color: bad ? '#f87171' : '#34d399' }}>{conf}%</div>
-            </div>
-          )}
-          <div className={`text-gray-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}><Ico.ChevRight /></div>
-        </div>
-      </button>
-      {open && (
-        <div className="px-3 sm:px-4 pb-4 border-t" style={{ borderColor:`${meta.color}18` }}>
-          {result?.key_findings?.length > 0 && (
-            <div className="mt-3 mb-3">
-              <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:`${meta.color}cc`}}>Key Findings</div>
-              <div className="space-y-1.5">
-                {result.key_findings.map((f: string, i: number) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-gray-300">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{background:meta.color}} />{f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {result?.recommendation && (
-            <div className="mt-2 mb-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 border" style={{background:`${meta.color}0a`,borderColor:`${meta.color}20`}}>
-              <span className="font-semibold" style={{color:meta.color}}>Recommendation: </span>{result.recommendation}
-            </div>
-          )}
-          <div className="mt-2 space-y-2">
-            {Object.entries(result || {}).map(([k, v]) => {
-              if (['verdict','result','confidence_pct','confidence','key_findings','recommendation'].includes(k)) return null
-              if (v === null || v === undefined || v === '') return null
-              if (k === 'vila_analysis' || k === 'raw') return (
-                <div key={k}>
-                  <div className='text-xs font-semibold uppercase tracking-wider mb-2' style={{color:`${meta.color}cc`}}>Full Analysis</div>
-                  <div className='text-xs text-gray-300 leading-relaxed p-3 rounded-lg border whitespace-pre-wrap max-h-48 overflow-y-auto' style={{background:`${meta.color}08`,borderColor:`${meta.color}20`}}>{String(v)}</div>
-                </div>
-              )
-              if (['engine','analysis_model','analysis_focus','nvidia_powered'].includes(k)) return null
-              if (typeof v === 'object' && !Array.isArray(v)) return (
-                <div key={k}>
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">{k.replace(/_/g,' ')}</div>
-                  <div className="space-y-1 pl-2 border-l-2" style={{ borderColor:`${meta.color}30` }}>
-                    {Object.entries(v as Record<string,any>).map(([kk,vv]) => (
-                      <div key={kk} className="flex justify-between text-xs gap-4">
-                        <span className="text-gray-600 capitalize">{kk.replace(/_/g,' ')}</span>
-                        <span className="text-gray-300 font-medium text-right">{String(vv)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-              if (Array.isArray(v)) {
-                if (!v.length) return null
-                return (
-                  <div key={k}>
-                    <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">{k.replace(/_/g,' ')}</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {v.map((item,i) => (
-                        <span key={i} className="px-2 py-1 rounded-md text-xs font-medium" style={{ background:`${meta.color}15`, color:meta.color }}>{item}</span>
-                      ))}
-                    </div>
-                  </div>
-                )
-              }
-              return (
-                <div key={k} className="flex justify-between text-xs gap-4">
-                  <span className="text-gray-600 capitalize">{k.replace(/_/g,' ')}</span>
-                  <span className="text-gray-300 font-medium text-right">{String(v)}</span>
-                </div>
-              )
-            })}
-          </div>
-          <button onClick={copyResult} className="mt-3 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
-            {copied ? <Ico.Check /> : <Ico.Copy />}
-            {copied ? 'Copied' : 'Copy result'}
-          </button>
-        </div>
-      )}
-    </div>
   )
 }
 
