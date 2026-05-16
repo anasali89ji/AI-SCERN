@@ -14,12 +14,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createPresignedUpload, r2Available, type R2MediaType } from '@/lib/storage/r2'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
+import { validateCsrf } from '@/lib/security/csrf'
 
 export const dynamic = 'force-dynamic'
 
 const VALID_MEDIA_TYPES: R2MediaType[] = ['image', 'audio', 'video']
 
+// MIME allowlist per category (server-side check on declared MIME before presign)
+const MIME_ALLOWLIST: Record<string, Set<string>> = {
+  image: new Set(['image/jpeg','image/png','image/webp','image/gif']),
+  audio: new Set(['audio/mpeg','audio/wav','audio/mp4','audio/x-m4a','audio/ogg','audio/flac','audio/webm']),
+  video: new Set(['video/mp4','video/webm','video/quicktime','video/x-msvideo']),
+}
+
+// Size limits (bytes)
+const SIZE_LIMITS: Record<string, number> = {
+  image: 10  * 1024 * 1024,
+  audio: 50  * 1024 * 1024,
+  video: 100 * 1024 * 1024,
+}
+
 export async function POST(req: NextRequest) {
+  // CSRF protection
+  const csrf = validateCsrf(req)
+  if (!csrf.ok) {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+  }
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
   const rl = await checkRateLimit('upload', ip)
   if (rl.limited) return NextResponse.json(rateLimitResponse(), { status: 429 })
@@ -54,6 +75,24 @@ export async function POST(req: NextRequest) {
     if (!VALID_MEDIA_TYPES.includes(mediaType)) {
       return NextResponse.json(
         { success: false, error: `mediaType must be one of: ${VALID_MEDIA_TYPES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // MIME allowlist — reject SVG and any disallowed type before presigning
+    const allowed = MIME_ALLOWLIST[mediaType]
+    if (!allowed || !allowed.has(mimeType)) {
+      return NextResponse.json(
+        { success: false, error: `MIME type "${mimeType}" is not permitted for ${mediaType} uploads` },
+        { status: 400 }
+      )
+    }
+
+    // Size limit
+    const maxSize = SIZE_LIMITS[mediaType]
+    if (fileSize > maxSize) {
+      return NextResponse.json(
+        { success: false, error: `File too large. Max for ${mediaType}: ${Math.floor(maxSize / 1024 / 1024)}MB` },
         { status: 400 }
       )
     }

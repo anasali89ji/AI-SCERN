@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
+import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -103,6 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </main>
             <Toaster richColors position="top-right" />
+            <CookieConsent />
           </AuthProvider>
         </ClerkClientProvider>
       </body>

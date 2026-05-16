@@ -17,6 +17,8 @@ const PLATFORM_LINKS = [
 const COMPANY_LINKS = [
   { label: 'About',       href: '/about',       title: 'About Aiscern' },
   { label: 'Methodology', href: '/methodology', title: 'Detection Methodology' },
+  { label: 'Benchmarks',  href: '/benchmarks',  title: 'Accuracy Benchmarks' },
+  { label: 'Research',    href: '/research',    title: 'Research Citations' },
   { label: 'Pricing',     href: '/pricing',     title: 'Pricing — Aiscern' },
   { label: 'Roadmap',     href: '/roadmap',     title: 'Product Roadmap' },
   { label: 'Changelog',   href: '/changelog',   title: 'Release Changelog' },
@@ -185,6 +187,9 @@ export function SiteFooter() {
               </span>
               <span className="text-xs text-text-muted">All systems operational</span>
             </div>
+            <a href="https://github.com/anasali89ji/AI-SCERN" target="_blank" rel="noopener noreferrer" className="text-xs text-text-disabled hover:text-text-muted transition-colors flex items-center gap-1">
+              GitHub <ExternalLink className="w-2.5 h-2.5" />
+            </a>
             <a href="https://aiscern.com" className="text-xs text-text-disabled hover:text-text-muted transition-colors flex items-center gap-1">
               aiscern.com <ExternalLink className="w-2.5 h-2.5" />
             </a>
