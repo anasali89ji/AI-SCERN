@@ -147,6 +147,7 @@ function VideoDetectionPage() {
   const [_preview, setPreview] = useState<string | null>(null)
   const [loading,     setLoading]     = useState(false)
   const [result,      setResult]      = useState<DetectionResult | null>(null)
+  const [showMobileResult, setShowMobileResult] = useState(false)
   const [error,       setError]       = useState<string | null>(null)
   const [playing,     setPlaying]     = useState(false)
   const [progress,    setProgress]    = useState(0)
