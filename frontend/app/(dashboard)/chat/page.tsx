@@ -691,7 +691,7 @@ export default function ChatPage() {
                 Ask anything about AI detection, upload media for deepfake analysis, or explore Aiscern's capabilities.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+              <div className="hidden xs:flex flex-wrap justify-center gap-1.5 mb-3">
                 {[['Text Detection',Ico.FileText],['Deepfake Analysis',Ico.Image],['Voice Cloning',Ico.Music],['Video Deepfakes',Ico.Video],['General Q&A',Ico.Globe],['Dataset Insights',Ico.DB]].map(([l,I])=>{
                   const Icon = I as ()=>React.ReactElement
                   return (
@@ -703,10 +703,10 @@ export default function ChatPage() {
                 })}
               </div>
 
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {SUGGESTIONS.map(({Ic: I, text, cat})=>(
                   <button key={text} onClick={()=>send(text)}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-500/20 text-left transition-all group cursor-pointer"
+                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-500/20 text-left transition-all group cursor-pointer"
                   >
                     <div className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-400/70 flex items-center justify-center shrink-0 group-hover:bg-violet-500/20 transition-colors mt-0.5">
                       <I />
@@ -720,7 +720,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+            <div className="max-w-3xl mx-auto w-full px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-6">
               {activeChat.messages.map(msg=>(
                 <MessageBubble
                   key={msg.id} msg={msg}

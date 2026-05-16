@@ -155,7 +155,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
   return (
     <>
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
       {/* Zoom modal */}
       {zoomed && preview && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setZoomed(false)}>
@@ -199,7 +199,6 @@ Analyzed: ${new Date().toLocaleString()}`
                   <input
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     className="hidden"
                     onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }}
                   />
@@ -423,7 +422,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload an Image</h3>
               <p className="text-text-muted text-sm max-w-xs">Drop any image to scan for GAN artifacts, metadata anomalies, and AI generation patterns</p>
-              <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />{f}

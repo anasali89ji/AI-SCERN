@@ -327,7 +327,7 @@ export default function BatchPage() {
                 { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber' : 'text-text-muted' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
-                  <div className={`text-2xl font-black ${color}`}>{value}</div>
+                  <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
                   <div className="text-xs text-text-muted mt-0.5">{label}</div>
                 </div>
               ))}
@@ -471,7 +471,7 @@ export default function BatchPage() {
           <BarChart3 className="w-12 h-12 text-text-muted mx-auto mb-4" />
           <h3 className="font-semibold text-text-primary mb-2">No files added yet</h3>
           <p className="text-text-muted text-sm max-w-xs">Drop images, audio, video, or text files above to start batch analysis</p>
-          <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
             {['Up to 20 files', '5 concurrent workers', 'Auto-saves to history', 'CSV + PDF export'].map(f => (
               <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary/60 shrink-0" />{f}

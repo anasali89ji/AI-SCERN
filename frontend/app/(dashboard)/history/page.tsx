@@ -234,7 +234,7 @@ export default function HistoryPage() {
     <>
       {selectedScan && <ScanDetailModal scan={selectedScan} onClose={() => setSelectedScan(null)} />}
 
-      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+      <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
           <div>
@@ -357,7 +357,7 @@ export default function HistoryPage() {
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
-                      className="card flex items-center gap-3 sm:gap-4 py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
+                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
                       onClick={() => setSelectedScan(scan)}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>

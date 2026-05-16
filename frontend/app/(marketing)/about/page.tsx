@@ -71,7 +71,7 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
       <div className={`h-20 bg-gradient-to-br ${member.gradient} relative`}>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.12),transparent)]" />
       </div>
-      <div className="px-6 pb-6 -mt-10">
+      <div className="px-3 sm:px-6 pb-5 -mt-8 sm:-mt-10">
         {/* Avatar */}
         <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center`}>
           {member.photo ? (
@@ -109,7 +109,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-24 pb-20 max-w-4xl mx-auto px-4">
+      <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl mx-auto px-3 sm:px-4">
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
@@ -135,8 +135,8 @@ export default function AboutPage() {
         </div>
 
         {/* Mission */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-8 mb-14">
-          <h2 className="text-xl font-black mb-4">Our mission</h2>
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-8 mb-10 sm:mb-14">
+          <h2 className="text-lg sm:text-xl font-black mb-3">Our mission</h2>
           <p className="text-text-muted leading-relaxed mb-4">
             AI-generated content is proliferating faster than the tools to understand it. Deepfakes influence elections. Synthetic text floods classrooms. AI audio clones voices of public figures. The people most affected by this — journalists, teachers, researchers, everyday users — often have the least access to reliable detection tools.
           </p>
@@ -147,7 +147,7 @@ export default function AboutPage() {
 
         {/* Values */}
         <div className="mb-14">
-          <h2 className="text-xl font-black mb-6 text-center">What we stand for</h2>
+          <h2 className="text-lg sm:text-xl font-black mb-4 sm:mb-6 text-center">What we stand for</h2>
           <div className="grid sm:grid-cols-2 gap-5">
             {VALUES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="rounded-xl border border-border/55 bg-surface p-5">
@@ -165,7 +165,7 @@ export default function AboutPage() {
 
         {/* ── Team — always before tech stack (1.3 fix) ── */}
         <div className="mb-14">
-          <h2 className="text-xl font-black mb-2 text-center">The team</h2>
+          <h2 className="text-lg sm:text-xl font-black mb-2 text-center">The team</h2>
           <p className="text-text-muted text-sm text-center mb-8 max-w-lg mx-auto">
             A small, focused team building AI transparency tools from Pakistan.
           </p>
@@ -177,7 +177,7 @@ export default function AboutPage() {
         </div>
 
         {/* Tech stack — moved after team (1.3 fix) */}
-        <div className="rounded-2xl border border-border/55 bg-surface p-6 mb-14">
+        <div className="rounded-2xl border border-border/55 bg-surface p-4 sm:p-6 mb-10 sm:mb-14">
           <div className="flex items-center gap-2 mb-4">
             <GitBranch className="w-5 h-5 text-primary" />
             <h2 className="font-black text-lg">Built with</h2>
@@ -196,7 +196,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-black">Try it free</h2>
+          <h2 className="text-xl sm:text-2xl font-black">Try it free</h2>
           <p className="text-text-muted">No account needed. Core features free during early access.</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/detect/text" className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">

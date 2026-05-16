@@ -313,7 +313,7 @@ function VideoDetectionPage() {
   return (
     <>
     <SignupGate />
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
@@ -576,7 +576,7 @@ function VideoDetectionPage() {
               <p className="text-text-muted text-sm max-w-xs">
                 Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts
               </p>
-              <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
                 {[
                   'Browser frame extraction',
                   'Aiscern vision engine',

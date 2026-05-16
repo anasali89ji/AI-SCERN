@@ -187,7 +187,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
   return (
     <>
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
@@ -524,7 +524,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <p className="text-text-muted text-sm max-w-xs">
                   Enter text on the left and click Detect. Minimum 50 characters for accurate results.
                 </p>
-                <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-text-muted w-full max-w-xs">
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
                   {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
                     <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />{f}

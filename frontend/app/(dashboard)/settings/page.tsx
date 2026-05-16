@@ -52,7 +52,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
     <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="bg-surface border border-border/55 rounded-2xl p-6">
+      className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
       <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-border/30">
         <Icon className="w-4 h-4 text-primary" /> {title}
       </h2>
@@ -177,7 +177,7 @@ export default function SettingsPage() {
   }
 
   if (loading) return (
-    <div className="p-8 flex items-center justify-center min-h-64">
+    <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
       <Loader2 className="w-6 h-6 animate-spin text-primary" />
     </div>
   )
@@ -313,7 +313,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* Danger zone */}
-      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-6">
+      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-4 sm:p-6">
         <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>

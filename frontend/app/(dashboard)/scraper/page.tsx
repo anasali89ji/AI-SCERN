@@ -50,7 +50,7 @@ function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
           style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)' }} />
       </svg>
       <div className="z-10 text-center">
-        <p className="text-3xl font-black tabular-nums" style={{ color }}>{score}%</p>
+        <p className="text-2xl sm:text-3xl font-black tabular-nums" style={{ color }}>{score}%</p>
         <p className="text-[10px] text-slate-400 font-medium mt-0.5">AI Score</p>
       </div>
     </div>
@@ -208,8 +208,8 @@ export default function ScraperPage() {
                 </div>
               </div>
               <div className="md:col-span-3 bg-[#0f0f17] border border-white/[0.06] rounded-2xl p-5 space-y-4">
-                <div className="flex gap-5">
-                  <div className="w-[120px] h-[120px] rounded-full bg-white/[0.04] shrink-0" />
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-5">
+                  <div className="w-16 h-16 sm:w-[100px] sm:h-[100px] rounded-full bg-white/[0.04] shrink-0" />
                   <div className="flex-1 space-y-2 pt-2">
                     <div className="flex gap-2">
                       <div className="h-5 bg-white/[0.04] rounded-full w-20" />

@@ -182,7 +182,7 @@ function AudioDetectionPage() {
   return (
     <>
     <SignupGate />
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
       <audio ref={audioRef} className="hidden" />
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">

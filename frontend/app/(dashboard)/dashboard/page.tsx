@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
       {/* ── Welcome ── */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary">
+        <h1 className="text-xl sm:text-3xl font-black text-text-primary">
           Welcome back, <span className="gradient-text">{name}</span> 👋
         </h1>
         <p className="text-text-muted text-sm mt-1">
@@ -178,7 +178,7 @@ export default function DashboardPage() {
               <s.icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-lg sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
+              <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
               <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
             </div>
           </motion.div>

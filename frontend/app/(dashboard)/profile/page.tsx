@@ -163,8 +163,8 @@ export default function ProfilePage() {
         <div className="h-28 sm:h-32 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
           <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(124,58,237,0.2) 0%, transparent 60%)' }} />
         </div>
-        <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-14">
+        <div className="px-3 sm:px-6 pb-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             {/* Avatar with upload overlay */}
             <div className="relative group w-24 h-24">
               <div className="w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-2xl ring-4 ring-surface"
@@ -249,7 +249,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <>
-                <h1 className="text-2xl font-black text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
+                <h1 className="text-xl sm:text-2xl font-black text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
                 {profile?.username && <p className="text-sm text-text-muted">@{profile.username}</p>}
                 {profile?.bio      && <p className="text-sm text-text-secondary">{profile.bio}</p>}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
@@ -278,7 +278,7 @@ export default function ProfilePage() {
 
       {/* ── Credits & Usage ─────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0, transition:{delay:0.05} }}
-        className="bg-surface border border-border/55 rounded-2xl p-6">
+        className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-5">
           <Zap className="w-4 h-4 text-primary" /> Credits & Usage
         </h2>
@@ -335,7 +335,7 @@ export default function ProfilePage() {
 
       {/* ── Account Details ─────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-        className="bg-surface border border-border/55 rounded-2xl p-6 space-y-3">
+        className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6 space-y-3">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1">
           <Shield className="w-5 h-5 text-primary" /> Account Details
         </h2>
