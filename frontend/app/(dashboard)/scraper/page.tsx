@@ -94,8 +94,9 @@ export default function ScraperPage() {
       if (user && data.data) {
         // FIX A.3: Removed `as any` cast. Table now created in v9_scraper_sessions.sql.
         // try/catch retained so a DB error never breaks the scan result display.
+        // Temporary `as any` on the client until Supabase types are regenerated post-migration.
         try {
-          await supabase.from('scraper_sessions').insert({
+          await (supabase as any).from('scraper_sessions').insert({
             user_id:          user.uid,
             target_url:       scanUrl,
             domain:           data.data.domain,
