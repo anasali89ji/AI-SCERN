@@ -198,9 +198,12 @@ RECOMMENDATION: [What the user should do with this information]`
   }
 
   try {
-    let d: Record<string, unknown>
-    try { d = await tryModel(VISION_MODEL) }
-    catch { d = await tryModel(VISION_FALLBACK) }
+    // Type the NVIDIA chat completion response shape directly
+    interface NvidiaChoice { message: { content: string } }
+    interface NvidiaResponse { choices?: NvidiaChoice[] }
+    let d: NvidiaResponse
+    try { d = await tryModel(VISION_MODEL) as NvidiaResponse }
+    catch { d = await tryModel(VISION_FALLBACK) as NvidiaResponse }
 
     const text: string = d.choices?.[0]?.message?.content || ''
     const isAI     = /ai.generated|deepfake|manipulated|not (authentic|real|genuine)/i.test(text)
