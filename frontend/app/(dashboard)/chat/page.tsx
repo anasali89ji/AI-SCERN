@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
-import { ToolCard } from '@/components/ToolCard'
+import { ToolCard, TOOL_META } from '@/components/ToolCard'
 import dynamic from 'next/dynamic'
 
 // ── Post-session component — only shown after first message ───────────────────
