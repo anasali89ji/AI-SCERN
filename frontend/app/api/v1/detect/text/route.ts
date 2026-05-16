@@ -85,12 +85,11 @@ async function resolveKey(
     }
 
     // Auto-migrate: write SHA-256 hash asynchronously (fire-and-forget)
-    // This does NOT block the current request — user gets 200 immediately.
-    db.from('api_keys')
-      .update({ sha256_hash: sha256, hash_version: 'sha256' })
-      .eq('id', djb2Row.id)
-      .then(() => { /* migration complete for this key */ })
-      .catch(() => { /* non-fatal — will retry on next call */ })
+    void Promise.resolve(
+      db.from('api_keys')
+        .update({ sha256_hash: sha256, hash_version: 'sha256' })
+        .eq('id', djb2Row.id)
+    ).catch(() => { /* non-fatal — will retry on next call */ })
 
     return { valid: true, owner: djb2Row.user_id, keyHash: legacy }
   } catch {
