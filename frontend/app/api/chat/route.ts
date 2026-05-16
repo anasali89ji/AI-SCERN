@@ -1,9 +1,9 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
+import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 export const maxDuration = 60
 
 import { NextRequest } from 'next/server'
-
 export const dynamic    = 'force-dynamic'
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
@@ -34,7 +34,7 @@ async function fetchPipelineStats(cfToken: string): Promise<Record<string, any>>
     ])
 
     const s     = ov.result?.[0]?.results?.[0] || {}
-    const byType = (ty.result?.[0]?.results || []) as any[]
+    const byType = (ty.result?.[0]?.results || []) as Array<Record<string, unknown>>
 
     return {
       total_samples:   s.total_scraped   ?? 0,
@@ -198,7 +198,7 @@ RECOMMENDATION: [What the user should do with this information]`
   }
 
   try {
-    let d: any
+    let d: Record<string, unknown>
     try { d = await tryModel(VISION_MODEL) }
     catch { d = await tryModel(VISION_FALLBACK) }
 
@@ -224,7 +224,7 @@ RECOMMENDATION: [What the user should do with this information]`
         pipeline:       'nvidia_vision_fallback',
       },
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${err?.message}`, details: {} }
   }
 }
@@ -257,6 +257,13 @@ async function analyzeText(text: string, baseUrl: string): Promise<Record<string
 // ─────────────────────────────────────────────────────────────────────────────
 // INTENT ENGINE — understands what the user wants before calling the LLM
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Incoming message shape from the client — content can be a string or content array */
+interface ChatMessage {
+  role:    'user' | 'assistant'
+  content: string | Array<{ type: string; text?: string }>
+}
+
 type Intent = {
   wantsPipelineStats: boolean
   wantsTextAnalysis:  boolean
@@ -266,7 +273,7 @@ type Intent = {
   urgency:            'high' | 'normal'
 }
 
-function detectIntent(message: string, history: any[]): Intent {
+function detectIntent(message: string, history: ChatMessage[]): Intent {
   const lower = message.toLowerCase()
 
   // Pipeline stat keywords — masked to "Aiscern pipeline/data" framing
@@ -333,223 +340,6 @@ function detectIntent(message: string, history: any[]): Intent {
 // traversal, injects most-relevant context into the system prompt
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface GraphNode {
-  id:         string
-  type:       'tool'|'verdict'|'topic'|'entity'|'action'|'media'
-  value:      string
-  confidence: number    // 0-1
-  msgIndex:   number    // which message it came from
-}
-
-interface GraphEdge {
-  from:   string
-  to:     string
-  rel:    'triggered'|'produced'|'about'|'followup_of'|'same_topic'|'contradicts'
-  weight: number
-}
-
-interface KnowledgeGraph {
-  nodes: GraphNode[]
-  edges: GraphEdge[]
-}
-
-// Extract entity nodes from a single message
-function extractNodes(content: string, msgIndex: number, role: string): GraphNode[] {
-  const nodes: GraphNode[] = []
-  const lower = content.toLowerCase()
-  const id = (t: string, v: string) => `${t}:${v.replace(/\s+/g,'_').slice(0,40)}`
-
-  // Detection tools mentioned
-  const toolMap: Record<string,string> = {
-    'image detection':'detect_image','deepfake':'detect_image','text detection':'detect_text',
-    'audio detection':'detect_audio','voice clone':'detect_audio','video detection':'detect_video',
-    'batch':'batch_analysis','pipeline':'pipeline_stats','web scanner':'web_scan'
-  }
-  for (const [kw, tool] of Object.entries(toolMap)) {
-    if (lower.includes(kw)) nodes.push({ id: id('tool', tool), type:'tool', value:tool, confidence:0.9, msgIndex })
-  }
-
-  // Verdict mentions
-  const verdictMap: Record<string,string> = {
-    'ai-generated':'AI','ai generated':'AI','is ai':'AI','looks ai':'AI',
-    'human':'HUMAN','authentic':'HUMAN','real':'HUMAN',
-    'uncertain':'UNCERTAIN','borderline':'UNCERTAIN','mixed signals':'UNCERTAIN'
-  }
-  for (const [kw, verdict] of Object.entries(verdictMap)) {
-    if (lower.includes(kw)) nodes.push({ id: id('verdict', verdict), type:'verdict', value:verdict, confidence:0.85, msgIndex })
-  }
-
-  // Media types
-  const mediaTypes = ['image','audio','video','text','document','pdf'] as const
-  for (const m of mediaTypes) {
-    if (lower.includes(m)) nodes.push({ id: id('media', m), type:'media', value:m, confidence:0.7, msgIndex })
-  }
-
-  // Action topics from ARIA knowledge domain
-  const topics: [string,string][] = [
-    ['confidence score','confidence'],['confidence','confidence'],
-    ['accuracy','accuracy'],['false positive','false_positive'],
-    ['explain','explanation'],['how it works','mechanism'],
-    ['what is aiscern','platform_info'],['who built','founder_info'],
-    ['pricing','pricing'],['api','api_usage'],['batch','batch'],
-    ['upload','file_upload'],['result','result_interpretation']
-  ]
-  for (const [kw, topic] of topics) {
-    if (lower.includes(kw)) nodes.push({ id: id('topic', topic), type:'topic', value:topic, confidence:0.75, msgIndex })
-  }
-
-  return nodes
-}
-
-// Build edges between nodes across messages
-function buildEdges(nodes: GraphNode[]): GraphEdge[] {
-  const edges: GraphEdge[] = []
-  const byMsg = new Map<number, GraphNode[]>()
-  for (const n of nodes) {
-    const arr = byMsg.get(n.msgIndex) || []; arr.push(n); byMsg.set(n.msgIndex, arr)
-  }
-
-  // Same-message nodes are related
-  for (const [, msgNodes] of byMsg) {
-    for (let i = 0; i < msgNodes.length; i++) {
-      for (let j = i+1; j < msgNodes.length; j++) {
-        const a = msgNodes[i], b = msgNodes[j]
-        if (a.type === 'tool' && b.type === 'verdict') {
-          edges.push({ from: a.id, to: b.id, rel: 'produced', weight: 0.9 })
-        } else if (a.type === 'topic' && b.type === 'tool') {
-          edges.push({ from: a.id, to: b.id, rel: 'about', weight: 0.8 })
-        } else {
-          edges.push({ from: a.id, to: b.id, rel: 'same_topic', weight: 0.6 })
-        }
-      }
-    }
-  }
-
-  // Cross-message follow-up edges (consecutive messages)
-  const msgIndices = Array.from(byMsg.keys()).sort((a,b) => a-b)
-  for (let k = 1; k < msgIndices.length; k++) {
-    const prevNodes = byMsg.get(msgIndices[k-1]) || []
-    const currNodes = byMsg.get(msgIndices[k]) || []
-    for (const p of prevNodes) {
-      for (const c of currNodes) {
-        if (p.type === c.type && p.value === c.value) {
-          edges.push({ from: p.id, to: c.id, rel: 'same_topic', weight: 0.85 })
-        } else if (c.type === 'topic' && c.value === 'result_interpretation') {
-          edges.push({ from: p.id, to: c.id, rel: 'followup_of', weight: 0.9 })
-        }
-      }
-    }
-  }
-
-  return edges
-}
-
-// Graph traversal — score nodes by relevance to current query using BFS
-function scoreNodesForQuery(graph: KnowledgeGraph, queryNodes: GraphNode[]): Map<string, number> {
-  const scores = new Map<string, number>()
-
-  // Seed scores from direct query matches
-  for (const qn of queryNodes) {
-    scores.set(qn.id, qn.confidence)
-    // Find same-value nodes from history
-    for (const hn of graph.nodes) {
-      if (hn.value === qn.value && hn.id !== qn.id) {
-        scores.set(hn.id, Math.max(scores.get(hn.id) || 0, qn.confidence * 0.9))
-      }
-    }
-  }
-
-  // BFS propagation — spread relevance through edges (2 hops)
-  for (let hop = 0; hop < 2; hop++) {
-    for (const edge of graph.edges) {
-      const fromScore = scores.get(edge.from) || 0
-      const toScore   = scores.get(edge.to)   || 0
-      if (fromScore > 0) scores.set(edge.to,   Math.max(toScore,   fromScore * edge.weight * 0.7))
-      if (toScore   > 0) scores.set(edge.from, Math.max(fromScore, toScore   * edge.weight * 0.7))
-    }
-  }
-
-  return scores
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
-function buildGraphRAGContext(history: any[], currentMsg: string): string {
-  if (!history?.length) return ''
-
-  const graph: KnowledgeGraph = { nodes: [], edges: [] }
-
-  // FIX 3.3 — Deduplicate nodes by id (keep most recent msgIndex) to prevent score inflation
-  const nodeMap = new Map<string, typeof graph.nodes[number]>()
-  for (let i = 0; i < history.length; i++) {
-    const msg     = history[i]
-    const content = typeof msg.content === 'string' ? msg.content : ''
-    if (!content) continue
-    const nodes = extractNodes(content, i, msg.role || 'user')
-    for (const node of nodes) {
-      const existing = nodeMap.get(node.id)
-      if (!existing || node.msgIndex > existing.msgIndex) nodeMap.set(node.id, node)
-    }
-  }
-  graph.nodes.push(...nodeMap.values())
-
-  if (!graph.nodes.length) return ''
-  graph.edges = buildEdges(graph.nodes)
-
-  // Score nodes against current query
-  const queryNodes = extractNodes(currentMsg, 999, 'user')
-  const scores     = scoreNodesForQuery(graph, queryNodes)
-
-  // FIX 3.1 — Apply temporal decay (~50% weight at 9 messages ago)
-  const CURRENT_MSG_INDEX = history.length
-  for (const [nodeId, score] of scores.entries()) {
-    const node = graph.nodes.find(n => n.id === nodeId)
-    if (node) {
-      const ageInMessages = CURRENT_MSG_INDEX - node.msgIndex
-      const decayFactor   = Math.exp(-0.08 * ageInMessages)
-      scores.set(nodeId, score * decayFactor)
-    }
-  }
-
-  // Collect top-scored nodes (threshold 0.5)
-  const topNodes = graph.nodes
-    .map(n => ({ ...n, score: scores.get(n.id) || 0 }))
-    .filter(n => n.score >= 0.5)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 8)
-
-  if (!topNodes.length) return ''
-
-  // Group by type for readable output
-  const byType: Record<string, string[]> = {}
-  for (const n of topNodes) {
-    if (!byType[n.type]) byType[n.type] = []
-    byType[n.type].push(n.value)
-  }
-
-  // FIX 3.2 — Structured XML context injection for better LLM comprehension
-  const xmlLines: string[] = ['<conversation_context>']
-  if (byType.tool)    xmlLines.push(`  <tools_used>${[...new Set(byType.tool)].join(', ')}</tools_used>`)
-  if (byType.verdict) xmlLines.push(`  <verdicts_seen>${[...new Set(byType.verdict)].join(', ')}</verdicts_seen>`)
-  if (byType.media)   xmlLines.push(`  <media_types>${[...new Set(byType.media)].join(', ')}</media_types>`)
-  if (byType.topic)   xmlLines.push(`  <topics>${[...new Set(byType.topic)].map(t => t.replace(/_/g,' ')).join(', ')}</topics>`)
-
-  // Find most recent detection result in history for follow-up awareness
-  for (let i = history.length - 1; i >= 0; i--) {
-    const c = typeof history[i]?.content === 'string' ? history[i].content : ''
-    if (c.includes('Verdict:') && c.includes('Confidence:')) {
-      const verdict = c.match(/Verdict:\s*(.+)/)?.[1]?.slice(0, 60) || ''
-      const conf    = c.match(/Confidence:\s*(.+)/)?.[1]?.slice(0, 20) || ''
-      xmlLines.push(`  <last_scan verdict="${verdict}" confidence="${conf}" messages_ago="${history.length - 1 - i}" />`)
-      break
-    }
-  }
-  xmlLines.push('</conversation_context>')
-  return xmlLines.join('\n')
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
 // ARIA — AISCERN AI ASSISTANT v3.0
 // Production system prompt — fully private, zero internal disclosure
 // Merged from: v2.0 refactor + Lighthouse audit + 11-phase architecture + live repo scan
@@ -845,7 +635,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const imageAttachments = (attachments || []).filter((a: any) => a.type?.startsWith('image/'))
+    const imageAttachments = (attachments as Array<{type:string;data:string}> || []).filter(a => a.type?.startsWith('image/'))
     const lastUserMsg      = messages[messages.length - 1]?.content || ''
     const history          = messages.slice(0, -1)
 
@@ -859,7 +649,7 @@ export async function POST(req: NextRequest) {
     const contextParts: string[] = []
     // Conversation graph (history-based) first
     if (graphContext) contextParts.push(graphContext)
-    const toolEvents: Array<{ tool: string; result: any }> = []
+    const toolEvents: Array<{ tool: string; result: Record<string, unknown> }> = []
 
     // 1. Image → Vision Engine analysis
     if (imageAttachments.length > 0) {
@@ -940,7 +730,7 @@ export async function POST(req: NextRequest) {
       : messages
 
     // Build conversation — include history for multi-turn awareness
-    const apiMessages = truncatedMessages.map((m: any) => ({
+    const apiMessages = truncatedMessages.map((m: ChatMessage) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
       content: typeof m.content === 'string'
         ? m.content
@@ -951,7 +741,7 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder()
     const stream  = new ReadableStream({
       async start(controller) {
-        const send = (obj: any) =>
+        const send = (obj: Record<string, unknown>) =>
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
 
         try {
@@ -1013,7 +803,7 @@ export async function POST(req: NextRequest) {
             let done: boolean, value: Uint8Array | undefined
             try {
               ;({ done, value } = await readWithTimeout(reader, 30_000))
-            } catch (e: any) {
+            } catch (e: unknown) {
               if (e?.message === 'stream_timeout') {
                 send({ type: 'text', text: '\n\n⚠️ Response timed out — please try again.' })
                 send({ type: 'done' })
@@ -1061,7 +851,7 @@ export async function POST(req: NextRequest) {
           }
 
           send({ type: 'done' })
-        } catch (e: any) {
+        } catch (e: unknown) {
           if (e?.name !== 'AbortError') {
             send({ type: 'text', text: `\n⚠️ ${e?.message || 'Connection error — please retry.'}` })
           }
@@ -1079,7 +869,7 @@ export async function POST(req: NextRequest) {
         'Connection':    'keep-alive',
       },
     })
-  } catch (e: any) {
+  } catch (e: unknown) {
     return new Response(JSON.stringify({ error: e?.message }), { status: 500 })
   }
 }
