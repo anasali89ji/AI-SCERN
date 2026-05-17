@@ -254,7 +254,8 @@ export default function UsersAdmin() {
             </div>
 
             <div className="rounded-xl border border-border bg-surface overflow-hidden">
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+              <table className="w-full text-xs min-w-[600px]">
                 <thead className="border-b border-border bg-surface/80">
                   <tr>
                     {['User', 'Plan', 'Status', 'Daily Scans', 'Joined', 'Actions'].map(h => (
@@ -353,9 +354,8 @@ export default function UsersAdmin() {
                   ))}
                 </tbody>
               </table>
+              </div>{/* end overflow-x-auto */}
             </div>
-
-            {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
                 <p className="text-xs text-text-muted">
                   Showing {((page - 1) * 25) + 1}–{Math.min(page * 25, total)} of {total}

@@ -4,8 +4,21 @@
 
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif; }
+  html {
+    scroll-behavior: smooth;
+    /* Prevent iOS font scaling on rotation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Remove 300ms tap delay globally */
+    touch-action: manipulation;
+  }
+  body {
+    font-family: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
+    /* Use dynamic viewport height — avoids iOS Safari address-bar jump */
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
@@ -58,9 +71,13 @@
 
   .input-field {
     @apply bg-surface-active border border-border rounded-xl px-3.5 py-2.5
-           text-text-primary placeholder:text-text-disabled text-sm
+           text-text-primary placeholder:text-text-disabled
+           /* text-base = 16px — prevents iOS auto-zoom on focus */
+           text-base sm:text-sm
+           /* min-h-[44px] — Apple HIG touch target compliance */
+           min-h-[44px]
            focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50
-           transition-all duration-200;
+           transition-all duration-200 w-full;
   }
 
   .badge-ai {
@@ -146,6 +163,23 @@
 
   /* Mobile safe paddings */
   .mobile-safe { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+
+  /* Overflow-wrap utility — prevents long URLs/hashes breaking layout on mobile */
+  .prevent-overflow {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  /* Tap highlight suppression for custom interactive elements */
+  .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+
+  /* Contain overscroll inside modal/sheet panels */
+  .overscroll-contain { overscroll-behavior: contain; }
+
+  /* Touch manipulation (remove 300ms delay on specific elements if needed) */
+  .touch-manipulation { touch-action: manipulation; }
 }
 
 /* Mobile responsive table wrapper */

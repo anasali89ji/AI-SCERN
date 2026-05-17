@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
+import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import {
   Shield, Brain, Eye, Mic, FileText, Globe, Zap, BarChart3,
   ArrowRight, CheckCircle, XCircle, HelpCircle,
@@ -483,6 +484,24 @@ export default function HomePage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const reduced = useReducedMotion()
   const { scrolled, hidden } = useNavScrollBehavior()
+
+  // iOS scroll lock — prevent body scrolling while mobile nav is open
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow  = 'hidden'
+      document.body.style.position  = 'fixed'
+      document.body.style.width     = '100%'
+    } else {
+      document.body.style.overflow  = ''
+      document.body.style.position  = ''
+      document.body.style.width     = ''
+    }
+    return () => {
+      document.body.style.overflow  = ''
+      document.body.style.position  = ''
+      document.body.style.width     = ''
+    }
+  }, [mobileNavOpen])
   const [datasetRows, setDatasetRows] = useState<number | null>(null)
 
   useEffect(() => {
@@ -561,8 +580,11 @@ export default function HomePage() {
                 </Link>
               </>
             )}
-            <button className="md:hidden p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors"
-              onClick={() => setMobileNavOpen(o => !o)} aria-label="Toggle menu">
+            <button className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors"
+              onClick={() => setMobileNavOpen(o => !o)}
+              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileNavOpen}
+              aria-controls="mobile-nav-panel">
               <AnimatePresence mode="wait" initial={false}>
                 {mobileNavOpen
                   ? <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><X className="w-5 h-5" /></motion.div>
@@ -576,8 +598,13 @@ export default function HomePage() {
         {/* Mobile menu */}
         <AnimatePresence>
           {mobileNavOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden">
+            <motion.div
+              id="mobile-nav-panel"
+              role="dialog"
+              aria-label="Navigation menu"
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden"
+              onKeyDown={e => e.key === 'Escape' && setMobileNavOpen(false)}>
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
                   { href: '#tools', label: 'Tools', Icon: Cpu },
@@ -646,29 +673,10 @@ export default function HomePage() {
               <span className="sm:hidden">8+ models · Free tier available</span>
             </motion.div>
 
-            {/* H1 */}
-            <motion.h1 className="font-black leading-[0.95] mb-5 sm:mb-7"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
-              <span className="block sm:hidden text-[2.1rem] leading-tight"
-                style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Aiscern
-              </span>
-              <span className="block sm:hidden text-lg text-text-secondary mt-2 font-semibold leading-snug">Text · Images · Audio · Video</span>
-              <span className="hidden sm:block text-4xl lg:text-6xl xl:text-7xl"
-                style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 40%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Detect AI-Generated Content
-              </span>
-              <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-3 text-2xl lg:text-4xl font-black mt-3 leading-snug">
-                <span className="text-amber">Text</span>
-                <span className="text-text-muted font-light">·</span>
-                <span className="text-primary">Images</span>
-                <span className="text-text-muted font-light">·</span>
-                <span className="text-cyan">Audio</span>
-                <span className="text-text-muted font-light">·</span>
-                <span className="text-secondary">Video</span>
-                <span className="text-text-secondary font-semibold ml-1">Across Four Modalities</span>
-              </div>
-            </motion.h1>
+            {/* H1 + Rotating modality animation */}
+            <div className="mb-5 sm:mb-7">
+              <HeroHeadline />
+            </div>
 
             {/* Subheadline */}
             <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"

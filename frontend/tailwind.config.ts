@@ -11,6 +11,7 @@ const config: Config = {
     'text-rose', 'border-rose', 'bg-rose',
     'text-emerald', 'border-emerald', 'bg-emerald',
     'text-amber', 'border-amber', 'bg-amber',
+    'bg-primary', 'bg-secondary', 'bg-cyan',
     'border-rose/30', 'bg-rose/5',
     'border-emerald/30', 'bg-emerald/5',
     'border-amber/30', 'bg-amber/5',
@@ -54,7 +55,10 @@ const config: Config = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       spacing: {
+        'safe-top':    'env(safe-area-inset-top)',
         'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left':   'env(safe-area-inset-left)',
+        'safe-right':  'env(safe-area-inset-right)',
       },
       keyframes: {
         float: {

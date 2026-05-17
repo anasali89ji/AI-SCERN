@@ -87,8 +87,13 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
               )}
             </div>
 
-            {/* Mobile hamburger */}
-            <button className="sm:hidden p-2 text-text-muted" onClick={() => setOpen(o => !o)} aria-label="Toggle menu">
+            {/* Mobile hamburger — min 44×44px touch target */}
+            <button
+              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface"
+              onClick={() => setOpen(o => !o)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-expanded={open}
+            >
               {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </>
@@ -109,7 +114,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             <div className="px-4 py-4 space-y-1 max-h-[calc(100svh-4rem)] overflow-y-auto">
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
-                  className="block text-sm text-text-secondary hover:text-text-primary transition-colors font-medium py-2.5 px-3 rounded-lg hover:bg-surface active:scale-95">
+                  className="block text-sm text-text-secondary hover:text-text-primary transition-colors font-medium py-3 px-3 rounded-lg hover:bg-surface active:scale-95 min-h-[44px] flex items-center">
                   {l.label}
                 </Link>
               ))}
