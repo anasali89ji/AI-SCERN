@@ -8,6 +8,7 @@ import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
 import { analyzeAudio as runForensicPipeline } from '@/lib/forensic/audio/pipeline'
 import { logModelPredictions }       from '@/lib/accuracy/log-predictions'
+import { queryDetectionRAG }         from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,7 +152,24 @@ export async function POST(req: NextRequest) {
     const result         = { ...hfResult, confidence: blendedConfidence, verdict: blendedVerdict }
     const processingTime = Date.now() - start
 
-    if (buffer && buffer.length > 0) await setCachedDetection('audio', hash, result)
+    let finalVerdict   = result.verdict
+    let finalConfidence = result.confidence
+    let ragResult: any = null
+    if (process.env.DETECTION_RAG_ENABLED === 'true') {
+      try {
+        const audioDescription = result.summary || fileName || 'audio sample'
+        ragResult = await queryDetectionRAG(audioDescription, 'audio', result.confidence)
+        if (ragResult?.rag_applied) {
+          finalConfidence = ragResult.blended_score
+          finalVerdict = finalConfidence >= 0.60 ? 'AI' : finalConfidence <= 0.40 ? 'HUMAN' : 'UNCERTAIN'
+        }
+      } catch (e) {
+        console.warn('[detect/audio] RAG query error (non-blocking):', e)
+      }
+    }
+
+    const finalResult = { ...result, verdict: finalVerdict, confidence: finalConfidence }
+    if (buffer && buffer.length > 0) await setCachedDetection('audio', hash, finalResult)
 
     let scanId: string | null = null
     if (userId && !userId.startsWith('anon_')) {
@@ -181,16 +199,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Fire Inngest background job (fire-and-forget, non-blocking)
-    if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'audio', verdict: result.verdict, confidence: result.confidence, model_used: result.model_used })
+      if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'audio', verdict: finalResult.verdict, confidence: finalResult.confidence, model_used: result.model_used })
 
     // Accuracy monitoring — fire-and-forget
     if (scanId && result.model_breakdown?.length) {
-      void logModelPredictions(scanId, 'audio', result.model_breakdown, result.verdict)
+      void logModelPredictions(scanId, 'audio', result.model_breakdown, finalResult.verdict)
     }
 
     return NextResponse.json({
       success: true, scan_id: scanId,
-      result:  { ...result, processing_time: processingTime, file_name: fileName, forensic: forensicSummary },
+      result:  { ...finalResult, processing_time: processingTime, file_name: fileName, forensic: forensicSummary, rag_stats: ragResult ? {
+        rag_applied: ragResult.rag_applied,
+        retrieval_confidence: ragResult.retrieval_confidence,
+        neighbour_count: ragResult.neighbour_count,
+        ai_ratio: ragResult.ai_ratio,
+      } : undefined },
     })
   } catch (err) {
     console.error('[detect/audio]', err)
