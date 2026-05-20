@@ -8,7 +8,7 @@
 type Tool = 'text' | 'image' | 'audio' | 'video'
 
 // No-op: renders nothing — no more usage limits or upgrade prompts
-export function UsageLimitBanner({ tool, isPro = false }: { tool: Tool; isPro?: boolean }) {
+export function UsageLimitBanner({ _tool, _isPro = false }: { _tool: Tool; _isPro?: boolean }) {
   return null
 }
 

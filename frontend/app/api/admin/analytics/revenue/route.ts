@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const _admin = await verifyAdmin()
   if (isAdminError(_admin)) return _admin
   try {

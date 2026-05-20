@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
 import { Star, ThumbsUp, CheckCircle, PenLine, Filter, ChevronLeft, ChevronRight, EyeOff, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'

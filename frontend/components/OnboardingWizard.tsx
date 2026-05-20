@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import {
-  FileText, Image, Mic, Video, Globe, Shield, ChevronRight,
+  FileText, Image, Mic, Video, Globe, ChevronRight,
   X, Sparkles, User, Zap, Check
 } from 'lucide-react'
 

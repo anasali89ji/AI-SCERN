@@ -226,7 +226,7 @@ function VideoDetectionPage() {
 
       if (dur > 0.5) {
         try {
-          frames = await extractFrames(vid, dur, (n, total) => setFramesDone(n + 1))
+          frames = await extractFrames(vid, dur, (n, _total) => setFramesDone(n + 1))
           setExtractedFrames(frames)
         } catch (frameErr) {
           // Frame extraction failed (e.g. Firefox seek issue) — continue without frames

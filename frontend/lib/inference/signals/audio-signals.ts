@@ -20,7 +20,7 @@ export function extractAudioSignals(
   buf:      Buffer,
   fileSize: number,
   format:   string,
-  fileName: string,
+  _fileName: string,
 ): AudioSignalResult[] {
   const bytes = new Uint8Array(buf)
 

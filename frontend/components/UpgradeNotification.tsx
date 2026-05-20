@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Crown, X, Zap, CheckCircle, Star, ChevronRight } from 'lucide-react'
+import { Crown, X, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 interface Notification {

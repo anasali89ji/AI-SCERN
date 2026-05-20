@@ -197,7 +197,7 @@ export function analyzeFormantTrajectory(
   f1Track: number[],
   f2Track: number[],
   f3Track: number[],
-  frameRateMs: number = 10,
+  _frameRateMs: number = 10,
 ): FormantResult {
   const violations: string[] = []
 

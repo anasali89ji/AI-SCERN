@@ -110,7 +110,7 @@ async function detectFromUrl(url: string): Promise<{ text: string; blogPatternSc
 
 // ── Process single item ────────────────────────────────────────────────────────
 
-async function processItem(item: BatchItem, index: number, userId: string): Promise<BatchItemResult> {
+async function processItem(item: BatchItem, index: number, _userId: string): Promise<BatchItemResult> {
   try {
     if (item.type === 'text') {
       if (!item.content) return { index, label: item.label, type: 'text', verdict: 'ERROR', error: 'No content provided' }

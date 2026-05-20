@@ -73,7 +73,7 @@ export default function BatchPage() {
     onDropRejected: () => {}
   })
 
-  const processFile = async (bf: BatchFile, uid: string | null): Promise<Partial<BatchFile>> => {
+  const processFile = async (bf: BatchFile, _uid: string | null): Promise<Partial<BatchFile>> => {
     const start = Date.now()
     try {
       const mediaType = detectType(bf.file)

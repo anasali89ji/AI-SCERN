@@ -165,7 +165,7 @@ function samplePixels(img: DecodedImage, maxSamples = 8000): RGBPixel[] {
 // Compressed bytes from JPEG are DCT coefficients — they bear no relationship
 // to actual pixel values. Sharp decodes the image to raw RGB pixels first.
 
-export async function decodeImagePixels(buf: Buffer, mimeType: string): Promise<DecodedImage> {
+export async function decodeImagePixels(buf: Buffer, _mimeType: string): Promise<DecodedImage> {
   try {
     const mod   = await import('sharp')
     const sharp = mod.default

@@ -175,7 +175,7 @@ function qTableScore(tables: number[][]): number {
 export async function analyzeCompressionAndExif(
   imageBuffer: Buffer,
   fileSize: number,
-  mimeType: string,
+  _mimeType: string,
 ): Promise<LayerReport> {
   const start = Date.now()
   const evidence: EvidenceNode[] = []

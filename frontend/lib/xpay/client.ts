@@ -117,7 +117,7 @@ export async function createXPayCheckout(order: XPayOrder): Promise<XPayCheckout
 /**
  * Verify webhook signature from XPay.
  */
-export function verifyXPayWebhook(payload: XPayWebhookPayload, rawBody: string): boolean {
+export function verifyXPayWebhook(payload: XPayWebhookPayload, _rawBody: string): boolean {
   try {
     const { signature, ...rest } = payload
     const sigString = Object.keys(rest)

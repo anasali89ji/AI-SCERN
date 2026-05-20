@@ -4,7 +4,7 @@
  * Middleware handles server-side redirect; this handles client-side hydration edge cases.
  */
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import {  } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'

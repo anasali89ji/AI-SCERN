@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 import {
   Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
   Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
-  Moon, Sun, Monitor, FileText, Volume2, Zap, Eye, EyeOff,
+  Moon, Sun, Monitor, FileText, Zap, Eye, EyeOff,
   RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
-  ChevronRight, Info, Star, BrainCircuit
+  ChevronRight, Star, BrainCircuit
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
