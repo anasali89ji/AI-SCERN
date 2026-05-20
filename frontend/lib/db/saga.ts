@@ -356,7 +356,7 @@ export async function runCreateScanSaga(params: {
   scanType: string
   payload:  Record<string, unknown>
 }): Promise<SagaResult> {
-  return runSaga('create-scan', `${params.userId}:${params.scanId}`, [
+  return runSaga<unknown>('create-scan', `${params.userId}:${params.scanId}`, [
     deductCreditStep(params.userId, params.scanType),
     insertScanStep(params.scanId, { ...params.payload, userId: params.userId, scanType: params.scanType }),
     logActivityStep(params.userId, params.scanType, { scan_id: params.scanId }),
@@ -372,7 +372,7 @@ export async function runCreditPurchaseSaga(params: {
   amountPkr: number
   planId:    string
 }): Promise<SagaResult> {
-  return runSaga('credit-purchase', params.orderId, [
+  return runSaga<unknown>('credit-purchase', params.orderId, [
     recordCreditPurchaseStep(params.userId, params.orderId, params.credits, params.amountPkr, params.planId),
     topUpCreditsStep(params.userId, params.credits),
     logActivityStep(params.userId, 'credit_purchase', {
