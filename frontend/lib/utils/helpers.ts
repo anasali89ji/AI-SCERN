@@ -34,6 +34,11 @@ export function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
+export function normalizeConfidence(score: number): number {
+  const percent = score <= 1 ? score * 100 : score
+  return Math.max(0, Math.min(100, percent))
+}
+
 export function formatConfidence(score: number): string {
   const percent = score <= 1 ? score * 100 : score
   const clamped = Math.max(0, Math.min(100, percent))

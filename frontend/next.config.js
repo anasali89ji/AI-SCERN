@@ -101,7 +101,6 @@ const nextConfig = {
           value: [
             '</hero/ai/ai-01.webp>; rel=preload; as=image; type="image/webp"',
             '</hero/real/real-01.webp>; rel=preload; as=image; type="image/webp"',
-            '</fonts/inter-400.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin=anonymous',
           ].join(', '),
         },
       ],
@@ -123,6 +122,7 @@ const nextConfig = {
     {
       source: '/fonts/:file*',
       headers: [
+        { key: 'Access-Control-Allow-Origin', value: '*' },
         { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
       ],
     },
