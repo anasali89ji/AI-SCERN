@@ -332,12 +332,12 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                     </span>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-text-primary tabular-nums">{Math.round(result.confidence || 0)}%</div>
+                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatConfidence(result.confidence || 0)}</div>
                     <div className="text-[10px] text-text-muted">confidence</div>
                   </div>
                 </div>
                 <div className="h-1.5 rounded-full bg-background overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence || 0}%` }}
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
                     transition={{ duration: 1.0, ease: 'easeOut' }}
                     className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-rose to-pink-400' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald to-teal-400' : 'bg-gradient-to-r from-amber to-yellow-400'}`} />
                 </div>

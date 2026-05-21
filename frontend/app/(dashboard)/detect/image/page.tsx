@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
+import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
@@ -128,7 +128,7 @@ File:       ${file.name}
 Size:       ${formatFileSize(file.size)}
 ${imgDims ? `Dimensions: ${imgDims.w} × ${imgDims.h}px\n` : ''}
 Verdict:    ${result.verdict}
-Confidence: ${result.confidence}%
+Confidence: ${formatConfidence(result.confidence)}
 Summary:    ${result.summary}
 
 Detection Signals:
@@ -335,7 +335,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
                   <div className="h-3 bg-border rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className="h-full rounded-full bg-gradient-to-r from-primary to-secondary" />
                   </div>
@@ -498,7 +498,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence)}% confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>

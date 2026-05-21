@@ -10,7 +10,7 @@ import {
   Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, formatFileSize } from '@/lib/utils/helpers'
+import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
@@ -491,7 +491,7 @@ function VideoDetectionPage() {
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
                   <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence * 100}%` }}
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className="h-full rounded-full bg-gradient-to-r from-secondary to-primary" />
                   </div>
@@ -642,7 +642,7 @@ function VideoDetectionPage() {
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence)}% confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>

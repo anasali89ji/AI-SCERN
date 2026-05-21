@@ -35,7 +35,9 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatConfidence(score: number): string {
-  return `${Math.round(score)}%`
+  const percent = score <= 1 ? score * 100 : score
+  const clamped = Math.max(0, Math.min(100, percent))
+  return `${Math.round(clamped)}%`
 }
 
 export function getVerdictColor(verdict: string): string {

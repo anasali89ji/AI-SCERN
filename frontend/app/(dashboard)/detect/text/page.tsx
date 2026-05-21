@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence } from '@/lib/utils/helpers'
+import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
 import dynamic from 'next/dynamic'
 
@@ -147,7 +147,7 @@ function TextDetectionPage() {
     const out = `Aiscern Text Analysis Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Verdict:    ${result.verdict === 'AI' ? 'AI GENERATED' : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : 'UNCERTAIN'}
-Confidence: ${Math.round((result.confidence <= 1 ? result.confidence * 100 : result.confidence))}%
+Confidence: ${formatConfidence(result.confidence)}
 Summary:    ${result.summary}
 
 Detection Signals:
@@ -161,7 +161,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
   const exportReport = () => {
     if (!result) return
-    const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${result.verdict}\nConfidence: ${result.confidence}%\nSummary: ${result.summary}\n\nText analyzed:\n${text}`], { type: 'text/plain' })
+    const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nText analyzed:\n${text}`], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-text-analysis-${Date.now()}.txt`; a.click()
   }
@@ -422,7 +422,7 @@ Analyzed: ${new Date().toLocaleString()}`
                       <span>→ AI</span>
                     </div>
                     <div className="h-2.5 bg-border rounded-full overflow-hidden relative">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
                         className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber to-rose' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald/50 to-emerald' : 'bg-gradient-to-r from-amber/50 to-amber'}`}
                       />
@@ -603,7 +603,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence)}% confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>
