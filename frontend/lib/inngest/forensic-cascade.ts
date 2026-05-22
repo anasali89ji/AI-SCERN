@@ -459,7 +459,7 @@ export const imageForensicCascade = inngest.createFunction(
           l6Agents:      semanticAgents,
           l7Agents:      l7Agents,
           l8Agents:      l8Agents,
-          l8Definitive:  (physicsData?.definitiveAgents ?? []) as string[],
+          l8Definitive:  (physicsData?.definitiveAgents ?? []) as Array<{ agentName: string; score: number; reason: string }>,
           bayesianScore: roughBayesianScore,
         })
       } catch (err) {
