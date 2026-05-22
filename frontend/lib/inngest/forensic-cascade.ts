@@ -381,10 +381,10 @@ export const imageForensicCascade = inngest.createFunction(
 
     const pythonLayers: LayerReport[]  = signalData?.layers      ?? []
     const synthidResult                = signalData?.synthid      ?? null
-    const semanticAgents               = semanticData?.agents     ?? []
-    const semanticLayerReport          = semanticData?.layerReport ?? null
-    const perspectiveLayerReport       = perspectiveData?.layerReport ?? null
-    const physicsLayerReport           = physicsData?.layerReport ?? null
+    const semanticAgents               = (semanticData?.agents     ?? []) as SemanticAgentReport[]
+    const semanticLayerReport          = (semanticData?.layerReport ?? null) as import("@/types/forensic").LayerReport | null
+    const perspectiveLayerReport       = (perspectiveData?.layerReport ?? null) as import("@/types/forensic").LayerReport | null
+    const physicsLayerReport           = (physicsData?.layerReport ?? null) as import("@/types/forensic").LayerReport | null
 
     // ── STEP 4: Targeted signal re-run if semantic flagged specific regions ──
     let targetedPythonLayers = pythonLayers
@@ -459,7 +459,7 @@ export const imageForensicCascade = inngest.createFunction(
           l6Agents:      semanticAgents,
           l7Agents:      l7Agents,
           l8Agents:      l8Agents,
-          l8Definitive:  physicsData?.definitiveAgents ?? [],
+          l8Definitive:  (physicsData?.definitiveAgents ?? []) as string[],
           bayesianScore: roughBayesianScore,
         })
       } catch (err) {
