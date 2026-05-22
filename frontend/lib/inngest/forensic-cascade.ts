@@ -447,8 +447,8 @@ export const imageForensicCascade = inngest.createFunction(
     // generator attribution from all 32 agent outputs combined.
     const contradictionResult = await step.run('layer-contradiction-graph', async () => {
       try {
-        const l7Agents = perspectiveData?.agents ?? []
-        const l8Agents = physicsData?.agents     ?? []
+        const l7Agents = (perspectiveData?.agents ?? []) as import('@/types/forensic').SemanticAgentReport[]
+        const l8Agents = (physicsData?.agents     ?? []) as import('@/types/forensic').SemanticAgentReport[]
 
         const l6Score  = semanticLayerReport?.layerSuspicionScore   ?? 0.5
         const l7Score  = perspectiveLayerReport?.layerSuspicionScore ?? 0.5
