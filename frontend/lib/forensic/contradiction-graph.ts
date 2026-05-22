@@ -529,7 +529,7 @@ export function runContradictionGraph(input: ContradictionGraphInput): Contradic
           layer:        22,
           category:     n.evidenceType,
           artifactType: n.agentId,
-          status:       (n.score > 0.65 ? 'anomalous' : n.score < 0.35 ? 'normal' : 'inconclusive') as const,
+          status:       (n.score > 0.65 ? 'anomalous' : n.score < 0.35 ? 'normal' : 'inconclusive') as 'anomalous' | 'normal' | 'inconclusive',
           confidence:   n.score,
           detail:       n.claim.slice(0, 180),
         })),
