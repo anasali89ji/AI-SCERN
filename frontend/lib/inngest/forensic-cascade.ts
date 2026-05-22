@@ -186,11 +186,17 @@ export const imageForensicCascade = inngest.createFunction(
     triggers:    [{ event: 'scan/image.forensic-cascade' as any }],
   },
   async ({ event, step }) => {
-    const { scanId, imageUrl, r2Key, existingEnsembleResult } = event.data as {
+    const { scanId, imageUrl, r2Key, existingEnsembleResult, brainTelemetry } = event.data as {
       scanId:   string
       imageUrl: string
       r2Key:    string
       existingEnsembleResult?: { confidence: number; label: 'ai' | 'human' | 'uncertain' }
+      brainTelemetry?: {
+        score:          number
+        verdict:        string
+        generatorHints: string[]
+        description:    string
+      } | null
     }
 
     const startTime = Date.now()
@@ -464,9 +470,39 @@ export const imageForensicCascade = inngest.createFunction(
 
     // ── STEP 7: Final Fusion (all 10 layers → verdict) ──────────────────────
     const finalVerdict = await step.run('final-fusion', async () => {
+      // Build L4 LayerReport from brain telemetry (runs in hf-analyze, score passed via event)
+      const brainL4: LayerReport | null = brainTelemetry
+        ? {
+            layer:             4,
+            layerName:         'Brain Signal Analysis (L4)',
+            processingTimeMs:  0,
+            status:            'success' as const,
+            layerSuspicionScore: Math.min(0.99, Math.max(0.01, brainTelemetry.score)),
+            evidence: [
+              {
+                layer:        4,
+                category:     'pixel-statistics',
+                artifactType: 'brain-score',
+                status:       (brainTelemetry.score > 0.65 ? 'anomalous' : brainTelemetry.score < 0.35 ? 'normal' : 'inconclusive') as 'anomalous' | 'normal' | 'inconclusive',
+                confidence:   brainTelemetry.score,
+                detail:       `Brain verdict: ${brainTelemetry.verdict} (${Math.round(brainTelemetry.score * 100)}%). ${brainTelemetry.description.slice(0, 200)}`,
+              },
+              ...brainTelemetry.generatorHints.map(hint => ({
+                layer:        4,
+                category:     'generator-attribution' as const,
+                artifactType: 'generator-hint',
+                status:       'anomalous' as const,
+                confidence:   brainTelemetry!.score,
+                detail:       hint,
+              })),
+            ],
+          }
+        : null
+
       const allLayers: LayerReport[] = [
         ...targetedPythonLayers,
         ...(compressionRpt      ? [compressionRpt]              : []),  // L2
+        ...(brainL4             ? [brainL4]                     : []),  // L4 brain telemetry
         ...(diffusionRpt        ? [diffusionRpt]                : []),  // L5
         ...(semanticLayerReport ? [semanticLayerReport]         : []),  // L6
         ...(ensembleRpt         ? [ensembleRpt]                 : []),  // L9

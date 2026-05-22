@@ -206,6 +206,19 @@ export async function POST(req: NextRequest) {
           throw new Error('forensic_scans insert failed: ' + insertErr.message)
         }
 
+        // Extract brain telemetry from model_breakdown for L4 LayerReport
+        const brainBreakdown = result.model_breakdown?.find((m: { model_id: string }) => m.model_id === 'image-brain-v2')
+        const brainSig       = result.signals?.find((s: { name: string }) => s.name === 'Image Detection Brain')
+        const genHintMatch   = brainSig?.description?.match(/Generator: ([^.]+)/)
+        const brainTelemetry = brainBreakdown
+          ? {
+              score:          brainBreakdown.raw_score as number,
+              verdict:        brainBreakdown.verdict   as string,
+              generatorHints: genHintMatch ? genHintMatch[1].split('; ').filter(Boolean) : [] as string[],
+              description:    brainSig?.description ?? '',
+            }
+          : null
+
         // Fire Inngest cascade — runs in background, never blocks this response
         await inngest.send({
           name: 'scan/image.forensic-cascade' as any,
@@ -217,6 +230,7 @@ export async function POST(req: NextRequest) {
               confidence: finalConfidence / 100,
               label:      finalVerdict === 'AI' ? 'ai' : finalVerdict === 'HUMAN' ? 'human' : 'uncertain',
             },
+            brainTelemetry,
           },
         })
       } catch (e) {

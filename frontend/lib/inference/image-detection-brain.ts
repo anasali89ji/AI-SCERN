@@ -677,6 +677,115 @@ function analyzeBackgroundCoherence(img: DecodedImage): ImageBrainSignal {
     evidence: `border luma std=${bgSt.std.toFixed(1)} (AI: <15, Real: >25) | L-R grad=${Math.abs(lMean-rMean).toFixed(1)} (AI: <15)` }
 }
 
+// ── SIGNAL 17: BILATERAL SYMMETRY ─────────────────────────────────────────────
+// AI generators produce images with high left-right symmetry because they learn
+// from vast datasets of centred subjects. Real cameras capture natural asymmetry:
+// tilted framing, off-centre subjects, uneven lighting, camera shake.
+// Method: compare luma of each pixel (x, y) against its mirror (W-1-x, y).
+// AI: mean absolute difference (MAD) < 15 luma units (out of 255).
+// Real: MAD typically 25–60 because composition is naturally asymmetric.
+
+function analyzeBilateralSymmetry(img: DecodedImage): ImageBrainSignal {
+  const { pixels, width, height, channels, decoded } = img
+  if (!decoded || width < 32 || height < 32) {
+    return {
+      name: 'Bilateral Symmetry', category: 'structure',
+      score: 0.5, weight: 0.07, rawValue: 0,
+      evidence: 'requires decoded pixels ≥32px',
+    }
+  }
+
+  const halfW  = Math.floor(width / 2)
+  const diffs: number[] = []
+  const stride = Math.max(1, Math.floor(height / 80))
+
+  for (let y = 0; y < height; y += stride) {
+    for (let x = 0; x < halfW; x += 2) {
+      const offL = (y * width + x)               * channels
+      const offR = (y * width + (width - 1 - x)) * channels
+      const lumaL = 0.299 * pixels[offL] + 0.587 * pixels[offL + 1] + 0.114 * pixels[offL + 2]
+      const lumaR = 0.299 * pixels[offR] + 0.587 * pixels[offR + 1] + 0.114 * pixels[offR + 2]
+      diffs.push(Math.abs(lumaL - lumaR))
+    }
+  }
+
+  if (!diffs.length) {
+    return { name: 'Bilateral Symmetry', category: 'structure', score: 0.5, weight: 0.07, rawValue: 0, evidence: 'no samples' }
+  }
+
+  const mad     = meanArr(diffs)
+  const diffSt  = stats(diffs)
+  const madSc   = mad < 8  ? 0.94 : mad < 14 ? 0.82 : mad < 22 ? 0.62 : mad < 35 ? 0.38 : 0.16
+  const varSc   = diffSt.std < 6  ? 0.90 : diffSt.std < 12 ? 0.74 : diffSt.std < 20 ? 0.50 : 0.20
+  const perfectR = diffs.filter(d => d < 5).length / diffs.length
+  const perfSc   = perfectR > 0.55 ? 0.92 : perfectR > 0.38 ? 0.74 : perfectR > 0.22 ? 0.50 : 0.20
+
+  return {
+    name: 'Bilateral Symmetry', category: 'structure',
+    score: clamp(madSc * 0.42 + varSc * 0.28 + perfSc * 0.30, 0, 1),
+    weight: 0.07, rawValue: mad,
+    evidence: `mirror MAD=${mad.toFixed(1)} (AI: <14, Real: >25) | std=${diffSt.std.toFixed(1)} | perfect=${(perfectR*100).toFixed(0)}% (AI: >38%)`,
+  }
+}
+
+// ── SIGNAL 18: HORIZON LINE CONSISTENCY ───────────────────────────────────────
+// AI images have a single level clean horizon because the model learned from
+// billions of levelled stock photos. Real cameras are tilted 0.5–3°, with
+// noisy edges and no single dominant horizontal energy row.
+// Method: per-row Sobel-Y energy → peak z-score + position + concentration.
+
+function analyzeHorizonConsistency(img: DecodedImage): ImageBrainSignal {
+  const { pixels, width, height, channels, decoded } = img
+  if (!decoded || width < 32 || height < 32) {
+    return {
+      name: 'Horizon Line Consistency', category: 'structure',
+      score: 0.5, weight: 0.06, rawValue: 0,
+      evidence: 'requires decoded pixels ≥32px',
+    }
+  }
+
+  const rowEnergy = new Float32Array(height)
+  const luma = (y: number, x: number) => {
+    const off = (y * width + x) * channels
+    return 0.299 * pixels[off] + 0.587 * pixels[off + 1] + 0.114 * pixels[off + 2]
+  }
+
+  const xStep = Math.max(1, Math.floor(width / 128))
+  for (let y = 1; y < height - 1; y++) {
+    let energy = 0, cnt = 0
+    for (let x = 1; x < width - 1; x += xStep) {
+      const gy = -luma(y-1,x-1) - 2*luma(y-1,x) - luma(y-1,x+1)
+               +  luma(y+1,x-1) + 2*luma(y+1,x) + luma(y+1,x+1)
+      energy += gy * gy
+      cnt++
+    }
+    rowEnergy[y] = cnt > 0 ? energy / cnt : 0
+  }
+
+  const energyArr = Array.from(rowEnergy)
+  const enSt      = stats(energyArr)
+  const peakIdx   = energyArr.indexOf(Math.max(...energyArr))
+  const peakVal   = energyArr[peakIdx]
+  const zScore    = enSt.std > 0 ? (peakVal - enSt.mean) / enSt.std : 0
+  const peakFrac  = peakIdx / Math.max(1, height - 1)
+  const inMiddle  = peakFrac >= 0.35 && peakFrac <= 0.75 ? 1 : 0
+
+  const nearPeak  = energyArr.slice(Math.max(0, peakIdx - 8), Math.min(height, peakIdx + 9))
+  const farEnergy = energyArr.filter((_, i) => Math.abs(i - peakIdx) > 20)
+  const concentration = farEnergy.length > 0 ? (meanArr(nearPeak) / (meanArr(farEnergy) + 1e-6)) : 1
+
+  const zSc    = zScore > 5  ? 0.90 : zScore > 3  ? 0.76 : zScore > 2  ? 0.54 : 0.20
+  const midSc  = inMiddle ? 0.72 : 0.28
+  const concSc = concentration > 8 ? 0.90 : concentration > 4 ? 0.72 : concentration > 2 ? 0.48 : 0.20
+
+  return {
+    name: 'Horizon Line Consistency', category: 'structure',
+    score: clamp(zSc * 0.45 + midSc * 0.25 + concSc * 0.30, 0, 1),
+    weight: 0.06, rawValue: zScore,
+    evidence: `horizon z=${zScore.toFixed(2)} (AI: >3) | at ${(peakFrac*100).toFixed(0)}% height | conc=${concentration.toFixed(1)} (AI: >4)`,
+  }
+}
+
 // ── SIGNAL 16: AI GENERATOR FINGERPRINTS v2.0 ─────────────────────────────────
 // Covers 11 generators: MJ, DALL-E 3, SD, Flux, Gemini Imagen v3, Grok Aurora,
 // Adobe Firefly, Ideogram v2, Leonardo AI, Canva AI, Claude Image Gen.
@@ -797,12 +906,14 @@ export async function analyzeImageWithBrain(
   const lcSig   = analyzeLocalContrast(img)
   const gamutSig = analyzeColorGamut(samples)
   const bgSig   = analyzeBackgroundCoherence(img)
+  const symSig  = analyzeBilateralSymmetry(img)
+  const horizSig = analyzeHorizonConsistency(img)
   const { signal: genSig, hints: genHints } = detectGeneratorFingerprints(samples, satSig, texSig, hueSig, hueHints)
 
   const allSignals: ImageBrainSignal[] = [
     satSig, texSig, chanSig, lumaSig, freqSig, edgeSig,
     compSig, gradSig, palSig, hueSig, upsSig, discSig,
-    lcSig, gamutSig, bgSig, genSig,
+    lcSig, gamutSig, bgSig, symSig, horizSig, genSig,
   ]
 
   // Step 3: Weighted ensemble + confidence boost
@@ -810,7 +921,8 @@ export async function analyzeImageWithBrain(
   const rawSc   = allSignals.reduce((s, sig) => s + sig.score * sig.weight, 0) / totalW
   const highAI  = allSignals.filter(s => s.score > 0.75).length
   const highHu  = allSignals.filter(s => s.score < 0.25).length
-  const boost   = highAI >= 8 ? 0.10 : highAI >= 5 ? 0.06 : highHu >= 8 ? -0.10 : highHu >= 5 ? -0.06 : 0
+  // Thresholds scaled to 18 signals (was 16): ≥9 strong AI = boost, ≥6 moderate
+  const boost   = highAI >= 10 ? 0.10 : highAI >= 6 ? 0.06 : highHu >= 10 ? -0.10 : highHu >= 6 ? -0.06 : 0
 
   // ── Artistic / Fantasy AI Override ────────────────────────────────────────
   // Texture, frequency, and gradient signals are calibrated for photorealistic
