@@ -386,6 +386,36 @@ export const imageForensicCascade = inngest.createFunction(
     const perspectiveLayerReport       = (perspectiveData?.layerReport ?? null) as import("@/types/forensic").LayerReport | null
     const physicsLayerReport           = (physicsData?.layerReport ?? null) as import("@/types/forensic").LayerReport | null
 
+    // ── Hoist brainL4 here so it's visible to both final-fusion and persist-result ──
+    // brainTelemetry comes from event.data (passed by detect/image route).
+    const brainL4: LayerReport | null = brainTelemetry
+      ? {
+          layer:               4,
+          layerName:           'Brain Signal Analysis (L4)',
+          processingTimeMs:    0,
+          status:              'success' as const,
+          layerSuspicionScore: Math.min(0.99, Math.max(0.01, brainTelemetry.score)),
+          evidence: [
+            {
+              layer:        4,
+              category:     'pixel-statistics',
+              artifactType: 'brain-score',
+              status:       (brainTelemetry.score > 0.65 ? 'anomalous' : brainTelemetry.score < 0.35 ? 'normal' : 'inconclusive') as 'anomalous' | 'normal' | 'inconclusive',
+              confidence:   brainTelemetry.score,
+              detail:       `Brain verdict: ${brainTelemetry.verdict} (${Math.round(brainTelemetry.score * 100)}%). ${brainTelemetry.description.slice(0, 200)}`,
+            },
+            ...brainTelemetry.generatorHints.map(hint => ({
+              layer:        4,
+              category:     'generator-attribution' as const,
+              artifactType: 'generator-hint',
+              status:       'anomalous' as const,
+              confidence:   brainTelemetry!.score,
+              detail:       hint,
+            })),
+          ],
+        }
+      : null
+
     // ── STEP 4: Targeted signal re-run if semantic flagged specific regions ──
     let targetedPythonLayers = pythonLayers
 
@@ -469,36 +499,8 @@ export const imageForensicCascade = inngest.createFunction(
     })
 
     // ── STEP 7: Final Fusion (all 10 layers → verdict) ──────────────────────
+    // brainL4 is hoisted to outer scope above — accessible here and in persist-result
     const finalVerdict = await step.run('final-fusion', async () => {
-      // Build L4 LayerReport from brain telemetry (runs in hf-analyze, score passed via event)
-      const brainL4: LayerReport | null = brainTelemetry
-        ? {
-            layer:             4,
-            layerName:         'Brain Signal Analysis (L4)',
-            processingTimeMs:  0,
-            status:            'success' as const,
-            layerSuspicionScore: Math.min(0.99, Math.max(0.01, brainTelemetry.score)),
-            evidence: [
-              {
-                layer:        4,
-                category:     'pixel-statistics',
-                artifactType: 'brain-score',
-                status:       (brainTelemetry.score > 0.65 ? 'anomalous' : brainTelemetry.score < 0.35 ? 'normal' : 'inconclusive') as 'anomalous' | 'normal' | 'inconclusive',
-                confidence:   brainTelemetry.score,
-                detail:       `Brain verdict: ${brainTelemetry.verdict} (${Math.round(brainTelemetry.score * 100)}%). ${brainTelemetry.description.slice(0, 200)}`,
-              },
-              ...brainTelemetry.generatorHints.map(hint => ({
-                layer:        4,
-                category:     'generator-attribution' as const,
-                artifactType: 'generator-hint',
-                status:       'anomalous' as const,
-                confidence:   brainTelemetry!.score,
-                detail:       hint,
-              })),
-            ],
-          }
-        : null
-
       const allLayers: LayerReport[] = [
         ...targetedPythonLayers,
         ...(compressionRpt      ? [compressionRpt]              : []),  // L2
@@ -525,11 +527,20 @@ export const imageForensicCascade = inngest.createFunction(
     // ── STEP 8: Persist completed result ───────────────────────────────────
     await step.run('persist-result', async () => {
       const sb = getSupabaseAdmin()
+      // Build FULL layer set for DB — must include every layer so the forensic
+      // page renders all layer cards. Previously L4(brain)/L5/L6/L9/L10 were
+      // accidentally omitted, causing those cards to be invisible in the UI.
       const allLayers = [
-        ...targetedPythonLayers,
-        ...(compressionRpt       ? [compressionRpt]       : []),
-        ...(perspectiveLayerReport ? [perspectiveLayerReport] : []),
-        ...(physicsLayerReport   ? [physicsLayerReport]   : []),
+        ...targetedPythonLayers,                                          // L1,L3,L4 python
+        ...(compressionRpt         ? [compressionRpt]         : []),      // L2
+        ...(brainL4                ? [brainL4]                : []),      // L4 brain telemetry
+        ...(diffusionRpt           ? [diffusionRpt]           : []),      // L5
+        ...(semanticLayerReport    ? [semanticLayerReport]    : []),      // L6 semantic RAG
+        ...(perspectiveLayerReport ? [perspectiveLayerReport] : []),      // L7
+        ...(physicsLayerReport     ? [physicsLayerReport]     : []),      // L8
+        ...(ensembleRpt            ? [ensembleRpt]            : []),      // L9 neural ensemble
+        ...(provenanceResult.layerReport.status === 'success'
+              ? [provenanceResult.layerReport] : []),                     // L10 provenance
       ]
 
       const { error } = await sb.from('forensic_scans').update({

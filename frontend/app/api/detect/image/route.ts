@@ -117,8 +117,15 @@ export async function POST(req: NextRequest) {
     
     if (process.env.DETECTION_RAG_ENABLED === 'true') {
       try {
-        // Use filename or a generic description for image RAG
-        const imageDescription = fileName || 'uploaded image'
+        // Embed the model's signal description for meaningful pgvector similarity.
+        // Using fileName was a placeholder — it produces random/useless neighbors.
+        // Signal description contains artifact names, verdicts, and model findings
+        // which are semantically meaningful for retrieval.
+        const imageDescription =
+          result.signals?.[0]?.description ??
+          result.summary ??
+          fileName ??
+          'uploaded image'
         ragResult = await queryDetectionRAG(imageDescription, 'image', result.confidence)
         if (ragResult?.rag_applied) {
           finalConfidence = ragResult.blended_score
@@ -195,7 +202,7 @@ export async function POST(req: NextRequest) {
           provenance:               null,
           final_verdict:            null,
           existing_ensemble_result: {
-            confidence: finalConfidence / 100,
+            confidence: finalConfidence,   // already 0-1 from analyzeImage — do NOT divide by 100
             label:      finalVerdict === 'AI' ? 'ai' : finalVerdict === 'HUMAN' ? 'human' : 'uncertain',
           },
           created_at: new Date().toISOString(),
@@ -227,7 +234,7 @@ export async function POST(req: NextRequest) {
             imageUrl,
             r2Key,
             existingEnsembleResult: {
-              confidence: finalConfidence / 100,
+              confidence: finalConfidence,   // already 0-1 — do NOT divide by 100
               label:      finalVerdict === 'AI' ? 'ai' : finalVerdict === 'HUMAN' ? 'human' : 'uncertain',
             },
             brainTelemetry,
