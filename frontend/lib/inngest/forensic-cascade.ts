@@ -22,11 +22,14 @@ import { getR2Buffer }        from '@/lib/storage/r2'
 
 import { analyzeCompressionAndExif } from '@/lib/forensic/layers/compression-analysis'
 import { runSemanticRAG }            from '@/lib/forensic/layers/semantic-rag'
+import { runPerspectiveSwarm }       from '@/lib/forensic/layers/perspective-swarm'
+import { runPhysicsBiologySwarm }    from '@/lib/forensic/layers/physics-biology-swarm'
 import { runProvenanceCheck }        from '@/lib/forensic/layers/provenance'
 import { runFinalFusion }            from '@/lib/forensic/layers/final-fusion'
 import { runDiffusionInversion }     from '@/lib/forensic/layers/diffusion-inversion'
 import { runDiffusionSnapBack }     from '@/lib/forensic/layers/diffusion-snapback'
 import { runEnsembleClassifier }     from '@/lib/forensic/layers/ensemble-classifier'
+import { runContradictionGraph }     from '@/lib/forensic/contradiction-graph'
 import { SIGNAL_WORKER_TIMEOUT_MS }  from '@/lib/forensic/constants'
 
 import type {
@@ -177,7 +180,7 @@ async function notifyFrontend(scanId: string, status: string, verdict?: string):
 export const imageForensicCascade = inngest.createFunction(
   {
     id:          'image-forensic-cascade',
-    name:        'Image Forensic Cascade Detection (6-Layer)',
+    name:        'Image Forensic Cascade Detection (10-Layer, 32-Agent)',
     concurrency: { limit: 10 },
     retries:     2,
     triggers:    [{ event: 'scan/image.forensic-cascade' as any }],
@@ -240,10 +243,11 @@ export const imageForensicCascade = inngest.createFunction(
       }
     })
 
-    // ── STEP 3: Parallel fan-out (4 tracks) ────────────────────────────────
+    // ── STEP 3: Parallel fan-out (6 tracks) ────────────────────────────────
     // Each track is isolated — a failure in one does NOT abort others.
+    // L6, L7, L8 all run in parallel for maximum throughput (~9-12s wall time).
 
-    const [signalResult, compressionResult, semanticResult, diffusionResult, ensembleResult] =
+    const [signalResult, compressionResult, semanticResult, perspectiveResult, physicsResult, diffusionResult, ensembleResult] =
       await Promise.allSettled([
 
       // Track A: Python signal worker (Layers 1, 3, 4 + SynthID) — with retry
@@ -267,7 +271,7 @@ export const imageForensicCascade = inngest.createFunction(
         return analyzeCompressionAndExif(imgBuf, imageBuffer.size, imageBuffer.contentType)
       }),
 
-      // Track C: Semantic vector-less RAG (Layer 6 — 9 agents in parallel)
+      // Track C: Semantic vector-less RAG (Layer 6 — 20 agents in parallel)
       step.run('layer-semantic-rag', async () => {
         try {
           return await runSemanticRAG(imageUrl)
@@ -284,9 +288,41 @@ export const imageForensicCascade = inngest.createFunction(
         }
       }),
 
-      // Track D: Diffusion analysis (Layer 5) — runs BOTH variants in parallel.
-      // Snap-back (multi-strength dynamics) is more discriminating than single-shot inversion.
-      // If both succeed, take the one with higher confidence. Both degrade gracefully without GPU.
+      // Track D: Perspective Swarm (Layer 7 — 5 spatial-viewpoint agents, parallel with L6)
+      step.run('layer-perspective-swarm', async () => {
+        try {
+          return await runPerspectiveSwarm(imageUrl)
+        } catch (err) {
+          console.warn(`[forensic-cascade] Perspective swarm failed: ${err}`)
+          return {
+            layerReport: {
+              layer: 7, layerName: 'Perspective Swarm',
+              processingTimeMs: 0, status: 'failure' as const,
+              evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
+            },
+            agents: [],
+          }
+        }
+      }),
+
+      // Track E: Physics & Biology Swarm (Layer 8 — 7 agents, parallel with L6)
+      step.run('layer-physics-biology-swarm', async () => {
+        try {
+          return await runPhysicsBiologySwarm(imageUrl)
+        } catch (err) {
+          console.warn(`[forensic-cascade] Physics-biology swarm failed: ${err}`)
+          return {
+            layerReport: {
+              layer: 8, layerName: 'Physics & Biology Swarm',
+              processingTimeMs: 0, status: 'failure' as const,
+              evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
+            },
+            agents: [],
+          }
+        }
+      }),
+
+      // Track F: Diffusion analysis (Layer 5) — DDIM inversion + snapback
       step.run('layer-diffusion-analysis', async () => {
         try {
           const [invResult, snapResult] = await Promise.allSettled([
@@ -296,7 +332,6 @@ export const imageForensicCascade = inngest.createFunction(
           const inv  = invResult.status  === 'fulfilled' ? invResult.value  : null
           const snap = snapResult.status === 'fulfilled' ? snapResult.value : null
 
-          // Prefer snap-back (higher AUROC) if it succeeded; fall back to inversion; else failure
           if (snap?.status === 'success') return snap
           if (inv?.status  === 'success') return inv
           return {
@@ -314,7 +349,7 @@ export const imageForensicCascade = inngest.createFunction(
         }
       }),
 
-      // Track E: Neural Ensemble Classifier (Layer 9) — HF + CLIP + JPEG analysis
+      // Track G: Neural Ensemble Classifier (Layer 9) — HF + CLIP
       step.run('layer-ensemble-classifier', async () => {
         try {
           return await runEnsembleClassifier(imageUrl)
@@ -329,17 +364,21 @@ export const imageForensicCascade = inngest.createFunction(
       }),
     ])
 
-    // Unpack all 5 parallel results safely
-    const signalData      = signalResult.status     === 'fulfilled' ? signalResult.value     : null
+    // Unpack all 7 parallel results safely
+    const signalData      = signalResult.status      === 'fulfilled' ? signalResult.value      : null
     const compressionRpt  = compressionResult.status === 'fulfilled' ? compressionResult.value : null
-    const semanticData    = semanticResult.status   === 'fulfilled' ? semanticResult.value   : null
-    const diffusionRpt    = diffusionResult.status  === 'fulfilled' ? diffusionResult.value  : null
-    const ensembleRpt     = ensembleResult.status   === 'fulfilled' ? ensembleResult.value   : null
+    const semanticData    = semanticResult.status    === 'fulfilled' ? semanticResult.value    : null
+    const perspectiveData = perspectiveResult.status === 'fulfilled' ? perspectiveResult.value : null
+    const physicsData     = physicsResult.status     === 'fulfilled' ? physicsResult.value     : null
+    const diffusionRpt    = diffusionResult.status   === 'fulfilled' ? diffusionResult.value   : null
+    const ensembleRpt     = ensembleResult.status    === 'fulfilled' ? ensembleResult.value    : null
 
     const pythonLayers: LayerReport[]  = signalData?.layers      ?? []
     const synthidResult                = signalData?.synthid      ?? null
     const semanticAgents               = semanticData?.agents     ?? []
     const semanticLayerReport          = semanticData?.layerReport ?? null
+    const perspectiveLayerReport       = perspectiveData?.layerReport ?? null
+    const physicsLayerReport           = physicsData?.layerReport ?? null
 
     // ── STEP 4: Targeted signal re-run if semantic flagged specific regions ──
     let targetedPythonLayers = pythonLayers
@@ -370,12 +409,11 @@ export const imageForensicCascade = inngest.createFunction(
       }
     }
 
-    // ── STEP 5: Provenance check (Layer 7) ─────────────────────────────────
+    // ── STEP 5: Provenance check (Layer 10) ─────────────────────────────────
     // Runs after signal worker so we can pass SynthID result in
     const provenanceResult = await step.run('layer-provenance', async () => {
       try {
         const imgBuf     = Buffer.from(imageBuffer.base64, 'base64')
-        // Extract EXIF software/model from L2 evidence if available
         const l2Ev       = compressionRpt?.evidence ?? []
         const swEv       = l2Ev.find(e => e.artifactType === 'ai_software_tag' || e.artifactType === 'software_tag')
         const camEv      = l2Ev.find(e => e.artifactType === 'camera_metadata')
@@ -389,7 +427,7 @@ export const imageForensicCascade = inngest.createFunction(
         console.warn(`[forensic-cascade] Provenance check failed: ${err}`)
         return {
           layerReport: {
-            layer: 7, layerName: 'Provenance & Traceability',
+            layer: 10, layerName: 'Provenance & Traceability',
             processingTimeMs: 0, status: 'failure' as const,
             evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
           },
@@ -398,56 +436,90 @@ export const imageForensicCascade = inngest.createFunction(
       }
     })
 
-    // ── STEP 6: Final Fusion (Layer 8) ─────────────────────────────────────
+    // ── STEP 6: Contradiction Graph + Generator Attribution (L9) ────────────
+    // Pure computation — no API calls. Fires definitive gates and builds
+    // generator attribution from all 32 agent outputs combined.
+    const contradictionResult = await step.run('layer-contradiction-graph', async () => {
+      try {
+        const l7Agents = perspectiveData?.agents ?? []
+        const l8Agents = physicsData?.agents     ?? []
+
+        const l6Score  = semanticLayerReport?.layerSuspicionScore   ?? 0.5
+        const l7Score  = perspectiveLayerReport?.layerSuspicionScore ?? 0.5
+        const l8Score  = physicsLayerReport?.layerSuspicionScore     ?? 0.5
+        const roughBayesianScore = l6Score * 0.40 + l7Score * 0.30 + l8Score * 0.30
+
+        return runContradictionGraph({
+          l6Agents:      semanticAgents,
+          l7Agents:      l7Agents,
+          l8Agents:      l8Agents,
+          l8Definitive:  physicsData?.definitiveAgents ?? [],
+          bayesianScore: roughBayesianScore,
+        })
+      } catch (err) {
+        console.warn(`[forensic-cascade] Contradiction graph failed: ${err}`)
+        return null
+      }
+    })
+
+    // ── STEP 7: Final Fusion (all 10 layers → verdict) ──────────────────────
     const finalVerdict = await step.run('final-fusion', async () => {
       const allLayers: LayerReport[] = [
         ...targetedPythonLayers,
-        ...(compressionRpt      ? [compressionRpt]              : []),
+        ...(compressionRpt      ? [compressionRpt]              : []),  // L2
         ...(diffusionRpt        ? [diffusionRpt]                : []),  // L5
-        ...(semanticLayerReport ? [semanticLayerReport]         : []),
+        ...(semanticLayerReport ? [semanticLayerReport]         : []),  // L6
         ...(ensembleRpt         ? [ensembleRpt]                 : []),  // L9
         ...(provenanceResult.layerReport.status === 'success'
-             ? [provenanceResult.layerReport] : []),
+             ? [provenanceResult.layerReport] : []),                   // L10
       ]
 
       return runFinalFusion({
-        layers:                allLayers,
-        agents:                semanticAgents,
-        provenance:            provenanceResult.provenance,
+        layers:                          allLayers,
+        agents:                          semanticAgents,
+        provenance:                      provenanceResult.provenance,
         existingEnsembleResult,
+        perspectiveLayerReport:          perspectiveLayerReport ?? undefined,
+        physicsLayerReport:              physicsLayerReport     ?? undefined,
+        contradictionAdjustedScore:      contradictionResult?.adjustedScore,
+        contradictionConfidenceInterval: contradictionResult?.confidenceInterval,
       })
     })
 
-    // ── STEP 7: Persist completed result ───────────────────────────────────
+    // ── STEP 8: Persist completed result ───────────────────────────────────
     await step.run('persist-result', async () => {
-      const sb         = getSupabaseAdmin()
-      const allLayers  = [
+      const sb = getSupabaseAdmin()
+      const allLayers = [
         ...targetedPythonLayers,
-        ...(compressionRpt ? [compressionRpt] : []),
+        ...(compressionRpt       ? [compressionRpt]       : []),
+        ...(perspectiveLayerReport ? [perspectiveLayerReport] : []),
+        ...(physicsLayerReport   ? [physicsLayerReport]   : []),
       ]
 
       const { error } = await sb.from('forensic_scans').update({
-        status:           'completed',
-        layers:           allLayers,
-        semantic_agents:  semanticAgents,
-        provenance:       provenanceResult.provenance,
-        final_verdict:    finalVerdict,
+        status:             'completed',
+        layers:             allLayers,
+        semantic_agents:    semanticAgents,
+        provenance:         provenanceResult.provenance,
+        final_verdict:      finalVerdict,
+        generator_attribution: contradictionResult?.generatorAttribution ?? null,
+        confidence_interval:   contradictionResult?.confidenceInterval   ?? null,
         processing_time_ms: Date.now() - startTime,
-        updated_at:       new Date().toISOString(),
+        updated_at:         new Date().toISOString(),
       }).eq('id', scanId)
 
       if (error) throw new Error(`Persist failed: ${error.message}`)
       return { persisted: true }
     })
 
-    // ── STEP 8: Notify frontend ─────────────────────────────────────────────
+    // ── STEP 9: Notify frontend ─────────────────────────────────────────────
     await step.run('notify-frontend', async () => {
       await notifyFrontend(scanId, 'completed', finalVerdict.label)
       return { notified: true }
     })
 
     console.info(
-      `[forensic-cascade] Scan ${scanId} complete in ${Date.now() - startTime}ms — ${finalVerdict.label} (${(finalVerdict.confidence * 100).toFixed(0)}%)`
+      `[forensic-cascade] Scan ${scanId} complete in ${Date.now() - startTime}ms — ${finalVerdict.label} (${(finalVerdict.confidence * 100).toFixed(0)}%) | L7:${perspectiveLayerReport?.layerSuspicionScore?.toFixed(2) ?? 'skip'} L8:${physicsLayerReport?.layerSuspicionScore?.toFixed(2) ?? 'skip'}`
     )
 
     return {

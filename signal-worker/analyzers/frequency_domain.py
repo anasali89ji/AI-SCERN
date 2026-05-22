@@ -171,5 +171,109 @@ def analyze_frequency_domain(
         status=wav_status, confidence=wav_score, detail=wav_detail, raw_value=wav_raw,
     ))
 
+    # Fourier Ring Correlation
+    frc_score, frc_detail, frc_raw = fourier_ring_correlation(img_array)
+    frc_status = "anomalous" if frc_score > 0.60 else "normal" if frc_score < 0.25 else "inconclusive"
+    evidence.append(evidence_node(
+        layer=4, category="frequency_analysis", artifact_type="fourier_ring_correlation",
+        status=frc_status, confidence=frc_score, detail=frc_detail, raw_value=frc_raw,
+    ))
+
+    # Spectral Flatness / 1/f deviation
+    flat_score, flat_detail, flat_raw = spectral_flatness_test(img_array)
+    flat_status = "anomalous" if flat_score > 0.60 else "normal" if flat_score < 0.25 else "inconclusive"
+    evidence.append(evidence_node(
+        layer=4, category="frequency_analysis", artifact_type="spectral_1f_deviation",
+        status=flat_status, confidence=flat_score, detail=flat_detail, raw_value=flat_raw,
+    ))
+
     elapsed_ms = int((time.time() - start) * 1000)
     return build_layer_report(4, "Frequency Domain", evidence, "success", elapsed_ms)
+
+
+# ── Fourier Ring Correlation ──────────────────────────────────────────────────
+
+def fourier_ring_correlation(img_array: np.ndarray) -> tuple[float, str, float]:
+    """
+    FRC measures spatial resolution consistency across frequencies.
+    AI super-resolution / upsampling creates artificially high correlation at
+    frequencies above the natural Nyquist limit — physically impossible for
+    real optical images.
+
+    Split image top/bottom, compute cross-correlation in frequency space.
+    Real images: FRC drops naturally at physical resolution limit.
+    AI upscaled: FRC stays anomalously high past Nyquist → flag.
+
+    Returns (suspicion_score, detail, frc_global).
+    """
+    gray = img_array.mean(axis=2).astype(np.float32) if img_array.ndim == 3 else img_array.astype(np.float32)
+    h, w = gray.shape
+
+    if h < 32:
+        return 0.5, "Image too small for FRC", 0.5
+
+    half_h = h // 2
+    half1 = gray[:half_h, :]
+    half2 = gray[half_h:half_h * 2, :]
+
+    F1 = np.fft.fft2(half1)
+    F2 = np.fft.fft2(half2)
+
+    numerator   = float(np.abs(np.sum(F1 * np.conj(F2))))
+    denominator = float(np.sqrt(np.sum(np.abs(F1) ** 2) * np.sum(np.abs(F2) ** 2)) + 1e-8)
+    frc_global  = numerator / denominator
+
+    # For small images, natural FRC is higher; normalize expectation by pixel count
+    pixel_count = h * w
+    expected_natural_frc = 0.55 if pixel_count < 500_000 else 0.38 if pixel_count < 2_000_000 else 0.28
+    score = max(0.0, min(1.0, (frc_global - expected_natural_frc) / 0.35))
+
+    return score, f"FRC={frc_global:.4f} expected≤{expected_natural_frc:.2f} (AI upscaling signal)", frc_global
+
+
+# ── Spectral Flatness / 1/f Noise Deviation ──────────────────────────────────
+
+def spectral_flatness_test(img_array: np.ndarray) -> tuple[float, str, float]:
+    """
+    Natural images follow 1/f power spectrum (power ∝ 1/frequency in log space).
+    AI diffusion images deviate: over-smooth (suppressed high freq) OR artificial
+    peaks from upsampling. Measure residual of radial FFT against 1/f fit.
+
+    Returns (suspicion_score, detail, residual).
+    """
+    gray = img_array.mean(axis=2).astype(np.float32) if img_array.ndim == 3 else img_array.astype(np.float32)
+    fft = np.fft.fftshift(np.fft.fft2(gray))
+    power = np.log1p(np.abs(fft) ** 2)
+
+    h, w = power.shape
+    cy, cx = h // 2, w // 2
+    max_r = min(cy, cx)
+
+    if max_r < 4:
+        return 0.5, "Image too small for spectral flatness test", 0.0
+
+    y_idx, x_idx = np.indices((h, w))
+    r = np.sqrt((y_idx - cy) ** 2 + (x_idx - cx) ** 2).astype(int)
+
+    radial = []
+    for ri in range(1, max_r):
+        mask = (r == ri)
+        if mask.any():
+            radial.append(float(power[mask].mean()))
+
+    if len(radial) < 4:
+        return 0.5, "Insufficient radial samples", 0.0
+
+    radial_arr = np.array(radial, dtype=np.float32)
+    freqs      = np.arange(1, len(radial_arr) + 1, dtype=np.float32)
+    log_freqs  = np.log(freqs)
+
+    # Linear fit in log-log space (1/f = slope of -1 in log-log)
+    coeffs    = np.polyfit(log_freqs, radial_arr, 1)
+    predicted = np.polyval(coeffs, log_freqs)
+    residual  = float(np.sqrt(np.mean((radial_arr - predicted) ** 2)))
+
+    # Normalize residual: >2.5 is anomalous for natural images
+    score = min(1.0, residual / 2.5)
+    return score, f"1/f residual={residual:.3f} (slope={coeffs[0]:.2f})", residual
+

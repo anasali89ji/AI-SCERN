@@ -215,5 +215,71 @@ def analyze_pixel_integrity(
         status=ca_status, confidence=ca_score, detail=ca_detail, raw_value=ca_raw,
     ))
 
+    # Clone Detection (PatchMatch proxy)
+    clone_score, clone_detail, clone_raw = clone_detection_suspicion(img_array)
+    clone_status = "anomalous" if clone_score > 0.60 else "normal" if clone_score < 0.25 else "inconclusive"
+    evidence.append(evidence_node(
+        layer=1, category="pixel_integrity", artifact_type="clone_region_detection",
+        status=clone_status, confidence=clone_score, detail=clone_detail, raw_value=clone_raw,
+    ))
+
     elapsed_ms = int((time.time() - start) * 1000)
     return build_layer_report(1, "Pixel Integrity", evidence, "success", elapsed_ms)
+
+
+# ── Clone Detection (PatchMatch proxy) ───────────────────────────────────────
+
+def clone_detection_suspicion(img_array: np.ndarray) -> tuple[float, str, float]:
+    """
+    Detect copy-move forgeries: AI inpainting, object removal, outpainting.
+
+    Method: divide into overlapping 16×16 patches, compute DCT-proxy descriptors
+    (per-quadrant mean + std), find spatially distant near-duplicate patch pairs.
+    AI inpainting leaves semantically identical patch clusters at edit seams.
+
+    Returns (suspicion_score, detail, clone_density).
+    """
+    gray = img_array.mean(axis=2).astype(np.float32) if img_array.ndim == 3 else img_array.astype(np.float32)
+    h, w = gray.shape
+    PATCH_SIZE = 16
+    STEP = PATCH_SIZE // 2
+
+    patches = []
+    positions = []
+    for i in range(0, h - PATCH_SIZE, STEP):
+        for j in range(0, w - PATCH_SIZE, STEP):
+            patch = gray[i:i + PATCH_SIZE, j:j + PATCH_SIZE]
+            # 5-element DCT proxy: per-quadrant mean + global std
+            q = [
+                float(patch[:8, :8].mean()),
+                float(patch[:8, 8:].mean()),
+                float(patch[8:, :8].mean()),
+                float(patch[8:, 8:].mean()),
+                float(patch.std()),
+            ]
+            patches.append(q)
+            positions.append((i, j))
+
+    if len(patches) < 4:
+        return 0.5, "Image too small for clone detection", 0.0
+
+    patches_arr = np.array(patches, dtype=np.float32)
+    clone_count = 0
+    DIST_THRESH = 2.5
+    SPATIAL_DIST = 64  # must be >64px apart to be a suspicious clone
+
+    for idx in range(len(patches_arr)):
+        dists = np.linalg.norm(patches_arr - patches_arr[idx], axis=1)
+        dists[idx] = 9999.0  # exclude self
+        near_idxs = np.where(dists < DIST_THRESH)[0]
+        for n in near_idxs:
+            pi, pj = positions[idx]
+            ni, nj = positions[n]
+            if abs(pi - ni) > SPATIAL_DIST or abs(pj - nj) > SPATIAL_DIST:
+                clone_count += 1
+                break  # one clone pair per source patch is enough
+
+    clone_density = clone_count / max(len(patches), 1)
+    score = min(1.0, clone_density * 10.0)
+    return score, f"Clone density: {clone_density:.4f} ({clone_count}/{len(patches)} patch pairs)", clone_density
+

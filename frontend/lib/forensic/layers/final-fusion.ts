@@ -46,14 +46,16 @@ import {
 // L7 provenance is 0.50 because absence of C2PA/SynthID watermarks is true for
 // >95% of images regardless of whether they are AI or real.
 const LAYER_RELIABILITY: Record<number, number> = {
-  1: 0.85,  // Pixel integrity — reliable for old generators, less so for modern
-  2: 0.72,  // Compression — moderate reliability
-  3: 0.90,  // Noise statistics — strong physical signal
-  4: 0.92,  // Frequency domain — strongest physical signal
-  5: 0.93,  // Diffusion inversion — direct manifold proximity test (gold standard)
-  6: 0.90,  // 9-agent semantic RAG — highly calibrated for 2025/2026 generators
-  7: 0.50,  // Provenance — weak: absence of watermarks ≠ evidence of being real
-  9: 0.85,  // Neural ensemble — reliable secondary classifier
+  1:  0.85,  // Pixel integrity — reliable for old generators, less so for modern
+  2:  0.72,  // Compression — moderate reliability
+  3:  0.90,  // Noise statistics — strong physical signal
+  4:  0.92,  // Frequency domain — strongest physical signal
+  5:  0.93,  // Diffusion inversion — direct manifold proximity test (gold standard)
+  6:  0.90,  // 20-agent semantic RAG — highly calibrated for 2025/2026 generators
+  7:  0.85,  // Perspective swarm — 5 spatial agents, reliable for scene/macro analysis
+  8:  0.90,  // Physics & biology swarm — anatomy highly reliable; shadow geometry strong
+  9:  0.85,  // Neural ensemble — reliable secondary classifier
+  10: 0.50,  // Provenance — weak: absence of watermarks ≠ evidence of being real
 }
 
 export function computeBayesianScore(layers: LayerReport[]): number {
@@ -70,7 +72,7 @@ export function computeBayesianScore(layers: LayerReport[]): number {
   }
 
   // Are physics signal layers (L1-L4) or diffusion (L5) present?
-  // If absent, L6 semantic RAG becomes the primary sensor → absence boost.
+  // If absent, L6 semantic RAG + L7/L8 swarms become primary sensors → absence boost.
   const physicsOrDiffusionPresent = successfulLayers.some(l => [1, 2, 3, 4, 5].includes(l.layer))
 
   // Compute effective weights: base × reliability × absence_boost
@@ -80,8 +82,8 @@ export function computeBayesianScore(layers: LayerReport[]): number {
   for (const layer of successfulLayers) {
     const base          = LAYER_BASE_WEIGHTS[layer.layer] ?? 0.10
     const reliability   = LAYER_RELIABILITY[layer.layer]  ?? 0.75
-    // 2× absence boost for L6 when it is the sole primary sensor
-    const absenceBoost  = (layer.layer === 6 && !physicsOrDiffusionPresent) ? 2.0 : 1.0
+    // 2× absence boost for L6/L7/L8 when they are the sole primary sensors
+    const absenceBoost  = ([6, 7, 8].includes(layer.layer) && !physicsOrDiffusionPresent) ? 2.0 : 1.0
     const effective     = base * reliability * absenceBoost
 
     effectiveWeights.set(layer.layer, effective)
@@ -375,8 +377,20 @@ export async function runFinalFusion(input: {
   agents:                SemanticAgentReport[]
   provenance:            ProvenanceReport | null
   existingEnsembleResult?: { confidence: number; label: 'ai' | 'human' | 'uncertain' }
+  /** L7 Perspective Swarm layer report — run in parallel with L6 */
+  perspectiveLayerReport?: LayerReport
+  /** L8 Physics & Biology Swarm layer report — run in parallel with L6 */
+  physicsLayerReport?: LayerReport
+  /** L9 Contradiction graph adjusted score — overrides Bayesian if definitive gate fired */
+  contradictionAdjustedScore?: number
+  /** L9 Confidence interval from bootstrap sampling */
+  contradictionConfidenceInterval?: [number, number]
 }): Promise<FinalVerdict> {
-  const { layers, agents, provenance, existingEnsembleResult } = input
+  const {
+    layers, agents, provenance, existingEnsembleResult,
+    perspectiveLayerReport, physicsLayerReport,
+    contradictionAdjustedScore, contradictionConfidenceInterval,
+  } = input
 
   // Incorporate semantic layer into layers array for Bayesian computation
   // We represent L6 as a LayerReport synthesized from agent scores
@@ -395,10 +409,24 @@ export async function runFinalFusion(input: {
       evidence:            agents.flatMap(a => a.evidence),
       layerSuspicionScore: l6AgentScore,
     }] : []),
+    // L7 Perspective Swarm — run in parallel with L6
+    ...(perspectiveLayerReport?.status === 'success' ? [perspectiveLayerReport] : []),
+    // L8 Physics & Biology Swarm — run in parallel with L6
+    ...(physicsLayerReport?.status === 'success' ? [physicsLayerReport] : []),
   ]
 
   // ── Tier 1: Bayesian score ────────────────────────────────────────────────
   let finalScore = computeBayesianScore(allLayers)
+
+  // ── L9 Contradiction Graph override ──────────────────────────────────────
+  // If the contradiction graph fired a definitive gate (e.g. wrong finger count,
+  // incoherent text), it has already adjusted the score. Blend 70/30 toward the
+  // graph-adjusted score since definitive anatomical gates are highly reliable.
+  if (contradictionAdjustedScore !== undefined) {
+    const isDefinitive = Math.abs(contradictionAdjustedScore - finalScore) > 0.15
+    const blendFactor  = isDefinitive ? 0.70 : 0.40
+    finalScore = finalScore * (1 - blendFactor) + contradictionAdjustedScore * blendFactor
+  }
 
   // Blend with existing ensemble if available (10% weight)
   if (existingEnsembleResult) {

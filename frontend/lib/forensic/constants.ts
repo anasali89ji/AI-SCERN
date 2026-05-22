@@ -7,16 +7,17 @@ export const LAYER_NAMES = {
   2:  'Compression & Structural',
   3:  'Noise & Statistical',
   4:  'Frequency Domain',
-  5:  'Diffusion Inversion',      // NEW: direct manifold proximity test
-  6:  'Semantic Vector-Less RAG',
-  7:  'Provenance & Traceability',
-  8:  'Final Fusion',
-  9:  'Neural Ensemble',          // NEW: HF + CLIP + frequency ensemble
+  5:  'Diffusion Inversion',        // Direct manifold proximity test (gold standard)
+  6:  'Semantic Vector-Less RAG',   // 20-agent semantic swarm
+  7:  'Perspective Swarm',          // NEW: 5 spatial-viewpoint agents (L7)
+  8:  'Physics & Biology Swarm',    // NEW: 7 physics/anatomy agents (L8)
+  9:  'Neural Ensemble',            // HF + CLIP + frequency ensemble
+  10: 'Provenance & Traceability',  // Moved from 7 → 10 (low-weight)
   // Audio layers
-  10: 'Audio Signal Fingerprint',
-  11: 'Audio Semantic RAG',
-  12: 'Audio Temporal Graph',
-  13: 'Audio Fusion',
+  20: 'Audio Signal Fingerprint',
+  21: 'Audio Semantic RAG',
+  22: 'Audio Temporal Graph',
+  23: 'Audio Fusion',
 } as const
 
 export type LayerNumber = keyof typeof LAYER_NAMES
@@ -41,19 +42,22 @@ export const AGENT_PROMPTS = {
  *  Weight rationale:
  *  L5 (diffusion inversion) highest: direct manifold test is the gold standard.
  *  L4 (frequency domain) high: strong physical signal, hard to fool.
- *  L3 (noise statistics) high: GAN/diffusion noise patterns are distinctive.
- *  L6 (semantic RAG) moderate: 9-agent LLM system, catches 2025/2026 AI.
- *  L7 (provenance) low: absence of watermarks ≠ evidence of being real.
+ *  L6 (semantic RAG) high: 20-agent LLM swarm, catches 2025/2026 AI.
+ *  L7 (perspective swarm) medium: 5 spatial-viewpoint agents.
+ *  L8 (physics/biology) high: anatomy agents are highly reliable.
+ *  L10 (provenance) low: absence of watermarks ≠ evidence of being real.
  */
 export const LAYER_BASE_WEIGHTS: Record<number, number> = {
-  1: 0.12,   // Pixel integrity (reduced — modern AI handles pixels well)
-  2: 0.08,   // Compression & structural (reduced)
-  3: 0.15,   // Noise & statistical (strong signal)
-  4: 0.20,   // Frequency domain (strong physical signal)
-  5: 0.20,   // Diffusion inversion (gold standard for latent diffusion models)
-  6: 0.12,   // Semantic RAG — boosted to 2× in computeBayesianScore when L1-L5 offline
-  7: 0.08,   // Provenance — low weight; absence of watermark ≠ real photo
-  9: 0.05,   // Neural ensemble — lightweight backup
+  1:  0.08,   // Pixel integrity (reduced — modern AI handles pixels well)
+  2:  0.06,   // Compression & structural (reduced)
+  3:  0.12,   // Noise & statistical (strong signal)
+  4:  0.18,   // Frequency domain (strong physical signal)
+  5:  0.18,   // Diffusion inversion (gold standard for latent diffusion models)
+  6:  0.15,   // Semantic RAG — 20 agents; 2× boosted in computeBayesianScore when L1-L5 offline
+  7:  0.10,   // Perspective swarm — 5 spatial agents
+  8:  0.13,   // Physics & biology swarm — 7 high-reliability anatomy+physics agents
+  9:  0.05,   // Neural ensemble — lightweight backup
+  10: 0.05,   // Provenance — low weight; absence of watermark ≠ real photo
 }
 
 /**
