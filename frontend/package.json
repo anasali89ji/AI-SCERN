@@ -28,7 +28,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.1051.0",
     "@aws-sdk/client-s3": "^3.1051.0",
     "@aws-sdk/s3-request-presigner": "^3.1051.0",
-    "@clerk/nextjs": "^7.3.7",
+    "@clerk/nextjs": "^7.4.0",
     "@fontsource/inter": "^5.2.8",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",
@@ -87,6 +87,7 @@
     "fast-xml-parser": ">=5.7.0",
     "fast-xml-builder": ">=1.2.0",
     "protobufjs": ">=7.5.6",
-    "postcss": "^8.5.15"
+    "postcss": "^8.5.15",
+    "js-cookie": "3.0.7"
   }
 }
