@@ -1164,6 +1164,92 @@ section > .max-w-7xl > .border-t {
   transform: translateY(-2px);
 }
 
+/* ── Nav hide/show on scroll ────────────────────────────────────────── */
+.nav-hidden {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.nav-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Tool card scanline shimmer on hover ────────────────────────────── */
+.scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(139, 92, 246, 0.08) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+}
+
+.tool-card:hover .scanline {
+  opacity: 1;
+  animation: scanline-sweep 1.2s ease-in-out;
+}
+
+@keyframes scanline-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ── Bento shimmer (large trust feature card) ───────────────────────── */
+.bento-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.04) 40%,
+    rgba(99, 102, 241, 0.06) 50%,
+    rgba(139, 92, 246, 0.04) 60%,
+    transparent 100%
+  );
+  background-size: 300% 300%;
+  animation: bento-shimmer-move 6s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+@keyframes bento-shimmer-move {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* ── Professional pill badges ───────────────────────────────────────── */
+.prof-item {
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.prof-item:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  color: rgba(216, 180, 254, 0.9);
+  background-color: rgba(139, 92, 246, 0.06);
+}
+
+/* ── CountUp number display ─────────────────────────────────────────── */
+.counter-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
 /* ═══════════════════════════════════════════════════════════════
    END OF GLOBALS.CSS
    ═══════════════════════════════════════════════════════════════ */
