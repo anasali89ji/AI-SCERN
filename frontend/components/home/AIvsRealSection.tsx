@@ -144,7 +144,7 @@ function MarqueeRow({ cards, direction }: { cards: ComparisonCardData[]; directi
 // ─── Section (default export) ──────────────────────────────────────────────
 export default function AIvsRealSection() {
   return (
-    <section className="py-10 sm:py-16 lg:py-24 overflow-hidden">
+    <section className="section-below-fold py-10 sm:py-16 lg:py-24 overflow-hidden">
       <div className="max-w-7xl 2xl:max-w-[1400px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} className="text-center mb-8 sm:mb-12">
@@ -161,8 +161,9 @@ export default function AIvsRealSection() {
         </motion.div>
 
         <div className="space-y-2 sm:space-y-3">
-          <MarqueeRow cards={COMPARISON_CARDS.slice(0, 10)} direction="left" />
-          <MarqueeRow cards={COMPARISON_CARDS.slice(10)} direction="right" />
+          {/* 5 unique cards × 2 (CSS duplication) = 10 DOM nodes per row, 20 total */}
+          <MarqueeRow cards={COMPARISON_CARDS.slice(0, 5)} direction="left" />
+          <MarqueeRow cards={COMPARISON_CARDS.slice(5, 10)} direction="right" />
           <p className="text-center text-xs text-text-muted pt-2">⚠️ Illustrative examples — not real detection results. Try the live detector above.</p>
         </div>
       </div>

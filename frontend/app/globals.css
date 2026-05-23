@@ -40,7 +40,7 @@
     padding: 0;
     /* Prevent layout shift from scrollbar appearance */
     overflow-y: auto;
-    overflow-x: clip;
+    overflow-x: hidden;
     /* Ensure text wraps beautifully on all screens */
     text-wrap: pretty;
   }
@@ -143,7 +143,7 @@
 
   .card-hover {
     @apply card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
-           transition-all duration-150;
+           transition-[border-color,box-shadow,transform] duration-150;
   }
 
   .glass {
@@ -328,12 +328,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Prevent horizontal scroll — body only (html uses clip for sticky support) */
-body {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
-
+/* html max-width guard */
 html {
   max-width: 100vw;
 }
