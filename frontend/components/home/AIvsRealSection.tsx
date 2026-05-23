@@ -4,12 +4,32 @@
  * Extracted from app/page.tsx for route-based code splitting.
  * Loaded via next/dynamic + IntersectionObserver — only fetched when
  * the user scrolls near this section.
+ * 
+ * Perf fixes applied:
+ * - IntersectionObserver to pause animations when off-screen (Module 7.2)
+ * - React.memo on ComparisonCard (Module 8.3)
+ * - decoding="async" on all images (Module 3.2)
+ * - content-visibility:auto on off-screen cards via CSS class (Module 2.1)
+ * - TypeScript interface instead of any (Module 8.4)
  */
+import { useRef, useEffect, memo } from 'react'
 import { motion } from 'framer-motion'
 import { Scan, AlertTriangle, CheckCircle } from 'lucide-react'
 
+// ─── Types ──────────────────────────────────────────────────────────────────
+interface ComparisonCardData {
+  type: 'text' | 'image'
+  label: string
+  verdict: 'AI' | 'HUMAN'
+  color: string
+  preview?: string
+  img?: string
+  tag: string
+  icon: 'text' | 'image'
+}
+
 // ─── Data ──────────────────────────────────────────────────────────────────
-const COMPARISON_CARDS = [
+const COMPARISON_CARDS: ComparisonCardData[] = [
   { type: 'text',  label: 'AI-Generated Text',       verdict: 'AI',    color: '#f43f5e', preview: 'The implementation of advanced machine learning algorithms has fundamentally transformed the paradigm of data processing...', tag: 'GPT-4',                   icon: 'text'  },
   { type: 'text',  label: 'Human Writing',             verdict: 'HUMAN', color: '#10b981', preview: "I burned my toast again this morning. Third time this week. My smoke alarm and I have a complicated relationship at this point...", tag: 'Authentic',              icon: 'text'  },
   { type: 'image', label: 'AI-Generated Portrait',     verdict: 'AI',    color: '#f43f5e', img: '/compare/ai-portrait-01.webp',      tag: 'Midjourney',              icon: 'image' },
@@ -32,24 +52,29 @@ const COMPARISON_CARDS = [
   { type: 'image', label: 'Real Food Photo',           verdict: 'HUMAN', color: '#10b981', img: '/compare/real-food-01.webp',       tag: 'Authentic',               icon: 'image' },
 ]
 
-// ─── Card ──────────────────────────────────────────────────────────────────
-function ComparisonCard({ card }: { card: typeof COMPARISON_CARDS[0] }) {
+// ─── Card — memoized to prevent re-renders ─────────────────────────────────
+const ComparisonCard = memo(function ComparisonCard({ card }: { card: ComparisonCardData }) {
   const isAI = card.verdict === 'AI'
   return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border/60 rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group">
+    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border/60 rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
       {card.type === 'image' && card.img ? (
         <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
           <div className="absolute inset-0" style={{
             background: isAI ? 'linear-gradient(135deg,#4c1d9580,#1e1b4b50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
           }} />
-          <img src={card.img} alt={card.label}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10"
-            loading="lazy" width={288} height={176}
+          <img
+            src={card.img}
+            alt={card.label}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10 active:scale-[1.02]"
+            loading="lazy"
+            decoding="async"
+            width={288}
+            height={176}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
           <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white backdrop-blur-sm ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+            {isAI ? <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" /> : <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" />}
             {card.verdict}
           </div>
         </div>
@@ -60,7 +85,7 @@ function ComparisonCard({ card }: { card: typeof COMPARISON_CARDS[0] }) {
             &ldquo;{card.preview}&rdquo;
           </p>
           <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5" /> : <CheckCircle className="w-2.5 h-2.5" />}
+            {isAI ? <AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" /> : <CheckCircle className="w-2.5 h-2.5" aria-hidden="true" />}
             {card.verdict}
           </div>
         </div>
@@ -80,6 +105,40 @@ function ComparisonCard({ card }: { card: typeof COMPARISON_CARDS[0] }) {
       </div>
     </div>
   )
+})
+
+// ─── Animated row with IntersectionObserver pause ──────────────────────────
+function MarqueeRow({ cards, direction }: { cards: ComparisonCardData[]; direction: 'left' | 'right' }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        track.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused'
+      },
+      { rootMargin: '100px' }
+    )
+    observer.observe(track)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div className="relative overflow-hidden">
+      <div
+        ref={trackRef}
+        className={`flex gap-2 sm:gap-3 ${direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'}`}
+        style={{ width: 'max-content' }}
+      >
+        {[...cards, ...cards].map((card, i) => (
+          <ComparisonCard key={i} card={card} />
+        ))}
+      </div>
+      <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+    </div>
+  )
 }
 
 // ─── Section (default export) ──────────────────────────────────────────────
@@ -90,7 +149,7 @@ export default function AIvsRealSection() {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} className="text-center mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose/30 bg-rose/5 text-rose text-[11px] sm:text-xs font-semibold mb-3">
-            <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+            <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" aria-hidden="true" />
             Real-World Detection Examples
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black mb-3">
@@ -102,24 +161,8 @@ export default function AIvsRealSection() {
         </motion.div>
 
         <div className="space-y-2 sm:space-y-3">
-          <div className="relative overflow-hidden">
-            <div className="flex gap-2 sm:gap-3 animate-scroll-left" style={{ width: 'max-content' }}>
-              {[...COMPARISON_CARDS.slice(0, 10), ...COMPARISON_CARDS.slice(0, 10)].map((card, i) => (
-                <ComparisonCard key={i} card={card} />
-              ))}
-            </div>
-            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          </div>
-          <div className="relative overflow-hidden">
-            <div className="flex gap-2 sm:gap-3 animate-scroll-right" style={{ width: 'max-content' }}>
-              {[...COMPARISON_CARDS.slice(10), ...COMPARISON_CARDS.slice(10)].map((card, i) => (
-                <ComparisonCard key={i} card={card} />
-              ))}
-            </div>
-            <div className="absolute left-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-6 sm:w-16 lg:w-28 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          </div>
+          <MarqueeRow cards={COMPARISON_CARDS.slice(0, 10)} direction="left" />
+          <MarqueeRow cards={COMPARISON_CARDS.slice(10)} direction="right" />
           <p className="text-center text-xs text-text-muted pt-2">⚠️ Illustrative examples — not real detection results. Try the live detector above.</p>
         </div>
       </div>

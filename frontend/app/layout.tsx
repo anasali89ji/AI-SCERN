@@ -80,24 +80,43 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
         <meta name="theme-color" content="#0f172a" />
 
-        {/* ── Preconnect / DNS-prefetch for all third-party origins ──── */}
+        {/* ── Critical font preloads — must come before CSS to prevent FOIT ── */}
+        <link
+          rel="preload"
+          href="/fonts/inter-400.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/inter-700.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+
+        {/* ── Preconnect for auth only — HF api is not used on homepage load ── */}
         <link rel="preconnect" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
-        <link rel="preconnect"   href="https://api-inference.huggingface.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api-inference.huggingface.co" />
+        {/* NOTE: HuggingFace preconnect removed — not used within first 2s */}
         <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         {/* Skip to main content — keyboard accessibility */}
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
+        <a
+          href="#main-content"
+          aria-label="Skip to main content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+        >
           Skip to main content
         </a>
         <ClerkClientProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
-            <main id="main-content" className="mobile-safe">
+            <main id="main-content">
               {children}
             </main>
             <Toaster richColors position="top-right" />

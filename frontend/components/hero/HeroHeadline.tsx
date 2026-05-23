@@ -133,17 +133,26 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
               role="tab"
               aria-selected={active}
               aria-label={`Show ${w}`}
+              aria-current={active ? 'true' : undefined}
               onClick={() => { setIdx(i); setIsPaused(true) }}
               className={[
-                'rounded-full transition-all duration-300',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                // Mobile: 14px pill active × 5px tall, 5px dot inactive
-                // Desktop: 18px pill active × 6px tall, 6px dot inactive
-                active
-                  ? `w-3.5 sm:w-4 h-[5px] sm:h-1.5 ${WORD_STYLES[w].bg}`
-                  : 'w-[5px] sm:w-1.5 h-[5px] sm:h-1.5 bg-white/30 hover:bg-white/50',
+                /* 44px hit area on mobile, natural on desktop */
+                'flex items-center justify-center',
+                'min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full',
               ].join(' ')}
-            />
+            >
+              {/* Visual dot — uses transform:scaleX to avoid non-composited width animation */}
+              <span
+                className={[
+                  'block h-[5px] sm:h-1.5 rounded-full',
+                  'transition-transform duration-300',
+                  active
+                    ? `w-3.5 sm:w-4 ${WORD_STYLES[w].bg} scale-x-100`
+                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/50',
+                ].join(' ')}
+              />
+            </button>
           )
         })}
       </motion.div>

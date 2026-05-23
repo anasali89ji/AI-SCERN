@@ -24,16 +24,16 @@ import {
 // ─── Lazy-loaded sections ────────────────────────────────────────────────────
 const DynamicWhoNeedsSection = dynamic(
   () => import('@/components/home/WhoNeedsSection'),
-  { ssr: false, loading: () => <div className="min-h-[560px] sm:min-h-[700px]" /> }
+  { ssr: false, loading: () => <div className="min-h-[560px] sm:min-h-[700px] bg-background" aria-hidden="true" /> }
 )
 const DynamicAIvsRealSection = dynamic(
   () => import('@/components/home/AIvsRealSection'),
-  { ssr: false, loading: () => <div className="min-h-[320px]" /> }
+  { ssr: false, loading: () => <div className="min-h-[320px] sm:min-h-[420px] bg-background" aria-hidden="true" /> }
 )
 const DynamicHomepageReviews = dynamic(
   () => import('@/components/home/HomepageReviews'),
   { ssr: false, loading: () => (
-    <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid sm:grid-cols-3 gap-4 sm:gap-6" aria-busy="true" aria-label="Loading reviews">
       {[0,1,2].map(i => <div key={i} className="h-40 animate-pulse bg-surface/60 rounded-2xl" />)}
     </div>
   )}
@@ -303,7 +303,8 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="flex gap-2">
             {examples.map(ex => (
               <button key={ex.label} onClick={() => setText(ex.text)}
-                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-purple-500/40 text-text-muted hover:text-purple-400 transition-all min-h-0">
+                aria-label={`Load ${ex.label} example`}
+                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-purple-500/40 text-text-muted hover:text-purple-400 transition-colors duration-200">
                 {ex.label}
               </button>
             ))}
@@ -311,7 +312,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all" />
+          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors duration-200" />
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
           <button onClick={analyze} disabled={loading || text.length < 50}
@@ -426,7 +427,12 @@ function HeroScrollIndicator() {
   }, [])
   if (hidden) return null
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce opacity-30 pointer-events-none">
+    <div
+      aria-label="Scroll to content"
+      role="button"
+      tabIndex={-1}
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce opacity-30 pointer-events-none"
+    >
       <span className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">Scroll</span>
       <ChevronDown className="w-4 h-4 text-text-muted" />
     </div>
@@ -522,7 +528,7 @@ export default function HomePage() {
       ]` }} />
 
       {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
+      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
           ? 'border-b border-purple-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
@@ -533,7 +539,7 @@ export default function HomePage() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
             <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
-              className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(245,100,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(245,100,0,0.7)] transition-all duration-300" priority />
+              className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(245,100,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(245,100,0,0.7)] transition-[filter] duration-300" priority />
             <span className="font-black text-xl gradient-text">Aiscern</span>
           </Link>
 
@@ -542,17 +548,17 @@ export default function HomePage() {
             {[['#tools','Tools'],['#how','How It Works']].map(([href, label]) => (
               <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
                 {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-all duration-300 rounded-full" />
+                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
               </a>
             ))}
             <Link href={user ? "/chat" : "/signup"} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-all duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-[width] duration-300 rounded-full" />
             </Link>
             {[['/ reviews','Reviews',''],['/ blog','Blog',''],['/ pricing','Pricing','']].map(([href, label]) => (
               <Link key={label} href={href.replace(/ /g,'')} className="relative hover:text-text-primary transition-colors duration-200 group">
                 {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-all duration-300 rounded-full" />
+                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
               </Link>
             ))}
           </div>
@@ -560,7 +566,7 @@ export default function HomePage() {
           {/* CTA */}
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-all duration-200 group">
+              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-[background-color,border-color] duration-200 group">
                 <span className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                   {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
                 </span>
@@ -569,10 +575,10 @@ export default function HomePage() {
               </Link>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-purple-500/30 transition-all duration-200">
+                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-purple-500/30 transition-[background-color,border-color] duration-200">
                   Sign In
                 </Link>
-                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-purple-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-purple-500/20 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"
                   style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
                   <Zap className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Get Started</span>
@@ -616,14 +622,14 @@ export default function HomePage() {
                 ].map((link, i) => (
                   <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
                     <Link href={link.href} onClick={() => setMobileNavOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
                       <link.Icon className="w-4 h-4" />{link.label}
                     </Link>
                   </motion.div>
                 ))}
                 {!loading && !user && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/40">
-                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
+                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
                       <Lock className="w-4 h-4" />Sign In
                     </Link>
                     <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
@@ -655,12 +661,17 @@ export default function HomePage() {
           <NetworkBackground />
           <FloatingCards />
 
-          {/* Center glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 65%)' }} />
+          {/* Center glow — responsive sizing prevents mobile CLS/overflow */}
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[700px] sm:h-[700px] md:w-[900px] md:h-[900px] rounded-full pointer-events-none will-change-transform"
+            style={{
+              background: 'radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 65%)',
+              contain: 'strict',
+            }}
+          />
 
           {/* Content */}
-          <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
+          <div className="relative z-20 text-center px-4 sm:px-6 md:px-8 lg:px-4 max-w-7xl mx-auto w-full">
 
             {/* Animated badge */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -679,7 +690,7 @@ export default function HomePage() {
             </div>
 
             {/* Subheadline */}
-            <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
+            <motion.p className="text-sm sm:text-lg text-text-secondary max-w-md sm:max-w-lg md:max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
               <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
               <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Core features free during early access. No account required for basic scans.</span>
@@ -691,7 +702,7 @@ export default function HomePage() {
               {user ? (
                 <>
                   <Link href="/dashboard"
-                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 8px 32px rgba(124,58,237,0.35)' }}>
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
@@ -700,7 +711,7 @@ export default function HomePage() {
                     Go to Dashboard
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-purple-500/40 transition-all duration-200">
+                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-purple-500/40 transition-[border-color,background-color] duration-200">
                     <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
                   </Link>
                 </>
@@ -903,7 +914,7 @@ export default function HomePage() {
 
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-purple-500/30 bg-purple-500/8 text-sm font-semibold text-purple-400 hover:bg-purple-500/15 transition-all duration-200">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-purple-500/30 bg-purple-500/8 text-sm font-semibold text-purple-400 hover:bg-purple-500/15 transition-[background-color] duration-200">
                 Share Your Feedback
               </a>
               <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
@@ -950,7 +961,7 @@ export default function HomePage() {
                   viewport={{ once: true }} transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color="rgba(139,92,246,0.10)"
-                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-purple-500/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
+                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-purple-500/25 transition-[border-color,box-shadow] duration-300 ${large ? 'bento-shimmer' : ''}`}>
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />
@@ -1007,7 +1018,7 @@ export default function HomePage() {
             <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
               style={{ background: 'linear-gradient(-90deg, #08080d 0%, transparent 100%)' }} />
             <div className="marquee-track marquee-left py-2">
-              {[...PROFESSIONALS, ...PROFESSIONALS, ...PROFESSIONALS].map((prof, i) => (
+              {[...PROFESSIONALS, ...PROFESSIONALS].map((prof, i) => (
                 <div key={i} className="prof-item inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border/50 bg-surface/40 text-text-muted text-sm font-medium cursor-default mx-3 flex-shrink-0">
                   <prof.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
                   {prof.label}

@@ -134,7 +134,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-500 hover:-translate-y-1.5"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-transform duration-500 hover:-translate-y-1.5"
       style={{ boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)` }}
     >
       {/* ── Image panel ── */}
@@ -144,7 +144,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           src={card.img} alt={card.role} fill
           className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
           loading="lazy"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 338px, (max-width: 1024px) 50vw, 33vw"
           quality={72}
           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
@@ -212,7 +212,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
         <Link
           href={card.href}
           aria-label={`Start free AI detection for ${card.role}`}
-          className="mt-auto flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-200 group/btn hover:brightness-110"
+          className="mt-auto flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-[filter,background-color] duration-200 group/btn hover:brightness-110"
           style={{ background: `${card.color}14`, border: `1px solid ${card.color}30`, color: card.color }}
         >
           <span className="font-black">Try free</span>
@@ -251,7 +251,7 @@ export default function WhoNeedsSection() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
             {['Media', 'Education', 'Legal', 'HR', 'Security', 'Research', 'Healthcare', 'Marketing'].map(tag => (
-              <span key={tag} className="text-[10px] sm:text-xs font-semibold text-text-muted px-2.5 py-1 rounded-full border border-border/50 hover:border-primary/30 hover:text-primary transition-all duration-200 cursor-default">
+              <span key={tag} className="text-[10px] sm:text-xs font-semibold text-text-muted px-2.5 py-1 rounded-full border border-border/50 hover:border-primary/30 hover:text-primary transition-colors duration-200 cursor-default">
                 {tag}
               </span>
             ))}
@@ -270,12 +270,12 @@ export default function WhoNeedsSection() {
           className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
         >
           <Link href="/detect/text"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-all duration-200">
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-[transform,background-color,box-shadow] duration-200">
             <Brain className="w-4 h-4" />
             Start Free Scan
           </Link>
           <Link href="/methodology"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border/50 text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all duration-200">
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border/50 text-sm font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-[border-color,color] duration-200">
             <Eye className="w-4 h-4" />
             See How It Works
           </Link>
