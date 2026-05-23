@@ -637,10 +637,8 @@ export default function HomePage() {
         </AnimatePresence>
       </nav>
 
-      <main id="main-content">
-
-        {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
+      {/* ══ HERO ══ */}
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
 
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -736,7 +734,7 @@ export default function HomePage() {
         </LazySection>
 
         {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
+        <section className="py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 70%)' }} />
           <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
@@ -763,7 +761,7 @@ export default function HomePage() {
         </LazySection>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
+        <section id="tools" className="py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.06) 0%, transparent 65%)' }} />
 
@@ -823,7 +821,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
+        <section id="how" className="py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
 
@@ -1067,7 +1065,6 @@ export default function HomePage() {
           </div>
         </section>
 
-      </main>
       <SiteFooter />
     </div>
   )

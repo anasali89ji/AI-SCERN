@@ -626,44 +626,22 @@ html {
 }
 
 /* ── content-visibility optimization ────────────────────────────── */
-.cv-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 600px;
-}
-
-.cv-auto-sm {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 300px;
-}
-
-/* Apply content-visibility to all major below-fold sections */
+/* cv-auto and section-below-fold: content-visibility removed — it interfered
+   with IntersectionObserver in LazySection and caused sections to skip rendering
+   on Chromium-based browsers when contain-intrinsic-size didn't match real height */
+.cv-auto,
+.cv-auto-sm,
 .section-below-fold {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 500px;
+  /* intentionally empty — classes kept for backwards compat but no CV applied */
 }
 
 /* ── Dashboard GPU performance optimization ──────────────────────────────── */
-/* CRITICAL: Add containment to dashboard containers to prevent full-page repaints */
-.dashboard-grid,
-[class*="dashboard"] {
+.dashboard-grid {
   contain: layout style paint;
 }
 
-/* ── Mobile GPU performance optimization ──────────────────────────────── */
+/* ── Mobile scrollbar ────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  /* Disable expensive backdrop effects on mobile */
-  .glass,
-  [class*="backdrop-blur"] {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* Ensure near-transparent bg elements become opaque on mobile */
-  [class*="bg-surface/"],
-  [class*="bg-background/"] {
-    background-color: #0f0f17 !important;
-  }
-
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.06);
   }
