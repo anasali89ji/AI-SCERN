@@ -20,6 +20,19 @@ const config: Config = {
     {
       pattern: /^(bg|border|text)-(primary|secondary|cyan|emerald|rose|amber)\/(5|8|10|12|14|18|25|28|30|60|80)$/,
     },
+    // Gradient from/to/via opacity variants used in tool cards and trust section
+    {
+      pattern: /^(from|to|via)-(primary|secondary|cyan|emerald|rose|amber)\/(5|8|10|12|14|18|20|25|28|30|50|60|80)$/,
+    },
+    // Explicit from-*/8 and from-*/10 for tool cards
+    'from-amber/8', 'from-primary/8', 'from-cyan/8',
+    'from-secondary/8', 'from-emerald/8', 'from-rose/8',
+    'from-amber/10', 'from-primary/10', 'from-cyan/10',
+    'from-secondary/10', 'from-emerald/10', 'from-rose/10',
+    'from-amber/20', 'from-cyan/20', 'from-emerald/20', 'from-rose/20',
+    'from-amber/50', 'from-emerald/50', 'from-primary/5',
+    'to-amber/5', 'to-cyan/5', 'to-emerald/5', 'to-rose/5', 'to-secondary/5',
+    'via-secondary/5',
   ],
   darkMode: 'class',
   theme: {
@@ -33,6 +46,19 @@ const config: Config = {
       '3xl': '1920px',
     },
     extend: {
+      opacity: {
+        '8':  '0.08',
+        '12': '0.12',
+        '14': '0.14',
+        '18': '0.18',
+        '22': '0.22',
+        '28': '0.28',
+        '35': '0.35',
+        '45': '0.45',
+        '55': '0.55',
+        '65': '0.65',
+        '88': '0.88',
+      },
       colors: {
         background:       '#08080d',
         surface:          '#0f0f17',
