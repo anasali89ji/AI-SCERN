@@ -1,14 +1,45 @@
-# DISABLED — Vercel project is paused + VERCEL_TOKEN is vcp_ read-only
-# Use deploy-netlify.yml instead
-name: Deploy to Vercel (DISABLED)
+# Vercel deployment is handled by Vercel's native GitHub integration (webhook).
+# This workflow only acts as a MANUAL fallback via workflow_dispatch.
+#
+# For auto-deploy to work:
+#   1. Vercel project must be ACTIVE (not paused) — dashboard → Settings → Resume
+#   2. aiscern.com domain must be added to project — dashboard → Settings → Domains
+#   3. GitHub integration must be connected — dashboard → Settings → Git
+#
+# To create a proper VERCEL_TOKEN (not vcp_):
+#   vercel.com → Settings → Tokens → Create Token (scope: team)
+
+name: Vercel Manual Deploy
+
 on:
   workflow_dispatch:
     inputs:
-      confirm:
-        description: 'This workflow is disabled. Use deploy-netlify.yml'
+      environment:
+        description: 'Deploy target'
         required: true
+        default: 'production'
+        type: choice
+        options: [production, preview]
+
 jobs:
-  disabled:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This workflow is disabled. Vercel project is paused."
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Deploy
+        working-directory: frontend
+        run: |
+          vercel pull --yes --environment=${{ inputs.environment }} --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build ${{ inputs.environment == 'production' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt ${{ inputs.environment == 'production' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
+          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9

@@ -1,14 +1,13 @@
-# DISABLED — next-on-pages internally calls vercel build which requires Vercel token
-# Use deploy-netlify.yml instead
-name: Deploy to CF Pages (DISABLED)
+# DISABLED — next-on-pages requires vercel build internally
+name: CF Pages Deploy (DISABLED)
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'This workflow is disabled. Use deploy-netlify.yml'
+        description: 'Disabled.'
         required: true
 jobs:
   disabled:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This workflow is disabled"
+      - run: echo "Disabled"
