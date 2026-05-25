@@ -1,42 +1,14 @@
-name: Deploy to Vercel
-
+# DISABLED — Vercel project is paused + VERCEL_TOKEN is vcp_ read-only
+# Use deploy-netlify.yml instead
+name: Deploy to Vercel (DISABLED)
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
-# Only one deploy at a time per branch.
-# IMPORTANT: do NOT use cancel-in-progress: true here — that was canceling
-# the Vercel webhook deployment. Instead we queue them so both paths
-# (webhook + this workflow) don't race. Webhook will win most of the time;
-# this workflow acts as a guaranteed fallback.
-concurrency:
-  group: vercel-deploy-${{ github.ref }}
-  cancel-in-progress: false
-
+    inputs:
+      confirm:
+        description: 'This workflow is disabled. Use deploy-netlify.yml'
+        required: true
 jobs:
-  deploy:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      # Wait 30s to let the Vercel webhook deployment finish first.
-      # If webhook already deployed successfully, this step will be a no-op
-      # (Vercel deduplicates deploys for the same commit+target).
-      - name: Wait for webhook deployment
-        run: sleep 30
-
-      - name: Deploy to Vercel (fallback)
-        run: |
-          cd frontend
-          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
+      - run: echo "This workflow is disabled. Vercel project is paused."
