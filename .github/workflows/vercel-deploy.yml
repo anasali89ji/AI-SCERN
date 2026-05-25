@@ -2,79 +2,41 @@ name: Deploy to Vercel
 
 on:
   push:
-    branches:
-      - main
-      - 'fix/**'
-      - 'feat/**'
-      - 'hotfix/**'
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Target environment'
-        required: false
-        default: 'preview'
-        type: choice
-        options: [production, preview]
 
-# Prevent duplicate deployments for the same branch/commit.
-# Cancel in-progress runs when a newer push arrives on the same branch.
+# Only one deploy at a time per branch.
+# IMPORTANT: do NOT use cancel-in-progress: true here — that was canceling
+# the Vercel webhook deployment. Instead we queue them so both paths
+# (webhook + this workflow) don't race. Webhook will win most of the time;
+# this workflow acts as a guaranteed fallback.
 concurrency:
   group: vercel-deploy-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: ${{ github.ref == 'refs/heads/main' && 'Production Deploy' || 'Preview Deploy' }}
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      # Pull remote project config (env vars, build settings) into local .vercel/
-      # This ensures rootDirectory, buildCommand etc. come from the Vercel project,
-      # not the local vercel.json at repo root.
-      - name: Pull Vercel project config
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend
-        env:
-          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
+      # Wait 30s to let the Vercel webhook deployment finish first.
+      # If webhook already deployed successfully, this step will be a no-op
+      # (Vercel deduplicates deploys for the same commit+target).
+      - name: Wait for webhook deployment
+        run: sleep 30
 
-      # Build locally so CI catches errors before uploading to Vercel.
-      # Uses the env vars pulled in the previous step.
-      - name: Build project
-        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend
-        env:
-          VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
-          VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
-
-      # Deploy the pre-built output — no rebuild on Vercel's side.
-      # --prebuilt skips Vercel's remote build step entirely; avoids webhook/GA conflicts.
-      - name: Deploy prebuilt output
-        id: deploy
+      - name: Deploy to Vercel (fallback)
         run: |
-          URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --yes --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend)
-          echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "✅ Deployed to: $URL"
+          cd frontend
+          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
           VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
-
-      - name: Summary
-        run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| | |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Type** | ${{ github.ref == 'refs/heads/main' && '🟢 Production' || '🔵 Preview' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **URL** | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
