@@ -242,24 +242,40 @@ function FloatingCards() {
 // ─── CountUp ────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0)
-  const [animated, setAnimated] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
+  const hasAnimated = useRef(false)
+
   useEffect(() => {
-    if (animated) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting || animated) return
-      setAnimated(true)
-      let start = 0
-      const steps = 60; const step = target / steps
-      const interval = setInterval(() => {
-        start += step
-        if (start >= target) { setCount(target); clearInterval(interval) }
-        else setCount(Math.floor(start))
-      }, 1600 / steps)
-    }, { threshold: 0.1 })
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [target, animated])
+    if (hasAnimated.current) return
+    const el = ref.current
+    if (!el) return
+
+    // FALLBACK: force target value after 2.5s if IntersectionObserver never fires
+    // (overflow-x:clip/hidden on html/body can block intersection calculations)
+    const fallbackTimer = setTimeout(() => {
+      if (!hasAnimated.current) { hasAnimated.current = true; setCount(target) }
+    }, 2500)
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true
+          clearTimeout(fallbackTimer)
+          let start = 0
+          const steps = 60; const step = target / steps
+          const interval = setInterval(() => {
+            start += step
+            if (start >= target) { setCount(target); clearInterval(interval) }
+            else setCount(Math.floor(start))
+          }, 1600 / steps)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => { observer.disconnect(); clearTimeout(fallbackTimer) }
+  }, [target])
+
   return <span ref={ref} className="counter-value">{count.toLocaleString()}{suffix}</span>
 }
 
@@ -403,11 +419,20 @@ function LazySection({ children, minHeight = '400px', rootMargin = '400px' }: {
   const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    // FALLBACK: force-show section after 1.5s if IntersectionObserver never fires.
+    // overflow-x:clip/hidden on <html>/<body> can block IntersectionObserver on some browsers.
+    const fallback = setTimeout(() => setVisible(true), 1500)
     const observer = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } }, { rootMargin }
+      ([e]) => {
+        if (e.isIntersecting) {
+          clearTimeout(fallback)
+          setVisible(true)
+          observer.disconnect()
+        }
+      }, { rootMargin }
     )
     if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
+    return () => { observer.disconnect(); clearTimeout(fallback) }
   }, [rootMargin])
   return (
     <div ref={ref} style={{ minHeight: visible ? undefined : minHeight }}>

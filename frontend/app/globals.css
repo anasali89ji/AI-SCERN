@@ -39,8 +39,10 @@
     margin: 0;
     padding: 0;
     /* Prevent layout shift from scrollbar appearance */
+    /* NOTE: overflow-x:hidden on body breaks IntersectionObserver (clips root).
+       Use clip instead — same visual effect, does NOT establish a scroll container. */
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: clip;
     /* Ensure text wraps beautifully on all screens */
     text-wrap: pretty;
   }
