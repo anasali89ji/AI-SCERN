@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
+
+// Detect build target
+const isCloudflare = process.env.CF_PAGES === '1' || process.env.DEPLOYMENT_PLATFORM === 'cloudflare-pages'
+
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
@@ -147,4 +151,14 @@ const nextConfig = {
   ],
 }
 
-module.exports = nextConfig
+if (isCloudflare) {
+  // next-on-pages requires this wrapper for CF Pages edge runtime
+  const { setupDevPlatform } = require('@cloudflare/next-on-pages/next-dev')
+  if (process.env.NODE_ENV === 'development') {
+    setupDevPlatform().catch(console.error)
+  }
+  const { withCloudflarePages } = require('@cloudflare/next-on-pages/next-config')
+  module.exports = withCloudflarePages(nextConfig)
+} else {
+  module.exports = nextConfig
+}
