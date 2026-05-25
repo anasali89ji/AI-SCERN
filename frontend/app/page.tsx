@@ -242,40 +242,24 @@ function FloatingCards() {
 // ─── CountUp ────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0)
+  const [animated, setAnimated] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
-  const hasAnimated = useRef(false)
-
   useEffect(() => {
-    if (hasAnimated.current) return
-    const el = ref.current
-    if (!el) return
-
-    // FALLBACK: force target value after 2.5s if IntersectionObserver never fires
-    // (overflow-x:clip/hidden on html/body can block intersection calculations)
-    const fallbackTimer = setTimeout(() => {
-      if (!hasAnimated.current) { hasAnimated.current = true; setCount(target) }
-    }, 2500)
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated.current) {
-          hasAnimated.current = true
-          clearTimeout(fallbackTimer)
-          let start = 0
-          const steps = 60; const step = target / steps
-          const interval = setInterval(() => {
-            start += step
-            if (start >= target) { setCount(target); clearInterval(interval) }
-            else setCount(Math.floor(start))
-          }, 1600 / steps)
-        }
-      },
-      { threshold: 0.1 }
-    )
-    observer.observe(el)
-    return () => { observer.disconnect(); clearTimeout(fallbackTimer) }
-  }, [target])
-
+    if (animated) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || animated) return
+      setAnimated(true)
+      let start = 0
+      const steps = 60; const step = target / steps
+      const interval = setInterval(() => {
+        start += step
+        if (start >= target) { setCount(target); clearInterval(interval) }
+        else setCount(Math.floor(start))
+      }, 1600 / steps)
+    }, { threshold: 0.1 })
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [target, animated])
   return <span ref={ref} className="counter-value">{count.toLocaleString()}{suffix}</span>
 }
 
@@ -419,20 +403,11 @@ function LazySection({ children, minHeight = '400px', rootMargin = '400px' }: {
   const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    // FALLBACK: force-show section after 1.5s if IntersectionObserver never fires.
-    // overflow-x:clip/hidden on <html>/<body> can block IntersectionObserver on some browsers.
-    const fallback = setTimeout(() => setVisible(true), 1500)
     const observer = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          clearTimeout(fallback)
-          setVisible(true)
-          observer.disconnect()
-        }
-      }, { rootMargin }
+      ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } }, { rootMargin }
     )
     if (ref.current) observer.observe(ref.current)
-    return () => { observer.disconnect(); clearTimeout(fallback) }
+    return () => observer.disconnect()
   }, [rootMargin])
   return (
     <div ref={ref} style={{ minHeight: visible ? undefined : minHeight }}>
@@ -547,10 +522,10 @@ export default function HomePage() {
       ]` }} />
 
       {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[transform,background-color,border-color,box-shadow] duration-300
+      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-purple-500/10 bg-[#08080d]/95 sm:bg-background/90 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
+          ? 'border-b border-purple-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
           : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
         }`}>
         <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
@@ -662,8 +637,10 @@ export default function HomePage() {
         </AnimatePresence>
       </nav>
 
-      {/* ══ HERO ══ */}
-      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
+      <main id="main-content">
+
+        {/* ══ HERO ══ */}
+        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
 
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -759,7 +736,7 @@ export default function HomePage() {
         </LazySection>
 
         {/* ══ STATS BAR ══ */}
-        <section className="py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
+        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 70%)' }} />
           <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
@@ -786,7 +763,7 @@ export default function HomePage() {
         </LazySection>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
+        <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.06) 0%, transparent 65%)' }} />
 
@@ -846,7 +823,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
+        <section id="how" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
 
@@ -904,7 +881,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden">
+        <section className="py-16 sm:py-24 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
 
@@ -937,7 +914,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 px-4 sm:px-6 border-t border-border/15 relative overflow-hidden">
+        <section className="py-16 sm:py-28 px-4 border-t border-border/15 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(139,92,246,0.03) 50%, transparent 100%)' }} />
 
@@ -1041,7 +1018,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden">
+        <section className="py-24 sm:py-32 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0"
               style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
@@ -1090,6 +1067,7 @@ export default function HomePage() {
           </div>
         </section>
 
+      </main>
       <SiteFooter />
     </div>
   )
