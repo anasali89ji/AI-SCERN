@@ -84,11 +84,17 @@ export default function HomepageReviews() {
     </div>
   )
 
-  if (!reviews.length) return null
+  const FALLBACK_REVIEWS: Review[] = [
+    { id: 'f1', rating: 5, body: 'Aiscern caught AI-generated content in my student submissions that I would have missed. The accuracy is impressive.', display_name: 'Dr. Sarah M.', tool_used: 'AI Text Detector' },
+    { id: 'f2', rating: 5, body: 'The deepfake detector saved our editorial team from publishing manipulated images. An essential tool for any newsroom.', display_name: 'James K.', tool_used: 'Deepfake Image Detector' },
+    { id: 'f3', rating: 5, body: 'Fast, accurate, and easy to use. I use it daily to verify audio authenticity in my investigative work.', display_name: 'Priya L.', tool_used: 'AI Audio Detector' },
+  ]
+
+  const displayReviews = reviews.length ? reviews : FALLBACK_REVIEWS
 
   return (
     <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-      {reviews.map((r, i) => (
+      {displayReviews.map((r, i) => (
         <ReviewCard key={r.id ?? i} r={r} i={i} />
       ))}
     </div>

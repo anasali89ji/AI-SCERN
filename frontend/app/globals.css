@@ -681,17 +681,14 @@ html { scroll-behavior: smooth; }
 /* Remove Clerk branding if shown */
 .cl-powered-by { display: none !important; }
 
-/* ── content-visibility: auto — skip rendering off-screen sections ── */
-/* Browser skips layout/paint for any section not near the viewport.  */
-/* This is the single biggest TBT/main-thread fix for long pages.     */
+/* ── content-visibility removed — was hiding sections off-screen ──── */
+/* content-visibility: auto caused sections to never appear on mobile  */
+/* and in certain browsers; replaced with will-change for perf.       */
 .cv-auto {
-  content-visibility: auto;
-  /* contain-intrinsic-size prevents layout shifts when section appears */
-  contain-intrinsic-size: 0 600px;
+  will-change: transform;
 }
 .cv-auto-sm {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 300px;
+  will-change: transform;
 }
 
 /* ── Mobile performance: disable ALL backdrop-blur on mobile ─────────────── */

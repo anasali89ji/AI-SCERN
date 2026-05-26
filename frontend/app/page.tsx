@@ -10,6 +10,7 @@ import { formatConfidence } from '@/lib/utils/helpers'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
   Shield, Brain, Eye, FileText, Globe, Zap,
   ArrowRight, CheckCircle, XCircle, HelpCircle,
@@ -397,14 +398,20 @@ function useNavScrollBehavior() {
 }
 
 // ─── Lazy section ─────────────────────────────────────────────────────────────
-function LazySection({ children, minHeight = '400px', rootMargin = '400px' }: {
+function LazySection({ children, minHeight = '400px', rootMargin = '600px' }: {
   children: React.ReactNode; minHeight?: string; rootMargin?: string
 }) {
   const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    // Immediately show if already in viewport or close to it
+    if (typeof window !== 'undefined' && !window.IntersectionObserver) {
+      setVisible(true)
+      return
+    }
     const observer = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } }, { rootMargin }
+      ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } },
+      { rootMargin }
     )
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
@@ -732,7 +739,9 @@ export default function HomePage() {
 
         {/* ── WHO NEEDS AISCERN ── */}
         <LazySection minHeight="560px" rootMargin="300px">
-          <DynamicWhoNeedsSection />
+          <ErrorBoundary fallback={<div className="min-h-[560px]" />}>
+            <DynamicWhoNeedsSection />
+          </ErrorBoundary>
         </LazySection>
 
         {/* ══ STATS BAR ══ */}
@@ -759,7 +768,9 @@ export default function HomePage() {
 
         {/* ── AI VS REAL ── */}
         <LazySection minHeight="320px" rootMargin="400px">
-          <DynamicAIvsRealSection />
+          <ErrorBoundary fallback={<div className="min-h-[320px]" />}>
+            <DynamicAIvsRealSection />
+          </ErrorBoundary>
         </LazySection>
 
         {/* ══ TOOLS GRID ══ */}
@@ -898,7 +909,9 @@ export default function HomePage() {
             </motion.div>
 
             <LazySection minHeight="200px" rootMargin="200px">
-              <DynamicHomepageReviews />
+              <ErrorBoundary fallback={<div className="min-h-[200px]" />}>
+                <DynamicHomepageReviews />
+              </ErrorBoundary>
             </LazySection>
 
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
