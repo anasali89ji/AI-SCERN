@@ -17,21 +17,23 @@ on:
         options: [production, preview]
 
 # Prevent duplicate deployments for the same branch/commit.
-# Cancel in-progress runs when a newer push arrives on the same branch.
 concurrency:
   group: vercel-deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   deploy:
-    name: ${{ github.ref == 'refs/heads/main' && 'Production Deploy' || 'Preview Deploy' }}
+    name: ${{ github.ref == 'refs/heads/main' && '🚀 Production Deploy' || '🔵 Preview Deploy' }}
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -40,41 +42,80 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      # Pull remote project config (env vars, build settings) into local .vercel/
-      # This ensures rootDirectory, buildCommand etc. come from the Vercel project,
-      # not the local vercel.json at repo root.
+      - name: Verify Vercel Token
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "❌ ERROR: VERCEL_TOKEN secret is not set!"
+            exit 1
+          fi
+          echo "✅ Vercel Token is configured"
+
       - name: Pull Vercel project config
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend
+        run: |
+          vercel pull --yes \
+            --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd frontend
         env:
           VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
           VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
 
-      # Build locally so CI catches errors before uploading to Vercel.
-      # Uses the env vars pulled in the previous step.
       - name: Build project
-        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend
+        run: |
+          vercel build \
+            ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd frontend
         env:
           VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
           VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
 
-      # Deploy the pre-built output — no rebuild on Vercel's side.
-      # --prebuilt skips Vercel's remote build step entirely; avoids webhook/GA conflicts.
-      - name: Deploy prebuilt output
+      - name: Deploy to Vercel
         id: deploy
         run: |
-          URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --yes --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend)
+          set -e
+          DEPLOY_ARGS="--prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }} --cwd frontend"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            DEPLOY_ARGS="$DEPLOY_ARGS --prod"
+          fi
+          
+          echo "🚀 Deploying with args: $DEPLOY_ARGS"
+          
+          URL=$(vercel deploy $DEPLOY_ARGS 2>&1 | tail -1)
+          
+          # Verify URL was captured
+          if [[ ! "$URL" =~ ^https:// ]]; then
+            echo "❌ Failed to capture deployment URL"
+            echo "Last output: $URL"
+            exit 1
+          fi
+          
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "✅ Deployed to: $URL"
+          echo "✅ Successfully deployed to: $URL"
         env:
           VERCEL_ORG_ID: team_sUVHUcrNUc6fWYVOF1cpD1Z1
           VERCEL_PROJECT_ID: prj_xoNvRPv0ooeRx7DA8k1BAODHcDj9
 
-      - name: Summary
+      - name: Create deployment summary
+        if: always()
         run: |
           echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| | |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Type** | ${{ github.ref == 'refs/heads/main' && '🟢 Production' || '🔵 Preview' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **URL** | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Type** | ${{ github.ref == 'refs/heads/main' && '🟢 **Production**' || '🔵 **Preview**' }} |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.deploy.outputs.url }}" ]; then
+            echo "| **URL** | [${{ steps.deploy.outputs.url }}](${{ steps.deploy.outputs.url }}) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| **Status** | ⚠️ Deployment completed but URL not captured |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "| **Timestamp** | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify deployment status
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the GitHub Actions log above for details."
+          exit 1
