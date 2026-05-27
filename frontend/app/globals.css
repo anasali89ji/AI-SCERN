@@ -27,20 +27,20 @@
 
 @layer components {
   .gradient-text {
-    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
            text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
            active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
   }
   .btn-primary:hover {
-    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
     transform: translateY(-1px);
   }
   .btn-primary:active { transform: translateY(0); }
@@ -138,8 +138,8 @@
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.3); }
-  50%       { box-shadow: 0 0 40px rgba(124, 58, 237, 0.6), 0 0 80px rgba(37, 99, 235, 0.2); }
+  0%, 100% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); }
+  50%       { box-shadow: 0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(37, 99, 235, 0.2); }
 }
 
 @keyframes scan-line {
@@ -158,7 +158,7 @@
   .prose-detectai ul { list-style: disc; padding-left: 1.5rem; }
   .prose-detectai ul li { margin-bottom: 0.35rem; }
   .prose-detectai strong { color: #f1f5f9; }
-  .prose-detectai a { color: #7c3aed; }
+  .prose-detectai a { color: #2563eb; }
   .prose-detectai a:hover { text-decoration: underline; }
 
   /* Mobile safe paddings */
@@ -442,7 +442,7 @@ img {
   @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
   /* backdrop-filter removed — causes GPU compositing glitches on mobile */
 }
-.card:hover { border-color: rgba(124, 58, 237, 0.2); }
+.card:hover { border-color: rgba(37, 99, 235, 0.2); }
 
 /* ── Section spacing — tighter on mobile ── */
 @media (max-width: 639px) {
@@ -466,13 +466,13 @@ main { animation: page-in 0.3s ease-out; }
 
 /* ── Focus styles — accessibility ── */
 a:focus-visible, button:focus-visible {
-  outline: 2px solid #7c3aed;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* ── Text selection ── */
-::selection { background: rgba(124, 58, 237, 0.3); color: #f1f5f9; }
+::selection { background: rgba(37, 99, 235, 0.3); color: #f1f5f9; }
 
 /* ── Mobile safe area for bottom nav ── */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -601,14 +601,14 @@ html { scroll-behavior: smooth; }
 .scan-sweep { animation: scan-sweep 2.4s ease-in-out infinite; }
 
 .dropzone-hover {
-  border-color: #7c3aed !important;
-  background: rgba(124, 58, 237, 0.04) !important;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12), inset 0 0 40px rgba(124, 58, 237, 0.03);
+  border-color: #2563eb !important;
+  background: rgba(37, 99, 235, 0.04) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), inset 0 0 40px rgba(37, 99, 235, 0.03);
 }
 
 @media (max-width: 1024px) { .detect-grid { grid-template-columns: 1fr !important; } }
 
-:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 6px; }
 
 @keyframes verdict-in {
   from { opacity: 0; transform: translateY(12px) scale(0.97); }
@@ -673,7 +673,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Loading dots color */
-.cl-internal-spinner { color: #7c3aed !important; }
+.cl-internal-spinner { color: #2563eb !important; }
 
 /* Verification success checkmark */
 .cl-verificationLinkStatusIconBox { color: #34d399 !important; }
@@ -844,11 +844,11 @@ section > .max-w-7xl > .border-t {
 
 /* ── CSS Design Tokens ──────────────────────────────────────────────────── */
 :root {
-  --brand-purple: #8B5CF6;
-  --brand-purple-glow: #A78BFA;
+  --brand-blue: #2563eb;
+  --brand-blue-glow: #3b82f6;
   --brand-orange: #F97316;
-  --border-subtle: rgba(139, 92, 246, 0.12);
-  --border-glow: rgba(139, 92, 246, 0.4);
+  --border-subtle: rgba(37, 99, 235, 0.12);
+  --border-glow: rgba(37, 99, 235, 0.4);
 }
 
 /* ── Noise texture overlay — REMOVED ───────────────────────────────────── */
@@ -892,13 +892,13 @@ section > .max-w-7xl > .border-t {
   background-clip: text;
 }
 .gradient-text-cool {
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .gradient-text-hero {
-  background: linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1041,15 +1041,15 @@ section > .max-w-7xl > .border-t {
 }
 .tool-card:hover {
   transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.08),
-              0 0 0 1px rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08),
+              0 0 0 1px rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 /* ── Trust badge pulse ─────────────────────────────────────────────── */
 @keyframes trust-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
-  50%       { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
 }
 .trust-pulse { animation: trust-pulse 2s ease-in-out infinite; }
 
@@ -1095,12 +1095,12 @@ section > .max-w-7xl > .border-t {
 /* ── Testimonial card glass effect ────────────────────────────────── */
 .testimonial-card {
   background: rgba(17, 17, 24, 0.95);
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.1);
   /* backdrop-filter removed — use opaque bg instead to avoid GPU layer glitches */
   transition: border-color 0.25s ease, transform 0.25s ease;
 }
 .testimonial-card:hover {
-  border-color: rgba(139, 92, 246, 0.25);
+  border-color: rgba(37, 99, 235, 0.25);
   transform: translateY(-2px);
 }
 
@@ -1111,9 +1111,9 @@ section > .max-w-7xl > .border-t {
 }
 .prof-item:hover {
   transform: scale(1.05);
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(37, 99, 235, 0.4);
   color: #f1f5f9;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
 }
 
 /* ── Section reveal — scroll-triggered via IntersectionObserver ─── */
