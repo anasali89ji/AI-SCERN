@@ -9,11 +9,14 @@ const nextConfig = {
 
   experimental: {
     optimizePackageImports: [
-      'lucide-react', 'framer-motion', '@clerk/nextjs',
+      'lucide-react', '@clerk/nextjs',
       '@radix-ui/react-avatar', '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs',
       '@radix-ui/react-tooltip', 'recharts', 'd3',
       'react-dropzone', 'date-fns',
+      // framer-motion intentionally excluded — optimizePackageImports rewrites
+      // its ESM barrel imports and causes motion.* to resolve as undefined at
+      // runtime in Next.js 15 + framer-motion v11. Remove to fix blank sections.
     ],
   },
 
@@ -23,9 +26,9 @@ const nextConfig = {
         ...config.optimization.splitChunks,
         cacheGroups: {
           ...(config.optimization.splitChunks?.cacheGroups ?? {}),
-          framerMotion: { test: /[\\/]node_modules[\\/]framer-motion[\\/]/, name: 'vendor-framer-motion', chunks: 'all', priority: 30 },
-          lucide:       { test: /[\\/]node_modules[\\/]lucide-react[\\/]/,  name: 'vendor-lucide',         chunks: 'all', priority: 29 },
-          clerk:        { test: /[\\/]node_modules[\\/]@clerk[\\/]/,         name: 'vendor-clerk',          chunks: 'all', priority: 28 },
+          // framer-motion excluded from chunk splitting — breaks ESM module graph
+          lucide: { test: /[\/]node_modules[\/]lucide-react[\/]/, name: 'vendor-lucide', chunks: 'all', priority: 29 },
+          clerk:  { test: /[\/]node_modules[\/]@clerk[\/]/,        name: 'vendor-clerk',  chunks: 'all', priority: 28 },
         },
       }
     }
