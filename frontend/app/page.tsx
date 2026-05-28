@@ -22,22 +22,49 @@ import {
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
-// ─── Lazy-loaded sections ────────────────────────────────────────────────────
+// ─── Sections (SSR enabled — critical for render) ────────────────────────────
+// ssr:false was the root cause of sections not rendering: the server sends
+// nothing, the IntersectionObserver then has no DOM node to observe, so
+// visible never flips to true, and the section never appears.
 const DynamicWhoNeedsSection = dynamic(
   () => import('@/components/home/WhoNeedsSection'),
-  { ssr: false, loading: () => <div className="min-h-[560px] sm:min-h-[700px]" /> }
+  {
+    loading: () => (
+      <section className="py-16 sm:py-28 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="h-8 w-48 bg-surface/60 rounded-xl animate-pulse mb-12 mx-auto" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[0,1,2,3,4,5].map(i => <div key={i} className="h-48 bg-surface/60 rounded-2xl animate-pulse" />)}
+          </div>
+        </div>
+      </section>
+    )
+  }
 )
 const DynamicAIvsRealSection = dynamic(
   () => import('@/components/home/AIvsRealSection'),
-  { ssr: false, loading: () => <div className="min-h-[320px]" /> }
+  {
+    loading: () => (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="h-8 w-56 bg-surface/60 rounded-xl animate-pulse mb-8 mx-auto" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {[0,1].map(i => <div key={i} className="h-64 bg-surface/60 rounded-2xl animate-pulse" />)}
+          </div>
+        </div>
+      </section>
+    )
+  }
 )
 const DynamicHomepageReviews = dynamic(
   () => import('@/components/home/HomepageReviews'),
-  { ssr: false, loading: () => (
-    <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
-      {[0,1,2].map(i => <div key={i} className="h-40 animate-pulse bg-surface/60 rounded-2xl" />)}
-    </div>
-  )}
+  {
+    loading: () => (
+      <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+        {[0,1,2].map(i => <div key={i} className="h-40 animate-pulse bg-surface/60 rounded-2xl" />)}
+      </div>
+    )
+  }
 )
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
@@ -738,11 +765,9 @@ export default function HomePage() {
         </section>
 
         {/* ── WHO NEEDS AISCERN ── */}
-        <LazySection minHeight="560px" rootMargin="300px">
-          <ErrorBoundary fallback={<div className="min-h-[560px]" />}>
-            <DynamicWhoNeedsSection />
-          </ErrorBoundary>
-        </LazySection>
+        <ErrorBoundary>
+          <DynamicWhoNeedsSection />
+        </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
         <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
@@ -752,8 +777,8 @@ export default function HomePage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
                 <motion.div key={i}
-                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.6 }}
+                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
                   <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
                     style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
@@ -767,11 +792,9 @@ export default function HomePage() {
         </section>
 
         {/* ── AI VS REAL ── */}
-        <LazySection minHeight="320px" rootMargin="400px">
-          <ErrorBoundary fallback={<div className="min-h-[320px]" />}>
-            <DynamicAIvsRealSection />
-          </ErrorBoundary>
-        </LazySection>
+        <ErrorBoundary>
+          <DynamicAIvsRealSection />
+        </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
         <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
@@ -779,7 +802,7 @@ export default function HomePage() {
             style={{ background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.06) 0%, transparent 65%)' }} />
 
           <div className="max-w-6xl mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-14 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/8 text-purple-400 text-xs font-semibold mb-4">
                 <Cpu className="w-3 h-3" /> Six Powerful Tools
@@ -792,14 +815,14 @@ export default function HomePage() {
               </p>
               <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
                 style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent)' }}
-                initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }} />
+                initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {TOOLS.map((tool, i) => (
                 <motion.div key={i}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}>
+                  initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}>
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
                     <SpotlightCard color={`${tool.accent}18`}
                       className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
@@ -839,7 +862,7 @@ export default function HomePage() {
             style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
 
           <div className="max-w-5xl mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-16 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
                 <Activity className="w-3 h-3" /> Simple Process
@@ -855,8 +878,8 @@ export default function HomePage() {
               <div className="absolute left-7 lg:left-1/2 top-0 bottom-0 w-px hidden sm:block overflow-hidden">
                 <motion.div className="h-full w-full"
                   style={{ background: 'linear-gradient(180deg, rgba(139,92,246,0.8) 0%, rgba(37,99,235,0.4) 60%, transparent 100%)' }}
-                  initial={{ scaleY: 0, originY: 0 }} whileInView={{ scaleY: 1 }}
-                  viewport={{ once: true }} transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
+                  initial={{ scaleY: 0, originY: 0 }} animate={{ scaleY: 1 }}
+                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
               </div>
 
               <div className="space-y-10 sm:space-y-16">
@@ -865,8 +888,8 @@ export default function HomePage() {
                   return (
                     <motion.div key={i}
                       initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.1 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.6, delay: i * 0.1 }}
                       className={`flex items-center gap-5 sm:gap-8 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
                       <div className="flex-1 hidden lg:block" />
                       <div className="relative z-10 flex-shrink-0">
@@ -897,7 +920,7 @@ export default function HomePage() {
             style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
 
           <div className="max-w-5xl mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-12 sm:mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber/20 bg-amber/8 text-amber text-xs font-semibold mb-4">
                 <Star className="w-3 h-3" /> Beta Feedback
@@ -908,11 +931,9 @@ export default function HomePage() {
               </p>
             </motion.div>
 
-            <LazySection minHeight="200px" rootMargin="200px">
-              <ErrorBoundary fallback={<div className="min-h-[200px]" />}>
+            <ErrorBoundary>
                 <DynamicHomepageReviews />
               </ErrorBoundary>
-            </LazySection>
 
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
@@ -932,7 +953,7 @@ export default function HomePage() {
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(139,92,246,0.03) 50%, transparent 100%)' }} />
 
           <div className="max-w-6xl mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
                 <Shield className="w-3 h-3" /> Trust & Accuracy
@@ -959,8 +980,8 @@ export default function HomePage() {
                 const displayTarget = parseFloat(displayStat) || 0
                 return (
                 <motion.div key={title}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: idx * 0.1, duration: 0.5 }}
+                  initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color="rgba(139,92,246,0.10)"
                     className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-purple-500/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
@@ -999,7 +1020,7 @@ export default function HomePage() {
             </div>
 
             {/* Methodology note */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <FlaskConical className="w-4 h-4 text-purple-400" />
@@ -1040,7 +1061,7 @@ export default function HomePage() {
             style={{ backgroundImage: `linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
 
           <div className="max-w-3xl mx-auto text-center relative z-10">
-            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
               <div className="flex justify-center mb-8">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full blur-2xl opacity-60"

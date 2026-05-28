@@ -33,8 +33,8 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
   const starCount = r.rating ?? r.stars ?? 5
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.1 }}
       className="card border-border/30 hover:border-primary/20 transition-colors"
     >
       <div className="flex gap-0.5 mb-4" aria-label={`${starCount} out of 5 stars`}>
