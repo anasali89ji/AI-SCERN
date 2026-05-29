@@ -2,35 +2,35 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
-  Brain, FileText, Mic, BarChart3,
-  Zap, ArrowRight, Shield, CheckCircle, AlertTriangle,
-  HelpCircle, Image as ImageIcon, Video, Music, Sparkles, Layers,
-  RefreshCw
+  Brain, FileText, Mic, BarChart3, Zap, ArrowRight, Shield,
+  CheckCircle, AlertTriangle, HelpCircle, Image as ImageIcon,
+  Video, Music, Sparkles, Layers, RefreshCw, TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
+import { GlassCard } from '@/components/ui/glass-card'
+import { DetectionBadge } from '@/components/ui/detection-badge'
+import { NumberCounter } from '@/components/motion/NumberCounter'
+import { FadeIn } from '@/components/motion/FadeIn'
+import { StaggerContainer, StaggerItem } from '@/components/motion/StaggerContainer'
 
+// ── Constants ─────────────────────────────────────────────────────────────────
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-violet-500/20 to-violet-500/5', iconColor: 'text-violet-400', desc: 'Deepfake & AI image detection' },
-  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
-  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
-  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
-  { href: '/chat',         icon: Zap,       label: 'ARIA',  color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
+  { href: '/detect/text',  icon: FileText,  label: 'Text',   color: 'from-amber/20 to-amber/5',       iconColor: 'text-amber',     desc: 'Detect AI-written text'      },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image',  color: 'from-violet-500/20 to-violet-500/5', iconColor: 'text-violet-400', desc: 'AI image & deepfake detection' },
+  { href: '/detect/audio', icon: Mic,       label: 'Audio',  color: 'from-cyan/20 to-cyan/5',         iconColor: 'text-cyan',      desc: 'Voice clone detection'       },
+  { href: '/detect/video', icon: Video,     label: 'Video',  color: 'from-rose/20 to-rose/5',         iconColor: 'text-rose',      desc: 'Deepfake video analysis'     },
+  { href: '/batch',        icon: Layers,    label: 'Batch',  color: 'from-emerald/20 to-emerald/5',   iconColor: 'text-emerald',   desc: 'Scan up to 20 files'         },
+  { href: '/chat',         icon: Zap,       label: 'ARIA',   color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
 ]
 
-function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose flex-shrink-0" />
-  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
-  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber flex-shrink-0" />
-}
-
-function VerdictBadge({ verdict }: { verdict: string }) {
-  const s = verdict === 'AI' ? 'text-rose bg-rose/10 border-rose/20'
-          : verdict === 'HUMAN' ? 'text-emerald bg-emerald/10 border-emerald/20'
-          : 'text-amber bg-amber/10 border-amber/20'
-  return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${s}`}>{verdict}</span>
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  text: FileText, image: ImageIcon, audio: Music, video: Video,
 }
 
 function timeAgo(ts: string) {
@@ -43,292 +43,303 @@ function timeAgo(ts: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function mediaIcon(type: string) {
-  const icons: Record<string, any> = { text: FileText, image: ImageIcon, audio: Music, video: Video }
-  const Icon = icons[type] ?? Brain
-  return <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+function mapVerdict(v: string): 'ai' | 'human' | 'uncertain' {
+  if (v === 'AI')    return 'ai'
+  if (v === 'HUMAN') return 'human'
+  return 'uncertain'
 }
 
+// ── Stat Card ──────────────────────────────────────────────────────────────────
+function StatCard({
+  title, value, icon: Icon, suffix = '', trend, trendUp, delay = 0,
+}: {
+  title: string; value: number; icon: React.ElementType
+  suffix?: string; trend?: string; trendUp?: boolean; delay?: number
+}) {
+  return (
+    <FadeIn delay={delay}>
+      <GlassCard className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-blue-400" />
+          </div>
+          {trend && (
+            <span className={`flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <TrendingUp className={`w-3 h-3 ${trendUp ? '' : 'rotate-180'}`} />
+              {trend}
+            </span>
+          )}
+        </div>
+        <div className="text-2xl font-bold text-text-primary tabular-nums">
+          <NumberCounter value={value} suffix={suffix} />
+        </div>
+        <p className="text-xs text-text-muted mt-1">{title}</p>
+      </GlassCard>
+    </FadeIn>
+  )
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { user } = useAuth()
-  const router = useRouter()
   const [stats,   setStats]   = useState<any>(null)
   const [scans,   setScans]   = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
-  const [isPulling, setIsPulling] = useState(false)
-  const mountedRef    = useRef(false)
-  const touchStartY   = useRef(0)
+  const [error,   setError]   = useState(false)
+  const mountedRef = useRef(true)
+
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const loadDashboard = useCallback(async () => {
     if (!user?.uid) return
+    setError(false)
     try {
-      setFetchError(false)
       const [statsRes, scansRes] = await Promise.all([
-        fetch('/api/user/stats',                   { cache: 'no-store' }),
-        fetch('/api/user/scans?limit=8&sort=newest', { cache: 'no-store' }),
+        fetch('/api/user/stats',                      { cache: 'no-store' }),
+        fetch('/api/user/scans?limit=6&sort=newest',  { cache: 'no-store' }),
       ])
+      if (!mountedRef.current) return
+
       if (statsRes.ok) {
         const d = await statsRes.json()
         const rawAvg = d.avg_confidence ?? 0
-        const avg = rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg)
-        setStats({ ...d, avg_confidence: avg })
+        setStats({ ...d, avg_confidence: rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg) })
       }
       if (scansRes.ok) {
         const json = await scansRes.json()
-        // API returns { data: [...], total: n }
-        setScans(json.data ?? [])
+        setScans(Array.isArray(json) ? json : (json.data ?? []))
       }
-      if (!statsRes.ok && !scansRes.ok) setFetchError(true)
     } catch {
-      setFetchError(true)
+      if (mountedRef.current) setError(true)
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
   }, [user?.uid])
 
   useEffect(() => {
-    // Bust Next.js router segment cache on every mount so navigating back
-    // always fetches fresh data instead of showing a stale cached page.
-    if (!mountedRef.current) {
-      mountedRef.current = true
-      router.refresh()
-    }
-
+    mountedRef.current = true
     loadDashboard()
+    return () => { mountedRef.current = false }
+  }, [loadDashboard])
 
-    const onVisible   = () => { if (document.visibilityState === 'visible') loadDashboard() }
-    const onFocus     = () => loadDashboard()
-    const onScanSaved = () => loadDashboard()
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('aiscern:scan-saved', onScanSaved)
-
-    // Fix 4.5: Pull-to-refresh on mobile — trigger loadDashboard on 80px+ downward pull at top
-    const onTouchStart = (e: TouchEvent) => { touchStartY.current = e.touches[0].clientY }
-    const onTouchEnd   = (e: TouchEvent) => {
-      const pullDistance = e.changedTouches[0].clientY - touchStartY.current
-      if (pullDistance > 80 && window.scrollY === 0) {
-        setIsPulling(true)
-        loadDashboard().finally(() => setIsPulling(false))
-      }
-    }
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchend',   onTouchEnd,   { passive: true })
-
-    // Poll every 10 s — fast enough to feel live, cheap enough to run
-    const poll = setInterval(loadDashboard, 10_000)
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('aiscern:scan-saved', onScanSaved)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchend', onTouchEnd)
-      clearInterval(poll)
-    }
-  }, [loadDashboard, router])
-
-  const totalScans = stats?.total_scans ?? 0
-  const aiCount    = stats?.ai_detected  ?? 0
-  const humanCount = stats?.human_detected ?? 0
-  const avgConf    = stats?.avg_confidence ?? 0
-  const aiPct      = totalScans > 0 ? Math.round(aiCount / totalScans * 100) : 0
-  const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
+  const totalScans  = stats?.total_scans  ?? 0
+  const aiDetected  = stats?.ai_count     ?? 0
+  const humanCount  = stats?.human_count  ?? 0
+  const avgConfidence = stats?.avg_confidence ?? 0
+  const aiRate = totalScans > 0 ? Math.round((aiDetected / totalScans) * 100) : 0
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
 
-      {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
-      {isPulling && (
-        <div className="flex items-center justify-center py-2 lg:hidden">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border/40">
-            <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            Refreshing…
+      {/* Header */}
+      <FadeIn>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+              Hey, {name} 👋
+            </h1>
+            <p className="text-text-muted mt-1 text-sm">
+              {totalScans > 0
+                ? `${totalScans.toLocaleString()} scans total — here's your overview`
+                : 'Welcome to Aiscern. Run your first detection below.'}
+            </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 self-start sm:self-auto"
+            onClick={loadDashboard}
+            disabled={loading}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
-      )}
+      </FadeIn>
 
-      {/* ── Welcome ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-xl sm:text-3xl font-black text-text-primary">
-          Welcome back, <span className="gradient-text">{name}</span> 👋
-        </h1>
-        <p className="text-text-muted text-sm mt-1">
-          {totalScans === 0 ? 'Run your first scan below.' : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
-        </p>
-      </motion.div>
-
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-        {[
-          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-primary/10 text-primary'  },
-          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose/10 text-rose'        },
-          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
-          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
-        ].map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
-            <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
-              <s.icon className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
-              <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* ── Tools grid ── */}
-      <div>
-        {/* New user onboarding card */}
-        {totalScans === 0 && !loading && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-text-primary mb-1">Welcome to Aiscern! 🎉</h3>
-                <p className="text-xs sm:text-sm text-text-muted mb-3 leading-relaxed">
-                  You're all set. Pick a detection tool below to run your first scan — completely free, no limits.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Link href="/detect/text"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all">
-                    <FileText className="w-3.5 h-3.5" /> Try Text Detection
-                  </Link>
-                  <Link href="/detect/image"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
-                    <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
-                  </Link>
-                  <Link href="/batch"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
-                    <Layers className="w-3.5 h-3.5" /> Try Batch Scan
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-          {TOOLS.map((t, i) => (
-            <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>
-              <Link href={t.href}
-                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
-                <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
-                  <t.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-text-primary">{t.label}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{t.desc}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── AI/Human balance bar ── */}
-      {totalScans > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="bg-surface border border-border/50 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
-            <span className="text-xs text-text-muted">{totalScans} total scans</span>
-          </div>
-          <div className="flex rounded-full overflow-hidden h-3 gap-0.5">
-            <div className="bg-rose transition-all duration-700" style={{ width: `${aiPct}%` }} />
-            <div className="bg-amber/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
-            <div className="bg-emerald transition-all duration-700" style={{ width: `${humanPct}%` }} />
-          </div>
-          <div className="flex items-center gap-4 mt-2.5 text-xs text-text-muted">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose" />{aiPct}% AI</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── Recent scans ── */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Recent Scans</h2>
-          <div className="flex items-center gap-2">
-            <button onClick={loadDashboard} title="Refresh"
-              className="text-text-disabled hover:text-text-muted transition-colors p-1 rounded-lg hover:bg-surface-hover">
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-            {scans.length > 0 && (
-              <Link href="/history" className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
-                View all <ArrowRight className="w-3 h-3" />
-              </Link>
-            )}
-          </div>
-        </div>
-
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {loading ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : fetchError ? (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center">
-            <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">Couldn't load scan history</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Check your connection and try again</p>
-            <button onClick={loadDashboard}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
-              <RefreshCw className="w-4 h-4" /> Retry
-            </button>
-          </div>
-        ) : scans.length === 0 ? (
-          <div className="bg-surface border border-border rounded-2xl p-10 text-center">
-            <Shield className="w-10 h-10 text-text-disabled mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">No scans yet</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Pick a tool above to run your first detection</p>
-            <Link href="/detect/text"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all">
-              <FileText className="w-4 h-4" /> Try Text Detector
-            </Link>
-          </div>
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))
         ) : (
-          <div className="space-y-2">
-            {scans.map((scan, i) => (
-              <motion.div key={scan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03, ease: 'easeOut' }}
-                className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
-                <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary truncate">
-                    {scan.content_preview?.slice(0, 60) || `${scan.media_type} scan`}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <VerdictIcon verdict={scan.verdict} />
-                    <span className="text-[11px] text-text-muted">{timeAgo(scan.created_at)}</span>
-                    <span className="text-[11px] text-text-disabled">·</span>
-                    <span className="text-[11px] text-text-muted">{Math.round((scan.confidence_score ?? 0) * 100)}% conf</span>
-                  </div>
-                </div>
-                <VerdictBadge verdict={scan.verdict} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <StatCard title="Total Scans"    value={totalScans}    icon={BarChart3} delay={0}    trend="+12%" trendUp />
+            <StatCard title="AI Detected"    value={aiDetected}    icon={AlertTriangle} delay={0.05} trend="+5%"  trendUp />
+            <StatCard title="Human Verified" value={humanCount}    icon={CheckCircle}   delay={0.1}  trend="+8%"  trendUp />
+            <StatCard title="Avg Accuracy"   value={avgConfidence} icon={Brain}         delay={0.15} suffix="%" trend="+2%" trendUp />
+          </>
         )}
       </div>
 
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+
+        {/* Detection distribution */}
+        <FadeIn delay={0.1} className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Detection Overview</CardTitle>
+              <CardDescription>Breakdown of your scan results</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {loading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+              ) : totalScans === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <Brain className="w-10 h-10 text-text-disabled mb-3" />
+                  <p className="text-sm text-text-muted">No scans yet — run a detection to see stats here</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'AI Generated', pct: aiRate,         color: 'bg-rose',    icon: AlertTriangle, iconClass: 'text-rose-400' },
+                      { label: 'Human Made',   pct: 100 - aiRate,   color: 'bg-emerald', icon: CheckCircle,   iconClass: 'text-emerald-400' },
+                    ].map(row => (
+                      <div key={row.label}>
+                        <div className="flex items-center justify-between text-sm mb-1.5">
+                          <span className="flex items-center gap-2 text-text-secondary">
+                            <row.icon className={`w-4 h-4 ${row.iconClass}`} />
+                            {row.label}
+                          </span>
+                          <span className="font-semibold text-text-primary tabular-nums">{row.pct}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-surface-active overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${row.pct}%` }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                            className={`h-full rounded-full ${row.color}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Per-modality breakdown */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    {(['text', 'image', 'audio', 'video'] as const).map(type => {
+                      const Icon = TYPE_ICONS[type]
+                      const count = scans.filter(s => (s.content_type || s.type) === type).length
+                      return (
+                        <Link key={type} href={`/detect/${type}`}>
+                          <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface-active hover:bg-white/[0.04] transition-colors cursor-pointer">
+                            <Icon className="w-5 h-5 text-text-muted" />
+                            <div className="text-xl font-bold text-text-primary tabular-nums">{count}</div>
+                            <div className="text-xs text-text-muted capitalize">{type}</div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </FadeIn>
+
+        {/* Recent scans */}
+        <FadeIn delay={0.15}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent Scans</CardTitle>
+              <CardDescription>Your latest detections</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 rounded-lg" />
+                  ))}
+                </div>
+              ) : scans.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Sparkles className="w-8 h-8 text-text-disabled mb-2" />
+                  <p className="text-xs text-text-muted">No scans yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {scans.slice(0, 5).map((scan, i) => {
+                    const type = scan.content_type || scan.type || 'text'
+                    const Icon = TYPE_ICONS[type] ?? FileText
+                    const verdict = mapVerdict(scan.verdict || 'UNCERTAIN')
+                    const filename = scan.filename || scan.file_name || `Scan #${i + 1}`
+                    return (
+                      <motion.div
+                        key={scan.id || i}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.06 }}
+                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.03] transition-colors group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-surface-active flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-text-muted" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-text-primary truncate">{filename}</p>
+                          <p className="text-[10px] text-text-disabled">
+                            {scan.created_at ? timeAgo(scan.created_at) : '—'}
+                          </p>
+                        </div>
+                        <DetectionBadge result={verdict} size="sm" />
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-4 gap-2 text-text-muted hover:text-text-secondary"
+                asChild
+              >
+                <Link href="/history">
+                  View All History
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      </div>
+
+      {/* Quick detect grid */}
+      <div>
+        <FadeIn delay={0.2}>
+          <h2 className="text-base font-semibold text-text-primary mb-4">Quick Detection</h2>
+        </FadeIn>
+        <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {TOOLS.map(tool => (
+            <StaggerItem key={tool.href}>
+              <Link href={tool.href}>
+                <GlassCard className="p-4 text-center group cursor-pointer h-full">
+                  <div className={`w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br ${tool.color} transition-transform group-hover:scale-110`}>
+                    <tool.icon className={`w-5 h-5 ${tool.iconColor}`} />
+                  </div>
+                  <p className="text-xs font-semibold text-text-primary">{tool.label}</p>
+                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight hidden sm:block">{tool.desc}</p>
+                </GlassCard>
+              </Link>
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+      </div>
+
+      {error && (
+        <div className="rounded-xl border border-rose/20 bg-rose/5 px-4 py-3 text-sm text-rose-400 flex items-center gap-3">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>Failed to load dashboard data.</span>
+          <button onClick={loadDashboard} className="ml-auto text-xs underline hover:no-underline">
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,351 +1,572 @@
 'use client'
-import { ScrollToTop } from '@/components/ScrollToTop'
-import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useCallback, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
-  Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
-  Moon, Sun, Monitor, FileText, Zap, Eye, EyeOff,
-  RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
-  ChevronRight, Star, BrainCircuit
+  Bell, Shield, Save, Loader2, Trash2, Key, Palette,
+  Globe, Download, AlertTriangle, Copy, Check, Lock,
+  Moon, Sun, Monitor, Mail, Database,
+  RefreshCw, CheckCircle2, Eye, EyeOff, User,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
+import { ScrollToTop } from '@/components/ScrollToTop'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { FadeIn } from '@/components/motion/FadeIn'
 
-// ── Toggle ───────────────────────────────────────────────────────────────────
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
-  return (
-    <button onClick={onChange} disabled={disabled}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-primary' : 'bg-border'}`}>
-      <motion.div animate={{ x: checked ? 22 : 2 }} transition={{ type:'spring', stiffness:500, damping:30 }}
-        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm" />
-    </button>
-  )
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Prefs {
+  email_notifications: boolean
+  scan_complete_email: boolean
+  weekly_summary: boolean
+  marketing_emails: boolean
+  auto_delete_days: number
+  default_language: string
+}
+const defaultPrefs: Prefs = {
+  email_notifications: true,
+  scan_complete_email: false,
+  weekly_summary: true,
+  marketing_emails: false,
+  auto_delete_days: 90,
+  default_language: 'en',
 }
 
-// ── Setting Row ───────────────────────────────────────────────────────────────
-function SettingRow({ icon: Icon, label, description, action, badge }: {
-  icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
+// ── Setting Row ────────────────────────────────────────────────────────────────
+function SettingRow({
+  icon: Icon,
+  label,
+  description,
+  action,
+  badge,
+}: {
+  icon: React.ElementType
+  label: string
+  description?: string
+  action: React.ReactNode
+  badge?: string
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border/30 last:border-0 gap-4">
+    <div className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon className="w-4 h-4 text-primary" />
+        <div className="w-8 h-8 rounded-lg bg-surface-active flex items-center justify-center shrink-0 mt-0.5">
+          <Icon className="w-4 h-4 text-text-muted" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-text-primary">{label}</span>
-            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 font-bold">{badge}</span>}
+            <p className="text-sm font-medium text-text-primary">{label}</p>
+            {badge && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                {badge}
+              </Badge>
+            )}
           </div>
-          {description && <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{description}</p>}
+          {description && (
+            <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{description}</p>
+          )}
         </div>
       </div>
-      <div className="flex-shrink-0">{action}</div>
+      <div className="shrink-0">{action}</div>
     </div>
-  )
-}
-
-// ── Section ───────────────────────────────────────────────────────────────────
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
-  return (
-    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
-      <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-border/30">
-        <Icon className="w-4 h-4 text-primary" /> {title}
-      </h2>
-      {children}
-    </motion.div>
   )
 }
 
 export default function SettingsPage() {
-  const { user, signOut }  = useAuth()
-  const { openUserProfile } = useClerk()
-  const supabase            = createClient()
+  const { user } = useAuth()
+  const { signOut } = useClerk()
+  const supabase = createClient()
 
-  // ── Notification settings ──────────────────────────────────────────────────
-  const [emailNotif,       setEmailNotif]       = useState(true)
-  const [batchAlerts,      setBatchAlerts]      = useState(true)
-  const [weeklyReport,     setWeeklyReport]     = useState(false)
-  const [autoSave,         setAutoSave]         = useState(true)
-  const [upgradeAlerts,    setUpgradeAlerts]    = useState(true)
+  const [prefs, setPrefs]       = useState<Prefs>(defaultPrefs)
+  const [saving, setSaving]     = useState(false)
+  const [loading, setLoading]   = useState(true)
+  const [saved, setSaved]       = useState(false)
+  const [apiKey, setApiKey]     = useState<string | null>(null)
+  const [showKey, setShowKey]   = useState(false)
+  const [genLoading, setGenLoading] = useState(false)
+  const [copied, setCopied]     = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [theme, setTheme]       = useState<'dark' | 'light' | 'system'>('dark')
 
-  // ── Detection settings ─────────────────────────────────────────────────────
-  const [highAccMode,      setHighAccMode]      = useState(false)
-  const [saveHistory,      setSaveHistory]      = useState(true)
-  const [autoDownload,     setAutoDownload]     = useState(false)
-  const [showConfidence,   setShowConfidence]   = useState(true)
-  const [showSignals,      setShowSignals]      = useState(true)
-  const [defaultModality,  setDefaultModality]  = useState('text')
-
-  // ── Privacy settings ───────────────────────────────────────────────────────
-  const [publicProfile,    setPublicProfile]    = useState(false)
-  const [shareAnon,        setShareAnon]        = useState(true)
-  const [cookieConsent,    setCookieConsent]    = useState(true)
-  const [analyticsOptOut,  setAnalyticsOptOut]  = useState(false)
-  const [dataRetention,    setDataRetention]    = useState('90')
-
-  // ── Interface settings ─────────────────────────────────────────────────────
-  const [theme,            setTheme]            = useState<'dark'|'light'|'system'>('dark')
-  const [language,         setLanguage]         = useState('en')
-  const [compactView,      setCompactView]      = useState(false)
-  const [animationsOff,    setAnimationsOff]    = useState(false)
-
-  // ── Security ───────────────────────────────────────────────────────────────
-  const [copied,           setCopied]           = useState(false)
-  const [showKey,          setShowKey]          = useState(false)
-
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-
-  const SETTINGS_KEY = `aiscern_settings_${user?.uid}`
-
-  const loadSettings = useCallback(() => {
+  // Load preferences
+  const load = useCallback(async () => {
     if (!user?.uid) return
+    setLoading(true)
     try {
-      const saved = localStorage.getItem(SETTINGS_KEY)
-      if (saved) {
-        const s = JSON.parse(saved)
-        if (s.emailNotif       !== undefined) setEmailNotif(s.emailNotif)
-        if (s.batchAlerts      !== undefined) setBatchAlerts(s.batchAlerts)
-        if (s.weeklyReport     !== undefined) setWeeklyReport(s.weeklyReport)
-        if (s.autoSave         !== undefined) setAutoSave(s.autoSave)
-        if (s.upgradeAlerts    !== undefined) setUpgradeAlerts(s.upgradeAlerts)
-        if (s.highAccMode      !== undefined) setHighAccMode(s.highAccMode)
-        if (s.saveHistory      !== undefined) setSaveHistory(s.saveHistory)
-        if (s.autoDownload     !== undefined) setAutoDownload(s.autoDownload)
-        if (s.showConfidence   !== undefined) setShowConfidence(s.showConfidence)
-        if (s.showSignals      !== undefined) setShowSignals(s.showSignals)
-        if (s.defaultModality  !== undefined) setDefaultModality(s.defaultModality)
-        if (s.publicProfile    !== undefined) setPublicProfile(s.publicProfile)
-        if (s.shareAnon        !== undefined) setShareAnon(s.shareAnon)
-        if (s.analyticsOptOut  !== undefined) setAnalyticsOptOut(s.analyticsOptOut)
-        if (s.dataRetention    !== undefined) setDataRetention(s.dataRetention)
-        if (s.theme            !== undefined) setTheme(s.theme)
-        if (s.language         !== undefined) setLanguage(s.language)
-        if (s.compactView      !== undefined) setCompactView(s.compactView)
-        if (s.animationsOff    !== undefined) setAnimationsOff(s.animationsOff)
-      }
-    } catch {}
-    setLoading(false)
-  }, [user?.uid]) // eslint-disable-line
+      const { data } = await supabase
+        .from('users')
+        .select('preferences, api_key_preview')
+        .eq('id', user.uid)
+        .single() as { data: { preferences?: Prefs; api_key_preview?: string } | null; error: unknown }
 
-  useEffect(() => { loadSettings() }, [loadSettings])
+      if (data?.preferences) {
+        setPrefs({ ...defaultPrefs, ...data.preferences })
+      }
+      if (data?.api_key_preview) {
+        setApiKey(data.api_key_preview)
+      }
+    } catch {
+      // non-fatal
+    } finally {
+      setLoading(false)
+    }
+  }, [user?.uid, supabase])
+
+  useEffect(() => { load() }, [load])
+
+  const toggle = (key: keyof Prefs) => {
+    setPrefs(p => ({ ...p, [key]: !p[key] }))
+  }
 
   const handleSave = async () => {
     if (!user?.uid) return
     setSaving(true)
-    const settings = {
-      emailNotif, batchAlerts, weeklyReport, autoSave, upgradeAlerts,
-      highAccMode, saveHistory, autoDownload, showConfidence, showSignals, defaultModality,
-      publicProfile, shareAnon, analyticsOptOut, dataRetention,
-      theme, language, compactView, animationsOff,
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
+        .from('users')
+        .update({ preferences: prefs })
+        .eq('id', user.uid)
+      setSaved(true)
+      toast.success('Settings saved')
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      toast.error('Failed to save settings')
+    } finally {
+      setSaving(false)
     }
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-    // Persist some to DB
-    await (supabase as any).from('profiles').update({
-      public_profile: publicProfile,
-      analytics_opt_out: analyticsOptOut,
-    }).eq('id', user.uid).catch(() => {})
-    setSaving(false)
-    toast.success('Settings saved')
   }
 
-  const copyApiKey = () => {
-    navigator.clipboard.writeText(`aiscern_${user?.uid?.slice(0,16)}...`)
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
-  }
-
-  const deleteAccount = async () => {
-    if (!confirmDelete || !user?.uid) return
-    setDeleting(true)
-    await fetch('/api/delete-account', { method:'POST' }).catch(() => {})
-    await signOut()
-  }
-
-  const exportData = async () => {
+  const generateApiKey = async () => {
     if (!user?.uid) return
-    const { data: scans } = await (supabase as any).from('scans').select('*').eq('user_id', user.uid)
-    const blob = new Blob([JSON.stringify({ scans, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aiscern-data.json'; a.click()
-    toast.success('Data exported')
+    setGenLoading(true)
+    try {
+      const res = await fetch('/api/user/api-key', { method: 'POST' })
+      if (res.ok) {
+        const { key } = await res.json()
+        setApiKey(key)
+        setShowKey(true)
+        toast.success('New API key generated')
+      } else {
+        toast.error('Failed to generate key')
+      }
+    } catch {
+      toast.error('Request failed')
+    } finally {
+      setGenLoading(false)
+    }
   }
 
-  if (loading) return (
-    <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
-      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-    </div>
-  )
+  const copyKey = () => {
+    if (!apiKey) return
+    navigator.clipboard.writeText(apiKey)
+    setCopied(true)
+    toast.success('Copied to clipboard')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirm) { setDeleteConfirm(true); return }
+    try {
+      await signOut({ redirectUrl: '/' })
+      toast.success('Account deletion initiated')
+    } catch {
+      toast.error('Failed to delete account')
+    }
+  }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-black text-text-primary">Settings</h1>
-          <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
-        </div>
-        <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
-          style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save All
-        </button>
-      </div>
-
-      {/* Notifications */}
-      <Section title="Notifications" icon={Bell}>
-        <SettingRow icon={Mail}       label="Email notifications" description="Scan summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
-        <SettingRow icon={Bell}       label="Batch scan alerts"   description="Notify when bulk scan results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
-        <SettingRow icon={Star}       label="Upgrade alerts"      description="Get notified of plan changes from admin"         action={<Toggle checked={upgradeAlerts}  onChange={() => setUpgradeAlerts(v => !v)} />} />
-        <SettingRow icon={FileText}   label="Weekly report"       description="Weekly digest of your detection activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
-        <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every scan result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
-      </Section>
-
-      {/* Detection */}
-      <Section title="Detection Preferences" icon={BrainCircuit}>
-        <SettingRow icon={Zap}    label="High-accuracy mode"   description="Use slower but more precise ensemble analysis" badge="PRO"  action={<Toggle checked={highAccMode}    onChange={() => setHighAccMode(v => !v)} />} />
-        <SettingRow icon={Database} label="Save scan history"  description="Keep all scan results in your history tab"             action={<Toggle checked={saveHistory}    onChange={() => setSaveHistory(v => !v)} />} />
-        <SettingRow icon={Download} label="Auto-download PDF"  description="Automatically download PDF report after each scan"     action={<Toggle checked={autoDownload}   onChange={() => setAutoDownload(v => !v)} />} />
-        <SettingRow icon={Sliders}  label="Show confidence %"  description="Display confidence scores on all results"              action={<Toggle checked={showConfidence} onChange={() => setShowConfidence(v => !v)} />} />
-        <SettingRow icon={Eye}      label="Show signal details" description="Show individual detection signals on results"          action={<Toggle checked={showSignals}    onChange={() => setShowSignals(v => !v)} />} />
-        <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
-          action={
-            <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
-              {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
-            </select>
-          } />
-      </Section>
-
-      {/* Interface */}
-      <Section title="Interface" icon={Palette}>
-        <SettingRow icon={Moon} label="Theme" description="Choose your preferred color scheme"
-          action={
-            <div className="flex gap-1">
-              {(['dark','light','system'] as const).map(t => (
-                <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/55 text-text-muted hover:text-text-secondary'}`}>
-                  {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
-                  {t.charAt(0).toUpperCase()+t.slice(1)}
-                </button>
-              ))}
-            </div>
-          } />
-        <SettingRow icon={Languages} label="Language" description="Interface display language"
-          action={
-            <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
-              <option value="en">English</option>
-              <option value="ur">اردو (Urdu)</option>
-              <option value="ar">العربية (Arabic)</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-            </select>
-          } />
-        <SettingRow icon={Monitor}     label="Compact view"      description="Reduce padding for a denser layout"          action={<Toggle checked={compactView}    onChange={() => setCompactView(v => !v)} />} />
-        <SettingRow icon={Zap}         label="Reduce animations" description="Disable motion effects for accessibility"    action={<Toggle checked={animationsOff}  onChange={() => setAnimationsOff(v => !v)} />} />
-      </Section>
-
-      {/* Privacy */}
-      <Section title="Privacy" icon={Shield}>
-        <SettingRow icon={Globe}       label="Public profile"      description="Allow others to see your username and stats"      action={<Toggle checked={publicProfile}   onChange={() => setPublicProfile(v => !v)} />} />
-        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized scan results to improve accuracy" action={<Toggle checked={shareAnon}      onChange={() => setShareAnon(v => !v)} />} />
-        <SettingRow icon={Eye}         label="Opt out of analytics" description="Disable usage analytics collection"              action={<Toggle checked={analyticsOptOut} onChange={() => setAnalyticsOptOut(v => !v)} />} />
-        <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
-          action={
-            <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
-              <option value="30">30 days</option>
-              <option value="90">90 days</option>
-              <option value="365">1 year</option>
-              <option value="forever">Forever</option>
-            </select>
-          } />
-      </Section>
-
-      {/* Security */}
-      <Section title="Security & API" icon={Lock}>
-        <SettingRow icon={Smartphone} label="Manage 2FA & password"  description="Update security settings via Clerk"
-          action={
-            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline">
-              Manage <ChevronRight className="w-3 h-3" />
-            </button>
-          } />
-        <SettingRow icon={Key} label="API key (beta)" description="For programmatic access — Team/Enterprise only"
-          action={
-            <div className="flex items-center gap-2">
-              <code className="text-[10px] text-text-muted font-mono">
-                {showKey ? `aiscern_${user?.uid?.slice(0,16)}...` : '••••••••••••••••'}
-              </code>
-              <button onClick={() => setShowKey(v => !v)} className="text-text-muted hover:text-text-primary transition-colors">
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-              <button onClick={copyApiKey} className="text-text-muted hover:text-text-primary transition-colors">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          } />
-      </Section>
-
-      {/* Data */}
-      <Section title="Data & Storage" icon={Database}>
-        <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
-          action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border/55 text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
-              <Download className="w-3 h-3" /> Export
-            </button>
-          } />
-        <SettingRow icon={Trash2} label="Clear scan history" description="Delete all saved detection results permanently"
-          action={
-            <button onClick={async () => {
-              if (!user?.uid) return
-              await (supabase as any).from('scans').delete().eq('user_id', user.uid)
-              toast.success('History cleared')
-            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
-              <Trash2 className="w-3 h-3" /> Clear
-            </button>
-          } />
-      </Section>
-
-      {/* Danger zone */}
-      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-4 sm:p-6">
-        <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-4 h-4" /> Danger Zone
-        </h2>
-        {!confirmDelete ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-text-primary">Delete account</p>
-              <p className="text-xs text-text-muted mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
-            </div>
-            <button onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
-              <Trash2 className="w-3 h-3" /> Delete
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-rose-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-xl border border-border/55 text-xs text-text-muted hover:text-text-primary">
-                Cancel
-              </button>
-              <button onClick={deleteAccount} disabled={deleting}
-                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
-                {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
-              </button>
-            </div>
-          </div>
-        )}
-      </motion.div>
-
+    <>
       <ScrollToTop />
-    </div>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6 pb-20 lg:pb-8">
+        {/* Header */}
+        <FadeIn>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+              Settings
+            </h1>
+            <p className="text-text-muted mt-1 text-sm">
+              Manage your account preferences and notifications
+            </p>
+          </div>
+        </FadeIn>
+
+        <FadeIn delay={0.05}>
+          <Tabs defaultValue="notifications" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 h-9 mb-6">
+              <TabsTrigger value="notifications" className="gap-1.5 text-xs">
+                <Bell className="w-3 h-3" />
+                <span className="hidden sm:inline">Notifications</span>
+                <span className="sm:hidden">Notifs</span>
+              </TabsTrigger>
+              <TabsTrigger value="appearance" className="gap-1.5 text-xs">
+                <Palette className="w-3 h-3" />
+                <span className="hidden sm:inline">Appearance</span>
+                <span className="sm:hidden">Theme</span>
+              </TabsTrigger>
+              <TabsTrigger value="api" className="gap-1.5 text-xs">
+                <Key className="w-3 h-3" />
+                <span>API</span>
+              </TabsTrigger>
+              <TabsTrigger value="danger" className="gap-1.5 text-xs">
+                <Shield className="w-3 h-3" />
+                <span>Security</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* ── Notifications ─────────────────────────────────────────────── */}
+            <TabsContent value="notifications" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Email Notifications</CardTitle>
+                  <CardDescription>Choose when we contact you</CardDescription>
+                </CardHeader>
+                <CardContent className="divide-y divide-white/5">
+                  <SettingRow
+                    icon={Mail}
+                    label="All Email Notifications"
+                    description="Master toggle for all email communication"
+                    action={
+                      <Switch
+                        checked={prefs.email_notifications}
+                        onCheckedChange={() => toggle('email_notifications')}
+                      />
+                    }
+                  />
+                  <SettingRow
+                    icon={Bell}
+                    label="Scan Complete"
+                    description="Notify when a long-running scan finishes"
+                    action={
+                      <Switch
+                        checked={prefs.scan_complete_email}
+                        onCheckedChange={() => toggle('scan_complete_email')}
+                        disabled={!prefs.email_notifications}
+                      />
+                    }
+                  />
+                  <SettingRow
+                    icon={Globe}
+                    label="Weekly Summary"
+                    description="Weekly digest of your detection activity"
+                    badge="Pro"
+                    action={
+                      <Switch
+                        checked={prefs.weekly_summary}
+                        onCheckedChange={() => toggle('weekly_summary')}
+                        disabled={!prefs.email_notifications}
+                      />
+                    }
+                  />
+                  <SettingRow
+                    icon={Mail}
+                    label="Product Updates"
+                    description="News about new features and improvements"
+                    action={
+                      <Switch
+                        checked={prefs.marketing_emails}
+                        onCheckedChange={() => toggle('marketing_emails')}
+                      />
+                    }
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Data Retention</CardTitle>
+                  <CardDescription>Control how long scan history is kept</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SettingRow
+                    icon={Database}
+                    label="Auto-delete scans after"
+                    description="Older scans will be automatically removed"
+                    action={
+                      <select
+                        value={prefs.auto_delete_days}
+                        onChange={e => setPrefs(p => ({ ...p, auto_delete_days: Number(e.target.value) }))}
+                        className="text-sm bg-surface-active border border-white/10 rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value={30}>30 days</option>
+                        <option value={60}>60 days</option>
+                        <option value={90}>90 days (default)</option>
+                        <option value={180}>180 days</option>
+                        <option value={365}>1 year</option>
+                        <option value={0}>Never</option>
+                      </select>
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Appearance ────────────────────────────────────────────────── */}
+            <TabsContent value="appearance" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Theme</CardTitle>
+                  <CardDescription>Choose your preferred display mode</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      { value: 'dark',   label: 'Dark',   icon: Moon },
+                      { value: 'light',  label: 'Light',  icon: Sun },
+                      { value: 'system', label: 'System', icon: Monitor },
+                    ] as const).map(t => (
+                      <button
+                        key={t.value}
+                        onClick={() => setTheme(t.value)}
+                        className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-150 ${
+                          theme === t.value
+                            ? 'border-primary bg-primary/10 text-blue-400'
+                            : 'border-white/8 bg-surface-active text-text-muted hover:border-white/20 hover:text-text-secondary'
+                        }`}
+                      >
+                        <t.icon className="w-6 h-6" />
+                        <span className="text-sm font-medium">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-text-disabled mt-4">
+                    Full light mode coming soon. Dark mode is the current default.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── API ───────────────────────────────────────────────────────── */}
+            <TabsContent value="api" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">API Access</CardTitle>
+                  <CardDescription>
+                    Integrate Aiscern detection into your own apps
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {apiKey ? (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-text-muted">Your API Key</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 bg-surface-active border border-white/10 rounded-lg px-3 py-2 font-mono text-sm text-text-secondary">
+                          <span className="flex-1 truncate">
+                            {showKey ? apiKey : '•'.repeat(32)}
+                          </span>
+                          <button
+                            onClick={() => setShowKey(s => !s)}
+                            className="text-text-disabled hover:text-text-muted transition-colors shrink-0"
+                          >
+                            {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-10 w-10 shrink-0"
+                          onClick={copyKey}
+                        >
+                          {copied
+                            ? <Check className="w-4 h-4 text-emerald-400" />
+                            : <Copy className="w-4 h-4" />
+                          }
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+                      <Key className="w-8 h-8 text-text-disabled mx-auto mb-3" />
+                      <p className="text-sm text-text-muted mb-4">
+                        No API key generated yet
+                      </p>
+                      <Button
+                        onClick={generateApiKey}
+                        disabled={genLoading}
+                        className="gap-2"
+                        size="sm"
+                      >
+                        {genLoading
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <Key className="w-4 h-4" />
+                        }
+                        Generate API Key
+                      </Button>
+                    </div>
+                  )}
+
+                  {apiKey && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={generateApiKey}
+                        disabled={genLoading}
+                      >
+                        {genLoading
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <RefreshCw className="w-3.5 h-3.5" />
+                        }
+                        Regenerate
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        asChild
+                      >
+                        <a href="/docs/api" target="_blank" rel="noopener noreferrer">
+                          <Globe className="w-3.5 h-3.5" />
+                          API Docs
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+
+                  <Alert variant="warning">
+                    <AlertTriangle className="w-4 h-4" />
+                    <AlertDescription className="text-xs">
+                      Keep your API key secret. Regenerating will invalidate the current key immediately.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Security / Danger ─────────────────────────────────────────── */}
+            <TabsContent value="danger" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Account Security</CardTitle>
+                  <CardDescription>Manage your account and data</CardDescription>
+                </CardHeader>
+                <CardContent className="divide-y divide-white/5">
+                  <SettingRow
+                    icon={Download}
+                    label="Export your data"
+                    description="Download all your scan history as a CSV file"
+                    action={
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Download className="w-3.5 h-3.5" />
+                        Export
+                      </Button>
+                    }
+                  />
+                  <SettingRow
+                    icon={Lock}
+                    label="Change password"
+                    description="Update via your Clerk account settings"
+                    action={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        asChild
+                      >
+                        <a href="https://accounts.aiscern.com/user" target="_blank" rel="noopener noreferrer">
+                          <Lock className="w-3.5 h-3.5" />
+                          Manage
+                        </a>
+                      </Button>
+                    }
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="border-rose/20">
+                <CardHeader>
+                  <CardTitle className="text-base text-rose-400">Danger Zone</CardTitle>
+                  <CardDescription>Irreversible actions — proceed with care</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-rose/20 bg-rose/5">
+                    <div className="flex items-start gap-3">
+                      <Trash2 className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Delete Account</p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                          Permanently delete your account and all associated data. This cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="shrink-0 gap-2"
+                      onClick={handleDeleteAccount}
+                    >
+                      {deleteConfirm ? (
+                        <>
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          Confirm
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {deleteConfirm && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <Alert variant="destructive">
+                        <AlertTriangle className="w-4 h-4" />
+                        <AlertDescription className="text-xs">
+                          Click <strong>Confirm</strong> again to permanently delete your account.
+                          You will be signed out immediately.
+                        </AlertDescription>
+                      </Alert>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </FadeIn>
+
+        {/* Save button — always visible */}
+        <FadeIn delay={0.1}>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <AnimatePresence>
+              {saved && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center gap-2 text-emerald-400 text-sm"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <Button
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="gap-2 min-w-[120px]"
+            >
+              {saving
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Save className="w-4 h-4" />
+              }
+              {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </div>
+        </FadeIn>
+      </div>
+    </>
   )
 }
