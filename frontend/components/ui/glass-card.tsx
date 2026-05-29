@@ -12,15 +12,16 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative overflow-hidden rounded-xl",
-          "bg-surface/80 border border-white/8",
+          "relative overflow-hidden rounded-xl border border-white/8",
+          // Use solid bg instead of backdrop-blur (disabled on mobile by globals.css)
+          "bg-surface",
           variant === "elevated" && "shadow-xl shadow-black/20",
-          variant === "bordered" && "border-white/12",
-          hover && "transition-all duration-300 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 hover:border-white/14",
+          hover && "transition-all duration-200 hover:border-white/[0.14] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20",
           className
         )}
         {...props}
       >
+        {/* Subtle inner gradient for depth */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
         <div className="relative z-10">{children}</div>
       </div>

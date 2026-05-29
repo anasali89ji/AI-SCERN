@@ -12,17 +12,17 @@ interface FadeInProps {
 }
 
 const directionOffset = {
-  up:    { y: 24 },
-  down:  { y: -24 },
-  left:  { x: 24 },
-  right: { x: -24 },
+  up:    { y: 16 },
+  down:  { y: -16 },
+  left:  { x: 16 },
+  right: { x: -16 },
   none:  {},
 }
 
 export function FadeIn({
   children,
   delay = 0,
-  duration = 0.5,
+  duration = 0.4,
   direction = "up",
   className,
   once = true,
@@ -39,9 +39,9 @@ export function FadeIn({
 
   return (
     <motion.div
+      // Start visible on server, animate on client
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once, margin: "-50px" }}
+      animate="visible"
       variants={variants}
       className={className}
     >

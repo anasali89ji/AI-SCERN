@@ -4,7 +4,7 @@ import { type ReactNode } from "react"
 
 export function StaggerContainer({
   children,
-  staggerDelay = 0.1,
+  staggerDelay = 0.08,
   className,
 }: {
   children: ReactNode
@@ -15,15 +15,14 @@ export function StaggerContainer({
     hidden:  { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: staggerDelay, delayChildren: 0.1 },
+      transition: { staggerChildren: staggerDelay, delayChildren: 0.05 },
     },
   }
 
   return (
     <motion.div
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
+      animate="visible"
       variants={containerVariants}
       className={className}
     >
@@ -40,11 +39,11 @@ export function StaggerItem({
   className?: string
 }) {
   const itemVariants: Variants = {
-    hidden:  { opacity: 0, y: 20 },
+    hidden:  { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
     },
   }
 
