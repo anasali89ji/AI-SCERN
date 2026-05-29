@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── shadcn/ui CSS Variables ─────────────────────────────────────────────── */
+/* Dark-first theme to match existing Aiscern design system */
+:root {
+  --background: 230 84% 4%;
+  --foreground: 210 40% 96%;
+  --card: 230 50% 6%;
+  --card-foreground: 210 40% 96%;
+  --popover: 230 50% 6%;
+  --popover-foreground: 210 40% 96%;
+  --primary: 217 91% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 96%;
+  --muted: 217 32% 12%;
+  --muted-foreground: 215 20% 55%;
+  --accent: 217 32% 17%;
+  --accent-foreground: 210 40% 96%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 32% 14%;
+  --input: 217 32% 14%;
+  --ring: 217 91% 50%;
+  --radius: 0.75rem;
+  --chart-1: 217 91% 50%;
+  --chart-2: 142 76% 36%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 0 84% 60%;
+  --chart-5: 280 70% 50%;
+}
+
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html {

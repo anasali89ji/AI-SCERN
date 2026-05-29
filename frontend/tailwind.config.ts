@@ -7,7 +7,6 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx}',
   ],
   safelist: [
-    // Verdict color classes
     'text-rose', 'border-rose', 'bg-rose',
     'text-emerald', 'border-emerald', 'bg-emerald',
     'text-amber', 'border-amber', 'bg-amber',
@@ -20,11 +19,9 @@ const config: Config = {
     {
       pattern: /^(bg|border|text)-(primary|secondary|cyan|emerald|rose|amber)\/(5|8|10|12|14|18|25|28|30|60|80)$/,
     },
-    // Gradient from/to/via opacity variants used in tool cards and trust section
     {
       pattern: /^(from|to|via)-(primary|secondary|cyan|emerald|rose|amber)\/(5|8|10|12|14|18|20|25|28|30|50|60|80)$/,
     },
-    // Explicit from-*/8 and from-*/10 for tool cards
     'from-amber/8', 'from-primary/8', 'from-cyan/8',
     'from-secondary/8', 'from-emerald/8', 'from-rose/8',
     'from-amber/10', 'from-primary/10', 'from-cyan/10',
@@ -34,14 +31,14 @@ const config: Config = {
     'to-amber/5', 'to-cyan/5', 'to-emerald/5', 'to-rose/5', 'to-secondary/5',
     'via-secondary/5',
   ],
-  darkMode: 'class',
+  darkMode: ['class'],
   theme: {
     screens: {
-      'xs':  '375px',
-      'sm':  '640px',
-      'md':  '768px',
-      'lg':  '1024px',
-      'xl':  '1280px',
+      'xs': '375px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
       '2xl': '1440px',
       '3xl': '1920px',
     },
@@ -60,6 +57,7 @@ const config: Config = {
         '88': '0.88',
       },
       colors: {
+        // ── Legacy custom tokens (preserved) ──
         background:       '#08080d',
         surface:          '#0f0f17',
         'surface-active': '#141420',
@@ -76,9 +74,67 @@ const config: Config = {
         emerald:   'rgb(16 185 129 / <alpha-value>)',
         amber:     'rgb(245 158 11 / <alpha-value>)',
         rose:      'rgb(244 63 94 / <alpha-value>)',
+
+        // ── shadcn/ui semantic tokens ──
+        input:      'hsl(var(--input))',
+        ring:       'hsl(var(--ring))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT:    'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        popover: {
+          DEFAULT:    'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        muted: {
+          DEFAULT:    'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT:    'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT:    'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+
+        // ── Brand palette ──
+        brand: {
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
+        },
+        success: {
+          DEFAULT:    'hsl(142 76% 36%)',
+          foreground: 'hsl(142 76% 97%)',
+        },
+        warning: {
+          DEFAULT:    'hsl(38 92% 50%)',
+          foreground: 'hsl(38 92% 97%)',
+        },
+        info: {
+          DEFAULT:    'hsl(217 91% 60%)',
+          foreground: 'hsl(217 91% 97%)',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       spacing: {
         'safe-top':    'env(safe-area-inset-top)',
@@ -92,8 +148,8 @@ const config: Config = {
           '50%':       { transform: 'translateY(-8px)' },
         },
         'glow-pulse': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(124, 58, 237, 0.3)' },
-          '50%':       { boxShadow: '0 0 40px rgba(124, 58, 237, 0.6), 0 0 80px rgba(37, 99, 235, 0.2)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(37, 99, 235, 0.3)' },
+          '50%':       { boxShadow: '0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(37, 99, 235, 0.2)' },
         },
         'scan-line': {
           '0%':   { top: '0%', opacity: '1' },
@@ -135,34 +191,59 @@ const config: Config = {
         'ping-slow': {
           '75%, 100%': { transform: 'scale(2)', opacity: '0' },
         },
+        'accordion-down': {
+          from: { height: '0' },
+          to:   { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to:   { height: '0' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to:   { opacity: '1' },
+        },
+        'slide-in-from-bottom': {
+          from: { transform: 'translateY(10px)', opacity: '0' },
+          to:   { transform: 'translateY(0)', opacity: '1' },
+        },
+        'scale-in': {
+          from: { transform: 'scale(0.95)', opacity: '0' },
+          to:   { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
-        'float':         'float 3s ease-in-out infinite',
-        'glow-pulse':    'glow-pulse 2s ease-in-out infinite',
-        'scan-line':     'scan-line 2s linear infinite',
-        'scan-sweep':    'scan-sweep 2.4s ease-in-out infinite',
-        'shimmer':       'shimmer 1.8s infinite linear',
-        'mesh-drift':    'mesh-drift 18s ease-in-out infinite',
-        'slide-up-fade': 'slide-up-fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'marquee-left':  'marquee-left 30s linear infinite',
-        'marquee-right': 'marquee-right 35s linear infinite',
-        'border-shimmer':'border-shimmer 6s linear infinite',
-        'ping-slow':     'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'float':           'float 3s ease-in-out infinite',
+        'glow-pulse':      'glow-pulse 2s ease-in-out infinite',
+        'scan-line':       'scan-line 2s linear infinite',
+        'scan-sweep':      'scan-sweep 2.4s ease-in-out infinite',
+        'shimmer':         'shimmer 1.8s infinite linear',
+        'mesh-drift':      'mesh-drift 18s ease-in-out infinite',
+        'slide-up-fade':   'slide-up-fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'marquee-left':    'marquee-left 30s linear infinite',
+        'marquee-right':   'marquee-right 35s linear infinite',
+        'border-shimmer':  'border-shimmer 6s linear infinite',
+        'ping-slow':       'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'accordion-down':  'accordion-down 0.2s ease-out',
+        'accordion-up':    'accordion-up 0.2s ease-out',
+        'fade-in':         'fade-in 0.3s ease-out',
+        'slide-in':        'slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        'scale-in':        'scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
       },
       boxShadow: {
-        'glow-purple': '0 0 24px rgba(37, 99, 235, 0.4)',
+        'glow-purple':    '0 0 24px rgba(37, 99, 235, 0.4)',
         'glow-purple-lg': '0 0 48px rgba(37, 99, 235, 0.3)',
-        'glow-orange': '0 0 24px rgba(249, 115, 22, 0.4)',
-        'inner-purple': 'inset 0 0 0 1px rgba(37, 99, 235, 0.3)',
+        'glow-orange':    '0 0 24px rgba(249, 115, 22, 0.4)',
+        'inner-purple':   'inset 0 0 0 1px rgba(37, 99, 235, 0.3)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'hero-mesh': 'radial-gradient(ellipse at top left, rgba(139,92,246,0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(37,99,235,0.1) 0%, transparent 50%)',
+        'gradient-conic':  'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'hero-mesh':       'radial-gradient(ellipse at top left, rgba(37,99,235,0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(37,99,235,0.1) 0%, transparent 50%)',
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 }
 
 export default config
