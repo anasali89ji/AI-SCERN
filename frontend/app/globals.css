@@ -1178,3 +1178,45 @@ section > .max-w-7xl > .border-t {
     transition: none !important;
   }
 }
+
+/* ── CRITICAL: Framer-motion animation fallback ─────────────────────────────
+ * framer-motion serializes initial={opacity:0} as inline style="opacity:0"
+ * in SSR HTML. If hydration or animation fails (React 19 timing, slow JS,
+ * network error), elements stay invisible forever.
+ *
+ * This fallback uses @keyframes to override the inline opacity:0 after a
+ * short delay, ensuring content is ALWAYS visible within 1.5 seconds
+ * regardless of JS animation state.
+ * ----------------------------------------------------------------------- */
+@keyframes fm-reveal {
+  0%   { /* allow framer-motion to animate first */ }
+  100% { opacity: 1 !important; transform: none !important; }
+}
+
+/* Any element with inline opacity:0 that framer-motion hasn't yet animated
+   will be forced visible after 1.4s. The !important overrides the inline style. */
+[style*="opacity: 0"],
+[style*="opacity:0"] {
+  animation: fm-reveal 0.3s ease-out 1.4s forwards;
+}
+
+/* For elements already in viewport (hero sections, above-fold content)
+   make them visible even faster */
+[style*="opacity: 0"][data-above-fold],
+[style*="opacity:0"][data-above-fold] {
+  animation: fm-reveal 0.3s ease-out 0.5s forwards;
+}
+
+/* Sections with translateY inline style — reset transform too */
+[style*="transform: translateY"],
+[style*="transform:translateY"] {
+  animation: fm-reveal 0.3s ease-out 1.4s forwards;
+}
+
+/* But DON'T apply to truly-hidden elements (aria-hidden, display:none, etc.) */
+[aria-hidden="true"][style*="opacity: 0"],
+[aria-hidden="true"][style*="opacity:0"] {
+  animation: none;
+}
+
+/* ── End framer-motion fallback ─────────────────────────────────────────── */

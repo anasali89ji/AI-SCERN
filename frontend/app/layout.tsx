@@ -4,6 +4,7 @@ import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -117,6 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
+            <MotionProvider>
             <TooltipProvider delayDuration={200}>
               <main id="main-content">
                 {children}
@@ -124,6 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Toaster richColors position="top-right" />
               <CookieConsent />
             </TooltipProvider>
+            </MotionProvider>
           </AuthProvider>
         </ClerkClientProvider>
       </body>
