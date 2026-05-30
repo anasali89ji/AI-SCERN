@@ -1148,3 +1148,21 @@ section > .max-w-7xl > .border-t {
     transition: none !important;
   }
 }
+
+/* ── CRITICAL: Framer-motion animation safety fallback ──────────────────────
+ * framer-motion serializes initial={opacity:0} as inline style="opacity:0".
+ * If React 19 hydration timing causes animations to miss, elements stay
+ * permanently invisible. This CSS ensures they're always visible after 1.4s.
+ * ----------------------------------------------------------------------- */
+@keyframes fm-reveal {
+  to { opacity: 1 !important; transform: none !important; }
+}
+[style*="opacity: 0"]:not([aria-hidden="true"]),
+[style*="opacity:0"]:not([aria-hidden="true"]) {
+  animation: fm-reveal 0.3s ease-out 1.4s forwards;
+}
+[style*="transform: translateY"]:not([aria-hidden="true"]),
+[style*="transform:translateY"]:not([aria-hidden="true"]) {
+  animation: fm-reveal 0.3s ease-out 1.4s forwards;
+}
+/* ────────────────────────────────────────────────────────────────────────── */

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'
 import './globals.css'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 
 const inter = localFont({
   src: [
@@ -116,11 +117,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
-            <main id="main-content">
-              {children}
-            </main>
-            <Toaster richColors position="top-right" />
-            <CookieConsent />
+            <MotionProvider>
+              <main id="main-content">
+                {children}
+              </main>
+              <Toaster richColors position="top-right" />
+              <CookieConsent />
+            </MotionProvider>
           </AuthProvider>
         </ClerkClientProvider>
       </body>
