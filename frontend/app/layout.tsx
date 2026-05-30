@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -116,11 +117,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
-            <main id="main-content">
-              {children}
-            </main>
-            <Toaster richColors position="top-right" />
-            <CookieConsent />
+            <TooltipProvider delayDuration={200}>
+              <main id="main-content">
+                {children}
+              </main>
+              <Toaster richColors position="top-right" />
+              <CookieConsent />
+            </TooltipProvider>
           </AuthProvider>
         </ClerkClientProvider>
       </body>

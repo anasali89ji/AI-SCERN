@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
+import { Button } from '@/components/ui/button'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Signal { name: string; flagged: boolean; description: string; weight?: number }
@@ -146,13 +147,13 @@ export default function ScraperPage() {
                 className="w-full bg-[#141420] border border-white/[0.07] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
               />
             </div>
-            <button
+            <Button
               onClick={() => handleScrape()} disabled={loading || !url.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-bold disabled:opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap"
+              className="gap-2 whitespace-nowrap bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               {loading ? 'Scanning…' : 'Scan Site'}
-            </button>
+            </Button>
           </div>
 
           {/* Options row */}

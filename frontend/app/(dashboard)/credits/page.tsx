@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser }  from '@clerk/nextjs'
 import { toast }    from 'sonner'
+import { Button } from '@/components/ui/button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ export default function CreditsPage() {
           {/* Period toggle */}
           <div className="inline-flex mt-8 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
             {(['monthly', 'yearly'] as const).map(p => (
-              <button
+              <Button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -99,7 +100,7 @@ export default function CreditsPage() {
                 }`}
               >
                 {p === 'monthly' ? 'Monthly' : 'Yearly (save ~17%)'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -163,7 +164,7 @@ export default function CreditsPage() {
                     </ul>
                   </div>
 
-                  <button
+                  <Button
                     onClick={() => handlePurchase(plan.id)}
                     disabled={isBuying || !!buying}
                     className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
@@ -173,7 +174,7 @@ export default function CreditsPage() {
                     }`}
                   >
                     {isBuying ? 'Redirecting…' : `Get ${plan.name.split(' ')[0]}`}
-                  </button>
+                  </Button>
                 </div>
               )
             })}
