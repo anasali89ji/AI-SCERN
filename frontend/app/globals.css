@@ -298,19 +298,16 @@ h1 {
 
 .node-card {
   opacity: 0;
-  will-change: transform, opacity;
   animation: node-in-bob-a 5s ease-in-out infinite;
   animation-fill-mode: forwards;
 }
 .node-card-bob-a {
   opacity: 0;
-  will-change: transform, opacity;
   animation: node-in-bob-a 5s ease-in-out infinite;
   animation-fill-mode: forwards;
 }
 .node-card-bob-b {
   opacity: 0;
-  will-change: transform, opacity;
   animation: node-in-bob-b 6s ease-in-out infinite;
   animation-fill-mode: forwards;
 }
@@ -366,11 +363,9 @@ html, body {
 /* ── Hero node cards — smooth pop-in with zero CLS ── */
 .node-card-bob-a,
 .node-card-bob-b {
-  will-change: transform, opacity;
   backface-visibility: hidden;
   /* contain: layout ensures the translateY never causes document reflow */
   contain: layout style;
-  /* preserve-3d removed — promotes full 3D GPU layer, causes scanline glitches on mobile */
   transform-style: flat;
 }
 
@@ -929,15 +924,12 @@ section > .max-w-7xl > .border-t {
 }
 .hero-mesh-1 {
   animation: mesh-drift 18s ease-in-out infinite;
-  will-change: transform;
 }
 .hero-mesh-2 {
   animation: mesh-drift 22s ease-in-out infinite reverse;
-  will-change: transform;
 }
 .hero-mesh-3 {
   animation: mesh-drift 15s ease-in-out infinite 5s;
-  will-change: transform;
 }
 
 /* ── Bento grid shimmer border on large card ──────────────────────────── */
