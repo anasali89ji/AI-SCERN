@@ -332,7 +332,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
               <div className="flex gap-2">
                 <Button onClick={() => { setText(''); setResult(null); setError(null) }}
-                  className="btn-ghost py-2 px-3 text-sm flex items-center gap-1.5">
+                  variant="ghost" className="gap-1.5">
                   <RotateCcw className="w-3.5 h-3.5" /> Clear
                 </Button>
                 <Button onClick={handleDetect} disabled={loading || charCount < 50}
@@ -497,7 +497,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   <span className="text-xs text-text-muted font-mono">{result.processing_time}ms</span>
                   <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
                     <Button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
-                      className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
+                      variant="ghost" size="sm" className="gap-1.5 flex-1 xs:flex-none justify-center">
                       <RotateCcw className="w-3.5 h-3.5" /> Detect Another
                     </Button>
                     <Button onClick={copyResult}

@@ -340,7 +340,7 @@ export default function BatchPage() {
             {!running ? (
               <Button onClick={runBatch}
                 disabled={!files.some(f => f.status === 'queued')}
-                className="btn-primary flex items-center gap-2 disabled:opacity-50">
+                className="gap-2">
                 <Play className="w-4 h-4" />
                 {files.some(f => f.status === 'queued')
                   ? `Run ${files.filter(f => f.status === 'queued').length} files`
@@ -396,7 +396,7 @@ export default function BatchPage() {
                 { key: 'error',     label: 'Errors',    count: errored },
               ] as const).filter(t => t.key === 'all' || t.count > 0).map(t => (
                 <Button key={t.key} onClick={() => setFilter(t.key)}
-                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-primary text-white' : 'btn-ghost'}`}>
+                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-primary text-white' : 'hover:bg-white/5 text-text-muted hover:text-text-primary'}`}>
                   {t.label}
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-surface-active text-text-muted'}`}>{t.count}</span>
                 </Button>

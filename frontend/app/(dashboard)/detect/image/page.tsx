@@ -253,11 +253,11 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
 
               <div className="flex gap-3">
-                <Button onClick={reset} className="btn-ghost flex-1 py-2.5 flex items-center justify-center gap-2 text-sm">
+                <Button onClick={reset} variant="outline" className="flex-1 gap-2">
                   <RotateCcw className="w-4 h-4" /> New Image
                 </Button>
                 <Button onClick={handleDetect} disabled={loading}
-                  className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                  className="flex-1 gap-2">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
                   {loading ? 'Scanning…' : 'Detect'}
                 </Button>

@@ -162,10 +162,10 @@ export default function ScraperPage() {
               <span className="text-xs text-slate-500">Crawl depth</span>
               <div className="flex gap-1">
                 {[1, 2].map(d => (
-                  <button key={d} onClick={() => setDepth(d)}
+                  <Button key={d} onClick={() => setDepth(d)}
                     className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-violet-600 text-white' : 'bg-[#141420] text-slate-400 hover:bg-violet-500/20'}`}>
                     {d}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <span className="text-[10px] text-slate-500">{depth === 1 ? 'Main page only' : 'Follow internal links'}</span>
@@ -177,10 +177,10 @@ export default function ScraperPage() {
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               <span className="text-[10px] text-slate-600 font-medium">Try:</span>
               {EXAMPLES.map(ex => (
-                <button key={ex.url} onClick={() => handleScrape(ex.url)}
+                <Button key={ex.url} onClick={() => handleScrape(ex.url)}
                   className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-violet-400 hover:bg-violet-500/15 border border-white/5 hover:border-violet-500/30 transition-colors">
                   {ex.label}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -453,10 +453,10 @@ export default function ScraperPage() {
                         className="text-violet-400 hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
-                      <button onClick={() => handleScrape(link.url)} title="Scan this page"
+                      <Button onClick={() => handleScrape(link.url)} title="Scan this page"
                         className="text-slate-500 hover:text-violet-400 transition-colors shrink-0 ml-1">
                         <Zap className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
