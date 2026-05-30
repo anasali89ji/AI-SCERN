@@ -144,9 +144,11 @@ function MarqueeRow({ cards, direction }: { cards: ComparisonCardData[]; directi
 // ─── Section (default export) ──────────────────────────────────────────────
 export default function AIvsRealSection() {
   return (
-    <section className="section-below-fold py-10 sm:py-16 lg:py-24 overflow-hidden">
+    <section className="py-10 sm:py-16 lg:py-24 overflow-hidden">
       <div className="max-w-7xl 2xl:max-w-[1400px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose/30 bg-rose/5 text-rose text-[11px] sm:text-xs font-semibold mb-3">
             <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" aria-hidden="true" />

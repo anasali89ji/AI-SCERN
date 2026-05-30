@@ -424,8 +424,11 @@ img {
   /* Better paragraph readability on small screens */
   p { text-wrap: pretty; }
 
-  /* Ensure no horizontal scroll from any element */
-  * { max-width: 100%; }
+  /* Prevent horizontal overflow — target layout elements only, NOT all elements.
+     Applying max-width:100% to * breaks framer-motion's internal wrappers,
+     SVG viewBox calculations, and position:absolute children. */
+  div, section, article, aside, header, footer, nav, p, h1, h2, h3, h4, h5, h6,
+  ul, ol, li, table, figure, blockquote { max-width: 100%; }
 
   /* Better tap targets */
   a, button { min-height: 40px; }
@@ -446,8 +449,9 @@ img {
 
 /* ── Section spacing — tighter on mobile ── */
 @media (max-width: 639px) {
-  section { padding-left: 1rem; padding-right: 1rem; }
-  .max-w-6xl, .max-w-7xl, .max-w-5xl { padding-left: 1rem; padding-right: 1rem; }
+/* Section padding override removed — it conflicts with Tailwind's px-4/px-5/px-8
+   applied directly on section tags and causes double-padding + layout shifts.
+   Individual sections manage their own horizontal padding via Tailwind utilities. */
 }
 
 /* ── Gradient badges — cleaner ── */
@@ -684,11 +688,14 @@ html { scroll-behavior: smooth; }
 /* ── content-visibility removed — was hiding sections off-screen ──── */
 /* content-visibility: auto caused sections to never appear on mobile  */
 /* and in certain browsers; replaced with will-change for perf.       */
+/* will-change:transform removed — creates new stacking contexts that clip
+   position:absolute children and cause sections to disappear on Safari/iOS.
+   Use contain:layout only on sections that actually need paint containment. */
 .cv-auto {
-  will-change: transform;
+  /* intentionally empty — keep class for future use */
 }
 .cv-auto-sm {
-  will-change: transform;
+  /* intentionally empty */
 }
 
 /* ── Mobile performance: disable ALL backdrop-blur on mobile ─────────────── */
