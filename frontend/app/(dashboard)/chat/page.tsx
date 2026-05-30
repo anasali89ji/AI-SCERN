@@ -563,7 +563,7 @@ export default function ChatPage() {
       {/* ── Sidebar ── */}
       <aside className={`
         fixed lg:relative z-30 lg:z-auto w-[15.5rem] sm:w-[17rem] h-full flex flex-col
-        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
+        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[261ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">

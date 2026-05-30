@@ -211,8 +211,8 @@ Analyzed: ${new Date().toLocaleString()}`
                   <ClipboardPaste className="w-3.5 h-3.5" />
                   Paste
                 </Button>
-                <Button onClick={() => setText(SAMPLE_AI)} className="text-xs btn-ghost py-1.5 px-2.5">Sample AI</Button>
-                <Button onClick={() => setText(SAMPLE_HUMAN)} className="text-xs btn-ghost py-1.5 px-2.5">Sample Human</Button>
+                <Button onClick={() => setText(SAMPLE_AI)} variant="ghost" size="sm">Sample AI</Button>
+                <Button onClick={() => setText(SAMPLE_HUMAN)} variant="ghost" size="sm">Sample Human</Button>
               </div>
             </div>
 
