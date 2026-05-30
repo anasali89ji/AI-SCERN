@@ -10,6 +10,7 @@ import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
 import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui/button'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -205,13 +206,13 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-text-primary text-sm">Input Text</h2>
               <div className="flex gap-1.5">
-                <button onClick={handlePaste} disabled={pasteLoading}
-                  className="text-xs btn-ghost py-1.5 px-2.5 flex items-center gap-1.5 disabled:opacity-50">
+                <Button onClick={handlePaste} disabled={pasteLoading}
+                  variant="ghost" size="sm">
                   <ClipboardPaste className="w-3.5 h-3.5" />
                   Paste
-                </button>
-                <button onClick={() => setText(SAMPLE_AI)} className="text-xs btn-ghost py-1.5 px-2.5">Sample AI</button>
-                <button onClick={() => setText(SAMPLE_HUMAN)} className="text-xs btn-ghost py-1.5 px-2.5">Sample Human</button>
+                </Button>
+                <Button onClick={() => setText(SAMPLE_AI)} className="text-xs btn-ghost py-1.5 px-2.5">Sample AI</Button>
+                <Button onClick={() => setText(SAMPLE_HUMAN)} className="text-xs btn-ghost py-1.5 px-2.5">Sample Human</Button>
               </div>
             </div>
 
@@ -227,16 +228,16 @@ Analyzed: ${new Date().toLocaleString()}`
 
             {/* PDF Upload Zone */}
             <div className="flex items-center gap-2 mb-3">
-              <button
+              <Button
                 onClick={() => setPdfMode(false)}
                 className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber/15 text-amber border border-amber/30' : 'text-text-muted hover:text-text-secondary'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setPdfMode(true)}
                 className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-primary/15 text-primary border border-primary/30' : 'text-text-muted hover:text-text-secondary'}`}>
                 <BookOpen className="w-3.5 h-3.5" /> PDF Upload
-              </button>
+              </Button>
             </div>
 
             {pdfMode && (
@@ -280,10 +281,10 @@ Analyzed: ${new Date().toLocaleString()}`
                 <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = '' }} />
                 {pdfFile && !pdfLoading && !result && (
-                  <button onClick={() => { setPdfFile(null); setResult(null) }}
+                  <Button onClick={() => { setPdfFile(null); setResult(null) }}
                     className="flex items-center gap-1.5 text-xs text-text-muted hover:text-rose transition-colors mb-2">
                     <X className="w-3.5 h-3.5" /> Clear PDF
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -330,15 +331,15 @@ Analyzed: ${new Date().toLocaleString()}`
                 {charCount >= 50 && <span className="ml-2 text-emerald/70">✓ Ready to analyze</span>}
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { setText(''); setResult(null); setError(null) }}
+                <Button onClick={() => { setText(''); setResult(null); setError(null) }}
                   className="btn-ghost py-2 px-3 text-sm flex items-center gap-1.5">
                   <RotateCcw className="w-3.5 h-3.5" /> Clear
-                </button>
-                <button onClick={handleDetect} disabled={loading || charCount < 50}
-                  className="btn-primary py-2 px-5 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                </Button>
+                <Button onClick={handleDetect} disabled={loading || charCount < 50}
+                  >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   {loading ? 'Analyzing…' : 'Detect'}
-                </button>
+                </Button>
               </div>
             </div>
             <p className="text-xs text-text-disabled mt-2">Ctrl+Enter to analyze</p>
@@ -495,20 +496,20 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="card py-3 px-4 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
                   <span className="text-xs text-text-muted font-mono">{result.processing_time}ms</span>
                   <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
-                    <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
+                    <Button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
                       className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
                       <RotateCcw className="w-3.5 h-3.5" /> Detect Another
-                    </button>
-                    <button onClick={copyResult}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
+                    </Button>
+                    <Button onClick={copyResult}
+                      variant="ghost" size="sm">
                       <Copy className="w-3.5 h-3.5" />
                       {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                    <button onClick={exportReport}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
+                    </Button>
+                    <Button onClick={exportReport}
+                      variant="ghost" size="sm">
                       <Download className="w-3.5 h-3.5" />
                       Export
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -561,10 +562,10 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
-            <button onClick={shareResult}
+            <Button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
-            </button>
+            </Button>
           )}
         </div>
       )}

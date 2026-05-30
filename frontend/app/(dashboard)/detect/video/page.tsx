@@ -23,6 +23,7 @@ const LazyFeedbackBar = dynamic(
   { ssr: false }
 )
 import { SignupGate } from '@/components/SignupGate'
+import { Button } from '@/components/ui/button'
 
 
 
@@ -386,12 +387,12 @@ function VideoDetectionPage() {
                     )}
                   </div>
                 ) : (
-                  <button onClick={togglePlay}
+                  <Button onClick={togglePlay}
                     className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/40 transition-colors group">
                     <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       {playing ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-1" />}
                     </div>
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -413,9 +414,9 @@ function VideoDetectionPage() {
                   <p className="text-xs sm:text-sm text-text-secondary font-medium truncate">{file.name}</p>
                   <p className="text-[10px] sm:text-xs text-text-muted">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
+                <Button onClick={reset} className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               {/* Extracted frames strip */}
@@ -424,14 +425,14 @@ function VideoDetectionPage() {
               )}
 
               <div className="flex gap-3">
-                <button onClick={reset} className="btn-ghost flex-1 py-2.5 text-sm flex items-center justify-center gap-2">
+                <Button onClick={reset} variant="outline">
                   <RotateCcw className="w-4 h-4" /> New Video
-                </button>
-                <button onClick={handleDetect} disabled={loading}
-                  className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                </Button>
+                <Button onClick={handleDetect} disabled={loading}
+                  >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
                   {loading ? loadingLabel.split('…')[0] + '…' : 'Analyze Video'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -561,9 +562,9 @@ function VideoDetectionPage() {
                 <span className="text-xs text-text-muted font-mono truncate">
                   {result.processing_time}ms
                 </span>
-                <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                <Button onClick={exportReport} variant="ghost" size="sm">
                   <Download className="w-3.5 h-3.5" /> Export Report
-                </button>
+                </Button>
               </div>
             </motion.div>
           ) : !loading && (
@@ -602,10 +603,10 @@ function VideoDetectionPage() {
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
-            <button onClick={shareResult}
+            <Button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
-            </button>
+            </Button>
           )}
         </div>
       )}

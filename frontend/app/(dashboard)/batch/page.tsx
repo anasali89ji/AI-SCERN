@@ -6,6 +6,7 @@ import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle,
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
 import { ReviewSuggestion } from '@/components/ReviewSuggestion'
+import { Button } from '@/components/ui/button'
 
 
 interface BatchFile {
@@ -337,39 +338,39 @@ export default function BatchPage() {
           {/* Controls */}
           <div className="flex flex-wrap gap-2 mb-4">
             {!running ? (
-              <button onClick={runBatch}
+              <Button onClick={runBatch}
                 disabled={!files.some(f => f.status === 'queued')}
                 className="btn-primary flex items-center gap-2 disabled:opacity-50">
                 <Play className="w-4 h-4" />
                 {files.some(f => f.status === 'queued')
                   ? `Run ${files.filter(f => f.status === 'queued').length} files`
                   : 'All processed'}
-              </button>
+              </Button>
             ) : (
-              <button onClick={togglePause}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber/10 text-amber border border-amber/30 hover:bg-amber/20'}`}>
+              <Button onClick={togglePause}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'bg-primary text-white hover:bg-primary/90' : 'bg-amber/10 text-amber border border-amber/30 hover:bg-amber/20'}`}>
                 {paused ? <><Play className="w-4 h-4" />Resume</> : <><Pause className="w-4 h-4" />Pause</>}
-              </button>
+              </Button>
             )}
 
             {errored > 0 && !running && (
-              <button onClick={retryErrors} className="btn-ghost flex items-center gap-2 text-sm">
+              <Button onClick={retryErrors} variant="ghost">
                 <RotateCcw className="w-4 h-4" />Retry {errored} errors
-              </button>
+              </Button>
             )}
 
-            <button onClick={clearAll} disabled={running} className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50">
+            <Button onClick={clearAll} disabled={running} variant="ghost">
               <X className="w-4 h-4" /> Clear All
-            </button>
+            </Button>
 
             {completed > 0 && (
               <div className="flex gap-2 ml-auto">
-                <button onClick={exportCSV} className="btn-ghost flex items-center gap-2 text-sm">
+                <Button onClick={exportCSV} variant="ghost">
                   <Download className="w-4 h-4" /> CSV
-                </button>
-                <button onClick={exportPdfReport} disabled={exportingPdf} className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50">
+                </Button>
+                <Button onClick={exportPdfReport} disabled={exportingPdf} variant="ghost">
                   {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF Report
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -394,11 +395,11 @@ export default function BatchPage() {
                 { key: 'UNCERTAIN', label: 'Uncertain', count: files.filter(f => f.verdict === 'UNCERTAIN').length },
                 { key: 'error',     label: 'Errors',    count: errored },
               ] as const).filter(t => t.key === 'all' || t.count > 0).map(t => (
-                <button key={t.key} onClick={() => setFilter(t.key)}
+                <Button key={t.key} onClick={() => setFilter(t.key)}
                   className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-primary text-white' : 'btn-ghost'}`}>
                   {t.label}
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-surface-active text-text-muted'}`}>{t.count}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -454,10 +455,10 @@ export default function BatchPage() {
 
                   {/* Remove */}
                   {bf.status === 'queued' && (
-                    <button onClick={() => removeFile(bf.id)}
+                    <Button onClick={() => removeFile(bf.id)}
                       className="text-text-muted hover:text-rose p-1 rounded hover:bg-rose/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                   )}
                 </motion.div>
               ))}

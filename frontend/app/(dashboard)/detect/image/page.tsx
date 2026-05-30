@@ -11,6 +11,8 @@ import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -156,10 +158,10 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setZoomed(false)}>
           <div className="relative max-w-full max-h-full">
             <img src={preview} alt="Zoomed" className="max-w-full max-h-[90vh] object-contain rounded-xl" />
-            <button onClick={() => setZoomed(false)}
+            <Button onClick={() => setZoomed(false)}
               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80">
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -220,18 +222,16 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="card space-y-4">
               <div className="relative rounded-xl overflow-hidden bg-surface-active group">
                 <img src={preview!} alt="Preview" className="w-full max-h-72 object-contain" />
-                <button onClick={() => setZoomed(true)}
+                <Button onClick={() => setZoomed(true)}
                   className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                   <ZoomIn className="w-8 h-8 text-white drop-shadow" />
-                </button>
+                </Button>
                 {uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="mt-3 w-full">
-                    <div className="flex justify-between text-xs text-text-muted mb-1">
+                    <div className="flex justify-between text-xs text-text-muted mb-1.5">
                       <span>Uploading…</span><span>{uploadProgress}%</span>
                     </div>
-                    <div className="h-1.5 bg-surface-active rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
-                    </div>
+                    <Progress value={uploadProgress} className="h-1.5" />
                   </div>
                 )}
               </div>
@@ -246,21 +246,21 @@ Analyzed: ${new Date().toLocaleString()}`
                     {imgDims && ` · ${(imgDims.w / (imgDims.h || 1)).toFixed(2)}:1 ratio`}
                   </p>
                 </div>
-                <button onClick={reset}
+                <Button onClick={reset}
               title="Detect Another" className="text-text-muted hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose/10 shrink-0">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={reset} className="btn-ghost flex-1 py-2.5 flex items-center justify-center gap-2 text-sm">
+                <Button onClick={reset} className="btn-ghost flex-1 py-2.5 flex items-center justify-center gap-2 text-sm">
                   <RotateCcw className="w-4 h-4" /> New Image
-                </button>
-                <button onClick={handleDetect} disabled={loading}
+                </Button>
+                <Button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
                   {loading ? 'Scanning…' : 'Detect'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -367,9 +367,9 @@ Analyzed: ${new Date().toLocaleString()}`
                       Deep Forensic Analysis
                     </motion.a>
                   )}
-                  <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                  <Button onClick={exportReport} variant="ghost" size="sm" className="gap-1.5 shrink-0 text-xs">
                     <Download className="w-3.5 h-3.5" /> Export Report
-                  </button>
+                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -432,10 +432,10 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
-            <button onClick={shareResult}
+            <Button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
-            </button>
+            </Button>
           )}
         </div>
       )}

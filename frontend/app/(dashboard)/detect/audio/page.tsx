@@ -22,6 +22,7 @@ const LazyFeedbackBar = dynamic(
   { ssr: false }
 )
 import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
+import { Button } from '@/components/ui/button'
 
 
 
@@ -241,10 +242,10 @@ function AudioDetectionPage() {
                 </div>
 
                 <div className="flex items-center gap-3 mt-3">
-                  <button onClick={togglePlay}
+                  <Button onClick={togglePlay}
                     className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan to-primary flex items-center justify-center hover:opacity-90 transition-opacity shrink-0 shadow-lg shadow-cyan/20">
                     {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
-                  </button>
+                  </Button>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-text-secondary font-medium truncate">{file.name}</p>
                     <p className="text-xs text-text-muted">
@@ -252,22 +253,22 @@ function AudioDetectionPage() {
                       {duration > 0 && ` · ${formatDuration(duration)}`}
                     </p>
                   </div>
-                  <button onClick={reset}
+                  <Button onClick={reset}
               title="Detect Another" className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={reset} className="btn-ghost flex-1 py-2.5 text-sm flex items-center justify-center gap-2">
+                <Button onClick={reset} variant="outline">
                   <RotateCcw className="w-4 h-4" /> New File
-                </button>
-                <button onClick={handleDetect} disabled={loading}
-                  className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                </Button>
+                <Button onClick={handleDetect} disabled={loading}
+                  >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
                   {loading ? 'Analyzing…' : 'Detect'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -382,9 +383,9 @@ function AudioDetectionPage() {
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-xs text-text-muted font-mono truncate">{result.processing_time}ms</span>
-                <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                <Button onClick={exportReport} variant="ghost" size="sm">
                   <Download className="w-3.5 h-3.5" /> Export Report
-                </button>
+                </Button>
               </div>
             </motion.div>
           ) : !loading && (
@@ -414,10 +415,10 @@ function AudioDetectionPage() {
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
-            <button onClick={shareResult}
+            <Button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
-            </button>
+            </Button>
           )}
         </div>
       )}
