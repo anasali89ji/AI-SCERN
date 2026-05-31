@@ -118,9 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <AuthProvider>
             <MotionProvider>
-              <main id="main-content">
-                {children}
-              </main>
+              {children}
               <Toaster richColors position="top-right" />
               <CookieConsent />
             </MotionProvider>

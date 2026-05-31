@@ -27,7 +27,7 @@
 
 @layer components {
   .gradient-text {
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #8B5CF6 0%, #6d28d9 40%, #2563eb 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1149,20 +1149,6 @@ section > .max-w-7xl > .border-t {
   }
 }
 
-/* ── CRITICAL: Framer-motion animation safety fallback ──────────────────────
- * framer-motion serializes initial={opacity:0} as inline style="opacity:0".
- * If React 19 hydration timing causes animations to miss, elements stay
- * permanently invisible. This CSS ensures they're always visible after 1.4s.
- * ----------------------------------------------------------------------- */
-@keyframes fm-reveal {
-  to { opacity: 1 !important; transform: none !important; }
-}
-[style*="opacity: 0"]:not([aria-hidden="true"]),
-[style*="opacity:0"]:not([aria-hidden="true"]) {
-  animation: fm-reveal 0.3s ease-out 1.4s forwards;
-}
-[style*="transform: translateY"]:not([aria-hidden="true"]),
-[style*="transform:translateY"]:not([aria-hidden="true"]) {
-  animation: fm-reveal 0.3s ease-out 1.4s forwards;
-}
-/* ────────────────────────────────────────────────────────────────────────── */
+/* fm-reveal hack removed — was fighting against framer-motion JS animations.
+ * LazyMotion has been removed from MotionProvider, so motion.* elements
+ * animate correctly via JS and no CSS fallback is needed. */

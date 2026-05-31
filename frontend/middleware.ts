@@ -37,7 +37,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   const csp = [
     "default-src 'self'",
-    `script-src 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com https://accounts.google.com https://*.clerk.accounts.dev https://*.clerk.com https://js.clerk.dev https://cdn.jsdelivr.net https://clerk.aiscern.com https://challenges.cloudflare.com`,
+    `script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://*.clerk.accounts.dev https://*.clerk.com https://js.clerk.dev https://cdn.jsdelivr.net https://clerk.aiscern.com https://challenges.cloudflare.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiscern.com https://accounts.aiscern.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: img.clerk.com *.supabase.co images.unsplash.com *.clerk.accounts.dev *.aiscern.com *.r2.cloudflarestorage.com *.r2.dev",
@@ -46,7 +46,6 @@ export default clerkMiddleware(async (auth, req) => {
     "worker-src 'self' blob:",
     "frame-ancestors 'self'",
     "object-src 'none'",
-    "require-trusted-types-for 'script'",
   ].join('; ')
 
   const response = NextResponse.next()

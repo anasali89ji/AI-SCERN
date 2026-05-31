@@ -389,32 +389,6 @@ function useNavScrollBehavior() {
   return { scrolled, hidden }
 }
 
-// ─── Lazy section ─────────────────────────────────────────────────────────────
-function LazySection({ children, minHeight = '400px', rootMargin = '600px' }: {
-  children: React.ReactNode; minHeight?: string; rootMargin?: string
-}) {
-  const [visible, setVisible] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    // Immediately show if already in viewport or close to it
-    if (typeof window !== 'undefined' && !window.IntersectionObserver) {
-      setVisible(true)
-      return
-    }
-    const observer = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect() } },
-      { rootMargin }
-    )
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [rootMargin])
-  return (
-    <div ref={ref} style={{ minHeight: visible ? undefined : minHeight }}>
-      {visible && children}
-    </div>
-  )
-}
-
 // ─── Scroll indicator ─────────────────────────────────────────────────────────
 function HeroScrollIndicator() {
   const [hidden, setHidden] = useState(false)
