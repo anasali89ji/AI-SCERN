@@ -28,10 +28,10 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
       <motion.div
         initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
         transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-        className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#7c3aed40] rounded-3xl p-8 shadow-2xl shadow-purple-950/40 overflow-hidden"
+        className="relative w-full max-w-md bg-gradient-to-b from-[#09101f] to-[#060a14] border border-[#1e3a5f50] rounded-3xl p-8 shadow-2xl shadow-blue-950/40 overflow-hidden"
       >
         {/* Glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/8 via-transparent to-blue-600/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-transparent to-blue-800/3 pointer-events-none" />
 
         {/* Confetti dots */}
         {[...Array(12)].map((_,i) => (

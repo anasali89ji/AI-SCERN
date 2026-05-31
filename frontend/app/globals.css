@@ -871,7 +871,7 @@ section > .max-w-7xl > .border-t {
   z-index: 0;
   background: radial-gradient(
     600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    var(--spotlight-color, rgba(139,92,246,0.12)),
+    var(--spotlight-color, rgba(37,99,235,0.06)),
     transparent 40%
   );
   opacity: 0;
@@ -916,22 +916,6 @@ section > .max-w-7xl > .border-t {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Hero mesh gradient animation ──────────────────────────────────────── */
-@keyframes mesh-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(40px, -30px) scale(1.08); }
-  66%       { transform: translate(-30px, 20px) scale(0.95); }
-}
-.hero-mesh-1 {
-  animation: mesh-drift 18s ease-in-out infinite;
-}
-.hero-mesh-2 {
-  animation: mesh-drift 22s ease-in-out infinite reverse;
-}
-.hero-mesh-3 {
-  animation: mesh-drift 15s ease-in-out infinite 5s;
-}
-
 /* ── Bento grid shimmer border on large card ──────────────────────────── */
 @keyframes border-shimmer {
   0%   { background-position: 0% 50%; }
@@ -949,11 +933,11 @@ section > .max-w-7xl > .border-t {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(139,92,246,0.6) 0%,
-    rgba(37,99,235,0.4) 25%,
-    rgba(139,92,246,0.2) 50%,
-    rgba(249,115,22,0.3) 75%,
-    rgba(139,92,246,0.6) 100%
+    rgba(37,99,235,0.4) 0%,
+    rgba(255,255,255,0.08) 25%,
+    rgba(37,99,235,0.15) 50%,
+    rgba(255,255,255,0.06) 75%,
+    rgba(37,99,235,0.4) 100%
   );
   background-size: 300% 300%;
   animation: border-shimmer 6s linear infinite;
@@ -1069,8 +1053,8 @@ section > .max-w-7xl > .border-t {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(139,92,246,0.15) 45%,
-    rgba(139,92,246,0.15) 55%,
+    rgba(255,255,255,0.02) 45%,
+    rgba(255,255,255,0.02) 55%,
     transparent 100%
   );
   transform: translateY(-100%);
