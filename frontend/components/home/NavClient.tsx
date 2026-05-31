@@ -91,7 +91,7 @@ export default function NavClient() {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-[background-color,border-color] duration-200 group">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                 {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
               </span>
               <span className="hidden sm:inline">Dashboard</span>

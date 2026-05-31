@@ -758,24 +758,25 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'none' }} />
-          <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
-              {STATS.map((stat, i) => (
+        <section className="cv-auto py-10 sm:py-16 border-y border-border/20 relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-4 sm:px-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4">
+              {STATS.map((stat, i) => {
+                const Icon = stat.icon
+                return (
                 <motion.div key={i}
                   initial={false} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
-                  className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
-                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  transition={{ delay: i * 0.08, duration: 0.5 }}
+                  className={`text-center py-8 px-4 sm:px-8 ${i < 3 ? 'border-r border-border/20' : ''} ${i >= 2 ? 'border-t border-border/20 lg:border-t-0' : ''}`}>
+                  <Icon className="w-4 h-4 text-text-muted mx-auto mb-3 opacity-60" strokeWidth={1.8} />
+                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-1.5 tabular-nums"
+                    style={{ background: 'linear-gradient(135deg,#fff 0%,#93c5fd 60%,#2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
-                  <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
+                  <p className="text-text-muted text-xs font-medium tracking-wide">{stat.label}</p>
                 </motion.div>
-              ))}
+              )})}
             </div>
           </div>
         </section>
@@ -802,9 +803,7 @@ export default function HomePage() {
               <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
                 Six detection tools powered by an ensemble of open-source and fine-tuned models, benchmarked on public datasets.
               </p>
-              <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.3), transparent)' }}
-                initial={false} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }} />
+
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -816,10 +815,7 @@ export default function HomePage() {
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
                     <SpotlightCard color={`${tool.accent}18`}
                       className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
-                      {/* Scanline on hover */}
-                      <div className="scanline" aria-hidden="true" />
-
-                      <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-start justify-between mb-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
                           style={{ background: `${tool.accent}14`, border: `1px solid ${tool.accent}20` }}>
                           <tool.icon className="w-6 h-6" strokeWidth={1.8} />
@@ -848,8 +844,7 @@ export default function HomePage() {
 
         {/* ══ HOW IT WORKS ══ */}
         <section id="how" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
+
 
           <div className="max-w-5xl mx-auto relative">
             <motion.div initial={false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6 }}
@@ -906,9 +901,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'none' }} />
+        <section className="py-16 sm:py-24 px-4 border-t border-border/15 relative overflow-hidden">
 
           <div className="max-w-5xl mx-auto relative">
             <motion.div initial={false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6 }}
@@ -1013,7 +1006,7 @@ export default function HomePage() {
 
             {/* Methodology note */}
             <motion.div initial={false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
+              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/30 bg-surface/40 backdrop-blur-sm">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <FlaskConical className="w-4 h-4 text-blue-400" />
                 <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">How our detection works</span>
@@ -1047,10 +1040,8 @@ export default function HomePage() {
         <section className="py-24 sm:py-32 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.06) 0%, transparent 60%)' }} />
+              style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
           </div>
-          <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <motion.div initial={false} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7 }}>
