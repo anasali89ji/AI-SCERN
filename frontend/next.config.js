@@ -66,8 +66,7 @@ const nextConfig = {
   headers: async () => [
     { source: '/', headers: [{ key: 'Link', value: [
       '</fonts/inter-400.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin=anonymous',
-      '</hero/ai/ai-01.webp>; rel=preload; as=image; type="image/webp"',
-      '</hero/real/real-01.webp>; rel=preload; as=image; type="image/webp"',
+      '</fonts/inter-700.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin=anonymous',
     ].join(', ') }] },
     { source: '/trust/:file*',  headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }, { key: 'Vary', value: 'Accept' }] },
     { source: '/hero/:file*',   headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
@@ -81,7 +80,21 @@ const nextConfig = {
       { key: 'X-Frame-Options',            value: 'SAMEORIGIN'                      },
       { key: 'X-DNS-Prefetch-Control',     value: 'on'                              },
       { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups'        },
-      // Content-Security-Policy is set per-request in middleware.ts (nonce-based)
+      {
+        key: 'Content-Security-Policy',
+        value: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://*.clerk.accounts.dev https://*.clerk.com https://js.clerk.dev https://cdn.jsdelivr.net https://clerk.aiscern.com https://challenges.cloudflare.com",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiscern.com",
+          "font-src 'self' data: https://fonts.gstatic.com",
+          "img-src 'self' data: blob: https://img.clerk.com https://*.supabase.co https://images.unsplash.com https://*.clerk.accounts.dev https://*.aiscern.com https://*.r2.cloudflarestorage.com https://*.r2.dev",
+          "connect-src 'self' https://*.supabase.co https://generativelanguage.googleapis.com https://api-inference.huggingface.co https://integrate.api.nvidia.com https://api.cloudflare.com https://*.r2.cloudflarestorage.com https://*.r2.dev https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://clerk.aiscern.com https://aiscern.com https://inn.gs https://*.inngest.com wss://*.clerk.accounts.dev wss://*.clerk.com wss://clerk.aiscern.com https://challenges.cloudflare.com",
+          "frame-src https://accounts.google.com https://*.google.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiscern.com https://accounts.aiscern.com https://challenges.cloudflare.com",
+          "worker-src 'self' blob:",
+          "frame-ancestors 'self'",
+          "object-src 'none'",
+        ].join('; '),
+      },
     ]},
   ],
 }
