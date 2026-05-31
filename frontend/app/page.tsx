@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -23,49 +22,15 @@ import {
 } from 'lucide-react'
 
 // ─── Sections (SSR enabled — critical for render) ────────────────────────────
-// ssr:false was the root cause of sections not rendering: the server sends
-// nothing, the IntersectionObserver then has no DOM node to observe, so
-// visible never flips to true, and the section never appears.
-const DynamicWhoNeedsSection = dynamic(
-  () => import('@/components/home/WhoNeedsSection'),
-  {
-    loading: () => (
-      <section className="py-16 sm:py-28 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="h-8 w-48 bg-surface/60 rounded-xl animate-pulse mb-12 mx-auto" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[0,1,2,3,4,5].map(i => <div key={i} className="h-48 bg-surface/60 rounded-2xl animate-pulse" />)}
-          </div>
-        </div>
-      </section>
-    )
-  }
-)
-const DynamicAIvsRealSection = dynamic(
-  () => import('@/components/home/AIvsRealSection'),
-  {
-    loading: () => (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="h-8 w-56 bg-surface/60 rounded-xl animate-pulse mb-8 mx-auto" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {[0,1].map(i => <div key={i} className="h-64 bg-surface/60 rounded-2xl animate-pulse" />)}
-          </div>
-        </div>
-      </section>
-    )
-  }
-)
-const DynamicHomepageReviews = dynamic(
-  () => import('@/components/home/HomepageReviews'),
-  {
-    loading: () => (
-      <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
-        {[0,1,2].map(i => <div key={i} className="h-40 animate-pulse bg-surface/60 rounded-2xl" />)}
-      </div>
-    )
-  }
-)
+// Static imports — no Suspense boundaries, no skeleton flash, no $RC JS dependency
+// dynamic() caused sections to show as skeleton placeholders when JS was slow
+import WhoNeedsSection from '@/components/home/WhoNeedsSection'
+import AIvsRealSection from '@/components/home/AIvsRealSection'
+import HomepageReviews from '@/components/home/HomepageReviews'
+// Aliases for backward compat with existing JSX usage
+const DynamicWhoNeedsSection = WhoNeedsSection
+const DynamicAIvsRealSection = AIvsRealSection
+const DynamicHomepageReviews = HomepageReviews
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
 // ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
@@ -777,7 +742,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
                 <motion.div key={i}
-                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
                   transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
                   <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
@@ -888,7 +853,7 @@ export default function HomePage() {
                   return (
                     <motion.div key={i}
                       initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.15 }}
                       transition={{ duration: 0.6, delay: i * 0.1 }}
                       className={`flex items-center gap-5 sm:gap-8 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
                       <div className="flex-1 hidden lg:block" />
