@@ -50,7 +50,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
       {/* Static "Detect" */}
       <motion.h1
         className="font-black leading-[0.9] tracking-tight"
-        initial={{ opacity: 0, y: reduced ? 0 : 20 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduced ? 0 : 0.5, ease: 'easeOut' }}
       >
@@ -70,7 +70,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
       {/* Rotating word row */}
       <motion.div
         className="mt-3 sm:mt-4 flex items-center justify-center gap-x-2 sm:gap-x-3"
-        initial={{ opacity: 0, y: reduced ? 0 : 14 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduced ? 0 : 0.5, delay: 0.15, ease: 'easeOut' }}
         onMouseEnter={() => setIsPaused(true)}
@@ -95,7 +95,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
               key={idx}
-              initial={{ opacity: 0, y: reduced ?  0 :  22 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               exit={{   opacity: 0, y: reduced ?  0 : -22 }}
               transition={{ duration: dur, ease }}
@@ -119,7 +119,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
       {/* Dot indicators */}
       <motion.div
         className="mt-2 sm:mt-3 flex items-center justify-center gap-1.5"
-        initial={{ opacity: 0 }}
+        initial={false}
         animate={{ opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.4, delay: 0.3 }}
         role="tablist"

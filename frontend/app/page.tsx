@@ -115,7 +115,7 @@ const AI_EDGES_SM   = [[0,1],[1,2]]
 const REAL_EDGES_SM = [[0,1],[1,2]]
 
 const FLOAT_BADGES = [
-  { Icon: Search, label: 'AI Text',  pct: 'Detected', color: '#8B5CF6', delay: 0,   pulse: true  },
+  { Icon: Search, label: 'AI Text',  pct: 'Detected', color: '#2563eb', delay: 0,   pulse: true  },
   { Icon: Eye,    label: 'Deepfake', pct: 'Flagged',  color: '#2563eb', delay: 0.5, pulse: false },
 ]
 
@@ -213,7 +213,7 @@ function FloatingCards() {
   return (
     <>
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#8B5CF6" side="ai"   />
+        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#2563eb" side="ai"   />
         <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
         {aiNodes.map((node, i) => (
           <RootNetworkNode key={`ai-${i}`} node={node}
@@ -226,12 +226,12 @@ function FloatingCards() {
             side="real" index={i} size={cardSize} />
         ))}
         <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8"
-          style={{ top: 72, left: 8 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
+          style={{ top: 72, left: 8 }} initial={false} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
           <Bot className="w-2.5 h-2.5 text-rose" />
           <span className="text-[8px] font-bold text-rose/80 uppercase tracking-wide hidden md:inline">AI Generated</span>
         </motion.div>
         <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8"
-          style={{ top: 72, right: 8 }} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
+          style={{ top: 72, right: 8 }} initial={false} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
           <CheckCircle className="w-2.5 h-2.5 text-emerald" />
           <span className="text-[8px] font-bold text-emerald/80 uppercase tracking-wide hidden md:inline">Authentic</span>
         </motion.div>
@@ -242,7 +242,7 @@ function FloatingCards() {
           <motion.div key={i}
             className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border select-none"
             style={{ left: pos.x, top: pos.y, zIndex: 10, background: `${item.color}12`, borderColor: `${item.color}30` }}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }}
+            initial={false} animate={{ opacity: 1, y: [0, -5, 0] }}
             transition={{ opacity: { delay: item.delay + 1.0, duration: 0.5 }, y: { delay: item.delay, duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }}>
             <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}22`, color: item.color }}>
               <Icon className="w-3 h-3" strokeWidth={2} />
@@ -467,7 +467,7 @@ const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/8 to-transparent',        desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#8B5CF6' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#2563eb' },
   { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/8 to-transparent',         desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#06b6d4' },
   { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-secondary', bg: 'from-secondary/8 to-transparent',    desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
   { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/8 to-transparent',      desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
@@ -685,7 +685,7 @@ export default function HomePage() {
           <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
 
             {/* Animated badge */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            <motion.div initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-300 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
@@ -702,14 +702,14 @@ export default function HomePage() {
 
             {/* Subheadline */}
             <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+              initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
               <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
               <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Core features free during early access. No account required for basic scans.</span>
             </motion.p>
 
             {/* CTAs */}
             <motion.div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-9 sm:mb-14"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+              initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
               {user ? (
                 <>
                   <Link href="/dashboard"
@@ -744,7 +744,7 @@ export default function HomePage() {
 
             {/* Live demo */}
             <motion.div className="max-w-2xl 2xl:max-w-3xl mx-auto w-full"
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
+              initial={false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
               <LiveDemo isLoggedIn={!!user} />
             </motion.div>
 
@@ -770,7 +770,7 @@ export default function HomePage() {
                   transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
                   <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
-                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
@@ -984,7 +984,7 @@ export default function HomePage() {
                     {displayStat !== undefined && (
                       <div className="mb-3">
                         <div className="text-3xl sm:text-4xl font-black tabular-nums"
-                          style={{ background: 'linear-gradient(135deg, #ffffff, #d8b4fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                          style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                           <CountUp target={displayTarget} suffix={displaySuffix} />
                         </div>
                         <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
