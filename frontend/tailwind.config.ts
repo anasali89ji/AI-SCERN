@@ -33,6 +33,10 @@ const config: Config = {
     'from-amber/50', 'from-emerald/50', 'from-primary/5',
     'to-amber/5', 'to-cyan/5', 'to-emerald/5', 'to-rose/5', 'to-secondary/5',
     'via-secondary/5',
+    // Explicit bg opacity variants used dynamically in tool cards & sections
+    'bg-rose/8', 'bg-emerald/8', 'bg-amber/8', 'bg-primary/8', 'bg-cyan/8',
+    'bg-rose/12', 'bg-emerald/12', 'bg-amber/12', 'bg-primary/12', 'bg-cyan/12',
+    'border-rose/25', 'border-emerald/25', 'border-amber/25', 'border-primary/25', 'border-cyan/25',
   ],
   darkMode: 'class',
   theme: {
