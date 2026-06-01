@@ -26,36 +26,8 @@ import {
 // ssr:false was the root cause of sections not rendering: the server sends
 // nothing, the IntersectionObserver then has no DOM node to observe, so
 // visible never flips to true, and the section never appears.
-const DynamicWhoNeedsSection = dynamic(
-  () => import('@/components/home/WhoNeedsSection'),
-  {
-    loading: () => (
-      <section className="py-16 sm:py-28 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="h-8 w-48 bg-surface/60 rounded-xl animate-pulse mb-12 mx-auto" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[0,1,2,3,4,5].map(i => <div key={i} className="h-48 bg-surface/60 rounded-2xl animate-pulse" />)}
-          </div>
-        </div>
-      </section>
-    )
-  }
-)
-const DynamicAIvsRealSection = dynamic(
-  () => import('@/components/home/AIvsRealSection'),
-  {
-    loading: () => (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="h-8 w-56 bg-surface/60 rounded-xl animate-pulse mb-8 mx-auto" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {[0,1].map(i => <div key={i} className="h-64 bg-surface/60 rounded-2xl animate-pulse" />)}
-          </div>
-        </div>
-      </section>
-    )
-  }
-)
+const DynamicWhoNeedsSection = dynamic(() => import('@/components/home/WhoNeedsSection'), { ssr: false })
+const DynamicAIvsRealSection = dynamic(() => import('@/components/home/AIvsRealSection'), { ssr: false })
 const DynamicHomepageReviews = dynamic(
   () => import('@/components/home/HomepageReviews'),
   { ssr: false }
