@@ -57,7 +57,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         <span
           className="block text-[2.5rem] xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
           style={{
-            background: 'linear-gradient(135deg,#ffffff 0%,#d8b4fe 45%,#8B5CF6 100%)',
+            background: 'linear-gradient(135deg,#ffffff 0%,#93c5fd 45%,#2563eb 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',

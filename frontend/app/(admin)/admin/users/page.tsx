@@ -41,7 +41,7 @@ type ReviewModal = { request: UpgradeRequest; action: 'approve' | 'reject' }
 const PLAN_COLOR: Record<string, string> = {
   free:       'bg-slate/10 text-slate-400 border-slate/20',
   pro:        'bg-primary/10 text-primary border-primary/30',
-  team:       'bg-violet/10 text-violet-400 border-violet/30',
+  team:       'bg-primary/10 text-primary border-primary/30',
   enterprise: 'bg-amber/10 text-amber border-amber/30',
 }
 
@@ -306,7 +306,7 @@ export default function UsersAdmin() {
                               )}
                               <button
                                 onClick={() => setModal({ userId: u.id, action: 'set_plan', email: u.email, currentPlan: u.plan })}
-                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-violet/10 text-violet-400 border border-violet/20 hover:bg-violet/20 transition-colors"
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
                               >
                                 <ChevronDown className="w-2.5 h-2.5" /> Change Plan
                               </button>
@@ -535,7 +535,7 @@ export default function UsersAdmin() {
               }`}>
                 {modal.action === 'grant_pro'   && <Crown      className="w-5 h-5 text-primary" />}
                 {modal.action === 'revoke_pro'  && <UserX      className="w-5 h-5 text-rose" />}
-                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-violet-400" />}
+                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-primary" />}
                 {modal.action === 'reset_daily' && <RotateCcw  className="w-5 h-5 text-slate-400" />}
                 {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose" />}
                 {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald" />}

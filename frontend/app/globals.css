@@ -27,7 +27,7 @@
 
 @layer components {
   .gradient-text {
-    background: linear-gradient(135deg, #8B5CF6 0%, #6d28d9 40%, #2563eb 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 40%, #06b6d4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -622,7 +622,7 @@ html { scroll-behavior: smooth; }
 ::-webkit-scrollbar       { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.3); }
+::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.3); }
 
 /* node-bob-a / node-bob-b removed — node-in-bob-a / node-in-bob-b (above) handle both
    fade-in and bob. Duplicate declarations here were overriding opacity and keeping cards invisible. */
@@ -869,7 +869,7 @@ section > .max-w-7xl > .border-t {
   z-index: 0;
   background: radial-gradient(
     600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    var(--spotlight-color, rgba(139,92,246,0.12)),
+    var(--spotlight-color, rgba(37,99,235,0.12)),
     transparent 40%
   );
   opacity: 0;
@@ -950,11 +950,11 @@ section > .max-w-7xl > .border-t {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(139,92,246,0.6) 0%,
-    rgba(37,99,235,0.4) 25%,
-    rgba(139,92,246,0.2) 50%,
+    rgba(37,99,235,0.6) 0%,
+    rgba(59,130,246,0.4) 25%,
+    rgba(37,99,235,0.2) 50%,
     rgba(249,115,22,0.3) 75%,
-    rgba(139,92,246,0.6) 100%
+    rgba(37,99,235,0.6) 100%
   );
   background-size: 300% 300%;
   animation: border-shimmer 6s linear infinite;
@@ -1070,8 +1070,8 @@ section > .max-w-7xl > .border-t {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(139,92,246,0.15) 45%,
-    rgba(139,92,246,0.15) 55%,
+    rgba(37,99,235,0.12) 45%,
+    rgba(37,99,235,0.12) 55%,
     transparent 100%
   );
   transform: translateY(-100%);
