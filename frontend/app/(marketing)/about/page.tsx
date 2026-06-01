@@ -26,7 +26,7 @@ const VALUES = [
   {
     icon: Brain,
     title: 'Ensemble over single models',
-    desc:  'No single signal reliably catches all AI content. We combine perplexity analysis, frequency fingerprints, geometric checks, and trained classifiers into one weighted verdict.',
+    desc:  'No single signal reliably catches all AI content. We combine multiple independent detection signals into one weighted verdict, so each scan is cross-verified before delivering a result.',
   },
   {
     icon: Zap,
@@ -49,7 +49,7 @@ const TEAM = [
     photo:    '/anas-ali.jpg',
     location: 'Islamabad, Pakistan',
     skills:   'Full-Stack + AI/ML',
-    gradient: 'from-violet-600/30 via-indigo-600/20 to-purple-600/30',
+    gradient: 'from-primary/30 via-secondary/20 to-primary/20',
     ring:     'border-primary/30',
   },
   {
@@ -69,11 +69,11 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
     <div className="rounded-2xl border border-border/55 bg-surface overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
       {/* Gradient header banner */}
       <div className={`h-20 bg-gradient-to-br ${member.gradient} relative`}>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.12),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.12),transparent)]" />
       </div>
       <div className="px-3 sm:px-6 pb-5 -mt-8 sm:-mt-10">
         {/* Avatar */}
-        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center`}>
+        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-primary to-secondary flex items-center justify-center`}>
           {member.photo ? (
             <Image
               src={member.photo}

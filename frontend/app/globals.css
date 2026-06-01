@@ -34,7 +34,7 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-secondary
            text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
            active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
@@ -656,7 +656,7 @@ html { scroll-behavior: smooth; }
   color: #7c64c8 !important;
   font-size: 12px !important;
 }
-.cl-formFieldAction:hover { color: #a78bfa !important; }
+.cl-formFieldAction:hover { color: #60a5fa !important; }
 
 /* Error message icon alignment */
 .cl-formFieldErrorText {
@@ -1152,3 +1152,41 @@ section > .max-w-7xl > .border-t {
 /* fm-reveal hack removed — was fighting against framer-motion JS animations.
  * LazyMotion has been removed from MotionProvider, so motion.* elements
  * animate correctly via JS and no CSS fallback is needed. */
+
+/* ── GPU acceleration & micro-interactions ──────────────────────────── */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Magnetic button micro-interaction */
+.magnetic-btn {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.magnetic-btn:hover  { transform: scale(1.02); }
+.magnetic-btn:active { transform: scale(0.98); }
+
+/* Subtle card lift on hover */
+.lift-hover {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s ease;
+}
+.lift-hover:hover { transform: translateY(-4px); }
+
+/* Shimmer loading for async content */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 400px 100%;
+}
+
+/* Disable heavy blur effects on small/reduced-motion devices */
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .blur-orb, .hero-mesh-blur {
+    display: none !important;
+  }
+}

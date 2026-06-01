@@ -43,7 +43,7 @@ function WaveformVisualizer({ playing, progress = 0 }: { playing: boolean; progr
       {Array.from({ length: 40 }).map((_, i) => (
         <motion.div key={i}
           className="w-1 rounded-full shrink-0"
-          style={{ background: i < progress * 40 ? '#8b5cf6' : '#4c1d95' }}
+          style={{ background: i < progress * 40 ? '#2563eb' : '#1e3a8a' }}
           animate={playing ? { height: [3, WAVE_HEIGHTS[i], 3] } : { height: 3 }}
           transition={{ duration: WAVE_DURATIONS[i], repeat: playing ? Infinity : 0, ease: 'easeInOut', delay: i * 0.025 }}
         />

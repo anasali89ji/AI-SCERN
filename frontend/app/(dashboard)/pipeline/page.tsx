@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { Database, Zap, RefreshCw, Loader2, CheckCircle, Clock, TrendingUp, Radio, BarChart3 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
+export const metadata = {
+  title: 'Pipeline',
+  description: 'Monitor and manage your Aiscern detection pipeline.',
+  robots: { index: false, follow: false },
+}
+
+
 interface PipelineStats {
   total_scraped: number
   total_pushed: number

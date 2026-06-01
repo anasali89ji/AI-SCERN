@@ -55,7 +55,7 @@ export default function NavClient() {
       className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-purple-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
+          ? 'border-b border-primary/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
           : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
         }`}
     >
@@ -72,7 +72,7 @@ export default function NavClient() {
           {[['/#tools', 'Tools'], ['/#how', 'How It Works']].map(([href, label]) => (
             <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
               {label}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-[width] duration-300 rounded-full" />
             </a>
           ))}
           <Link href={user ? '/chat' : '/signup'} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
@@ -82,7 +82,7 @@ export default function NavClient() {
           {['/reviews', '/blog', '/pricing'].map(href => (
             <Link key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group capitalize">
               {href.slice(1)}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-[width] duration-300 rounded-full" />
             </Link>
           ))}
         </div>
@@ -91,7 +91,7 @@ export default function NavClient() {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-[background-color,border-color] duration-200 group">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                 {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
               </span>
               <span className="hidden sm:inline">Dashboard</span>
@@ -99,11 +99,11 @@ export default function NavClient() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-purple-500/30 transition-[background-color,border-color] duration-200">
+              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/30 transition-[background-color,border-color] duration-200">
                 Sign In
               </Link>
-              <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-purple-500/20 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+              <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-primary/20 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                 <Zap className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Get Started</span>
                 <span className="sm:hidden">Join</span>
@@ -160,7 +160,7 @@ export default function NavClient() {
                   <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
                     <Lock className="w-4 h-4" />Sign In
                   </Link>
-                  <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                  <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                     <Zap className="w-4 h-4" />Get Started Free
                   </Link>
                 </motion.div>

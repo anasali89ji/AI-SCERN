@@ -14,6 +14,13 @@ import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
 
+export const metadata = {
+  title: 'Settings',
+  description: 'Update your Aiscern account preferences and notification settings.',
+  robots: { index: false, follow: false },
+}
+
+
 // ── Toggle ───────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -191,7 +198,7 @@ export default function SettingsPage() {
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
-          style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+          style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>

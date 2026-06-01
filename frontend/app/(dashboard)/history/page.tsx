@@ -7,6 +7,13 @@ import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
 
+export const metadata = {
+  title: 'Detection History',
+  description: 'View your past content detection results and analysis history.',
+  robots: { index: false, follow: false },
+}
+
+
 // ── FIX B.5: Swipe-to-delete row wrapper (mobile only) ──────────────────────
 // On touch devices, swipe left > 72px reveals a full-height delete button.
 // On desktop, the existing hover-reveal Trash2 button is used instead.

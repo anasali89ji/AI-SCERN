@@ -11,9 +11,16 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
+export const metadata = {
+  title: 'Dashboard',
+  description: 'Manage your detection history, view analytics, and access your Aiscern account.',
+  robots: { index: false, follow: false },
+}
+
+
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-violet-500/20 to-violet-500/5', iconColor: 'text-violet-400', desc: 'Deepfake & AI image detection' },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-primary', desc: 'Deepfake & AI image detection' },
   { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
   { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
   { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
@@ -138,7 +145,7 @@ export default function DashboardPage() {
   const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
 
       {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
       {isPulling && (

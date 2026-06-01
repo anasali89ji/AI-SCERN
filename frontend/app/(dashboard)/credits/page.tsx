@@ -10,6 +10,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser }  from '@clerk/nextjs'
 import { toast }    from 'sonner'
 
+export const metadata = {
+  title: 'Credits',
+  description: 'Manage your Aiscern detection credits and view usage.',
+  robots: { index: false, follow: false },
+}
+
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Plan {

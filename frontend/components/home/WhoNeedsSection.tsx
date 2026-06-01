@@ -24,8 +24,8 @@ const WHO_NEEDS = [
     value: 'Verify every image, audio clip and statement before it publishes — in under 10 seconds.',
     stats: [{ label: 'Image verification', value: '~82%' }, { label: 'Audio deepfake', value: '~79%' }],
     href: '/detect/image',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.22)',
   },
   {
     role: 'Educators & Schools',
@@ -96,8 +96,8 @@ const WHO_NEEDS = [
     value: 'Validate source material and peer submissions using methodology-backed multi-model detection.',
     stats: [{ label: 'Text accuracy', value: '~85%' }, { label: 'Datasets used', value: '87' }],
     href: '/methodology',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.22)',
   },
   {
     role: 'Marketing & Brand Teams',

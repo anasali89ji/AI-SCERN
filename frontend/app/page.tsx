@@ -27,6 +27,17 @@ import {
 import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import HomepageReviews from '@/components/home/HomepageReviews'
+
+export const metadata = {
+  title: 'AI Content Detector',
+  description: 'Detect AI-generated text, images, audio, and video. Get a clear authenticity score in seconds.',
+  openGraph: {
+    title: 'Aiscern — AI Content Detector',
+    description: 'Detect AI-generated text, images, audio, and video. Get a clear authenticity score in seconds.',
+    url: 'https://aiscern.com',
+  },
+}
+
 // Aliases for backward compat with existing JSX usage
 const DynamicWhoNeedsSection = WhoNeedsSection
 const DynamicAIvsRealSection = AIvsRealSection
@@ -41,10 +52,10 @@ function NetworkBackground() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06)_0%,transparent_50%)]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.03] rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-indigo-600/[0.03] rounded-full blur-[100px]" />
-      {/* Static dot grid — zero GPU cost, simulates network feel */}
-      <div className="absolute inset-0 opacity-[0.025]"
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.03] rounded-full blur-[120px] blur-orb hidden sm:block" />
+      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-secondary/[0.03] rounded-full blur-[100px] blur-orb hidden sm:block" />
+      {/* Dot grid hidden on mobile/low-power devices to prevent GPU glitches */}
+      <div className="absolute inset-0 opacity-[0.015] hidden sm:block"
            style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     </div>
   )
@@ -146,13 +157,17 @@ function RootNetworkNode({ node, file, side, index, size }: {
 function RootNetworkSVG({ nodes, edges, color, side }: {
   nodes: { x: number; y: number }[]; edges: number[][]; color: string; side: 'ai' | 'real'
 }) {
+  const reduced = useReducedMotion()
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 100 100" preserveAspectRatio="none" style={{ opacity: 0.25, zIndex: 1 }}>
       {edges.map(([a, b], i) => {
         const n1 = nodes[a], n2 = nodes[b]
         const cx = (n1.x + n2.x) / 2 + (side === 'ai' ? -3 : 3), cy = (n1.y + n2.y) / 2
-        return (
+        return reduced ? (
+          <path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
+            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity={0.6} />
+        ) : (
           <motion.path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
             stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
@@ -161,10 +176,14 @@ function RootNetworkSVG({ nodes, edges, color, side }: {
         )
       })}
       {nodes.map((n, i) => (
-        <motion.circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color}
-          initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ delay: 0.7 + i * 0.08, duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        reduced ? (
+          <circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color} opacity={0.5} />
+        ) : (
+          <motion.circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color}
+            initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }}
+            transition={{ delay: 0.7 + i * 0.08, duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )
       ))}
     </svg>
   )
@@ -750,7 +769,7 @@ export default function HomePage() {
                 Detection <span className="gradient-text">Tools</span>
               </h2>
               <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                Six detection tools powered by an ensemble of open-source and fine-tuned models, benchmarked on public datasets.
+                Six detection tools covering text, images, audio, and video. Each delivers a clear authenticity score in seconds.
               </p>
               <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
                 style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
@@ -966,7 +985,7 @@ export default function HomePage() {
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">How our detection works</span>
               </div>
               <p className="text-sm text-text-muted leading-relaxed">
-                Each scan runs through Aiscern's ensemble of open-source and fine-tuned detection models plus 7–10 deterministic signal extractors (perplexity, burstiness, spectral entropy, GAN artifacts). Weights adapt in real time — if a model is unavailable, its weight redistributes to the remaining models. Final verdict requires ≥62% confidence to label AI, ≤38% for Human.
+                Each scan analyzes content using multiple independent detection signals. Results are combined into a single confidence score, and a clear AI or Human verdict is returned in seconds.
               </p>
             </motion.div>
           </div>

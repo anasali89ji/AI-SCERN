@@ -57,7 +57,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How does the ensemble work?',
-        a: 'We run content through multiple independent models and combine their signals into a weighted confidence score. No single model makes the final call. For text, we use perplexity, burstiness, vocabulary diversity, and transformer classifiers. For images, we analyze frequency artifacts, facial geometry, and EXIF metadata.',
+        a: 'We run content through multiple independent detection signals and combine them into a single confidence score. No single model makes the final call — results are cross-verified before delivering a verdict.',
         link: { label: 'Full detection methodology', href: '/methodology' },
       },
       {

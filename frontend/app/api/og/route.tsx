@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const title = searchParams.get('title') || 'Aiscern — Free AI Detector'
   const tool  = searchParams.get('tool')  || 'Multi-Modal'
-  const color = searchParams.get('color') || '#7c3aed'
+  const color = searchParams.get('color') || '#2563eb'
 
   return new ImageResponse(
     (

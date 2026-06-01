@@ -11,12 +11,12 @@ export const metadata = {
 }
 
 const CATEGORY_GRADIENT: Record<string, string> = {
-  Guides:     'from-violet-900/60 to-indigo-900/60',
+  Guides:     'from-primary/30 to-secondary/30',
   Education:  'from-blue-900/60  to-cyan-900/60',
   Comparison: 'from-emerald-900/60 to-teal-900/60',
   Technical:  'from-orange-900/60 to-red-900/60',
 }
-const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-violet-900/50 to-indigo-900/50'
+const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-primary/25 to-secondary/25'
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

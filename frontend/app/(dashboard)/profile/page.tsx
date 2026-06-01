@@ -12,6 +12,13 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 
+export const metadata = {
+  title: 'Profile',
+  description: 'Manage your Aiscern account and update your settings.',
+  robots: { index: false, follow: false },
+}
+
+
 // ── Avatar ────────────────────────────────────────────────────────────────────
 function Avatar({ name, photoURL, avatarUrl, size = 96 }: { name: string; photoURL?: string|null; avatarUrl?: string|null; size?: number }) {
   const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) || 'U'
@@ -23,7 +30,7 @@ function Avatar({ name, photoURL, avatarUrl, size = 96 }: { name: string; photoU
   }
   return (
     <div
-      style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)', width:size, height:size, fontSize:size*0.32 }}
+      style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)', width:size, height:size, fontSize:size*0.32 }}
       className="rounded-full flex items-center justify-center font-black text-white ring-4 ring-primary/30 shadow-xl shadow-primary/20">
       {initials}
     </div>
@@ -160,15 +167,15 @@ export default function ProfilePage() {
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
         className="bg-surface border border-border/55 rounded-3xl overflow-hidden">
         {/* Banner */}
-        <div className="h-28 sm:h-32 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.2), rgba(124,58,237,0.15))' }}>
-          <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(124,58,237,0.2) 0%, transparent 60%)' }} />
+        <div className="h-28 sm:h-32 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(37,99,235,0.2), rgba(37,99,235,0.15))' }}>
+          <div className="absolute inset-0" style={{ backgroundImage:'radial-gradient(circle at 30% 50%, rgba(37,99,235,0.2) 0%, transparent 60%)' }} />
         </div>
         <div className="px-3 sm:px-6 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             {/* Avatar with upload overlay */}
             <div className="relative group w-24 h-24">
               <div className="w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-2xl ring-4 ring-surface"
-                style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                 {(displayName||user?.displayName||user?.email||'U')[0]?.toUpperCase()}
               </div>
               {editing && (
@@ -185,7 +192,7 @@ export default function ProfilePage() {
                 <>
                   <button onClick={handleSave} disabled={saving}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60"
-                    style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                    style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
                   <button onClick={() => setEditing(false)}
@@ -286,7 +293,7 @@ export default function ProfilePage() {
           <CreditBar
             label={`Daily Scans (${planLabel} — ${dailyLimit === Infinity ? 'Unlimited' : dailyLimit}/day)`}
             used={dailyUsed} total={dailyLimit === Infinity ? dailyUsed+1 : dailyLimit}
-            color="linear-gradient(90deg,#7c3aed,#2563eb)" />
+            color="linear-gradient(90deg,#2563eb,#2563eb)" />
           {!isPro && (
             <>
               <CreditBar label="Audio Detection Credits (Free Trial)" used={audioCreditsUsed} total={audioCreditsUsed+audioCredits} color="#06b6d4" />
@@ -325,7 +332,7 @@ export default function ProfilePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
-              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-violet-500/10 text-violet-400" />
+              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-primary/10 text-primary" />
               <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-cyan-500/10 text-cyan-400" />
               <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
             </div>

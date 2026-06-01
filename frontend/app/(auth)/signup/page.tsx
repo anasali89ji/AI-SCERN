@@ -43,7 +43,7 @@ function SignUpContent() {
         <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[400px] rounded-full"
           style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
         <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: 'linear-gradient(#a78bfa 1px, transparent 1px), linear-gradient(90deg, #a78bfa 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+          style={{ backgroundImage: 'linear-gradient(#60a5fa 1px, transparent 1px), linear-gradient(90deg, #60a5fa 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
       </div>
 
       {/* Logo */}

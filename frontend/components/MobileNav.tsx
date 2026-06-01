@@ -91,7 +91,7 @@ export function MobileNav() {
               <Link key={href} href={href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0
                   ${active ? 'text-primary' : 'text-text-muted hover:text-text-secondary active:scale-95'}`}>
-                <Icon className={`w-5 h-5 transition-all ${active ? 'drop-shadow-[0_0_8px_rgba(124,58,237,0.7)]' : ''}`} strokeWidth={active ? 2.5 : 1.8} />
+                <Icon className={`w-5 h-5 transition-all ${active ? 'drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]' : ''}`} strokeWidth={active ? 2.5 : 1.8} />
                 <span className={`text-[9px] font-bold uppercase tracking-wider leading-none truncate w-full text-center ${active ? 'text-primary' : ''}`}>{label}</span>
               </Link>
             )
@@ -99,7 +99,7 @@ export function MobileNav() {
           <button onClick={() => setMoreOpen(true)}
             className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0 active:scale-95
               ${isMoreActive || moreOpen ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
-            <MoreHorizontal className={`w-5 h-5 ${moreOpen ? 'drop-shadow-[0_0_8px_rgba(124,58,237,0.7)]' : ''}`} strokeWidth={1.8} />
+            <MoreHorizontal className={`w-5 h-5 ${moreOpen ? 'drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]' : ''}`} strokeWidth={1.8} />
             <span className="text-[9px] font-bold uppercase tracking-wider leading-none">More</span>
           </button>
         </div>
