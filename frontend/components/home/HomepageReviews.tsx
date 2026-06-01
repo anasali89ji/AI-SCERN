@@ -36,11 +36,11 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
       initial={false} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: i * 0.1 }}
-      className="card border-border/30 hover:border-primary/20 transition-colors"
+      className="rounded-2xl border border-white/6 bg-surface p-5 sm:p-6 hover:border-white/12 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg" style={{ boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset" }}
     >
       <div className="flex gap-0.5 mb-4" aria-label={`${starCount} out of 5 stars`}>
         {Array.from({ length: starCount }).map((_, j) => (
-          <span key={j} className="text-amber text-sm" aria-hidden="true">★</span>
+          <span key={j} className="text-amber-400 text-sm" aria-hidden="true">★</span>
         ))}
       </div>
       <p className="text-text-secondary text-sm leading-relaxed mb-4">

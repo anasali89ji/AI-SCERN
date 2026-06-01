@@ -55,8 +55,8 @@ export default function NavClient() {
       className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-white/5 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
-          : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
+          ? 'border-b border-white/5 bg-[#060a10]/96 backdrop-blur-2xl shadow-[0_1px_0_rgba(255,255,255,0.04)] shadow-md shadow-black/30'
+          : 'border-b border-transparent bg-transparent'
         }`}
     >
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
@@ -99,7 +99,7 @@ export default function NavClient() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-blue-500/25 transition-[background-color,border-color] duration-200">
+              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/8 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:border-white/14 hover:text-white transition-all duration-200">
                 Sign In
               </Link>
               <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-blue-500/15 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"

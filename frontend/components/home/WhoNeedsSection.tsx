@@ -24,8 +24,8 @@ const WHO_NEEDS = [
     value: 'Verify every image, audio clip and statement before it publishes — in under 10 seconds.',
     stats: [{ label: 'Image verification', value: '~82%' }, { label: 'Audio deepfake', value: '~79%' }],
     href: '/detect/image',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.20)',
   },
   {
     role: 'Educators & Schools',
@@ -96,8 +96,8 @@ const WHO_NEEDS = [
     value: 'Validate source material and peer submissions using methodology-backed multi-model detection.',
     stats: [{ label: 'Text accuracy', value: '~85%' }, { label: 'Datasets used', value: '87' }],
     href: '/methodology',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.20)',
   },
   {
     role: 'Marketing & Brand Teams',
@@ -134,7 +134,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-transform duration-500 hover:-translate-y-1.5"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.07] hover:border-white/[0.14] transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
       style={{ boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)` }}
     >
       {/* ── Image panel ── */}

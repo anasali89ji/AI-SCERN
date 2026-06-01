@@ -671,11 +671,14 @@ export default function HomePage() {
         {/* ══ HERO ══ */}
         <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
 
-          {/* Minimal dark background — single faint blue radial, no neon */}
+          {/* Hero ambient — dark grid + a single centered blue accent */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            {/* Single very faint blue center light — all that's needed */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(ellipse, rgba(37,99,235,0.07) 0%, transparent 65%)', filter: 'blur(60px)' }} />
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+            <div className="absolute inset-0"
+              style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 35%, var(--color-background,#060a10) 100%)' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full"
+              style={{ background: 'radial-gradient(ellipse, rgba(37,99,235,0.09) 0%, transparent 65%)', filter: 'blur(70px)' }} />
           </div>
 
           <NetworkBackground />

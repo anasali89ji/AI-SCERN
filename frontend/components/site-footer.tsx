@@ -60,7 +60,7 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="border-t border-border/20 relative overflow-hidden">
+    <footer className="border-t border-white/5 relative overflow-hidden">
       {/* Subtle top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none"
         style={{ background: 'none' }} />
@@ -159,7 +159,7 @@ export function SiteFooter() {
                   <button type="submit"
                     aria-label="Subscribe to newsletter"
                     className="px-3 py-2 rounded-lg text-white text-xs font-bold flex-shrink-0 transition-transform duration-200 hover:scale-[1.02]"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                     <Zap className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </form>
