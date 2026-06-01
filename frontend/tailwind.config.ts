@@ -7,6 +7,10 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx}',
   ],
   safelist: [
+    // Explicit bg opacity variants used dynamically in tool cards & sections
+    'bg-rose/8', 'bg-emerald/8', 'bg-amber/8', 'bg-primary/8', 'bg-cyan/8',
+    'bg-rose/12', 'bg-emerald/12', 'bg-amber/12', 'bg-primary/12', 'bg-cyan/12',
+    'border-rose/25', 'border-emerald/25', 'border-amber/25', 'border-primary/25', 'border-cyan/25',
     // Verdict color classes
     'text-rose', 'border-rose', 'bg-rose',
     'text-emerald', 'border-emerald', 'bg-emerald',

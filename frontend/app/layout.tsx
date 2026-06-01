@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'
@@ -116,9 +117,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''}
         >
           <AuthProvider>
-            {children}
-            <Toaster richColors position="top-right" />
-            <CookieConsent />
+            <MotionProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+              <CookieConsent />
+            </MotionProvider>
           </AuthProvider>
         </ClerkClientProvider>
       </body>
