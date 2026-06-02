@@ -333,7 +333,6 @@ export default function ChatPage() {
   // FIX B.8: Voice input state
   const [isListening, setIsListening]   = useState(false)
   const recognitionRef = useRef<any>(null)
-  const endRef       = useRef<HTMLDivElement>(null)
   const taRef        = useRef<HTMLTextAreaElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
@@ -379,6 +378,16 @@ export default function ChatPage() {
     setHydrated(true)
   }, [])
 
+  // Scroll to bottom when switching chats
+  useEffect(() => {
+    if (activeChatId) {
+      setTimeout(() => {
+        const el = messagesAreaRef.current
+        if (el) el.scrollTop = el.scrollHeight
+      }, 50)
+    }
+  }, [activeChatId])
+
   // Fix 4.1: iOS keyboard avoidance — visualViewport shrinks when keyboard opens
   // Without this, the keyboard covers the chat input on iPhone Safari
   useEffect(() => {
@@ -393,12 +402,44 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => { if (!hydrated) return; saveChats(chats) }, [chats, hydrated])
-  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}) }, [activeChat?.messages.length, activeChat?.messages[activeChat?.messages.length-1]?.content?.length])
+  // Smart auto-scroll: only scroll when user is near bottom, or on new message
+  const messagesAreaRef = useRef<HTMLDivElement>(null)
+  const isNearBottom = useCallback(() => {
+    const el = messagesAreaRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }, [])
+
+  const scrollToBottom = useCallback((force = false) => {
+    const el = messagesAreaRef.current
+    if (!el) return
+    if (force || isNearBottom()) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    }
+  }, [isNearBottom])
+
+  // Scroll on new message added (force) or streaming chunk only if near bottom
+  const prevMsgCount = useRef(0)
+  useEffect(() => {
+    const count = activeChat?.messages.length ?? 0
+    const isNew = count > prevMsgCount.current
+    prevMsgCount.current = count
+    if (isNew) {
+      // New message — always scroll
+      setTimeout(() => scrollToBottom(true), 30)
+    } else {
+      // Streaming chunk — only scroll if already near bottom
+      scrollToBottom(false)
+    }
+  }, [activeChat?.messages.length, activeChat?.messages[activeChat?.messages.length-1]?.content?.length, scrollToBottom])
 
   useEffect(() => {
     const ta = taRef.current; if (!ta) return
-    ta.style.height = 'auto'
-    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
+    // Reset then re-measure — use requestAnimationFrame to avoid layout thrash
+    requestAnimationFrame(() => {
+      ta.style.height = 'auto'
+      ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
+    })
   }, [input])
 
   const now = () => new Date().toISOString()
@@ -554,7 +595,7 @@ export default function ChatPage() {
 
   return (
     <>
-    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#09090f]">
+    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] bg-[#09090f] overflow-hidden">
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/70 z-20 lg:hidden" onClick={()=>setSidebarOpen(false)} />
@@ -672,7 +713,7 @@ export default function ChatPage() {
         </header>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={messagesAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
           {!activeChat || activeChat.messages.length===0 ? (
             <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
@@ -730,7 +771,7 @@ export default function ChatPage() {
                   userName={userName}
                 />
               ))}
-              <div ref={endRef} className="h-4" />
+              <div className="h-4" />
             </div>
           )}
         </div>
