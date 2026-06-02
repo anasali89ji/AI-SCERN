@@ -514,8 +514,6 @@ export default function HomePage() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-            <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
-              className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(245,100,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(245,100,0,0.7)] transition-all duration-300" priority />
             <span className="font-black text-xl gradient-text">Aiscern</span>
           </Link>
 
