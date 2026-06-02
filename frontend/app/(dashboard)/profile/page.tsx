@@ -2,7 +2,6 @@
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { motion } from 'framer-motion'
 import {
   Mail, Shield, BarChart3, Calendar, Edit3, Save, X,
   Loader2, Check, FileText, Image as ImageIcon, Music, Video,
@@ -159,7 +158,7 @@ export default function ProfilePage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
 
       {/* ── Profile Card ─────────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
+      <div
         className="bg-surface border border-border/55 rounded-3xl overflow-hidden">
         {/* Banner */}
         <div className="h-28 sm:h-32 relative overflow-hidden" style={{ background:'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(37,99,235,0.2), rgba(37,99,235,0.15))' }}>
@@ -276,10 +275,10 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Credits & Usage ─────────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0, transition:{delay:0.05} }}
+      <div
         className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-5">
           <Zap className="w-4 h-4 text-primary" /> Credits & Usage
@@ -308,7 +307,7 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Stats ───────────────────────────────────────────────────────────── */}
       <div>
@@ -336,7 +335,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── Account Details ─────────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
+      <div
         className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6 space-y-3">
         <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1">
           <Shield className="w-5 h-5 text-primary" /> Account Details
@@ -354,7 +353,7 @@ export default function ProfilePage() {
             <span className={`font-medium text-text-primary truncate text-right min-w-0 ${cls}`}>{value}</span>
           </div>
         ))}
-      </motion.div>
+      </div>
 
       <ScrollToTop />
     </div>

@@ -1321,3 +1321,25 @@ section > .max-w-7xl > .border-t {
     transform: none !important;
   }
 }
+
+/* ── WhoNeedsSection cards — pure CSS, no JS animation dependency ── */
+/* Cards are visible immediately; no opacity:0 initial state            */
+.who-card {
+  transform: translateZ(0);   /* own layer, isolate from parent */
+  backface-visibility: hidden;
+}
+@media (hover: hover) {
+  /* Hover lift only on devices that actually support hover */
+  .who-card:hover {
+    transform: translateY(-4px) translateZ(0);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* ── Dashboard / Profile stat cards — always visible ── */
+/* Framer Motion initial:opacity:0 causes blank cards on slow CPUs.    */
+/* These sections now use plain <div> — no animation needed.            */
+.stat-card {
+  opacity: 1 !important;
+  transform: none !important;
+}

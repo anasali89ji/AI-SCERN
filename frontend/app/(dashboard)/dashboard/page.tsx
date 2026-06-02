@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -156,14 +155,14 @@ export default function DashboardPage() {
       )}
 
       {/* ── Welcome ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+      <div>
         <h1 className="text-xl sm:text-3xl font-black text-text-primary">
           Welcome back, <span className="gradient-text">{name}</span> 👋
         </h1>
         <p className="text-text-muted text-sm mt-1">
           {totalScans === 0 ? 'Run your first scan below.' : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
         </p>
-      </motion.div>
+      </div>
 
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
@@ -173,8 +172,7 @@ export default function DashboardPage() {
           { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
           { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
         ].map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+          <div key={s.label}
             className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
             <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
               <s.icon className="w-5 h-5" />
@@ -183,7 +181,7 @@ export default function DashboardPage() {
               <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
               <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -191,7 +189,7 @@ export default function DashboardPage() {
       <div>
         {/* New user onboarding card */}
         {totalScans === 0 && !loading && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          <div
             className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -218,15 +216,14 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {TOOLS.map((t, i) => (
-            <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>
+            <div key={t.href}>
               <Link href={t.href}
                 className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
                 <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
@@ -237,14 +234,14 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{t.desc}</p>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
 
       {/* ── AI/Human balance bar ── */}
       {totalScans > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        <div
           className="bg-surface border border-border/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
@@ -260,7 +257,7 @@ export default function DashboardPage() {
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* ── Recent scans ── */}
@@ -309,7 +306,7 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-2">
             {scans.map((scan, i) => (
-              <motion.div key={scan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              <div key={scan.id}
                 transition={{ delay: i * 0.03, ease: 'easeOut' }}
                 className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
@@ -325,7 +322,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <VerdictBadge verdict={scan.verdict} />
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

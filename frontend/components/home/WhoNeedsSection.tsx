@@ -4,7 +4,6 @@
  * Extracted from app/page.tsx for route-based code splitting.
  * Loaded via next/dynamic only when this section enters the viewport.
  */
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -129,11 +128,8 @@ const WHO_NEEDS = [
 function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
   const CardIcon = card.icon
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
-     
-      transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-transform duration-500 hover:-translate-y-1.5"
+    <div
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-300 hover:-translate-y-1 who-card"
       style={{ boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)` }}
     >
       {/* ── Image panel ── */}
@@ -218,24 +214,20 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true" />
         </Link>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 // ─── Section (default export) ──────────────────────────────────────────────
 export default function WhoNeedsSection() {
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 overflow-hidden">
+    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 [overflow:clip]">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px] blur-orb" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px] blur-orb" />
       </div>
       <div className="max-w-6xl mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16"
-        >
+        <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-[11px] sm:text-xs font-black uppercase tracking-widest mb-5">
             <Users className="w-3 h-3" />
             Who Uses Aiscern
@@ -255,7 +247,7 @@ export default function WhoNeedsSection() {
               </span>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5">
           {WHO_NEEDS.map((card, i) => (
@@ -263,11 +255,7 @@ export default function WhoNeedsSection() {
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
-        >
+        <div className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link href="/detect/text"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-[transform,background-color,box-shadow] duration-200">
             <Brain className="w-4 h-4" />
@@ -278,7 +266,7 @@ export default function WhoNeedsSection() {
             <Eye className="w-4 h-4" />
             See How It Works
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   )
