@@ -1,8 +1,8 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import {
@@ -84,6 +84,24 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   )
 }
 
+// ── Chat history helpers (reads same localStorage key as chat page) ─────────────
+const CHAT_STORAGE_KEY = 'aiscern_chats_v2'
+
+interface ChatPreview { id: string; title: string; updatedAt: string }
+
+function loadChatPreviews(): ChatPreview[] {
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((c: any) => c?.id && c?.title)
+      .map((c: any) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt || '' }))
+      .slice(0, 8) // show max 8 recent chats
+  } catch { return [] }
+}
+
 // ── Sidebar — extracted as module-level component (fixes BUG-02) ─────────────
 interface SidebarProps {
   user: any
@@ -91,9 +109,11 @@ interface SidebarProps {
   collapsed: boolean
   pathname: string
   onNavClick: () => void
+  chatPreviews: ChatPreview[]
+  onChatSelect: (id: string) => void
 }
 
-function Sidebar({ user, signOut, collapsed, pathname, onNavClick }: SidebarProps) {
+function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews, onChatSelect }: SidebarProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -134,6 +154,26 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick }: SidebarProp
             </div>
           </div>
         ))}
+
+        {/* ARIA Chat History — subsection under Tools */}
+        {!collapsed && chatPreviews.length > 0 && pathname.startsWith('/chat') && (
+          <div>
+            <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
+              Recent Chats
+            </p>
+            <div className="space-y-0.5">
+              {chatPreviews.map(chat => (
+                <button key={chat.id}
+                  onClick={() => { onChatSelect(chat.id); onNavClick() }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left group"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
+                  <span className="text-xs truncate flex-1">{chat.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Account section — always visible, icon-only when collapsed (fixes BUG-16) */}
         <div>
@@ -315,7 +355,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, signOut } = useAuth()
   const [collapsed, setCollapsed]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [chatPreviews, setChatPreviews] = useState<ChatPreview[]>([])
   const pathname = usePathname()
+  const router = useRouter()
+
+  // Load chat previews from localStorage, refresh when on chat page
+  useEffect(() => {
+    setChatPreviews(loadChatPreviews())
+    // Also refresh on storage changes (when chat page saves)
+    const onStorage = () => setChatPreviews(loadChatPreviews())
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [pathname])
+
+  const handleChatSelect = useCallback((chatId: string) => {
+    // Navigate to chat and pass selected chat id via URL hash
+    router.push(`/chat#${chatId}`)
+    setMobileOpen(false)
+  }, [router])
 
   return (
     <AuthGuard>
@@ -328,6 +385,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             user={user} signOut={signOut}
             collapsed={collapsed} pathname={pathname}
             onNavClick={() => setMobileOpen(false)}
+            chatPreviews={chatPreviews}
+            onChatSelect={handleChatSelect}
           />
           <button onClick={() => setCollapsed(!collapsed)}
             className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-text-muted hover:text-white z-10">
@@ -349,6 +408,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   user={user} signOut={signOut}
                   collapsed={false} pathname={pathname}
                   onNavClick={() => setMobileOpen(false)}
+                  chatPreviews={chatPreviews}
+                  onChatSelect={handleChatSelect}
                 />
               </motion.aside>
             </>

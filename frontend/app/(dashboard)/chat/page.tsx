@@ -1,16 +1,11 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
 import { ToolCard, TOOL_META } from '@/components/ToolCard'
 import dynamic from 'next/dynamic'
-
-// ── Post-session component — only shown after first message ───────────────────
-const LazyReviewSuggestion = dynamic(
-  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
-  { ssr: false }
-)
 
 const STORAGE_KEY = 'aiscern_chats_v2'
 
@@ -372,10 +367,25 @@ export default function ChatPage() {
     rec.start()
   }, [isListening])
 
+  const router = useRouter()
+
   useEffect(() => {
     const saved = loadChats()
     if (saved.length > 0) { setChats(saved); setActiveChatId(saved[0].id) }
     setHydrated(true)
+
+    // Handle hash-based chat selection from sidebar nav
+    const checkHash = () => {
+      const hash = window.location.hash.slice(1)
+      if (hash && hash.startsWith('c')) {
+        setActiveChatId(hash)
+        // Clean the hash from URL without navigation
+        window.history.replaceState(null, '', '/chat')
+      }
+    }
+    checkHash()
+    window.addEventListener('hashchange', checkHash)
+    return () => window.removeEventListener('hashchange', checkHash)
   }, [])
 
   // Scroll to bottom when switching chats
@@ -594,7 +604,6 @@ export default function ChatPage() {
   const userName     = user?.fullName || user?.firstName || user?.username
 
   return (
-    <>
     <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] bg-[#09090f] overflow-hidden">
 
       {sidebarOpen && (
@@ -691,18 +700,7 @@ export default function ChatPage() {
                 <Ico.Download />
               </button>
             )}
-            <div className="hidden sm:flex items-center gap-1">
-              {(['Text','Image','Audio','Video'] as const).map(l => {
-                const icons = { Text:Ico.FileText, Image:Ico.Image, Audio:Ico.Music, Video:Ico.Video }
-                const I = icons[l]
-                return (
-                  <div key={l} className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-white/[0.04] text-gray-600 border border-white/[0.06]">
-                    <span className="text-gray-500"><I /></span>
-                    <span className="hidden md:inline">{l}</span>
-                  </div>
-                )
-              })}
-            </div>
+
             {/* User avatar in header */}
             {user && (
               <div className="ml-1">
@@ -844,9 +842,5 @@ export default function ChatPage() {
         </div>
       </main>
     </div>
-    <div className="px-4 pb-4 max-w-full">
-      <LazyReviewSuggestion toolName="AI Detection Assistant" />
-    </div>
-  </>
   )
 }
