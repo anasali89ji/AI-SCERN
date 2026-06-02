@@ -307,7 +307,6 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {scans.map((scan, i) => (
               <div key={scan.id}
-                transition={{ delay: i * 0.03, ease: 'easeOut' }}
                 className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">
