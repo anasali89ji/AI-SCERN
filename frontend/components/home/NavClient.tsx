@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
 import {
@@ -62,8 +61,6 @@ export default function NavClient() {
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-          <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
-            className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(245,100,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(245,100,0,0.7)] transition-[filter] duration-300" priority />
           <span className="font-black text-xl gradient-text">Aiscern</span>
         </Link>
 

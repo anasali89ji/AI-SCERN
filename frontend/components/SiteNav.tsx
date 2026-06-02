@@ -1,6 +1,5 @@
 'use client'
 import Link    from 'next/link'
-import Image   from 'next/image'
 import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -47,7 +46,6 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
       <div className="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image src="/logo.png" alt="Aiscern" width={32} height={24} className="object-contain" />
           <span className="font-black text-lg gradient-text">Aiscern</span>
         </Link>
 
