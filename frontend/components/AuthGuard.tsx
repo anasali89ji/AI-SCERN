@@ -53,7 +53,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none auth-blur-orb" />
 
       <AnimatePresence>
         <motion.div

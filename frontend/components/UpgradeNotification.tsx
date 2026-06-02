@@ -23,7 +23,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/85 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
       <motion.div
         initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}

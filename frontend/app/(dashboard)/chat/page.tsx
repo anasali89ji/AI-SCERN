@@ -627,7 +627,7 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl">
+        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#09090f]">
           <button onClick={()=>setSidebarOpen(s=>!s)} className="lg:hidden p-2 rounded-lg hover:bg-white/8 text-gray-500 hover:text-white transition-colors shrink-0">
             <Ico.Menu />
           </button>
@@ -736,7 +736,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl px-3 sm:px-4 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f] px-3 sm:px-4 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <div className="max-w-3xl mx-auto">
 
             {attachments.length>0 && (

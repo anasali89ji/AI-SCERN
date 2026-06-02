@@ -291,7 +291,7 @@ export default function ScraperPage() {
                       </div>
                     )}
                     {/* Overlay badge */}
-                    <div className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold backdrop-blur-sm ${verdictBg(result.verdict)}`}>
+                    <div className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${verdictBg(result.verdict)}`}>
                       <VerdictIcon v={result.verdict} cls="w-3.5 h-3.5" />
                       <span className={verdictColor(result.verdict)}>
                         {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}

@@ -89,7 +89,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
           {/* Modal — slides up on mobile, scales in on desktop */}
           <motion.div

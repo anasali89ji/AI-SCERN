@@ -109,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-14 border-b border-border bg-background/80 backdrop-blur-xl flex items-center px-4 gap-3 sticky top-0 z-30">
+        <header className="h-14 border-b border-border bg-background flex items-center px-4 gap-3 sticky top-0 z-30">
           <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-surface text-text-muted">
             <Menu className="w-4 h-4" />
           </button>

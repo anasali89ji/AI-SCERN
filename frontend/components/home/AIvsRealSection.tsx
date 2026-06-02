@@ -73,7 +73,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
-          <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white backdrop-blur-sm ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
+          <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" /> : <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" />}
             {card.verdict}
           </div>

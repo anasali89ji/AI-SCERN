@@ -388,7 +388,7 @@ function VideoDetectionPage() {
                 ) : (
                   <button onClick={togglePlay}
                     className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/40 transition-colors group">
-                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-14 h-14 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       {playing ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-1" />}
                     </div>
                   </button>

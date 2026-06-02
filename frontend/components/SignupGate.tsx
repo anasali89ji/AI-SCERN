@@ -73,7 +73,7 @@ export function SignupGate() {
     <AnimatePresence>
       <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
         {/* Non-dismissible backdrop */}
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+        <div className="absolute inset-0 bg-black/85" />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.92, y: 20 }}

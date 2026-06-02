@@ -1190,3 +1190,134 @@ section > .max-w-7xl > .border-t {
     display: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GPU CRASH & SCREEN-BLANK FIXES — LOW-SPEC DEVICES
+   Root causes:
+   1. backdrop-filter on stacked fixed/sticky elements → compositor overflow
+   2. will-change: transform on many simultaneous elements → VRAM exhaustion
+   3. Large blur-[Npx] orbs composited at full-screen size → texture OOM
+   4. CSS animations + Framer Motion JS animations fighting same element
+   5. overflow-hidden on a parent of a fixed child → blank section on iOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Widen mobile backdrop-filter kill to 768px (covers mid-range tablets) */
+@media (max-width: 768px) {
+  [class*="backdrop-blur"],
+  .glass,
+  .testimonial-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* ── 2. Restrict will-change to only elements currently animating ── */
+/*    Too many will-change declarations = too many compositor layers      */
+@media (max-width: 768px) {
+  .node-card-bob-a,
+  .node-card-bob-b,
+  .hero-fade-up,
+  .marquee-left,
+  .marquee-right,
+  .cv-auto,
+  .cv-auto-sm,
+  .gpu-accelerated,
+  .lift-hover {
+    will-change: auto !important;
+  }
+}
+
+/* ── 3. Disable bob animations on mobile — translateY causes layer promotion */
+@media (max-width: 640px) {
+  .node-card-bob-a {
+    animation: node-in-bob-a-static 0.6s ease-out forwards !important;
+  }
+  .node-card-bob-b {
+    animation: node-in-bob-b-static 0.7s ease-out forwards !important;
+  }
+  @keyframes node-in-bob-a-static {
+    from { opacity: 0; transform: translateY(8px) scale(0.92); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+  }
+  @keyframes node-in-bob-b-static {
+    from { opacity: 0; transform: translateY(8px) scale(0.92); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+  }
+}
+
+/* ── 4. Large blur orbs — reduce blur radius on mobile to cut texture size ── */
+@media (max-width: 640px) {
+  .blur-orb { display: none !important; }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Tablet: halve the blur radius via a filter fallback */
+  .blur-orb { filter: blur(40px) !important; }
+}
+
+/* ── 5. Marquee — pause on mobile to save battery & prevent jank ── */
+@media (max-width: 640px) {
+  .marquee-left,
+  .marquee-right {
+    animation-play-state: paused !important;
+  }
+}
+
+/* ── 6. Section overflow-hidden → overflow-clip (doesn't create stacking ctx) */
+/*    overflow-hidden on sections with fixed children = blank on iOS Safari   */
+@supports (overflow: clip) {
+  section[class*="overflow-hidden"] {
+    overflow: clip !important;
+  }
+}
+
+/* ── 7. Prevent fixed nav from creating a compositor crash on low-end chips ── */
+/*    Use a solid near-opaque bg instead of transparent + blur on mobile      */
+@media (max-width: 768px) {
+  nav[class*="fixed"][class*="backdrop-blur"],
+  nav[class*="fixed"] {
+    background-color: #08080d !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* ── 8. Framer Motion scale transforms — contain layout to avoid reflow ── */
+[data-framer-component-type],
+[style*="transform: scale"] {
+  contain: layout style;
+}
+
+/* ── 9. bento-shimmer — disable the ::before pseudo on low-end (heuristic) ── */
+@media (max-width: 640px) {
+  .bento-shimmer::before { animation: none !important; opacity: 0 !important; }
+  .spotlight-card::before { animation: none !important; }
+  .scanline { display: none !important; }
+}
+
+/* ── 10. AuthGuard / SignupGate blur orb — mobile kill ── */
+@media (max-width: 768px) {
+  .auth-blur-orb { display: none !important; }
+}
+
+/* ── 11. Reduced-motion: stop everything ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bento-shimmer::before,
+  .spotlight-card::before,
+  .marquee-left,
+  .marquee-right,
+  .scanline,
+  .trust-pulse,
+  .hero-fade-up,
+  .node-card-bob-a,
+  .node-card-bob-b {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

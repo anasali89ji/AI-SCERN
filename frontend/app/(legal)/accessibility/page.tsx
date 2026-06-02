@@ -13,7 +13,7 @@ const LAST_REVIEWED = 'May 17, 2026'
 export default function AccessibilityPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-surface sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />

@@ -83,7 +83,7 @@ export function CookieConsent() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-sm shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-[#0f0f17] shadow-2xl"
     >
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

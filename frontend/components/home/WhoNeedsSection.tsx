@@ -227,8 +227,8 @@ export default function WhoNeedsSection() {
   return (
     <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px]" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px] blur-orb" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px] blur-orb" />
       </div>
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div

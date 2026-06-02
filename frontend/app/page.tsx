@@ -718,7 +718,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
+        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
           <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
@@ -745,7 +745,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
+        <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative [overflow:clip]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
 
@@ -805,7 +805,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
+        <section id="how" className="cv-auto py-16 sm:py-28 px-4 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
 
@@ -863,7 +863,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 px-4 relative overflow-hidden">
+        <section className="py-16 sm:py-24 px-4 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
 
@@ -896,7 +896,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 px-4 border-t border-border/15 relative overflow-hidden">
+        <section className="py-16 sm:py-28 px-4 border-t border-border/15 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
 
@@ -982,7 +982,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ PROFESSIONALS MARQUEE ══ */}
-        <section className="py-10 sm:py-14 border-t border-border/15 overflow-hidden relative">
+        <section className="py-10 sm:py-14 border-t border-border/15 [overflow:clip] relative">
           <div className="relative">
             <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
               style={{ background: 'linear-gradient(90deg, #08080d 0%, transparent 100%)' }} />
@@ -1000,7 +1000,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 px-4 relative overflow-hidden">
+        <section className="py-24 sm:py-32 px-4 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0"
               style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />

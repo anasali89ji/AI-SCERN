@@ -32,7 +32,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl">
         <div className="max-w-5xl mx-auto h-full px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />

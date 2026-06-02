@@ -524,7 +524,7 @@ export default function UsersAdmin() {
           USER ACTION MODAL (ban / grant_pro / revoke / etc.)
       ══════════════════════════════════════════════════════════════════════ */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <div className="flex items-start gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -624,7 +624,7 @@ export default function UsersAdmin() {
           UPGRADE REQUEST REVIEW MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {reviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-start gap-3 mb-5">
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald/10' : 'bg-rose/10'}`}>

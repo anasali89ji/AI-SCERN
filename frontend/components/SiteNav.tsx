@@ -43,7 +43,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   }, [open])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl isolate">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl isolate">
       <div className="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
