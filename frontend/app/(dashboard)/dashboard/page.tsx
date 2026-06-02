@@ -11,11 +11,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
-export const metadata = {
-  title: 'Dashboard',
-  description: 'Manage your detection history, view analytics, and access your Aiscern account.',
-  robots: { index: false, follow: false },
-}
 
 
 const TOOLS = [

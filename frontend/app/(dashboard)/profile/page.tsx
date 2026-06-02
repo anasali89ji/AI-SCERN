@@ -12,11 +12,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 
-export const metadata = {
-  title: 'Profile',
-  description: 'Manage your Aiscern account and update your settings.',
-  robots: { index: false, follow: false },
-}
 
 
 // ── Avatar ────────────────────────────────────────────────────────────────────

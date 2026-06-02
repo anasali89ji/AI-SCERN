@@ -9,11 +9,6 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 
-export const metadata = {
-  title: 'Web Scanner',
-  description: 'Scan web pages for AI-generated content using the Aiscern web scanner.',
-  robots: { index: false, follow: false },
-}
 
 
 // ── Types ──────────────────────────────────────────────────────────────────────

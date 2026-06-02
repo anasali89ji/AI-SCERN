@@ -28,16 +28,6 @@ import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import HomepageReviews from '@/components/home/HomepageReviews'
 
-export const metadata = {
-  title: 'AI Content Detector',
-  description: 'Detect AI-generated text, images, audio, and video. Get a clear authenticity score in seconds.',
-  openGraph: {
-    title: 'Aiscern — AI Content Detector',
-    description: 'Detect AI-generated text, images, audio, and video. Get a clear authenticity score in seconds.',
-    url: 'https://aiscern.com',
-  },
-}
-
 // Aliases for backward compat with existing JSX usage
 const DynamicWhoNeedsSection = WhoNeedsSection
 const DynamicAIvsRealSection = AIvsRealSection

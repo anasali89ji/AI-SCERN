@@ -14,11 +14,6 @@ import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
 
-export const metadata = {
-  title: 'Settings',
-  description: 'Update your Aiscern account preferences and notification settings.',
-  robots: { index: false, follow: false },
-}
 
 
 // ── Toggle ───────────────────────────────────────────────────────────────────
