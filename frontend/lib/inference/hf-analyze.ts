@@ -30,6 +30,8 @@ import {
 } from './gemini-analyzer'
 import { analyzeTextWithBrain }  from '@/lib/inference/text-detection-brain'
 import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
+import { analyzeDeepfake }       from '@/lib/inference/deepfake-detector'
+import { loadSignalWeights, applyLearnedWeights } from '@/lib/inference/self-learning'
 import { scoreToVerdict }        from '@/lib/accuracy/log-predictions'
 
 export interface DetectionSignal {
@@ -430,6 +432,19 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   // ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
   const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length, mimeType)
 
+  // ── DEEPFAKE DETECTOR — runs on same decoded pixels as brain ──────────────
+  // Uses brainResult's decoded pixel data if available, else re-decodes.
+  // Adds 9 portrait/deepfake-specific signals on top of the base 18 brain signals.
+  const { decodeImagePixels } = await import('@/lib/inference/image-detection-brain')
+  const decodedImg = await decodeImagePixels(imageBuffer, mimeType)
+  const deepfakeResult = await analyzeDeepfake(
+    imageBuffer, imageBuffer.length, mimeType,
+    decodedImg.pixels, decodedImg.width, decodedImg.height, decodedImg.channels,
+  )
+
+  // ── SELF-LEARNING WEIGHTS — load from DB/cache (non-blocking) ──────────────
+  const learnedWeights = await loadSignalWeights('image').catch(() => null)
+
   // ── LLM Vision Analysis — ALWAYS runs (not conditional on brain score) ──────
   // Gemini + Grok run in parallel with the HF models. Modern AI images fool
   // pixel-based brain analysis but are reliably caught by vision LLMs with
@@ -638,30 +653,40 @@ Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evide
   })()
   const llmScore = llmWeightedScore
 
+  // ── Apply self-learning weights to brain signals ──────────────────────────
+  const adjustedBrainSignals = applyLearnedWeights(brainResult.signals, learnedWeights)
+  const brainTotalW = adjustedBrainSignals.reduce((s, sig) => s + sig.weight, 0) || 1
+  const adjustedBrainScore = adjustedBrainSignals.reduce((s, sig) => s + sig.score * sig.weight, 0) / brainTotalW
+
+  // Blended brain score: portrait images get stronger deepfake weighting
+  const combinedBrainScore = deepfakeResult.isPortrait
+    ? adjustedBrainScore * 0.72 + deepfakeResult.score * 0.28
+    : adjustedBrainScore * 0.85 + deepfakeResult.score * 0.15
+
   let aiScore:   number
   let modelUsed: string
   let engineDesc: string
 
   if (llmScore !== null && mlScore !== null) {
-    // Full ensemble: LLM(45%) + HF(25%) + Brain(20%) + Pixels(10%)
-    aiScore    = llmScore * 0.45 + mlScore * 0.25 + brainResult.score * 0.20 + imgSignalScore * 0.10
-    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+${mlScores.length}HF+Brain+Pixel)`
-    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (45%) + ${mlScores.length} HF ViT (25%) + Brain (20%) + Pixel (10%)`
+    // Full ensemble: LLM(42%) + HF(23%) + CombinedBrain(25%) + Pixels(10%)
+    aiScore    = llmScore * 0.42 + mlScore * 0.23 + combinedBrainScore * 0.25 + imgSignalScore * 0.10
+    modelUsed  = `Aiscern-ImageEngine-v8(${llmScores.length}LLM+${mlScores.length}HF+Brain+Deepfake+Pixel)`
+    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (42%) + ${mlScores.length} HF ViT (23%) + Brain+Deepfake (25%) + Pixel (10%)`
   } else if (llmScore !== null) {
-    // LLM-only + Brain + Pixels: LLM(55%) + Brain(30%) + Pixels(15%)
-    aiScore    = llmScore * 0.55 + brainResult.score * 0.30 + imgSignalScore * 0.15
-    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+Brain+Pixel)`
-    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (55%) + Brain (30%) + Pixel (15%) — HF cold-starting`
+    // LLM-only + Brain + Pixels: LLM(52%) + CombinedBrain(33%) + Pixels(15%)
+    aiScore    = llmScore * 0.52 + combinedBrainScore * 0.33 + imgSignalScore * 0.15
+    modelUsed  = `Aiscern-ImageEngine-v8(${llmScores.length}LLM+Brain+Deepfake+Pixel)`
+    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (52%) + Brain+Deepfake (33%) + Pixel (15%) — HF cold-starting`
   } else if (mlScore !== null) {
-    // Legacy path — no LLM: HF(40%) + Brain(40%) + Pixels(20%)
-    aiScore    = mlScore * 0.40 + brainResult.score * 0.40 + imgSignalScore * 0.20
-    modelUsed  = `Aiscern-ImageEngine-v7(Legacy-${mlScores.length}HF+Brain+Pixel)`
-    engineDesc = `${mlScores.length} HF ViT models (40%) + Brain (40%) + Pixel signals (20%) — no LLM available`
+    // Legacy path — no LLM: HF(38%) + CombinedBrain(42%) + Pixels(20%)
+    aiScore    = mlScore * 0.38 + combinedBrainScore * 0.42 + imgSignalScore * 0.20
+    modelUsed  = `Aiscern-ImageEngine-v8(Legacy-${mlScores.length}HF+Brain+Deepfake+Pixel)`
+    engineDesc = `${mlScores.length} HF ViT models (38%) + Brain+Deepfake (42%) + Pixel signals (20%) — no LLM available`
   } else {
-    // Fallback — only brain + pixels
-    aiScore    = brainResult.score * 0.60 + imgSignalScore * 0.40
-    modelUsed  = 'Aiscern-ImageEngine-v7(BrainOnly)'
-    engineDesc = 'Image Brain (60%) + Pixel signals (40%) — configure GEMINI_API_KEY or GROK_API_KEY for best accuracy'
+    // Fallback — only brain + deepfake + pixels
+    aiScore    = combinedBrainScore * 0.62 + imgSignalScore * 0.38
+    modelUsed  = 'Aiscern-ImageEngine-v8(BrainOnly)'
+    engineDesc = 'Image Brain+Deepfake (62%) + Pixel signals (38%) — configure GEMINI_API_KEY for best accuracy'
   }
 
   // ── LLM High-Confidence Override Floor ────────────────────────────────────
@@ -706,7 +731,7 @@ Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evide
     verdict,
     confidence:    Math.round(calibratedImgScore * 1000) / 1000,
     model_used:    modelUsed,
-    model_version: '6.0.0',
+    model_version: '8.0.0',
     signals: [
       {
         name:        'Image Detection Brain',
@@ -719,7 +744,24 @@ Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evide
         value:   Math.round(brainResult.score * 1000) / 1000,
         flagged: brainResult.score > 0.60,
       },
+      {
+        name:        'Deepfake / Portrait Detection',
+        category:    'ML',
+        description: `Deepfake score: ${Math.round(deepfakeResult.score * 100)}% | Portrait: ${deepfakeResult.isPortrait ? 'YES' : 'NO'} | ` +
+          (deepfakeResult.findings[0] ?? 'no face-specific artifacts'),
+        weight:  deepfakeResult.isPortrait ? 30 : 15,
+        value:   Math.round(deepfakeResult.score * 1000) / 1000,
+        flagged: deepfakeResult.score > 0.60,
+      },
       ...brainSignalsFormatted,
+      ...deepfakeResult.signals.slice(0, 3).map(sig => ({
+        name:        sig.name,
+        category:    'Deepfake Analysis',
+        description: sig.evidence,
+        weight:      Math.round(sig.weight * 30),
+        value:       Math.round(sig.score * 1000) / 1000,
+        flagged:     sig.score > 0.65,
+      })),
       ...imgSignals.map(sig => ({
         name:        sig.name,
         category:    'Pixel Analysis',
@@ -730,16 +772,18 @@ Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evide
       })),
     ],
     model_breakdown: [
-      { model_id: 'image-brain-v2', raw_score: brainResult.score, verdict: scoreToVerdict(brainResult.score), latency_ms: 0 },
+      { model_id: 'image-brain-v2',       raw_score: brainResult.score,    verdict: scoreToVerdict(brainResult.score),    latency_ms: 0 },
+      { model_id: 'deepfake-detector-v1', raw_score: deepfakeResult.score, verdict: scoreToVerdict(deepfakeResult.score), latency_ms: 0 },
       ...(geminiScore !== null ? [{ model_id: 'gemini-2.0-flash-vision', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
       ...(grokScore   !== null ? [{ model_id: 'grok-2-vision',           raw_score: grokScore,   verdict: scoreToVerdict(grokScore),   latency_ms: 0 }] : []),
       ...(nimScore    !== null ? [{ model_id: 'nvidia-llama-3.2-90b',    raw_score: nimScore,    verdict: scoreToVerdict(nimScore),    latency_ms: 0 }] : []),
       ...(orScore     !== null ? [{ model_id: 'openrouter-qwen2.5-vl',   raw_score: orScore,     verdict: scoreToVerdict(orScore),     latency_ms: 0 }] : []),
       ...mlScores.map(m => ({ model_id: m.model, raw_score: m.aiScore, verdict: scoreToVerdict(m.aiScore), latency_ms: 0 })),
-      { model_id: 'pixel-signals-v2', raw_score: imgSignalScore, verdict: scoreToVerdict(imgSignalScore), latency_ms: 0 },
+      { model_id: 'pixel-signals-v2',     raw_score: imgSignalScore,       verdict: scoreToVerdict(imgSignalScore),        latency_ms: 0 },
     ],
     summary: verdict === 'AI'
       ? `AI-generated image detected with ${Math.round(calibratedImgScore * 100)}% confidence. ` +
+        (deepfakeResult.isPortrait ? `Deepfake/portrait analysis: ${Math.round(deepfakeResult.score * 100)}% AI. ` : '') +
         (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '') +
         `Key signals: ${brainResult.findings.slice(0, 2).join(' | ')}.`
       : verdict === 'HUMAN'
