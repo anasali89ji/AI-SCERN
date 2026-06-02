@@ -14,7 +14,17 @@ const isProtected = createRouteMatcher([
   '/api/admin(.*)',
 ])
 
+// Routes that Clerk needs to finish OAuth flows — must never redirect
+const isPublicClerkRoute = createRouteMatcher([
+  '/sso-callback(.*)',
+  '/login(.*)',
+  '/signup(.*)',
+])
+
 export default clerkMiddleware(async (auth, req) => {
+  // ── Skip Clerk's own OAuth callback routes ─────────────────────────────────
+  if (isPublicClerkRoute(req)) return NextResponse.next()
+
   // ── Auth guard ────────────────────────────────────────────────────────────
   if (isProtected(req)) {
     const { userId } = await auth()

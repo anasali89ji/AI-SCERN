@@ -23,6 +23,11 @@ export function ClerkClientProvider({ children, publishableKey }: Props) {
       publishableKey={publishableKey}
       signInUrl="/login"
       signUpUrl="/signup"
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
+      // Required so Google OAuth (and all other OAuth providers) can complete.
+      // Without this, Clerk redirects to /sso-callback which must exist as a page.
+      // That page renders <AuthenticateWithRedirectCallback> to finish the handshake.
     >
       {children}
     </ClerkProvider>
