@@ -253,6 +253,10 @@ export const supabaseKeepAlive = inngest.createFunction(
 import { imageForensicCascade } from './forensic-cascade'
 export { imageForensicCascade }
 
+// ── Self-learning daily recalibration ────────────────────────────────────────
+import { selfLearningRecalibrate, selfLearningManualTrigger } from './self-learning-job'
+export { selfLearningRecalibrate, selfLearningManualTrigger }
+
 // ── All functions export (registered in the serve route) ─────────────────────
 export const INNGEST_FUNCTIONS = [
   onScanCompleted,
@@ -263,4 +267,6 @@ export const INNGEST_FUNCTIONS = [
   vercelWarmup,
   supabaseKeepAlive,
   imageForensicCascade,
+  selfLearningRecalibrate,
+  selfLearningManualTrigger,
 ]

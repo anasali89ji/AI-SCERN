@@ -45,3 +45,18 @@ CREATE POLICY "service_bypass_signal_feedback" ON signal_feedback
 
 CREATE POLICY "service_bypass_signal_weights" ON signal_weights
   USING (auth.role() = 'service_role');
+
+-- Calibration run log (admin visibility)
+CREATE TABLE IF NOT EXISTS calibration_runs (
+  id              bigserial     PRIMARY KEY,
+  ran_at          timestamptz   NOT NULL DEFAULT now(),
+  duration_ms     integer,
+  image_signals   integer       DEFAULT 0,
+  text_signals    integer       DEFAULT 0,
+  image_updated   boolean       DEFAULT false,
+  text_updated    boolean       DEFAULT false
+);
+
+ALTER TABLE calibration_runs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_bypass_calibration_runs" ON calibration_runs
+  USING (auth.role() = 'service_role');
