@@ -762,19 +762,6 @@ export default function ChatPage() {
               <input ref={fileRef} type="file" className="hidden" multiple accept="image/*,audio/*,video/*,.txt,.pdf"
                 onChange={e=>handleFiles(e.target.files)} />
 
-              {/* FIX B.8: Voice input — hidden if Web Speech API unavailable */}
-              {typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) && (
-                <button onClick={toggleVoice}
-                  title={isListening ? 'Stop recording' : 'Voice input'}
-                  className={`p-2 rounded-xl transition-all shrink-0 mb-0.5 ${
-                    isListening
-                      ? 'text-rose-400 bg-rose-500/15 animate-pulse'
-                      : 'text-gray-700 hover:text-gray-400 hover:bg-white/8'
-                  }`}>
-                  <Ico.Mic />
-                </button>
-              )}
-
               <textarea
                 ref={taRef} value={input}
                 onChange={e=>setInput(e.target.value)}
