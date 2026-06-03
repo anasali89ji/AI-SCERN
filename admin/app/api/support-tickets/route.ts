@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const db = getAdminDb()
   let query = db
     .from('support_tickets')
-    .select('id, user_id, subject, message, status, priority, category, assigned_to, created_at, updated_at, users(email)')
+    .select('id, user_id, subject, message, status, priority, category, assigned_to, created_at, updated_at')
     .order('created_at', { ascending: false })
     .limit(200)
 
@@ -22,11 +22,8 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const tickets = (data ?? []).map(t => ({
-    ...t,
-    email: (t.users as unknown as Record<string, string>)?.email ?? 'unknown',
-  }))
-
+  // Expose user_id as email field so the tab UI shows something useful
+  const tickets = (data ?? []).map(t => ({ ...t, email: t.user_id ?? 'unknown' }))
   return NextResponse.json(tickets)
 }
 

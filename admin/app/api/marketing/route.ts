@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   ]
 
   // Funnel
-  const { count: registeredCount } = await db.from('users').select('*', { count: 'exact', head: true })
+  const { count: registeredCount } = await db.from('scans').select('user_id', { count: 'exact', head: true })
   const { count: activatedCount }  = await db.from('scans').select('*', { count: 'exact', head: true }).gte('created_at', since30d)
   const funnel = [
     { stage: 'Visits',     count: total_visits,             rate: 0 },
