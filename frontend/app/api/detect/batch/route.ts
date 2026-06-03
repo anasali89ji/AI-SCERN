@@ -176,6 +176,22 @@ async function processItem(item: BatchItem, index: number, _userId: string): Pro
   }
 }
 
+// ── Controlled concurrency helper ─────────────────────────────────────────────
+// Runs tasks with max CONCURRENCY simultaneous, to avoid overwhelming HF API
+async function pLimit<T>(tasks: Array<() => Promise<T>>, concurrency: number): Promise<T[]> {
+  const results: T[] = new Array(tasks.length)
+  let idx = 0
+  async function worker() {
+    while (idx < tasks.length) {
+      const i = idx++
+      results[i] = await tasks[i]()
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
+  await Promise.all(workers)
+  return results
+}
+
 // ── Route handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -201,9 +217,19 @@ export async function POST(req: NextRequest) {
   if (items.length === 0) return NextResponse.json({ success: false, error: { code: 'EMPTY', message: 'No items provided' } }, { status: 400 })
   if (items.length > MAX_BATCH) return NextResponse.json({ success: false, error: { code: 'TOO_MANY', message: `Max ${MAX_BATCH} items per batch` } }, { status: 400 })
 
-  const start   = Date.now()
-  // Run all items in parallel
-  const results = await Promise.all(items.map((item, i) => processItem(item, i, userId)))
+  // Validate all items upfront for fast feedback
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (!item || !item.type) return NextResponse.json({ success: false, error: { code: 'INVALID_ITEM', message: `Item ${i}: missing type` } }, { status: 400 })
+    if (![ 'text', 'image', 'url' ].includes(item.type)) return NextResponse.json({ success: false, error: { code: 'INVALID_TYPE', message: `Item ${i}: type must be text, image, or url` } }, { status: 400 })
+    if (item.type !== 'url' && !item.content) return NextResponse.json({ success: false, error: { code: 'MISSING_CONTENT', message: `Item ${i}: content required for type=${item.type}` } }, { status: 400 })
+    if (item.type === 'url' && !item.url) return NextResponse.json({ success: false, error: { code: 'MISSING_URL', message: `Item ${i}: url required for type=url` } }, { status: 400 })
+  }
+
+  const start = Date.now()
+  // Controlled concurrency: 3 simultaneous (avoids HF API rate limits)
+  const tasks   = items.map((item, i) => () => processItem(item, i, userId))
+  const results = await pLimit(tasks, 3)
 
   const processing_ms = Date.now() - start
   const ai            = results.filter(r => r.verdict === 'AI').length
@@ -221,7 +247,7 @@ export async function POST(req: NextRequest) {
         verdict:          ai > human + uncertain ? 'AI' : human > ai + uncertain ? 'HUMAN' : 'UNCERTAIN',
         confidence_score: results.filter(r => r.confidence != null).reduce((s, r) => s + (r.confidence ?? 0), 0) / (results.length || 1),
         processing_time:  processing_ms,
-        model_used:       'Aiscern-BatchEngine-v1',
+        model_used:       'Aiscern-BatchEngine-v2',
         status:           'complete',
         metadata:         { batch_size: items.length, ai, human, uncertain, errors, types: [...new Set(items.map(i => i.type))] },
       })

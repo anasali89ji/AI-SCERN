@@ -9,6 +9,7 @@ import { GoogleGenerativeAI }         from '@google/generative-ai'
 import { assertSafeUrl }              from '@/lib/utils/ssrf-guard'
 import { getSupabaseAdmin }           from '@/lib/supabase/admin'
 import * as cheerio                   from 'cheerio'
+import { analyzeTextWithBrainV2 }     from '@/lib/inference/text-detection-brain'
 
 export const dynamic = 'force-dynamic'
 
@@ -363,14 +364,36 @@ export async function POST(req: NextRequest) {
     let analysis: ContentAnalysis
     let tier = 1
 
-    const hfFallback = (): ContentAnalysis => ({
-      aiScore: hfQuick.aiScore, verdict: hfQuick.verdict as 'AI'|'HUMAN'|'UNCERTAIN',
-      confidence: Math.round(Math.abs(hfQuick.aiScore - 0.5) * 200),
-      contentQuality: scoreContentQuality(mainPage.textContent, mainPage.wordCount, mainPage.headings),
-      signals: [{ name: 'Neural Text Classifier', flagged: hfQuick.verdict === 'AI', description: hfQuick.verdict === 'AI' ? 'Statistical patterns suggest AI generation' : 'Statistical patterns suggest human authorship', weight: 1.0 }],
-      summary: `AI probability: ${Math.round(hfQuick.aiScore * 100)}%.`,
-      reasoning: '', writingStyle: '',
-    })
+    // Local TextBrainV2 fallback — full 30+ signal analysis without any API key
+    const localBrainFallback = (): ContentAnalysis => {
+      const brainResult = analyzeTextWithBrainV2(mainPage.textContent.slice(0, 50_000))
+      const blended = brainResult.score * 0.65 + hfQuick.aiScore * 0.35
+      const v: 'AI' | 'HUMAN' | 'UNCERTAIN' = blended >= 0.60 ? 'AI' : blended <= 0.38 ? 'HUMAN' : 'UNCERTAIN'
+      const topSignals = [...brainResult.signals]
+        .sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
+        .slice(0, 8)
+      return {
+        aiScore:        Math.round(blended * 1000) / 1000,
+        verdict:        v,
+        confidence:     Math.round(Math.abs(blended - 0.5) * 200),
+        contentQuality: scoreContentQuality(mainPage.textContent, mainPage.wordCount, mainPage.headings),
+        signals:        topSignals.map(s => ({
+          name:        s.name,
+          flagged:     s.score > 0.62,
+          description: s.evidence,
+          weight:      s.weight,
+        })),
+        summary: v === 'AI'
+          ? `AI-generated content detected (${Math.round(blended * 100)}%). ` + (brainResult.findings[0] ?? '')
+          : v === 'HUMAN'
+          ? `Content appears human-authored (${Math.round((1 - blended) * 100)}% confidence). ` + (brainResult.findings[0] ?? '')
+          : `Analysis inconclusive (${Math.round(blended * 100)}% AI). Add GEMINI_API_KEY for deeper analysis.`,
+        reasoning:    brainResult.findings.slice(0, 3).join(' | '),
+        writingStyle: brainResult.score > 0.65 ? 'Uniform, transition-heavy, lacks personal voice'
+                    : brainResult.score < 0.38 ? 'Natural variance, personal voice present'
+                    : 'Mixed signals',
+      }
+    }
 
     if (geminiAvailable()) {
       try {
@@ -380,12 +403,16 @@ export async function POST(req: NextRequest) {
           try { analysis = await analyzeWithGemini(mainPage, agentResults, 'gemini-1.5-flash'); tier = 2 }
           catch {
             const nv = await analyzeWithNVIDIA(mainPage, agentResults)
-            if (nv) { analysis = nv; tier = 3 } else { analysis = hfFallback(); tier = 4 }
+            if (nv) { analysis = nv; tier = 3 } else { analysis = localBrainFallback(); tier = 4 }
           }
-        } else throw e1
+        } else {
+          // Non-quota errors: fall through to brain immediately
+          const nv = await analyzeWithNVIDIA(mainPage, agentResults)
+          if (nv) { analysis = nv; tier = 3 } else { analysis = localBrainFallback(); tier = 4 }
+        }
       }
     } else {
-      analysis = hfFallback(); tier = 4
+      analysis = localBrainFallback(); tier = 4
     }
 
     // Weighted cross-agent score (blend HF sub-scores with Gemini)
@@ -400,7 +427,7 @@ export async function POST(req: NextRequest) {
       user_id: userId, media_type: 'url', source_url: normalised,
       content_preview: (mainPage.description || mainPage.title)?.slice(0, 300),
       verdict: analysis.verdict, confidence_score: analysis.aiScore,
-      signals: analysis.signals, model_used: `rag-t${tier}`, status: 'complete',
+      signals: analysis.signals, model_used: `rag-t${tier}-textbrain-v2`, status: 'complete',
       metadata: { domain: urlObj.hostname, word_count: mainPage.wordCount, content_type: mainPage.contentType, fetch_method: fetchMethod, agents: agentResults.length },
     }).then(({ error }) => { if (error) console.error('[scraper] DB save:', error.message) })
 
@@ -436,5 +463,31 @@ export async function POST(req: NextRequest) {
     const msg = (err as Error)?.message || ''
     const isBlocked = /403|blocked|CORS|ERR_|ECONNREFUSED|strategies failed/i.test(msg)
     return NextResponse.json({ success: false, error: { code: isBlocked ? 'BLOCKED' : 'SCRAPE_FAILED', message: isBlocked ? 'This website blocks automated access. Try a specific article or blog post URL.' : 'Scan failed unexpectedly. Please try again.' } }, { status: 500 })
+  }
+}
+
+// ── GET /api/scraper?url=... — quick reachability check ──────────────────────
+// Used by the frontend to validate a URL before submitting a full scan.
+// Returns { reachable: boolean, content_type: string, word_estimate: number }
+export async function GET(req: NextRequest) {
+  const { userId } = await auth().catch(() => ({ userId: null as string | null }))
+  if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+
+  const url = req.nextUrl.searchParams.get('url')
+  if (!url) return NextResponse.json({ reachable: false, error: 'No URL provided' }, { status: 400 })
+
+  try {
+    assertSafeUrl(url)
+    const normalised = url.startsWith('http') ? url : `https://${url}`
+    const html = await fetchDirect(normalised)
+    if (!html) return NextResponse.json({ reachable: false, error: 'Could not reach URL' })
+    const $ = cheerio.load(html)
+    $(NOISE_SELECTORS.join(', ')).remove()
+    const text = $('body').text().replace(/\s+/g, ' ').trim()
+    const wordEstimate = text.split(' ').filter(Boolean).length
+    const ct = html.toLowerCase().includes('<article') || html.toLowerCase().includes('class="post') ? 'article' : 'page'
+    return NextResponse.json({ reachable: true, content_type: ct, word_estimate: wordEstimate })
+  } catch (err) {
+    return NextResponse.json({ reachable: false, error: (err as Error)?.message ?? 'Validation failed' })
   }
 }
