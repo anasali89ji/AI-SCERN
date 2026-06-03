@@ -25,10 +25,13 @@ export default function SSOCallbackPage() {
         AuthenticateWithRedirectCallback must be rendered on this page.
         It reads the Clerk hash params, exchanges the OAuth code for a
         session, then triggers the AuthProvider redirect to /dashboard.
+        
+        signInFallbackRedirectUrl / signUpFallbackRedirectUrl are the v5
+        Clerk API for post-auth redirects.
       */}
       <AuthenticateWithRedirectCallback
-        afterSignInUrl="/dashboard"
-        afterSignUpUrl="/dashboard"
+        signInFallbackRedirectUrl="/dashboard"
+        signUpFallbackRedirectUrl="/dashboard"
       />
     </>
   )

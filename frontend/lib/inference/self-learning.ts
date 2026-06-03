@@ -78,6 +78,7 @@ export async function loadSignalWeights(modality: 'image' | 'text'): Promise<Rec
   // 1. Try Redis cache
   try {
     const redis = getRedis()
+    if (!redis) throw new Error('Redis not configured')
     const cached = await redis.get(cacheKey)
     if (cached) {
       const parsed = JSON.parse(cached as string) as LearnedWeights
@@ -105,6 +106,7 @@ export async function loadSignalWeights(modality: 'image' | 'text'): Promise<Rec
     // Cache in Redis
     try {
       const redis = getRedis()
+      if (!redis) throw new Error('no redis')
       await redis.set(cacheKey, JSON.stringify(learned), { ex: CACHE_TTL_SEC })
     } catch { /* non-fatal */ }
 
@@ -199,6 +201,7 @@ export async function recalculateSignalWeights(modality: 'image' | 'text'): Prom
     // Bust Redis cache
     try {
       const redis = getRedis()
+      if (!redis) throw new Error('no redis')
       const cacheKey = modality === 'image' ? CACHE_KEY_IMAGE : CACHE_KEY_TEXT
       await redis.del(cacheKey)
     } catch { /* non-fatal */ }
