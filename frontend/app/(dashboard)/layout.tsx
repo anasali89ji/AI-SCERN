@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -119,8 +120,9 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
       {/* Logo */}
       <Link href="/"
         className={`flex items-center gap-3 px-4 py-5 border-b border-border hover:opacity-80 transition-opacity ${collapsed ? 'justify-center' : ''}`}>
+        <Image src="/logo.png" alt="Aiscern" width={36} height={36}
+          className="object-contain flex-shrink-0" />
         {!collapsed && <span className="text-lg font-black gradient-text">Aiscern</span>}
-        {collapsed && <span className="text-lg font-black gradient-text">A</span>}
       </Link>
 
       {/* Nav groups */}
@@ -428,6 +430,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Menu className="w-6 h-6" />
               </button>
               <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity">
+                <Image src="/logo.png" alt="Aiscern" width={28} height={28} className="object-contain" />
                 <span className="font-bold gradient-text text-sm">Aiscern</span>
               </Link>
               <div className="hidden lg:flex items-center gap-2 text-sm text-text-muted">
