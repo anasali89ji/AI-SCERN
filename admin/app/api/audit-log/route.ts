@@ -1,37 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  try {
-    const auth = await requireAdmin(req)
-    if (auth instanceof NextResponse) return auth
-    const db = getAdminDb()
+  const auth = await requireAdmin(req)
+  if (auth instanceof NextResponse) return auth
 
-    // Try admin_audit_log first, fall back to audit_log
-    let data: any[] = []
-    const r1 = await db.from('admin_audit_log')
-      .select('id,action,admin_ip,metadata,created_at')
-      .order('created_at', { ascending: false })
-      .limit(100)
-    if (!r1.error && r1.data) {
-      data = (r1.data || []).map((l: any) => ({
-        id: l.id, action_type: l.action,
-        admin_ip: l.admin_ip, ip_address: l.admin_ip,
-        metadata: l.metadata, created_at: l.created_at,
-      }))
-    } else {
-      const r2 = await db.from('admin_activity_logs')
-        .select('id,action,admin_id,target_id,details,created_at')
-        .order('created_at', { ascending: false })
-        .limit(100)
-      data = (r2.data || []).map((l: any) => ({
-        id: l.id, action_type: l.action, admin_id: l.admin_id,
-        target_resource: l.target_id, metadata: l.details, created_at: l.created_at,
-      }))
-    }
-    return NextResponse.json({ logs: data })
-  } catch (err: any) {
-    return NextResponse.json({ logs: [], error: err?.message }, { status: 200 })
-  }
+  const { searchParams } = new URL(req.url)
+  const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
+  const action = searchParams.get('action') ?? ''
+  const limit  = 50
+  const offset = (page - 1) * limit
+
+  const db = getAdminDb()
+  let q = db
+    .from('admin_audit_log')
+    .select('id, action, admin_ip, metadata, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (action) q = q.eq('action', action)
+
+  const { data, count, error } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({
+    entries: data ?? [],
+    total:   count ?? 0,
+    pages:   Math.ceil((count ?? 0) / limit),
+  })
 }

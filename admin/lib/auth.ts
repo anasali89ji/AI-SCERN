@@ -1,24 +1,50 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
 
 export const COOKIE_NAME = 'admin_session'
 
+// ── Edge-safe Buffer replacement ──────────────────────────────────────────────
+function bufToHex(buf: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function hexToUint8(hex: string): Uint8Array {
+  const arr = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < hex.length; i += 2) {
+    arr[i / 2] = parseInt(hex.slice(i, i + 2), 16)
+  }
+  return arr
+}
+
+// ── Config validation ─────────────────────────────────────────────────────────
+export function validateAdminConfig(): { ok: boolean; errors: string[] } {
+  const errors: string[] = []
+  if (!process.env.ADMIN_PASSWORD && !process.env.ADMIN_PASSWORD_BCRYPT) {
+    errors.push('ADMIN_PASSWORD or ADMIN_PASSWORD_BCRYPT is missing')
+  }
+  if (!process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_SESSION_SECRET.length < 32) {
+    errors.push('ADMIN_SESSION_SECRET is missing or < 32 chars')
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    errors.push('Supabase credentials missing (NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)')
+  }
+  return { ok: errors.length === 0, errors }
+}
+
 // ── Secret resolution ─────────────────────────────────────────────────────────
-// ADMIN_SESSION_SECRET MUST be set in production. It must be a cryptographically
-// random string (≥32 chars). Falling back to ADMIN_PASSWORD or a hardcoded value
-// would allow session forgery — both fallbacks are removed.
-function getSessionSecret(): string {
+function getSessionSecret(): string | null {
   const secret = process.env.ADMIN_SESSION_SECRET
   if (!secret || secret.length < 32) {
-    throw new Error(
-      'ADMIN_SESSION_SECRET env var is missing or too short (need ≥32 chars). ' +
-      'Generate one with: openssl rand -hex 32'
-    )
+    console.error('[auth] ADMIN_SESSION_SECRET env var is missing or too short (need ≥32 chars). Generate: openssl rand -hex 32')
+    return null
   }
   return secret
 }
 
-// ── HMAC helpers (Web Crypto — edge-compatible) ───────────────────────────────
+// ── HMAC helpers (Web Crypto — fully edge-compatible) ─────────────────────────
 async function hmacSign(data: string, secret: string): Promise<string> {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
@@ -27,14 +53,13 @@ async function hmacSign(data: string, secret: string): Promise<string> {
     false, ['sign']
   )
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data))
-  return Buffer.from(sig).toString('hex')
+  return bufToHex(sig)
 }
 
 async function hmacVerify(data: string, sig: string, secret: string): Promise<boolean> {
   const expected = await hmacSign(data, secret)
-  // Constant-time comparison to prevent timing attacks
-  const a = Buffer.from(expected, 'hex')
-  const b = Buffer.from(sig.padEnd(expected.length, '0'), 'hex')
+  const a = hexToUint8(expected)
+  const b = hexToUint8(sig.padEnd(expected.length, '0'))
   if (a.length !== b.length) return false
   let diff = 0
   for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
@@ -42,10 +67,12 @@ async function hmacVerify(data: string, sig: string, secret: string): Promise<bo
 }
 
 // ── Session management ────────────────────────────────────────────────────────
-const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours (was mislabelled "2h" but set to 24h)
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 export async function createAdminSession(ip: string, userAgent: string): Promise<string> {
-  const secret  = getSessionSecret()
+  const secret = getSessionSecret()
+  if (!secret) throw new Error('Session secret not configured')
+
   const payload = `admin:${ip}:${Date.now()}`
   const sig     = await hmacSign(payload, secret)
   const token   = `${payload}:${sig}`
@@ -75,12 +102,8 @@ export async function createAdminSession(ip: string, userAgent: string): Promise
 export async function verifyAdminSession(token: string | undefined): Promise<boolean> {
   if (!token) return false
 
-  let secret: string
-  try {
-    secret = getSessionSecret()
-  } catch {
-    return false // misconfigured — deny all
-  }
+  const secret = getSessionSecret()
+  if (!secret) return false // misconfigured — deny all
 
   const parts = token.split(':')
   if (parts.length < 4) return false
@@ -96,7 +119,7 @@ export async function verifyAdminSession(token: string | undefined): Promise<boo
   const ts = parseInt(parts[parts.length - 1])
   if (isNaN(ts) || Date.now() - ts > SESSION_TTL_MS) return false
 
-  // 3. Check Supabase revocation table — revoked or expired rows must be rejected
+  // 3. Check Supabase revocation table
   try {
     const sb = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -110,13 +133,12 @@ export async function verifyAdminSession(token: string | undefined): Promise<boo
       .maybeSingle()
 
     if (error) {
-      // If Supabase is unreachable, fail closed for safety
       console.error('[auth] Supabase revocation check failed:', error.message)
       return false
     }
-    if (!row) return false                                         // token not in DB
-    if (row.revoked_at)  return false                             // explicitly revoked
-    if (new Date(row.expires_at) < new Date()) return false       // DB-side expiry
+    if (!row) return false
+    if (row.revoked_at) return false
+    if (new Date(row.expires_at) < new Date()) return false
   } catch {
     return false
   }
@@ -139,22 +161,35 @@ export async function revokeAdminSession(token: string): Promise<void> {
 }
 
 // ── Password verification ─────────────────────────────────────────────────────
-// PRODUCTION: ADMIN_PASSWORD must be the SHA-256 hex hash of the real password.
-//   Generate: echo -n 'yourpassword' | sha256sum
-// PLAINTEXT passwords are rejected in production (NODE_ENV=production).
+// Priority order:
+//   1. ADMIN_PASSWORD_BCRYPT — bcrypt hash (most secure, recommended for prod)
+//   2. ADMIN_PASSWORD        — 64-char SHA-256 hex hash (prod) or plaintext (dev only)
 export async function verifyAdminPassword(password: string): Promise<boolean> {
+  if (!password) return false
+
+  // Option 1: bcrypt hash (preferred)
+  const bcryptHash = process.env.ADMIN_PASSWORD_BCRYPT
+  if (bcryptHash && bcryptHash.trim() !== '') {
+    try {
+      return await bcrypt.compare(password, bcryptHash)
+    } catch (e) {
+      console.error('[auth] bcrypt compare failed:', e)
+      return false
+    }
+  }
+
+  // Option 2: SHA-256 hex or plaintext
   const stored = process.env.ADMIN_PASSWORD
-  if (!stored) return false
+  if (!stored || stored.trim() === '') {
+    console.error('[auth] ADMIN_PASSWORD env var is not set. Admin login is disabled.')
+    return false
+  }
 
   const isHash = stored.length === 64 && /^[0-9a-f]{64}$/.test(stored)
 
   if (!isHash) {
-    // Reject plaintext passwords in production environments
     if (process.env.NODE_ENV === 'production') {
-      console.error(
-        '[auth] ADMIN_PASSWORD must be a 64-char SHA-256 hex hash in production. ' +
-        'Plaintext passwords are not accepted. Generate: echo -n "pw" | sha256sum'
-      )
+      console.error('[auth] ADMIN_PASSWORD must be a 64-char SHA-256 hex hash in production. Generate: echo -n "pw" | sha256sum')
       return false
     }
     // Dev only: constant-time plaintext compare
@@ -167,10 +202,10 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     return diff === 0
   }
 
-  // Production: hash the supplied password and compare
+  // SHA-256 hash compare (edge-safe)
   const enc     = new TextEncoder()
   const hashBuf = await crypto.subtle.digest('SHA-256', enc.encode(password))
-  const hashHex = Buffer.from(hashBuf).toString('hex')
+  const hashHex = bufToHex(hashBuf)
 
   const a = enc.encode(hashHex)
   const b = enc.encode(stored)
