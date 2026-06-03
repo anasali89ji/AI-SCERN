@@ -123,14 +123,18 @@ function Markdown({ content }: { content: string }) {
   let html = ''
   let inCode = false
   let codeLines: string[] = []
+  let inList = false
+
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false } }
 
   for (const line of lines) {
     const codeMatch = line.match(/^```(\w+)?$/)
     if (codeMatch) {
+      closeList()
       if (!inCode) { inCode = true; codeLines = [] }
       else {
         const escaped = codeLines.join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        html += `<pre class="bg-black/50 border border-white/8 rounded-xl p-4 my-3 overflow-x-auto text-xs font-mono text-emerald-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
+        html += `<pre class="bg-black/40 border border-white/[0.07] rounded-xl p-3 my-3 overflow-x-auto text-xs font-mono text-blue-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
         inCode = false; codeLines = []
       }
       continue
@@ -138,25 +142,43 @@ function Markdown({ content }: { content: string }) {
     if (inCode) { codeLines.push(line); continue }
 
     let l = line
+    // inline code
     l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
-      `<code class="px-1.5 py-0.5 rounded bg-primary/20 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
-    if (l.startsWith('### ')) { html += `<h3 class="text-sm font-bold text-white mt-5 mb-1.5">${l.slice(4)}</h3>`; continue }
-    if (l.startsWith('## '))  { html += `<h2 class="text-base font-bold text-white mt-5 mb-2">${l.slice(3)}</h2>`; continue }
-    if (l.startsWith('# '))   { html += `<h1 class="text-lg font-bold text-white mt-5 mb-3">${l.slice(2)}</h1>`; continue }
-    if (l.startsWith('- '))   { html += `<li class="flex gap-2 items-start py-0.5"><span class="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span><span>${l.slice(2)}</span></li>`; continue }
-    if (/^\d+\. /.test(l)) {
-      const m = l.match(/^(\d+)\. (.+)/)
-      if (m) { html += `<li class="flex gap-2 items-start py-0.5"><span class="text-primary text-xs font-mono mt-0.5 w-4 shrink-0">${m[1]}.</span><span>${m[2]}</span></li>`; continue }
-    }
+      `<code class="px-1.5 py-0.5 rounded-md bg-primary/15 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+    // bold / italic
     l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
-    l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-blue-300 underline">$1</a>')
-    if (l === '') { html += '<br/>'; continue }
-    html += `<span>${l}</span><br/>`
+    // links
+    l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2 hover:text-blue-300">$1</a>')
+
+    if (l.startsWith('### ')) { closeList(); html += `<h3 class="text-sm font-bold text-white mt-4 mb-1.5 leading-snug">${l.slice(4)}</h3>`; continue }
+    if (l.startsWith('## '))  { closeList(); html += `<h2 class="text-base font-bold text-white mt-5 mb-2 leading-snug">${l.slice(3)}</h2>`; continue }
+    if (l.startsWith('# '))   { closeList(); html += `<h1 class="text-lg font-bold text-white mt-5 mb-2 leading-snug">${l.slice(2)}</h1>`; continue }
+
+    // bullet: -, *, •
+    const bulletMatch = l.match(/^[\-\*•]\s+(.+)/)
+    if (bulletMatch) {
+      if (!inList) { html += '<ul class="my-1.5 space-y-1">'; inList = true }
+      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
+      continue
+    }
+    // numbered list
+    const numMatch = l.match(/^(\d+)[.):]\s+(.+)/)
+    if (numMatch) {
+      if (!inList) { html += '<ol class="my-1.5 space-y-1 list-none">'; inList = true }
+      html += `<li class="flex gap-2 items-start"><span class="text-primary/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
+      continue
+    }
+
+    closeList()
+    if (l.trim() === '') { html += '<div class="h-2"></div>'; continue }
+    html += `<p class="leading-relaxed">${l}</p>`
   }
+  closeList()
 
   return (
-    <div className="text-sm leading-relaxed text-gray-300"
+    <div className="text-sm leading-relaxed text-gray-300 space-y-0.5"
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
     />
   )
@@ -165,13 +187,40 @@ function Markdown({ content }: { content: string }) {
 // ── Animated typing dots (shown while streaming but no text yet) ────────────
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1 px-4 py-3">
+    <div className="flex items-center gap-1.5 px-4 py-3.5">
       {[0,1,2].map(i => (
-        <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary/70"
-          style={{ animation: `aria-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+        <span key={i}
+          className="w-2 h-2 rounded-full bg-primary/60"
+          style={{ animation: `aria-dot-bounce 1.4s cubic-bezier(0.4,0,0.6,1) ${i * 0.18}s infinite` }} />
       ))}
     </div>
   )
+}
+
+// ── Smooth token-by-token fade-in for streaming text ──────────────────────
+function StreamingMessage({ content }: { content: string }) {
+  const [displayed, setDisplayed] = useState('')
+  const [target, setTarget] = useState(content)
+  const rafRef = useRef<number>(0)
+
+  useEffect(() => { setTarget(content) }, [content])
+
+  useEffect(() => {
+    if (displayed.length >= target.length) return
+    const step = () => {
+      setDisplayed(prev => {
+        if (prev.length >= target.length) return prev
+        // Reveal in small chunks for smooth feel
+        const chunk = Math.min(4, target.length - prev.length)
+        return target.slice(0, prev.length + chunk)
+      })
+      rafRef.current = requestAnimationFrame(step)
+    }
+    rafRef.current = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [target, displayed.length])
+
+  return <Markdown content={displayed} />
 }
 
 // ── Message bubble ─────────────────────────────────────────────────────────
@@ -193,6 +242,7 @@ function MessageBubble({
   return (
     <div
       className={`flex gap-2 sm:gap-3 group aria-msg-in ${isUser ? 'justify-end' : 'justify-start'}`}
+      style={{ animation: 'aria-msg-in 0.22s cubic-bezier(0.25,0.46,0.45,0.94) both' }}
     >
       {/* ARIA avatar — Aiscern logo */}
       {!isUser && (
@@ -201,7 +251,7 @@ function MessageBubble({
         </div>
       )}
 
-      <div className={`flex flex-col gap-1 max-w-[88%] sm:max-w-[82%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[78%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
         {/* Attachments */}
         {msg.attachments?.map((att,i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-white/[0.06] max-w-[240px] sm:max-w-[280px]">
@@ -254,11 +304,13 @@ function MessageBubble({
           }`}>
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
-              : <Markdown content={msg.content} />
+              : msg.isStreaming
+                ? <StreamingMessage content={msg.content} />
+                : <Markdown content={msg.content} />
             }
             {/* Blinking cursor while streaming */}
             {msg.isStreaming && msg.content && (
-              <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-middle rounded-full" />
+              <span className="inline-block w-0.5 h-[14px] bg-primary/80 animate-[blink_1s_ease-in-out_infinite] ml-0.5 align-middle rounded-full" />
             )}
           </div>
         )}
@@ -722,7 +774,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto w-full px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-6">
+            <div className="max-w-3xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
               {activeChat.messages.map(msg=>(
                 <MessageBubble
                   key={msg.id} msg={msg}
@@ -753,7 +805,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-2 px-3 py-2.5 rounded-2xl border border-white/[0.08] bg-[#0d1117] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10 transition-all">
+            <div className="flex items-end gap-2 px-3 py-3 rounded-2xl border border-white/[0.09] bg-[#0d1117] focus-within:border-primary/50 focus-within:shadow-xl focus-within:shadow-primary/8 transition-all duration-200">
               <button onClick={()=>fileRef.current?.click()}
                 className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
                 title="Attach image, audio or video">
