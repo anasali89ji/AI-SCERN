@@ -104,11 +104,14 @@ export async function POST(req: NextRequest) {
           model_used:       result.model_used,
           model_version:    result.model_version,
           status:           'complete',
-          metadata:         { 
-            char_count: sanitized.length, 
-            word_count: sanitized.split(/\s+/).length,
-            rag_applied: ragResult?.rag_applied ?? false,
-            rag_confidence: ragResult?.retrieval_confidence,
+          metadata:         {
+            char_count:       sanitized.length,
+            word_count:       sanitized.split(/\s+/).length,
+            is_long_document: (result as any).isLongDocument ?? false,
+            chunk_count:      (result as any).chunkAnalysis?.chunkScores?.length ?? 1,
+            high_ai_chunks:   (result as any).chunkAnalysis?.highAIChunks ?? 0,
+            rag_applied:      ragResult?.rag_applied ?? false,
+            rag_confidence:   ragResult?.retrieval_confidence,
           },
         }).select('id').single()
         if (insertErr) console.error('[detect/text] scan insert error:', insertErr.message, insertErr.code)

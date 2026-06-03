@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth }                      from '@clerk/nextjs/server'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { indexConfirmedScan }        from '@/lib/rag/detection-rag'
+import { logSignalFeedback }         from '@/lib/inference/self-learning'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest) {
     ground_truth: string
     note?:        string
     content?:     string   // text content to embed for RAG — optional
+    signals?:     Array<{ name: string; score: number }>  // signal scores for self-learning
+    predicted?:   string   // original prediction for self-learning
   }
 
   try {
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { scan_id, ground_truth, note, content } = body
+  const { scan_id, ground_truth, note, content, signals: bodySignals, predicted } = body
 
   if (!scan_id || typeof scan_id !== 'string') {
     return NextResponse.json({ success: false, error: 'scan_id required' }, { status: 400 })
@@ -99,6 +102,23 @@ export async function POST(req: NextRequest) {
   if (upsertErr) {
     console.error('[feedback] upsert error:', upsertErr.message)
     return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+  }
+
+  // ── Self-learning: log per-signal feedback ──────────────────────────────────
+  if (Array.isArray(bodySignals) && bodySignals.length > 0 && scanRow) {
+    const feedbackEntries = bodySignals
+      .filter(s => s.name && typeof s.score === 'number')
+      .map(s => ({
+        scan_id,
+        modality: modality as 'image' | 'text',
+        signal_name:  s.name,
+        signal_score: Math.max(0, Math.min(1, s.score)),
+        ground_truth: ground_truth as 'AI' | 'HUMAN',
+        predicted:   (predicted ?? 'UNCERTAIN') as 'AI' | 'HUMAN' | 'UNCERTAIN',
+        was_correct: ((ground_truth === 'AI' && predicted === 'AI') ||
+                      (ground_truth === 'HUMAN' && predicted === 'HUMAN')),
+      }))
+    void logSignalFeedback(feedbackEntries)
   }
 
   // ── RAG indexing (fire-and-forget) ──────────────────────────────────────────

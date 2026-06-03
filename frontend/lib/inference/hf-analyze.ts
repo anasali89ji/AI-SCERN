@@ -28,7 +28,7 @@ import {
   geminiAnalyzeAudio,
   geminiAvailable,
 } from './gemini-analyzer'
-import { analyzeTextWithBrain }  from '@/lib/inference/text-detection-brain'
+import { analyzeTextWithBrain, analyzeTextWithBrainV2 }  from '@/lib/inference/text-detection-brain'
 import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
 import { analyzeDeepfake }       from '@/lib/inference/deepfake-detector'
 import { loadSignalWeights, applyLearnedWeights } from '@/lib/inference/self-learning'
@@ -220,7 +220,12 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   const truncated        = text.slice(0, MAX_TEXT_CHARS)
 
   // Run brain + HF + linguistic signals in parallel — brain is instant
-  const brainResult  = analyzeTextWithBrain(truncated)
+  // Run brain v2 (long-doc + academic + self-learning) — synchronous, instant
+  const brainResult        = analyzeTextWithBrainV2(truncated)
+  const textLearnedW       = await loadSignalWeights("text").catch(() => null)
+  const adjustedBrainSigs  = applyLearnedWeights(brainResult.signals, textLearnedW)
+  const adjBrainTotalW     = adjustedBrainSigs.reduce((s, sig) => s + sig.weight, 0) || 1
+  const adjustedBrainScore = adjustedBrainSigs.reduce((s, sig) => s + sig.score * sig.weight, 0) / adjBrainTotalW
 
   const hfPromise = Promise.allSettled([
     // Aiscern fine-tuned DeBERTa (PRIMARY — highest weight 0.45)
@@ -272,17 +277,17 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   let engineDesc: string
 
   if (geminiScore !== null && mlScore !== null) {
-    // Full ensemble: Brain(50%) + HF(15%) + Linguistic(20%) + Gemini(15%)
-    aiScore    = brainResult.score * 0.50 + mlScore * 0.15 + lingScore * 0.20 + geminiScore * 0.15
-    engineDesc = `Graph RAG Brain (50%) + Gemini 2.0 Flash (15%) + ${mlScores.length} HF models (15%) + 7 linguistic signals (20%)`
+    // Full ensemble v7: Brain(50%) + HF(15%) + Linguistic(20%) + Gemini(15%)
+    aiScore    = adjustedBrainScore * 0.50 + mlScore * 0.15 + lingScore * 0.20 + geminiScore * 0.15
+    engineDesc = `TextBrainV2+SelfLearn (50%) + Gemini 2.0 Flash (15%) + ${mlScores.length} HF models (15%) + linguistic signals (20%)`
   } else if (mlScore !== null) {
     // Brain(50%) + HF(25%) + Linguistic(25%)
-    aiScore    = brainResult.score * 0.50 + mlScore * 0.25 + lingScore * 0.25
-    engineDesc = `Graph RAG Brain (50%) + ${mlScores.length} HF transformer models (25%) + 7 linguistic signals (25%)`
+    aiScore    = adjustedBrainScore * 0.50 + mlScore * 0.25 + lingScore * 0.25
+    engineDesc = `TextBrainV2+SelfLearn (50%) + ${mlScores.length} HF transformer models (25%) + linguistic signals (25%)`
   } else {
     // Brain(60%) + Linguistic(40%) — HF cold
-    aiScore    = brainResult.score * 0.60 + lingScore * 0.40
-    engineDesc = `Graph RAG Brain (60%) + 7 linguistic signals (40%) — HF models cold-starting`
+    aiScore    = adjustedBrainScore * 0.60 + lingScore * 0.40
+    engineDesc = `TextBrainV2+SelfLearn (60%) + linguistic signals (40%) — HF models cold-starting`
   }
 
   // Homoglyph normalization — detect adversarial Unicode evasion

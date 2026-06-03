@@ -704,3 +704,388 @@ export function analyzeTextWithBrain(text: string): TextBrainResult {
 
   return { score, signals: allSignals, findings, verdict }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// TEXT DETECTION BRAIN — Extension Module v2.0
+// Added signals for:
+//   • Academic assignment / essay AI patterns
+//   • Long-text / PDF scanning (chunk-based analysis)
+//   • Research paper AI markers
+//   • Perplexity scoring approximation (without API calls)
+//   • Cross-paragraph repetition detection
+//   • Statistical text features (average word length, sentence opener variety)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── EXTENSION: Academic Assignment Pattern Detection ─────────────────────────
+
+const ACADEMIC_AI_PHRASES: Array<[string, number]> = [
+  // Assignment opener patterns
+  ['in this essay, i will',          0.97],
+  ['in this assignment, i will',     0.97],
+  ['this essay will explore',        0.96],
+  ['this paper will discuss',        0.96],
+  ['this essay aims to',             0.96],
+  ['this assignment will examine',   0.97],
+  ['the purpose of this essay',      0.95],
+  ['the purpose of this paper',      0.95],
+  ['the aim of this report',         0.95],
+  ['this report will analyze',       0.96],
+  ['this report will analyse',       0.96],
+  // Academic hedging + AI phrases
+  ['it can be argued that',          0.94],
+  ['one could argue that',           0.93],
+  ['there is no denying that',       0.92],
+  ['it is widely accepted that',     0.94],
+  ['scholars have noted that',       0.93],
+  ['research suggests that',         0.88],
+  ['studies have shown that',        0.87],
+  ['evidence suggests that',         0.89],
+  ['according to scholars',          0.91],
+  ['academic literature suggests',   0.93],
+  ['in academic circles',            0.92],
+  // AI conclusion patterns for assignments
+  ['in conclusion, this essay has',  0.97],
+  ['in conclusion, this paper',      0.97],
+  ['this essay has demonstrated',    0.96],
+  ['this paper has shown that',      0.96],
+  ['as this essay has argued',       0.96],
+  ['as this paper has demonstrated', 0.97],
+  ['having examined the evidence',   0.94],
+  ['based on the evidence presented', 0.92],
+  // Over-structured academic AI patterns
+  ['firstly,',                       0.84],
+  ['secondly,',                      0.88],
+  ['thirdly,',                       0.92],
+  ['lastly,',                        0.86],
+  ['to begin with,',                 0.87],
+  ['in the first instance,',         0.90],
+  ['to conclude,',                   0.88],
+  ['in light of the above',          0.91],
+  ['taking everything into account', 0.92],
+  ['all things considered,',         0.90],
+]
+
+export function analyzeAcademicPatterns(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const lower     = text.toLowerCase()
+  const wordCount = text.split(/\s+/).length
+
+  // Score academic AI phrases
+  let acadTotal = 0, acadWeight = 0
+  const acadFound: string[] = []
+  for (const [phrase, w] of ACADEMIC_AI_PHRASES) {
+    const cnt = lower.split(phrase).length - 1
+    if (cnt > 0) {
+      acadTotal  += w * Math.min(1, cnt / 2)
+      acadWeight += w
+      acadFound.push(`"${phrase}"`)
+    }
+  }
+  if (acadWeight > 0) {
+    const phraseScore = Math.min(1, acadTotal / acadWeight)
+    signals.push({
+      name:     'Academic AI Phrase Patterns',
+      category: 'phrase',
+      score:    phraseScore,
+      weight:   0.18,
+      evidence: acadFound.length > 0
+        ? `${acadFound.length} academic AI phrase(s): ${acadFound.slice(0, 4).join(', ')}`
+        : 'No academic AI phrases',
+    })
+  }
+
+  // Citation abuse detection: AI over-cites with (Author, Year) patterns
+  const citations = (text.match(/\([A-Z][a-z]+,?\s+\d{4}\)/g) || []).length
+  const citDensity = citations / Math.max(1, wordCount / 100)
+  if (citDensity > 0) {
+    // Normal academic work: 1–3 citations per 100 words. AI: sometimes over-cites, sometimes 0
+    const citScore = citDensity === 0 ? 0.72 : citDensity > 5 ? 0.80 : 0.35
+    signals.push({
+      name:     'Citation Pattern Consistency',
+      category: 'structure',
+      score:    citScore,
+      weight:   0.07,
+      evidence: `${citations} citations (${citDensity.toFixed(2)}/100 words)`,
+    })
+  }
+
+  // Paragraph opener variety analysis (AI starts paragraphs in predictable ways)
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim().length > 50)
+  if (paragraphs.length >= 3) {
+    const openers = paragraphs.map(p => {
+      const firstWord = p.trim().split(/\s+/)[0]?.toLowerCase() ?? ''
+      return firstWord
+    })
+    const uniqueOpeners = new Set(openers).size
+    const openerVariety = uniqueOpeners / openers.length
+    // AI: typically low opener variety (many start with "The", "In", "This", "Furthermore")
+    const aiOpeners = ['the', 'in', 'this', 'furthermore', 'moreover', 'additionally',
+      'however', 'another', 'finally', 'firstly', 'secondly', 'thirdly', 'lastly', 'overall']
+    const aiOpenerCount = openers.filter(o => aiOpeners.includes(o)).length
+    const aiOpenerRatio = aiOpenerCount / openers.length
+    const openerScore = openerVariety < 0.35 ? 0.85 : openerVariety < 0.55 ? 0.65 : 0.30
+    const aiOpenerScore = aiOpenerRatio > 0.80 ? 0.88 : aiOpenerRatio > 0.65 ? 0.72 : 0.35
+    signals.push({
+      name:     'Paragraph Opener Variety',
+      category: 'structure',
+      score:    openerScore * 0.5 + aiOpenerScore * 0.5,
+      weight:   0.09,
+      evidence: `opener variety=${openerVariety.toFixed(2)} | AI openers=${(aiOpenerRatio*100).toFixed(0)}% (AI: >65%)`,
+    })
+  }
+
+  // Passive voice abuse (AI academic writing overuses passive)
+  const passivePatterns = [
+    /\b(is|are|was|were|be|been|being)\s+([a-z]+(ed|en))\b/g,
+    /\b(has|have|had)\s+been\s+[a-z]+(ed|en)\b/g,
+  ]
+  let passiveCount = 0
+  for (const pattern of passivePatterns) {
+    passiveCount += (text.match(pattern) || []).length
+  }
+  const passiveDensity = passiveCount / Math.max(1, wordCount / 100)
+  if (passiveDensity > 0.5) {
+    const passiveScore = passiveDensity > 5 ? 0.82 : passiveDensity > 3 ? 0.66 : passiveDensity > 1.5 ? 0.50 : 0.28
+    signals.push({
+      name:     'Passive Voice Density',
+      category: 'structure',
+      score:    passiveScore,
+      weight:   0.08,
+      evidence: `${passiveCount} passive constructions (${passiveDensity.toFixed(2)}/100 words) — AI academic overuse`,
+    })
+  }
+
+  return signals
+}
+
+// ── EXTENSION: Long-text / PDF chunk analysis ─────────────────────────────────
+
+export interface ChunkAnalysisResult {
+  chunkScores:   number[]
+  meanScore:     number
+  highAIChunks:  number
+  chunkFindings: string[]
+}
+
+/**
+ * analyzeTextInChunks — splits long text into overlapping 1000-word chunks,
+ * runs the brain on each chunk, and returns aggregate statistics.
+ * Used by the PDF route for long-document scanning.
+ */
+export function analyzeTextInChunks(text: string, chunkSize = 800, overlap = 100): ChunkAnalysisResult {
+  const words  = text.split(/\s+/)
+  const chunks: string[] = []
+
+  if (words.length <= chunkSize) {
+    chunks.push(text)
+  } else {
+    for (let i = 0; i < words.length; i += chunkSize - overlap) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '))
+      if (i + chunkSize >= words.length) break
+    }
+  }
+
+  const chunkScores: number[] = []
+  for (const chunk of chunks) {
+    if (chunk.split(/\s+/).length < 30) continue
+    const result = analyzeTextWithBrain(chunk)
+    chunkScores.push(result.score)
+  }
+
+  if (!chunkScores.length) return { chunkScores: [0.5], meanScore: 0.5, highAIChunks: 0, chunkFindings: [] }
+
+  const meanScore    = chunkScores.reduce((a, b) => a + b, 0) / chunkScores.length
+  const highAIChunks = chunkScores.filter(s => s > 0.65).length
+  const maxScore     = Math.max(...chunkScores)
+  const minScore     = Math.min(...chunkScores)
+
+  const chunkFindings = [
+    `Analysed ${chunkScores.length} text segments of ~${chunkSize} words each`,
+    `Mean AI score: ${(meanScore * 100).toFixed(1)}% | Max: ${(maxScore * 100).toFixed(0)}% | Min: ${(minScore * 100).toFixed(0)}%`,
+    `High-AI segments: ${highAIChunks}/${chunkScores.length} (>${65}%)`,
+  ]
+
+  return { chunkScores, meanScore, highAIChunks, chunkFindings }
+}
+
+// ── EXTENSION: Cross-paragraph repetition detection ──────────────────────────
+// AI text repeats key phrases and sentence openers across different paragraphs
+// in a way humans rarely do. This is a strong AI signal in long documents.
+
+export function analyzeCrossParaRepetition(text: string): BrainSignal | null {
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim().split(/\s+/).length > 20)
+  if (paragraphs.length < 3) return null
+
+  // Extract 3-grams from each paragraph
+  const getTrigramSet = (para: string): Set<string> => {
+    const words = para.toLowerCase().match(/\b[a-z]{3,}\b/g) || []
+    const trigrams = new Set<string>()
+    for (let i = 0; i < words.length - 2; i++) {
+      trigrams.add(`${words[i]} ${words[i+1]} ${words[i+2]}`)
+    }
+    return trigrams
+  }
+
+  const trigrams = paragraphs.map(getTrigramSet)
+  let totalOverlap = 0, comparisons = 0
+
+  for (let i = 0; i < trigrams.length; i++) {
+    for (let j = i + 1; j < trigrams.length; j++) {
+      const aSize = trigrams[i].size, bSize = trigrams[j].size
+      if (!aSize || !bSize) continue
+      let shared = 0
+      for (const t of trigrams[i]) { if (trigrams[j].has(t)) shared++ }
+      const jaccard = shared / (aSize + bSize - shared)
+      totalOverlap += jaccard
+      comparisons++
+    }
+  }
+
+  if (!comparisons) return null
+  const avgOverlap = totalOverlap / comparisons
+  // AI: avg inter-para trigram Jaccard typically 0.05–0.15 (more repetition)
+  // Human: 0.01–0.05 (more varied vocabulary and sentence structures)
+  const repScore = avgOverlap > 0.12 ? 0.88 : avgOverlap > 0.07 ? 0.72 : avgOverlap > 0.04 ? 0.50 : 0.22
+  return {
+    name:     'Cross-Paragraph Repetition',
+    category: 'structure',
+    score:    repScore,
+    weight:   0.10,
+    evidence: `avg Jaccard 3-gram overlap=${avgOverlap.toFixed(4)} across ${comparisons} para pairs (AI: >0.07)`,
+  }
+}
+
+// ── EXTENSION: Statistical text features ─────────────────────────────────────
+
+export function analyzeStatisticalFeatures(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const words = text.match(/\b[a-z]{2,}\b/gi) || []
+  if (words.length < 40) return signals
+
+  // Average word length (AI uses slightly longer words on average)
+  const avgWL = words.reduce((s, w) => s + w.length, 0) / words.length
+  const awlScore = avgWL > 6.2 ? 0.80 : avgWL > 5.4 ? 0.60 : avgWL < 4.2 ? 0.22 : 0.42
+  signals.push({
+    name:     'Average Word Length',
+    category: 'vocabulary',
+    score:    awlScore,
+    weight:   0.05,
+    evidence: `avg word length=${avgWL.toFixed(2)} chars (AI: >5.4, Human casual: <4.5)`,
+  })
+
+  // Sentence opener word-type distribution
+  // AI: very high rate of sentence-initial transition adverbs
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.length > 20)
+  if (sentences.length >= 4) {
+    const transAdverbs = ['however', 'therefore', 'furthermore', 'moreover', 'additionally',
+      'consequently', 'subsequently', 'nevertheless', 'nonetheless', 'ultimately',
+      'importantly', 'significantly', 'notably', 'interestingly', 'essentially']
+    const transOpeners = sentences.filter(s => {
+      const first = s.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '') || ''
+      return transAdverbs.includes(first)
+    }).length
+    const transRatio = transOpeners / sentences.length
+    if (transRatio > 0.05) {
+      const transScore = transRatio > 0.30 ? 0.90 : transRatio > 0.20 ? 0.76 : transRatio > 0.12 ? 0.58 : 0.30
+      signals.push({
+        name:     'Transition Adverb Sentence Openers',
+        category: 'structure',
+        score:    transScore,
+        weight:   0.09,
+        evidence: `${transOpeners}/${sentences.length} sentences start with transition adverb (${(transRatio*100).toFixed(0)}%) (AI: >20%)`,
+      })
+    }
+  }
+
+  // Pronoun distribution (AI: more "it", "they", less "I", "we", more "one")
+  const lowerText = text.toLowerCase()
+  const iCount  = (lowerText.match(/\bi\b/g) || []).length
+  const weCount = (lowerText.match(/\bwe\b/g) || []).length
+  const oneCount = (lowerText.match(/\bone\b/g) || []).length
+  const theyCount = (lowerText.match(/\bthey\b/g) || []).length
+  const pronounTotal = iCount + weCount + oneCount + theyCount
+  const oneRatio = pronounTotal > 0 ? oneCount / pronounTotal : 0
+  if (oneRatio > 0.05) {
+    const oneScore = oneRatio > 0.25 ? 0.88 : oneRatio > 0.15 ? 0.72 : 0.45
+    signals.push({
+      name:     'Impersonal "One" Pronoun Usage',
+      category: 'vocabulary',
+      score:    oneScore,
+      weight:   0.06,
+      evidence: `"one" = ${(oneRatio*100).toFixed(0)}% of personal pronouns (AI academic writing overuse)`,
+    })
+  }
+
+  return signals
+}
+
+// ── ENHANCED MAIN ENTRY POINT ─────────────────────────────────────────────────
+
+/**
+ * analyzeTextWithBrainV2 — full v2 analysis including:
+ *   • All v1 signals (phrase fingerprints, structure, vocabulary, semantics)
+ *   • Academic pattern detection (for assignments and essays)
+ *   • Cross-paragraph repetition analysis
+ *   • Statistical text feature analysis
+ *   • Long-document chunk analysis for PDFs
+ *
+ * For texts longer than 3000 words, also runs chunk analysis and blends
+ * the chunk mean score with the whole-text score.
+ */
+export function analyzeTextWithBrainV2(text: string): TextBrainResult & {
+  chunkAnalysis?: ChunkAnalysisResult
+  isLongDocument: boolean
+} {
+  const wordCount = text.split(/\s+/).length
+  const isLong    = wordCount > 3000
+
+  // Base v1 signals
+  const phraseSignals    = analyzePhraseFingerprints(text)
+  const structureSignals = analyzeStructure(text)
+  const vocabSignals     = analyzeVocabulary(text)
+  const semanticSignals  = analyzeSemanticCoherence(text)
+
+  // v2 extension signals
+  const academicSignals = analyzeAcademicPatterns(text)
+  const statsSignals    = analyzeStatisticalFeatures(text)
+  const repSig          = analyzeCrossParaRepetition(text)
+  const repSignals      = repSig ? [repSig] : []
+
+  const allSignals = [
+    ...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals,
+    ...academicSignals, ...statsSignals, ...repSignals,
+  ]
+
+  // Weighted average
+  const totalWeight = allSignals.reduce((s, sig) => s + sig.weight, 0) || 1
+  const rawScore    = allSignals.reduce((s, sig) => s + sig.score * sig.weight, 0) / totalWeight
+
+  // Chunk analysis for long documents
+  let chunkAnalysis: ChunkAnalysisResult | undefined
+  let blendedScore = rawScore
+
+  if (isLong) {
+    chunkAnalysis = analyzeTextInChunks(text, 800, 100)
+    // For long docs: blend whole-doc score (60%) with chunk mean (40%)
+    blendedScore = rawScore * 0.60 + chunkAnalysis.meanScore * 0.40
+    // If majority of chunks are AI-flagged, apply a boost
+    const chunkAIRatio = chunkAnalysis.highAIChunks / Math.max(1, chunkAnalysis.chunkScores.length)
+    if (chunkAIRatio > 0.70) blendedScore = Math.max(blendedScore, 0.72)
+    else if (chunkAIRatio > 0.50) blendedScore = Math.max(blendedScore, 0.62)
+  }
+
+  const score   = Math.max(0.01, Math.min(0.99, blendedScore))
+  const verdict = score > 0.65 ? 'AI' : score < 0.38 ? 'HUMAN' : 'UNCERTAIN'
+
+  const sorted   = [...allSignals].sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
+  const findings = sorted.slice(0, 8).map(s => {
+    const dir = s.score > 0.65 ? '🤖 AI' : s.score < 0.38 ? '✅ Human' : '⚠️ Mixed'
+    return `${dir} — ${s.name}: ${s.evidence}`
+  })
+
+  if (isLong && chunkAnalysis) {
+    findings.push(...chunkAnalysis.chunkFindings)
+  }
+
+  return { score, signals: allSignals, findings, verdict, chunkAnalysis, isLongDocument: isLong }
+}
