@@ -67,7 +67,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
     )
   }
   return (
-    <div className={`${cls} bg-gradient-to-br from-blue-700 to-secondary flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
+    <div className={`${cls} bg-gradient-to-br from-primary to-cyan flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
       {initials}
     </div>
   )
@@ -229,7 +229,7 @@ function MessageBubble({
 
         {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
         {!isUser && msg.isThinking && !msg.content && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05] text-xs text-gray-500">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
             <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -240,7 +240,7 @@ function MessageBubble({
 
         {/* Typing dots while waiting for first token */}
         {showTypingDots && (
-          <div className="rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05]">
+          <div className="rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05]">
             <TypingDots />
           </div>
         )}
@@ -249,8 +249,8 @@ function MessageBubble({
         {(msg.content || (msg.isStreaming && msg.content)) && (
           <div className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
-              ? 'bg-gradient-to-br from-primary to-secondary text-white rounded-br-sm shadow-lg shadow-primary/15'
-              : 'bg-[#131328] border border-white/[0.05] rounded-bl-sm'
+              ? 'bg-gradient-to-br from-primary to-cyan text-white rounded-br-sm shadow-lg shadow-primary/15'
+              : 'bg-[#0d1117] border border-white/[0.05] rounded-bl-sm'
           }`}>
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
@@ -325,47 +325,10 @@ export default function ChatPage() {
   const [hydrated, setHydrated]         = useState(false)
   const [searchQuery, setSearchQuery]   = useState('')
   const [showSearch, setShowSearch]     = useState(false)
-  // FIX B.8: Voice input state
-  const [isListening, setIsListening]   = useState(false)
-  const recognitionRef = useRef<any>(null)
   const taRef        = useRef<HTMLTextAreaElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const activeChat   = chats.find(c=>c.id===activeChatId)
-
-  // FIX B.8: Start/stop Web Speech API voice recognition
-  const toggleVoice = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) return   // browser doesn't support it — button hidden via feature detect
-
-    if (isListening) {
-      recognitionRef.current?.stop()
-      setIsListening(false)
-      return
-    }
-
-    const rec = new SpeechRecognition()
-    rec.lang          = 'en-US'
-    rec.interimResults = true
-    rec.maxAlternatives = 1
-    recognitionRef.current = rec
-
-    rec.onstart  = () => setIsListening(true)
-    rec.onend    = () => setIsListening(false)
-    rec.onerror  = () => setIsListening(false)
-    rec.onresult = (e: any) => {
-      const transcript = Array.from(e.results as SpeechRecognitionResultList)
-        .map((r: any) => r[0].transcript)
-        .join('')
-      setInput(transcript)
-      // Auto-submit on final result
-      if (e.results[e.results.length - 1].isFinal) {
-        rec.stop()
-        setTimeout(() => send(transcript), 100)
-      }
-    }
-    rec.start()
-  }, [isListening])
 
   const router = useRouter()
 
@@ -595,7 +558,7 @@ export default function ChatPage() {
     : chats
 
   if (!hydrated) return (
-    <div className="flex h-[calc(100dvh-4rem)] items-center justify-center bg-[#09090f]">
+    <div className="flex h-[calc(100dvh-4rem)] items-center justify-center bg-[#080c14]">
       <div className="text-gray-700 text-sm">Loading conversations…</div>
     </div>
   )
@@ -604,7 +567,7 @@ export default function ChatPage() {
   const userName     = user?.fullName || user?.firstName || user?.username
 
   return (
-    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] bg-[#09090f] overflow-hidden">
+    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] bg-[#080c14] overflow-hidden">
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/70 z-20 lg:hidden" onClick={()=>setSidebarOpen(false)} />
@@ -613,11 +576,11 @@ export default function ChatPage() {
       {/* ── Sidebar ── */}
       <aside className={`
         fixed lg:relative z-30 lg:z-auto w-[15.5rem] sm:w-[17rem] h-full flex flex-col
-        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
+        bg-[#0d1117] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
-          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary/20">
+          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary/20">
             <Ico.Plus /><span>New conversation</span>
           </button>
           <button onClick={()=>setShowSearch(s=>!s)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] text-xs transition-all">
@@ -677,7 +640,7 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#09090f]">
+        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#080c14]">
           <button onClick={()=>setSidebarOpen(s=>!s)} className="lg:hidden p-2 rounded-lg hover:bg-white/8 text-gray-500 hover:text-white transition-colors shrink-0">
             <Ico.Menu />
           </button>
@@ -719,7 +682,7 @@ export default function ChatPage() {
                 <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#09090f] flex items-center justify-center">
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#080c14] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse" />
                 </div>
               </div>
@@ -775,7 +738,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f] px-3 sm:px-4 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <div className="shrink-0 border-t border-white/[0.06] bg-[#080c14] px-3 sm:px-4 py-2.5 sm:py-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
           <div className="max-w-3xl mx-auto">
 
             {attachments.length>0 && (
@@ -790,9 +753,9 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-1.5 sm:gap-2 px-2 py-2 rounded-2xl border border-white/[0.07] bg-[#111128] focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/8 transition-all">
+            <div className="flex items-end gap-2 px-3 py-2.5 rounded-2xl border border-white/[0.08] bg-[#0d1117] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10 transition-all">
               <button onClick={()=>fileRef.current?.click()}
-                className="p-2 rounded-xl text-gray-700 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0 mb-0.5"
+                className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
                 title="Attach image, audio or video">
                 <Ico.Clip />
               </button>
@@ -816,26 +779,26 @@ export default function ChatPage() {
                 ref={taRef} value={input}
                 onChange={e=>setInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
-                placeholder={isListening ? 'Listening…' : 'Ask anything, or upload media to analyze…'}
+                placeholder='Ask anything, or upload media to analyze…'
                 rows={1}
                 inputMode="text"
                 enterKeyHint="send"
-                className="flex-1 bg-transparent text-sm text-gray-200 placeholder:text-gray-700 resize-none outline-none leading-relaxed py-2 min-h-[36px] max-h-[160px]"
+                className="flex-1 bg-transparent text-sm text-gray-200 placeholder:text-gray-600 resize-none outline-none leading-relaxed py-2 min-h-[40px] max-h-[120px]"
               />
 
               {loading
-                ? <button onClick={stop} className="p-2 rounded-xl bg-red-500/12 text-red-400 hover:bg-red-500/20 transition-colors shrink-0 mb-0.5 active:scale-95" title="Stop"><Ico.Stop /></button>
+                ? <button onClick={stop} className="p-2.5 rounded-xl bg-red-500/12 text-red-400 hover:bg-red-500/20 transition-colors shrink-0 active:scale-95" title="Stop"><Ico.Stop /></button>
                 : <button
                     onClick={()=>send()}
                     disabled={!input.trim()&&!attachments.length}
-                    className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary text-white disabled:opacity-25 hover:opacity-90 active:scale-95 transition-all shrink-0 mb-0.5 shadow-lg shadow-primary/20"
+                    className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-cyan text-white disabled:opacity-25 hover:opacity-90 active:scale-95 transition-all shrink-0 shadow-lg shadow-primary/20"
                   >
                     <Ico.Send />
                   </button>
               }
             </div>
 
-            <p className="text-center text-[10px] sm:text-xs text-gray-800 mt-2 select-none">
+            <p className="text-center text-[10px] text-gray-800 mt-1.5 select-none hidden sm:block">
               Shift+Enter for new line · Supports image, audio, video up to 20 MB · Conversations auto-saved
             </p>
           </div>

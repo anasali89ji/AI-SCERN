@@ -114,6 +114,7 @@ interface SidebarProps {
 }
 
 function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews, onChatSelect }: SidebarProps) {
+  const [historyOpen, setHistoryOpen] = useState(true)
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -155,23 +156,29 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
           </div>
         ))}
 
-        {/* ARIA Chat History — subsection under Tools */}
+        {/* ARIA Chat History — collapsible subsection */}
         {!collapsed && chatPreviews.length > 0 && pathname.startsWith('/chat') && (
           <div>
-            <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
-              Recent Chats
-            </p>
-            <div className="space-y-0.5">
-              {chatPreviews.map(chat => (
-                <button key={chat.id}
-                  onClick={() => { onChatSelect(chat.id); onNavClick() }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left group"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
-                  <span className="text-xs truncate flex-1">{chat.title}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setHistoryOpen(h => !h)}
+              className="w-full flex items-center justify-between px-3 py-1.5 group"
+            >
+              <span className="text-xs font-semibold text-text-disabled uppercase tracking-widest">Recent Chats</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-text-disabled transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
+            </button>
+            {historyOpen && (
+              <div className="space-y-0.5 mt-0.5">
+                {chatPreviews.map(chat => (
+                  <button key={chat.id}
+                    onClick={() => { onChatSelect(chat.id); onNavClick() }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
+                    <span className="text-xs truncate flex-1">{chat.title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
