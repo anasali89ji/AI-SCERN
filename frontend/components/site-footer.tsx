@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Mail, ArrowRight, ExternalLink, Zap } from 'lucide-react'
+import { Mail, ArrowRight, ExternalLink, Zap, Headphones, Shield } from 'lucide-react'
 
 const PLATFORM_LINKS = [
   { label: 'Text Detector',  href: '/detect/text',  title: 'Free AI Text Detector' },
@@ -105,8 +105,18 @@ export function SiteFooter() {
               </a>
               <a href="mailto:contact@aiscern.com"
                 className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/8 transition-[color,border-color,background-color] duration-200"
-                title="Email Aiscern">
+                title="contact@aiscern.com">
                 <Mail className="w-4 h-4" />
+              </a>
+              <a href="mailto:support@aiscern.com"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-cyan-400 hover:border-cyan-400/30 hover:bg-cyan-400/8 transition-[color,border-color,background-color] duration-200"
+                title="support@aiscern.com">
+                <Headphones className="w-4 h-4" />
+              </a>
+              <a href="mailto:security@aiscern.com"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-emerald-400 hover:border-emerald-400/30 hover:bg-emerald-400/8 transition-[color,border-color,background-color] duration-200"
+                title="security@aiscern.com">
+                <Shield className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -179,6 +189,13 @@ export function SiteFooter() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-text-disabled">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-3 text-xs text-text-disabled">
+              <a href="mailto:contact@aiscern.com" className="hover:text-primary transition-colors">contact@aiscern.com</a>
+              <span className="opacity-30">·</span>
+              <a href="mailto:support@aiscern.com" className="hover:text-cyan-400 transition-colors">support@aiscern.com</a>
+              <span className="opacity-30">·</span>
+              <a href="mailto:security@aiscern.com" className="hover:text-emerald-400 transition-colors">security@aiscern.com</a>
+            </div>
             © {new Date().getFullYear()} Aiscern · Built with precision in Islamabad, Pakistan
           </p>
           <div className="flex items-center gap-3">

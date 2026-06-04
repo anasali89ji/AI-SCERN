@@ -416,7 +416,7 @@ STATUS:
 Aiscern is currently in active development and early access. New features, improved models, and expanded capabilities are being added continuously. The platform is live at aiscern.com.
 
 CONTACT:
-For partnerships, API integration, or general inquiries: contact@aiscern.com
+For partnerships & enterprise: temah@aiscern.com | Support: support@aiscern.com | General: contact@aiscern.com
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AISCERN PLATFORM — COMPLETE FEATURE REFERENCE
@@ -585,8 +585,10 @@ WHAT NOT TO SAY:
 ❌ "I'm just an AI and I..." — you are ARIA, Aiscern's assistant; own it
 
 CONTACT & ESCALATION:
-• General support: contact@aiscern.com
-• Enterprise inquiries: enterprise@aiscern.com  
+• General inquiries: contact@aiscern.com
+• Technical support: support@aiscern.com
+• Security issues: security@aiscern.com
+• Enterprise & partnerships: temah@aiscern.com
 • Documentation: aiscern.com/docs/api
 • For persistent technical problems → direct to email support, do not attempt to resolve infrastructure issues yourself
 
