@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Image from 'next/image'
 import {
   BarChart3, Users, Database, Flag, AlertTriangle, FileText,
   Settings, TrendingUp, DollarSign, Headphones, Key,
@@ -38,39 +37,40 @@ interface Props {
   onLogout: () => void
 }
 
-function Logo({ size = 28 }: { size?: number }) {
+function Logo({ size = 28, collapsed = false }: { size?: number; collapsed?: boolean }) {
   return (
-    <Image
-      src="/logo.png"
-      alt="Aiscern"
-      width={size}
-      height={size}
-      className="rounded-lg flex-shrink-0"
-      priority
-    />
+    <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.png"
+        alt="Aiscern logo"
+        width={size}
+        height={size}
+        style={{ width: size, height: size, borderRadius: 8, flexShrink: 0 }}
+      />
+      {!collapsed && (
+        <div>
+          <div className="text-sm font-black gradient-text-cool">Aiscern</div>
+          <div className="text-[10px] text-text-disabled font-semibold tracking-widest uppercase">Admin</div>
+        </div>
+      )}
+    </div>
   )
 }
 
 export default function Sidebar({ active, onSelect, onLogout }: Props) {
   const [collapsed, setCollapsed]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-
   const groups = ['OVERVIEW', 'OPERATIONS', 'SYSTEM']
 
-  const SidebarContent = () => (
+  const NavContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className={`flex items-center gap-3 px-4 py-5 border-b border-border ${collapsed ? 'justify-center' : ''}`}>
-        <Logo size={28} />
-        {!collapsed && (
-          <div>
-            <div className="text-sm font-black text-text-primary gradient-text-cool">Aiscern</div>
-            <div className="text-[10px] text-text-disabled font-semibold tracking-widest uppercase">Admin</div>
-          </div>
-        )}
+      {/* Logo row */}
+      <div className="px-4 py-5 border-b border-border">
+        <Logo size={28} collapsed={collapsed} />
       </div>
 
-      {/* Nav */}
+      {/* Nav items */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Admin navigation">
         {groups.map(group => {
           const items = NAV.filter(n => n.group === group)
@@ -88,7 +88,7 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => { onSelect(item.id); setMobileOpen(false) }}
+                      onClick={() => { onSelect(item.id); onItemClick?.() }}
                       aria-label={item.label}
                       aria-current={isActive ? 'page' : undefined}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
@@ -112,18 +112,19 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
       {/* Footer */}
       <div className="border-t border-border px-3 py-3 space-y-1">
         {!collapsed && (
-          <div className="px-3 py-2 text-[10px] text-text-disabled">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot flex-shrink-0" />
-              <span>Session active</span>
-            </div>
+          <div className="px-3 py-2 text-[10px] text-text-disabled flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot flex-shrink-0" />
+            <span>Session active</span>
           </div>
         )}
-        <button onClick={onLogout} aria-label="Logout"
+        <button
+          onClick={onLogout}
+          aria-label="Logout"
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
             text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-all
             focus:outline-none focus:ring-2 focus:ring-rose-500/50
-            ${collapsed ? 'justify-center' : ''}`}>
+            ${collapsed ? 'justify-center' : ''}`}
+        >
           <LogOut className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
@@ -134,36 +135,48 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-surface border-r border-border
-        transition-all duration-300 relative ${collapsed ? 'w-[72px]' : 'w-[260px]'}`}>
-        <SidebarContent />
+      <aside
+        className={`hidden lg:flex flex-col flex-shrink-0 bg-surface border-r border-border
+          transition-all duration-300 relative ${collapsed ? 'w-[72px]' : 'w-[260px]'}`}
+      >
+        <NavContent />
         <button
           onClick={() => setCollapsed(c => !c)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border
             flex items-center justify-center text-text-disabled
-            hover:text-text-secondary hover:border-primary/50 transition-all z-10">
+            hover:text-text-secondary hover:border-primary/50 transition-all z-10"
+        >
           {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
         </button>
       </aside>
 
       {/* Mobile hamburger */}
-      <button onClick={() => setMobileOpen(true)} aria-label="Open navigation"
+      <button
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open navigation"
         className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 rounded-xl bg-surface border border-border
-          flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors">
+          flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+      >
         <Menu className="w-4 h-4" />
       </button>
 
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <aside className="relative w-[260px] bg-surface border-r border-border flex flex-col">
-            <button onClick={() => setMobileOpen(false)} aria-label="Close navigation"
-              className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors">
+            <button
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close navigation"
+              className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors"
+            >
               <X className="w-4 h-4" />
             </button>
-            <SidebarContent />
+            <NavContent onItemClick={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
