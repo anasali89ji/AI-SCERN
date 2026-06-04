@@ -199,7 +199,7 @@ export default function MethodologyPage() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
             Try Detection Free →
           </Link>
-          <p className="text-xs text-text-disabled mt-3">No account required. Core features free during early access.</p>
+          <p className="text-xs text-text-disabled mt-3">No account required. Free tier available — no credit card needed.</p>
         </div>
       </main>
 

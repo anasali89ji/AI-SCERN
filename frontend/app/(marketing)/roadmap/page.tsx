@@ -54,7 +54,7 @@ export default function RoadmapPage() {
               What We Are <span className="gradient-text">Building</span>
             </h1>
             <p className="text-text-muted text-base leading-relaxed">
-              Aiscern is an early-access product built by a solo founder. This page is an honest record of what works, what is coming, and where we fall short.
+              Aiscern is built by a solo founder. This page is an honest record of what works, what is coming, and where we fall short.
             </p>
           </div>
 

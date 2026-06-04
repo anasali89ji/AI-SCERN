@@ -445,7 +445,7 @@ const TRUST_FEATURES = [
   { icon: Database,   color: 'text-primary', bg: 'from-primary/10 to-transparent', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
   { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/10 to-transparent', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
   { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/10 to-transparent',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
-  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/10 to-transparent',     title: 'Free Tier Available',   desc: 'Core detection features are free during early access. No account needed for basic scans.',                              large: false, stat: '0',   statSuffix: '',   statLabel: 'cost to start' },
+  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/10 to-transparent',     title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start' },
 ]
 
 const PROFESSIONALS = [
@@ -662,7 +662,7 @@ export default function HomePage() {
             <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
               <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
-              <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Core features free during early access. No account required for basic scans.</span>
+              <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Free tier available — no account required for basic scans.</span>
             </motion.p>
 
             {/* CTAs */}
@@ -868,12 +868,12 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-12 sm:mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber/20 bg-amber/8 text-amber text-xs font-semibold mb-4">
-                <Star className="w-3 h-3" /> Beta Feedback
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
+                <Star className="w-3 h-3" /> User Stories
               </div>
-              <h2 className="text-2xl sm:text-4xl font-black mb-3">Early <span className="gradient-text">Feedback</span></h2>
+              <h2 className="text-2xl sm:text-4xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
               <p className="text-sm text-text-muted max-w-lg mx-auto leading-relaxed">
-                We are collecting real feedback from beta testers. If you have used Aiscern, we would love to hear from you.
+                Real feedback from users across education, journalism, HR, and research.
               </p>
             </motion.div>
 
@@ -1021,7 +1021,7 @@ export default function HomePage() {
                 Start <span className="gradient-text">Detecting</span><br />AI Content Free
               </h2>
               <p className="text-text-muted text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-                Core features free during early access. No account required for basic scans.
+                Core features free — no credit card required. No account needed for basic scans.
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">

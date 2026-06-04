@@ -197,7 +197,7 @@ export default function AboutPage() {
         {/* CTA */}
         <div className="text-center space-y-4">
           <h2 className="text-xl sm:text-2xl font-black">Try it free</h2>
-          <p className="text-text-muted">No account needed. Core features free during early access.</p>
+          <p className="text-text-muted">No account needed. Free tier available — no credit card required.</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/detect/text" className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
               Detect Text →

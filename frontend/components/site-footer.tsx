@@ -15,10 +15,14 @@ const PLATFORM_LINKS = [
 
 const COMPANY_LINKS = [
   { label: 'About',       href: '/about',       title: 'About Aiscern' },
+  { label: 'Solutions',    href: '/solutions',    title: 'Industry Solutions — Aiscern' },
   { label: 'Methodology', href: '/methodology', title: 'Detection Methodology' },
   { label: 'Benchmarks',  href: '/benchmarks',  title: 'Accuracy Benchmarks' },
   { label: 'Research',    href: '/research',    title: 'Research Citations' },
+  { label: 'Transparency',href: '/transparency',title: 'Data Transparency — Aiscern' },
   { label: 'Pricing',     href: '/pricing',     title: 'Pricing — Aiscern' },
+  { label: 'Enterprise',  href: '/enterprise',  title: 'Enterprise — Aiscern' },
+  { label: 'Compare',     href: '/compare',     title: 'AI Detector Comparison' },
   { label: 'Roadmap',     href: '/roadmap',     title: 'Product Roadmap' },
   { label: 'Changelog',   href: '/changelog',   title: 'Release Changelog' },
   { label: 'FAQ',         href: '/faq',         title: 'Frequently Asked Questions' },
@@ -82,10 +86,6 @@ export function SiteFooter() {
             <p className="text-text-muted text-sm leading-relaxed mb-4">
               Multi-modal AI content detection. Ensemble-based analysis across text, image, audio, and video. Free tier available.
             </p>
-
-            <span className="inline-flex items-center gap-1.5 text-xs text-amber/80 bg-amber/8 border border-amber/20 px-2.5 py-1 rounded-full mb-4">
-              🚧 Early Access — Some features are experimental
-            </span>
 
             <p className="text-xs text-text-muted">
               Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
@@ -182,7 +182,7 @@ export function SiteFooter() {
         <div className="border-t border-border/20 pt-6 mb-5">
           <p className="text-xs text-text-disabled text-center leading-relaxed max-w-2xl mx-auto">
             Detection results are probabilistic, not definitive. Use human judgment for high-stakes decisions.
-            Aiscern is an early-access product — accuracy benchmarks reflect current model performance and will improve over time.
+            Accuracy benchmarks reflect current model performance and will improve over time.
           </p>
         </div>
 

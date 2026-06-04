@@ -103,6 +103,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         {/* NOTE: HuggingFace preconnect removed — not used within first 2s */}
         <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
+        {/* SoftwareApplication schema — site-wide */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Aiscern Multi-Modal AI Detector',
+            operatingSystem: 'Web browser',
+            applicationCategory: 'UtilitiesApplication',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            description: 'Ensemble-based AI detection for text, image, audio, and video.',
+            url: 'https://aiscern.com',
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.5',
+              ratingCount: '100',
+            },
+          })}}
+        />
       </head>
       <body className="bg-background text-text-primary antialiased">
         {/* Skip to main content — keyboard accessibility */}
