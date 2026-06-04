@@ -1,34 +1,18 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Lock, Eye, EyeOff, AlertCircle, ArrowRight, Shield } from 'lucide-react'
 
-function AiscernLogo({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="10" fill="url(#lg_login)" />
-      <path d="M20 8L30 28H10L20 8Z" fill="white" fillOpacity="0.92" />
-      <circle cx="20" cy="25" r="3.5" fill="white" fillOpacity="0.6" />
-      <defs>
-        <linearGradient id="lg_login" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#1d4ed8" />
-          <stop offset="1" stopColor="#0369a1" />
-        </linearGradient>
-      </defs>
-    </svg>
-  )
-}
-
 export default function LoginPage() {
-  const [pw, setPw]         = useState('')
-  const [show, setShow]     = useState(false)
-  const [loading, setLoad]  = useState(false)
-  const [error, setError]   = useState('')
-  const [rateLimited, setRL]= useState(false)
-  const cardRef             = useRef<HTMLDivElement>(null)
-  const router              = useRouter()
+  const [pw, setPw]          = useState('')
+  const [show, setShow]      = useState(false)
+  const [loading, setLoad]   = useState(false)
+  const [error, setError]    = useState('')
+  const [rateLimited, setRL] = useState(false)
+  const cardRef              = useRef<HTMLDivElement>(null)
+  const router               = useRouter()
 
-  // Spotlight effect
   useEffect(() => {
     const card = cardRef.current
     if (!card) return
@@ -73,21 +57,39 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-background">
-      {/* Mesh background */}
+      {/* Animated mesh background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full animate-mesh-drift"
-          style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full animate-mesh-drift"
-          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%)', animationDelay: '6s' }} />
-        <div className="absolute inset-0"
-          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div
+          className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full animate-mesh-drift"
+          style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full animate-mesh-drift"
+          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%)', animationDelay: '6s' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)',
+            backgroundSize: '32px 32px',
+          }}
+        />
       </div>
 
       <div className="w-full max-w-[400px] animate-slide-up-fade">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <AiscernLogo size={44} />
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 animate-glow-pulse"
+              style={{ boxShadow: '0 0 24px rgba(37,99,235,0.35)' }}>
+              <Image
+                src="/logo.png"
+                alt="Aiscern"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
             <div className="text-left">
               <div className="text-xl font-black text-text-primary tracking-tight">Aiscern</div>
               <div className="text-xs text-text-disabled font-semibold tracking-widest uppercase">Admin Panel</div>
@@ -97,14 +99,17 @@ export default function LoginPage() {
         </div>
 
         {/* Login card */}
-        <div ref={cardRef}
+        <div
+          ref={cardRef}
           className="spotlight-card rounded-2xl border border-border p-8"
-          style={{ background: '#0f0f17' }}>
-
-          {/* Lock icon */}
+          style={{ background: '#0f0f17' }}
+        >
+          {/* Shield icon */}
           <div className="flex items-center justify-center mb-6">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center animate-glow-pulse"
-              style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.2)' }}>
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.2)' }}
+            >
               <Shield className="w-5 h-5 text-primary" />
             </div>
           </div>
@@ -113,8 +118,10 @@ export default function LoginPage() {
           <p className="text-xs text-text-muted text-center mb-6">Enter your admin password to continue</p>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-xl p-3 mb-5 text-xs text-rose-300"
-              style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
+            <div
+              className="flex items-center gap-2 rounded-xl p-3 mb-5 text-xs text-rose-300"
+              style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -135,38 +142,46 @@ export default function LoginPage() {
                   placeholder="Enter password"
                   disabled={loading || rateLimited}
                   aria-label="Admin password"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl text-sm text-text-primary placeholder-text-disabled
-                    outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-50"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl text-sm text-text-primary
+                    placeholder-text-disabled outline-none focus:ring-2 focus:ring-primary/50
+                    transition-all disabled:opacity-50"
                   style={{ background: '#141420', border: '1px solid #1c1c2e' }}
                 />
-                <button type="button" onClick={() => setShow(s => !s)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-disabled hover:text-text-secondary transition-colors"
-                  aria-label={show ? 'Hide password' : 'Show password'}>
+                <button
+                  type="button"
+                  onClick={() => setShow(s => !s)}
+                  aria-label={show ? 'Hide password' : 'Show password'}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-disabled
+                    hover:text-text-secondary transition-colors"
+                >
                   {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <button type="submit" disabled={!pw || loading || rateLimited}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
-                text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed
+            <button
+              type="submit"
+              disabled={!pw || loading || rateLimited}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm
+                font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed
                 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
+              style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}
+            >
               {loading ? (
                 <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white spinner" />
               ) : (
-                <>Sign in <ArrowRight className="w-4 h-4" /></>
+                <> Sign in <ArrowRight className="w-4 h-4" /> </>
               )}
             </button>
           </form>
 
           <p className="text-center text-xs text-text-disabled mt-6">
-            Session expires after 2 hours of inactivity
+            Session expires after 2 hours
           </p>
         </div>
 
         <p className="text-center text-xs text-text-disabled mt-6 opacity-50">
-          Aiscern Admin • Restricted Access
+          Aiscern Admin · Restricted Access
         </p>
       </div>
     </div>

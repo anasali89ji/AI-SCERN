@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import {
   BarChart3, Users, Database, Flag, AlertTriangle, FileText,
   Settings, TrendingUp, DollarSign, Headphones, Key,
@@ -15,20 +16,20 @@ export type TabId =
 interface NavItem { id: TabId; label: string; icon: React.ElementType; group: string }
 
 const NAV: NavItem[] = [
-  { id: 'overview',      label: 'Overview',        icon: BarChart3,      group: 'OVERVIEW' },
-  { id: 'analytics',     label: 'Analytics',       icon: TrendingUp,     group: 'OVERVIEW' },
-  { id: 'marketing',     label: 'Marketing',       icon: Radio,          group: 'OVERVIEW' },
-  { id: 'revenue',       label: 'Revenue',         icon: DollarSign,     group: 'OVERVIEW' },
-  { id: 'users',         label: 'Users',           icon: Users,          group: 'OPERATIONS' },
-  { id: 'support',       label: 'Support Tickets', icon: Headphones,     group: 'OPERATIONS' },
-  { id: 'apikeys',       label: 'API Keys',        icon: Key,            group: 'OPERATIONS' },
-  { id: 'pipeline',      label: 'Pipeline',        icon: Database,       group: 'OPERATIONS' },
-  { id: 'flags',         label: 'Feature Flags',   icon: Flag,           group: 'SYSTEM' },
-  { id: 'announcements', label: 'Announcements',   icon: Megaphone,      group: 'SYSTEM' },
-  { id: 'health',        label: 'Health Monitor',  icon: Activity,       group: 'SYSTEM' },
-  { id: 'errors',        label: 'Error Logs',      icon: AlertTriangle,  group: 'SYSTEM' },
-  { id: 'audit',         label: 'Audit Log',       icon: FileText,       group: 'SYSTEM' },
-  { id: 'settings',      label: 'Settings',        icon: Settings,       group: 'SYSTEM' },
+  { id: 'overview',      label: 'Overview',        icon: BarChart3,     group: 'OVERVIEW' },
+  { id: 'analytics',     label: 'Analytics',       icon: TrendingUp,    group: 'OVERVIEW' },
+  { id: 'marketing',     label: 'Marketing',       icon: Radio,         group: 'OVERVIEW' },
+  { id: 'revenue',       label: 'Revenue',         icon: DollarSign,    group: 'OVERVIEW' },
+  { id: 'users',         label: 'Users',           icon: Users,         group: 'OPERATIONS' },
+  { id: 'support',       label: 'Support Tickets', icon: Headphones,    group: 'OPERATIONS' },
+  { id: 'apikeys',       label: 'API Keys',        icon: Key,           group: 'OPERATIONS' },
+  { id: 'pipeline',      label: 'Pipeline',        icon: Database,      group: 'OPERATIONS' },
+  { id: 'flags',         label: 'Feature Flags',   icon: Flag,          group: 'SYSTEM' },
+  { id: 'announcements', label: 'Announcements',   icon: Megaphone,     group: 'SYSTEM' },
+  { id: 'health',        label: 'Health Monitor',  icon: Activity,      group: 'SYSTEM' },
+  { id: 'errors',        label: 'Error Logs',      icon: AlertTriangle, group: 'SYSTEM' },
+  { id: 'audit',         label: 'Audit Log',       icon: FileText,      group: 'SYSTEM' },
+  { id: 'settings',      label: 'Settings',        icon: Settings,      group: 'SYSTEM' },
 ]
 
 interface Props {
@@ -37,8 +38,21 @@ interface Props {
   onLogout: () => void
 }
 
+function Logo({ size = 28 }: { size?: number }) {
+  return (
+    <Image
+      src="/logo.png"
+      alt="Aiscern"
+      width={size}
+      height={size}
+      className="rounded-lg flex-shrink-0"
+      priority
+    />
+  )
+}
+
 export default function Sidebar({ active, onSelect, onLogout }: Props) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const groups = ['OVERVIEW', 'OPERATIONS', 'SYSTEM']
@@ -47,16 +61,7 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 py-5 border-b border-border ${collapsed ? 'justify-center' : ''}`}>
-        <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
-          <rect width="40" height="40" rx="9" fill="url(#sb_lg)" />
-          <path d="M20 8L30 28H10L20 8Z" fill="white" fillOpacity="0.92" />
-          <circle cx="20" cy="25" r="3.5" fill="white" fillOpacity="0.6" />
-          <defs>
-            <linearGradient id="sb_lg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#1d4ed8" /><stop offset="1" stopColor="#0369a1" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <Logo size={28} />
         {!collapsed && (
           <div>
             <div className="text-sm font-black text-text-primary gradient-text-cool">Aiscern</div>
@@ -72,7 +77,9 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
           return (
             <div key={group}>
               {!collapsed && (
-                <p className="text-[10px] font-bold text-text-disabled tracking-widest uppercase px-3 mb-2">{group}</p>
+                <p className="text-[10px] font-bold text-text-disabled tracking-widest uppercase px-3 mb-2">
+                  {group}
+                </p>
               )}
               <div className="space-y-0.5">
                 {items.map(item => {
@@ -89,8 +96,7 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
                         ${collapsed ? 'justify-center' : ''}
                         ${isActive
                           ? 'nav-active text-primary'
-                          : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'
-                        }`}
+                          : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {!collapsed && <span>{item.label}</span>}
@@ -107,8 +113,8 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
       <div className="border-t border-border px-3 py-3 space-y-1">
         {!collapsed && (
           <div className="px-3 py-2 text-[10px] text-text-disabled">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot flex-shrink-0" />
               <span>Session active</span>
             </div>
           </div>
@@ -128,15 +134,15 @@ export default function Sidebar({ active, onSelect, onLogout }: Props) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-surface border-r border-border transition-all duration-300 relative
-        ${collapsed ? 'w-[72px]' : 'w-[260px]'}`}>
+      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-surface border-r border-border
+        transition-all duration-300 relative ${collapsed ? 'w-[72px]' : 'w-[260px]'}`}>
         <SidebarContent />
-        {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(c => !c)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border
-            flex items-center justify-center text-text-disabled hover:text-text-secondary hover:border-primary/50 transition-all z-10">
+            flex items-center justify-center text-text-disabled
+            hover:text-text-secondary hover:border-primary/50 transition-all z-10">
           {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
         </button>
       </aside>
