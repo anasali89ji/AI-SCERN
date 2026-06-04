@@ -9,7 +9,8 @@ import { api } from '@/lib/api-client'
 
 interface User {
   id: string; email: string; plan?: string; status?: string
-  scans_used: number; created_at: string; banned_at?: string
+  scans_used: number; credits_balance?: number; created_at: string
+  is_banned?: boolean; banned_at?: string
 }
 interface UsersResponse { users: User[]; total: number; pages: number }
 
@@ -93,7 +94,7 @@ export default function UsersTab() {
             className="p-1.5 rounded-lg text-text-muted hover:text-amber-400 hover:bg-amber-400/10 transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
-          {u.banned_at ? (
+          {u.is_banned ? (
             <button onClick={() => setModal({ type: 'unban', user: u })} title="Unban"
               aria-label={`Unban ${u.email}`}
               className="p-1.5 rounded-lg text-text-muted hover:text-emerald-400 hover:bg-emerald-400/10 transition-colors">
