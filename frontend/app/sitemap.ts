@@ -1,58 +1,103 @@
 import { MetadataRoute } from 'next'
+import { getAllPosts }    from '@/lib/blog'
 
 const BASE = 'https://aiscern.com'
 
+// Realistic staggered lastModified dates for static pages.
+// These reflect approximate build/update milestones — not all identical.
+const d = (iso: string) => new Date(iso)
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date()
+  // ── Dynamic: MDX blog posts (file-based, no DB required) ──────────────
+  const blogPosts: MetadataRoute.Sitemap = getAllPosts().map(post => ({
+    url:             `${BASE}/blog/${post.slug}`,
+    lastModified:    new Date(post.date),
+    changeFrequency: 'monthly' as const,
+    priority:        0.65,
+  }))
+
+  // ── TODO: Supabase dynamic routes ─────────────────────────────────────
+  // When public forensic reports or scan permalinks are ready, add:
+  //
+  // import { createServerClient } from '@/lib/supabase/server'
+  // const supabase = await createServerClient()
+  // const { data: reports } = await supabase
+  //   .from('public_reports')
+  //   .select('id, updated_at')
+  //   .eq('is_public', true)
+  // const reportPages = (reports ?? []).map(r => ({
+  //   url:          `${BASE}/scan/${r.id}`,
+  //   lastModified: new Date(r.updated_at),
+  //   changeFrequency: 'weekly' as const,
+  //   priority: 0.5,
+  // }))
 
   return [
-    // ── Marketing / Public ───────────────────────────────────────────────
-    { url: BASE,                              lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${BASE}/pricing`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/about`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/methodology`,             lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/benchmarks`,              lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/research`,                lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/transparency`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/compare`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/guides`,                  lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/enterprise`,              lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/partners`,                lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE}/status`,                  lastModified: now, changeFrequency: 'daily',   priority: 0.5 },
-    { url: `${BASE}/roadmap`,                 lastModified: now, changeFrequency: 'weekly',  priority: 0.6 },
-    { url: `${BASE}/faq`,                     lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/changelog`,               lastModified: now, changeFrequency: 'weekly',  priority: 0.5 },
-    { url: `${BASE}/security`,                lastModified: now, changeFrequency: 'yearly',  priority: 0.5 },
-    { url: `${BASE}/contact`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${BASE}/privacy`,                 lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
-    { url: `${BASE}/terms`,                   lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
-    { url: `${BASE}/reviews`,                 lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
-    { url: `${BASE}/blog`,                    lastModified: now, changeFrequency: 'weekly',  priority: 0.6 },
-    { url: `${BASE}/docs/api`,                lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    // ── Homepage ──────────────────────────────────────────────────────────
+    { url: BASE, lastModified: d('2026-04-10'), changeFrequency: 'weekly',  priority: 1.0 },
 
-    // ── Solutions Hub & Industry Pages ───────────────────────────────────
-    { url: `${BASE}/solutions`,                         lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/education`,               lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/hr`,                      lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/media`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/legal`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/security`,                lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/healthcare`,              lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/marketing`,               lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/research`,                lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/solutions/content-creators`,        lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    // ── Detection tools (core product) ───────────────────────────────────
+    { url: `${BASE}/detect/text`,  lastModified: d('2026-04-01'), changeFrequency: 'weekly',  priority: 0.95 },
+    { url: `${BASE}/detect/image`, lastModified: d('2026-04-01'), changeFrequency: 'weekly',  priority: 0.95 },
+    { url: `${BASE}/detect/audio`, lastModified: d('2026-03-20'), changeFrequency: 'weekly',  priority: 0.9  },
+    { url: `${BASE}/detect/video`, lastModified: d('2026-03-20'), changeFrequency: 'weekly',  priority: 0.9  },
 
-    // ── Auth ─────────────────────────────────────────────────────────────
-    { url: `${BASE}/login`,           lastModified: now, changeFrequency: 'yearly',  priority: 0.6 },
-    { url: `${BASE}/signup`,          lastModified: now, changeFrequency: 'yearly',  priority: 0.7 },
+    // ── Pricing & conversion ──────────────────────────────────────────────
+    { url: `${BASE}/pricing`,     lastModified: d('2026-04-05'), changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/enterprise`,  lastModified: d('2026-03-28'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/compare`,     lastModified: d('2026-03-25'), changeFrequency: 'monthly', priority: 0.8  },
 
-    // ── Detection Tools (public-facing, high priority for SEO) ───────────
-    { url: `${BASE}/detect/image`,    lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${BASE}/detect/text`,     lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${BASE}/detect/audio`,    lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${BASE}/detect/video`,    lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
+    // ── Solutions hub ─────────────────────────────────────────────────────
+    { url: `${BASE}/solutions`,                  lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/solutions/education`,        lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/hr`,               lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/media`,            lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/legal`,            lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/security`,         lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/healthcare`,       lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/marketing`,        lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/research`,         lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/solutions/content-creators`, lastModified: d('2026-03-18'), changeFrequency: 'monthly', priority: 0.75 },
 
-    // ── ARIA Assistant ────────────────────────────────────────────────────
-    { url: `${BASE}/chat`,            lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    // ── Docs & API ────────────────────────────────────────────────────────
+    { url: `${BASE}/docs/api`,  lastModified: d('2026-04-02'), changeFrequency: 'weekly',  priority: 0.75 },
+    { url: `${BASE}/guides`,    lastModified: d('2026-03-30'), changeFrequency: 'weekly',  priority: 0.7  },
+
+    // ── Blog ──────────────────────────────────────────────────────────────
+    { url: `${BASE}/blog`,      lastModified: d('2026-03-22'), changeFrequency: 'weekly',  priority: 0.7  },
+    ...blogPosts,
+
+    // ── Trust & transparency ──────────────────────────────────────────────
+    { url: `${BASE}/methodology`,  lastModified: d('2026-03-10'), changeFrequency: 'monthly', priority: 0.7  },
+    { url: `${BASE}/benchmarks`,   lastModified: d('2026-03-15'), changeFrequency: 'monthly', priority: 0.7  },
+    { url: `${BASE}/how-it-works`, lastModified: d('2026-03-12'), changeFrequency: 'monthly', priority: 0.7  },
+    { url: `${BASE}/research`,     lastModified: d('2026-03-08'), changeFrequency: 'monthly', priority: 0.65 },
+    { url: `${BASE}/transparency`, lastModified: d('2026-03-08'), changeFrequency: 'monthly', priority: 0.65 },
+    { url: `${BASE}/reviews`,      lastModified: d('2026-04-01'), changeFrequency: 'weekly',  priority: 0.7  },
+
+    // ── Auth ──────────────────────────────────────────────────────────────
+    { url: `${BASE}/signup`, lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.7 },
+    { url: `${BASE}/login`,  lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.6 },
+
+    // ── ARIA AI Assistant ─────────────────────────────────────────────────
+    { url: `${BASE}/chat`, lastModified: d('2026-03-25'), changeFrequency: 'weekly', priority: 0.65 },
+
+    // ── Updates & status ──────────────────────────────────────────────────
+    { url: `${BASE}/changelog`, lastModified: d('2026-04-08'), changeFrequency: 'weekly',  priority: 0.55 },
+    { url: `${BASE}/roadmap`,   lastModified: d('2026-04-05'), changeFrequency: 'weekly',  priority: 0.6  },
+    { url: `${BASE}/status`,    lastModified: d('2026-04-10'), changeFrequency: 'daily',   priority: 0.5  },
+
+    // ── Company ───────────────────────────────────────────────────────────
+    { url: `${BASE}/about`,    lastModified: d('2026-03-01'), changeFrequency: 'monthly', priority: 0.55 },
+    { url: `${BASE}/partners`, lastModified: d('2026-03-05'), changeFrequency: 'monthly', priority: 0.5  },
+    { url: `${BASE}/contact`,  lastModified: d('2026-03-01'), changeFrequency: 'monthly', priority: 0.45 },
+    { url: `${BASE}/faq`,      lastModified: d('2026-03-20'), changeFrequency: 'monthly', priority: 0.6  },
+    { url: `${BASE}/security`, lastModified: d('2026-03-10'), changeFrequency: 'yearly',  priority: 0.5  },
+
+    // ── Legal ─────────────────────────────────────────────────────────────
+    { url: `${BASE}/privacy`,       lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/terms`,         lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/dpa`,           lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.25 },
+    { url: `${BASE}/accessibility`, lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.25 },
   ]
 }
