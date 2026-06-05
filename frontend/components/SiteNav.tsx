@@ -69,7 +69,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl isolate">
-      <div className="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
+      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="font-black text-lg gradient-text">Aiscern</span>

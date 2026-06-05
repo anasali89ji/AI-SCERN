@@ -79,7 +79,7 @@ export default function CreditsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white px-4 py-16">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
 
         {/* Header */}
         <div className="text-center mb-12">

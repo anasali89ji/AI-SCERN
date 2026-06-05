@@ -728,7 +728,7 @@ export default function ChatPage() {
         {/* Messages area */}
         <div ref={messagesAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
           {!activeChat || activeChat.messages.length===0 ? (
-            <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl mx-auto w-full">
+            <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl 2xl:max-w-3xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
                 <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
@@ -774,7 +774,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
+            <div className="max-w-3xl 2xl:max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
               {activeChat.messages.map(msg=>(
                 <MessageBubble
                   key={msg.id} msg={msg}
@@ -791,7 +791,7 @@ export default function ChatPage() {
 
         {/* Input bar */}
         <div className="shrink-0 border-t border-white/[0.06] bg-[#080c14] px-3 sm:px-4 py-2.5 sm:py-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
 
             {attachments.length>0 && (
               <div className="flex flex-wrap gap-2 mb-2.5">

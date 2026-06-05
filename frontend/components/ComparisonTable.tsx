@@ -36,8 +36,8 @@ const COLS = [
 
 export default function ComparisonTable() {
   return (
-    <section className="py-20 px-4">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <section className="py-20 px-4 sm:px-6 2xl:px-10">
+      <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto space-y-8">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="text-center space-y-3">
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest">

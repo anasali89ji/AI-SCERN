@@ -60,7 +60,7 @@ export default function ResearchPage() {
   return (
     <>
       <SiteNav />
-      <main className="mx-auto max-w-4xl px-4 py-16 sm:py-24">
+      <main className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 2xl:px-8 py-16 sm:py-24 2xl:py-32">
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="h-7 w-7 text-primary" />

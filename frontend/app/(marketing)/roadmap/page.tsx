@@ -42,8 +42,8 @@ export default function RoadmapPage() {
     <div className="min-h-screen bg-background">
       <SiteNav />
 
-      <main className="pt-28 pb-24 px-4">
-        <div className="max-w-3xl mx-auto">
+      <main className="pt-28 pb-24 px-4 sm:px-6 2xl:px-8">
+        <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
 
           {/* Header */}
           <div className="mb-14">

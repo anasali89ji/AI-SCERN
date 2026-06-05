@@ -38,7 +38,7 @@ export default function EnterprisePage() {
         {/* Hero */}
         <section className="py-20 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)] pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
               <Building2 className="w-3.5 h-3.5" />
               Enterprise
@@ -60,7 +60,7 @@ export default function EnterprisePage() {
 
         {/* Features */}
         <section className="py-16 border-t border-border/20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary text-center mb-10">What Enterprise Includes</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {FEATURES.map((f, i) => {
@@ -107,7 +107,7 @@ export default function EnterprisePage() {
 
         {/* Contact Form */}
         <section className="py-16 md:py-20">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="card border border-border/60 rounded-2xl p-8">
               <h2 className="text-xl font-black text-text-primary mb-2">Talk to Sales</h2>
               <p className="text-sm text-text-muted mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>

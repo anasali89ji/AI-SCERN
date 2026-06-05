@@ -187,7 +187,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
   return (
     <>
-    <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
@@ -537,7 +537,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       </div>
     </div>
-    <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pb-6">
+    <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
       {graphContext && (
         <motion.div

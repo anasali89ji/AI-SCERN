@@ -139,7 +139,7 @@ export default function DashboardPage() {
   const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto space-y-4 sm:space-y-6 2xl:space-y-8 overflow-x-hidden">
 
       {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
       {isPulling && (

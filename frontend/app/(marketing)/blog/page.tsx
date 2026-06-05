@@ -80,7 +80,7 @@ export default function BlogPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-24 pb-20 max-w-5xl mx-auto px-4">
+      <main className="pt-24 pb-20 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
             <Tag className="w-3 h-3" /> Insights & Guides

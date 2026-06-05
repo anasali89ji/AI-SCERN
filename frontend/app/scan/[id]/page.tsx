@@ -103,7 +103,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
     <div className="min-h-screen bg-background text-text-primary">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl">
-        <div className="max-w-2xl mx-auto h-full px-4 flex items-center justify-between">
+        <div className="max-w-2xl 2xl:max-w-3xl mx-auto h-full px-4 sm:px-6 2xl:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
             <span className="font-black text-lg gradient-text">Aiscern</span>
@@ -112,7 +112,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         </div>
       </nav>
 
-      <main className="pt-24 pb-20 max-w-2xl mx-auto px-4">
+      <main className="pt-24 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
         {/* Header card */}
         <div className={`rounded-2xl border p-8 text-center mb-6 ${verdictColor(scan.verdict)}`}>
           <div className="flex justify-center mb-4">

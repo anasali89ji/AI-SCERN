@@ -43,7 +43,7 @@ export default function PartnersPage() {
         {/* Hero */}
         <section className="py-20 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan/10 border border-cyan/20 text-xs font-semibold text-cyan mb-6">
               <Handshake className="w-3.5 h-3.5" />
               Partner Program
@@ -62,7 +62,7 @@ export default function PartnersPage() {
 
         {/* Partner Types */}
         <section className="py-16 border-t border-border/20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary text-center mb-10">Partnership Types</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {PARTNER_TYPES.map((pt, i) => {
@@ -134,7 +134,7 @@ X-API-Key: your-key
 
         {/* CTA */}
         <section className="py-16 md:py-20">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl font-black text-text-primary mb-4">Ready to partner with Aiscern?</h2>
             <p className="text-text-secondary mb-6 text-sm">Tell us about your platform, use case, and expected volume. We&apos;ll respond within 2 business days.</p>
             <a href="mailto:partners@aiscern.com?subject=Partnership Inquiry" className="btn-primary inline-flex items-center gap-2">

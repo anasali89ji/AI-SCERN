@@ -121,7 +121,7 @@ export default function SolutionsHub() {
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)]" />
           </div>
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
               <Zap className="w-3.5 h-3.5" />
               Industry Solutions
@@ -147,7 +147,7 @@ export default function SolutionsHub() {
 
         {/* Solutions Grid */}
         <section className="py-12 md:py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {SOLUTIONS.map((sol) => {
                 const c = colorMap[sol.color]
@@ -175,7 +175,7 @@ export default function SolutionsHub() {
 
         {/* Bottom CTA */}
         <section className="py-16 md:py-20">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-4">
               Don&apos;t see your industry?
             </h2>

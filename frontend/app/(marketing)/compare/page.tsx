@@ -58,7 +58,7 @@ export default function ComparePage() {
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
               <Zap className="w-3.5 h-3.5" />
               Comparison
@@ -74,7 +74,7 @@ export default function ComparePage() {
 
         {/* Comparison Table */}
         <section className="pb-16">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="overflow-x-auto rounded-2xl border border-border/60">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>

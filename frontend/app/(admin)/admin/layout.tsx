@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-background text-text-primary flex">
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col border-r border-border bg-surface/60 transition-all shrink-0 ${collapsed ? 'w-16' : 'w-56'}`}>
+      <aside className={`hidden lg:flex flex-col border-r border-border bg-surface/60 transition-all shrink-0 ${collapsed ? 'w-16' : 'w-56 2xl:w-64 3xl:w-72'}`}>
         <SidebarContent />
         <button onClick={() => setCollapsed(c => !c)}
           className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full border border-border bg-surface flex items-center justify-center z-10 hover:bg-surface-active transition-colors">
@@ -123,7 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 2xl:p-8 3xl:p-10">
           {children}
         </main>
       </div>

@@ -126,7 +126,7 @@ export default function PricingPage() {
   return (
     <>
       <SiteNav />
-      <main className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
+      <main className="mx-auto max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
 
         {/* Header */}
         <div className="text-center mb-12">

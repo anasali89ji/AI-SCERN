@@ -363,7 +363,7 @@ function CrossValidationMap({ verdict }: { verdict: FinalVerdict }) {
 
 function ProcessingView({ scanId }: { scanId: string }) {
   return (
-    <div className="max-w-2xl mx-auto py-20 text-center">
+    <div className="max-w-2xl 2xl:max-w-3xl mx-auto py-20 text-center">
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
         <RefreshCw size={28} className="text-blue-400 animate-spin" />
       </div>
@@ -456,7 +456,7 @@ export default function ForensicScanPage() {
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Header */}
       <div className="border-b border-white/5 bg-white/[0.02]">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 2xl:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Shield className="text-blue-400" size={20} />
             <span className="font-semibold text-white/80">Forensic Analysis</span>
@@ -489,7 +489,7 @@ export default function ForensicScanPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 2xl:px-8 py-8 2xl:py-10">
         {isProcessing ? (
           <ProcessingView scanId={scanId} />
         ) : (

@@ -310,7 +310,7 @@ export default function ProfilePage() {
     : '—'
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto space-y-6">
 
       {/* ── Profile Card ──────────────────────────────────────── */}
       <div className="bg-surface border border-border/55 rounded-3xl overflow-hidden">

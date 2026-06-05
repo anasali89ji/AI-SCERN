@@ -149,7 +149,7 @@ export default function FAQPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-28 pb-20 max-w-2xl mx-auto px-4">
+      <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
 
         <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-semibold mb-5">

@@ -119,7 +119,7 @@ export default function ScraperPage() {
 
   return (
     <div className="min-h-screen bg-[#08080d] pb-24 lg:pb-8">
-      <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
+      <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
 
         {/* Header */}
         <div className="mb-6">

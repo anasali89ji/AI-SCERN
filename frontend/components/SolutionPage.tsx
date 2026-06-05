@@ -144,7 +144,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px]"
               style={{ background: c.glow }} />
           </div>
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative">
             <div className="flex flex-col lg:flex-row items-center gap-12">
               <div className="flex-1 text-center lg:text-left">
                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 ${c.badge}`}>
@@ -183,7 +183,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* The Problem */}
         <section className="py-16 md:py-20 border-t border-border/20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-12">
               <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
               <p className="text-text-secondary max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
@@ -201,7 +201,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* How Aiscern Solves It */}
         <section className="py-16 md:py-20 bg-surface/30">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-12">
               <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">How Aiscern Solves It</h2>
               <p className="text-text-secondary max-w-xl mx-auto">
@@ -234,7 +234,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* Use Cases */}
         <section className="py-16 md:py-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">Real-World Use Cases</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {useCases.map((uc, i) => (
@@ -251,7 +251,7 @@ export function SolutionPage(props: SolutionPageProps) {
         {/* Testimonial */}
         {testimonialQuote && (
           <section className="py-12 bg-surface/30">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
               <blockquote className="text-lg text-text-secondary italic leading-relaxed mb-4">
                 &ldquo;{testimonialQuote}&rdquo;
               </blockquote>
@@ -272,7 +272,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* FAQ */}
         <section className="py-16 md:py-20">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-8 text-center">
               Frequently Asked Questions
             </h2>
@@ -284,7 +284,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* CTA */}
         <section className="py-16 md:py-20 border-t border-border/20">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-4">
               Ready to detect AI content in {industry.toLowerCase()}?
             </h2>

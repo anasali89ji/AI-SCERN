@@ -182,7 +182,7 @@ export default function UsersAdmin() {
 
   return (
     <RoleGuard required="SUPPORT">
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 2xl:p-8 max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1900px] mx-auto">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

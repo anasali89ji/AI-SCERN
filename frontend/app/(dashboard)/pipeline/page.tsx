@@ -77,7 +77,7 @@ export default function PipelinePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 2xl:p-8 space-y-6 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>

@@ -236,7 +236,7 @@ export default function HistoryPage() {
     <>
       {selectedScan && <ScanDetailModal scan={selectedScan} onClose={() => setSelectedScan(null)} />}
 
-      <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
+      <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
           <div>

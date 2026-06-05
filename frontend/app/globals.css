@@ -1353,3 +1353,62 @@ section > .max-w-7xl > .border-t {
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LARGE-SCREEN SAFETY NET
+   These rules ensure NO page breaks or gets clipped on
+   big desktops regardless of what inline Tailwind classes do.
+   Applied globally — safe for all screen sizes.
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Every direct page wrapper stays bounded */
+@media (min-width: 1440px) {
+  /* Tables inside cards should scroll, never overflow their card */
+  .card table,
+  .card .overflow-x-auto { max-width: 100%; }
+
+  /* Grid layouts on dashboard — give cells room to breathe */
+  .grid.grid-cols-2 { gap: clamp(0.5rem, 1vw, 1.25rem); }
+  .grid.grid-cols-4,
+  .grid.grid-cols-3 { gap: clamp(0.75rem, 1.2vw, 1.5rem); }
+
+  /* Prevent any fixed-width element from causing horizontal overflow */
+  img, video, canvas, svg:not(.icon) {
+    max-width: 100%;
+  }
+}
+
+/* 2. Dashboard inner content max-width safety net */
+@media (min-width: 1440px) {
+  /* Any page that uses the old bare max-w-6xl without 2xl: override
+     gets bumped up by the globals.css max-w override already in place.
+     This just adds a fallback for any we missed. */
+  [class*="max-w-6xl"] { max-width: min(88rem, 96vw); }
+  [class*="max-w-5xl"] { max-width: min(76rem, 94vw); }
+  [class*="max-w-4xl"] { max-width: min(64rem, 92vw); }
+}
+
+@media (min-width: 1920px) {
+  [class*="max-w-6xl"] { max-width: min(108rem, 90vw); }
+  [class*="max-w-5xl"] { max-width: min(90rem, 88vw); }
+  [class*="max-w-4xl"] { max-width: min(78rem, 86vw); }
+  [class*="max-w-7xl"] { max-width: min(120rem, 92vw); }
+}
+
+/* 3. Marketing page sections — never let background bleed edges */
+@media (min-width: 1440px) {
+  section[class*="py-"] {
+    padding-left: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1));
+    padding-right: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1));
+  }
+}
+
+/* 4. Headings — clamp to readable size even on 4K */
+@media (min-width: 1920px) {
+  h1 { font-size: clamp(2.5rem, 4vw, 6rem); }
+  h2 { font-size: clamp(1.75rem, 2.8vw, 4rem); }
+}
+@media (min-width: 2560px) {
+  h1 { font-size: clamp(3rem, 3.5vw, 7rem); }
+  h2 { font-size: clamp(2rem, 2.5vw, 5rem); }
+}

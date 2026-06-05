@@ -82,7 +82,7 @@ export default function BenchmarksPage() {
   return (
     <>
       <SiteNav />
-      <main className="mx-auto max-w-5xl px-4 py-16 sm:py-24">
+      <main className="mx-auto max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Accuracy Benchmarks</h1>
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">Per-modality evaluation results across our ensemble models. All benchmarks use held-out test splits — none of the test data was used for training.</p>

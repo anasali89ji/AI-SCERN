@@ -109,7 +109,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl mx-auto px-3 sm:px-4">
+      <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-3 sm:px-4 2xl:px-8">
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
