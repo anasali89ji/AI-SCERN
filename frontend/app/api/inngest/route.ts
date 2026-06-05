@@ -12,8 +12,9 @@
 import { serve } from 'inngest/next'
 import { inngest } from '@/lib/inngest/client'
 import { INNGEST_FUNCTIONS } from '@/lib/inngest/functions'
+import { REPLICA_SYNC_FUNCTIONS } from '@/lib/inngest/replica-sync'
 
 export const { GET, POST, PUT } = serve({
   client:    inngest,
-  functions: INNGEST_FUNCTIONS,
+  functions: [...INNGEST_FUNCTIONS, ...REPLICA_SYNC_FUNCTIONS],
 })

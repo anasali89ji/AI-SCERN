@@ -11,9 +11,38 @@ export async function POST(req: NextRequest) {
 
   try {
     const { email, display_name } = await req.json()
+    const db = getSupabaseAdmin()
 
-    const { error } = await getSupabaseAdmin().from('profiles').upsert({
-      id:                userId,   // session-verified, not body-supplied
+    // ── Check if profile already exists ──────────────────────────────────
+    // CRITICAL: never overwrite plan/credits on an existing profile.
+    // Admin upgrades set plan='pro' etc — a blind upsert on every login
+    // would roll them back to 'free'. Only insert if the row is truly new.
+    const { data: existing } = await db
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (existing) {
+      // Profile already exists — only update safe, non-plan fields
+      const { error } = await db
+        .from('profiles')
+        .update({
+          email:       email || '',
+          updated_at:  new Date().toISOString(),
+        })
+        .eq('id', userId)
+
+      if (error) {
+        console.error('[profiles/create] update error:', error.message)
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      return NextResponse.json({ ok: true, created: false })
+    }
+
+    // ── New user — insert with free defaults ──────────────────────────────
+    const { error } = await db.from('profiles').insert({
+      id:                userId,
       email:             email || '',
       display_name:      display_name || email?.split('@')[0] || 'User',
       plan:              'free',
@@ -23,13 +52,16 @@ export async function POST(req: NextRequest) {
       monthly_scans:     0,
       created_at:        new Date().toISOString(),
       updated_at:        new Date().toISOString(),
-    }, { onConflict: 'id', ignoreDuplicates: false })
+    })
 
     if (error) {
-      console.error('[profiles/create] Supabase error:', error.message)
+      // Ignore unique-violation (race condition: two tabs creating simultaneously)
+      if (error.code === '23505') return NextResponse.json({ ok: true, created: false })
+      console.error('[profiles/create] insert error:', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json({ ok: true })
+
+    return NextResponse.json({ ok: true, created: true })
   } catch (err: any) {
     console.error('[profiles/create] Error:', err?.message)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

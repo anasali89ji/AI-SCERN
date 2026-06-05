@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { verifyAdmin, isAdminError } from '@/lib/auth/verify-admin'
+import { inngest } from '@/lib/inngest/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,6 +144,17 @@ export async function PATCH(req: NextRequest) {
         })
       } catch { /* non-fatal */ }
     }
+
+    // Fire profile/updated event → replica-sync job replicates to Convex
+    if (['grant_pro', 'revoke_pro', 'set_plan'].includes(action)) {
+      try {
+        await inngest.send({
+          name: 'profile/updated',
+          data: { user_id: targetId, changed_by: 'admin', action },
+        })
+      } catch { /* non-fatal — replica sync failure must not block admin actions */ }
+    }
+
     return NextResponse.json({ success: true, action, update })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
