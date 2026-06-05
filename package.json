@@ -1,0 +1,20 @@
+{
+  "name": "ai-scern",
+  "version": "1.0.0",
+  "description": "Aiscern — AI Content Detection Platform",
+  "main": "index.js",
+  "scripts": {
+    "convex:dev": "npx convex dev",
+    "convex:deploy": "npx convex deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anasali89ji/AI-SCERN.git"
+  },
+  "keywords": [],
+  "author": "Aiscern",
+  "license": "MIT",
+  "dependencies": {
+    "convex": "^1.40.0"
+  }
+}
