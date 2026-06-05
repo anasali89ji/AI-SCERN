@@ -69,7 +69,7 @@ export function SiteFooter() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
 
-      <div className="max-w-6xl mx-auto px-4 pt-14 pb-8 relative">
+      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 2xl:px-10 pt-14 pb-8 relative">
 
         {/* Main grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 mb-12">

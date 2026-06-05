@@ -640,7 +640,7 @@ export default function HomePage() {
             style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 65%)' }} />
 
           {/* Content */}
-          <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
+          <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl mx-auto w-full">
 
             {/* Animated badge */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -716,17 +716,17 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative [overflow:clip]">
+        <section className="cv-auto py-12 sm:py-20 2xl:py-24 border-y border-border/20 bg-surface/20 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
-          <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
+          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 2xl:px-10 3xl:px-16 relative">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 2xl:gap-14">
               {STATS.map((stat, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
                   transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
+                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-2 tabular-nums"
                     style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
@@ -743,20 +743,20 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative [overflow:clip]">
+        <section id="tools" className="cv-auto py-16 sm:py-28 2xl:py-32 3xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
 
-          <div className="max-w-6xl mx-auto relative">
+          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-14 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
                 <Cpu className="w-3 h-3" /> Six Powerful Tools
               </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-4">
                 Detection <span className="gradient-text">Tools</span>
               </h2>
-              <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+              <p className="text-text-muted text-base sm:text-lg 2xl:text-xl max-w-2xl 2xl:max-w-3xl mx-auto leading-relaxed">
                 Six detection tools covering text, images, audio, and video. Each delivers a clear authenticity score in seconds.
               </p>
               <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
@@ -764,21 +764,21 @@ export default function HomePage() {
                 initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 2xl:gap-6">
               {TOOLS.map((tool, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
                   transition={{ delay: i * 0.08, duration: 0.5 }}>
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
                     <SpotlightCard color={`${tool.accent}18`}
-                      className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
+                      className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 2xl:p-7 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
                       {/* Scanline on hover */}
                       <div className="scanline" aria-hidden="true" />
 
                       <div className="flex items-start justify-between mb-5">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
+                        <div className={`w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
                           style={{ background: `${tool.accent}14`, border: `1px solid ${tool.accent}20` }}>
-                          <tool.icon className="w-6 h-6" strokeWidth={1.8} />
+                          <tool.icon className="w-6 h-6 2xl:w-7 2xl:h-7" strokeWidth={1.8} />
                         </div>
                         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tool.color}`}
                           style={{ background: `${tool.accent}12`, border: `1px solid ${tool.accent}22` }}>
@@ -786,10 +786,10 @@ export default function HomePage() {
                         </span>
                       </div>
 
-                      <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-primary transition-colors duration-200 leading-tight">
+                      <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-text-primary mb-2 group-hover:text-primary transition-colors duration-200 leading-tight">
                         {tool.label}
                       </h3>
-                      <p className="text-sm text-text-muted leading-relaxed">{tool.desc}</p>
+                      <p className="text-sm 2xl:text-base text-text-muted leading-relaxed">{tool.desc}</p>
 
                       <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors duration-200">
                         Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
@@ -803,11 +803,11 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 px-4 relative [overflow:clip]">
+        <section id="how" className="cv-auto py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
 
-          <div className="max-w-5xl mx-auto relative">
+          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-16 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
@@ -861,18 +861,18 @@ export default function HomePage() {
         </section>
 
         {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 px-4 relative [overflow:clip]">
+        <section className="py-16 sm:py-24 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
 
-          <div className="max-w-5xl mx-auto relative">
+          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-12 sm:mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
                 <Star className="w-3 h-3" /> User Stories
               </div>
-              <h2 className="text-2xl sm:text-4xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
-              <p className="text-sm text-text-muted max-w-lg mx-auto leading-relaxed">
+              <h2 className="text-2xl sm:text-4xl 2xl:text-5xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
+              <p className="text-sm 2xl:text-base text-text-muted max-w-lg 2xl:max-w-xl mx-auto leading-relaxed">
                 Real feedback from users across education, journalism, HR, and research.
               </p>
             </motion.div>
@@ -894,22 +894,22 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 px-4 border-t border-border/15 relative [overflow:clip]">
+        <section className="py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
 
-          <div className="max-w-6xl mx-auto relative">
+          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
                 <Shield className="w-3 h-3" /> Trust & Accuracy
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-text-primary">
+              <h2 className="text-3xl sm:text-5xl 2xl:text-6xl font-black text-text-primary">
                 Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span>
               </h2>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 2xl:gap-6 mb-14">
               {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel }, idx) => {
                 // Override dataset stat with live HF count
                 const isDataset = title === 'Benchmarked Datasets'
@@ -998,7 +998,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 px-4 relative [overflow:clip]">
+        <section className="py-24 sm:py-32 2xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0"
               style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
@@ -1006,21 +1006,21 @@ export default function HomePage() {
           <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
             style={{ backgroundImage: `linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
 
-          <div className="max-w-3xl mx-auto text-center relative z-10">
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>
               <div className="flex justify-center mb-8">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full blur-2xl opacity-60"
                     style={{ background: 'radial-gradient(circle, rgba(245,100,0,0.5) 0%, transparent 70%)' }} />
                   <Image src="/logo.png" alt="Aiscern" width={68} height={80}
-                    className="relative object-contain h-16 sm:h-20 w-auto drop-shadow-[0_0_28px_rgba(245,100,0,0.55)]" />
+                    className="relative object-contain h-16 sm:h-20 2xl:h-24 w-auto drop-shadow-[0_0_28px_rgba(245,100,0,0.55)]" />
                 </div>
               </div>
 
-              <h2 className="text-4xl sm:text-6xl font-black mb-6 leading-tight">
+              <h2 className="text-4xl sm:text-6xl 2xl:text-7xl font-black mb-6 leading-tight">
                 Start <span className="gradient-text">Detecting</span><br />AI Content Free
               </h2>
-              <p className="text-text-muted text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+              <p className="text-text-muted text-lg sm:text-xl 2xl:text-2xl mb-10 max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
                 Core features free — no credit card required. No account needed for basic scans.
               </p>
 
@@ -1036,7 +1036,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-text-muted">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs 2xl:text-sm text-text-muted">
                 {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
                   <div key={t} className="flex items-center gap-1.5">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald" />{t}

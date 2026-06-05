@@ -487,68 +487,34 @@ html { scroll-behavior: smooth; }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BIG SCREEN RESPONSIVE — 1280px, 1440px, 1920px+
-   Ensures content scales up gracefully on wide monitors
+   BIG SCREEN RESPONSIVE — 1280px, 1440px, 1600px, 1920px, 2560px
+   Ensures content scales up gracefully on large laptops, desktops,
+   and ultra-wide monitors. Only layout/spacing — no visual changes.
    ═══════════════════════════════════════════════════════════ */
 
-/* 1280px — xl: standard desktop, already handled by max-w-7xl */
+/* ── 1280px (xl) — large laptop ── */
 @media (min-width: 1280px) {
-  .max-w-5xl { max-width: 64rem; }
-  .max-w-6xl { max-width: 76rem; }
-  .max-w-7xl { max-width: 88rem; }
+  /* Tailwind's built-in max-w classes already handle this tier;
+     we just ensure no accidental shrinkage. */
   body { font-size: 16px; }
 }
 
-/* 1440px — 2xl: wide desktop / laptop */
+/* ── 1440px (2xl) — wide desktop / 1440p display ── */
 @media (min-width: 1440px) {
-  /* Scale up section padding */
-  section { padding-top: clamp(3rem, 5vw, 6rem); padding-bottom: clamp(3rem, 5vw, 6rem); }
+  /* Expand content containers so they fill the wider viewport */
+  .max-w-3xl { max-width: 54rem;  }   /* was 48rem  */
+  .max-w-4xl { max-width: 64rem;  }   /* was 56rem  */
+  .max-w-5xl { max-width: 76rem;  }   /* was 64rem  */
+  .max-w-6xl { max-width: 88rem;  }   /* was 72rem  */
+  .max-w-7xl { max-width: 100rem; }   /* was 80rem  */
 
-  /* Hero text scales up */
-  .hero-title { font-size: clamp(3rem, 5vw, 5rem) !important; }
+  /* Section vertical rhythm — more breathing room */
+  section.cv-auto { padding-top: clamp(4rem, 6vw, 7rem); padding-bottom: clamp(4rem, 6vw, 7rem); }
 
-  /* Content containers get more breathing room */
-  .max-w-5xl { max-width: 72rem; }
-  .max-w-6xl { max-width: 84rem; }
-  .max-w-7xl { max-width: 96rem; }
+  /* Card padding increase */
+  .card  { padding: 1.75rem; }
 
-  /* Cards get slightly more padding */
-  .card { padding: 1.75rem; }
-
-  /* Nav height increase */
-  nav, header { min-height: 4rem; }
-}
-
-/* 1920px — full HD and ultra-wide */
-@media (min-width: 1920px) {
-  body { font-size: 17px; }
-
-  .max-w-5xl { max-width: 80rem; }
-  .max-w-6xl { max-width: 96rem; }
-  .max-w-7xl { max-width: 112rem; }
-
-  /* Hero section scales text proportionally */
-  h1 { font-size: clamp(3.5rem, 4.5vw, 7rem); }
-  h2 { font-size: clamp(2rem, 3vw, 4rem); }
-
-  /* More padding on ultra-wide */
-  .px-4 { padding-left: clamp(1rem, 3vw, 4rem); padding-right: clamp(1rem, 3vw, 4rem); }
-}
-
-/* 2560px — 2K / ultra-wide */
-@media (min-width: 2560px) {
-  body { font-size: 18px; }
-
-  .max-w-5xl { max-width: 90rem; }
-  .max-w-6xl { max-width: 108rem; }
-  .max-w-7xl { max-width: 120rem; }
-
-  /* Prevent text from being tiny relative to screen */
-  p, li, td, th { font-size: 1.05rem; }
-}
-
-/* Fluid container — replaces fixed max-width classes on very wide screens */
-@media (min-width: 1440px) {
+  /* Fluid container utility */
   .fluid-container {
     width: min(90%, 1400px);
     margin-left: auto;
@@ -556,21 +522,65 @@ html { scroll-behavior: smooth; }
   }
 }
 
-/* Grid columns auto-expand on wide screens */
-@media (min-width: 1440px) {
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-/* Detect pages — sidebar + content layout on very wide screens */
+/* ── 1600px — between 2xl and 3xl ── */
 @media (min-width: 1600px) {
+  .max-w-3xl { max-width: 60rem;  }
+  .max-w-4xl { max-width: 70rem;  }
+  .max-w-5xl { max-width: 82rem;  }
+  .max-w-6xl { max-width: 96rem;  }
+  .max-w-7xl { max-width: 110rem; }
+
+  /* Detect pages: side-by-side panel layout activates here */
   .detect-layout {
     display: grid;
-    grid-template-columns: 1fr 420px;
+    grid-template-columns: 1fr 440px;
     gap: 2rem;
     align-items: start;
   }
+}
+
+/* ── 1920px (3xl) — Full HD and ultra-wide ── */
+@media (min-width: 1920px) {
+  body { font-size: 17px; }
+
+  .max-w-3xl { max-width: 66rem;  }
+  .max-w-4xl { max-width: 78rem;  }
+  .max-w-5xl { max-width: 90rem;  }
+  .max-w-6xl { max-width: 108rem; }
+  .max-w-7xl { max-width: 120rem; }
+
+  /* Hero section — allow H1 to breathe at full HD */
+  .hero-title { font-size: clamp(3.5rem, 4.5vw, 7rem) !important; }
+
+  /* Sections get maximum vertical rhythm */
+  section.cv-auto { padding-top: clamp(5rem, 7vw, 9rem); padding-bottom: clamp(5rem, 7vw, 9rem); }
+}
+
+/* ── 2560px — 2K / ultra-wide ── */
+@media (min-width: 2560px) {
+  body { font-size: 18px; }
+
+  .max-w-3xl { max-width: 72rem;  }
+  .max-w-4xl { max-width: 84rem;  }
+  .max-w-5xl { max-width: 100rem; }
+  .max-w-6xl { max-width: 120rem; }
+  .max-w-7xl { max-width: 136rem; }
+
+  /* Slightly larger base text so lines don't feel narrow */
+  p, li, td, th { font-size: 1.05rem; }
+}
+
+/* Fluid container utility — also available at narrower breakpoints */
+.fluid-container {
+  width: min(92vw, 1400px);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 1920px) {
+  .fluid-container { width: min(88vw, 1600px); }
+}
+@media (min-width: 2560px) {
+  .fluid-container { width: min(80vw, 2000px); }
 }
 
 /* ── Phase 9: Mobile Nav + Touch + UI Improvements ──────────────────────────── */

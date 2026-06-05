@@ -221,21 +221,21 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
 // ─── Section (default export) ──────────────────────────────────────────────
 export default function WhoNeedsSection() {
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 [overflow:clip]">
+    <section className="relative py-16 sm:py-24 lg:py-32 2xl:py-40 px-5 sm:px-8 lg:px-12 2xl:px-16 bg-background border-b border-border/20 [overflow:clip]">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px] blur-orb" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px] blur-orb" />
       </div>
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative z-10">
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-[11px] sm:text-xs font-black uppercase tracking-widest mb-5">
             <Users className="w-3 h-3" />
             Who Uses Aiscern
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl 2xl:text-6xl font-black mb-4 leading-tight">
             Used by Professionals <span className="gradient-text">Across Industries</span>
           </h2>
-          <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+          <p className="text-text-muted text-sm sm:text-base 2xl:text-lg max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
             <strong className="text-text-secondary">AI-generated content</strong> is a problem in every field.
             Aiscern gives professionals detection tools to identify it —{' '}
             <strong className="text-primary">free tier available</strong>, across all four modalities.
@@ -249,7 +249,7 @@ export default function WhoNeedsSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5 2xl:gap-6">
           {WHO_NEEDS.map((card, i) => (
             <WhoNeedsCard key={card.role} card={card} i={i} />
           ))}
