@@ -63,7 +63,7 @@ export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProp
   }, [open])
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 isolate
+    <nav className={`fixed top-0 left-0 right-0 z-[var(--z-nav)] h-16 transition-all duration-300 isolate
       ${hidden ? 'nav-hidden' : 'nav-visible'}
       ${scrolled
         ? 'border-b border-border/50 bg-background/95 backdrop-blur-2xl shadow-lg shadow-black/20'
@@ -133,12 +133,12 @@ export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProp
         <>
           {/* Backdrop */}
           <div
-            className="md:hidden fixed inset-0 bg-black/70 z-[60]"
+            className="md:hidden fixed inset-0 bg-black/70 z-[var(--z-overlay)]"
             onClick={() => setOpen(false)}
             style={{ touchAction: 'none' }}
           />
           {/* Panel */}
-          <div className="md:hidden fixed top-16 left-0 right-0 bg-surface border-b border-border z-[70] shadow-2xl">
+          <div className="md:hidden fixed top-16 left-0 right-0 bg-surface border-b border-border z-[var(--z-modal)] shadow-2xl">
             <div className="px-4 py-4 space-y-1 max-h-[calc(100svh-4rem)] overflow-y-auto">
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
