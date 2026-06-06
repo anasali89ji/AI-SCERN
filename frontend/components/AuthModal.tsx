@@ -1,8 +1,4 @@
 'use client'
-/**
- * AuthModal — navigates to /login or /signup which have
- * embedded Clerk SignIn/SignUp components directly in the page.
- */
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -18,8 +14,23 @@ export function AuthModal({ mode, children, className }: Props) {
     router.push(mode === 'signIn' ? '/login' : '/signup')
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      open()
+    }
+  }
+
   return (
-    <span className={className} onClick={open} style={{ cursor: 'pointer' }}>
+    <span
+      role="button"
+      tabIndex={0}
+      className={className}
+      onClick={open}
+      onKeyDown={handleKeyDown}
+      style={{ cursor: 'pointer' }}
+      aria-label={mode === 'signIn' ? 'Sign in' : 'Sign up'}
+    >
       {children}
     </span>
   )

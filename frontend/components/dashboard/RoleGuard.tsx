@@ -11,7 +11,7 @@ export function RoleGuard({ required, children }: { required: string; children: 
   const { user } = useAuth()
   const router   = useRouter()
   // Role from Clerk publicMetadata — defaults to USER (not OWNER) for safety
-  const role = (user as any)?.publicMetadata?.role?.toUpperCase() ?? 'USER'
+  const role = ((user as { publicMetadata?: { role?: string } } | null)?.publicMetadata?.role ?? 'USER').toUpperCase()
 
   useEffect(() => {
     if ((ROLE_LEVEL[role] ?? 0) < (ROLE_LEVEL[required] ?? 0)) {
