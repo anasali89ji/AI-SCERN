@@ -12,12 +12,12 @@ import { SiteNav } from '@/components/SiteNav'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
-  Shield, Brain, Eye, FileText, Globe, Zap,
+  Shield, Brain, FileText, Globe, Zap,
   ArrowRight, CheckCircle, XCircle, HelpCircle,
   Image as ImageIcon, Video, Music, ChevronRight, Loader2,
   MessageSquare, Cpu, Database, Sparkles,
   TrendingUp, Users, Search,
-  Scan, Bot,
+  Scan,
   Activity, Layers, Wand2, Star, ChevronDown, FlaskConical, GraduationCap,
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
@@ -36,207 +36,18 @@ const DynamicHomepageReviews = HomepageReviews
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
 // ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
 // The canvas requestAnimationFrame + filter:blur combo on mobile causes GPU
-// compositing overflow → purple/blue scanline glitch artifacts on Android/iOS.
+// compositing overflow → scanline glitch artifacts on Android/iOS.
 function NetworkBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.08)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06)_0%,transparent_50%)]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/[0.03] rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-indigo-600/[0.03] rounded-full blur-[100px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(8,145,178,0.05)_0%,transparent_50%)]" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.04] rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-primary/[0.03] rounded-full blur-[100px]" />
       {/* Static dot grid — zero GPU cost, simulates network feel */}
-      <div className="absolute inset-0 opacity-[0.025]"
-           style={{ backgroundImage: 'radial-gradient(circle, rgba(139,92,246,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="absolute inset-0 opacity-[0.02]"
+           style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     </div>
-  )
-}
-
-// ─── Root Network (preserved from original) ───────────────────────────────────
-const AI_NODES_LG = [
-  { x: 3,  y: 12, delay: 0.00 }, { x: 14, y: 28, delay: 0.15 },
-  { x: 2,  y: 46, delay: 0.30 }, { x: 18, y: 60, delay: 0.45 },
-  { x: 7,  y: 76, delay: 0.60 }, { x: 28, y: 15, delay: 0.10 },
-  { x: 32, y: 36, delay: 0.25 }, { x: 24, y: 54, delay: 0.40 },
-  { x: 35, y: 70, delay: 0.55 }, { x: 20, y: 88, delay: 0.70 },
-]
-const REAL_NODES_LG = [
-  { x: 96, y: 12, delay: 0.00 }, { x: 83, y: 28, delay: 0.15 },
-  { x: 97, y: 46, delay: 0.30 }, { x: 79, y: 60, delay: 0.45 },
-  { x: 91, y: 76, delay: 0.60 }, { x: 68, y: 15, delay: 0.10 },
-  { x: 64, y: 36, delay: 0.25 }, { x: 73, y: 54, delay: 0.40 },
-  { x: 62, y: 70, delay: 0.55 }, { x: 77, y: 88, delay: 0.70 },
-]
-const AI_EDGES_LG   = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const REAL_EDGES_LG = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const AI_NODES_MD = [
-  { x: 2,  y: 10, delay: 0.00 }, { x: 12, y: 28, delay: 0.15 },
-  { x: 3,  y: 50, delay: 0.30 }, { x: 15, y: 68, delay: 0.45 },
-  { x: 5,  y: 82, delay: 0.60 }, { x: 22, y: 42, delay: 0.25 },
-]
-const REAL_NODES_MD = [
-  { x: 97, y: 10, delay: 0.00 }, { x: 86, y: 28, delay: 0.15 },
-  { x: 96, y: 50, delay: 0.30 }, { x: 83, y: 68, delay: 0.45 },
-  { x: 93, y: 82, delay: 0.60 }, { x: 76, y: 42, delay: 0.25 },
-]
-const AI_EDGES_MD   = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const REAL_EDGES_MD = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const AI_NODES_SM   = [{ x: 1, y: 18, delay: 0.00 }, { x: 2, y: 50, delay: 0.25 }, { x: 1, y: 80, delay: 0.50 }]
-const REAL_NODES_SM = [{ x: 98, y: 18, delay: 0.00 }, { x: 97, y: 50, delay: 0.25 }, { x: 98, y: 80, delay: 0.50 }]
-const AI_EDGES_SM   = [[0,1],[1,2]]
-const REAL_EDGES_SM = [[0,1],[1,2]]
-
-const FLOAT_BADGES = [
-  { Icon: Search, label: 'AI Text',  pct: 'Detected', color: '#8B5CF6', delay: 0,   pulse: true  },
-  { Icon: Eye,    label: 'Deepfake', pct: 'Flagged',  color: '#2563eb', delay: 0.5, pulse: false },
-]
-
-function useBreakpoint() {
-  const [bp, setBp] = useState<'sm'|'md'|'lg'|null>(null)
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>
-    const update = () => {
-      clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        const w = window.innerWidth
-        setBp(w < 640 ? 'sm' : w < 1024 ? 'md' : 'lg')
-      }, 150)
-    }
-    update()
-    window.addEventListener('resize', update)
-    return () => { clearTimeout(timeout); window.removeEventListener('resize', update) }
-  }, [])
-  return bp ?? 'lg'
-}
-
-function RootNetworkNode({ node, file, side, index, size }: {
-  node: { x: number; y: number; delay: number }
-  file: string; side: 'ai' | 'real'; index: number
-  size: { w: number; h: number }
-}) {
-  const isAI = side === 'ai'
-  const { w, h } = size
-  const safeLeft = node.x < 10
-    ? `max(4px, calc(${node.x}% - ${w / 2}px))`
-    : node.x > 90
-    ? `min(calc(100% - ${w + 4}px), calc(${node.x}% - ${w / 2}px))`
-    : `calc(${node.x}% - ${w / 2}px)`
-  const bobClass = index % 2 === 0 ? 'node-card-bob-a' : 'node-card-bob-b'
-  return (
-    <div
-      className={`absolute rounded-xl pointer-events-none overflow-hidden ${bobClass}`}
-      style={{
-        left: safeLeft, top: `calc(${node.y}% - ${h / 2}px)`,
-        width: w, height: h, zIndex: 2,
-        animationDelay: `${node.delay}s, ${node.delay}s`,
-        boxShadow: isAI ? '0 4px 24px rgba(139,92,246,0.12)' : '0 4px 24px rgba(16,185,129,0.08)',
-      }}
-    >
-      <div className="absolute inset-0" style={{
-        background: isAI ? 'linear-gradient(160deg,#5b21b6,#1e1b4b)' : 'linear-gradient(160deg,#065f46,#052e16)',
-      }} />
-      <img src={file} alt="" decoding="async"
-        className="absolute inset-0 w-full h-full object-cover" style={{ display: 'block' }}
-        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        loading={index < 2 ? 'eager' : 'lazy'}
-        fetchPriority={index === 0 ? 'high' : 'low'}
-      />
-      <div className="absolute inset-0 bg-black/35" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      <div className={`absolute bottom-1 left-1 text-[7px] font-black px-1 py-0.5 rounded leading-none z-10 ${isAI ? 'bg-rose/80 text-white' : 'bg-emerald/80 text-white'}`}>
-        {isAI ? 'AI' : '✓'}
-      </div>
-      <div className="absolute inset-0 rounded-xl"
-        style={{ boxShadow: isAI ? 'inset 0 0 0 1px rgba(139,92,246,0.3)' : 'inset 0 0 0 1px rgba(16,185,129,0.3)' }} />
-    </div>
-  )
-}
-
-function RootNetworkSVG({ nodes, edges, color, side }: {
-  nodes: { x: number; y: number }[]; edges: number[][]; color: string; side: 'ai' | 'real'
-}) {
-  return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 100 100" preserveAspectRatio="none" style={{ opacity: 0.25, zIndex: 1 }}>
-      {edges.map(([a, b], i) => {
-        const n1 = nodes[a], n2 = nodes[b]
-        const cx = (n1.x + n2.x) / 2 + (side === 'ai' ? -3 : 3), cy = (n1.y + n2.y) / 2
-        return (
-          <motion.path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
-            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
-            transition={{ delay: 0.4 + i * 0.07, duration: 1.4, ease: 'easeInOut' }}
-          />
-        )
-      })}
-      {nodes.map((n, i) => (
-        <motion.circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color}
-          initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ delay: 0.7 + i * 0.08, duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-    </svg>
-  )
-}
-
-function FloatingCards() {
-  const bp = useBreakpoint()
-  const aiNodes   = bp === 'sm' ? AI_NODES_SM   : bp === 'md' ? AI_NODES_MD   : AI_NODES_LG
-  const realNodes = bp === 'sm' ? REAL_NODES_SM : bp === 'md' ? REAL_NODES_MD : REAL_NODES_LG
-  const aiEdges   = bp === 'sm' ? AI_EDGES_SM   : bp === 'md' ? AI_EDGES_MD   : AI_EDGES_LG
-  const realEdges = bp === 'sm' ? REAL_EDGES_SM : bp === 'md' ? REAL_EDGES_MD : REAL_EDGES_LG
-  const cardSize  = bp === 'sm' ? { w: 34, h: 44 } : bp === 'md' ? { w: 48, h: 60 } : { w: 64, h: 80 }
-  const badgePositions = bp === 'sm'
-    ? [{ x: '28%', y: '6%' }, { x: '54%', y: '6%' }]
-    : [{ x: '22%', y: '7%' }, { x: '66%', y: '7%' }]
-  return (
-    <>
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#8B5CF6" side="ai"   />
-        <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
-        {aiNodes.map((node, i) => (
-          <RootNetworkNode key={`ai-${i}`} node={node}
-            file={`/hero/ai/ai-${String(i+1).padStart(2,'0')}.webp`}
-            side="ai" index={i} size={cardSize} />
-        ))}
-        {realNodes.map((node, i) => (
-          <RootNetworkNode key={`real-${i}`} node={node}
-            file={`/hero/real/real-${String(i+1).padStart(2,'0')}.webp`}
-            side="real" index={i} size={cardSize} />
-        ))}
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8"
-          style={{ top: 72, left: 8 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <Bot className="w-2.5 h-2.5 text-rose" />
-          <span className="text-[8px] font-bold text-rose/80 uppercase tracking-wide hidden md:inline">AI Generated</span>
-        </motion.div>
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8"
-          style={{ top: 72, right: 8 }} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <CheckCircle className="w-2.5 h-2.5 text-emerald" />
-          <span className="text-[8px] font-bold text-emerald/80 uppercase tracking-wide hidden md:inline">Authentic</span>
-        </motion.div>
-      </div>
-      {FLOAT_BADGES.map((item, i) => {
-        const Icon = item.Icon; const pos = badgePositions[i]
-        return (
-          <motion.div key={i}
-            className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border select-none"
-            style={{ left: pos.x, top: pos.y, zIndex: 10, background: `${item.color}12`, borderColor: `${item.color}30` }}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }}
-            transition={{ opacity: { delay: item.delay + 1.0, duration: 0.5 }, y: { delay: item.delay, duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }}>
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}22`, color: item.color }}>
-              <Icon className="w-3 h-3" strokeWidth={2} />
-            </div>
-            <div className="hidden md:block">
-              <div className="text-[8px] font-medium leading-none mb-0.5" style={{ color: `${item.color}bb` }}>{item.label}</div>
-              <div className="text-[10px] font-bold text-white leading-none">{item.pct}</div>
-            </div>
-            {item.pulse && (
-              <motion.div className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: item.color }}
-                animate={{ scale: [1, 1.6, 1], opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }} />
-            )}
-          </motion.div>
-        )
-      })}
-    </>
   )
 }
 
@@ -477,19 +288,18 @@ export default function HomePage() {
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
             <div className="hero-mesh-1 absolute top-1/4 left-1/3 w-[700px] h-[700px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', filter: 'blur(80px)' }} />
             <div className="hero-mesh-2 absolute top-1/3 right-1/4 w-[600px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.09) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(8,145,178,0.08) 0%, transparent 70%)', filter: 'blur(100px)' }} />
             <div className="hero-mesh-3 absolute bottom-1/4 left-1/5 w-[500px] h-[500px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)', filter: 'blur(80px)' }} />
           </div>
 
           <NetworkBackground />
-          <FloatingCards />
 
           {/* Center glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 65%)' }} />
+            style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 65%)' }} />
 
           {/* Content */}
           <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl mx-auto w-full">
@@ -498,8 +308,8 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary/80 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
               <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
               <span className="sm:hidden">8+ models · Free tier available</span>
@@ -523,8 +333,7 @@ export default function HomePage() {
               {user ? (
                 <>
                   <Link href="/dashboard"
-                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 8px 32px rgba(124,58,237,0.35)' }}>
+                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] btn-primary shadow-2xl shadow-primary/30">
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
                       {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
@@ -570,7 +379,7 @@ export default function HomePage() {
         {/* ══ STATS BAR ══ */}
         <section className="cv-auto py-12 sm:py-20 border-y border-border/20 bg-surface/20 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 70%)' }} />
+            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
           <div className="max-w-6xl 2xl:max-w-[1300px] mx-auto px-4 2xl:px-8 relative">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
@@ -579,7 +388,7 @@ export default function HomePage() {
                   transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
                   <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-bold font-display mb-2 tabular-nums"
-                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
@@ -597,7 +406,7 @@ export default function HomePage() {
         {/* ══ TOOLS GRID ══ */}
         <section id="tools" className="cv-auto py-16 sm:py-28 px-4 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.06) 0%, transparent 65%)' }} />
+            style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
 
           <div className="max-w-6xl mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
