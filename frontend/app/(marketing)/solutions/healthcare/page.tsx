@@ -18,7 +18,7 @@ export default function HealthcarePage() {
       industry="Healthcare"
       tagline="Ensure Clinical Accuracy in an AI-Generated World"
       description="Fabricated research, synthetic patient records, and AI-generated clinical notes are threats to patient safety and scientific integrity. Aiscern helps healthcare organizations verify the authenticity of submitted medical content."
-      heroIcon={Heart}
+      heroIcon={<Heart className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="rose"
       ctaLabel="Start Free Healthcare Account"
       problemTitle="AI Fabrication Risks in Healthcare"
@@ -29,12 +29,12 @@ export default function HealthcarePage() {
         { title: 'Medical imaging manipulation is a growing concern', desc: 'AI-generated or modified medical images (X-rays, MRIs) submitted in research or insurance contexts require forensic-level verification.' },
       ]}
       features={[
-        { icon: Brain, title: 'Medical Literature Screening', desc: 'Detect AI-generated sections in submitted research papers, systematic reviews, and clinical study reports.' },
-        { icon: FileSearch, title: 'Clinical Document Analysis', desc: 'Analyze clinical notes, discharge summaries, and patient reports for AI-generation patterns.' },
-        { icon: Eye, title: 'Medical Image Forensics', desc: 'ViT-based detection identifies digitally synthesized medical imagery for research and insurance fraud contexts.' },
-        { icon: Lock, title: 'HIPAA-Conscious Design', desc: 'Ephemeral processing ensures patient data is never retained. Enterprise plans include Data Processing Agreements.' },
-        { icon: Shield, title: 'Audit Reports', desc: 'Timestamped PDF reports for compliance documentation, IRB submissions, and quality assurance records.' },
-        { icon: BarChart3, title: 'Confidence Transparency', desc: 'Explicit confidence intervals ensure healthcare professionals understand result limitations before acting on them.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Medical Literature Screening', desc: 'Detect AI-generated sections in submitted research papers, systematic reviews, and clinical study reports.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Clinical Document Analysis', desc: 'Analyze clinical notes, discharge summaries, and patient reports for AI-generation patterns.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Medical Image Forensics', desc: 'ViT-based detection identifies digitally synthesized medical imagery for research and insurance fraud contexts.' },
+        { icon: <Lock className="w-5 h-5" />, title: 'HIPAA-Conscious Design', desc: 'Ephemeral processing ensures patient data is never retained. Enterprise plans include Data Processing Agreements.' },
+        { icon: <Shield className="w-5 h-5" />, title: 'Audit Reports', desc: 'Timestamped PDF reports for compliance documentation, IRB submissions, and quality assurance records.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Transparency', desc: 'Explicit confidence intervals ensure healthcare professionals understand result limitations before acting on them.' },
       ]}
       useCases={[
         { title: 'Research Submission Pre-Screening', desc: 'A medical journal\'s editorial team runs submitted manuscripts through Aiscern before peer review assignment, flagging high-AI-probability sections for additional scrutiny.' },

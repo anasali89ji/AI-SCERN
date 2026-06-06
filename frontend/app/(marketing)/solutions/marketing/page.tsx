@@ -18,7 +18,7 @@ export default function MarketingPage() {
       industry="Marketing & Brand"
       tagline="Verify Your Content Is Genuinely Human"
       description="Brand authenticity depends on genuine human creativity. Aiscern helps marketing teams verify that UGC campaigns, influencer deliverables, and agency content reflect real human effort — not AI-generated filler."
-      heroIcon={Megaphone}
+      heroIcon={<Megaphone className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="amber"
       ctaLabel="Start Free Marketing Account"
       problemTitle="The Brand Authenticity Problem"
@@ -29,12 +29,12 @@ export default function MarketingPage() {
         { title: 'Deepfake imagery in competitor analysis and industry research', desc: 'Synthetic images circulating on social media can be misidentified as real product photos, misleading competitive intelligence.' },
       ]}
       features={[
-        { icon: Brain, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with ≥96% ensemble AUC.' },
-        { icon: Eye, title: 'Image Authenticity', desc: 'Detect AI-generated brand imagery, synthetic product photos, and fabricated lifestyle content.' },
-        { icon: Layers, title: 'Bulk Content Audits', desc: 'Scan entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
-        { icon: BarChart3, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },
-        { icon: FileSearch, title: 'Influencer Content Review', desc: 'Analyze deliverable packages from influencer partners before approving payment or publishing.' },
-        { icon: CheckCircle, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with ≥96% ensemble AUC.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Image Authenticity', desc: 'Detect AI-generated brand imagery, synthetic product photos, and fabricated lifestyle content.' },
+        { icon: <Layers className="w-5 h-5" />, title: 'Bulk Content Audits', desc: 'Scan entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Influencer Content Review', desc: 'Analyze deliverable packages from influencer partners before approving payment or publishing.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
       ]}
       useCases={[
         { title: 'UGC Campaign Verification', desc: 'A consumer brand running a "real customer stories" campaign scans all 2,000 written submissions through Aiscern before featuring them, ensuring only genuine customer voices appear in campaign materials.' },

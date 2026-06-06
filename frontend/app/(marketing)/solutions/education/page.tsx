@@ -20,7 +20,7 @@ export default function EducationPage() {
       industry="Education"
       tagline="Protect Academic Integrity at Scale"
       description="AI-generated essays are flooding classrooms. Aiscern gives educators a forensic-grade ensemble detection system to identify AI-written assignments across text modalities — with explainable results, not just scores."
-      heroIcon={GraduationCap}
+      heroIcon={<GraduationCap className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="primary"
       ctaLabel="Start Free Teacher Account"
       problemTitle="The Academic Integrity Crisis"
@@ -31,12 +31,12 @@ export default function EducationPage() {
         { title: 'No audit trail for grade appeals', desc: 'Instructors need a defensible, documented record. Aiscern provides forensic reports exportable for disciplinary proceedings.' },
       ]}
       features={[
-        { icon: Brain, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for ≥96% ensemble AUC across student writing datasets.' },
-        { icon: FileSearch, title: 'Sentence-Level Highlights', desc: 'Color-coded heatmap shows which sentences are AI-likely — not just an overall score.' },
-        { icon: BarChart3, title: 'Confidence Scoring', desc: 'Confidence threshold system: ≥62% = AI, ≤38% = Human, middle zone = uncertain. Designed for defensible academic decisions.' },
-        { icon: Layers, title: 'Batch Processing', desc: 'Upload entire class sets at once. Process 50+ documents simultaneously with a Pro or Team plan.' },
-        { icon: Shield, title: 'Export & Evidence', desc: 'PDF forensic reports include scan ID, timestamp, model breakdown, and per-sentence scores for grade appeals.' },
-        { icon: Eye, title: 'Multi-Language Support', desc: 'Detection works across English, Spanish, French, German, and more — covering international student submissions.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for ≥96% ensemble AUC across student writing datasets.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Highlights', desc: 'Color-coded heatmap shows which sentences are AI-likely — not just an overall score.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Confidence threshold system: ≥62% = AI, ≤38% = Human, middle zone = uncertain. Designed for defensible academic decisions.' },
+        { icon: <Layers className="w-5 h-5" />, title: 'Batch Processing', desc: 'Upload entire class sets at once. Process 50+ documents simultaneously with a Pro or Team plan.' },
+        { icon: <Shield className="w-5 h-5" />, title: 'Export & Evidence', desc: 'PDF forensic reports include scan ID, timestamp, model breakdown, and per-sentence scores for grade appeals.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Multi-Language Support', desc: 'Detection works across English, Spanish, French, German, and more — covering international student submissions.' },
       ]}
       useCases={[
         { title: 'Essay & Assignment Verification', desc: 'A professor uploads 30 student essays after noticing suspiciously uniform prose. Aiscern flags 4 as high-confidence AI-generated, generating exportable evidence for academic integrity review.' },

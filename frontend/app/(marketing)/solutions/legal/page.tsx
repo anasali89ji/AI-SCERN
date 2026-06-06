@@ -18,7 +18,7 @@ export default function LegalPage() {
       industry="Legal & Compliance"
       tagline="Forensic AI Verification for Legal Documents"
       description="Legal professionals need more than a score — they need a defensible audit trail. Aiscern delivers forensic-grade AI detection with timestamped reports, confidence breakdowns, and model transparency for use in compliance and legal proceedings."
-      heroIcon={Scale}
+      heroIcon={<Scale className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="emerald"
       ctaLabel="Start Free Legal Account"
       problemTitle="AI Fabrication Risks in Legal Practice"
@@ -29,12 +29,12 @@ export default function LegalPage() {
         { title: 'Regulatory compliance documentation risk', desc: 'AI-generated compliance reports and filings that don\'t reflect genuine organizational analysis create significant liability exposure.' },
       ]}
       features={[
-        { icon: Brain, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble detects AI text across legal drafting styles with ≥96% AUC.' },
-        { icon: FileSearch, title: 'Document-Level Analysis', desc: 'Analyze full legal documents including briefs, contracts, affidavits, and compliance filings.' },
-        { icon: Lock, title: 'Forensic PDF Reports', desc: 'Timestamped, scan-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
-        { icon: CheckCircle, title: 'Chain of Custody Logging', desc: 'Every scan generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
-        { icon: Shield, title: 'Data Security', desc: 'Enterprise plans support private deployment options and enhanced data handling for privileged legal material.' },
-        { icon: BarChart3, title: 'Sentence-Level Audit', desc: 'Pinpoint which sections of a document are AI-flagged — not just a document-level score — for targeted human review.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble detects AI text across legal drafting styles with ≥96% AUC.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Document-Level Analysis', desc: 'Analyze full legal documents including briefs, contracts, affidavits, and compliance filings.' },
+        { icon: <Lock className="w-5 h-5" />, title: 'Forensic PDF Reports', desc: 'Timestamped, scan-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every scan generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
+        { icon: <Shield className="w-5 h-5" />, title: 'Data Security', desc: 'Enterprise plans support private deployment options and enhanced data handling for privileged legal material.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Sentence-Level Audit', desc: 'Pinpoint which sections of a document are AI-flagged — not just a document-level score — for targeted human review.' },
       ]}
       useCases={[
         { title: 'Brief & Filing Verification', desc: 'Before filing, a law firm\'s quality control process runs all externally prepared briefs through Aiscern to verify that cited cases exist and that content is not AI-hallucinated.' },

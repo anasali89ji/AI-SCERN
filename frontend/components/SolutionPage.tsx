@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import { ArrowRight, CheckCircle, ChevronDown, Zap } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+
 
 export interface SolutionFAQ {
   q: string
@@ -11,7 +11,7 @@ export interface SolutionFAQ {
 }
 
 export interface SolutionFeature {
-  icon: LucideIcon
+  icon: ReactNode
   title: string
   desc: string
 }
@@ -30,7 +30,7 @@ export interface SolutionPageProps {
   industry: string
   tagline: string
   description: string
-  heroIcon: LucideIcon
+  heroIcon: ReactNode
   accentColor: 'primary' | 'cyan' | 'amber' | 'emerald' | 'rose'
   ctaLabel: string
   problemTitle: string
@@ -109,7 +109,7 @@ function FAQ({ faqs }: { faqs: SolutionFAQ[] }) {
 
 export function SolutionPage(props: SolutionPageProps) {
   const {
-    industry, tagline, description, heroIcon: HeroIcon, accentColor, ctaLabel,
+    industry, tagline, description, heroIcon, accentColor, ctaLabel,
     problemTitle, painPoints, features, useCases, faqs,
     testimonialQuote, testimonialAuthor, testimonialRole,
   } = props
@@ -171,7 +171,7 @@ export function SolutionPage(props: SolutionPageProps) {
               <div className="flex-shrink-0 lg:w-64 xl:w-80">
                 <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
                   style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
-                  <HeroIcon className={`w-20 h-20 lg:w-28 lg:h-28 ${c.icon} opacity-80`} strokeWidth={1} />
+                  {heroIcon}
                   <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
                     <CheckCircle className={`w-4 h-4 ${c.icon}`} />
                   </div>
@@ -211,11 +211,10 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {features.map((f, i) => {
-                const FIcon = f.icon
                 return (
                   <div key={i} className="card p-5 rounded-xl border border-border/60 hover:border-primary/20 transition-colors">
                     <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4`}>
-                      <FIcon className={`w-5 h-5 ${c.icon}`} />
+                      {f.icon}
                     </div>
                     <h3 className="font-semibold text-text-primary text-sm mb-2">{f.title}</h3>
                     <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>

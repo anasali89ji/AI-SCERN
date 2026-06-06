@@ -18,7 +18,7 @@ export default function ResearchPage() {
       industry="Academic Research"
       tagline="Uphold Scientific Integrity in the AI Age"
       description="AI-generated research content threatens peer review, reproducibility, and scientific trust. Aiscern helps researchers, journal editors, and institutions validate the authenticity of submitted work before it enters the scientific record."
-      heroIcon={Microscope}
+      heroIcon={<Microscope className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="cyan"
       ctaLabel="Start Free Research Account"
       problemTitle="Scientific Integrity Under Pressure"
@@ -29,12 +29,12 @@ export default function ResearchPage() {
         { title: 'Data fabrication in experiment logs and lab notes', desc: 'AI assistance in generating experiment logs, results tables, and analysis text blurs the line between AI-assisted writing and outright fabrication.' },
       ]}
       features={[
-        { icon: Brain, title: 'Research Paper Analysis', desc: 'Full-document ensemble detection on academic papers with ≥96% AUC. Section-level confidence breakdown for targeted review.' },
-        { icon: FileSearch, title: 'Sentence-Level Heatmap', desc: 'Identify which specific paragraphs and sections are AI-flagged — crucial for peer reviewers assessing partial AI use.' },
-        { icon: Layers, title: 'Batch Journal Submission Screening', desc: 'Process entire submission batches. API integration available for journal management systems (OJS, ScholarOne, Editorial Manager).' },
-        { icon: BarChart3, title: 'Statistical Confidence Reporting', desc: 'Detailed confidence intervals and model breakdown — the kind of methodological transparency academic contexts demand.' },
-        { icon: CheckCircle, title: 'Audit Trail for IRB', desc: 'Timestamped reports with scan IDs for institutional review board documentation and research integrity committees.' },
-        { icon: Lock, title: 'Data Privacy for Research', desc: 'Submitted manuscripts are processed ephemerally. We do not train on your research content or retain it beyond the session.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Research Paper Analysis', desc: 'Full-document ensemble detection on academic papers with ≥96% AUC. Section-level confidence breakdown for targeted review.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Heatmap', desc: 'Identify which specific paragraphs and sections are AI-flagged — crucial for peer reviewers assessing partial AI use.' },
+        { icon: <Layers className="w-5 h-5" />, title: 'Batch Journal Submission Screening', desc: 'Process entire submission batches. API integration available for journal management systems (OJS, ScholarOne, Editorial Manager).' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Statistical Confidence Reporting', desc: 'Detailed confidence intervals and model breakdown — the kind of methodological transparency academic contexts demand.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trail for IRB', desc: 'Timestamped reports with scan IDs for institutional review board documentation and research integrity committees.' },
+        { icon: <Lock className="w-5 h-5" />, title: 'Data Privacy for Research', desc: 'Submitted manuscripts are processed ephemerally. We do not train on your research content or retain it beyond the session.' },
       ]}
       useCases={[
         { title: 'Journal Pre-Submission Screening', desc: 'A scientific journal integrates Aiscern\'s API into its submission portal. Every paper triggers automated AI screening before assignment to peer reviewers, with a dashboard showing confidence scores across the submission queue.' },

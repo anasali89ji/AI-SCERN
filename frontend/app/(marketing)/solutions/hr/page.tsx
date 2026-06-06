@@ -19,7 +19,7 @@ export default function HRPage() {
       industry="Human Resources"
       tagline="Hire People, Not AI-Written Applications"
       description="AI-polished cover letters and fabricated work samples are flooding application pipelines. Aiscern gives HR teams a fast, accurate way to flag AI-generated content before it wastes interview bandwidth."
-      heroIcon={Users}
+      heroIcon={<Users className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="cyan"
       ctaLabel="Start Free HR Account"
       problemTitle="The Authenticity Problem in Hiring"
@@ -30,12 +30,12 @@ export default function HRPage() {
         { title: 'Legal exposure from unverified assessments', desc: 'Hiring decisions made on AI-generated work samples can create liability if discovered post-hire.' },
       ]}
       features={[
-        { icon: Brain, title: 'Ensemble Text Detection', desc: 'Multi-model analysis flags AI-generated cover letters, personal statements, and written assessments with high confidence.' },
-        { icon: Layers, title: 'Batch Upload', desc: 'Drop a folder of applications and screen all cover letters in minutes. Results dashboard shows risk scores at a glance.' },
-        { icon: FileSearch, title: 'Work Sample Analysis', desc: 'Analyze longer documents like project write-ups, case study responses, and code documentation for AI generation.' },
-        { icon: BarChart3, title: 'Confidence Scoring', desc: 'Every result shows a confidence breakdown — not just a binary flag. Decide your own threshold for follow-up questioning.' },
-        { icon: CheckCircle, title: 'Audit Trails', desc: 'Exportable PDF reports with scan timestamp and model breakdown — defensible records for HR documentation.' },
-        { icon: Shield, title: 'Privacy First', desc: 'Candidate data is processed ephemerally. We never train on your submissions. Full data handling details at /transparency.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Text Detection', desc: 'Multi-model analysis flags AI-generated cover letters, personal statements, and written assessments with high confidence.' },
+        { icon: <Layers className="w-5 h-5" />, title: 'Batch Upload', desc: 'Drop a folder of applications and screen all cover letters in minutes. Results dashboard shows risk scores at a glance.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Work Sample Analysis', desc: 'Analyze longer documents like project write-ups, case study responses, and code documentation for AI generation.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Every result shows a confidence breakdown — not just a binary flag. Decide your own threshold for follow-up questioning.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trails', desc: 'Exportable PDF reports with scan timestamp and model breakdown — defensible records for HR documentation.' },
+        { icon: <Shield className="w-5 h-5" />, title: 'Privacy First', desc: 'Candidate data is processed ephemerally. We never train on your submissions. Full data handling details at /transparency.' },
       ]}
       useCases={[
         { title: 'Application Screening at Scale', desc: 'An in-house recruiter uploads 200 cover letters from an open role posting. Aiscern flags 38 as high-probability AI-generated, allowing the team to prioritize genuine applications for review.' },

@@ -18,7 +18,7 @@ export default function SecurityPage() {
       industry="Cybersecurity"
       tagline="Stop Synthetic Threats Before They Land"
       description="AI-powered fraud — voice clone scams, deepfake identity verification bypass, and AI-crafted spear-phishing — is the fastest-growing attack surface. Aiscern gives security teams multi-modal detection to stop synthetic content at every ingestion point."
-      heroIcon={ShieldCheck}
+      heroIcon={<ShieldCheck className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="rose"
       ctaLabel="Start Free Security Account"
       problemTitle="Synthetic Content in the Threat Landscape"
@@ -29,12 +29,12 @@ export default function SecurityPage() {
         { title: 'Trust & Safety teams are overwhelmed by synthetic UGC', desc: 'User-generated content platforms face massive volumes of AI-generated spam, synthetic reviews, and deepfake images that exceed manual moderation capacity.' },
       ]}
       features={[
-        { icon: Brain, title: 'AI Text Detection', desc: 'Identify AI-generated phishing, social engineering, and synthetic content in ingested text streams.' },
-        { icon: Eye, title: 'Image Forensics', desc: 'Detect synthetic identity photos, AI-generated profile images, and fabricated document imagery.' },
-        { icon: AlertTriangle, title: 'Voice Clone Detection', desc: 'wav2vec2 spectral analysis flags AI-synthesized speech against ASVspoof benchmark datasets.' },
-        { icon: Lock, title: 'API Integration', desc: 'High-throughput REST API designed for security platform integration. Sub-2-second text detection for real-time screening.' },
-        { icon: Layers, title: 'Batch Processing', desc: 'Run bulk scans across ingested content queues. Prioritize high-risk items with confidence-score filtering.' },
-        { icon: BarChart3, title: 'SIEM-Ready Reporting', desc: 'Scan results include structured JSON output compatible with SIEM ingestion and SOC dashboards.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'AI Text Detection', desc: 'Identify AI-generated phishing, social engineering, and synthetic content in ingested text streams.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Image Forensics', desc: 'Detect synthetic identity photos, AI-generated profile images, and fabricated document imagery.' },
+        { icon: <AlertTriangle className="w-5 h-5" />, title: 'Voice Clone Detection', desc: 'wav2vec2 spectral analysis flags AI-synthesized speech against ASVspoof benchmark datasets.' },
+        { icon: <Lock className="w-5 h-5" />, title: 'API Integration', desc: 'High-throughput REST API designed for security platform integration. Sub-2-second text detection for real-time screening.' },
+        { icon: <Layers className="w-5 h-5" />, title: 'Batch Processing', desc: 'Run bulk scans across ingested content queues. Prioritize high-risk items with confidence-score filtering.' },
+        { icon: <BarChart3 className="w-5 h-5" />, title: 'SIEM-Ready Reporting', desc: 'Scan results include structured JSON output compatible with SIEM ingestion and SOC dashboards.' },
       ]}
       useCases={[
         { title: 'Real-Time Call Authentication', desc: 'A financial services firm integrates Aiscern\'s audio API into its inbound call verification pipeline to flag real-time voice synthesis attempts during account access requests.' },

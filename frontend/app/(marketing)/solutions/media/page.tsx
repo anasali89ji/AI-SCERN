@@ -18,7 +18,7 @@ export default function MediaPage() {
       industry="Media & Journalism"
       tagline="Defend the Truth Against Synthetic Media"
       description="Deepfakes, AI-generated press releases, and synthetic imagery are weaponized against journalism every day. Aiscern gives newsrooms a multi-modal detection layer across text, image, audio, and video."
-      heroIcon={Newspaper}
+      heroIcon={<Newspaper className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="amber"
       ctaLabel="Start Free Journalist Account"
       problemTitle="The Synthetic Media Threat to Journalism"
@@ -29,12 +29,12 @@ export default function MediaPage() {
         { title: 'Viral deepfake videos spread before verification can catch up', desc: 'The detection window is narrow. By the time manual verification completes, synthetic content has already been widely shared.' },
       ]}
       features={[
-        { icon: Brain, title: 'AI Text Detection', desc: 'Ensemble RoBERTa + Binoculars analysis on press releases, reports, and submitted articles with ≥96% AUC.' },
-        { icon: Eye, title: 'Deepfake Image Detection', desc: 'ViT-based classifier with pixel-level integrity analysis. Detects GAN-generated and diffusion model images.' },
-        { icon: Video, title: 'Video Deepfake Detection', desc: 'Frame-level analysis combined with NVIDIA NIM deepfake models for facial manipulation detection.' },
-        { icon: AlertTriangle, title: 'Audio Clone Detection', desc: 'wav2vec2-based voice analysis against ASVspoof benchmarks — flags synthetic speech with 92% recall.' },
-        { icon: FileSearch, title: 'Forensic Reports', desc: 'Exportable reports with model confidence breakdown, scan ID, and timestamp for editorial documentation.' },
-        { icon: Shield, title: 'API for Newsroom Workflows', desc: 'Integrate detection directly into CMS submission pipelines. Auto-flag content before it reaches editorial review.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'AI Text Detection', desc: 'Ensemble RoBERTa + Binoculars analysis on press releases, reports, and submitted articles with ≥96% AUC.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Deepfake Image Detection', desc: 'ViT-based classifier with pixel-level integrity analysis. Detects GAN-generated and diffusion model images.' },
+        { icon: <Video className="w-5 h-5" />, title: 'Video Deepfake Detection', desc: 'Frame-level analysis combined with NVIDIA NIM deepfake models for facial manipulation detection.' },
+        { icon: <AlertTriangle className="w-5 h-5" />, title: 'Audio Clone Detection', desc: 'wav2vec2-based voice analysis against ASVspoof benchmarks — flags synthetic speech with 92% recall.' },
+        { icon: <FileSearch className="w-5 h-5" />, title: 'Forensic Reports', desc: 'Exportable reports with model confidence breakdown, scan ID, and timestamp for editorial documentation.' },
+        { icon: <Shield className="w-5 h-5" />, title: 'API for Newsroom Workflows', desc: 'Integrate detection directly into CMS submission pipelines. Auto-flag content before it reaches editorial review.' },
       ]}
       useCases={[
         { title: 'User-Submitted Media Screening', desc: 'A digital newsroom receives thousands of tips and user-submitted images during a breaking news event. Aiscern\'s API scans each image at submission and flags suspected deepfakes for priority editorial review.' },
