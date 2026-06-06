@@ -12,11 +12,12 @@ interface SiteNavProps {
 }
 
 const NAV_LINKS = [
-  { href: '/#tools',   label: 'Tools'   },
-  { href: '/reviews',  label: 'Reviews' },
-  { href: '/blog',     label: 'Blog'    },
-  { href: '/pricing',  label: 'Pricing' },
-  { href: '/docs/api', label: 'API'     },
+  { href: '/#tools',    label: 'Tools'     },
+  { href: '/solutions', label: 'Solutions' },
+  { href: '/reviews',   label: 'Reviews'   },
+  { href: '/blog',      label: 'Blog'      },
+  { href: '/pricing',   label: 'Pricing'   },
+  { href: '/docs/api',  label: 'API'       },
 ]
 
 export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProps) {
