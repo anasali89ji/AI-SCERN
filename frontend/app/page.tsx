@@ -291,7 +291,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
   ]
   return (
     <div className="relative">
-      <div className="rounded-2xl border border-purple-500/20 bg-surface p-4 sm:p-5 shadow-2xl shadow-purple-500/5">
+      <div className="rounded-2xl border border-primary/20 bg-surface p-4 sm:p-5 shadow-2xl shadow-primary/5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
@@ -304,7 +304,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="flex gap-2">
             {examples.map(ex => (
               <button key={ex.label} onClick={() => setText(ex.text)}
-                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-purple-500/40 text-text-muted hover:text-purple-400 transition-all min-h-0">
+                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-primary/40 text-text-muted hover:text-primary transition-all min-h-0">
                 {ex.label}
               </button>
             ))}
@@ -312,7 +312,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all" />
+          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
           <button onClick={analyze} disabled={loading || text.length < 50}
@@ -345,7 +345,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
                   <p className="text-xs text-text-muted">✓ Free · Sign in to save results</p>
-                  <Link href="/detect/text" className="text-xs text-purple-400 hover:underline font-medium flex items-center gap-1">
+                  <Link href="/detect/text" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
                     Full text detector <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -496,7 +496,7 @@ export default function HomePage() {
 
             {/* Animated badge */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
+              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary/80 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400" />
@@ -532,20 +532,20 @@ export default function HomePage() {
                     Go to Dashboard
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-purple-500/40 transition-all duration-200">
+                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/40 transition-all duration-200">
                     <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
                   </Link>
                 </>
               ) : (
                 <>
                   <Link href="/detect/text"
-                    className="group relative overflow-hidden btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-2xl shadow-purple-500/30">
+                    className="group relative overflow-hidden btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
                     Start Free Scan
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center gap-2 hover:border-purple-500/30">
+                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center gap-2 hover:border-primary/30">
                     <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber" />Create Free Account
                   </Link>
                 </>
@@ -602,7 +602,7 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-14 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/8 text-purple-400 text-xs font-semibold mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
                 <Cpu className="w-3 h-3" /> Six Powerful Tools
               </div>
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-display mb-4">
@@ -638,12 +638,12 @@ export default function HomePage() {
                         </span>
                       </div>
 
-                      <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-purple-300 transition-colors duration-200 leading-tight">
+                      <h3 className="text-base sm:text-lg font-bold text-text-primary mb-2 group-hover:text-primary/80 transition-colors duration-200 leading-tight">
                         {tool.label}
                       </h3>
                       <p className="text-sm text-text-muted leading-relaxed">{tool.desc}</p>
 
-                      <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-purple-400 transition-colors duration-200">
+                      <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors duration-200">
                         Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
                     </SpotlightCard>
@@ -693,14 +693,14 @@ export default function HomePage() {
                       <div className="relative z-10 flex-shrink-0">
                         <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
                           style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(37,99,235,0.15))', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 8px 32px rgba(139,92,246,0.12)' }}>
-                          <StepIcon className="w-6 h-6 text-purple-400" strokeWidth={1.7} />
+                          <StepIcon className="w-6 h-6 text-primary" strokeWidth={1.7} />
                           <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
                             {i + 1}
                           </div>
                         </div>
                       </div>
                       <div className="flex-1 max-w-md">
-                        <div className="text-xs font-bold text-purple-400/60 uppercase tracking-widest mb-1">{step.n}</div>
+                        <div className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">{step.n}</div>
                         <h3 className="text-xl sm:text-2xl font-bold text-text-primary mb-2">{step.title}</h3>
                         <p className="text-sm sm:text-base text-text-muted leading-relaxed">{step.desc}</p>
                       </div>
@@ -735,7 +735,7 @@ export default function HomePage() {
 
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-purple-500/30 bg-purple-500/8 text-sm font-semibold text-purple-400 hover:bg-purple-500/15 transition-all duration-200">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all duration-200">
                 Share Your Feedback
               </a>
               <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
@@ -782,7 +782,7 @@ export default function HomePage() {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color="rgba(139,92,246,0.10)"
-                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-purple-500/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
+                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300`}>
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />
@@ -821,8 +821,8 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <FlaskConical className="w-4 h-4 text-purple-400" />
-                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">How our detection works</span>
+                <FlaskConical className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">How our detection works</span>
               </div>
               <p className="text-sm text-text-muted leading-relaxed">
                 Each scan runs through Aiscern's ensemble of open-source and fine-tuned detection models plus 7–10 deterministic signal extractors (perplexity, burstiness, spectral entropy, GAN artifacts). Weights adapt in real time — if a model is unavailable, its weight redistributes to the remaining models. Final verdict requires ≥62% confidence to label AI, ≤38% for Human.
@@ -878,12 +878,12 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={user ? '/dashboard' : '/detect/text'}
-                  className="group relative overflow-hidden btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-purple-500/30">
+                  className="group relative overflow-hidden btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
                   <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/8 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2 hover:border-purple-500/30">
+                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2 hover:border-primary/30">
                   <Sparkles className="w-5 h-5 text-amber" />Create Free Account
                 </Link>
               </div>
