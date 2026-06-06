@@ -156,7 +156,7 @@ export default function ReviewsPage() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-black mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold font-display mb-4">
             User <span className="gradient-text">Reviews</span>
           </h1>
           <p className="text-text-muted text-lg max-w-xl mx-auto mb-6">
@@ -174,7 +174,7 @@ export default function ReviewsPage() {
             className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="flex items-center gap-5">
               <div className="text-center">
-                <div className="text-6xl font-black gradient-text">{displayStats.avg}</div>
+                <div className="text-6xl font-bold font-display gradient-text">{displayStats.avg}</div>
                 <StarRow rating={Math.round(parseFloat(displayStats.avg))} size="md" />
                 <p className="text-xs text-text-muted mt-1">{displayStats.total} review{displayStats.total !== 1 ? 's' : ''}</p>
               </div>
@@ -204,7 +204,7 @@ export default function ReviewsPage() {
                 <div key={s.label} className="bg-surface-active rounded-xl p-3 flex items-center gap-2.5">
                   <s.icon className={`w-5 h-5 flex-shrink-0 ${s.color}`} />
                   <div>
-                    <div className="text-lg font-black text-text-primary">{s.value}</div>
+                    <div className="text-lg font-semibold text-text-primary">{s.value}</div>
                     <div className="text-[10px] text-text-muted">{s.label}</div>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default function ReviewsPage() {
 
         {/* CTA */}
         <div className="text-center mt-16 p-8 rounded-2xl border border-border bg-surface/40">
-          <h2 className="text-2xl font-black text-text-primary mb-2">Share Your Experience</h2>
+          <h2 className="text-2xl font-semibold font-display text-text-primary mb-2">Share Your Experience</h2>
           <p className="text-text-muted mb-5">
             Tried Aiscern? Help others by sharing your honest feedback — 1 star or 5 stars, anonymously or with your name.
           </p>

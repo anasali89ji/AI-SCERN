@@ -70,7 +70,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 <Image src="/logo.png" alt="Aiscern" width={72} height={50}
                   className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]" />
               </Link>
-              <h1 className="text-2xl font-black text-text-primary">
+              <h1 className="text-2xl font-semibold font-display text-text-primary">
                 Sign in to <span className="gradient-text">Aiscern</span>
               </h1>
               <p className="text-text-muted text-sm leading-relaxed">

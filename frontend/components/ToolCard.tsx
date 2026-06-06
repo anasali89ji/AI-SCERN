@@ -62,7 +62,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
           {conf != null && (
             <div className="text-right">
               <div className="text-xs text-text-muted hidden sm:block">Confidence</div>
-              <div className="text-lg sm:text-xl font-black tabular-nums" style={{ color: bad ? '#f87171' : '#34d399' }}>{conf}%</div>
+              <div className="text-lg sm:text-xl font-semibold tabular-nums" style={{ color: bad ? '#f87171' : '#34d399' }}>{conf}%</div>
             </div>
           )}
           <div className={`text-text-muted transition-transform duration-200 ${open ? 'rotate-90' : ''}`}><Ico.ChevRight /></div>

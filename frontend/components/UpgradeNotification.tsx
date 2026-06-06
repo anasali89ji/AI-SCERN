@@ -58,7 +58,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           </motion.div>
         </div>
 
-        <h2 className="text-2xl font-black text-white text-center mb-2">{notif.title}</h2>
+        <h2 className="text-2xl font-semibold font-display text-white text-center mb-2">{notif.title}</h2>
         <p className="text-sm text-[#94a3b8] text-center mb-6 leading-relaxed">{notif.message}</p>
 
         {/* Perks */}

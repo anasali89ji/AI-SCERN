@@ -87,8 +87,8 @@ function renderMarkdown(md: string): string {
   const result = md
     // Headings
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-text-primary mt-8 mb-3">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-black text-text-primary mt-10 mb-4 pb-2 border-b border-border/40">$1</h2>')
-    .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-black text-text-primary mt-10 mb-4">$1</h1>')
+    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-semibold text-text-primary mt-10 mb-4 pb-2 border-b border-border/40">$1</h2>')
+    .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-semibold font-display text-text-primary mt-10 mb-4">$1</h1>')
     // Bold / italic
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-text-primary">$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em class="italic">$1</em>')
@@ -138,7 +138,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl sm:text-4xl font-black text-text-primary leading-tight mb-5">
+        <h1 className="text-2xl sm:text-4xl font-bold font-display text-text-primary leading-tight mb-5">
           {post.title}
         </h1>
 
@@ -181,7 +181,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* CTA */}
         <div className="mt-12 p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center">
-          <h3 className="font-black text-lg mb-2">Try Aiscern Free</h3>
+          <h3 className="font-semibold text-lg mb-2">Try Aiscern Free</h3>
           <p className="text-text-muted text-sm mb-4">
             Detect AI-generated text, images, audio, and video — no account required.
           </p>

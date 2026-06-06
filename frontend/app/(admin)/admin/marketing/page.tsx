@@ -14,7 +14,7 @@ export default function Marketing() {
   return (
     <RoleGuard required="MARKETING">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Marketing Analytics</h1>
+        <h1 className="text-2xl font-semibold font-display text-text-primary">Marketing Analytics</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Monthly Visitors"  value="48,320" delta="22%"  positive icon={Globe}       color={C.primary}   />
           <StatCard title="Bounce Rate"       value="36.4%"  delta="2.1%" positive icon={MousePointer} color={C.warning}   />

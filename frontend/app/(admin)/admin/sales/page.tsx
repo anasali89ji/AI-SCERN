@@ -13,7 +13,7 @@ export default function SalesRevenue() {
   return (
     <RoleGuard required="MANAGER">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Sales & Revenue</h1>
+        <h1 className="text-2xl font-semibold font-display text-text-primary">Sales & Revenue</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="MRR"             value="$4,820"  delta="8.2%" positive icon={DollarSign}  color={C.success}   />
           <StatCard title="ARR"             value="$57,840" delta="8.2%" positive icon={TrendingUp}  color={C.primary}   />

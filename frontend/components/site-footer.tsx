@@ -76,7 +76,7 @@ export function SiteFooter() {
               <Image src="/logo.png" alt="Aiscern AI Detection Platform Logo"
                 width={31} height={36}
                 className="object-contain h-8 w-auto drop-shadow-[0_0_10px_rgba(245,100,0,0.45)]" />
-              <span className="font-black text-xl gradient-text">Aiscern</span>
+              <span className="font-semibold text-xl gradient-text">Aiscern</span>
             </div>
 
             <p className="text-text-muted text-sm leading-relaxed mb-4">

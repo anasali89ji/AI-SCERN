@@ -130,7 +130,7 @@ export default function PricingPage() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Simple, transparent pricing</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-display text-text-primary mb-3">Simple, transparent pricing</h1>
           <p className="text-text-muted max-w-xl mx-auto mb-6">Start free — no credit card required. Upgrade when you need more scans, modalities, or API access.</p>
 
           {/* Billing toggle */}
@@ -162,10 +162,10 @@ export default function PricingPage() {
               </div>
               <div className="mb-6">
                 {tier.monthlyPrice === null ? (
-                  <p className="text-2xl font-black text-text-primary">Custom</p>
+                  <p className="text-2xl font-semibold font-display text-text-primary">Custom</p>
                 ) : (
                   <div className="flex items-end gap-1">
-                    <span className="text-3xl font-black text-text-primary">${yearly ? tier.yearlyPrice : tier.monthlyPrice}</span>
+                    <span className="text-3xl font-semibold font-display text-text-primary">${yearly ? tier.yearlyPrice : tier.monthlyPrice}</span>
                     <span className="text-text-muted text-sm mb-1">/mo</span>
                   </div>
                 )}

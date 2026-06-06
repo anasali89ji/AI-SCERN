@@ -50,7 +50,7 @@ export default function RoadmapPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-semibold mb-5">
               <Clock className="w-3 h-3" /> Product Roadmap
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-text-primary mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold font-display text-text-primary mb-4">
               What We Are <span className="gradient-text">Building</span>
             </h1>
             <p className="text-text-muted text-base leading-relaxed">
@@ -60,7 +60,7 @@ export default function RoadmapPage() {
 
           {/* Current Status */}
           <section className="mb-14">
-            <h2 className="text-xl font-black text-text-primary mb-5 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-text-primary mb-5 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald" /> Current Status
             </h2>
             <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
@@ -75,7 +75,7 @@ export default function RoadmapPage() {
 
           {/* Next 3 Months */}
           <section className="mb-14">
-            <h2 className="text-xl font-black text-text-primary mb-5 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-text-primary mb-5 flex items-center gap-2">
               <ArrowRight className="w-5 h-5 text-primary" /> Next 3 Months
             </h2>
             <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
@@ -90,7 +90,7 @@ export default function RoadmapPage() {
 
           {/* Known Limitations */}
           <section className="mb-14">
-            <h2 className="text-xl font-black text-text-primary mb-5 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-text-primary mb-5 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber" /> Known Limitations
             </h2>
             <div className="space-y-3">

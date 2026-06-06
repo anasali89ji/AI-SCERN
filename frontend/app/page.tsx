@@ -334,7 +334,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                     </span>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatConfidence(result.confidence || 0)}</div>
+                    <div className="text-2xl font-semibold font-display text-text-primary tabular-nums">{formatConfidence(result.confidence || 0)}</div>
                     <div className="text-[10px] text-text-muted">confidence</div>
                   </div>
                 </div>
@@ -578,7 +578,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
                   transition={{ delay: i * 0.1, duration: 0.6 }}
                   className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-black mb-2 tabular-nums"
+                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl font-bold font-display mb-2 tabular-nums"
                     style={{ background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #8B5CF6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
@@ -605,7 +605,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/8 text-purple-400 text-xs font-semibold mb-4">
                 <Cpu className="w-3 h-3" /> Six Powerful Tools
               </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-display mb-4">
                 Detection <span className="gradient-text">Tools</span>
               </h2>
               <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
@@ -665,7 +665,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
                 <Activity className="w-3 h-3" /> Simple Process
               </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-display mb-4">
                 How It <span className="gradient-text">Works</span>
               </h2>
               <p className="text-text-muted text-base sm:text-lg">From upload to verdict in seconds.</p>
@@ -723,7 +723,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber/20 bg-amber/8 text-amber text-xs font-semibold mb-4">
                 <Star className="w-3 h-3" /> Beta Feedback
               </div>
-              <h2 className="text-2xl sm:text-4xl font-black mb-3">Early <span className="gradient-text">Feedback</span></h2>
+              <h2 className="text-2xl sm:text-4xl font-bold font-display mb-3">Early <span className="gradient-text">Feedback</span></h2>
               <p className="text-sm text-text-muted max-w-lg mx-auto leading-relaxed">
                 We are collecting real feedback from beta testers. If you have used Aiscern, we would love to hear from you.
               </p>
@@ -756,7 +756,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
                 <Shield className="w-3 h-3" /> Trust & Accuracy
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-text-primary">
+              <h2 className="text-3xl sm:text-5xl font-bold font-display text-text-primary">
                 Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span>
               </h2>
             </motion.div>
@@ -789,7 +789,7 @@ export default function HomePage() {
                     </div>
                     {displayStat !== undefined && (
                       <div className="mb-3">
-                        <div className="text-3xl sm:text-4xl font-black tabular-nums"
+                        <div className="text-3xl sm:text-4xl font-bold font-display tabular-nums"
                           style={{ background: 'linear-gradient(135deg, #ffffff, #d8b4fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                           <CountUp target={displayTarget} suffix={displaySuffix} />
                         </div>
@@ -869,7 +869,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <h2 className="text-4xl sm:text-6xl font-black mb-6 leading-tight">
+              <h2 className="text-4xl sm:text-6xl font-bold font-display mb-6 leading-tight">
                 Start <span className="gradient-text">Detecting</span><br />AI Content Free
               </h2>
               <p className="text-text-muted text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">

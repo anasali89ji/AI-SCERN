@@ -685,7 +685,7 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              <h1 className="text-2xl font-black text-white mb-0.5 tracking-tight">ARIA</h1>
+              <h1 className="text-2xl font-semibold font-display text-white mb-0.5 tracking-tight">ARIA</h1>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">Aiscern AI Detection Assistant</p>
               <p className="text-gray-600 text-xs sm:text-sm text-center mb-4 max-w-sm leading-relaxed">
                 Ask anything about AI detection, upload media for deepfake analysis, or explore Aiscern's capabilities.

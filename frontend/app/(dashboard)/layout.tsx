@@ -101,7 +101,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick }: SidebarProp
         className={`flex items-center gap-3 px-4 py-5 border-b border-border hover:opacity-80 transition-opacity ${collapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Aiscern" width={36} height={25}
           className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.5)] flex-shrink-0" />
-        {!collapsed && <span className="text-lg font-black gradient-text">Aiscern</span>}
+        {!collapsed && <span className="text-lg font-semibold gradient-text">Aiscern</span>}
       </Link>
 
       {/* Nav groups */}

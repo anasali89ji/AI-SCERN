@@ -240,7 +240,7 @@ export default function WhoNeedsSection() {
             <Users className="w-3 h-3" />
             Who Uses Aiscern
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4 leading-tight">
             Used by Professionals <span className="gradient-text">Across Industries</span>
           </h2>
           <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">

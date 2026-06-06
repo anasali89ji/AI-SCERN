@@ -51,7 +51,7 @@ export default function Finance() {
     <RoleGuard required="EXECUTIVE">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-text-primary">Financial Dashboard</h1>
+          <h1 className="text-2xl font-semibold font-display text-text-primary">Financial Dashboard</h1>
           <span className="text-xs text-amber-400 bg-amber/10 border border-amber/20 px-3 py-1 rounded-full font-medium">🔒 Restricted</span>
         </div>
 
@@ -61,7 +61,7 @@ export default function Finance() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
             {metrics.map(({label,value})=>(
               <div key={label} className="text-center">
-                <div className="text-lg font-black text-text-primary">{value}</div>
+                <div className="text-lg font-semibold text-text-primary">{value}</div>
                 <div className="text-xs text-text-muted mt-1">{label}</div>
               </div>
             ))}

@@ -79,7 +79,7 @@ export default function PipelinePage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-black text-text-primary flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-text-primary flex items-center gap-2">
             <Database className="w-5 h-5 text-primary" />
             Data Pipeline
           </h1>
@@ -123,7 +123,7 @@ export default function PipelinePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-text-muted uppercase tracking-wider mb-1">{label}</p>
-                    <p className={`text-2xl font-black ${color}`}>{value}</p>
+                    <p className={`text-2xl font-semibold font-display ${color}`}>{value}</p>
                     <p className="text-xs text-text-disabled mt-1">{sub}</p>
                   </div>
                   <Icon className="w-5 h-5 text-text-disabled" />
@@ -141,10 +141,10 @@ export default function PipelinePage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {byType.map(b => (
                   <div key={b.media_type} className="text-center p-3 bg-background/60 rounded-xl">
-                    <p className={`text-lg font-black capitalize ${COLORS[b.media_type] || 'text-text-primary'}`}>
+                    <p className={`text-lg font-semibold capitalize ${COLORS[b.media_type] || 'text-text-primary'}`}>
                       {b.media_type}
                     </p>
-                    <p className="text-2xl font-black text-text-primary">{fmt(b.count)}</p>
+                    <p className="text-2xl font-semibold font-display text-text-primary">{fmt(b.count)}</p>
                     <p className="text-xs text-text-muted mt-1">{fmt(b.pushed)} pushed</p>
                   </div>
                 ))}

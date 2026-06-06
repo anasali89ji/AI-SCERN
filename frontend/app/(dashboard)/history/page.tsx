@@ -238,7 +238,7 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-semibold font-display text-text-primary mb-1 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <Clock className="w-6 h-6 text-primary" />
               </div>

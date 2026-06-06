@@ -70,7 +70,7 @@ export default function SecurityPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
             <Shield className="w-3 h-3" /> Security
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold font-display mb-4">
             How we protect <span className="gradient-text">your data</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
@@ -80,7 +80,7 @@ export default function SecurityPage() {
 
         {/* Summary card */}
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-12">
-          <h2 className="font-black text-lg mb-3 flex items-center gap-2">
+          <h2 className="font-semibold text-lg mb-3 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-400" /> The short version
           </h2>
           <ul className="space-y-2 text-sm text-text-muted">
@@ -123,7 +123,7 @@ export default function SecurityPage() {
 
         {/* Data retention table */}
         <section className="mb-14">
-          <h2 className="text-xl font-black mb-5">Data retention</h2>
+          <h2 className="text-xl font-semibold mb-5">Data retention</h2>
           <div className="rounded-xl border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -148,7 +148,7 @@ export default function SecurityPage() {
         <section className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6 mb-10">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-yellow-400" />
-            <h2 className="font-black text-lg">Responsible disclosure</h2>
+            <h2 className="font-semibold text-lg">Responsible disclosure</h2>
           </div>
           <p className="text-sm text-text-muted leading-relaxed mb-3">
             If you discover a security vulnerability in Aiscern, please report it responsibly before disclosing publicly. We investigate all credible reports promptly.
