@@ -43,7 +43,7 @@ export default function ComparisonTable() {
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest">
             Competitive Edge
           </div>
-          <h2 className="text-3xl md:text-4xl font-black">
+          <h2 className="text-3xl md:text-4xl font-bold font-display">
             The <span className="gradient-text">Only Platform</span> That Detects All 4 Media Types
           </h2>
           <p className="text-text-muted max-w-xl mx-auto">

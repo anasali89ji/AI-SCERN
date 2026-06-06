@@ -152,7 +152,7 @@ export default function AIvsRealSection() {
             <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" aria-hidden="true" />
             Real-World Detection Examples
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black mb-3">
+          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold font-display mb-3">
             AI vs <span className="gradient-text">Authentic</span>
           </h2>
           <p className="text-text-muted text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-2">

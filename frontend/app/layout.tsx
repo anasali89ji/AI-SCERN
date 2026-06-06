@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+import { Space_Grotesk } from 'next/font/google'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
@@ -15,6 +16,13 @@ const inter = localFont({
   variable: '--font-inter',
   display: 'swap',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+  weight: ['500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -76,7 +84,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
         <meta name="theme-color" content="#0f172a" />

@@ -14,7 +14,7 @@ export default function DetectionAnalytics() {
   return (
     <RoleGuard required="ANALYST">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Detection Analytics</h1>
+        <h1 className="text-2xl font-semibold font-display text-text-primary">Detection Analytics</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Scans Today"     value="14,280" delta="12%" positive icon={Scan}          color={C.primary}   />
           <StatCard title="This Month"      value="312k"   delta="18%" positive icon={TrendingUp}    color={C.secondary} />

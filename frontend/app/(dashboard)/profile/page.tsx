@@ -34,7 +34,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
   return (
     <div className="bg-surface border border-border/55 rounded-2xl p-5 flex flex-col gap-2">
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4 h-4" /></div>
-      <p className="text-2xl font-black text-text-primary tabular-nums">{value}</p>
+      <p className="text-2xl font-semibold font-display text-text-primary tabular-nums">{value}</p>
       <p className="text-xs text-text-muted">{label}</p>
     </div>
   )
@@ -167,7 +167,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             {/* Avatar with upload overlay */}
             <div className="relative group w-24 h-24">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-2xl ring-4 ring-surface"
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-white font-semibold font-display text-2xl ring-4 ring-surface"
                 style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
                 {(displayName||user?.displayName||user?.email||'U')[0]?.toUpperCase()}
               </div>
@@ -249,7 +249,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-black text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold font-display text-text-primary">{displayName || user?.displayName || user?.email?.split('@')[0]}</h1>
                 {profile?.username && <p className="text-sm text-text-muted">@{profile.username}</p>}
                 {profile?.bio      && <p className="text-sm text-text-secondary">{profile.bio}</p>}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">

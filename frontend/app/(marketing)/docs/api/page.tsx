@@ -39,11 +39,11 @@ export default function ApiDocsPage() {
   return (
     <div className="min-h-screen bg-background text-text-primary">
       <div className="border-b border-border px-6 py-4">
-        <Link href="/" className="text-xl font-black gradient-text">Aiscern</Link>
+        <Link href="/" className="text-xl font-semibold gradient-text">Aiscern</Link>
       </div>
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
         <div>
-          <h1 className="text-4xl font-black mb-3">API Documentation</h1>
+          <h1 className="text-4xl font-bold font-display mb-3">API Documentation</h1>
           <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
         </div>
 

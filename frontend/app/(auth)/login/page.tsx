@@ -50,7 +50,7 @@ function LoginContent() {
       <Link href="/" className="flex items-center gap-2.5 mb-7 relative z-10 group">
         <Image src="/logo.png" alt="Aiscern logo" width={36} height={24}
           className="object-contain drop-shadow-[0_0_14px_rgba(245,100,0,0.6)] group-hover:drop-shadow-[0_0_20px_rgba(245,100,0,0.75)] transition-all duration-300" priority />
-        <span className="text-xl font-black gradient-text tracking-tight">Aiscern</span>
+        <span className="text-xl font-semibold gradient-text tracking-tight">Aiscern</span>
       </Link>
 
       {/* Card */}

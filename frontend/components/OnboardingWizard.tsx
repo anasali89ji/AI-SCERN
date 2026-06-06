@@ -100,7 +100,7 @@ export function OnboardingWizard() {
               <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
+              <h2 className="text-2xl font-semibold font-display text-white">Welcome to Aiscern</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 The most accurate AI content detection platform. Let's get you set up in 30 seconds.
               </p>
@@ -122,7 +122,7 @@ export function OnboardingWizard() {
           {step === 'modalities' && (
             <div className="space-y-5">
               <div className="text-center">
-                <h2 className="text-xl font-black text-white">What will you detect?</h2>
+                <h2 className="text-xl font-semibold text-white">What will you detect?</h2>
                 <p className="text-text-muted text-xs mt-1">Select all that apply — you can use all of them anytime</p>
               </div>
               <div className="space-y-2">
@@ -159,7 +159,7 @@ export function OnboardingWizard() {
                 <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
                   <User className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-black text-white">Choose a username</h2>
+                <h2 className="text-xl font-semibold text-white">Choose a username</h2>
                 <p className="text-text-muted text-xs mt-1">This is optional — you can set it later in your profile</p>
               </div>
               <div className="relative">
@@ -212,7 +212,7 @@ export function OnboardingWizard() {
               >
                 <Zap className="w-8 h-8 text-white" />
               </motion.div>
-              <h2 className="text-2xl font-black text-white">You're all set!</h2>
+              <h2 className="text-2xl font-semibold font-display text-white">You're all set!</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 Your account is ready. Start with a free scan — no upload required for text detection.
               </p>

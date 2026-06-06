@@ -254,7 +254,7 @@ export default function BatchPage() {
     <>
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-semibold font-display text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6 text-secondary" />
           </div>
@@ -327,7 +327,7 @@ export default function BatchPage() {
                 { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber' : 'text-text-muted' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
-                  <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
+                  <div className={`text-xl sm:text-2xl font-semibold font-display ${color}`}>{value}</div>
                   <div className="text-xs text-text-muted mt-0.5">{label}</div>
                 </div>
               ))}

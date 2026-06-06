@@ -185,7 +185,7 @@ function AudioDetectionPage() {
     <div className="p-2 sm:p-4 lg:p-8 max-w-6xl mx-auto">
       <audio ref={audioRef} className="hidden" />
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-semibold font-display text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
             <Mic className="w-6 h-6 text-cyan" />
           </div>
@@ -296,7 +296,7 @@ function AudioDetectionPage() {
                     <cfg.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${cfg.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>
+                    <h3 className={`text-base sm:text-xl font-semibold ${cfg.color} mb-1 leading-tight`}>
                       {displayName
                         ? result.verdict === 'AI' ? `${displayName}, this audio is AI Generated`
                           : result.verdict === 'HUMAN' ? `${displayName}, this is an Authentic Human Voice`
@@ -454,7 +454,7 @@ function AudioDetectionPage() {
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
-            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
+            <p className="font-semibold text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>

@@ -31,7 +31,7 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
           <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 mb-3 inline-block">
             {post.category}
           </span>
-          <h2 className="text-xl sm:text-3xl font-black text-white mb-2">{post.title}</h2>
+          <h2 className="text-xl sm:text-3xl font-semibold font-display text-white mb-2">{post.title}</h2>
           <div className="flex items-center gap-3 text-xs text-white/60">
             <span>{formatDate(post.date)}</span>
             <span>·</span>
@@ -85,7 +85,7 @@ export default function BlogPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
             <Tag className="w-3 h-3" /> Insights & Guides
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold font-display mb-4">
             Aiscern <span className="gradient-text">Blog</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">

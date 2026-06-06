@@ -14,7 +14,7 @@ export default function Support() {
   return (
     <RoleGuard required="SUPPORT">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Customer Support</h1>
+        <h1 className="text-2xl font-semibold font-display text-text-primary">Customer Support</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="CSAT Score"      value="94%"   delta="2%"  positive icon={Star}             color={C.warning}   />
           <StatCard title="NPS Score"       value="62"    delta="4"   positive icon={HeadphonesIcon}   color={C.primary}   />
@@ -41,7 +41,7 @@ export default function Support() {
               {[{label:'Open',count:12,color:C.danger},{label:'In Progress',count:5,count2:5,color:C.warning},{label:'Resolved',count:148,color:C.success}].map(s=>(
                 <div key={s.label} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50">
                   <span className="text-sm text-text-secondary">{s.label}</span>
-                  <span className="text-lg font-black" style={{color:s.color}}>{s.count}</span>
+                  <span className="text-lg font-semibold" style={{color:s.color}}>{s.count}</span>
                 </div>
               ))}
             </div>

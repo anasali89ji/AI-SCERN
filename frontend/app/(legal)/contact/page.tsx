@@ -36,7 +36,7 @@ export default function ContactPage() {
         <div className="max-w-5xl mx-auto h-full px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
-            <span className="font-black text-lg gradient-text">Aiscern</span>
+            <span className="font-semibold text-lg gradient-text">Aiscern</span>
           </Link>
           <Link href="/" className="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary">
             <ArrowLeft className="w-3.5 h-3.5" /> Home
@@ -46,7 +46,7 @@ export default function ContactPage() {
 
       <main className="pt-24 pb-20 max-w-5xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">Get in <span className="gradient-text">Touch</span></h1>
+          <h1 className="text-3xl sm:text-5xl font-bold font-display mb-4">Get in <span className="gradient-text">Touch</span></h1>
           <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">
             We respond to all inquiries within 24–48 hours. For business and enterprise queries, contact our Project Manager directly.
           </p>

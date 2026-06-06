@@ -27,7 +27,7 @@ export default function AccessibilityPage() {
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-12">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-text-primary mb-3">Accessibility Statement</h1>
+          <h1 className="text-4xl font-bold font-display text-text-primary mb-3">Accessibility Statement</h1>
           <p className="text-text-muted">Last reviewed: {LAST_REVIEWED}</p>
         </div>
 
