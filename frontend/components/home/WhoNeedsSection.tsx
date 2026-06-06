@@ -24,8 +24,8 @@ const WHO_NEEDS = [
     value: 'Verify every image, audio clip and statement before it publishes — in under 10 seconds.',
     stats: [{ label: 'Image verification', value: '~82%' }, { label: 'Audio deepfake', value: '~79%' }],
     href: '/detect/image',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.22)',
   },
   {
     role: 'Educators & Schools',
@@ -96,8 +96,8 @@ const WHO_NEEDS = [
     value: 'Validate source material and peer submissions using methodology-backed multi-model detection.',
     stats: [{ label: 'Text accuracy', value: '~85%' }, { label: 'Datasets used', value: '87' }],
     href: '/methodology',
-    color: '#7c3aed',
-    glow: 'rgba(124,58,237,0.22)',
+    color: '#2563eb',
+    glow: 'rgba(37,99,235,0.22)',
   },
   {
     role: 'Marketing & Brand Teams',
@@ -145,7 +145,11 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           loading="lazy"
           sizes="(max-width: 640px) 338px, (max-width: 1024px) 50vw, 33vw"
           quality={72}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          onError={e => {
+            const el = e.target as HTMLImageElement
+            el.style.display = 'none'
+            // The gradient background underneath shows as fallback
+          }}
         />
         <div className="absolute inset-0" style={{ background: `${card.color}28` }} />
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -164,7 +168,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           style={{ background: `radial-gradient(ellipse at 50% 120%, ${card.glow} 0%, transparent 65%)` }}
         />
         <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3 z-10">
-          <h3 className="text-[13px] sm:text-sm font-black text-white leading-snug drop-shadow-lg">{card.role}</h3>
+          <h3 className="text-[13px] sm:text-sm font-semibold text-white leading-snug drop-shadow-lg">{card.role}</h3>
         </div>
       </div>
 
