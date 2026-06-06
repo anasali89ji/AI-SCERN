@@ -52,7 +52,6 @@ function sanitizeHtml(html: string): string {
   )
 
   // Strip or sanitize all remaining tags
-  html = html.replace(/<(\/?[a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?\/?>/ , (match) => match) // placeholder
   html = html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?>?/g, (match, tagName) => {
     const tag = (tagName ?? '').toLowerCase()
     if (!SAFE_TAGS.has(tag)) return ''

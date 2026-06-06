@@ -1,15 +1,7 @@
 'use client'
-/**
- * UpgradeModal — OPEN SOURCE MODE
- * Subscription model removed. This is a no-op stub.
- */
-interface Props {
-  onClose: () => void
-  feature?: string
-  requiredPlan?: 'starter' | 'pro' | 'enterprise'
-}
+import { useEffect } from 'react'
+interface Props { onClose: () => void; feature?: string; requiredPlan?: 'starter' | 'pro' | 'enterprise' }
 export default function UpgradeModal({ onClose }: Props) {
-  // Auto-close immediately — no upgrade modal in open source mode
-  if (typeof onClose === 'function') onClose()
+  useEffect(() => { onClose() }, [onClose])
   return null
 }

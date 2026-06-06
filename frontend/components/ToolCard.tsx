@@ -61,11 +61,11 @@ export function ToolCard({ tool, result }: ToolCardProps) {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
           {conf != null && (
             <div className="text-right">
-              <div className="text-xs text-gray-600 hidden sm:block">Confidence</div>
+              <div className="text-xs text-text-muted hidden sm:block">Confidence</div>
               <div className="text-lg sm:text-xl font-black tabular-nums" style={{ color: bad ? '#f87171' : '#34d399' }}>{conf}%</div>
             </div>
           )}
-          <div className={`text-gray-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}><Ico.ChevRight /></div>
+          <div className={`text-text-muted transition-transform duration-200 ${open ? 'rotate-90' : ''}`}><Ico.ChevRight /></div>
         </div>
       </button>
       {open && (
@@ -75,7 +75,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
               <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:`${meta.color}cc`}}>Key Findings</div>
               <div className="space-y-1.5">
                 {(result.key_findings as string[]).map((f, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                  <div key={i} className="flex items-start gap-2 text-xs text-text-secondary">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{background:meta.color}} />{f}
                   </div>
                 ))}
@@ -83,7 +83,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
             </div>
           )}
           {Boolean(result?.recommendation) && (
-            <div className="mt-2 mb-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 border" style={{background:`${meta.color}0a`,borderColor:`${meta.color}20`}}>
+            <div className="mt-2 mb-3 px-3 py-2.5 rounded-lg text-xs text-text-secondary border" style={{background:`${meta.color}0a`,borderColor:`${meta.color}20`}}>
               <span className="font-semibold" style={{color:meta.color}}>Recommendation: </span>{result.recommendation as string}
             </div>
           )}
@@ -94,18 +94,18 @@ export function ToolCard({ tool, result }: ToolCardProps) {
               if (k === 'vila_analysis' || k === 'raw') return (
                 <div key={k}>
                   <div className='text-xs font-semibold uppercase tracking-wider mb-2' style={{color:`${meta.color}cc`}}>Full Analysis</div>
-                  <div className='text-xs text-gray-300 leading-relaxed p-3 rounded-lg border whitespace-pre-wrap max-h-48 overflow-y-auto' style={{background:`${meta.color}08`,borderColor:`${meta.color}20`}}>{String(v)}</div>
+                  <div className='text-xs text-text-secondary leading-relaxed p-3 rounded-lg border whitespace-pre-wrap max-h-48 overflow-y-auto' style={{background:`${meta.color}08`,borderColor:`${meta.color}20`}}>{String(v)}</div>
                 </div>
               )
               if (['engine','analysis_model','analysis_focus','nvidia_powered'].includes(k)) return null
               if (typeof v === 'object' && !Array.isArray(v)) return (
                 <div key={k}>
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">{k.replace(/_/g,' ')}</div>
+                  <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">{k.replace(/_/g,' ')}</div>
                   <div className="space-y-1 pl-2 border-l-2" style={{ borderColor:`${meta.color}30` }}>
                     {Object.entries(v as Record<string, unknown>).map(([kk, vv]) => (
                       <div key={kk} className="flex justify-between text-xs gap-4">
-                        <span className="text-gray-600 capitalize">{kk.replace(/_/g,' ')}</span>
-                        <span className="text-gray-300 font-medium text-right">{String(vv)}</span>
+                        <span className="text-text-muted capitalize">{kk.replace(/_/g,' ')}</span>
+                        <span className="text-text-secondary font-medium text-right">{String(vv)}</span>
                       </div>
                     ))}
                   </div>
@@ -115,7 +115,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
                 if (!v.length) return null
                 return (
                   <div key={k}>
-                    <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">{k.replace(/_/g,' ')}</div>
+                    <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">{k.replace(/_/g,' ')}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {(v as unknown[]).map((item, i) => (
                         <span key={i} className="px-2 py-1 rounded-md text-xs font-medium" style={{ background:`${meta.color}15`, color:meta.color }}>{String(item)}</span>
@@ -126,13 +126,13 @@ export function ToolCard({ tool, result }: ToolCardProps) {
               }
               return (
                 <div key={k} className="flex justify-between text-xs gap-4">
-                  <span className="text-gray-600 capitalize">{k.replace(/_/g,' ')}</span>
-                  <span className="text-gray-300 font-medium text-right">{String(v)}</span>
+                  <span className="text-text-muted capitalize">{k.replace(/_/g,' ')}</span>
+                  <span className="text-text-secondary font-medium text-right">{String(v)}</span>
                 </div>
               )
             })}
           </div>
-          <button onClick={copyResult} className="mt-3 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
+          <button onClick={copyResult} className="mt-3 flex items-center gap-1.5 text-xs text-text-disabled hover:text-gray-400 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
             {copied ? <Ico.Check /> : <Ico.Copy />}
             {copied ? 'Copied' : 'Copy result'}
           </button>

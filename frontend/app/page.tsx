@@ -92,10 +92,17 @@ const FLOAT_BADGES = [
 function useBreakpoint() {
   const [bp, setBp] = useState<'sm'|'md'|'lg'|null>(null)
   useEffect(() => {
-    const update = () => { const w = window.innerWidth; setBp(w < 640 ? 'sm' : w < 1024 ? 'md' : 'lg') }
+    let timeout: ReturnType<typeof setTimeout>
+    const update = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        const w = window.innerWidth
+        setBp(w < 640 ? 'sm' : w < 1024 ? 'md' : 'lg')
+      }, 150)
+    }
     update()
     window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    return () => { clearTimeout(timeout); window.removeEventListener('resize', update) }
   }, [])
   return bp ?? 'lg'
 }
@@ -478,10 +485,12 @@ export default function HomePage() {
   const [datasetRows, setDatasetRows] = useState<number | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     fetch('/api/dataset-stats')
       .then(r => r.json())
-      .then(d => { if (d.rows) setDatasetRows(d.rows) })
+      .then(d => { if (!cancelled && d.rows) setDatasetRows(d.rows) })
       .catch(() => {})
+    return () => { cancelled = true }
   }, [])
 
   return (

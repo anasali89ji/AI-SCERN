@@ -66,7 +66,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = 50_000
-  const charColor = charCount > 45_000 ? 'text-rose' : charCount > 70_000 ? 'text-amber' : 'text-text-muted'
+  const charColor = charCount > 70_000 ? 'text-rose' : charCount > 45_000 ? 'text-amber' : 'text-text-muted'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 

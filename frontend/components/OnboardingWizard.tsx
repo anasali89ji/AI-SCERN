@@ -108,7 +108,7 @@ export function OnboardingWizard() {
                 {[['Accurate','Multi-model ensemble'],['Fast','Results in seconds'],['Private','Files never stored']].map(([h,s]) => (
                   <div key={h} className="bg-[#ffffff05] border border-[#1e1e35] rounded-xl p-3 text-center">
                     <p className="text-xs font-bold text-white">{h}</p>
-                    <p className="text-[10px] text-[#4a5568] mt-0.5">{s}</p>
+                    <p className="text-[10px] text-text-muted mt-0.5">{s}</p>
                   </div>
                 ))}
               </div>
@@ -123,7 +123,7 @@ export function OnboardingWizard() {
             <div className="space-y-5">
               <div className="text-center">
                 <h2 className="text-xl font-black text-white">What will you detect?</h2>
-                <p className="text-[#4a5568] text-xs mt-1">Select all that apply — you can use all of them anytime</p>
+                <p className="text-text-muted text-xs mt-1">Select all that apply — you can use all of them anytime</p>
               </div>
               <div className="space-y-2">
                 {MODALITY_OPTIONS.map(m => {
@@ -135,13 +135,13 @@ export function OnboardingWizard() {
                       className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-[#7c3aed50] bg-[#7c3aed12]' : 'border-[#1e1e35] bg-[#ffffff03] hover:border-[#2a2a45]'}`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[#7c3aed30]' : 'bg-[#ffffff08]'}`}>
-                        <Icon className={`w-4 h-4 ${active ? 'text-[#a78bfa]' : 'text-[#4a5568]'}`} />
+                        <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-text-muted'}`} />
                       </div>
                       <div className="flex-1">
                         <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-[#94a3b8]'}`}>{m.label}</p>
-                        <p className="text-[11px] text-[#4a5568]">{m.sub}</p>
+                        <p className="text-[11px] text-text-muted">{m.sub}</p>
                       </div>
-                      {active && <Check className="w-4 h-4 text-[#a78bfa] flex-shrink-0" />}
+                      {active && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                     </button>
                   )
                 })}
@@ -157,13 +157,13 @@ export function OnboardingWizard() {
             <div className="space-y-5">
               <div className="text-center">
                 <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
-                  <User className="w-5 h-5 text-[#a78bfa]" />
+                  <User className="w-5 h-5 text-primary" />
                 </div>
                 <h2 className="text-xl font-black text-white">Choose a username</h2>
-                <p className="text-[#4a5568] text-xs mt-1">This is optional — you can set it later in your profile</p>
+                <p className="text-text-muted text-xs mt-1">This is optional — you can set it later in your profile</p>
               </div>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">@</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm">@</span>
                 <input
                   value={username}
                   onChange={e => checkUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
@@ -182,7 +182,7 @@ export function OnboardingWizard() {
                   <div className="flex flex-wrap gap-2">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
-                        className="px-3 py-1 rounded-lg border border-[#7c3aed30] bg-[#7c3aed12] text-[#a78bfa] text-xs hover:bg-[#7c3aed20]">
+                        className="px-3 py-1 rounded-lg border border-[#7c3aed30] bg-[#7c3aed12] text-primary text-xs hover:bg-[#7c3aed20]">
                         @{s}
                       </button>
                     ))}
@@ -226,7 +226,7 @@ export function OnboardingWizard() {
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-white">{h} </span>
-                      <span className="text-xs text-[#4a5568]">{s}</span>
+                      <span className="text-xs text-text-muted">{s}</span>
                     </div>
                   </div>
                 ))}
