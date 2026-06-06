@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 import { Space_Grotesk } from 'next/font/google'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
@@ -82,12 +82,18 @@ export const metadata: Metadata = {
   category: 'technology',
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0f172a',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
-        <meta name="theme-color" content="#0f172a" />
 
         {/* ── Critical font preloads — must come before CSS to prevent FOIT ── */}
         <link
@@ -127,7 +133,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <MotionProvider>
               {children}
-              <Toaster richColors position="top-right" />
+              <Toaster
+                richColors
+                position="top-right"
+                toastOptions={{ style: { marginTop: 'env(safe-area-inset-top, 0px)' } }}
+              />
               <CookieConsent />
             </MotionProvider>
           </AuthProvider>

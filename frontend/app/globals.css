@@ -203,10 +203,9 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Prevent horizontal scroll on mobile */
+/* Prevent horizontal scroll on mobile — use wrapper clip, NOT body overflow */
+/* Note: overflow-x:hidden on body breaks position:sticky + IntersectionObserver on iOS */
 @media (max-width: 640px) {
-  body { overflow-x: hidden; }
-
   /* Make tables scroll horizontally on mobile */
   table { display: block; overflow-x: auto; white-space: nowrap; }
 
@@ -347,8 +346,8 @@ h1 {
 
 /* ── Global mobile responsiveness fixes ── */
 
-/* Prevent horizontal overflow on all pages */
-html, body {
+/* Prevent horizontal overflow — only on html, not body (body overflow breaks iOS sticky) */
+html {
   overflow-x: hidden;
   max-width: 100vw;
 }

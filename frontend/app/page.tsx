@@ -268,7 +268,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
+    <div className="min-h-screen bg-background text-text-primary w-full max-w-[100vw]">
 
       {/* Schema JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `[
