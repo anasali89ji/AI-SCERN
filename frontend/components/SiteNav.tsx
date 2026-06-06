@@ -1,13 +1,14 @@
 'use client'
 import Link    from 'next/link'
 import Image   from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 interface SiteNavProps {
   backHref?:  string
   backLabel?: string
+  scrollHide?: boolean
 }
 
 const NAV_LINKS = [
@@ -18,9 +19,27 @@ const NAV_LINKS = [
   { href: '/docs/api', label: 'API'     },
 ]
 
-export function SiteNav({ backHref, backLabel }: SiteNavProps) {
+export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProps) {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
+  const [hidden, setHidden] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const lastY = useRef(0)
+
+  // Scroll hide / scrolled-state logic
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      setScrolled(y > 10)
+      if (scrollHide) {
+        if (y > lastY.current + 10 && y > 100) setHidden(true)
+        else if (y < lastY.current - 5) setHidden(false)
+      }
+      lastY.current = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [scrollHide])
 
   // Scroll lock — iOS-safe: uses position:fixed to prevent html/body scroll
   useEffect(() => {
@@ -43,12 +62,19 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   }, [open])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl isolate">
-      <div className="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
+    <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 isolate
+      ${hidden ? 'nav-hidden' : 'nav-visible'}
+      ${scrolled
+        ? 'border-b border-border/50 bg-background/95 backdrop-blur-2xl shadow-lg shadow-black/20'
+        : 'border-b border-transparent bg-background/60 backdrop-blur-xl'
+      }`}>
+      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image src="/logo.png" alt="Aiscern" width={32} height={24} className="object-contain" />
-          <span className="font-black text-lg gradient-text">Aiscern</span>
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
+          <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
+            className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(37,99,235,0.4)] group-hover:drop-shadow-[0_0_14px_rgba(37,99,235,0.6)] transition-all duration-300"
+            priority />
+          <span className="font-bold text-xl gradient-text">Aiscern</span>
         </Link>
 
         {backHref ? (
@@ -58,17 +84,18 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
         ) : (
           <>
             {/* Desktop nav */}
-            <div className="hidden sm:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6">
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href}
-                  className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
+                  className="text-sm text-text-muted hover:text-text-primary transition-colors duration-200 font-medium relative group">
                   {l.label}
+                  <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300 rounded-full" />
                 </Link>
               ))}
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <Link href="/dashboard"
                   className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
@@ -76,11 +103,11 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
+                  <Link href="/login" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium px-4 py-2 rounded-xl border border-border/60 hover:bg-surface-hover hover:border-primary/30">
                     Sign in
                   </Link>
                   <Link href="/signup"
-                    className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                    className="btn-primary px-4 py-2 text-sm font-bold">
                     Get started
                   </Link>
                 </>
@@ -89,7 +116,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
 
             {/* Mobile hamburger — min 44×44px touch target */}
             <button
-              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface"
+              className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface"
               onClick={() => setOpen(o => !o)}
               aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
@@ -100,17 +127,17 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
         )}
       </div>
 
-      {/* Mobile menu — fixed overlay with solid background, above nav stacking context */}
+      {/* Mobile menu — fixed overlay with solid background */}
       {!backHref && open && (
         <>
-          {/* Backdrop — full viewport, blocks interaction with page */}
+          {/* Backdrop */}
           <div
-            className="sm:hidden fixed inset-0 bg-black/70 z-[60]"
+            className="md:hidden fixed inset-0 bg-black/70 z-[60]"
             onClick={() => setOpen(false)}
             style={{ touchAction: 'none' }}
           />
-          {/* Panel — fully opaque, no transparency or backdrop-blur bleed */}
-          <div className="sm:hidden fixed top-16 left-0 right-0 bg-[#0a0a12] border-b border-border z-[70] shadow-2xl">
+          {/* Panel */}
+          <div className="md:hidden fixed top-16 left-0 right-0 bg-[#0a0a12] border-b border-border z-[70] shadow-2xl">
             <div className="px-4 py-4 space-y-1 max-h-[calc(100svh-4rem)] overflow-y-auto">
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
