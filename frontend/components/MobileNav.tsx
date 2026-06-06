@@ -48,7 +48,7 @@ export function MobileNav() {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-[#0a0a12] border-t border-border rounded-t-3xl"
+              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-surface border-t border-border rounded-t-3xl"
               style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               <div className="flex justify-center pt-3 pb-2">
@@ -81,7 +81,7 @@ export function MobileNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-border/40"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border/40"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="flex items-center justify-around px-2 h-16">

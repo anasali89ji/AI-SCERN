@@ -101,7 +101,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
           >
             {/* Top accent */}
-            <div className="h-1 w-full bg-gradient-to-r from-violet-600 via-primary to-amber-500 rounded-t-2xl flex-shrink-0" />
+            <div className="h-1 w-full bg-gradient-to-r from-primary via-primary to-amber-500 rounded-t-2xl flex-shrink-0" />
 
             {/* Drag handle (mobile only) */}
             <div className="flex justify-center pt-2 pb-1 sm:hidden flex-shrink-0">

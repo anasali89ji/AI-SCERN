@@ -137,7 +137,7 @@ export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProp
             style={{ touchAction: 'none' }}
           />
           {/* Panel */}
-          <div className="md:hidden fixed top-16 left-0 right-0 bg-[#0a0a12] border-b border-border z-[70] shadow-2xl">
+          <div className="md:hidden fixed top-16 left-0 right-0 bg-surface border-b border-border z-[70] shadow-2xl">
             <div className="px-4 py-4 space-y-1 max-h-[calc(100svh-4rem)] overflow-y-auto">
               {NAV_LINKS.map(l => (
                 <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
