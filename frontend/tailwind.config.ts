@@ -97,8 +97,8 @@ const config: Config = {
           '50%':       { transform: 'translateY(-8px)' },
         },
         'glow-pulse': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(124, 58, 237, 0.3)' },
-          '50%':       { boxShadow: '0 0 40px rgba(124, 58, 237, 0.6), 0 0 80px rgba(37, 99, 235, 0.2)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(37, 99, 235, 0.3)' },
+          '50%':       { boxShadow: '0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(6, 182, 212, 0.2)' },
         },
         'scan-line': {
           '0%':   { top: '0%', opacity: '1' },
@@ -163,7 +163,7 @@ const config: Config = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'hero-mesh': 'radial-gradient(ellipse at top left, rgba(139,92,246,0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(37,99,235,0.1) 0%, transparent 50%)',
+        'hero-mesh': 'radial-gradient(ellipse at top left, rgba(37,99,235,0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(6,182,212,0.1) 0%, transparent 50%)',
       },
     },
   },

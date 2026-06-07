@@ -103,7 +103,7 @@ export default function NavClient() {
                 Sign In
               </Link>
               <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-primary/20 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                 <Zap className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Get Started</span>
                 <span className="sm:hidden">Join</span>
@@ -160,7 +160,7 @@ export default function NavClient() {
                   <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
                     <Lock className="w-4 h-4" />Sign In
                   </Link>
-                  <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                  <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                     <Zap className="w-4 h-4" />Get Started Free
                   </Link>
                 </motion.div>
