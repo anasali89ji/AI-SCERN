@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: 'Aiscern — Free Multi-Modal AI Detection | Text, Image, Audio, Video',
     template: '%s | Aiscern',
   },
-  description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks. Built by Anas Ali in Islamabad.',
+  description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks. Built by Anas Ali in Mandi Bahauddin.',
   keywords: [
     'ai detector','free ai detector','ai text detector','chatgpt detector','claude detector',
     'gemini detector','ai content detector','detect ai generated text','chatgpt checker',

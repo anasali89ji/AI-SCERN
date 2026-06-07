@@ -51,7 +51,7 @@ export default function DpaPage() {
 
           <Section title="1. Parties and Scope">
             <p>
-              This Data Processing Agreement (&quot;DPA&quot;) is entered into between <strong>Aiscern</strong> (&quot;Data Processor&quot; or &quot;we&quot;)
+              This Data Processing Agreement (&quot;DPA&quot;) is entered into between <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong> (&quot;Data Processor&quot; or &quot;we&quot;)
               and the customer organisation using Aiscern services (&quot;Data Controller&quot; or &quot;you&quot;).
             </p>
             <p>
@@ -219,9 +219,9 @@ export default function DpaPage() {
           <Section title="10. Liability and Indemnification">
             <p>
               Each party shall be liable for damages caused by processing that infringes applicable data protection law.
-              Aiscern&apos;s total liability under this DPA shall not exceed the amounts paid by the Data Controller in the 12 months
-              preceding the claim, except in cases of gross negligence, wilful misconduct, or a personal data breach caused by
-              Aiscern&apos;s failure to comply with this DPA.
+              Aiscern&apos;s total liability under this DPA shall not exceed the greater of (a) the amounts paid by the Data
+              Controller in the 12 months preceding the claim, or (b) <strong>USD $500</strong>; except in cases of gross
+              negligence, wilful misconduct, or a personal data breach caused by Aiscern&apos;s failure to comply with this DPA.
             </p>
           </Section>
 
@@ -231,7 +231,8 @@ export default function DpaPage() {
               upon execution of a signed DPA addendum. To request a countersigned PDF version of this DPA, contact:
             </p>
             <p>
-              <strong>Aiscern</strong><br />
+              <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
+              Mandi Bahauddin, Punjab, Pakistan<br />
               Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
               Subject: &quot;DPA Request — [Your Organisation Name]&quot;
             </p>

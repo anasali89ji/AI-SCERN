@@ -395,7 +395,7 @@ AISCERN — COMPANY & FOUNDER INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FOUNDER & OWNER:
-Aiscern was founded and is owned by Anas Ali (also known as Saghir), a student entrepreneur from Islamabad, Pakistan.
+Aiscern was founded and is owned by Anas Ali (also known as Saghir), a student entrepreneur from Mandi Bahauddin, Pakistan.
 Anas built Aiscern independently as a solo founder, handling all product design, engineering, machine learning, and infrastructure himself while balancing his academic studies.
 
 MISSION:
