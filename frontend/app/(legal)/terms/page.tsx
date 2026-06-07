@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Aiscern terms of service. Use our AI detection tools freely. No spam, no misuse of detection results for harmful purposes.',
 }
 
-const LAST_UPDATED = 'March 20, 2026'
+const LAST_UPDATED = 'June 7, 2026'
 
 export default function TermsPage() {
   return (
@@ -34,7 +34,7 @@ export default function TermsPage() {
         <div className="space-y-8">
           <Section title="1. Acceptance of Terms">
             <p>
-              By accessing or using Aiscern (&quot;Service&quot;), operated by Anas Ali, you agree to be bound by these Terms of Service.
+              By accessing or using Aiscern (&quot;Service&quot;), a sole proprietorship operated by Anas Ali, you agree to be bound by these Terms of Service.
               If you do not agree, you must not use the Service. We reserve the right to update these terms at any time.
             </p>
           </Section>
@@ -94,7 +94,7 @@ export default function TermsPage() {
           <Section title="7. Intellectual Property">
             <p>
               The Aiscern platform, including its design, AI models, codebase, and branding, is the proprietary property
-              of Anas Ali. You may not use our trademarks,
+              of Aiscern, a sole proprietorship operated by Anas Ali. You may not use our trademarks,
               logos, or branding without prior written permission.
             </p>
           </Section>
@@ -123,17 +123,17 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section title="11. Governing Law">
+          <Section title="11. Governing Law & Dispute Resolution">
             <p>
-              These Terms are governed by and construed in accordance with the laws of Pakistan. Any disputes arising from these Terms shall first be attempted to be resolved through good-faith  Failing resolution, disputes shall be submitted to binding arbitration under internationally recognized arbitration rules.
-              negotiation, and failing that, through binding arbitration.
+              These Terms are governed by and construed in accordance with the laws of Pakistan. Any disputes arising from these Terms shall first be attempted to be resolved through good-faith negotiation for a period of 30 days. Failing resolution through negotiation, disputes shall be submitted to binding arbitration under the <strong>UNCITRAL Arbitration Rules</strong>, with the seat of arbitration in <strong>Mandi Bahauddin, Pakistan</strong>. The language of arbitration shall be English. Judgment on the arbitral award may be entered in any court of competent jurisdiction.
             </p>
           </Section>
 
           <Section title="12. Contact">
             <p>
               For questions about these Terms, contact:<br />
-              <strong>Anas Ali</strong><br />
+              <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
+              Mandi Bahauddin, Punjab, Pakistan<br />
               Email: <a href="mailto:legal@aiscern.com" className="text-primary hover:underline">legal@aiscern.com</a>
             </p>
           </Section>

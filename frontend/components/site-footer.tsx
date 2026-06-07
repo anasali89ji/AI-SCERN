@@ -88,7 +88,7 @@ export function SiteFooter() {
             </p>
 
             <p className="text-xs text-text-muted">
-              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
             </p>
 
             {/* Social icons */}
@@ -196,7 +196,7 @@ export function SiteFooter() {
               <span className="opacity-30">·</span>
               <a href="mailto:security@aiscern.com" className="hover:text-emerald-400 transition-colors">security@aiscern.com</a>
             </div>
-            © {new Date().getFullYear()} Aiscern · Built with precision in Islamabad, Pakistan
+            © {new Date().getFullYear()} Aiscern · Built with precision in Mandi Bahauddin, Pakistan
           </p>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">

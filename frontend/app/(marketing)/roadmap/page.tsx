@@ -106,7 +106,7 @@ export default function RoadmapPage() {
           {/* Footer note */}
           <div className="rounded-xl border border-border/60 bg-surface/40 p-5 flex items-start justify-between gap-4 flex-wrap">
             <p className="text-xs text-text-muted">
-              Last updated: <strong className="text-text-secondary">April 2026</strong> · Built by Anas Ali in Islamabad, Pakistan.
+              Last updated: <strong className="text-text-secondary">April 2026</strong> · Built by Anas Ali in Mandi Bahauddin, Pakistan.
             </p>
             <Link href="/methodology" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
               See accuracy methodology <ArrowRight className="w-3 h-3" />

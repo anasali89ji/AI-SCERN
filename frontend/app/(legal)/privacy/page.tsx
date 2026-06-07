@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI detection tools.',
 }
 
-const LAST_UPDATED = 'May 17, 2026'
+const LAST_UPDATED = 'June 7, 2026'
 
 export default function PrivacyPage() {
   return (
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
         <div className="prose-aiscern space-y-8">
           <Section title="1. Introduction">
             <p>
-              Welcome to Aiscern (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), operated by Anas Ali. This Privacy Policy explains how we collect,
+              Welcome to Aiscern, a sole proprietorship operated by Anas Ali (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;). This Privacy Policy explains how we collect,
               use, disclose, and safeguard your information when you use our AI content detection platform at{' '}
               <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>.
             </p>
@@ -111,22 +111,50 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>Account data:</strong> Retained until you delete your account</li>
               <li><strong>Scan history:</strong> Retained for 12 months, then automatically deleted</li>
-              <li><strong>Uploaded files:</strong> Deleted within 24 hours of processing</li>
-              <li><strong>Chat logs:</strong> Retained for 30 days for quality improvement, then deleted</li>
+              <li><strong>Uploaded files:</strong> Deleted within 24 hours of processing. This applies equally to files uploaded through Batch Analysis — all batch-uploaded files follow the same 24-hour deletion policy as individual uploads.</li>
+              <li><strong>Chat logs:</strong> Retained for 30 days for quality and abuse monitoring, then deleted</li>
             </ul>
           </Section>
 
-          <Section title="7. Cookies">
-            <p>Aiscern uses strictly necessary cookies for:</p>
+          <Section title="7. Shareable Result Links">
+            <p>
+              Aiscern allows you to generate a shareable link for any detection result. These links remain active for
+              <strong> 30 days</strong> from the time of creation, after which they expire automatically.
+            </p>
+            <p>
+              Shareable links contain only the detection verdict, confidence score, and associated metadata (modality, timestamp,
+              model version). <strong>They never expose the original uploaded file.</strong> Anyone with the link can view the
+              summary result — treat shared links accordingly.
+            </p>
+          </Section>
+
+          <Section title="8. AI Assistant">
+            <p>
+              The Aiscern AI Assistant is powered by third-party large language model (LLM) APIs. By using the AI Assistant,
+              your conversation content is transmitted to the relevant third-party API provider for inference.
+            </p>
             <ul>
-              <li>Authentication session management (Supabase auth tokens)</li>
-              <li>Security CSRF protection</li>
-              <li>User preferences (theme, language)</li>
+              <li><strong>Retention:</strong> Chat logs are retained for <strong>30 days</strong> for quality improvement and abuse monitoring, then permanently deleted.</li>
+              <li><strong>No model training:</strong> Your conversations are <strong>not used to train Aiscern's models</strong> or any third-party models. All third-party LLM API providers used by Aiscern are contractually prohibited from using API inputs for training.</li>
+              <li><strong>Do not share sensitive data:</strong> We recommend not submitting personally identifiable or confidential information in the AI Assistant.</li>
             </ul>
-            <p>We do not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
           </Section>
 
-          <Section title="8. Security">
+          <Section title="9. Cookies">
+            <p>Aiscern uses <strong>strictly necessary cookies only</strong>. These cookies are required for the service to function and cannot be disabled. They are used for:</p>
+            <ul>
+              <li>Authentication session management (Clerk auth tokens)</li>
+              <li>CSRF security protection</li>
+              <li>User preferences (theme)</li>
+            </ul>
+            <p>
+              <strong>We do not use tracking cookies, advertising cookies, or third-party analytics cookies of any kind.</strong>{' '}
+              No cookies are placed for the purpose of cross-site tracking, profiling, or advertising. No consent banner is
+              required because no non-essential cookies are set.
+            </p>
+          </Section>
+
+          <Section title="10. Security">
             <p>
               We implement industry-standard security measures including TLS encryption in transit, hashed passwords,
               row-level security in our database, and regular security reviews. However, no system is 100% secure and
@@ -134,7 +162,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="9. Your Rights">
+          <Section title="11. Your Rights">
             <p>You have the right to:</p>
             <ul>
               <li><strong>Access:</strong> Request a copy of your personal data</li>
@@ -148,7 +176,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="10. Children's Privacy">
+          <Section title="12. Children's Privacy">
             <p>
               Aiscern is intended for users aged <strong>13 and older</strong> (or 16 and older in the EU/EEA under GDPR).
               We do not knowingly collect personal data from children under these ages.
@@ -161,7 +189,7 @@ export default function PrivacyPage() {
             </p>
           </Section>
 
-          <Section title="11. GDPR & CCPA Rights">
+          <Section title="13. GDPR & CCPA Rights">
             <SubSection title="EU/EEA Users (GDPR)">
               <p>If you are located in the EU or EEA, you have the following rights under the General Data Protection Regulation:</p>
               <ul>
@@ -188,17 +216,18 @@ export default function PrivacyPage() {
             </SubSection>
           </Section>
 
-          <Section title="12. Changes to This Policy">
+          <Section title="14. Changes to This Policy">
             <p>
               We may update this Privacy Policy from time to time. We will notify users of significant changes via email
               or a prominent notice on the platform. Continued use of Aiscern after changes constitutes acceptance.
             </p>
           </Section>
 
-          <Section title="13. Contact Us">
+          <Section title="15. Business Address & Contact">
             <p>
               For privacy-related questions or requests, contact:<br />
-              <strong>Aiscern</strong> — Data Controller<br />
+              <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong> — Data Controller<br />
+              Business address: Mandi Bahauddin, Punjab, Pakistan<br />
               Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
               DPA requests: <a href="/dpa" className="text-primary hover:underline">aiscern.com/dpa</a><br />
               Website: <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>

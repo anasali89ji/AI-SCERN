@@ -92,7 +92,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'Who built Aiscern?',
-        a: 'Aiscern is built by Anas Ali, a solo founder based in Islamabad, Pakistan. It is an early-stage project — actively developed, transparent about limitations, and not VC-funded.',
+        a: 'Aiscern is built by Anas Ali, a solo founder based in Mandi Bahauddin, Pakistan. It is an early-stage project — actively developed, transparent about limitations, and not VC-funded.',
         link: { label: 'About the founder', href: '/about' },
       },
       {

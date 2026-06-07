@@ -6,7 +6,7 @@ import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Briefcase } from '
 
 export const metadata = {
   title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Islamabad, Pakistan.',
+  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
@@ -36,7 +36,7 @@ const VALUES = [
   {
     icon: Globe,
     title: 'Built for everyone',
-    desc:  'Developed in Islamabad, Pakistan. We believe access to AI literacy tools should not depend on geography or budget.',
+    desc:  'Developed in Mandi Bahauddin, Pakistan. We believe access to AI literacy tools should not depend on geography or budget.',
   },
 ]
 
@@ -45,9 +45,9 @@ const TEAM = [
   {
     name:     'Anas Ali',
     role:     'Founder & CEO',
-    bio:      'Building Aiscern from Islamabad, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
+    bio:      'Building Aiscern from Mandi Bahauddin, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
     photo:    '/anas-ali.jpg',
-    location: 'Islamabad, Pakistan',
+    location: 'Mandi Bahauddin, Pakistan',
     skills:   'Full-Stack + AI/ML',
     gradient: 'from-primary/30 via-secondary/20 to-primary/20',
     ring:     'border-primary/30',

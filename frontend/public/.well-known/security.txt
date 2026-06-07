@@ -1,6 +1,6 @@
-Contact: mailto:security@aiscern.com
-Acknowledgments: https://aiscern.com/security/hall-of-fame
+Contact: security@aiscern.com
+Expires: 2027-06-07T00:00:00.000Z
+Acknowledgments: https://aiscern.com/security
 Policy: https://aiscern.com/security
 Preferred-Languages: en
 Canonical: https://aiscern.com/.well-known/security.txt
-Expires: 2027-01-01T00:00:00.000Z
