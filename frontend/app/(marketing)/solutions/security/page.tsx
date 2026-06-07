@@ -13,7 +13,7 @@ export default function SecuritySolutionPage() {
       industry="Security"
       tagline="Stop Synthetic Threats Before They Land"
       description="Aiscern gives security and fraud teams a multi-modal detection layer for voice clones, deepfake video, synthetic identities and AI-generated phishing — before they reach customers or systems."
-      icon={ShieldCheck}
+      icon={<ShieldCheck className="w-16 h-16" />}
       color="#dc2626"
       heroImage="/solutions/hero-security.jpg"
       actionImage="/solutions/action-security.jpg"

@@ -13,7 +13,7 @@ export default function HealthcareSolutionPage() {
       industry="Healthcare"
       tagline="Authentic Medical Content. Every Time."
       description="Aiscern helps healthcare professionals and medical publishers verify the authenticity of research papers, clinical notes and patient communications — protecting against AI hallucinations and synthetic citations."
-      icon={Heart}
+      icon={<Heart className="w-16 h-16" />}
       color="#db2777"
       heroImage="/solutions/hero-healthcare.jpg"
       actionImage="/solutions/action-healthcare.jpg"

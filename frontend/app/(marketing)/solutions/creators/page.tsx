@@ -13,7 +13,7 @@ export default function CreatorsSolutionPage() {
       industry="Content Creators"
       tagline="Prove Your Work is Genuinely Yours"
       description="Aiscern gives writers, artists and creators a way to certify their content as human-made — protecting their creative reputation and standing out in a world flooded with AI-generated content."
-      icon={Pen}
+      icon={<Pen className="w-16 h-16" />}
       color="#7c3aed"
       heroImage="/solutions/hero-creators.jpg"
       actionImage="/solutions/action-creators.jpg"

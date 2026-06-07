@@ -13,7 +13,7 @@ export default function MarketingSolutionPage() {
       industry="Marketing"
       tagline="Keep Your Brand Authentically Human"
       description="Aiscern helps marketing teams audit user-generated content, influencer deliverables and campaign assets for undisclosed AI generation — protecting brand trust and FTC compliance."
-      icon={Megaphone}
+      icon={<Megaphone className="w-16 h-16" />}
       color="#d97706"
       heroImage="/solutions/hero-marketing.jpg"
       actionImage="/solutions/action-marketing.jpg"

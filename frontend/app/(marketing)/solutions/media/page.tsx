@@ -13,7 +13,7 @@ export default function MediaSolutionPage() {
       industry="Media & Journalism"
       tagline="Publish Truth, Not Synthetic Content"
       description="Aiscern gives journalists and fact-checkers a fast, multi-modal verification layer — checking images, audio recordings and written sources before they reach your audience."
-      icon={Globe}
+      icon={<Globe className="w-16 h-16" />}
       color="#7c3aed"
       heroImage="/solutions/hero-media.jpg"
       actionImage="/solutions/action-media.jpg"

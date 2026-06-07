@@ -1,9 +1,9 @@
 'use client'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 
@@ -26,7 +26,7 @@ export interface SolutionPageProps {
   /** Longer description for the hero */
   description: string
   /** Lucide icon component for fallback */
-  icon: LucideIcon
+  icon: ReactNode
   /** Primary accent color (CSS hex or rgba) */
   color: string
   /** Optional hero image path — /solutions/hero-education.jpg */
@@ -52,7 +52,7 @@ export function SolutionPage({
   industry,
   tagline,
   description,
-  icon: Icon,
+  icon,
   color,
   heroImage,
   actionImage,
@@ -87,7 +87,7 @@ export function SolutionPage({
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6"
                 style={{ borderColor: `${color}40`, backgroundColor: `${color}15`, color }}
               >
-                <Icon className="w-3.5 h-3.5" />
+                {icon}
                 Aiscern for {industry}
               </motion.div>
 
@@ -167,7 +167,7 @@ export function SolutionPage({
                   style={{ boxShadow: `0 0 60px ${color}20` }}>
                   <div className="w-32 h-32 rounded-3xl flex items-center justify-center"
                     style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
-                    <Icon className="w-16 h-16" style={{ color }} />
+                    {icon}
                   </div>
                   <div className="absolute inset-0 rounded-2xl opacity-5"
                     style={{ background: `radial-gradient(ellipse at 50% 50%, ${color} 0%, transparent 70%)` }} />

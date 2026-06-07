@@ -13,7 +13,7 @@ export default function HRSolutionPage() {
       industry="HR & Recruiting"
       tagline="Hire the Real Candidate, Not Their AI"
       description="Aiscern helps HR teams and recruiters spot AI-generated CVs, cover letters and interview prep responses — so you evaluate actual candidates, not their tools."
-      icon={Users}
+      icon={<Users className="w-16 h-16" />}
       color="#0891b2"
       heroImage="/solutions/hero-hr.jpg"
       actionImage="/solutions/action-hr.jpg"

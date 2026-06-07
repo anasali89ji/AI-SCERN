@@ -13,7 +13,7 @@ export default function ResearchSolutionPage() {
       industry="Research"
       tagline="Validate Research. Protect Scientific Integrity."
       description="Aiscern helps researchers, journal editors and academic institutions check papers for AI-generated passages, hallucinated citations and synthetic data narratives before they enter the scientific record."
-      icon={Microscope}
+      icon={<Microscope className="w-16 h-16" />}
       color="#0891b2"
       heroImage="/solutions/hero-research.jpg"
       actionImage="/solutions/action-research.jpg"

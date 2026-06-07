@@ -13,7 +13,7 @@ export default function EducationSolutionPage() {
       industry="Education"
       tagline="Protect Academic Integrity at Scale"
       description="Aiscern gives educators and institutions a sentence-level heatmap of AI-generated content in student work — catching ChatGPT, Claude, Gemini, and other models other tools miss."
-      icon={GraduationCap}
+      icon={<GraduationCap className="w-16 h-16" />}
       color="#2563eb"
       heroImage="/solutions/hero-education.jpg"
       actionImage="/solutions/action-education.jpg"

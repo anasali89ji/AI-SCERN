@@ -13,7 +13,7 @@ export default function LegalSolutionPage() {
       industry="Legal & Compliance"
       tagline="Authentic Evidence. Verified Documents."
       description="Aiscern helps legal professionals authenticate documents, contracts and audio/video evidence — producing shareable detection reports you can attach to case files. Results are probabilistic; always apply professional judgment."
-      icon={Scale}
+      icon={<Scale className="w-16 h-16" />}
       color="#059669"
       heroImage="/solutions/hero-legal.jpg"
       actionImage="/solutions/action-legal.jpg"
