@@ -10,7 +10,7 @@ export const metadata = {
 }
 
 const ACCURACY = [
-  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-violet-500' },
+  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-blue-500' },
   { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets',          color: 'bg-blue-500'   },
   { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500' },
   { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-orange-500'  },
@@ -113,7 +113,7 @@ export default function MethodologyPage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="rounded-xl border border-border bg-surface p-5">
               <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-violet-400" /> Text Signals
+                <span className="w-2 h-2 rounded-full bg-blue-400" /> Text Signals
               </h3>
               <div className="space-y-3">
                 {SIGNALS_TEXT.map(s => (

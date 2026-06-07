@@ -45,7 +45,7 @@ function NetworkBackground() {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.04] rounded-full blur-[120px]" />
       <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-primary/[0.03] rounded-full blur-[100px]" />
       {/* Static dot grid — zero GPU cost, simulates network feel */}
-      <div className="absolute inset-0 opacity-[0.02]"
+      <div className="absolute inset-0 hero-dot-grid"
            style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     </div>
   )
@@ -170,7 +170,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 }
 
 // ─── Spotlight Card ───────────────────────────────────────────────────────────
-function SpotlightCard({ children, className = '', color = 'rgba(139,92,246,0.12)' }: {
+function SpotlightCard({ children, className = '', color = 'rgba(37,99,235,0.12)' }: {
   children: React.ReactNode; className?: string; color?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -212,7 +212,7 @@ const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/8 to-transparent',        desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#8B5CF6' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#3b82f6' },
   { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/8 to-transparent',         desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#06b6d4' },
   { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-secondary', bg: 'from-secondary/8 to-transparent',    desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
   { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/8 to-transparent',      desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
@@ -306,7 +306,7 @@ export default function HomePage() {
 
             {/* Animated badge */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary/80 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
+              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 hero-badge-shimmer text-primary/80 text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
@@ -421,7 +421,7 @@ export default function HomePage() {
                 Six detection tools powered by an ensemble of open-source and fine-tuned models, benchmarked on public datasets.
               </p>
               <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent)' }}
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
                 initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
             </motion.div>
 
@@ -484,7 +484,7 @@ export default function HomePage() {
               {/* Animated vertical connector */}
               <div className="absolute left-7 lg:left-1/2 top-0 bottom-0 w-px hidden sm:block overflow-hidden">
                 <motion.div className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, rgba(139,92,246,0.8) 0%, rgba(37,99,235,0.4) 60%, transparent 100%)' }}
+                  style={{ background: 'linear-gradient(180deg, rgba(37,99,235,0.8) 0%, rgba(8,145,178,0.4) 60%, transparent 100%)' }}
                   initial={{ scaleY: 0, originY: 0 }} animate={{ scaleY: 1 }}
                   transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
               </div>
@@ -501,9 +501,9 @@ export default function HomePage() {
                       <div className="flex-1 hidden lg:block" />
                       <div className="relative z-10 flex-shrink-0">
                         <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(37,99,235,0.15))', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 8px 32px rgba(139,92,246,0.12)' }}>
+                          style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.18), rgba(8,145,178,0.12))', border: '1px solid rgba(37,99,235,0.25)', boxShadow: '0 8px 32px rgba(37,99,235,0.10)' }}>
                           <StepIcon className="w-6 h-6 text-primary" strokeWidth={1.7} />
-                          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
+                          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
                             {i + 1}
                           </div>
                         </div>
@@ -524,7 +524,7 @@ export default function HomePage() {
         {/* ══ EARLY FEEDBACK ══ */}
         <section className="py-16 sm:py-24 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
+            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
 
           <div className="max-w-5xl mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
@@ -557,7 +557,7 @@ export default function HomePage() {
         {/* ══ TRUST / FEATURES — bento grid ══ */}
         <section className="py-16 sm:py-28 px-4 border-t border-border/15 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(139,92,246,0.03) 50%, transparent 100%)' }} />
+            style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
 
           <div className="max-w-6xl mx-auto relative">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
@@ -590,7 +590,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
-                  <SpotlightCard color="rgba(139,92,246,0.10)"
+                  <SpotlightCard color="rgba(37,99,235,0.10)"
                     className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300`}>
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -599,7 +599,7 @@ export default function HomePage() {
                     {displayStat !== undefined && (
                       <div className="mb-3">
                         <div className="text-3xl sm:text-4xl font-bold font-display tabular-nums"
-                          style={{ background: 'linear-gradient(135deg, #ffffff, #d8b4fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                          style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                           <CountUp target={displayTarget} suffix={displaySuffix} />
                         </div>
                         <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
@@ -662,10 +662,10 @@ export default function HomePage() {
         <section className="py-24 sm:py-32 px-4 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.10) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
           </div>
           <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{ backgroundImage: `linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
+            style={{ backgroundImage: `linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
 
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>

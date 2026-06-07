@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: 'Free AI Text Detector — Detect ChatGPT, Claude & Gemini | Aiscern',
     description: 'Paste any text and instantly know if it was written by AI. Detects ChatGPT, Claude, Gemini, GPT-4. 85%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/text',
-    images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Text+Detector&tool=Text&color=%237c3aed', width: 1200, height: 630 }],
+    images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Text+Detector&tool=Text&color=%232563eb', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',

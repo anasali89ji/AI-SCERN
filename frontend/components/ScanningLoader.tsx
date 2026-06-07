@@ -24,7 +24,7 @@ const STAGES: {
   label:  string
   color:  string
 }[] = [
-  { id: 'uploading',  icon: Upload,      label: 'Uploading to secure storage',   color: 'var(--color-primary, #7c3aed)' },
+  { id: 'uploading',  icon: Upload,      label: 'Uploading to secure storage',   color: 'var(--color-primary, #2563eb)' },
   { id: 'analyzing',  icon: Brain,       label: 'Running AI detection models',   color: '#2563eb' },
   { id: 'processing', icon: Cpu,         label: 'Computing detection signals',   color: '#06b6d4' },
   { id: 'complete',   icon: CheckCircle, label: 'Analysis complete',             color: '#10b981' },

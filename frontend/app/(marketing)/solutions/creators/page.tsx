@@ -14,7 +14,7 @@ export default function CreatorsSolutionPage() {
       tagline="Prove Your Work is Genuinely Yours"
       description="Aiscern gives writers, artists and creators a way to certify their content as human-made — protecting their creative reputation and standing out in a world flooded with AI-generated content."
       icon={<Pen className="w-16 h-16" />}
-      color="#7c3aed"
+      color="#2563eb"
       heroImage="/solutions/hero-creators.jpg"
       actionImage="/solutions/action-creators.jpg"
       stats={[

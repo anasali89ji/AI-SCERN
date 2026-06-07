@@ -51,7 +51,7 @@ function StarRow({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' |
 
 function ReviewerAvatar({ name, isAnon }: { name: string; isAnon: boolean }) {
   const initials = isAnon ? '?' : name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
-  const colors = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#06b6d4','#f43f5e']
+  const colors = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#3b82f6','#06b6d4','#f43f5e']
   const color = isAnon ? '#64748b' : colors[name.charCodeAt(0) % colors.length]
   return (
     <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"

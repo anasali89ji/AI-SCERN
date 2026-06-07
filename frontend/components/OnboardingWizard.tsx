@@ -85,19 +85,19 @@ export function OnboardingWizard() {
           className="w-full max-w-lg bg-[#07070d] border border-[#1e1e35] rounded-3xl p-8 shadow-2xl relative overflow-hidden"
         >
           {/* Top gradient */}
-          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#7c3aed,#2563eb)` }} />
+          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#0891b2)` }} />
 
           {/* Progress dots */}
           <div className="flex justify-center gap-2 mb-8">
             {STEPS.map((s,i) => (
-              <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stepIdx ? 'bg-[#7c3aed] w-8' : 'bg-[#1e1e35] w-4'}`} />
+              <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stepIdx ? 'bg-blue-600 w-8' : 'bg-[#1e1e35] w-4'}`} />
             ))}
           </div>
 
           {/* STEP: welcome */}
           {step === 'welcome' && (
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-semibold font-display text-white">Welcome to Aiscern</h2>
@@ -112,7 +112,7 @@ export function OnboardingWizard() {
                   </div>
                 ))}
               </div>
-              <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+              <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 Get Started <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -132,9 +132,9 @@ export function OnboardingWizard() {
                   return (
                     <button key={m.id}
                       onClick={() => setSelected(s => s.includes(m.id) ? s.filter(x => x !== m.id) : [...s, m.id])}
-                      className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-[#7c3aed50] bg-[#7c3aed12]' : 'border-[#1e1e35] bg-[#ffffff03] hover:border-[#2a2a45]'}`}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-[#2563eb50] bg-[#2563eb12]' : 'border-[#1e1e35] bg-[#ffffff03] hover:border-[#2a2a45]'}`}
                     >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[#7c3aed30]' : 'bg-[#ffffff08]'}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[#2563eb30]' : 'bg-[#ffffff08]'}`}>
                         <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-text-muted'}`} />
                       </div>
                       <div className="flex-1">
@@ -146,7 +146,7 @@ export function OnboardingWizard() {
                   )
                 })}
               </div>
-              <button onClick={next} className="w-full py-3.5 rounded-2xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+              <button onClick={next} className="w-full py-3.5 rounded-2xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 Continue <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
             </div>
@@ -169,9 +169,9 @@ export function OnboardingWizard() {
                   onChange={e => checkUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
                   placeholder="yourname"
                   maxLength={30}
-                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#7c3aed] transition-colors"
+                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-blue-600 transition-colors"
                 />
-                {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-[#7c3aed] animate-spin" />}
+                {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-blue-600 animate-spin" />}
                 {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />}
                 {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-400" />}
               </div>
@@ -182,7 +182,7 @@ export function OnboardingWizard() {
                   <div className="flex flex-wrap gap-2">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
-                        className="px-3 py-1 rounded-lg border border-[#7c3aed30] bg-[#7c3aed12] text-primary text-xs hover:bg-[#7c3aed20]">
+                        className="px-3 py-1 rounded-lg border border-[#2563eb30] bg-[#2563eb12] text-primary text-xs hover:bg-[#2563eb20]">
                         @{s}
                       </button>
                     ))}
@@ -195,7 +195,7 @@ export function OnboardingWizard() {
                 </button>
                 <button onClick={next} disabled={uStatus === 'checking'}
                   className="flex-1 py-3 rounded-2xl font-bold text-sm text-white disabled:opacity-50"
-                  style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                  style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                   Continue
                 </button>
               </div>
@@ -208,7 +208,7 @@ export function OnboardingWizard() {
               <motion.div
                 animate={{ scale:[1,1.05,1] }} transition={{ duration:1.5, repeat:Infinity }}
                 className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
-                style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}
+                style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}
               >
                 <Zap className="w-8 h-8 text-white" />
               </motion.div>
@@ -233,7 +233,7 @@ export function OnboardingWizard() {
               </div>
               <button onClick={finish} disabled={saving}
                 className="w-full py-3.5 rounded-2xl font-bold text-sm text-white disabled:opacity-70 transition-all hover:scale-[1.02]"
-                style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 {saving ? 'Setting up…' : 'Go to Dashboard →'}
               </button>
             </div>

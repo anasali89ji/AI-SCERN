@@ -191,7 +191,7 @@ export default function SettingsPage() {
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
-          style={{ background:'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+          style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>

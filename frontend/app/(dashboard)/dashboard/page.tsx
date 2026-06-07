@@ -13,7 +13,7 @@ import { useAuth } from '@/components/auth-provider'
 
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-violet-500/20 to-violet-500/5', iconColor: 'text-violet-400', desc: 'Deepfake & AI image detection' },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-blue-500/20 to-blue-500/5', iconColor: 'text-blue-400', desc: 'Deepfake & AI image detection' },
   { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
   { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
   { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },

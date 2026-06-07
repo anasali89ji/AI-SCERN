@@ -28,16 +28,16 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
       <motion.div
         initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
         transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-        className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#7c3aed40] rounded-3xl p-8 shadow-2xl shadow-purple-950/40 overflow-hidden"
+        className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#2563eb40] rounded-3xl p-8 shadow-2xl shadow-blue-950/40 overflow-hidden"
       >
         {/* Glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/8 via-transparent to-blue-600/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/8 via-transparent to-blue-600/5 pointer-events-none" />
 
         {/* Confetti dots */}
         {[...Array(12)].map((_,i) => (
           <motion.div key={i}
             className="absolute w-1.5 h-1.5 rounded-full"
-            style={{ background: ['#a78bfa','#60a5fa','#f59e0b','#34d399'][i%4], left:`${10+i*7}%`, top:`${5+i*3}%` }}
+            style={{ background: ['#60a5fa','#60a5fa','#f59e0b','#34d399'][i%4], left:`${10+i*7}%`, top:`${5+i*3}%` }}
             animate={{ y:[0,-20,0], opacity:[0,1,0] }}
             transition={{ duration:1.5+i*0.1, repeat:Infinity, delay:i*0.12 }}
           />
@@ -50,9 +50,9 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
         {/* Badge */}
         <div className="flex justify-center mb-6">
           <motion.div
-            animate={{ scale:[1,1.08,1], boxShadow:['0 0 0px #7c3aed60','0 0 30px #7c3aed60','0 0 0px #7c3aed60'] }}
+            animate={{ scale:[1,1.08,1], boxShadow:['0 0 0px #2563eb60','0 0 30px #2563eb60','0 0 0px #2563eb60'] }}
             transition={{ duration:2, repeat:Infinity }}
-            className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#7c3aed] to-[#2563eb]"
+            className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#0891b2]"
           >
             <Crown className="w-10 h-10 text-white" />
           </motion.div>
@@ -82,7 +82,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
             href="/pricing"
             onClick={onDismiss}
             className="w-full py-3.5 rounded-2xl font-bold text-sm text-white text-center transition-all hover:scale-[1.02] active:scale-[0.98] block"
-            style={{ background:'linear-gradient(135deg, #7c3aed, #2563eb)' }}
+            style={{ background:'linear-gradient(135deg, #2563eb, #0891b2)' }}
           >
             View Pricing &amp; Upgrade →
           </a>

@@ -63,7 +63,7 @@ export function SiteFooter() {
     <footer className="border-t border-border/20 relative overflow-hidden">
       {/* Subtle top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at top, rgba(139,92,246,0.05) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
 
       <div className="max-w-6xl mx-auto px-4 pt-14 pb-8 relative">
 

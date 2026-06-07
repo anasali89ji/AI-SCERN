@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: 'Batch AI Content Analyzer — 20 Files at Once',
     description: 'Analyze up to 20 files simultaneously for AI-generated content across text, image, audio and video.',
     url: 'https://aiscern.com/batch',
-    images: [{ url: 'https://aiscern.com/api/og?title=Batch+AI+Content+Analyzer&tool=Batch&color=%237c3aed', width: 1200, height: 630 }],
+    images: [{ url: 'https://aiscern.com/api/og?title=Batch+AI+Content+Analyzer&tool=Batch&color=%232563eb', width: 1200, height: 630 }],
   },
 }
 
