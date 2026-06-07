@@ -7,3 +7,11 @@ scipy==1.14.1
 PyWavelets==1.7.0
 httpx==0.27.2
 pydantic==2.9.0
+
+# === AISCERN IMAGE v3 ADDITIONS ===
+opencv-python==4.10.0.84
+scikit-image==0.24.0
+pytesseract==0.3.13
+imagehash==4.3.1
+face-recognition==1.3.0
+python-dotenv==1.0.1
