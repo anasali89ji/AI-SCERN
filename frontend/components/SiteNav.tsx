@@ -1,6 +1,5 @@
 'use client'
 import Link    from 'next/link'
-import Image   from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -72,10 +71,7 @@ export function SiteNav({ backHref, backLabel, scrollHide = false }: SiteNavProp
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-          <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
-            className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(37,99,235,0.4)] group-hover:drop-shadow-[0_0_14px_rgba(37,99,235,0.6)] transition-all duration-300"
-            priority />
-          <span className="font-bold text-xl gradient-text">Aiscern</span>
+          <span className="font-black text-lg gradient-text">Aiscern</span>
         </Link>
 
         {backHref ? (

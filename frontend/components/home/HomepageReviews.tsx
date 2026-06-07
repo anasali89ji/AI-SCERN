@@ -21,12 +21,12 @@ interface Review {
 }
 
 const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg,#7c3aed,#2563eb)',
+  'linear-gradient(135deg,#2563eb,#1d4ed8)',
   'linear-gradient(135deg,#0ea5e9,#06b6d4)',
   'linear-gradient(135deg,#10b981,#16a34a)',
   'linear-gradient(135deg,#f43f5e,#dc2626)',
   'linear-gradient(135deg,#f59e0b,#d97706)',
-  'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+  'linear-gradient(135deg,#2563eb,#1d4ed8)',
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {

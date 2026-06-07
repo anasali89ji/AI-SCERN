@@ -60,7 +60,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
       {card.type === 'image' && card.img ? (
         <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
           <div className="absolute inset-0" style={{
-            background: isAI ? 'linear-gradient(135deg,#4c1d9580,#1e1b4b50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
+            background: isAI ? 'linear-gradient(135deg,#1e3a8a80,#1e3a8a50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
           }} />
           <img
             src={card.img}

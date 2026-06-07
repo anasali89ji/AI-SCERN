@@ -49,7 +49,7 @@ const TEAM = [
     photo:    '/anas-ali.jpg',
     location: 'Islamabad, Pakistan',
     skills:   'Full-Stack + AI/ML',
-    gradient: 'from-violet-600/30 via-indigo-600/20 to-purple-600/30',
+    gradient: 'from-primary/30 via-secondary/20 to-cyan/30',
     ring:     'border-primary/30',
   },
   {
@@ -73,7 +73,7 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
       </div>
       <div className="px-3 sm:px-6 pb-5 -mt-8 sm:-mt-10">
         {/* Avatar */}
-        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center`}>
+        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-primary to-secondary flex items-center justify-center`}>
           {member.photo ? (
             <Image
               src={member.photo}

@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
 import {
@@ -62,9 +61,7 @@ export default function NavClient() {
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-          <Image src="/logo.png" alt="Aiscern logo" width={24} height={28}
-            className="object-contain h-6 sm:h-7 w-auto drop-shadow-[0_0_8px_rgba(245,100,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(245,100,0,0.7)] transition-[filter] duration-300" priority />
-          <span className="font-semibold text-xl gradient-text">Aiscern</span>
+          <span className="font-black text-xl gradient-text">Aiscern</span>
         </Link>
 
         {/* Desktop links */}
@@ -91,7 +88,7 @@ export default function NavClient() {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-[background-color,border-color] duration-200 group">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                 {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
               </span>
               <span className="hidden sm:inline">Dashboard</span>
