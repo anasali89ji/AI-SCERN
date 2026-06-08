@@ -2,32 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --brand-blue: #2563eb;
+  --brand-blue-glow: #3b82f6;
+  --border-subtle: rgba(37, 99, 235, 0.12);
+}
+
+/* ── Base resets & defaults ─────────────────────────────────────────────── */
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html {
     scroll-behavior: smooth;
-    /* Prevent iOS font scaling on rotation */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    /* Remove 300ms tap delay globally */
     touch-action: manipulation;
+    overflow-x: hidden;
   }
   body {
     font-family: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
-    /* Use dynamic viewport height — avoids iOS Safari address-bar jump */
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  h1 { content-visibility: visible; }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  img { max-width: 100%; }
+  ::selection { background: rgba(37, 99, 235, 0.3); color: #f1f5f9; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #2a2a3e; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(37, 99, 235, 0.3); }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  :focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 6px; }
 }
 
+/* ── Shared component classes ───────────────────────────────────────────── */
 @layer components {
   .gradient-text {
     background: linear-gradient(135deg, #2563eb 0%, #3b82f6 40%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-warm {
+    background: linear-gradient(135deg, #f97316, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-cool {
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -36,7 +73,8 @@
   .btn-primary {
     @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-secondary
            text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
-           active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer;
+           active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer
+           min-h-[44px];
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
   }
   .btn-primary:hover {
@@ -47,179 +85,89 @@
 
   .btn-ghost {
     @apply hover:bg-white/5 text-text-muted hover:text-text-primary px-4 py-2
-           rounded-lg transition-colors font-medium cursor-pointer;
+           rounded-lg transition-colors font-medium cursor-pointer min-h-[44px];
   }
-
   .btn-secondary {
     @apply bg-surface border border-border hover:border-primary/50 text-text-primary
            font-medium px-5 py-2.5 rounded-xl transition-all duration-200
-           active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer;
+           active:scale-95 inline-flex items-center justify-center gap-2 cursor-pointer
+           min-h-[44px];
   }
 
   .card {
     @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
   }
-
+  .card:hover { border-color: rgba(37, 99, 235, 0.2); }
   .card-hover {
     @apply card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
            transition-all duration-300 cursor-pointer;
   }
 
   .glass {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/10;
+    @apply bg-white/[0.03] border border-white/10;
   }
 
   .input-field {
     @apply bg-surface-active border border-border rounded-xl px-3.5 py-2.5
            text-text-primary placeholder:text-text-disabled
-           /* text-base = 16px — prevents iOS auto-zoom on focus */
-           text-base sm:text-sm
-           /* min-h-[44px] — Apple HIG touch target compliance */
-           min-h-[44px]
+           text-base sm:text-sm min-h-[44px]
            focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50
            transition-all duration-200 w-full;
   }
 
   .badge-ai {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background-color: rgba(244, 63, 94, 0.15);
-    color: #f87171;
-    border: 1px solid rgba(244, 63, 94, 0.25);
+    background-color: rgba(244, 63, 94, 0.12);
+    color: #fc8093;
+    border: 1px solid rgba(244, 63, 94, 0.2);
   }
-
   .badge-human {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background-color: rgba(16, 185, 129, 0.15);
+    background-color: rgba(16, 185, 129, 0.12);
     color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(16, 185, 129, 0.2);
   }
-
   .badge-uncertain {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background-color: rgba(245, 158, 11, 0.15);
+    background-color: rgba(245, 158, 11, 0.12);
     color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(245, 158, 11, 0.2);
   }
-
   .badge-pending {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
-    background-color: rgba(59, 130, 246, 0.15);
+    background-color: rgba(59, 130, 246, 0.12);
     color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.25);
-  }
-
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-glow-pulse {
-    animation: glow-pulse 2s ease-in-out infinite;
+    border: 1px solid rgba(59, 130, 246, 0.2);
   }
 
   .skeleton {
     @apply bg-surface-active animate-pulse rounded-lg;
   }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .table-responsive { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
+/* ── Utility classes ────────────────────────────────────────────────────── */
 @layer utilities {
   .surface-hover { background-color: rgba(255,255,255,0.03); }
   .text-rose    { color: #f43f5e; }
   .text-emerald { color: #10b981; }
   .text-amber   { color: #f59e0b; }
   .text-cyan    { color: #06b6d4; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-8px); }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); }
-  50%       { box-shadow: 0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(37, 99, 235, 0.2); }
-}
-
-@keyframes scan-line {
-  0%   { top: 0%; opacity: 1; }
-  95%  { top: 100%; opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
-
-.scan-line {
-  animation: scan-line 2s linear infinite;
-}
-
-/* ── Mobile responsiveness ─────────────────────────────────────────────── */
-@layer utilities {
-  /* Prose styles for legal pages */
-  .prose-detectai ul { list-style: disc; padding-left: 1.5rem; }
-  .prose-detectai ul li { margin-bottom: 0.35rem; }
-  .prose-detectai strong { color: #f1f5f9; }
-  .prose-detectai a { color: #2563eb; }
-  .prose-detectai a:hover { text-decoration: underline; }
-
-  /* Mobile safe paddings */
   .mobile-safe { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
-
-  /* Overflow-wrap utility — prevents long URLs/hashes breaking layout on mobile */
-  .prevent-overflow {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    hyphens: auto;
-  }
-
-  /* Tap highlight suppression for custom interactive elements */
+  .prevent-overflow { overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
   .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
-
-  /* Contain overscroll inside modal/sheet panels */
   .overscroll-contain { overscroll-behavior: contain; }
-
-  /* Touch manipulation (remove 300ms delay on specific elements if needed) */
   .touch-manipulation { touch-action: manipulation; }
+  .touch-target { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
+  .fluid-container { width: min(92vw, 1400px); margin-left: auto; margin-right: auto; }
+  .detect-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
 }
 
-/* Mobile responsive table wrapper */
-.table-responsive {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Prevent horizontal scroll on mobile */
-@media (max-width: 640px) {
-  body { overflow-x: hidden; }
-
-  /* Make tables scroll horizontally on mobile */
-  table { display: block; overflow-x: auto; white-space: nowrap; }
-
-  /* Ensure code blocks don't overflow */
-  pre, code { max-width: 100%; overflow-x: auto; }
-
-  /* Fix hero text on mobile */
-  /* Fix hero text on mobile — smaller clamp to prevent overflow */
-  .hero-title { font-size: clamp(1.75rem, 7vw, 3.5rem); }
-
-  /* Larger scrollbar grab area on touch devices */
-  @media (hover: none) and (pointer: coarse) {
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-  }
-
-  /* Dashboard sidebar - always collapse on mobile */
-  .sidebar-mobile-hidden { display: none; }
-}
-
-/* Dashboard layout mobile fix */
-@media (max-width: 768px) {
-  .dashboard-grid { grid-template-columns: 1fr !important; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
-
-/* ── Performance: CSS-based scroll animations (replaces JS whileInView) ──── */
+/* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -228,61 +176,41 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease forwards;
+@keyframes scan-sweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(200%); opacity: 0; }
 }
-.animate-fade-in {
-  animation: fadeIn 0.4s ease forwards;
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
 }
-
-/* LCP: ensure H1 is always visible immediately */
-h1 {
-  content-visibility: visible;
+@keyframes aria-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.5; }
+  30%            { transform: translateY(-5px); opacity: 1;   }
 }
-
-/* Reduce animation on slow connections / reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+@keyframes aria-msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
-
-/* ── Infinite scroll animations for AI vs Real cards ── */
-@keyframes scroll-left {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes verdict-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes scroll-right {
-  0%   { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
+@keyframes bar-grow { from { width: 0; } }
+@keyframes page-in {
+  from { opacity: 0.7; }
+  to   { opacity: 1; }
 }
-.animate-scroll-left {
-  animation: scroll-left 40s linear infinite;
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.animate-scroll-right {
-  animation: scroll-right 40s linear infinite;
-}
-.animate-scroll-left:hover,
-.animate-scroll-right:hover {
-  animation-play-state: paused;
-}
-
-
-/* ── Hero root network card animations (CSS-only — no hydration flash) ── */
-/* ── Hero node card animations — single composite animation per element ──
-   Merged fade-in + bob into ONE animation to avoid non-composited conflicts.
-   GPU-composited: only `transform` + `opacity` used, no layout properties. */
-
 @keyframes node-in-bob-a {
-  /* 0-16%: fade in from scale 0.85 */
   0%   { opacity: 0;   transform: translateY(0px)  scale(0.85); }
   16%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
-  /* 16-58%: bob down */
   37%  { opacity: 1;   transform: translateY(-6px) scale(1);    }
-  /* 58-100%: bob back + repeat */
   58%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
   79%  { opacity: 1;   transform: translateY(-6px) scale(1);    }
   100% { opacity: 1;   transform: translateY(0px)  scale(1);    }
@@ -295,354 +223,132 @@ h1 {
   77%  { opacity: 1;   transform: translateY(-9px) scale(1);    }
   100% { opacity: 1;   transform: translateY(0px)  scale(1);    }
 }
-
-.node-card {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-a 5s ease-in-out infinite;
-  animation-fill-mode: forwards;
+@keyframes scroll-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
-.node-card-bob-a {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-a 5s ease-in-out infinite;
-  animation-fill-mode: forwards;
+@keyframes scroll-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
 }
-.node-card-bob-b {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-b 6s ease-in-out infinite;
-  animation-fill-mode: forwards;
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
 }
-
-/* ── Mobile: faster scroll animations so cards are visible ── */
-@media (max-width: 640px) {
-  .animate-scroll-left  { animation-duration: 18s; }
-  .animate-scroll-right { animation-duration: 22s; }
+@keyframes ring-fill {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: var(--ring-offset, 70); }
+}
+@keyframes line-draw {
+  from { stroke-dashoffset: 1000; opacity: 0; }
+  to   { stroke-dashoffset: 0; opacity: 1; }
 }
 
-
-/* ── Hero text fade-up (replaces Framer Motion — no LCP penalty) ── */
-@keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero-fade-up {
-  opacity: 0;
-  animation: hero-fade-up 0.55s ease-out forwards;
-}
-
-/* ── Global mobile responsiveness fixes ── */
-
-/* Prevent horizontal overflow on all pages */
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
-
-/* Better touch targets on mobile */
-@media (max-width: 640px) {
-  button, a, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Input fields — prevent iOS zoom on focus */
-  input, textarea, select {
-    font-size: 16px !important;
-  }
-
-  /* Hero section — ensure text never overflows */
-  section {
-    overflow-x: hidden;
-  }
-
-  /* Cards — ensure they don't break layout */
-  .card {
-    min-width: 0;
-  }
-}
-
-/* ── Hero node cards — smooth pop-in with zero CLS ── */
-.node-card-bob-a,
-.node-card-bob-b {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  /* contain: layout ensures the translateY never causes document reflow */
-  contain: layout style;
-  /* preserve-3d removed — promotes full 3D GPU layer, causes scanline glitches on mobile */
-  transform-style: flat;
-}
-
-/* ── Comparison scrolling rows — smooth on all devices ── */
-.animate-scroll-left,
-.animate-scroll-right {
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-/* ── Review modal mobile safe area ── */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .review-modal-content {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
-  }
-}
-
-/* ── Better scrollbar hiding for scroll rows ── */
-.animate-scroll-left::-webkit-scrollbar,
-.animate-scroll-right::-webkit-scrollbar {
-  display: none;
-}
-
-/* ── Ensure images never break layout ── */
-img {
-  max-width: 100%;
-}
-
-/* ── Hide scrollbar utility (for trust bar horizontal scroll) ── */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* ── Accessibility: contrast fixes ── 
-   text-disabled was #334155 (fails WCAG AA on #0a0a0f background)
-   text-muted was #64748b (borderline — upgrade for better legibility) */
-.text-text-disabled,
-[class*="text-text-disabled"] {
-  color: #64748b !important; /* upgraded from #475569 — better WCAG AA contrast */
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   MOBILE-FIRST PROFESSIONAL POLISH
-   Target: Moto G Power / 375-390px width / Slow 4G
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Typography scale on mobile ── */
-@media (max-width: 639px) {
-  /* Prevent orphan words in headings */
-  h1, h2, h3 { text-wrap: balance; }
-
-  /* Better paragraph readability on small screens */
-  p { text-wrap: pretty; }
-
-  /* Ensure no horizontal scroll from any element */
-  * { max-width: 100%; }
-
-  /* Better tap targets */
-  a, button { min-height: 40px; }
-
-  /* Cards look cleaner with less padding on mobile */
-  .card { padding: 1rem !important; }
-
-  /* Tool grid cards — tighter on mobile */
-  section#tools .rounded-2xl { border-radius: 1rem; }
-}
-
-/* ── Card polish ── */
-.card {
-  @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
-  /* backdrop-filter removed — causes GPU compositing glitches on mobile */
-}
-.card:hover { border-color: rgba(37, 99, 235, 0.2); }
-
-/* ── Section spacing — tighter on mobile ── */
-@media (max-width: 639px) {
-  section { padding-left: 1rem; padding-right: 1rem; }
-  .max-w-6xl, .max-w-7xl, .max-w-5xl { padding-left: 1rem; padding-right: 1rem; }
-}
-
-/* ── Gradient badges — cleaner ── */
-.badge-ai   { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold; background-color: rgba(244, 63, 94, 0.12); color: #fc8093; border: 1px solid rgba(244,63,94,0.2); }
-.badge-human { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold; background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
-
-/* ── Nav improvements ── */
-nav a { transition: color 0.15s ease; }
-
-/* ── Smooth page transitions ── */
-main { animation: page-in 0.3s ease-out; }
-@keyframes page-in {
-  from { opacity: 0.7; }
-  to   { opacity: 1; }
-}
-
-/* ── Focus styles — accessibility ── */
-a:focus-visible, button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ── Text selection ── */
-::selection { background: rgba(37, 99, 235, 0.3); color: #f1f5f9; }
-
-/* ── Mobile safe area for bottom nav ── */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  footer { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
-}
-
-/* ── Improved mobile scrolling ── */
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .hero-fade-up, .node-card-bob-a, .node-card-bob-b { animation: none !important; opacity: 1 !important; }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   BIG SCREEN RESPONSIVE — 1280px, 1440px, 1600px, 1920px, 2560px
-   Ensures content scales up gracefully on large laptops, desktops,
-   and ultra-wide monitors. Only layout/spacing — no visual changes.
-   ═══════════════════════════════════════════════════════════ */
-
-/* ── 1280px (xl) — large laptop ── */
-@media (min-width: 1280px) {
-  /* Tailwind's built-in max-w classes already handle this tier;
-     we just ensure no accidental shrinkage. */
-  body { font-size: 16px; }
-}
-
-/* ── 1440px (2xl) — wide desktop / 1440p display ── */
-@media (min-width: 1440px) {
-  /* Expand content containers so they fill the wider viewport */
-  .max-w-3xl { max-width: 54rem;  }   /* was 48rem  */
-  .max-w-4xl { max-width: 64rem;  }   /* was 56rem  */
-  .max-w-5xl { max-width: 76rem;  }   /* was 64rem  */
-  .max-w-6xl { max-width: 88rem;  }   /* was 72rem  */
-  .max-w-7xl { max-width: 100rem; }   /* was 80rem  */
-
-  /* Section vertical rhythm — more breathing room */
-  section.cv-auto { padding-top: clamp(4rem, 6vw, 7rem); padding-bottom: clamp(4rem, 6vw, 7rem); }
-
-  /* Card padding increase */
-  .card  { padding: 1.75rem; }
-
-  /* Fluid container utility */
-  .fluid-container {
-    width: min(90%, 1400px);
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-
-/* ── 1600px — between 2xl and 3xl ── */
-@media (min-width: 1600px) {
-  .max-w-3xl { max-width: 60rem;  }
-  .max-w-4xl { max-width: 70rem;  }
-  .max-w-5xl { max-width: 82rem;  }
-  .max-w-6xl { max-width: 96rem;  }
-  .max-w-7xl { max-width: 110rem; }
-
-  /* Detect pages: side-by-side panel layout activates here */
-  .detect-layout {
-    display: grid;
-    grid-template-columns: 1fr 440px;
-    gap: 2rem;
-    align-items: start;
-  }
-}
-
-/* ── 1920px (3xl) — Full HD and ultra-wide ── */
-@media (min-width: 1920px) {
-  body { font-size: 17px; }
-
-  .max-w-3xl { max-width: 66rem;  }
-  .max-w-4xl { max-width: 78rem;  }
-  .max-w-5xl { max-width: 90rem;  }
-  .max-w-6xl { max-width: 108rem; }
-  .max-w-7xl { max-width: 120rem; }
-
-  /* Hero section — allow H1 to breathe at full HD */
-  .hero-title { font-size: clamp(3.5rem, 4.5vw, 7rem) !important; }
-
-  /* Sections get maximum vertical rhythm */
-  section.cv-auto { padding-top: clamp(5rem, 7vw, 9rem); padding-bottom: clamp(5rem, 7vw, 9rem); }
-}
-
-/* ── 2560px — 2K / ultra-wide ── */
-@media (min-width: 2560px) {
-  body { font-size: 18px; }
-
-  .max-w-3xl { max-width: 72rem;  }
-  .max-w-4xl { max-width: 84rem;  }
-  .max-w-5xl { max-width: 100rem; }
-  .max-w-6xl { max-width: 120rem; }
-  .max-w-7xl { max-width: 136rem; }
-
-  /* Slightly larger base text so lines don't feel narrow */
-  p, li, td, th { font-size: 1.05rem; }
-}
-
-/* Fluid container utility — also available at narrower breakpoints */
-.fluid-container {
-  width: min(92vw, 1400px);
-  margin-left: auto;
-  margin-right: auto;
-}
-@media (min-width: 1920px) {
-  .fluid-container { width: min(88vw, 1600px); }
-}
-@media (min-width: 2560px) {
-  .fluid-container { width: min(80vw, 2000px); }
-}
-
-/* ── Phase 9: Mobile Nav + Touch + UI Improvements ──────────────────────────── */
-
-.nav-safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
-
-@media (max-width: 640px) {
-  button, a, [role="button"] { min-height: 36px; }
-  .touch-target { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
+/* ── Animation utility classes ─────────────────────────────────────────── */
+.animate-fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+.animate-fade-in    { animation: fadeIn 0.4s ease forwards; }
+.hero-fade-up { opacity: 0; animation: hero-fade-up 0.55s ease-out forwards; }
+.aria-msg-in  { animation: aria-msg-in 0.22s ease-out both; }
+.verdict-animate { animation: verdict-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.signal-bar { animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.scan-sweep { animation: scan-sweep 2.4s ease-in-out infinite; }
 .skeleton-shimmer {
   background: linear-gradient(90deg, #0f0f17 0%, #1c1c2e 50%, #0f0f17 100%);
   background-size: 800px 100%;
   animation: shimmer 1.8s infinite linear;
 }
-
-@keyframes scan-sweep {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(200%); opacity: 0; }
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 400px 100%;
 }
-.scan-sweep { animation: scan-sweep 2.4s ease-in-out infinite; }
+.animate-scroll-left  { animation: scroll-left  40s linear infinite; will-change: transform; backface-visibility: hidden; }
+.animate-scroll-right { animation: scroll-right 40s linear infinite; will-change: transform; backface-visibility: hidden; }
+.animate-scroll-left:hover, .animate-scroll-right:hover { animation-play-state: paused; }
+.node-card      { opacity: 0; will-change: transform, opacity; animation: node-in-bob-a 5s ease-in-out infinite; animation-fill-mode: forwards; }
+.node-card-bob-a { opacity: 0; will-change: transform, opacity; animation: node-in-bob-a 5s ease-in-out infinite; animation-fill-mode: forwards; backface-visibility: hidden; contain: layout style; transform-style: flat; }
+.node-card-bob-b { opacity: 0; will-change: transform, opacity; animation: node-in-bob-b 6s ease-in-out infinite; animation-fill-mode: forwards; backface-visibility: hidden; contain: layout style; transform-style: flat; }
+.eq-bar { transform-origin: bottom; animation: eq-bar 0.8s ease-in-out infinite; }
+.eq-bar:nth-child(2) { animation-delay: 0.15s; }
+.eq-bar:nth-child(3) { animation-delay: 0.3s; }
+.eq-bar:nth-child(4) { animation-delay: 0.45s; }
+.timeline-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+.timeline-line.in-view { animation: line-draw 1.5s ease-out forwards; }
+.progress-ring-circle { stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
 
+/* Marquee */
+.marquee-track { display: flex; width: max-content; }
+.marquee-left  { animation: scroll-left  30s linear infinite; }
+.marquee-right { animation: scroll-right 35s linear infinite; }
+.marquee-left:hover, .marquee-right:hover { animation-play-state: paused; }
+
+/* Stagger entrance */
+.animate-enter { animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-enter-delay-1 { animation-delay: 0.1s; }
+.animate-enter-delay-2 { animation-delay: 0.2s; }
+.animate-enter-delay-3 { animation-delay: 0.3s; }
+.animate-enter-delay-4 { animation-delay: 0.4s; }
+.animate-enter-delay-5 { animation-delay: 0.5s; }
+
+/* Section reveal (IntersectionObserver) */
+.section-reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.section-reveal.revealed { opacity: 1; transform: translateY(0); }
+
+/* ── Interactive component styles ───────────────────────────────────────── */
+main { animation: page-in 0.3s ease-out; }
+nav a { transition: color 0.15s ease; }
+
+/* Card hover */
+.tool-card {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.tool-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08), 0 0 0 1px rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+.lift-hover { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease; }
+.lift-hover:hover { transform: translateY(-4px); }
+.magnetic-btn { transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+.magnetic-btn:hover  { transform: scale(1.02); }
+.magnetic-btn:active { transform: scale(0.98); }
+.gpu-accelerated { transform: translateZ(0); backface-visibility: hidden; }
+.cv-auto    { will-change: transform; }
+.cv-auto-sm { will-change: transform; }
+.who-card { transform: translateZ(0); backface-visibility: hidden; }
+.stat-card { opacity: 1 !important; transform: none !important; }
 .dropzone-hover {
   border-color: #2563eb !important;
   background: rgba(37, 99, 235, 0.04) !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), inset 0 0 40px rgba(37, 99, 235, 0.03);
 }
-
-@media (max-width: 1024px) { .detect-grid { grid-template-columns: 1fr !important; } }
-
-:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 6px; }
-
-@keyframes verdict-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+.testimonial-card {
+  background: rgba(17, 17, 24, 0.95);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  transition: border-color 0.25s ease, transform 0.25s ease;
 }
-.verdict-animate { animation: verdict-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.testimonial-card:hover { border-color: rgba(37, 99, 235, 0.25); transform: translateY(-2px); }
+.prof-item { transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+@media (hover: hover) {
+  .prof-item:hover { transform: scale(1.05); border-color: rgba(37, 99, 235, 0.4); color: #f1f5f9; box-shadow: 0 0 12px rgba(37, 99, 235, 0.2); }
+  .who-card:hover { transform: translateY(-4px) translateZ(0); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+}
 
-@keyframes bar-grow { from { width: 0; } }
-.signal-bar { animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+/* Nav hide/show */
+.nav-hidden  { transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.nav-visible { transform: translateY(0);     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-::-webkit-scrollbar       { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.3); }
+/* Icon animations */
+.icon-typing::after { content: '|'; display: inline-block; animation: fadeIn 1s ease-in-out infinite; margin-left: 1px; }
 
-/* node-bob-a / node-bob-b removed — node-in-bob-a / node-in-bob-b (above) handle both
-   fade-in and bob. Duplicate declarations here were overriding opacity and keeping cards invisible. */
+/* Tabular nums for confidence values */
+[class*="font-black"][class*="gradient-text"],
+[class*="font-black"][class*="text-rose"],
+[class*="font-black"][class*="text-emerald"],
+[class*="font-black"][class*="text-amber"] { font-variant-numeric: tabular-nums; }
 
-/* ── Clerk auth form deep overrides ───────────────────────── */
-
-/* Remove white background flash on Clerk card mount */
+/* ── Clerk auth overrides ────────────────────────────────────────────────── */
 .cl-rootBox, .cl-card { background: transparent !important; }
-
-/* Ensure form inputs don't get browser autofill yellow */
 .cl-formFieldInput:-webkit-autofill,
 .cl-formFieldInput:-webkit-autofill:hover,
 .cl-formFieldInput:-webkit-autofill:focus {
@@ -651,600 +357,56 @@ html { scroll-behavior: smooth; }
   caret-color: #eef2ff !important;
   border-color: #2a2a55 !important;
 }
-
-/* OTP code inputs spacing */
 .cl-otpCodeField { gap: 8px !important; }
-
-/* Password strength indicator */
-.cl-passwordStrengthBar div {
-  border-radius: 4px !important;
-  height: 3px !important;
-}
-
-/* Make "Forgot password?" link always visible */
-.cl-formFieldAction {
-  color: #7c64c8 !important;
-  font-size: 12px !important;
-}
+.cl-passwordStrengthBar div { border-radius: 4px !important; height: 3px !important; }
+.cl-formFieldAction { color: #7c64c8 !important; font-size: 12px !important; }
 .cl-formFieldAction:hover { color: #60a5fa !important; }
-
-/* Error message icon alignment */
-.cl-formFieldErrorText {
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-}
-
-/* Social button icon sizing */
+.cl-formFieldErrorText { display: flex !important; align-items: center !important; gap: 4px !important; }
 .cl-socialButtonsBlockButton__google img,
-.cl-socialButtonsBlockButton__github img {
-  width: 16px !important;
-  height: 16px !important;
-}
-
-/* Loading dots color */
+.cl-socialButtonsBlockButton__github img { width: 16px !important; height: 16px !important; }
 .cl-internal-spinner { color: #2563eb !important; }
-
-/* Verification success checkmark */
 .cl-verificationLinkStatusIconBox { color: #34d399 !important; }
-
-/* Remove Clerk branding if shown */
 .cl-powered-by { display: none !important; }
 
-/* ── content-visibility removed — was hiding sections off-screen ──── */
-/* content-visibility: auto caused sections to never appear on mobile  */
-/* and in certain browsers; replaced with will-change for perf.       */
-.cv-auto {
-  will-change: transform;
-}
-.cv-auto-sm {
-  will-change: transform;
-}
+/* ── Prose styles ─────────────────────────────────────────────────────────── */
+.prose-detectai ul { list-style: disc; padding-left: 1.5rem; }
+.prose-detectai ul li { margin-bottom: 0.35rem; }
+.prose-detectai strong { color: #f1f5f9; }
+.prose-detectai a { color: #2563eb; }
+.prose-detectai a:hover { text-decoration: underline; }
 
-/* ── Mobile performance: disable ALL backdrop-blur on mobile ─────────────── */
-/* backdrop-filter is the #1 cause of GPU compositing overflow on mobile.     */
-/* Purple/blue scanline artifacts = stacked compositing layers crashing GPU.  */
-@media (max-width: 640px) {
-  [class*="backdrop-blur"],
-  .testimonial-card,
-  .glass {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  /* Ensure near-transparent bg elements become opaque on mobile */
-  [class*="bg-surface/"],
-  [class*="bg-background/"] {
-    background-color: #0f0f17 !important;
-  }
-}
-
-/* ── Reduce motion: disable all scroll-driven animations ── */
-@media (prefers-reduced-motion: reduce) {
-  .animate-scroll-left,
-  .animate-scroll-right {
-    animation: none !important;
-    transform: none !important;
-  }
-}
-
-/* ── ARIA chat animations ─────────────────────────────────────────────────── */
-@keyframes aria-dot-bounce {
-  0%, 60%, 100% { transform: translateY(0);    opacity: 0.5; }
-  30%            { transform: translateY(-5px); opacity: 1;   }
-}
-
-/* Slide-in animation for each new message */
-@keyframes aria-msg-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0);   }
-}
-.aria-msg-in {
-  animation: aria-msg-in 0.22s ease-out both;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   MODULE 10: Mobile overflow guards & UX polish
-   Applied: after full codebase audit (May 2026)
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Force all direct children of detect-page result panels to stay in-flow */
-.space-y-4.w-full.min-w-0 > * { max-width: 100%; }
-
-/* Signal list: momentum scroll on iOS, hide scrollbar */
-.overflow-y-auto.max-h-\[300px\],
-.overflow-y-auto.max-h-\[280px\] {
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.overflow-y-auto.max-h-\[300px\]::-webkit-scrollbar,
-.overflow-y-auto.max-h-\[280px\]::-webkit-scrollbar {
-  display: none;
-}
-
-/* dashboard <main>: belt-and-suspenders x-overflow guard */
-@media (max-width: 1023px) {
-  [class*="overflow-y-auto"][class*="overflow-x-hidden"] {
-    overflow-x: hidden !important;
-  }
-}
-
-/* iOS bottom safe area for detect result pages */
+/* ── Detect / dashboard layout ─────────────────────────────────────────── */
+@media (min-width: 1024px) { .detect-layout { grid-template-columns: 1fr 440px; } }
+.detect-page-safe { }
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .detect-page-safe {
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
+  .detect-page-safe  { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  .review-modal-content { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
+  footer { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
 }
+.nav-safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+.hero-title { font-size: clamp(1.75rem, 7vw, 3.5rem); }
+.sidebar-mobile-hidden { display: none; }
+.dashboard-grid { grid-template-columns: 1fr; }
+.space-y-4.w-full.min-w-0 > * { max-width: 100%; }
+.overflow-y-auto.max-h-\[300px\], .overflow-y-auto.max-h-\[280px\] { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.overflow-y-auto.max-h-\[300px\]::-webkit-scrollbar, .overflow-y-auto.max-h-\[280px\]::-webkit-scrollbar { display: none; }
+[data-framer-component-type], [style*="transform: scale"] { contain: layout style; }
 
-/* Remove min-width:44px from icon-only tight buttons — keep min-height only */
+/* ── Mobile-specific ────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .btn-ghost {
-    min-width: unset !important;
-  }
-  /* Preserve 44px min touch target on primary actions only */
-  .btn-primary {
-    min-height: 44px;
-  }
-}
-
-/* tabular-nums on all confidence values — prevents width jitter during animation */
-[class*="font-black"][class*="gradient-text"],
-[class*="font-black"][class*="text-rose"],
-[class*="font-black"][class*="text-emerald"],
-[class*="font-black"][class*="text-amber"] {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   MODULE F: Border polish & section separator minimal fade
-   Applied: May 2026 — border audit pass
-   ═══════════════════════════════════════════════════════════════ */
-
-/*
-  The `border` token is #1c1c2e (dark purple-gray).
-  At full opacity it reads as a clear hard line on #08080d bg.
-  Section separators (border-t, border-b, border-y) should be
-  nearly invisible — just enough to give structure without weight.
-  These overrides handle any missed instances globally.
-*/
-
-/* Section-level horizontal separators — always minimal */
-section + section,
-section > .max-w-6xl > .border-t,
-section > .max-w-7xl > .border-t {
-  border-color: rgba(28, 28, 46, 0.35);
-}
-
-/* Dashboard sidebar border — already subtle, keep it */
-.bg-surface.border-r.border-border {
-  border-color: rgba(28, 28, 46, 0.8);
-}
-
-/* Dashboard header border */
-.bg-surface\/50.border-b.border-border {
-  border-color: rgba(28, 28, 46, 0.6);
-}
-
-/* Detect page .card borders — ensure they never look harsh */
-.card {
-  border-color: rgba(28, 28, 46, 0.9);
-}
-
-/* Softer card borders on mobile */
-@media (max-width: 640px) {
-  .card { border-color: rgba(28, 28, 46, 0.6); }
-}
-
-/* On hover, cards reveal primary tint naturally via Tailwind — no override needed */
-
-/* Chat page: all border-white/N values should be uniform and very subtle */
-/* These are already handled per-element above in Module B */
-
-/* Prevent any border from using pure white above 12% opacity on dark surfaces */
-@media (prefers-color-scheme: dark) {
-  [class*="border-white/1"]:not([class*="border-white/[0."]) {
-    /* border-white/10, /18, /14, /12, /13, /16 — cap at equivalent of /8 */
-    opacity: 0.8;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   PREMIUM UI OVERHAUL — Phase 2.5 (May 2026)
-   Enterprise-grade animations, spotlight effects, bento grid
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── CSS Design Tokens ──────────────────────────────────────────────────── */
-:root {
-  --brand-blue: #2563eb;
-  --brand-blue-glow: #3b82f6;
-  --brand-orange: #F97316;
-  --border-subtle: rgba(37, 99, 235, 0.12);
-  --border-glow: rgba(37, 99, 235, 0.4);
-}
-
-/* ── Noise texture overlay — REMOVED ───────────────────────────────────── */
-/* The SVG feTurbulence fixed overlay caused severe horizontal banding on    */
-/* Android Chrome and iOS Safari (GPU compositing artifact at high DPR).     */
-/* Effect was 0.025 opacity — visually undetectable after removal.           */
-
-/* ── Spotlight card effect (mouse-tracking glow) ──────────────────────── */
-.spotlight-card {
-  position: relative;
-  overflow: hidden;
-}
-.spotlight-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    var(--spotlight-color, rgba(37,99,235,0.12)),
-    transparent 40%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: inherit;
-}
-.spotlight-card:hover::before {
-  opacity: 1;
-}
-.spotlight-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* ── Enhanced gradient-text variants ───────────────────────────────────── */
-.gradient-text-warm {
-  background: linear-gradient(135deg, #f97316, #f59e0b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.gradient-text-cool {
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.gradient-text-hero {
-  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ── Nav scroll-hide animation ──────────────────────────────────────────── */
-.nav-hidden {
-  transform: translateY(-100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.nav-visible {
-  transform: translateY(0);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ── Hero mesh gradient animation ──────────────────────────────────────── */
-@keyframes mesh-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(40px, -30px) scale(1.08); }
-  66%       { transform: translate(-30px, 20px) scale(0.95); }
-}
-.hero-mesh-1 {
-  animation: mesh-drift 18s ease-in-out infinite;
-  will-change: transform;
-}
-.hero-mesh-2 {
-  animation: mesh-drift 22s ease-in-out infinite reverse;
-  will-change: transform;
-}
-.hero-mesh-3 {
-  animation: mesh-drift 15s ease-in-out infinite 5s;
-  will-change: transform;
-}
-
-/* ── Bento grid shimmer border on large card ──────────────────────────── */
-@keyframes border-shimmer {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.bento-shimmer {
-  position: relative;
-}
-.bento-shimmer::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(37,99,235,0.6) 0%,
-    rgba(59,130,246,0.4) 25%,
-    rgba(37,99,235,0.2) 50%,
-    rgba(249,115,22,0.3) 75%,
-    rgba(37,99,235,0.6) 100%
-  );
-  background-size: 300% 300%;
-  animation: border-shimmer 6s linear infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* ── Stagger entrance animation classes ──────────────────────────────── */
-@keyframes slide-up-fade {
-  from { opacity: 0; transform: translateY(32px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-enter {
-  animation: slide-up-fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.animate-enter-delay-1 { animation-delay: 0.1s; }
-.animate-enter-delay-2 { animation-delay: 0.2s; }
-.animate-enter-delay-3 { animation-delay: 0.3s; }
-.animate-enter-delay-4 { animation-delay: 0.4s; }
-.animate-enter-delay-5 { animation-delay: 0.5s; }
-
-/* ── Tool card icon hover animations ────────────────────────────────── */
-@keyframes typing-cursor {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-.icon-typing::after {
-  content: '|';
-  display: inline-block;
-  animation: typing-cursor 1s ease-in-out infinite;
-  margin-left: 1px;
-}
-
-@keyframes eq-bar {
-  0%, 100% { transform: scaleY(0.3); }
-  50%       { transform: scaleY(1); }
-}
-.eq-bar { transform-origin: bottom; animation: eq-bar 0.8s ease-in-out infinite; }
-.eq-bar:nth-child(2) { animation-delay: 0.15s; }
-.eq-bar:nth-child(3) { animation-delay: 0.3s; }
-.eq-bar:nth-child(4) { animation-delay: 0.45s; }
-
-/* ── Timeline draw animation ─────────────────────────────────────────── */
-@keyframes line-draw {
-  from { stroke-dashoffset: 1000; opacity: 0; }
-  to   { stroke-dashoffset: 0; opacity: 1; }
-}
-.timeline-line {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-}
-.timeline-line.in-view {
-  animation: line-draw 1.5s ease-out forwards;
-}
-
-/* ── Circular progress ring ─────────────────────────────────────────── */
-@keyframes ring-fill {
-  from { stroke-dashoffset: 283; }
-  to   { stroke-dashoffset: var(--ring-offset, 70); }
-}
-.progress-ring-circle {
-  stroke-dasharray: 283;
-  stroke-dashoffset: 283;
-  transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* ── Marquee CSS fallback (for reduced motion) ────────────────────────── */
-@keyframes marquee-left  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
-
-.marquee-track { display: flex; width: max-content; }
-.marquee-left  { animation: marquee-left  30s linear infinite; }
-.marquee-right { animation: marquee-right 35s linear infinite; }
-.marquee-left:hover,
-.marquee-right:hover { animation-play-state: paused; }
-
-/* ── Card lift & glow on hover ──────────────────────────────────────── */
-.tool-card {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.25s ease,
-              border-color 0.25s ease;
-}
-.tool-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08),
-              0 0 0 1px rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.3);
-}
-
-/* ── Trust badge pulse ─────────────────────────────────────────────── */
-@keyframes trust-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-  50%       { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
-}
-.trust-pulse { animation: trust-pulse 2s ease-in-out infinite; }
-
-/* ── Scan line for image card hover ───────────────────────────────── */
-@keyframes scanline-sweep {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  5%   { opacity: 0.6; }
-  95%  { opacity: 0.6; }
-  100% { transform: translateY(100%); opacity: 0; }
-}
-.group:hover .scanline {
-  animation: scanline-sweep 1.8s ease-in-out infinite;
-}
-.scanline {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(37,99,235,0.12) 45%,
-    rgba(37,99,235,0.12) 55%,
-    transparent 100%
-  );
-  transform: translateY(-100%);
-}
-
-/* ── Text reveal (typewriter) effect ─────────────────────────────── */
-@keyframes typewriter {
-  from { clip-path: inset(0 100% 0 0); }
-  to   { clip-path: inset(0 0% 0 0); }
-}
-.typewriter {
-  animation: typewriter 2s steps(40) 0.5s both;
-}
-
-/* ── Number counter odometer feel ─────────────────────────────────── */
-.counter-value {
-  font-variant-numeric: tabular-nums;
-  transition: none;
-}
-
-/* ── Testimonial card glass effect ────────────────────────────────── */
-.testimonial-card {
-  background: rgba(17, 17, 24, 0.95);
-  border: 1px solid rgba(37, 99, 235, 0.1);
-  /* backdrop-filter removed — use opaque bg instead to avoid GPU layer glitches */
-  transition: border-color 0.25s ease, transform 0.25s ease;
-}
-.testimonial-card:hover {
-  border-color: rgba(37, 99, 235, 0.25);
-  transform: translateY(-2px);
-}
-
-/* ── Professionals list item hover ────────────────────────────────── */
-.prof-item {
-  transition: color 0.2s ease, border-color 0.2s ease,
-              transform 0.2s ease, box-shadow 0.2s ease;
-}
-.prof-item:hover {
-  transform: scale(1.05);
-  border-color: rgba(37, 99, 235, 0.4);
-  color: #f1f5f9;
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
-}
-
-/* ── Section reveal — scroll-triggered via IntersectionObserver ─── */
-.section-reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.section-reveal.revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── Reduced motion overrides for ALL new animations ───────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .hero-mesh-1, .hero-mesh-2, .hero-mesh-3,
-  .marquee-left, .marquee-right,
-  .bento-shimmer::before,
-  .spotlight-card::before,
-  .eq-bar,
-  .scanline,
-  .typewriter,
-  .trust-pulse {
-    animation: none !important;
-    transform: none !important;
-    transition: none !important;
-  }
-  .section-reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-}
-
-/* fm-reveal hack removed — was fighting against framer-motion JS animations.
- * LazyMotion has been removed from MotionProvider, so motion.* elements
- * animate correctly via JS and no CSS fallback is needed. */
-
-/* ── GPU acceleration & micro-interactions ──────────────────────────── */
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* Magnetic button micro-interaction */
-.magnetic-btn {
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.magnetic-btn:hover  { transform: scale(1.02); }
-.magnetic-btn:active { transform: scale(0.98); }
-
-/* Subtle card lift on hover */
-.lift-hover {
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.3s ease;
-}
-.lift-hover:hover { transform: translateY(-4px); }
-
-/* Shimmer loading for async content */
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-.animate-shimmer {
-  animation: shimmer 1.5s infinite linear;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-  background-size: 400px 100%;
-}
-
-/* Disable heavy blur effects on small/reduced-motion devices */
-@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
-  .blur-orb, .hero-mesh-blur {
-    display: none !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   GPU CRASH & SCREEN-BLANK FIXES — LOW-SPEC DEVICES
-   Root causes:
-   1. backdrop-filter on stacked fixed/sticky elements → compositor overflow
-   2. will-change: transform on many simultaneous elements → VRAM exhaustion
-   3. Large blur-[Npx] orbs composited at full-screen size → texture OOM
-   4. CSS animations + Framer Motion JS animations fighting same element
-   5. overflow-hidden on a parent of a fixed child → blank section on iOS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── 1. Widen mobile backdrop-filter kill to 768px (covers mid-range tablets) */
-@media (max-width: 768px) {
-  [class*="backdrop-blur"],
-  .glass,
-  .testimonial-card {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-}
-
-/* ── 2. Restrict will-change to only elements currently animating ── */
-/*    Too many will-change declarations = too many compositor layers      */
-@media (max-width: 768px) {
-  .node-card-bob-a,
-  .node-card-bob-b,
-  .hero-fade-up,
-  .marquee-left,
-  .marquee-right,
-  .cv-auto,
-  .cv-auto-sm,
-  .gpu-accelerated,
-  .lift-hover {
-    will-change: auto !important;
-  }
-}
-
-/* ── 3. Disable bob animations on mobile — translateY causes layer promotion */
-@media (max-width: 640px) {
-  .node-card-bob-a {
-    animation: node-in-bob-a-static 0.6s ease-out forwards !important;
-  }
-  .node-card-bob-b {
-    animation: node-in-bob-b-static 0.7s ease-out forwards !important;
-  }
+  body { overflow-x: hidden; }
+  pre, code { max-width: 100%; overflow-x: auto; }
+  section { overflow-x: hidden; }
+  .card { min-width: 0; padding: 1rem; }
+  input, textarea, select { font-size: 16px !important; }
+  .btn-ghost { min-width: unset !important; }
+  .btn-primary { min-height: 44px; }
+  .animate-scroll-left  { animation-duration: 18s; }
+  .animate-scroll-right { animation-duration: 22s; }
+  .marquee-left  { animation-play-state: paused !important; }
+  .marquee-right { animation-play-state: paused !important; }
+  .node-card-bob-a { animation: node-in-bob-a-static 0.6s ease-out forwards !important; }
+  .node-card-bob-b { animation: node-in-bob-b-static 0.7s ease-out forwards !important; }
   @keyframes node-in-bob-a-static {
     from { opacity: 0; transform: translateY(8px) scale(0.92); }
     to   { opacity: 1; transform: translateY(0)   scale(1);    }
@@ -1254,62 +416,75 @@ section > .max-w-7xl > .border-t {
     to   { opacity: 1; transform: translateY(0)   scale(1);    }
   }
 }
-
-/* ── 4. Large blur orbs — reduce blur radius on mobile to cut texture size ── */
-@media (max-width: 640px) {
-  .blur-orb { display: none !important; }
-}
-@media (min-width: 641px) and (max-width: 1024px) {
-  /* Tablet: halve the blur radius via a filter fallback */
-  .blur-orb { filter: blur(40px) !important; }
-}
-
-/* ── 5. Marquee — pause on mobile to save battery & prevent jank ── */
-@media (max-width: 640px) {
-  .marquee-left,
-  .marquee-right {
-    animation-play-state: paused !important;
-  }
-}
-
-/* ── 6. Section overflow-hidden → overflow-clip (doesn't create stacking ctx) */
-/*    overflow-hidden on sections with fixed children = blank on iOS Safari   */
-@supports (overflow: clip) {
-  section[class*="overflow-hidden"] {
-    overflow: clip !important;
-  }
-}
-
-/* ── 7. Prevent fixed nav from creating a compositor crash on low-end chips ── */
-/*    Use a solid near-opaque bg instead of transparent + blur on mobile      */
 @media (max-width: 768px) {
-  nav[class*="fixed"][class*="backdrop-blur"],
-  nav[class*="fixed"] {
-    background-color: #08080d !important;
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  [class*="backdrop-blur"], .glass, .testimonial-card {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
+  .node-card-bob-a, .node-card-bob-b, .hero-fade-up, .marquee-left, .marquee-right,
+  .cv-auto, .cv-auto-sm, .gpu-accelerated, .lift-hover { will-change: auto !important; }
+  nav[class*="fixed"] { background-color: #08080d !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+@media (max-width: 1023px) {
+  [class*="overflow-y-auto"][class*="overflow-x-hidden"] { overflow-x: hidden !important; }
+  .detect-grid { grid-template-columns: 1fr !important; }
+}
+@supports (overflow: clip) {
+  section[class*="overflow-hidden"] { overflow: clip !important; }
+}
+.auth-blur-orb { display: none; }
+
+/* ── Large screen enhancements ──────────────────────────────────────────── */
+@media (min-width: 768px) { .dashboard-grid { grid-template-columns: auto 1fr; } }
+@media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1440px) {
+  .max-w-3xl { max-width: 54rem; }
+  .max-w-4xl { max-width: 64rem; }
+  .max-w-5xl { max-width: 76rem; }
+  .max-w-6xl { max-width: 88rem; }
+  .max-w-7xl { max-width: 100rem; }
+  .card { padding: 1.75rem; }
+  .fluid-container { width: min(90%, 1400px); }
+  section[class*="py-"] { padding-left: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1)); padding-right: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1)); }
+  .card table, .card .overflow-x-auto { max-width: 100%; }
+  .grid.grid-cols-2 { gap: clamp(0.5rem, 1vw, 1.25rem); }
+  .grid.grid-cols-4, .grid.grid-cols-3 { gap: clamp(0.75rem, 1.2vw, 1.5rem); }
+  img, video, canvas, svg:not(.icon) { max-width: 100%; }
+  [class*="max-w-6xl"] { max-width: min(88rem, 96vw); }
+  [class*="max-w-5xl"] { max-width: min(76rem, 94vw); }
+  [class*="max-w-4xl"] { max-width: min(64rem, 92vw); }
+}
+@media (min-width: 1600px) {
+  .detect-layout { grid-template-columns: 1fr 440px; }
+}
+@media (min-width: 1920px) {
+  body { font-size: 17px; }
+  .max-w-3xl { max-width: 66rem; }
+  .max-w-4xl { max-width: 78rem; }
+  .max-w-5xl { max-width: 90rem; }
+  .max-w-6xl { max-width: 108rem; }
+  .max-w-7xl { max-width: 120rem; }
+  .hero-title { font-size: clamp(3.5rem, 4.5vw, 7rem) !important; }
+  .fluid-container { width: min(88vw, 1600px); }
+  h1 { font-size: clamp(2.5rem, 4vw, 6rem); }
+  h2 { font-size: clamp(1.75rem, 2.8vw, 4rem); }
+  [class*="max-w-6xl"] { max-width: min(108rem, 90vw); }
+  [class*="max-w-5xl"] { max-width: min(90rem, 88vw); }
+  [class*="max-w-4xl"] { max-width: min(78rem, 86vw); }
+  [class*="max-w-7xl"] { max-width: min(120rem, 92vw); }
+}
+@media (min-width: 2560px) {
+  body { font-size: 18px; }
+  .max-w-7xl { max-width: 136rem; }
+  h1 { font-size: clamp(3rem, 3.5vw, 7rem); }
+  h2 { font-size: clamp(2rem, 2.5vw, 5rem); }
+  .fluid-container { width: min(80vw, 2000px); }
+  p, li, td, th { font-size: 1.05rem; }
 }
 
-/* ── 8. Framer Motion scale transforms — contain layout to avoid reflow ── */
-[data-framer-component-type],
-[style*="transform: scale"] {
-  contain: layout style;
-}
-
-/* ── 9. bento-shimmer — disable the ::before pseudo on low-end (heuristic) ── */
-@media (max-width: 640px) {
-  .bento-shimmer::before { animation: none !important; opacity: 0 !important; }
-  .spotlight-card::before { animation: none !important; }
-  .scanline { display: none !important; }
-}
-
-/* ── 10. AuthGuard / SignupGate blur orb — mobile kill ── */
-@media (max-width: 768px) {
-  .auth-blur-orb { display: none !important; }
-}
-
-/* ── 11. Reduced-motion: stop everything ── */
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1317,98 +492,13 @@ section > .max-w-7xl > .border-t {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .bento-shimmer::before,
-  .spotlight-card::before,
-  .marquee-left,
-  .marquee-right,
-  .scanline,
-  .trust-pulse,
-  .hero-fade-up,
-  .node-card-bob-a,
-  .node-card-bob-b {
+  html { scroll-behavior: auto; }
+  .hero-fade-up, .node-card-bob-a, .node-card-bob-b, .section-reveal,
+  .animate-scroll-left, .animate-scroll-right, .marquee-left, .marquee-right,
+  .scan-sweep, .animate-shimmer, .skeleton-shimmer {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
   }
-}
-
-/* ── WhoNeedsSection cards — pure CSS, no JS animation dependency ── */
-/* Cards are visible immediately; no opacity:0 initial state            */
-.who-card {
-  transform: translateZ(0);   /* own layer, isolate from parent */
-  backface-visibility: hidden;
-}
-@media (hover: hover) {
-  /* Hover lift only on devices that actually support hover */
-  .who-card:hover {
-    transform: translateY(-4px) translateZ(0);
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-}
-
-/* ── Dashboard / Profile stat cards — always visible ── */
-/* Framer Motion initial:opacity:0 causes blank cards on slow CPUs.    */
-/* These sections now use plain <div> — no animation needed.            */
-.stat-card {
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   LARGE-SCREEN SAFETY NET
-   These rules ensure NO page breaks or gets clipped on
-   big desktops regardless of what inline Tailwind classes do.
-   Applied globally — safe for all screen sizes.
-   ═══════════════════════════════════════════════════════════ */
-
-/* 1. Every direct page wrapper stays bounded */
-@media (min-width: 1440px) {
-  /* Tables inside cards should scroll, never overflow their card */
-  .card table,
-  .card .overflow-x-auto { max-width: 100%; }
-
-  /* Grid layouts on dashboard — give cells room to breathe */
-  .grid.grid-cols-2 { gap: clamp(0.5rem, 1vw, 1.25rem); }
-  .grid.grid-cols-4,
-  .grid.grid-cols-3 { gap: clamp(0.75rem, 1.2vw, 1.5rem); }
-
-  /* Prevent any fixed-width element from causing horizontal overflow */
-  img, video, canvas, svg:not(.icon) {
-    max-width: 100%;
-  }
-}
-
-/* 2. Dashboard inner content max-width safety net */
-@media (min-width: 1440px) {
-  /* Any page that uses the old bare max-w-6xl without 2xl: override
-     gets bumped up by the globals.css max-w override already in place.
-     This just adds a fallback for any we missed. */
-  [class*="max-w-6xl"] { max-width: min(88rem, 96vw); }
-  [class*="max-w-5xl"] { max-width: min(76rem, 94vw); }
-  [class*="max-w-4xl"] { max-width: min(64rem, 92vw); }
-}
-
-@media (min-width: 1920px) {
-  [class*="max-w-6xl"] { max-width: min(108rem, 90vw); }
-  [class*="max-w-5xl"] { max-width: min(90rem, 88vw); }
-  [class*="max-w-4xl"] { max-width: min(78rem, 86vw); }
-  [class*="max-w-7xl"] { max-width: min(120rem, 92vw); }
-}
-
-/* 3. Marketing page sections — never let background bleed edges */
-@media (min-width: 1440px) {
-  section[class*="py-"] {
-    padding-left: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1));
-    padding-right: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1));
-  }
-}
-
-/* 4. Headings — clamp to readable size even on 4K */
-@media (min-width: 1920px) {
-  h1 { font-size: clamp(2.5rem, 4vw, 6rem); }
-  h2 { font-size: clamp(1.75rem, 2.8vw, 4rem); }
-}
-@media (min-width: 2560px) {
-  h1 { font-size: clamp(3rem, 3.5vw, 7rem); }
-  h2 { font-size: clamp(2rem, 2.5vw, 5rem); }
 }
