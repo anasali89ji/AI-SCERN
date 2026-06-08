@@ -617,12 +617,6 @@ export default function HomePage() {
 
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="hero-mesh-1 absolute top-1/4 left-1/3 w-[700px] h-[700px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-            <div className="hero-mesh-2 absolute top-1/3 right-1/4 w-[600px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.09) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-            <div className="hero-mesh-3 absolute bottom-1/4 left-1/5 w-[500px] h-[500px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', filter: 'blur(80px)' }} />
           </div>
 
           <NetworkBackground />
@@ -766,7 +760,6 @@ export default function HomePage() {
                     <SpotlightCard color={`${tool.accent}18`}
                       className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 2xl:p-7 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
                       {/* Scanline on hover */}
-                      <div className="scanline" aria-hidden="true" />
 
                       <div className="flex items-start justify-between mb-5">
                         <div className={`w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
@@ -923,7 +916,7 @@ export default function HomePage() {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color="rgba(37,99,235,0.10)"
-                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
+                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300 `}>
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />

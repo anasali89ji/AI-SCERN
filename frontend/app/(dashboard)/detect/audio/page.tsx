@@ -390,7 +390,7 @@ function AudioDetectionPage() {
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 animate-float">
+              <div className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 ">
                 <Mic className="w-10 h-10 text-cyan" />
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload Audio</h3>
