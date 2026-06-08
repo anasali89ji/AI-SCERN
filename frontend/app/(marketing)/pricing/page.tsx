@@ -128,12 +128,10 @@ export default function PricingPage() {
       <SiteNav />
       <main className="mx-auto max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
 
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Simple, transparent pricing</h1>
           <p className="text-text-muted max-w-xl mx-auto mb-6">Start free — no credit card required. Upgrade when you need more scans, modalities, or API access.</p>
 
-          {/* Billing toggle */}
           <div className="inline-flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-2">
             <button onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-text-primary' : 'text-text-muted'}`}>Monthly</button>
             <button
@@ -149,7 +147,6 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Tier cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
           {TIERS.map(tier => (
             <div key={tier.name} className={`relative rounded-2xl border ${tier.color} ${tier.highlight ? 'bg-primary/5' : 'bg-surface'} p-6 flex flex-col`}>
@@ -191,7 +188,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Full comparison table */}
         <div className="mb-16">
           <h2 className="text-xl font-bold text-text-primary mb-6 text-center">Full Feature Comparison</h2>
           <div className="overflow-x-auto rounded-2xl border border-border">
@@ -242,7 +238,6 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Rate limits note */}
         <div className="rounded-xl border border-border bg-surface p-6 mb-12">
           <h3 className="font-bold text-text-primary mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber" />API Rate Limits</h3>
           <div className="grid sm:grid-cols-3 gap-4 text-sm text-text-secondary">
@@ -273,7 +268,6 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Enterprise CTA */}
         <div className="rounded-2xl border border-border bg-surface p-8 text-center">
           <Building2 className="w-8 h-8 text-primary mx-auto mb-3" />
           <h3 className="text-xl font-bold text-text-primary mb-2">Need Enterprise?</h3>
