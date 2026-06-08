@@ -1,0 +1,28 @@
+import * as React from 'react'
+import { cn } from '@/lib/cn'
+
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline'
+}
+
+const variantClasses: Record<NonNullable<BadgeProps['variant']>, string> = {
+  default:     'bg-primary/10 text-blue-400 border-primary/30',
+  secondary:   'bg-white/5 text-text-secondary border-border',
+  success:     'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  warning:     'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  destructive: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+  outline:     'bg-transparent text-text-muted border-border',
+}
+
+export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border',
+        variantClasses[variant],
+        className,
+      )}
+      {...props}
+    />
+  )
+}
