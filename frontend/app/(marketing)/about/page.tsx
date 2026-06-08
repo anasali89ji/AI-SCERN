@@ -6,7 +6,7 @@ import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Briefcase } from '
 
 export const metadata = {
   title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
+  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video with ensemble-based analysis and published accuracy benchmarks.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
