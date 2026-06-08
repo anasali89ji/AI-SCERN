@@ -5,7 +5,6 @@
  * Loaded via next/dynamic only when this section enters the viewport.
  */
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   Globe, Award, Users, Shield, Lock, Sparkles,
   TrendingUp, Activity, Brain, AlertTriangle,
@@ -132,36 +131,27 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
       className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-300 hover:-translate-y-1 who-card"
       style={{ boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)` }}
     >
-      {/* ── Image panel ── */}
-      <div className="relative h-36 sm:h-40 overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0" style={{ background: `linear-gradient(145deg, ${card.color}60, ${card.color}25)` }} />
-        <Image
-          src={card.img} alt={card.role} fill
-          className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
-          loading="lazy"
-          sizes="(max-width: 640px) 338px, (max-width: 1024px) 50vw, 33vw"
-          quality={72}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
-        <div className="absolute inset-0" style={{ background: `${card.color}28` }} />
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      {/* ── Icon header panel ── */}
+      <div
+        className="relative px-4 pt-5 pb-4 flex-shrink-0"
+        style={{ background: `linear-gradient(145deg, ${card.color}14, ${card.color}06)` }}
+      >
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${card.color}, transparent)` }} />
-        <div className="absolute top-2.5 left-3 z-10">
-          <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
-            style={{ background: 'rgba(0,0,0,0.55)', border: `1px solid ${card.color}70`, color: '#fff' }}
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${card.color}18`, border: `1px solid ${card.color}30` }}
           >
-            <CardIcon className="w-2.5 h-2.5" />
+            <CardIcon className="w-5 h-5" style={{ color: card.color }} />
+          </div>
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest mt-0.5"
+            style={{ background: `${card.color}12`, border: `1px solid ${card.color}30`, color: card.color }}
+          >
             {card.tag}
           </span>
         </div>
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ background: `radial-gradient(ellipse at 50% 120%, ${card.glow} 0%, transparent 65%)` }}
-        />
-        <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3 z-10">
-          <h3 className="text-[13px] sm:text-sm font-black text-white leading-snug drop-shadow-lg">{card.role}</h3>
-        </div>
+        <h3 className="text-sm font-black text-text-primary leading-snug mt-3">{card.role}</h3>
       </div>
 
       {/* ── Content panel ── */}
