@@ -112,7 +112,7 @@ const FAQ_SECTIONS = [
 function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; href: string } | null }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-border/60 last:border-0">
+    <div className="border-b border-white/[0.08] last:border-0">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between py-4 text-left gap-4 group"
@@ -173,7 +173,7 @@ export default function FAQPage() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-1 px-1">
                 {section.title}
               </h2>
-              <div className="rounded-2xl border border-border bg-surface px-6">
+              <div className="rounded-xl border border-white/[0.08] bg-surface px-6">
                 {section.items.map(item => (
                   <FAQItem key={item.q} {...item} />
                 ))}
@@ -182,13 +182,13 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div className="text-center rounded-2xl border border-border/60 bg-surface/50 p-8">
+        <div className="text-center rounded-xl border border-white/[0.08] bg-surface/50 p-8">
           <Mail className="w-8 h-8 text-primary mx-auto mb-3 opacity-80" />
           <p className="text-sm font-semibold text-text-primary mb-1">Still have questions?</p>
           <p className="text-xs text-text-muted mb-4">We respond within 24–48 hours.</p>
           <a
             href="mailto:contact@aiscern.com"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:border-primary/50 hover:text-text-primary transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.08] text-sm font-semibold text-text-secondary hover:border-primary/50 hover:text-text-primary transition-all"
           >
             contact@aiscern.com
           </a>

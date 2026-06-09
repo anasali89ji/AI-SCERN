@@ -85,7 +85,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl">
         <div className="max-w-5xl mx-auto h-full px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-8 rounded-lg object-cover" />
@@ -115,7 +115,7 @@ export default function ContactPage() {
             {/* 3 main email cards */}
             {CONTACT_CARDS.map(item => (
               <a key={item.label} href={item.href}
-                className="flex items-center gap-3 p-4 rounded-xl border border-border/55 bg-surface hover:border-primary/30 transition-all group">
+                className="flex items-center gap-3 p-4 rounded-xl border border-white/[0.08] bg-surface hover:border-primary/30 transition-all group">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{ background: item.color + '18' }}>
                   <item.icon className="w-4 h-4" style={{ color: item.color }} />
@@ -129,7 +129,7 @@ export default function ContactPage() {
             ))}
 
             {/* Response time */}
-            <div className="p-4 rounded-xl border border-border/55 bg-surface">
+            <div className="p-4 rounded-xl border border-white/[0.08] bg-surface">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-text-primary">Response Time</span>
@@ -167,7 +167,7 @@ export default function ContactPage() {
             </div>
 
             {/* Social */}
-            <div className="p-4 rounded-xl border border-border/55 bg-surface">
+            <div className="p-4 rounded-xl border border-white/[0.08] bg-surface">
               <p className="text-xs text-text-muted uppercase tracking-wider mb-3 font-semibold">Follow Us</p>
               <div className="flex gap-3">
                 {[
@@ -177,7 +177,7 @@ export default function ContactPage() {
                 ].map(({ Icon, href, label }) => (
                   <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                     title={label}
-                    className="w-9 h-9 rounded-lg border border-border/55 bg-surface-active
+                    className="w-9 h-9 rounded-lg border border-white/[0.08] bg-surface-active
                       hover:border-primary/40 hover:bg-primary/5 transition-all flex items-center justify-center">
                     <Icon className="w-4 h-4 text-text-muted" />
                   </a>
@@ -189,7 +189,7 @@ export default function ContactPage() {
           {/* Right column — form */}
           <div className="lg:col-span-3">
             {sent ? (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-10 text-center">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-10 text-center">
                 <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
                 <h2 className="text-xl font-bold text-text-primary mb-2">Message sent!</h2>
                 <p className="text-text-muted text-sm mb-4">We'll get back to you within 24–48 hours.</p>
@@ -199,7 +199,7 @@ export default function ContactPage() {
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-border/55 bg-surface p-6 space-y-4">
+              <div className="rounded-xl border border-white/[0.08] bg-surface p-6 space-y-4">
                 <h2 className="text-base font-bold text-text-primary mb-1">Send us a message</h2>
                 <p className="text-xs text-text-muted mb-4">
                   Your message is routed to the right team automatically based on subject.
@@ -210,7 +210,7 @@ export default function ContactPage() {
                     <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Name *</label>
                     <input value={form.name} onChange={e => set('name', e.target.value)}
                       placeholder="Your name"
-                      className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm
+                      className="w-full bg-background border border-white/[0.08] rounded-xl px-4 py-3 text-sm
                         text-text-primary placeholder:text-text-disabled focus:outline-none
                         focus:border-primary/60 transition-colors" />
                   </div>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                     <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Email *</label>
                     <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
                       placeholder="your@email.com"
-                      className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm
+                      className="w-full bg-background border border-white/[0.08] rounded-xl px-4 py-3 text-sm
                         text-text-primary placeholder:text-text-disabled focus:outline-none
                         focus:border-primary/60 transition-colors" />
                   </div>
@@ -227,7 +227,7 @@ export default function ContactPage() {
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Subject</label>
                   <select value={form.subject} onChange={e => set('subject', e.target.value)}
-                    className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm
+                    className="w-full bg-background border border-white/[0.08] rounded-xl px-4 py-3 text-sm
                       text-text-primary focus:outline-none focus:border-primary/60 transition-colors">
                     {SUBJECTS.map(s => <option key={s}>{s}</option>)}
                   </select>
@@ -249,7 +249,7 @@ export default function ContactPage() {
                   <label className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 block">Message *</label>
                   <textarea value={form.message} onChange={e => set('message', e.target.value)}
                     placeholder="Tell us how we can help…" rows={5}
-                    className="w-full bg-background border border-border/55 rounded-xl px-4 py-3 text-sm
+                    className="w-full bg-background border border-white/[0.08] rounded-xl px-4 py-3 text-sm
                       text-text-primary placeholder:text-text-disabled resize-none focus:outline-none
                       focus:border-primary/60 transition-colors" />
                 </div>
@@ -267,7 +267,7 @@ export default function ContactPage() {
                 </button>
 
                 {/* Email footer */}
-                <div className="pt-2 border-t border-border/40">
+                <div className="pt-2 border-t border-white/[0.06]">
                   <p className="text-[11px] text-text-disabled text-center leading-relaxed">
                     Or email us directly:&nbsp;
                     <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">contact@aiscern.com</a>

@@ -192,14 +192,14 @@ export default function UsersAdmin() {
           </div>
           <button
             onClick={tab === 'users' ? fetchUsers : fetchRequests}
-            className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary px-3 py-1.5 rounded-lg border border-border hover:border-border/80 transition-colors"
+            className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/[0.08]/80 transition-colors"
           >
             <RefreshCw className="w-3 h-3" /> Refresh
           </button>
         </div>
 
         {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 mb-5 p-1 bg-surface border border-border rounded-xl w-fit">
+        <div className="flex gap-1 mb-5 p-1 bg-surface border border-white/[0.08] rounded-xl w-fit">
           <button
             onClick={() => setTab('users')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
@@ -240,23 +240,23 @@ export default function UsersAdmin() {
                 <input
                   value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
                   placeholder="Search by email…"
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-surface border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-surface border border-white/[0.08] rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
                 />
               </div>
               {['all', 'active', 'free', 'pro', 'banned', 'revoked'].map(f => (
                 <button key={f}
                   onClick={() => { setFilter(f); setPage(1) }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary hover:border-border/80'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-primary/10 border-primary/40 text-primary' : 'border-white/[0.08] text-text-muted hover:text-text-primary hover:border-white/[0.08]/80'}`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="rounded-xl border border-white/[0.08] bg-surface overflow-hidden">
               <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[600px]">
-                <thead className="border-b border-border bg-surface/80">
+                <thead className="border-b border-white/[0.08] bg-surface/80">
                   <tr>
                     {['User', 'Plan', 'Status', 'Daily Scans', 'Joined', 'Actions'].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-text-muted font-semibold uppercase tracking-wide text-[10px]">{h}</th>
@@ -269,7 +269,7 @@ export default function UsersAdmin() {
                   ) : users.length === 0 ? (
                     <tr><td colSpan={6} className="text-center py-12 text-text-muted">No users found</td></tr>
                   ) : users.map((u, i) => (
-                    <tr key={u.id} className={`border-b border-border/40 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
+                    <tr key={u.id} className={`border-b border-white/[0.06] hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
                       <td className="px-4 py-3">
                         <div className="font-medium text-text-primary truncate max-w-48">{u.email}</div>
                         {u.display_name && <div className="text-text-muted text-[10px]">{u.display_name}</div>}
@@ -364,12 +364,12 @@ export default function UsersAdmin() {
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-text-muted disabled:opacity-30 transition-colors">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                   <span className="text-xs text-text-muted px-2 py-1">{page} / {totalPages}</span>
                   <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-text-muted disabled:opacity-30 transition-colors">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -398,7 +398,7 @@ export default function UsersAdmin() {
               {['pending', 'approved', 'rejected', 'all'].map(s => (
                 <button key={s}
                   onClick={() => { setReqFilter(s); setReqPage(1) }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-primary/10 border-primary/40 text-primary' : 'border-white/[0.08] text-text-muted hover:text-text-primary'}`}
                 >
                   {s === 'pending'  && <Clock className="w-3 h-3" />}
                   {s === 'approved' && <CheckCircle2 className="w-3 h-3" />}
@@ -412,9 +412,9 @@ export default function UsersAdmin() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="rounded-xl border border-white/[0.08] bg-surface overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="border-b border-border bg-surface/80">
+                <thead className="border-b border-white/[0.08] bg-surface/80">
                   <tr>
                     {['User', 'Current Plan', 'Requesting', 'Status', 'Message', 'Submitted', 'Actions'].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-text-muted font-semibold uppercase tracking-wide text-[10px]">{h}</th>
@@ -434,7 +434,7 @@ export default function UsersAdmin() {
                       </td>
                     </tr>
                   ) : requests.map((r, i) => (
-                    <tr key={r.id} className={`border-b border-border/40 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
+                    <tr key={r.id} className={`border-b border-white/[0.06] hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
                       <td className="px-4 py-3">
                         <div className="font-medium text-text-primary truncate max-w-44">{r.user_email || '—'}</div>
                         {r.user_display_name && <div className="text-text-muted text-[10px]">{r.user_display_name}</div>}
@@ -505,12 +505,12 @@ export default function UsersAdmin() {
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setReqPage(p => Math.max(1, p - 1))} disabled={reqPage === 1}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-text-muted disabled:opacity-30 transition-colors">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                   <span className="text-xs text-text-muted px-2 py-1">{reqPage} / {reqTotalPages}</span>
                   <button onClick={() => setReqPage(p => Math.min(reqTotalPages, p + 1))} disabled={reqPage === reqTotalPages}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-text-muted disabled:opacity-30 transition-colors">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -525,7 +525,7 @@ export default function UsersAdmin() {
       ══════════════════════════════════════════════════════════════════════ */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-sm ">
             <div className="flex items-start gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 modal.action === 'grant_pro'  ? 'bg-primary/15' :
@@ -558,7 +558,7 @@ export default function UsersAdmin() {
                     <div className="grid grid-cols-4 gap-1.5">
                       {['free', 'pro', 'team', 'enterprise'].map(p => (
                         <button key={p} onClick={() => setPlanChoice(p)}
-                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-primary/50 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-primary/50 text-primary' : 'border-white/[0.08] text-text-muted hover:text-text-primary'}`}
                         >
                           {p.toUpperCase()}
                         </button>
@@ -573,7 +573,7 @@ export default function UsersAdmin() {
                   <input type="number" min="1" max="3650"
                     value={expiryDays} onChange={e => setExpiryDays(e.target.value)}
                     placeholder="e.g. 30 (optional)"
-                    className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                    className="w-full px-3 py-2 text-xs bg-background border border-white/[0.08] rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
                   />
                 </div>
               </div>
@@ -584,12 +584,12 @@ export default function UsersAdmin() {
                 <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">Reason (optional)</label>
                 <textarea value={reason} onChange={e => setReason(e.target.value)}
                   rows={2} placeholder="e.g. TOS violation"
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
+                  className="w-full px-3 py-2 text-xs bg-background border border-white/[0.08] rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
                 />
               </div>
             )}
 
-            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-border/50">
+            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-white/[0.08]">
               {modal.action === 'grant_pro'   && 'User will get 100 scans/day + all 4 modalities. No charge to user.'}
               {modal.action === 'revoke_pro'  && 'User will revert to free plan (10 scans/day, text + image only).'}
               {modal.action === 'set_plan'    && `User will be set to ${planChoice} plan with matching limits.`}
@@ -602,7 +602,7 @@ export default function UsersAdmin() {
 
             <div className="flex gap-2">
               <button onClick={() => { setModal(null); setReason(''); setExpiryDays('') }}
-                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
                 Cancel
               </button>
               <button onClick={doAction} disabled={!!actionLoading}
@@ -625,7 +625,7 @@ export default function UsersAdmin() {
       ══════════════════════════════════════════════════════════════════════ */}
       {reviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-md ">
             <div className="flex items-start gap-3 mb-5">
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald/10' : 'bg-rose/10'}`}>
                 {reviewModal.action === 'approve'
@@ -643,7 +643,7 @@ export default function UsersAdmin() {
             </div>
 
             {/* Plan change summary */}
-            <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-background/60 border border-border/50">
+            <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-background/60 border border-white/[0.08]">
               <PlanBadge plan={reviewModal.request.current_plan || 'free'} />
               <ChevronRight className="w-3 h-3 text-text-muted" />
               <PlanBadge plan={reviewModal.request.requested_plan || 'pro'} />
@@ -652,7 +652,7 @@ export default function UsersAdmin() {
 
             {/* User's message */}
             {reviewModal.request.user_message && (
-              <div className="mb-4 p-3 rounded-lg bg-background/60 border border-border/50">
+              <div className="mb-4 p-3 rounded-lg bg-background/60 border border-white/[0.08]">
                 <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">User's message</p>
                 <p className="text-xs text-text-secondary italic">"{reviewModal.request.user_message}"</p>
               </div>
@@ -667,7 +667,7 @@ export default function UsersAdmin() {
                 <input type="number" min="1" max="3650"
                   value={reviewExpiry} onChange={e => setReviewExpiry(e.target.value)}
                   placeholder="e.g. 365 (optional)"
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                  className="w-full px-3 py-2 text-xs bg-background border border-white/[0.08] rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
                 />
               </div>
             )}
@@ -682,11 +682,11 @@ export default function UsersAdmin() {
                 placeholder={reviewModal.action === 'approve'
                   ? 'e.g. Welcome to Pro! Enjoy the full platform.'
                   : 'e.g. Please reapply after 30 days.'}
-                className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
+                className="w-full px-3 py-2 text-xs bg-background border border-white/[0.08] rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
               />
             </div>
 
-            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-border/50">
+            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-white/[0.08]">
               {reviewModal.action === 'approve'
                 ? 'User is immediately upgraded to Pro. They receive an in-app notification with your note.'
                 : 'User stays on free plan. They are notified and can reapply in the future.'}
@@ -694,7 +694,7 @@ export default function UsersAdmin() {
 
             <div className="flex gap-2">
               <button onClick={() => { setReviewModal(null); setReviewNote(''); setReviewExpiry('') }}
-                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
                 Cancel
               </button>
               <button onClick={doReview} disabled={reviewLoading}

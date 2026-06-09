@@ -28,7 +28,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
       <motion.div
         initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
         transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-        className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#2563eb40] rounded-3xl p-8 shadow-2xl shadow-primary/40 overflow-hidden"
+        className="relative w-full max-w-md bg-[#0f0f17] border border-blue-500/20 rounded-xl p-8 overflow-hidden"
       >
         {/* Glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-secondary/5 pointer-events-none" />
@@ -52,7 +52,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           <motion.div
             animate={{ scale:[1,1.08,1], boxShadow:['0 0 0px #2563eb60','0 0 30px #2563eb60','0 0 0px #2563eb60'] }}
             transition={{ duration:2, repeat:Infinity }}
-            className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]"
+            className="w-20 h-20 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]"
           >
             <Crown className="w-10 h-10 text-white" />
           </motion.div>
@@ -81,14 +81,14 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           <a
             href="/pricing"
             onClick={onDismiss}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm text-white text-center transition-all hover:scale-[1.02] active:scale-[0.98] block"
+            className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center transition-all block"
             style={{ background:'linear-gradient(135deg, #2563eb, #2563eb)' }}
           >
             View Pricing &amp; Upgrade →
           </a>
           <button
             onClick={onDismiss}
-            className="w-full py-2.5 rounded-2xl text-sm text-[#64748b] hover:text-[#94a3b8] transition-colors font-medium"
+            className="w-full py-2.5 rounded-xl text-sm text-[#64748b] hover:text-[#94a3b8] transition-colors font-medium"
           >
             Not now
           </button>

@@ -126,7 +126,7 @@ export default function TransparencyPage() {
               ].map((badge, i) => {
                 const BIcon = badge.icon
                 return (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border/60 text-sm text-text-secondary">
+                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-white/[0.08] text-sm text-text-secondary">
                     <BIcon className="w-4 h-4 text-emerald" />
                     {badge.label}
                   </div>
@@ -143,7 +143,7 @@ export default function TransparencyPage() {
               const SIcon = section.icon
               const c = colorMap[section.color]
               return (
-                <div key={section.title} className="card border border-border/60 rounded-2xl p-6">
+                <div key={section.title} className="card border border-white/[0.08] rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <SIcon className={`w-5 h-5 ${c.icon}`} />
@@ -163,7 +163,7 @@ export default function TransparencyPage() {
             })}
 
             {/* Contact */}
-            <div className="text-center p-6 rounded-2xl border border-primary/20 bg-primary/5">
+            <div className="text-center p-6 rounded-xl border border-primary/20 bg-primary/5">
               <h2 className="text-lg font-bold text-text-primary mb-2">Questions about your data?</h2>
               <p className="text-sm text-text-muted mb-4">Contact our privacy team or submit a GDPR data request.</p>
               <div className="flex flex-wrap gap-3 justify-center">

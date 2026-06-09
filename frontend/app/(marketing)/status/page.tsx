@@ -59,7 +59,7 @@ export default function StatusPage() {
         <section className="pb-16">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10">
             <h2 className="text-sm font-bold text-text-muted uppercase tracking-widest mb-4">Services</h2>
-            <div className="card border border-border/60 rounded-2xl divide-y divide-border/40">
+            <div className="card border border-white/[0.08] rounded-xl divide-y divide-border/40">
               {SERVICES.map((service, i) => (
                 <div key={i} className="flex items-center justify-between px-5 py-4">
                   <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ export default function StatusPage() {
                 { label: '90-day uptime', value: '99.8%' },
                 { label: 'Incidents (30d)', value: '0' },
               ].map((stat, i) => (
-                <div key={i} className="card border border-border/60 rounded-xl p-4 text-center">
+                <div key={i} className="card border border-white/[0.08] rounded-xl p-4 text-center">
                   <div className="text-2xl font-black text-text-primary mb-1">{stat.value}</div>
                   <div className="text-xs text-text-muted">{stat.label}</div>
                 </div>
@@ -97,14 +97,14 @@ export default function StatusPage() {
             <div className="mt-10">
               <h2 className="text-sm font-bold text-text-muted uppercase tracking-widest mb-4">Recent Incidents</h2>
               {INCIDENTS.length === 0 ? (
-                <div className="card border border-border/60 rounded-xl p-6 text-center text-text-muted text-sm flex items-center justify-center gap-2">
+                <div className="card border border-white/[0.08] rounded-xl p-6 text-center text-text-muted text-sm flex items-center justify-center gap-2">
                   <Activity className="w-4 h-4 text-emerald" />
                   No incidents in the past 90 days
                 </div>
               ) : (
                 <div className="space-y-3">
                   {INCIDENTS.map((inc, i) => (
-                    <div key={i} className="card border border-border/60 rounded-xl p-4">
+                    <div key={i} className="card border border-white/[0.08] rounded-xl p-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-semibold text-text-primary">{inc.title}</span>
                         <span className={`text-xs font-bold ${inc.status === 'resolved' ? 'text-emerald' : 'text-amber'}`}>{inc.status}</span>

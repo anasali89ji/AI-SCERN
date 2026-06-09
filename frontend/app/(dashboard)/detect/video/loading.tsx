@@ -7,7 +7,7 @@ export default function VideoDetectLoading() {
         <div className="h-4 w-96 rounded-lg bg-white/5 animate-pulse" />
       </div>
       {/* Main card skeleton */}
-      <div className="h-72 w-full rounded-2xl bg-white/5 animate-pulse" />
+      <div className="h-72 w-full rounded-xl bg-white/5 animate-pulse" />
       {/* Button skeleton */}
       <div className="h-11 w-32 rounded-xl bg-white/5 animate-pulse" />
       {/* Signal bars skeleton */}

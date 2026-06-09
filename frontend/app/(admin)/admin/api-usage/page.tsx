@@ -22,7 +22,7 @@ export default function ApiUsage() {
           <StatCard title="Error Rate"         value="2.3%"   delta="0.2%" positive={false} icon={AlertTriangle} color={C.danger} />
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">Daily API Calls (30 days)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={daily}>
@@ -36,10 +36,10 @@ export default function ApiUsage() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5 overflow-x-auto">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
             <h3 className="text-sm font-bold text-text-primary mb-4">Usage by Endpoint</h3>
             <table className="w-full text-sm min-w-[320px]">
-              <thead><tr className="border-b border-border text-xs text-text-muted">
+              <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
                 <th className="text-left py-2 font-medium">Endpoint</th>
                 <th className="text-right py-2 font-medium">Calls</th>
                 <th className="text-right py-2 font-medium">P50</th>
@@ -47,7 +47,7 @@ export default function ApiUsage() {
               </tr></thead>
               <tbody>
                 {endpoints.map(e=>(
-                  <tr key={e.ep} className="border-b border-border/40 text-xs">
+                  <tr key={e.ep} className="border-b border-white/[0.06] text-xs">
                     <td className="py-2 text-primary font-medium">{e.ep}</td>
                     <td className="py-2 text-right text-text-primary">{e.calls.toLocaleString()}</td>
                     <td className="py-2 text-right text-text-muted">{e.p50}</td>
@@ -58,11 +58,11 @@ export default function ApiUsage() {
             </table>
           </div>
 
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Error Analysis</h3>
             <div className="space-y-3">
               {errors.map(e=>(
-                <div key={e.code} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50">
+                <div key={e.code} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
                   <div>
                     <span className="text-sm font-bold text-rose mr-2">{e.code}</span>
                     <span className="text-xs text-text-muted">{e.label}</span>

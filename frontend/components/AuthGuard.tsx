@@ -63,7 +63,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           className="relative w-full max-w-md z-10"
         >
           <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
-          <div className="bg-surface border border-white/10 rounded-b-2xl shadow-2xl shadow-primary/20 p-8 space-y-6">
+          <div className="bg-surface border border-white/10 rounded-b-xl  p-8 space-y-6">
 
             <div className="text-center space-y-3">
               <Link href="/">
@@ -88,12 +88,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             </ul>
 
             <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
+              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90  transition-all">
                 <Zap className="w-4 h-4" />
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
                 <Lock className="w-4 h-4" />
                 Already have an account? Sign In
               </Link>

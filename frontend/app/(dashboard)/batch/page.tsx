@@ -267,9 +267,9 @@ export default function BatchPage() {
 
       {/* Drop Zone */}
       <div {...getRootProps()} className={`card border-2 border-dashed cursor-pointer transition-all mb-5 py-8 flex flex-col items-center gap-3
-        ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-border/60 hover:border-secondary/50'}`}>
+        ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-white/[0.08] hover:border-secondary/50'}`}>
         <input {...getInputProps()} />
-        <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center">
           <Upload className={`w-7 h-7 ${isDragActive ? 'text-secondary' : 'text-text-muted'}`} />
         </div>
         <div className="text-center">
@@ -419,7 +419,7 @@ export default function BatchPage() {
 
                   {/* Status icon */}
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-border" />}
+                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-white/[0.08]" />}
                     {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
                     {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-rose" />}
                     {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-emerald" />}

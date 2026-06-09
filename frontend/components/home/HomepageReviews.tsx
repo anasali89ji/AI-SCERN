@@ -35,7 +35,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
     <motion.div
       initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
       transition={{ delay: i * 0.1 }}
-      className="card border-border/30 hover:border-primary/20 transition-colors"
+      className="card border-white/[0.06] hover:border-primary/20 transition-colors"
     >
       <div className="flex gap-0.5 mb-4" aria-label={`${starCount} out of 5 stars`}>
         {Array.from({ length: starCount }).map((_, j) => (
@@ -79,7 +79,7 @@ export default function HomepageReviews() {
   if (loading) return (
     <div className="grid sm:grid-cols-3 gap-4 sm:gap-6" aria-busy="true" aria-label="Loading reviews">
       {[0, 1, 2].map(i => (
-        <div key={i} className="card border-border/50 h-40 animate-pulse bg-surface/60 rounded-2xl" />
+        <div key={i} className="card border-white/[0.08] h-40 animate-pulse bg-surface/60 rounded-xl" />
       ))}
     </div>
   )

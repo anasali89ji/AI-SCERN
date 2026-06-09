@@ -32,15 +32,15 @@ export default function Finance() {
   if (!authed) return (
     <RoleGuard required="EXECUTIVE">
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="rounded-2xl border border-border bg-surface/60 p-8 max-w-sm w-full text-center">
-          <div className="w-14 h-14 rounded-2xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-4">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-8 max-w-sm w-full text-center">
+          <div className="w-14 h-14 rounded-xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-4">
             <DollarSign className="w-7 h-7 text-amber-400" />
           </div>
           <h2 className="text-lg font-bold text-text-primary mb-2">Financial Access</h2>
           <p className="text-sm text-text-muted mb-6">Re-authentication required for financial data.</p>
           <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleAuth()}
             placeholder="Enter PIN (demo: 0000)"
-            className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary mb-4 focus:outline-none focus:border-primary/50 text-center tracking-widest" />
+            className="w-full bg-background border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-text-primary mb-4 focus:outline-none focus:border-primary/50 text-center tracking-widest" />
           <button onClick={handleAuth} className="w-full btn-primary py-3 text-sm">Authenticate</button>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function Finance() {
           <StatCard title="Gross Margin"   value="57%"    delta="3%"  positive icon={Percent}     color={C.secondary} />
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">P&L — Revenue vs Costs (12 months)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={plData}>
@@ -91,7 +91,7 @@ export default function Finance() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Cost Breakdown</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -102,7 +102,7 @@ export default function Finance() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Cash Flow Trend</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={plData}>

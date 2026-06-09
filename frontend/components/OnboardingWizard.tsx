@@ -82,7 +82,7 @@ export function OnboardingWizard() {
           key={step}
           initial={{ opacity:0, y:16, scale:0.97 }} animate={{ opacity:1, y:0, scale:1 }}
           exit={{ opacity:0, y:-12 }} transition={{ duration:0.25 }}
-          className="w-full max-w-lg bg-[#07070d] border border-[#1e1e35] rounded-3xl p-8 shadow-2xl relative overflow-hidden"
+          className="w-full max-w-lg bg-[#07070d] border border-[#1e1e35] rounded-xl p-8  relative overflow-hidden"
         >
           {/* Top gradient */}
           <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#2563eb)` }} />
@@ -97,7 +97,7 @@ export function OnboardingWizard() {
           {/* STEP: welcome */}
           {step === 'welcome' && (
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <div className="w-16 h-16 rounded-xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
@@ -112,7 +112,7 @@ export function OnboardingWizard() {
                   </div>
                 ))}
               </div>
-              <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <button onClick={next} className="w-full mt-4 py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                 Get Started <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -146,7 +146,7 @@ export function OnboardingWizard() {
                   )
                 })}
               </div>
-              <button onClick={next} className="w-full py-3.5 rounded-2xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <button onClick={next} className="w-full py-3.5 rounded-xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                 Continue <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
             </div>
@@ -156,7 +156,7 @@ export function OnboardingWizard() {
           {step === 'username' && (
             <div className="space-y-5">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
+                <div className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
                   <User className="w-5 h-5 text-[#60a5fa]" />
                 </div>
                 <h2 className="text-xl font-black text-white">Choose a username</h2>
@@ -190,11 +190,11 @@ export function OnboardingWizard() {
                 </div>
               )}
               <div className="flex gap-2">
-                <button onClick={next} className="flex-1 py-3 rounded-2xl border border-[#1e1e35] text-xs text-[#64748b] hover:text-white font-semibold">
+                <button onClick={next} className="flex-1 py-3 rounded-xl border border-[#1e1e35] text-xs text-[#64748b] hover:text-white font-semibold">
                   Skip for now
                 </button>
                 <button onClick={next} disabled={uStatus === 'checking'}
-                  className="flex-1 py-3 rounded-2xl font-bold text-sm text-white disabled:opacity-50"
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-white disabled:opacity-50"
                   style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                   Continue
                 </button>
@@ -207,7 +207,7 @@ export function OnboardingWizard() {
             <div className="text-center space-y-5">
               <motion.div
                 animate={{ scale:[1,1.05,1] }} transition={{ duration:1.5, repeat:Infinity }}
-                className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
+                className="w-16 h-16 rounded-xl mx-auto flex items-center justify-center"
                 style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}
               >
                 <Zap className="w-8 h-8 text-white" />
@@ -232,7 +232,7 @@ export function OnboardingWizard() {
                 ))}
               </div>
               <button onClick={finish} disabled={saving}
-                className="w-full py-3.5 rounded-2xl font-bold text-sm text-white disabled:opacity-70 transition-all hover:scale-[1.02]"
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white disabled:opacity-70 transition-all"
                 style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
                 {saving ? 'Setting up…' : 'Go to Dashboard →'}
               </button>

@@ -50,7 +50,7 @@ export function ReviewSuggestion({ toolName }: Props) {
 
   return (
     <>
-      <div className="mt-6 rounded-xl border border-border bg-surface/60 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div className="mt-6 rounded-xl border border-white/[0.08] bg-surface/60 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
         {alreadyReviewed ? (
           <div className="flex items-center gap-2 text-sm text-text-muted">
             <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -65,7 +65,7 @@ export function ReviewSuggestion({ toolName }: Props) {
                 <button key={n}
                   onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
                   onClick={() => handleStarClick(n)}
-                  className="transition-transform hover:scale-110">
+                  className="transition-transform">
                   <Star className={`w-6 h-6 transition-colors ${n <= (hover || preRating) ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
                 </button>
               ))}

@@ -48,7 +48,7 @@ interface Chat        { id: string; title: string; messages: Message[]; createdA
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
-    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 overflow-hidden border border-white/[0.06]`}>
+    <div className={`${cls} bg-black flex items-center justify-center shrink-0 overflow-hidden border border-white/[0.06]`}>
       <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
     </div>
   )
@@ -279,7 +279,7 @@ function MessageBubble({
 
         {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
         {!isUser && msg.isThinking && !msg.content && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
             <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -290,14 +290,14 @@ function MessageBubble({
 
         {/* Typing dots while waiting for first token */}
         {showTypingDots && (
-          <div className="rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05]">
+          <div className="rounded-xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05]">
             <TypingDots />
           </div>
         )}
 
         {/* Content bubble */}
         {(msg.content || (msg.isStreaming && msg.content)) && (
-          <div className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
+          <div className={`rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
               ? 'bg-blue-600 text-white rounded-br-sm'
               : 'bg-[#0d1117] border border-white/[0.05] rounded-bl-sm'
@@ -698,7 +698,7 @@ export default function ChatPage() {
           </button>
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 overflow-hidden">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shrink-0 overflow-hidden">
               <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
             </div>
             <div className="min-w-0">
@@ -731,7 +731,7 @@ export default function ChatPage() {
             <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl 2xl:max-w-3xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
-                <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
+                <div className="w-14 h-14 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center  overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#080c14] flex items-center justify-center">
@@ -805,7 +805,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-2 px-3 py-3 rounded-2xl border border-white/[0.09] bg-[#0d1117] focus-within:border-primary/50 focus-within:shadow-xl focus-within:shadow-primary/8 transition-all duration-200">
+            <div className="flex items-end gap-2 px-3 py-3 rounded-xl border border-white/[0.09] bg-[#0d1117] focus-within:border-primary/50  transition-all duration-200">
               <button onClick={()=>fileRef.current?.click()}
                 className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
                 title="Attach image, audio or video">

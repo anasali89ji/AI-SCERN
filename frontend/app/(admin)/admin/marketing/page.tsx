@@ -22,7 +22,7 @@ export default function Marketing() {
           <StatCard title="Signup Conv. Rate" value="3.8%"   delta="0.4%" positive icon={TrendingUp}  color={C.secondary} />
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Traffic Sources</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -33,10 +33,10 @@ export default function Marketing() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl border border-border bg-surface/60 p-5 overflow-x-auto">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
             <h3 className="text-sm font-bold text-text-primary mb-4">Top SEO Keywords</h3>
             <table className="w-full text-sm min-w-[320px]">
-              <thead><tr className="border-b border-border text-xs text-text-muted">
+              <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
                 <th className="text-left py-2 font-medium">Keyword</th>
                 <th className="text-center py-2 font-medium">Pos.</th>
                 <th className="text-center py-2 font-medium">CTR</th>
@@ -44,7 +44,7 @@ export default function Marketing() {
               </tr></thead>
               <tbody>
                 {keywords.map(k=>(
-                  <tr key={k.kw} className="border-b border-border/40 text-xs">
+                  <tr key={k.kw} className="border-b border-white/[0.06] text-xs">
                     <td className="py-2 text-text-secondary">{k.kw}</td>
                     <td className="py-2 text-center font-bold" style={{color:k.pos<=5?C.success:C.warning}}>#{k.pos}</td>
                     <td className="py-2 text-center text-text-muted">{k.ctr}</td>
@@ -55,17 +55,17 @@ export default function Marketing() {
             </table>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-surface/60 p-5 overflow-x-auto">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
           <h3 className="text-sm font-bold text-text-primary mb-4">Top Landing Pages</h3>
           <table className="w-full text-sm min-w-[320px]">
-            <thead><tr className="border-b border-border text-xs text-text-muted">
+            <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
               <th className="text-left py-2 font-medium">Page</th>
               <th className="text-right py-2 font-medium">Sessions</th>
               <th className="text-right py-2 font-medium">Bounce</th>
             </tr></thead>
             <tbody>
               {pages.map(p=>(
-                <tr key={p.page} className="border-b border-border/40 text-xs">
+                <tr key={p.page} className="border-b border-white/[0.06] text-xs">
                   <td className="py-2 text-primary font-medium">{p.page}</td>
                   <td className="py-2 text-right text-text-primary">{p.sessions.toLocaleString()}</td>
                   <td className="py-2 text-right text-text-muted">{p.bounce}</td>

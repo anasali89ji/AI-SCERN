@@ -332,8 +332,8 @@ function VideoDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-secondary/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-secondary/15 flex items-center justify-center">
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-secondary/5 rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-secondary/15 flex items-center justify-center">
                   <Upload className="w-8 h-8 text-secondary" />
                 </div>
                 <div className="text-center">
@@ -345,10 +345,10 @@ function VideoDetectionPage() {
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.02]' : 'border-border hover:border-secondary/50 hover:bg-surface-hover/30'}`}>
+                ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.02]' : 'border-white/[0.08] hover:border-secondary/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-2xl bg-secondary/10 flex items-center justify-center">
+                className="w-20 h-20 rounded-xl bg-secondary/10 flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-secondary' : 'text-text-muted'}`} />
               </motion.div>
               <div className="text-center">
@@ -443,7 +443,7 @@ function VideoDetectionPage() {
             </motion.div>
           )}
 
-          <div className="card py-3 px-4 border-border/50">
+          <div className="card py-3 px-4 border-white/[0.08]">
             <div className="flex items-start gap-2 text-xs text-text-muted">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-secondary/60" />
               <span>
@@ -533,7 +533,7 @@ function VideoDetectionPage() {
                     <motion.div key={s.name}
                       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-white/[0.08] min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
@@ -569,7 +569,7 @@ function VideoDetectionPage() {
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 ">
+              <div className="w-20 h-20 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 ">
                 <Video className="w-10 h-10 text-secondary" />
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload a Video</h3>
@@ -603,7 +603,7 @@ function VideoDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -640,7 +640,7 @@ function VideoDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}

@@ -52,7 +52,7 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="lg:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-border overflow-hidden"
+            className="lg:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
             style={{
               maxHeight: '90dvh',
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -64,7 +64,7 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-border/40">
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.06]">
               <h3 className="font-bold text-text-primary">{title}</h3>
               <button
                 onClick={onClose}

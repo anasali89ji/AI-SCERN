@@ -109,7 +109,7 @@ export default function GuidesPage() {
                 const GIcon = guide.icon
                 const c = colorMap[guide.color]
                 return (
-                  <div key={i} className="card border border-border/60 rounded-2xl p-6 flex flex-col gap-5">
+                  <div key={i} className="card border border-white/[0.08] rounded-xl p-6 flex flex-col gap-5">
                     <div className="flex items-start gap-4">
                       <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                         <GIcon className={`w-5 h-5 ${c.icon}`} />
@@ -141,7 +141,7 @@ export default function GuidesPage() {
             </div>
 
             {/* More Resources */}
-            <div className="mt-12 p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center">
+            <div className="mt-12 p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
               <h2 className="text-lg font-bold text-text-primary mb-2">Need more help?</h2>
               <p className="text-sm text-text-muted mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
               <div className="flex flex-wrap gap-3 justify-center">

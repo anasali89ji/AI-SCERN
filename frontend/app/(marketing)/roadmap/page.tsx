@@ -63,7 +63,7 @@ export default function RoadmapPage() {
             <h2 className="text-xl font-black text-text-primary mb-5 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald" /> Current Status
             </h2>
-            <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
+            <div className="rounded-xl border border-white/[0.08] bg-surface p-6 space-y-3">
               {CURRENT.map(item => (
                 <div key={item} className="flex items-start gap-3">
                   <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />
@@ -78,10 +78,10 @@ export default function RoadmapPage() {
             <h2 className="text-xl font-black text-text-primary mb-5 flex items-center gap-2">
               <ArrowRight className="w-5 h-5 text-primary" /> Next 3 Months
             </h2>
-            <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
+            <div className="rounded-xl border border-white/[0.08] bg-surface p-6 space-y-3">
               {NEXT_3_MONTHS.map(({ item }) => (
                 <div key={item} className="flex items-start gap-3">
-                  <div className="w-4 h-4 rounded-full border-2 border-border flex-shrink-0 mt-0.5" />
+                  <div className="w-4 h-4 rounded-full border-2 border-white/[0.08] flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-text-secondary">{item}</span>
                 </div>
               ))}
@@ -104,7 +104,7 @@ export default function RoadmapPage() {
           </section>
 
           {/* Footer note */}
-          <div className="rounded-xl border border-border/60 bg-surface/40 p-5 flex items-start justify-between gap-4 flex-wrap">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/40 p-5 flex items-start justify-between gap-4 flex-wrap">
             <p className="text-xs text-text-muted">
               Last updated: <strong className="text-text-secondary">April 2026</strong> · Built by Anas Ali in Mandi Bahauddin, Pakistan.
             </p>

@@ -66,7 +66,7 @@ const TEAM = [
 
 function TeamCard({ member }: { member: typeof TEAM[0] }) {
   return (
-    <div className="rounded-2xl border border-border/55 bg-surface overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+    <div className="rounded-xl border border-white/[0.08] bg-surface overflow-hidden hover:border-primary/30 transition-all duration-300">
       {/* Gradient header banner */}
       <div className={`h-20 bg-[#141420] relative`}>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.12),transparent)]" />
@@ -92,10 +92,10 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
         <p className="text-sm text-primary font-bold mb-3">{member.role}</p>
         <p className="text-sm text-text-muted leading-relaxed mb-4">{member.bio}</p>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border/55">
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-white/[0.08]">
             <MapPin className="w-3 h-3 text-primary" /> {member.location}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-border/55">
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-muted px-2.5 py-1 rounded-full bg-surface-active border border-white/[0.08]">
             <Briefcase className="w-3 h-3 text-primary" /> {member.skills}
           </span>
         </div>
@@ -126,7 +126,7 @@ export default function AboutPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-16">
           {STATS.map(s => (
-            <div key={s.label} className="rounded-2xl border border-border/55 bg-surface p-5 text-center">
+            <div key={s.label} className="rounded-xl border border-white/[0.08] bg-surface p-5 text-center">
               <p className="text-3xl font-black gradient-text mb-1">{s.value}</p>
               <p className="text-xs font-bold text-text-primary mb-0.5">{s.label}</p>
               <p className="text-xs text-text-disabled">{s.sub}</p>
@@ -135,7 +135,7 @@ export default function AboutPage() {
         </div>
 
         {/* Mission */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-8 mb-10 sm:mb-14">
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 sm:p-8 mb-10 sm:mb-14">
           <h2 className="text-lg sm:text-xl font-black mb-3">Our mission</h2>
           <p className="text-text-muted leading-relaxed mb-4">
             AI-generated content is proliferating faster than the tools to understand it. Deepfakes influence elections. Synthetic text floods classrooms. AI audio clones voices of public figures. The people most affected by this — journalists, teachers, researchers, everyday users — often have the least access to reliable detection tools.
@@ -150,7 +150,7 @@ export default function AboutPage() {
           <h2 className="text-lg sm:text-xl font-black mb-4 sm:mb-6 text-center">What we stand for</h2>
           <div className="grid sm:grid-cols-2 gap-5">
             {VALUES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="rounded-xl border border-border/55 bg-surface p-5">
+              <div key={title} className="rounded-xl border border-white/[0.08] bg-surface p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Icon className="w-4 h-4 text-primary" />
@@ -177,7 +177,7 @@ export default function AboutPage() {
         </div>
 
         {/* Tech stack — moved after team (1.3 fix) */}
-        <div className="rounded-2xl border border-border/55 bg-surface p-4 sm:p-6 mb-10 sm:mb-14">
+        <div className="rounded-xl border border-white/[0.08] bg-surface p-4 sm:p-6 mb-10 sm:mb-14">
           <div className="flex items-center gap-2 mb-4">
             <GitBranch className="w-5 h-5 text-primary" />
             <h2 className="font-black text-lg">Built with</h2>
@@ -187,7 +187,7 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             {['Next.js 15', 'TypeScript', 'Supabase', 'Cloudflare R2', 'HuggingFace', 'NVIDIA NIM', 'Inngest', 'Vercel'].map(t => (
-              <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-surface-active border border-border/50 text-text-muted">
+              <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-surface-active border border-white/[0.08] text-text-muted">
                 {t}
               </span>
             ))}
@@ -202,10 +202,10 @@ export default function AboutPage() {
             <Link href="/detect/text" className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
               Detect Text →
             </Link>
-            <Link href="/detect/image" className="px-5 py-2.5 rounded-xl border border-border/55 bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
+            <Link href="/detect/image" className="px-5 py-2.5 rounded-xl border border-white/[0.08] bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
               Detect Images
             </Link>
-            <Link href="/methodology" className="px-5 py-2.5 rounded-xl border border-border/55 bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
+            <Link href="/methodology" className="px-5 py-2.5 rounded-xl border border-white/[0.08] bg-surface font-bold text-sm hover:border-primary/30 transition-colors">
               How It Works
             </Link>
           </div>

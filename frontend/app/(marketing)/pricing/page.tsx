@@ -13,11 +13,11 @@ const TIERS = [
     yearlyPrice: 0,
     label: null,
     description: 'Get started instantly — no credit card required.',
-    color: 'border-border',
+    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Start Free',
     ctaHref: '/signup',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
+    ctaStyle: 'border border-white/[0.08] text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 10,
       fileSizeMB: 10,
@@ -38,7 +38,7 @@ const TIERS = [
     highlight: true,
     cta: 'Upgrade to Pro',
     ctaHref: '/signup?plan=pro',
-    ctaStyle: 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/25',
+    ctaStyle: 'bg-primary text-white hover:bg-primary/90',
     limits: {
       scansPerDay: 100,
       fileSizeMB: 50,
@@ -55,11 +55,11 @@ const TIERS = [
     yearlyPrice: 35,
     label: null,
     description: 'Shared workspace for teams. API included.',
-    color: 'border-border',
+    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Start Team Trial',
     ctaHref: '/signup?plan=team',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
+    ctaStyle: 'border border-white/[0.08] text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 500,
       fileSizeMB: 100,
@@ -76,11 +76,11 @@ const TIERS = [
     yearlyPrice: null,
     label: null,
     description: 'Custom limits, SLA, DPA, and dedicated support.',
-    color: 'border-border',
+    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Contact Sales',
     ctaHref: 'mailto:sales@aiscern.com',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
+    ctaStyle: 'border border-white/[0.08] text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 'Unlimited',
       fileSizeMB: 500,
@@ -132,7 +132,7 @@ export default function PricingPage() {
           <h1 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Simple, transparent pricing</h1>
           <p className="text-text-muted max-w-xl mx-auto mb-6">Start free — no credit card required. Upgrade when you need more scans, modalities, or API access.</p>
 
-          <div className="inline-flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-2">
+          <div className="inline-flex items-center gap-3 bg-surface border border-white/[0.08] rounded-xl px-4 py-2">
             <button onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-text-primary' : 'text-text-muted'}`}>Monthly</button>
             <button
               onClick={() => setYearly(v => !v)}
@@ -149,7 +149,7 @@ export default function PricingPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
           {TIERS.map(tier => (
-            <div key={tier.name} className={`relative rounded-2xl border ${tier.color} ${tier.highlight ? 'bg-primary/5' : 'bg-surface'} p-6 flex flex-col`}>
+            <div key={tier.name} className={`relative rounded-xl border ${tier.color} ${tier.highlight ? 'bg-primary/5' : 'bg-surface'} p-6 flex flex-col`}>
               {tier.label && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-white text-xs font-bold whitespace-nowrap">{tier.label}</div>
               )}
@@ -190,10 +190,10 @@ export default function PricingPage() {
 
         <div className="mb-16">
           <h2 className="text-xl font-bold text-text-primary mb-6 text-center">Full Feature Comparison</h2>
-          <div className="overflow-x-auto rounded-2xl border border-border">
+          <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
             <table className="w-full text-sm min-w-[600px]">
               <thead>
-                <tr className="border-b border-border bg-muted/40">
+                <tr className="border-b border-white/[0.08] bg-muted/40">
                   <th className="px-4 py-3 text-left text-text-muted font-semibold text-xs uppercase tracking-wide w-48">Feature</th>
                   {TIERS.map(t => (
                     <th key={t.name} className={`px-4 py-3 text-center font-bold text-xs uppercase tracking-wide ${t.highlight ? 'text-primary' : 'text-text-muted'}`}>{t.name}</th>
@@ -203,7 +203,7 @@ export default function PricingPage() {
               <tbody>
                 {/* Limit rows */}
                 {FEATURE_ROWS.map(row => (
-                  <tr key={row.key} className="border-b border-border/50 hover:bg-muted/20">
+                  <tr key={row.key} className="border-b border-white/[0.08] hover:bg-muted/20">
                     <td className="px-4 py-3 text-text-secondary flex items-center gap-1.5">
                       {row.label}
                       {row.tooltip && <span title={row.tooltip} className="text-text-muted cursor-help"><Info className="w-3 h-3" /></span>}
@@ -221,7 +221,7 @@ export default function PricingPage() {
                 ))}
                 {/* Binary feature rows */}
                 {BINARY_FEATURES.map(feat => (
-                  <tr key={feat.label} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                  <tr key={feat.label} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/20">
                     <td className="px-4 py-3 text-text-secondary">{feat.label}</td>
                     {(['free', 'pro', 'team', 'enterprise'] as const).map(plan => (
                       <td key={plan} className="px-4 py-3 text-center">
@@ -238,7 +238,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-6 mb-12">
+        <div className="rounded-xl border border-white/[0.08] bg-surface p-6 mb-12">
           <h3 className="font-bold text-text-primary mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber" />API Rate Limits</h3>
           <div className="grid sm:grid-cols-3 gap-4 text-sm text-text-secondary">
             <div>
@@ -268,7 +268,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+        <div className="rounded-xl border border-white/[0.08] bg-surface p-8 text-center">
           <Building2 className="w-8 h-8 text-primary mx-auto mb-3" />
           <h3 className="text-xl font-bold text-text-primary mb-2">Need Enterprise?</h3>
           <p className="text-text-muted text-sm mb-4 max-w-md mx-auto">
@@ -279,7 +279,7 @@ export default function PricingPage() {
             <a href="mailto:sales@aiscern.com" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors">
               <Users className="w-4 h-4" /> Contact Sales
             </a>
-            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:border-primary/40 transition-colors">
+            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:border-primary/40 transition-colors">
               View DPA
             </Link>
           </div>

@@ -73,7 +73,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   if (avatarUrl) {
     return (
       <img src={avatarUrl} alt={initials}
-        className={`${sizeClass} rounded-full object-cover ring-2 ring-primary/40 flex-shrink-0`}
+        className={`${sizeClass} rounded-full object-cover ring-1 ring-blue-500/30 flex-shrink-0`}
         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
     )
   }
@@ -119,7 +119,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
     <div className="flex flex-col h-full">
       {/* Logo */}
       <Link href="/"
-        className={`flex items-center gap-3 px-4 py-5 border-b border-border hover:opacity-80 transition-opacity ${collapsed ? 'justify-center' : ''}`}>
+        className={`flex items-center gap-3 px-4 py-5 border-b border-white/[0.08] hover:opacity-80 transition-opacity ${collapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Aiscern" width={36} height={36}
           className="object-contain flex-shrink-0" />
         {!collapsed && <span className="text-lg font-black gradient-text">Aiscern</span>}
@@ -211,7 +211,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-border p-3">
+      <div className="border-t border-white/[0.08] p-3">
         {!collapsed ? (
           <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
             <UserAvatar user={user} size={8} />
@@ -260,7 +260,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
 
   const menuContent = (
     <>
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-surface-active">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-white/[0.08] bg-surface-active">
         <UserAvatar user={user} size={11} />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-text-primary truncate">{name}</p>
@@ -285,7 +285,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
           </Link>
         ))}
       </div>
-      <div className="p-2 border-t border-border">
+      <div className="p-2 border-t border-white/[0.08]">
         <button onClick={() => { setOpen(false); signOut() }}
           className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose/10 transition-colors text-sm text-text-muted hover:text-rose w-full">
           <LogOut className="w-4 h-4 flex-shrink-0" />
@@ -315,7 +315,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ type: 'tween', duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-border/55 rounded-2xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
+            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
           >
             {menuContent}
           </motion.div>
@@ -334,7 +334,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-border/55 overflow-hidden"
+              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               {/* Drag handle */}
@@ -387,7 +387,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop sidebar */}
         <motion.aside animate={{ width: collapsed ? 72 : 260 }}
           transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="hidden lg:flex flex-col bg-surface border-r border-border/50 relative flex-shrink-0 2xl:!w-[280px]" style={collapsed ? { width: 72 } : undefined}>
+          className="hidden lg:flex flex-col bg-surface border-r border-white/[0.08] relative flex-shrink-0 2xl:!w-[280px]" style={collapsed ? { width: 72 } : undefined}>
           <Sidebar
             user={user} signOut={signOut}
             collapsed={collapsed} pathname={pathname}
@@ -396,7 +396,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onChatSelect={handleChatSelect}
           />
           <button onClick={() => setCollapsed(!collapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-text-muted hover:text-white z-10">
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-white/[0.08] flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-text-muted hover:text-white z-10">
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
           </button>
         </motion.aside>
@@ -410,7 +410,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-border/50 z-50 flex flex-col">
+                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-white/[0.08] z-50 flex flex-col">
                 <Sidebar
                   user={user} signOut={signOut}
                   collapsed={false} pathname={pathname}
@@ -424,7 +424,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-14 sm:h-16 2xl:h-18 border-b border-border/40 flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-surface flex-shrink-0 sticky top-0 z-30">
+          <header className="h-14 sm:h-16 2xl:h-18 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-surface flex-shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
                 <Menu className="w-6 h-6" />

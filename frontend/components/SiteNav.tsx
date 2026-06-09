@@ -97,8 +97,8 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${solutionsOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {solutionsOpen && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0a0a12] border border-border rounded-2xl shadow-2xl p-4 z-[80]">
-                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/40">
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0a0a12] border border-white/[0.08] rounded-xl shadow-2xl p-4 z-[80]">
+                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/[0.06]">
                             <Layers className="w-4 h-4 text-primary" />
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Industry Solutions</span>
                             <Link href="/solutions" className="ml-auto text-xs text-primary hover:underline" onClick={() => setSolutionsOpen(false)}>View all →</Link>
@@ -170,7 +170,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             onClick={() => setOpen(false)}
             style={{ touchAction: 'none' }}
           />
-          <div className="sm:hidden fixed top-16 left-0 right-0 bg-[#0a0a12] border-b border-border z-[70] shadow-2xl">
+          <div className="sm:hidden fixed top-16 left-0 right-0 bg-[#0a0a12] border-b border-white/[0.08] z-[70] shadow-2xl">
             <div className="px-4 py-4 space-y-1 max-h-[calc(100svh-4rem)] overflow-y-auto">
 
               {/* Solutions accordion */}
@@ -209,7 +209,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                 </Link>
               ))}
 
-              <div className="pt-3 mt-2 border-t border-border/40 flex flex-col gap-2">
+              <div className="pt-3 mt-2 border-t border-white/[0.06] flex flex-col gap-2">
                 {user ? (
                   <Link href="/dashboard" onClick={() => setOpen(false)}
                     className="block text-center px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">

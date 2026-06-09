@@ -171,7 +171,7 @@ export default function ReviewsPage() {
         {/* Stats summary */}
         {displayStats.total > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="flex items-center gap-5">
               <div className="text-center">
                 <div className="text-6xl font-black gradient-text">{displayStats.avg}</div>
@@ -220,14 +220,14 @@ export default function ReviewsPage() {
           </div>
           {SORT_OPTIONS.map(o => (
             <button key={o.value} onClick={() => { setSort(o.value); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${sort === o.value ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${sort === o.value ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-text-muted hover:text-text-primary'}`}>
               {o.label}
             </button>
           ))}
           <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
           {STAR_FILTERS.map(f => (
             <button key={f.value} onClick={() => { setStarFilter(f.value); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-400 text-black' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-400 text-black' : 'bg-surface border border-white/[0.08] text-text-muted hover:text-text-primary'}`}>
               {f.label}
             </button>
           ))}
@@ -269,7 +269,7 @@ export default function ReviewsPage() {
                 <motion.div key={r.id}
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 hover:border-primary/30 transition-all">
+                  className="bg-surface border border-white/[0.08] rounded-xl sm:rounded-xl p-4 sm:p-5 flex flex-col gap-3 hover:border-primary/30 transition-all">
 
                   {/* Header */}
                   <div className="flex items-start gap-3">
@@ -285,7 +285,7 @@ export default function ReviewsPage() {
                           </span>
                         )}
                         {r.is_anonymous && (
-                          <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full border border-border font-medium">
+                          <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full border border-white/[0.08] font-medium">
                             <EyeOff className="w-2.5 h-2.5" /> Anonymous
                           </span>
                         )}
@@ -296,7 +296,7 @@ export default function ReviewsPage() {
                       </div>
                     </div>
                     {r.tool_used && (
-                      <span className="text-[10px] bg-surface-active border border-border px-2 py-1 rounded-lg text-text-muted font-medium flex-shrink-0 hidden sm:block">
+                      <span className="text-[10px] bg-surface-active border border-white/[0.08] px-2 py-1 rounded-lg text-text-muted font-medium flex-shrink-0 hidden sm:block">
                         {r.tool_used}
                       </span>
                     )}
@@ -309,7 +309,7 @@ export default function ReviewsPage() {
                   </div>
 
                   {/* Helpful */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
                     <button onClick={() => toggleHelpful(r.id)}
                       disabled={helpfulSet.has(r.id)}
                       className={`flex items-center gap-1.5 text-xs transition-all px-3 py-1.5 rounded-lg ${helpfulSet.has(r.id) ? 'text-primary bg-primary/10 border border-primary/20' : 'text-text-muted hover:text-text-primary hover:bg-surface-active border border-transparent'}`}>
@@ -331,19 +331,19 @@ export default function ReviewsPage() {
         {pages > 1 && (
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page === 1}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:text-text-primary hover:border-primary/40 transition-all disabled:opacity-40">
+              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-text-muted hover:text-text-primary hover:border-primary/40 transition-all disabled:opacity-40">
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
             <span className="text-sm text-text-muted">Page {page} of {pages}</span>
             <button onClick={() => setPage(p => Math.min(pages,p+1))} disabled={page === pages}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-border text-sm text-text-muted hover:text-text-primary hover:border-primary/40 transition-all disabled:opacity-40">
+              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-text-muted hover:text-text-primary hover:border-primary/40 transition-all disabled:opacity-40">
               Next <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {/* CTA */}
-        <div className="text-center mt-16 p-8 rounded-2xl border border-border bg-surface/40">
+        <div className="text-center mt-16 p-8 rounded-xl border border-white/[0.08] bg-surface/40">
           <h2 className="text-2xl font-black text-text-primary mb-2">Share Your Experience</h2>
           <p className="text-text-muted mb-5">
             Tried Aiscern? Help others by sharing your honest feedback — 1 star or 5 stars, anonymously or with your name.

@@ -48,7 +48,7 @@ export function MobileNav() {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-[#0a0a12] border-t border-border rounded-t-3xl"
+              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-[#0a0a12] border-t border-white/[0.08] rounded-t-3xl"
               style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               <div className="flex justify-center pt-3 pb-2">
@@ -66,7 +66,7 @@ export function MobileNav() {
                     const active = pathname === href || pathname.startsWith(href)
                     return (
                       <Link key={href} href={href} onClick={() => setMoreOpen(false)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all active:scale-95
                           ${active ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
                         <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                         <span className="text-[9px] font-bold uppercase tracking-wider leading-none text-center">{label}</span>
@@ -81,7 +81,7 @@ export function MobileNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-border/40"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-white/[0.06]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="flex items-center justify-around px-2 h-16">

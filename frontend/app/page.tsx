@@ -265,7 +265,7 @@ export default function HomePage() {
       {/* ══ NAV ══ */}
       <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
-        bg-[#08080d]/95 border-b ${scrolled ? 'border-white/[0.08] shadow-lg shadow-black/20' : 'border-transparent'}`}>
+        bg-[#08080d]/95 border-b ${scrolled ? 'border-white/[0.08]' : 'border-transparent'}`}>
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}

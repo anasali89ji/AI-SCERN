@@ -79,7 +79,7 @@ export default function SecurityPage() {
         </div>
 
         {/* Summary card */}
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-12">
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-12">
           <h2 className="font-black text-lg mb-3 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-400" /> The short version
           </h2>
@@ -102,7 +102,7 @@ export default function SecurityPage() {
         {/* Security practices */}
         <div className="grid sm:grid-cols-2 gap-5 mb-14">
           {PRACTICES.map(({ icon: Icon, title, items }) => (
-            <div key={title} className="rounded-xl border border-border bg-surface p-5">
+            <div key={title} className="rounded-xl border border-white/[0.08] bg-surface p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Icon className="w-3.5 h-3.5 text-primary" />
@@ -124,10 +124,10 @@ export default function SecurityPage() {
         {/* Data retention table */}
         <section className="mb-14">
           <h2 className="text-xl font-black mb-5">Data retention</h2>
-          <div className="rounded-xl border border-border overflow-hidden">
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface">
+                <tr className="border-b border-white/[0.08] bg-surface">
                   <th className="text-left px-4 py-3 font-semibold text-text-primary w-1/2">Data</th>
                   <th className="text-left px-4 py-3 font-semibold text-text-primary">Retention</th>
                 </tr>
@@ -145,7 +145,7 @@ export default function SecurityPage() {
         </section>
 
         {/* Responsible disclosure */}
-        <section className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6 mb-10">
+        <section className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6 mb-10">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-yellow-400" />
             <h2 className="font-black text-lg">Responsible disclosure</h2>

@@ -59,14 +59,14 @@ export default function EnterprisePage() {
         </section>
 
         {/* Features */}
-        <section className="py-16 border-t border-border/20">
+        <section className="py-16 border-t border-white/[0.08]/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary text-center mb-10">What Enterprise Includes</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {FEATURES.map((f, i) => {
                 const FIcon = f.icon
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-border/60">
+                  <div key={i} className="card p-5 rounded-xl border border-white/[0.08]">
                     <div className="w-10 h-10 rounded-xl bg-primary/8 border border-primary/20 flex items-center justify-center mb-4">
                       <FIcon className="w-5 h-5 text-primary" />
                     </div>
@@ -85,7 +85,7 @@ export default function EnterprisePage() {
             <h2 className="text-2xl font-black text-text-primary text-center mb-8">Plan Overview</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {PLANS.map((plan, i) => (
-                <div key={i} className={`p-6 rounded-2xl border ${plan.highlight ? 'border-primary/50 bg-primary/5' : 'border-border/60 bg-surface/20'}`}>
+                <div key={i} className={`p-6 rounded-xl border ${plan.highlight ? 'border-primary/50 bg-primary/5' : 'border-white/[0.08] bg-surface/20'}`}>
                   <div className="text-sm font-bold text-text-primary mb-1">{plan.label}</div>
                   <div className="text-xl font-black text-text-primary mb-4">{plan.price}</div>
                   <ul className="space-y-2 text-xs text-text-muted">
@@ -108,7 +108,7 @@ export default function EnterprisePage() {
         {/* Contact Form */}
         <section className="py-16 md:py-20">
           <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="card border border-border/60 rounded-2xl p-8">
+            <div className="card border border-white/[0.08] rounded-xl p-8">
               <h2 className="text-xl font-black text-text-primary mb-2">Talk to Sales</h2>
               <p className="text-sm text-text-muted mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
               <div className="space-y-4">

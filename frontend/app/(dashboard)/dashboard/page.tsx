@@ -144,7 +144,7 @@ export default function DashboardPage() {
       {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
       {isPulling && (
         <div className="flex items-center justify-center py-2 lg:hidden">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface px-4 py-2 rounded-full border border-border/40">
+          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface px-4 py-2 rounded-full border border-white/[0.06]">
             <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
           { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
         ].map((s, i) => (
           <div key={s.label}
-            className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
+            className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
             <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
               <s.icon className="w-5 h-5" />
             </div>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
           <div
             className="mb-4 bg-[#0f0f17] border border-white/[0.08] rounded-xl p-5">
             <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
@@ -206,11 +206,11 @@ export default function DashboardPage() {
                     <FileText className="w-3.5 h-3.5" /> Try Text Detection
                   </Link>
                   <Link href="/detect/image"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
                     <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
                   </Link>
                   <Link href="/batch"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
                     <Layers className="w-3.5 h-3.5" /> Try Batch Scan
                   </Link>
                 </div>
@@ -225,8 +225,8 @@ export default function DashboardPage() {
           {TOOLS.map((t, i) => (
             <div key={t.href}>
               <Link href={t.href}
-                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg- ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
-                <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
+                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg- ${t.color} border border-white/[0.08] hover:border-primary/30 transition-all text-center group`}>
+                <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group- transition-transform`}>
                   <t.icon className="w-5 h-5" />
                 </div>
                 <div>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
       {/* ── AI/Human balance bar ── */}
       {totalScans > 0 && (
         <div
-          className="bg-surface border border-border/50 rounded-2xl p-5">
+          className="bg-surface border border-white/[0.08] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
             <span className="text-xs text-text-muted">{totalScans} total scans</span>
@@ -280,21 +280,21 @@ export default function DashboardPage() {
         {loading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-surface border border-white/[0.08] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : fetchError ? (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-8 text-center">
             <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
             <p className="text-text-muted text-sm font-medium">Couldn't load scan history</p>
             <p className="text-text-disabled text-xs mt-1 mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-white/[0.08] text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
               <RefreshCw className="w-4 h-4" /> Retry
             </button>
           </div>
         ) : scans.length === 0 ? (
-          <div className="bg-surface border border-border rounded-2xl p-10 text-center">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-10 text-center">
             <Shield className="w-10 h-10 text-text-disabled mx-auto mb-3" />
             <p className="text-text-muted text-sm font-medium">No scans yet</p>
             <p className="text-text-disabled text-xs mt-1 mb-4">Pick a tool above to run your first detection</p>
@@ -307,7 +307,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {scans.map((scan, i) => (
               <div key={scan.id}
-                className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
+                className="flex items-center gap-3 bg-surface border border-white/[0.08] rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-text-primary truncate">

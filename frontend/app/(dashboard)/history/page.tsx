@@ -277,7 +277,7 @@ export default function HistoryPage() {
               <Filter className="w-3.5 h-3.5 text-text-muted shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-text-muted hover:border-primary/50'}`}>
                   {f}
                 </button>
               ))}
@@ -289,7 +289,7 @@ export default function HistoryPage() {
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-text-muted hover:border-primary/50'}`}>
                   {f}
                 </button>
               ))}
@@ -298,7 +298,7 @@ export default function HistoryPage() {
             {/* Sort */}
             <div className="ml-auto">
               <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-xs bg-surface border border-border/55 rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
+                className="text-xs bg-surface border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="confidence">By confidence</option>

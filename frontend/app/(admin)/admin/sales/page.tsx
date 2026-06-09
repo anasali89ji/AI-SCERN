@@ -20,7 +20,7 @@ export default function SalesRevenue() {
           <StatCard title="Net New MRR"     value="+$320"   delta="12%"  positive icon={ArrowUpRight} color={C.secondary} />
           <StatCard title="Churn Rate"      value="2.1%"    delta="0.3%" positive={false} icon={UserMinus} color={C.danger} />
         </div>
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">Monthly Revenue (12 months)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={revenue}>
@@ -33,7 +33,7 @@ export default function SalesRevenue() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">Sales Funnel Conversion</h3>
           <div className="flex items-end gap-2 h-32">
             {funnel.map((f,i)=>(

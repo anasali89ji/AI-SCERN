@@ -212,7 +212,7 @@ function AudioDetectionPage() {
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-border hover:border-blue-500/50 hover:bg-surface-hover/30'}`}>
+                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
                 className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center">
@@ -228,7 +228,7 @@ function AudioDetectionPage() {
             )
           ) : (
             <div className="card space-y-4">
-              <div className="p-4 rounded-xl bg-surface-active border border-border">
+              <div className="p-4 rounded-xl bg-surface-active border border-white/[0.08]">
                 <WaveformVisualizer playing={playing} progress={progress} />
 
                 {/* Seek bar */}
@@ -328,7 +328,7 @@ function AudioDetectionPage() {
                   {result.signals.map((s, i) => (
                     <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-white/[0.08] min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
@@ -415,7 +415,7 @@ function AudioDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}

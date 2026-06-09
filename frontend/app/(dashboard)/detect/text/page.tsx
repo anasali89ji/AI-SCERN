@@ -253,7 +253,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     else if (f) setError('Please upload a PDF file.')
                   }}
                   className={`flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3
-                    ${pdfFile ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/40 hover:bg-primary/5'}`}>
+                    ${pdfFile ? 'border-primary/40 bg-primary/5' : 'border-white/[0.08] hover:border-primary/40 hover:bg-primary/5'}`}>
                   {pdfLoading ? (
                     <div className="flex flex-col items-center gap-2 w-full px-6">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -298,7 +298,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 { label: 'Sentences', value: sentenceCount },
                 { label: 'Avg words/sent', value: avgSentLen || '—' },
               ].map(({ label, value }) => (
-                <div key={label} className="text-center px-2 py-1.5 rounded-lg bg-surface-active/50 border border-border/50">
+                <div key={label} className="text-center px-2 py-1.5 rounded-lg bg-surface-active/50 border border-white/[0.08]">
                   <div className="text-sm font-bold text-text-primary">{value}</div>
                   <div className="text-[10px] text-text-muted leading-tight">{label}</div>
                 </div>
@@ -440,7 +440,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     {result.signals.map((signal, i) => (
                       <motion.div key={signal.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                        className="p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
+                        className="p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-white/[0.08] min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                           <span className="text-sm text-text-secondary flex-1 font-medium">{signal.name}</span>
@@ -517,7 +517,7 @@ Analyzed: ${new Date().toLocaleString()}`
             {!result && !loading && (
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="card flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-2xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 rounded-xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-10 h-10 text-amber" />
                 </div>
                 <h3 className="font-semibold text-text-primary mb-2">Ready to Analyze</h3>
@@ -562,7 +562,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-primary/30">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -601,7 +601,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}

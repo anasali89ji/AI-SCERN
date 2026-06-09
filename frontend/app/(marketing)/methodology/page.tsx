@@ -69,7 +69,7 @@ export default function MethodologyPage() {
               <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-full border border-border bg-surface text-text-muted font-mono">
+              <span className="text-xs px-2.5 py-1 rounded-full border border-white/[0.08] bg-surface text-text-muted font-mono">
                 v4.0.0
               </span>
               <span className="text-xs px-2.5 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary font-semibold">
@@ -82,7 +82,7 @@ export default function MethodologyPage() {
           </p>
           <div className="space-y-4">
             {ACCURACY.map(({ type, score, model, color }) => (
-              <div key={type} className="rounded-xl border border-border bg-surface p-5">
+              <div key={type} className="rounded-xl border border-white/[0.08] bg-surface p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <span className="font-bold text-text-primary">{type} Detection</span>
@@ -111,7 +111,7 @@ export default function MethodologyPage() {
             No single signal reliably distinguishes AI content from human content across all edge cases. Aiscern combines multiple independent signals through a trained ensemble model. Each signal is weighted based on its empirically measured reliability for the specific content type, then combined into a single confidence score.
           </p>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-white/[0.08] bg-surface p-5">
               <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary" /> Text Signals
               </h3>
@@ -124,7 +124,7 @@ export default function MethodologyPage() {
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-white/[0.08] bg-surface p-5">
               <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-400" /> Image Signals
               </h3>
@@ -186,7 +186,7 @@ export default function MethodologyPage() {
         </section>
 
         {/* Model update cadence */}
-        <section className="rounded-2xl border border-border bg-surface p-6 mb-10">
+        <section className="rounded-xl border border-white/[0.08] bg-surface p-6 mb-10">
           <h2 className="font-black text-lg mb-3">Model Update Cadence</h2>
           <p className="text-text-muted text-sm leading-relaxed">
             Detection models are retrained quarterly or whenever a major new AI generator reaches significant market penetration. Model versions are tracked in our changelog. The accuracy figures on this page reflect the most recent production model. Fine-tuning data is sourced from public benchmarks, synthetic test sets, and anonymized user feedback (opt-in only).

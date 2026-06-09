@@ -88,13 +88,13 @@ function renderMarkdown(md: string): string {
   const result = md
     // Headings
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-text-primary mt-8 mb-3">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-black text-text-primary mt-10 mb-4 pb-2 border-b border-border/40">$1</h2>')
+    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-black text-text-primary mt-10 mb-4 pb-2 border-b border-white/[0.06]">$1</h2>')
     .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-black text-text-primary mt-10 mb-4">$1</h1>')
     // Bold / italic
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-text-primary">$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em class="italic">$1</em>')
     // Inline code
-    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-border/50 text-xs font-mono text-primary">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-white/[0.08] text-xs font-mono text-primary">$1</code>')
     // Unordered list items
     .replace(/^[-*] (.+)$/gm, '<li class="ml-5 list-disc text-text-muted leading-relaxed mb-1">$1</li>')
     // Ordered list items
@@ -144,7 +144,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </h1>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted mb-8 pb-6 border-b border-border/40">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted mb-8 pb-6 border-b border-white/[0.06]">
           <span className="flex items-center gap-1.5">
             <User className="w-3 h-3" /> {post.author}
           </span>
@@ -170,10 +170,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Tags */}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-border/40">
+          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-white/[0.06]">
             {post.tags.map(tag => (
               <span key={tag}
-                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-border/50 text-text-muted">
+                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-white/[0.08] text-text-muted">
                 {tag}
               </span>
             ))}
@@ -181,7 +181,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* CTA */}
-        <div className="mt-12 p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center">
+        <div className="mt-12 p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
           <h3 className="font-black text-lg mb-2">Try Aiscern Free</h3>
           <p className="text-text-muted text-sm mb-4">
             Detect AI-generated text, images, audio, and video — no account required.

@@ -85,7 +85,7 @@ const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
   new:         { label: 'New',         style: 'bg-primary/10 text-primary border border-primary/25' },
   improvement: { label: 'Improved',    style: 'bg-emerald/10 text-emerald border border-emerald/25' },
   fix:         { label: 'Fix',         style: 'bg-amber/10 text-amber border border-amber/25' },
-  infra:       { label: 'Infra',       style: 'bg-surface text-text-muted border border-border' },
+  infra:       { label: 'Infra',       style: 'bg-surface text-text-muted border border-white/[0.08]' },
 }
 
 export default function ChangelogPage() {
@@ -110,7 +110,7 @@ export default function ChangelogPage() {
 
         <div className="space-y-10">
           {RELEASES.map((release, i) => (
-            <div key={release.version} className="relative pl-6 border-l-2 border-border">
+            <div key={release.version} className="relative pl-6 border-l-2 border-white/[0.08]">
               {/* Version dot */}
               <div className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-primary" />
 
@@ -146,7 +146,7 @@ export default function ChangelogPage() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border/40 text-center">
+        <div className="mt-12 pt-6 border-t border-white/[0.06] text-center">
           <p className="text-xs text-text-muted">
             Found a bug or want to suggest a feature?{' '}
             <Link href="/contact" className="text-primary hover:underline">Contact us</Link>

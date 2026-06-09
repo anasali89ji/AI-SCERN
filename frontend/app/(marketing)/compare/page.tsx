@@ -75,10 +75,10 @@ export default function ComparePage() {
         {/* Comparison Table */}
         <section className="pb-16">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="overflow-x-auto rounded-2xl border border-border/60">
+            <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
-                  <tr className="border-b border-border bg-surface/60">
+                  <tr className="border-b border-white/[0.08] bg-surface/60">
                     <th className="px-5 py-4 text-left text-xs font-bold text-text-muted uppercase tracking-wide w-1/3">Feature</th>
                     <th className="px-4 py-4 text-center">
                       <div className="font-black text-primary text-sm">Aiscern</div>
@@ -100,7 +100,7 @@ export default function ComparePage() {
                 </thead>
                 <tbody>
                   {ROWS.map((row, i) => (
-                    <tr key={i} className={`border-b border-border/40 ${i % 2 === 0 ? 'bg-surface/10' : ''}`}>
+                    <tr key={i} className={`border-b border-white/[0.06] ${i % 2 === 0 ? 'bg-surface/10' : ''}`}>
                       <td className="px-5 py-3 text-sm text-text-secondary font-medium">{row.feature}</td>
                       <td className="px-4 py-3 text-center bg-primary/[0.03]"><Cell value={row.aiscern} /></td>
                       <td className="px-4 py-3 text-center"><Cell value={row.gptzero} /></td>
@@ -128,7 +128,7 @@ export default function ComparePage() {
                 { title: 'Ensemble, not single-model', desc: '8+ specialized models combined with Bayesian fusion. Single-model detectors are easier to fool and have higher false positive rates.' },
                 { title: 'Open methodology', desc: 'We publish our benchmark datasets, model breakdown, and confidence thresholds at /methodology. Most competitors treat their methods as black boxes.' },
               ].map((d, i) => (
-                <div key={i} className="card border border-border/60 rounded-xl p-5">
+                <div key={i} className="card border border-white/[0.08] rounded-xl p-5">
                   <div className="text-2xl font-black text-primary/20 mb-2">0{i+1}</div>
                   <h3 className="font-bold text-text-primary text-sm mb-2">{d.title}</h3>
                   <p className="text-xs text-text-muted leading-relaxed">{d.desc}</p>

@@ -8,7 +8,7 @@ const C = { primary:'#2563eb', success:'#10b981', warning:'#f59e0b', danger:'#f4
 
 function StatCard({ title, value, sub, icon: Icon, color, loading }: any) {
   return (
-    <div className="rounded-xl border border-border bg-surface/60 p-4 flex items-start gap-3">
+    <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-4 flex items-start gap-3">
       <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${color}18` }}>
         <Icon className="w-4 h-4" style={{ color }} />
       </div>
@@ -83,7 +83,7 @@ export default function AdminOverview() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-text-disabled">Last updated: {lastRefresh.toLocaleTimeString()}</span>
-            <button onClick={fetchStats} className="p-1.5 rounded-lg border border-border hover:bg-surface-active transition-colors">
+            <button onClick={fetchStats} className="p-1.5 rounded-lg border border-white/[0.08] hover:bg-surface-active transition-colors">
               <RefreshCw className="w-3.5 h-3.5 text-text-muted" />
             </button>
             <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald/10 border border-emerald/20 text-[10px] text-emerald font-semibold">
@@ -102,7 +102,7 @@ export default function AdminOverview() {
 
         <div className="grid lg:grid-cols-5 gap-4">
           {/* Live Activity Feed */}
-          <div className="lg:col-span-3 rounded-xl border border-border bg-surface/60 p-4">
+          <div className="lg:col-span-3 rounded-xl border border-white/[0.08] bg-surface/60 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
@@ -139,7 +139,7 @@ export default function AdminOverview() {
 
           {/* Model Accuracy Radar */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-xl border border-border bg-surface/60 p-4">
+            <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-4">
               <h3 className="text-sm font-bold text-text-primary mb-3">Detection Accuracy</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <RadarChart data={radarData}>
@@ -152,7 +152,7 @@ export default function AdminOverview() {
             </div>
 
             {/* Recent Signups */}
-            <div className="rounded-xl border border-border bg-surface/60 p-4">
+            <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-4">
               <h3 className="text-sm font-bold text-text-primary mb-3">Recent Signups</h3>
               <div className="space-y-1.5">
                 {(stats?.recentSignups || []).slice(0, 5).map((u: any, i: number) => (
@@ -176,7 +176,7 @@ export default function AdminOverview() {
 
         {/* Scans by Modality */}
         {modalityChart.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface/60 p-4">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-4">
             <h3 className="text-sm font-bold text-text-primary mb-3">Scans by Modality</h3>
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={modalityChart}>

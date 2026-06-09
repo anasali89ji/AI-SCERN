@@ -178,10 +178,10 @@ export function SolutionPage(props: SolutionPageProps) {
               </div>
               {/* Abstract geometric illustration */}
               <div className="flex-shrink-0 lg:w-64 xl:w-80">
-                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
+                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
                   style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
                   {heroIcon}
-                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
+                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-white/[0.08] flex items-center justify-center">
                     <CheckCircle className={`w-4 h-4 ${c.icon}`} />
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* The Problem */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-16 md:py-20 border-t border-white/[0.08]/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-12">
               <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
@@ -199,7 +199,7 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               {painPoints.map((p, i) => (
-                <div key={i} className="card border border-border/60 p-5 rounded-xl">
+                <div key={i} className="card border border-white/[0.08] p-5 rounded-xl">
                   <h3 className="font-semibold text-text-primary mb-2 text-sm">{p.title}</h3>
                   <p className="text-sm text-text-muted leading-relaxed">{p.desc}</p>
                 </div>
@@ -221,7 +221,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {features.map((f, i) => {
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-border/60 hover:border-primary/20 transition-colors">
+                  <div key={i} className="card p-5 rounded-xl border border-white/[0.08] hover:border-primary/20 transition-colors">
                     <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4`}>
                       {f.icon}
                     </div>
@@ -233,7 +233,7 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
 
             {/* Accuracy disclaimer */}
-            <p className="mt-6 text-xs text-text-muted text-center border border-border/30 rounded-lg p-3 max-w-xl mx-auto">
+            <p className="mt-6 text-xs text-text-muted text-center border border-white/[0.06] rounded-lg p-3 max-w-xl mx-auto">
               ℹ️ Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
               <Link href="/methodology" className="text-primary hover:underline ml-1">See full benchmarks →</Link>
             </p>
@@ -246,7 +246,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">Real-World Use Cases</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {useCases.map((uc, i) => (
-                <div key={i} className="relative p-6 rounded-2xl border border-border/60 bg-surface/20">
+                <div key={i} className="relative p-6 rounded-xl border border-white/[0.08] bg-surface/20">
                   <div className={`text-3xl font-black mb-3 ${c.icon} opacity-30`}>0{i+1}</div>
                   <h3 className="font-semibold text-text-primary mb-2">{uc.title}</h3>
                   <p className="text-sm text-text-muted leading-relaxed">{uc.desc}</p>
@@ -284,14 +284,14 @@ export function SolutionPage(props: SolutionPageProps) {
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="card border border-border/60 rounded-2xl p-6">
+            <div className="card border border-white/[0.08] rounded-xl p-6">
               <FAQ faqs={faqs} />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-16 md:py-20 border-t border-white/[0.08]/20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-4">
               Ready to detect AI content in {industry.toLowerCase()}?

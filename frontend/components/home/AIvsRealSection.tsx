@@ -56,7 +56,7 @@ const COMPARISON_CARDS: ComparisonCardData[] = [
 const ComparisonCard = memo(function ComparisonCard({ card }: { card: ComparisonCardData }) {
   const isAI = card.verdict === 'AI'
   return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-border/60 rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
+    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-white/[0.08] rounded-xl sm:rounded-xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
       {card.type === 'image' && card.img ? (
         <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
           <div className="absolute inset-0" style={{
@@ -65,7 +65,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
           <img
             src={card.img}
             alt={card.label}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 relative z-10 active:scale-[1.02]"
+            className="w-full h-full object-cover group- transition-transform duration-500 relative z-10"
             loading="lazy"
             decoding="async"
             width={288}

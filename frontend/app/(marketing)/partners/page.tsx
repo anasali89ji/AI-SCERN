@@ -61,14 +61,14 @@ export default function PartnersPage() {
         </section>
 
         {/* Partner Types */}
-        <section className="py-16 border-t border-border/20">
+        <section className="py-16 border-t border-white/[0.08]/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-text-primary text-center mb-10">Partnership Types</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {PARTNER_TYPES.map((pt, i) => {
                 const PIcon = pt.icon
                 return (
-                  <div key={i} className="card border border-border/60 rounded-2xl p-6">
+                  <div key={i} className="card border border-white/[0.08] rounded-xl p-6">
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
                       <PIcon className="w-5 h-5 text-blue-400" />
                     </div>
@@ -107,7 +107,7 @@ export default function PartnersPage() {
                 </div>
               </div>
               <div className="flex-shrink-0 w-full lg:w-auto">
-                <pre className="bg-background border border-border/60 rounded-xl p-4 text-xs text-text-secondary overflow-x-auto font-mono">
+                <pre className="bg-background border border-white/[0.08] rounded-xl p-4 text-xs text-text-secondary overflow-x-auto font-mono">
 {`POST /api/v1/detect/text
 Content-Type: application/json
 X-API-Key: your-key

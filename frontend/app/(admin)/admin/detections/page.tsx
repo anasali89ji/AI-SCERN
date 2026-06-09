@@ -22,7 +22,7 @@ export default function DetectionAnalytics() {
           <StatCard title="Avg Response"    value="1.4s"   delta="0.1s" positive icon={Activity}    color={C.success}   />
         </div>
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 rounded-xl border border-border bg-surface/60 p-5">
+          <div className="lg:col-span-2 rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">30-Day Volume by Modality</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={line30}>
@@ -37,7 +37,7 @@ export default function DetectionAnalytics() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Modality Breakdown</h3>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
@@ -49,7 +49,7 @@ export default function DetectionAnalytics() {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">Top Detected AI Sources</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={aiSrcs} layout="vertical">

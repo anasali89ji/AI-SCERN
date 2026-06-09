@@ -52,10 +52,10 @@ export default function ComparisonTable() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="overflow-x-auto rounded-2xl border border-border">
+          className="overflow-x-auto rounded-xl border border-white/[0.08]">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-white/[0.08]">
                 <th className="text-left p-4 text-text-muted text-sm font-medium w-52">Feature</th>
                 {COLS.map(col => (
                   <th key={col.key} className={`p-4 text-center ${col.highlight ? 'bg-primary/10 border-x border-primary/20' : ''}`}>
@@ -71,7 +71,7 @@ export default function ComparisonTable() {
             </thead>
             <tbody>
               {FEATURES.map((row, i) => (
-                <tr key={row.name} className={`border-b border-border/50 ${i % 2 === 0 ? 'bg-surface/30' : ''}`}>
+                <tr key={row.name} className={`border-b border-white/[0.08] ${i % 2 === 0 ? 'bg-surface/30' : ''}`}>
                   <td className="p-4 text-sm text-text-secondary">{row.name}</td>
                   {COLS.map(col => (
                     <td key={col.key} className={`p-4 text-center ${col.highlight ? 'bg-primary/5 border-x border-primary/10' : ''}`}>

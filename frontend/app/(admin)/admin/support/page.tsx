@@ -23,7 +23,7 @@ export default function Support() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Ticket Categories</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -35,11 +35,11 @@ export default function Support() {
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
             <h3 className="text-sm font-bold text-text-primary mb-4">Ticket Status</h3>
             <div className="space-y-3">
               {[{label:'Open',count:12,color:C.danger},{label:'In Progress',count:5,count2:5,color:C.warning},{label:'Resolved',count:148,color:C.success}].map(s=>(
-                <div key={s.label} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50">
+                <div key={s.label} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
                   <span className="text-sm text-text-secondary">{s.label}</span>
                   <span className="text-lg font-black" style={{color:s.color}}>{s.count}</span>
                 </div>
@@ -48,16 +48,16 @@ export default function Support() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5 overflow-x-auto">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
           <h3 className="text-sm font-bold text-text-primary mb-4">Top 5 Common Issues</h3>
           <table className="w-full text-sm min-w-[320px]">
-            <thead><tr className="border-b border-border text-xs text-text-muted">
+            <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
               <th className="text-left py-2 font-medium">Issue</th>
               <th className="text-right py-2 font-medium">Tickets</th>
             </tr></thead>
             <tbody>
               {issues.map((r,i)=>(
-                <tr key={i} className="border-b border-border/40 text-xs">
+                <tr key={i} className="border-b border-white/[0.06] text-xs">
                   <td className="py-2 text-text-secondary">{r.issue}</td>
                   <td className="py-2 text-right font-bold text-text-primary">{r.count}</td>
                 </tr>
@@ -66,11 +66,11 @@ export default function Support() {
           </table>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
           <h3 className="text-sm font-bold text-text-primary mb-4">Latest Reviews</h3>
           <div className="space-y-3">
             {latestReviews.map((r,i)=>(
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-white/[0.08]">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">{r.name[0]}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

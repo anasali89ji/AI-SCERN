@@ -32,7 +32,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
   icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border/30 last:border-0 gap-4">
+    <div className="flex items-center justify-between py-4 border-b border-white/[0.06] last:border-0 gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
           <Icon className="w-4 h-4 text-primary" />
@@ -54,8 +54,8 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
     <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
-      <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-border/30">
+      className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6">
+      <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-white/[0.06]">
         <Icon className="w-4 h-4 text-primary" /> {title}
       </h2>
       {children}
@@ -192,7 +192,7 @@ export default function SettingsPage() {
           <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all"
           style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
@@ -218,7 +218,7 @@ export default function SettingsPage() {
         <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              className="text-xs bg-surface-active border border-white/[0.08] rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
               {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
@@ -231,7 +231,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/55 text-text-muted hover:text-text-secondary'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-white/[0.08] text-text-muted hover:text-text-secondary'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -241,7 +241,7 @@ export default function SettingsPage() {
         <SettingRow icon={Languages} label="Language" description="Interface display language"
           action={
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              className="text-xs bg-surface-active border border-white/[0.08] rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
               <option value="en">English</option>
               <option value="ur">اردو (Urdu)</option>
               <option value="ar">العربية (Arabic)</option>
@@ -261,7 +261,7 @@ export default function SettingsPage() {
         <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              className="text-xs bg-surface-active border border-white/[0.08] rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
       <Section title="Data & Storage" icon={Database}>
         <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
           action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border/55 text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/[0.08] text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
               <Download className="w-3 h-3" /> Export
             </button>
           } />
@@ -315,7 +315,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* Danger zone */}
-      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-4 sm:p-6">
+      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-xl p-4 sm:p-6">
         <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
             <p className="text-sm text-rose-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-xl border border-border/55 text-xs text-text-muted hover:text-text-primary">
+                className="flex-1 py-2 rounded-xl border border-white/[0.08] text-xs text-text-muted hover:text-text-primary">
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
