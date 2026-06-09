@@ -119,7 +119,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
     <div className="flex flex-col h-full">
       {/* Logo */}
       <Link href="/"
-        className={`flex items-center gap-3 px-4 py-5 border-b border-white/[0.08] hover:opacity-80 transition-opacity ${collapsed ? 'justify-center' : ''}`}>
+        className={`flex items-center gap-3 px-4 py-5 border-b border-white/[0.08] hover:text-white transition-colors ${collapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Aiscern" width={36} height={36}
           className="object-contain flex-shrink-0" />
         {!collapsed && <span className="text-lg font-black gradient-text">Aiscern</span>}
@@ -429,7 +429,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button onClick={() => setMobileOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-100">
                 <Menu className="w-6 h-6" />
               </button>
-              <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity">
+              <Link href="/" className="flex items-center gap-2 lg:hidden hover:text-white transition-colors">
                 <Image src="/logo.png" alt="Aiscern" width={28} height={28} className="object-contain" />
                 <span className="font-bold gradient-text text-sm">Aiscern</span>
               </Link>

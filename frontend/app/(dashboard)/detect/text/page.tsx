@@ -371,7 +371,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="text-center space-y-1">
                   <p className="font-semibold text-slate-100">Analyzing text patterns…</p>
                   <p className="text-sm text-slate-500">Perplexity · Burstiness · Style signals</p>
-                  <p className="text-xs text-slate-600 animate-pulse">Running 3-model ensemble…</p>
+                  <p className="text-xs text-slate-500">Running 3-model ensemble…</p>
                 </div>
               </motion.div>
             )}

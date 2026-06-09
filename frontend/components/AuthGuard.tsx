@@ -37,9 +37,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           <Image src="/logo.png" alt="Aiscern" width={56} height={38}
             className="object-contain drop-shadow-[0_0_12px_rgba(245,100,0,0.5)] animate-pulse" />
           <div className="flex gap-1">
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div className="w-5 h-5 rounded-full border-2 border-blue-600/30 border-t-blue-600 animate-spin" />
           </div>
         </div>
       </div>

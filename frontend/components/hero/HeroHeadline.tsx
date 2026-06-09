@@ -149,7 +149,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
                   'transition-transform duration-300',
                   active
                     ? `w-3.5 sm:w-4 ${WORD_STYLES[w].bg} scale-x-100`
-                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/50',
+                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/[0.05]0',
                 ].join(' ')}
               />
             </button>

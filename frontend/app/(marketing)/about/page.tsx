@@ -66,7 +66,7 @@ const TEAM = [
 
 function TeamCard({ member }: { member: typeof TEAM[0] }) {
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] overflow-hidden hover:border-white/[0.12] transition-all duration-300">
+    <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] overflow-hidden hover:border-white/[0.12] transition-all duration-200">
       {/* Gradient header banner */}
       <div className={`h-20 bg-[#141420] relative`}>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.12),transparent)]" />

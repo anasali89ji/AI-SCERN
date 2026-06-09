@@ -98,7 +98,6 @@ export async function checkRateLimit(
         current:   current,
       }
     } catch {
-      console.warn('[ratelimit] Redis error, failing open for', type, identifier)
     }
   }
 

@@ -82,10 +82,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
             <span className="text-sm font-bold text-slate-100">Live AI Detector</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">Free</span>
           </div>
@@ -263,7 +260,7 @@ export default function HomePage() {
       ]` }} />
 
       {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
+      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-200
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         bg-[#08080d]/95 border-b ${scrolled ? 'border-white/[0.08]' : 'border-transparent'}`}>
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">

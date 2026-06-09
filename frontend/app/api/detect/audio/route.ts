@@ -118,7 +118,6 @@ export async function POST(req: NextRequest) {
 
     const forensicData = forensicSettled.status === 'fulfilled' ? forensicSettled.value : null
     if (forensicSettled.status === 'rejected') {
-      console.warn('[detect/audio] Forensic pipeline non-fatal error:', forensicSettled.reason)
     }
 
     // Blend HF + forensic when forensic data is available
@@ -164,7 +163,6 @@ export async function POST(req: NextRequest) {
           finalVerdict = finalConfidence >= 0.60 ? 'AI' : finalConfidence <= 0.40 ? 'HUMAN' : 'UNCERTAIN'
         }
       } catch (e) {
-        console.warn('[detect/audio] RAG query error (non-blocking):', e)
       }
     }
 

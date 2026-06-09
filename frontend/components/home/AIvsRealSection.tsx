@@ -56,7 +56,7 @@ const COMPARISON_CARDS: ComparisonCardData[] = [
 const ComparisonCard = memo(function ComparisonCard({ card }: { card: ComparisonCardData }) {
   const isAI = card.verdict === 'AI'
   return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-[#0f0f17] border border-white/[0.08] rounded-xl sm:rounded-xl overflow-hidden hover:border-white/[0.12] transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
+    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-[#0f0f17] border border-white/[0.08] rounded-xl sm:rounded-xl overflow-hidden hover:border-white/[0.12] transition-colors duration-200 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
       {card.type === 'image' && card.img ? (
         <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-[#141420]">
           <div className="absolute inset-0" style={{
@@ -65,7 +65,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
           <img
             src={card.img}
             alt={card.label}
-            className="w-full h-full object-cover group- transition-transform duration-500 relative z-10"
+            className="w-full h-full object-cover group- transition-transform duration-200 relative z-10"
             loading="lazy"
             decoding="async"
             width={288}
@@ -128,7 +128,7 @@ function MarqueeRow({ cards, direction }: { cards: ComparisonCardData[]; directi
     <div className="relative overflow-hidden">
       <div
         ref={trackRef}
-        className={`flex gap-2 sm:gap-3 ${direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'}`}
+        className={`flex gap-2 sm:gap-3 ${direction === 'left' ? 'flex gap-2 sm:gap-3 flex-wrap justify-center' : 'flex gap-2 sm:gap-3 flex-wrap justify-center'}`}
         style={{ width: 'max-content' }}
       >
         {[...cards, ...cards].map((card, i) => (

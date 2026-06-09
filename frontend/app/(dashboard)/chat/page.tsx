@@ -257,7 +257,7 @@ function MessageBubble({
           <div key={i} className="rounded-xl overflow-hidden border border-white/[0.06] max-w-[240px] sm:max-w-[280px]">
             {att.type?.startsWith('image/') && att.preview
               ? <img src={att.preview} alt={att.name} className="max-h-40 sm:max-h-48 object-cover w-full" />
-              : <div className="flex items-center gap-2 px-3 py-2 bg-white/5 text-xs text-gray-400"><Ico.Clip />{att.name}</div>
+              : <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.05] text-xs text-gray-400"><Ico.Clip />{att.name}</div>
             }
           </div>
         ))}
@@ -321,7 +321,7 @@ function MessageBubble({
             {new Date(msg.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
           </span>
           {!isUser && !msg.isStreaming && msg.content && (
-            <button onClick={copy} className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-all px-2 py-1 rounded-lg hover:bg-white/5">
+            <button onClick={copy} className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-all px-2 py-1 rounded-lg hover:bg-white/[0.05]">
               {copied ? <Ico.Check /> : <Ico.Copy />}
               {copied ? 'Copied' : 'Copy'}
             </button>

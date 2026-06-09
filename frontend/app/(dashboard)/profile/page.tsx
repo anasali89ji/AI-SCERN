@@ -339,7 +339,7 @@ export default function ProfilePage() {
               {editing ? (
                 <>
                   <button onClick={handleSave} disabled={saving}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
                     style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)' }}>
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>

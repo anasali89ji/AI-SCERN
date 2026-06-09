@@ -154,7 +154,7 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group card card-hover flex flex-col gap-4 p-6 rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300">
+                    className="group card card-hover flex flex-col gap-4 p-6 rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-all duration-200">
                     <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <Icon className={`w-5 h-5 ${c.icon}`} />
                     </div>

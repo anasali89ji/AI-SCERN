@@ -121,7 +121,7 @@ export default function CreditsPage() {
                   key={plan.id}
                   className={`relative rounded-xl border p-8 flex flex-col gap-6 transition-all ${
                     isPro
-                      ? 'border-white bg-white/5 ring-1 ring-white/20'
+                      ? 'border-white bg-white/[0.05] ring-1 ring-white/20'
                       : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-600'
                   }`}
                 >

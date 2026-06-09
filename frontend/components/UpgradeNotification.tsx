@@ -43,7 +43,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           />
         ))}
 
-        <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/5 transition-colors">
+        <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/[0.05] transition-colors">
           <X className="w-4 h-4" />
         </button>
 

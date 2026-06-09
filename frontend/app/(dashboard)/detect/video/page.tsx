@@ -230,7 +230,6 @@ function VideoDetectionPage() {
           setExtractedFrames(frames)
         } catch (frameErr) {
           // Frame extraction failed (e.g. Firefox seek issue) — continue without frames
-          console.warn('[VideoDetection] Frame extraction failed:', frameErr)
           setError('Frame extraction failed — analysis will use file metadata only. For best results use Chrome/Edge.')
           frames = []
         }
@@ -344,7 +343,7 @@ function VideoDetectionPage() {
               </label>
             ) : (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.02]' : 'border-white/[0.08] hover:border-secondary/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
@@ -376,13 +375,13 @@ function VideoDetectionPage() {
                     {phase === 'extracting' && (
                       <div className="flex gap-1 mt-1">
                         {FRAME_POSITIONS.map((_, i) => (
-                          <div key={i} className={`w-2 h-2 rounded-full transition-all duration-300
+                          <div key={i} className={`w-2 h-2 rounded-full transition-all duration-200
                             ${i < framesDone ? 'bg-slate-700' : 'bg-slate-700/20'}`} />
                         ))}
                       </div>
                     )}
                     {phase === 'analyzing' && (
-                      <p className="text-xs text-slate-500 animate-pulse">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
+                      <p className="text-xs text-slate-500">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
                     )}
                   </div>
                 ) : (

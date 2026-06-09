@@ -200,7 +200,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             ) : (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-primary bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
@@ -385,7 +385,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="text-center space-y-1">
                 <p className="font-semibold text-slate-100">Analyzing image…</p>
                 <p className="text-sm text-slate-500">GAN fingerprints · Pixel forensics · Neural ensemble</p>
-                <p className="text-xs text-slate-600 animate-pulse">Running 3-model ensemble + 6 pixel signals…</p>
+                <p className="text-xs text-slate-500">Running 3-model ensemble + 6 pixel signals…</p>
               </div>
             </motion.div>
           ) : (

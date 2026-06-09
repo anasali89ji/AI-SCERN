@@ -179,7 +179,7 @@ export default function ScraperPage() {
               <span className="text-[10px] text-slate-600 font-medium">Try:</span>
               {EXAMPLES.map(ex => (
                 <button key={ex.url} onClick={() => handleScrape(ex.url)}
-                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-blue-400 hover:bg-primary/15 border border-white/5 hover:border-white/[0.12] transition-colors">
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-blue-400 hover:bg-primary/15 border border-white/[0.08] hover:border-white/[0.12] transition-colors">
                   {ex.label}
                 </button>
               ))}
@@ -353,7 +353,7 @@ export default function ScraperPage() {
                   </div>
 
                   {/* Summary */}
-                  <div className="mt-4 pt-3 border-t border-white/5 space-y-2">
+                  <div className="mt-4 pt-3 border-t border-white/[0.08] space-y-2">
                     <p className="text-xs text-slate-300 leading-relaxed">{result.summary}</p>
                     {result.reasoning && (
                       <p className="text-[10px] text-slate-500 leading-relaxed italic">"{result.reasoning}"</p>
@@ -402,7 +402,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/5 hover:border-white/[0.12] transition-colors">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/[0.08] hover:border-white/[0.12] transition-colors">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-slate-300 truncate">{sp.title}</p>
@@ -429,7 +429,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {result.headings.map((h, i) => (
-                      <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-slate-300 border border-white/5">
+                      <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-slate-300 border border-white/[0.08]">
                         {h.slice(0, 60)}
                       </span>
                     ))}

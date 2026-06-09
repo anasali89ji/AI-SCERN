@@ -51,7 +51,7 @@ export default function NavClient() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-300
+      className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-200
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
           ? 'border-b border-blue-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl'
@@ -133,7 +133,7 @@ export default function NavClient() {
             aria-label="Navigation menu"
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden"
+            className="md:hidden border-t border-white/[0.08] bg-[#08080d] overflow-hidden"
             onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setMobileNavOpen(false)}
           >
             <div className="px-4 py-4 flex flex-col gap-1">

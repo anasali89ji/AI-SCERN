@@ -150,7 +150,6 @@ async function analyzeImageForensic(
         },
       }
     } catch (err) {
-      console.warn('[analyzeImageForensic] Semantic RAG failed, falling back to NVIDIA vision:', err)
       // fall through to base64 / NVIDIA path
     }
   }

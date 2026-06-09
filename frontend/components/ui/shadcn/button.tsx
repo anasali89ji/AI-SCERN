@@ -11,7 +11,7 @@ const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
   default:     'bg-blue-600 text-white hover:bg-blue-700 transition-colors',
   secondary:   'bg-surface border border-white/[0.08] hover:border-blue-500/50 text-slate-100',
   outline:     'border border-white/[0.08] bg-transparent hover:border-primary/40 hover:bg-white/[0.03] text-slate-100',
-  ghost:       'bg-transparent hover:bg-white/5 text-slate-500 hover:text-slate-100',
+  ghost:       'bg-transparent hover:bg-white/[0.05] text-slate-500 hover:text-slate-100',
   destructive: 'bg-rose-600 text-white hover:bg-rose-500',
   link:        'bg-transparent text-blue-400 underline-offset-4 hover:underline p-0 h-auto',
 }

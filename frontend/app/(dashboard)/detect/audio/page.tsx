@@ -211,7 +211,7 @@ function AudioDetectionPage() {
               </label>
             ) : (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
                 ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}

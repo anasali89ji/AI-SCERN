@@ -54,7 +54,6 @@ export async function runDiffusionInversion(imageUrl: string): Promise<LayerRepo
   const TIMEOUT_MS = 45_000  // 45s — GPU inference takes 10-30s
 
   if (!workerUrl) {
-    console.warn('[L5] SIGNAL_WORKER_URL not set — diffusion inversion skipped')
     return {
       layer:               5,
       layerName:           LAYER_NAMES[5],
@@ -76,7 +75,6 @@ export async function runDiffusionInversion(imageUrl: string): Promise<LayerRepo
     if (!res.ok) {
       // 503 = GPU not available; 404 = endpoint not yet deployed
       // Both are non-fatal — L5 just doesn't contribute to the score
-      console.warn(`[L5] signal-worker returned ${res.status} — skipping`)
       return {
         layer:               5,
         layerName:           LAYER_NAMES[5],
@@ -125,7 +123,6 @@ export async function runDiffusionInversion(imageUrl: string): Promise<LayerRepo
   } catch (err) {
     // Timeout or network error — graceful degradation
     const isTimeout = err instanceof Error && err.name === 'TimeoutError'
-    console.warn(`[L5] Diffusion inversion ${isTimeout ? 'timed out' : 'failed'}:`, err)
     return {
       layer:               5,
       layerName:           LAYER_NAMES[5],
