@@ -31,7 +31,7 @@ export interface SolutionPageProps {
   tagline: string
   description: string
   heroIcon: ReactNode
-  accentColor: 'primary' | 'cyan' | 'amber' | 'emerald' | 'rose'
+  accentColor: 'primary' | 'blue' | 'cyan' | 'amber' | 'emerald' | 'rose'
   ctaLabel: string
   problemTitle: string
   painPoints: SolutionPainPoint[]
@@ -45,22 +45,31 @@ export interface SolutionPageProps {
 
 const colorMap = {
   primary: {
-    badge:   'bg-primary/10 border-primary/20 text-primary',
-    iconBg:  'bg-primary/10 border-primary/20',
-    icon:    'text-primary',
-    glow:    'rgba(37,99,235,0.12)',
-    heroGlow:'rgba(37,99,235,0.15)',
-    check:   'text-primary',
-    btn:     'bg-primary hover:bg-primary/90',
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
+  },
+  blue: {
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
   },
   cyan: {
-    badge:   'bg-cyan/10 border-cyan/20 text-cyan',
-    iconBg:  'bg-cyan/10 border-cyan/20',
-    icon:    'text-cyan',
-    glow:    'rgba(6,182,212,0.12)',
-    heroGlow:'rgba(6,182,212,0.15)',
-    check:   'text-cyan',
-    btn:     'bg-cyan hover:bg-cyan/90',
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
   },
   amber: {
     badge:   'bg-amber/10 border-amber/20 text-amber',

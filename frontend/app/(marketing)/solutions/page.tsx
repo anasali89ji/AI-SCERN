@@ -32,7 +32,7 @@ const SOLUTIONS = [
   {
     href: '/solutions/hr',
     icon: Users,
-    color: 'cyan',
+    color: 'blue',
     title: 'Human Resources',
     tagline: 'Hire with confidence',
     desc: 'Verify authenticity of cover letters, CVs, and work samples. Catch AI-written applications before they reach interview stage.',
@@ -86,7 +86,7 @@ const SOLUTIONS = [
   {
     href: '/solutions/research',
     icon: Microscope,
-    color: 'cyan',
+    color: 'blue',
     title: 'Academic Research',
     tagline: 'Uphold scientific integrity',
     desc: 'Validate authenticity of papers, datasets, and experiment logs. Integrate with your research workflow via API.',
@@ -105,7 +105,7 @@ const SOLUTIONS = [
 
 const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
   primary: { bg: 'bg-primary/8', border: 'border-primary/25', text: 'text-primary', icon: 'text-primary' },
-  cyan:    { bg: 'bg-cyan/8',    border: 'border-cyan/25',    text: 'text-cyan',    icon: 'text-cyan'    },
+  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/25',    text: 'text-blue-400',    icon: 'text-blue-400'    },
   amber:   { bg: 'bg-amber/8',   border: 'border-amber/25',   text: 'text-amber',   icon: 'text-amber'   },
   emerald: { bg: 'bg-emerald/8', border: 'border-emerald/25', text: 'text-emerald', icon: 'text-emerald' },
   rose:    { bg: 'bg-rose/8',    border: 'border-rose/25',    text: 'text-rose',    icon: 'text-rose'    },

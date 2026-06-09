@@ -15,7 +15,7 @@ import { useAuth } from '@/components/auth-provider'
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
   { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-primary', desc: 'Deepfake & AI image detection' },
-  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
+  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-blue-600/20 to-blue-600/5',        iconColor: 'text-blue-400',      desc: 'Voice clone detection'         },
   { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
   { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
   { href: '/chat',         icon: Zap,       label: 'ARIA',  color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
@@ -190,7 +190,7 @@ export default function DashboardPage() {
         {/* New user onboarding card */}
         {totalScans === 0 && !loading && (
           <div
-            className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
+            className="mb-4 bg-[#0f0f17] border border-white/[0.08] rounded-xl p-5">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-5 h-5 text-primary" />
@@ -225,7 +225,7 @@ export default function DashboardPage() {
           {TOOLS.map((t, i) => (
             <div key={t.href}>
               <Link href={t.href}
-                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
+                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg- ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
                 <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
                   <t.icon className="w-5 h-5" />
                 </div>

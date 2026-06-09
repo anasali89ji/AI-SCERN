@@ -59,7 +59,7 @@ export default function ApiDocsPage() {
           <h3 className="font-semibold text-sm">Request Body</h3>
           <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`{ "text": "string (50–10,000 characters)" }`}</pre>
           <h3 className="font-semibold text-sm">Response</h3>
-          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-blue-400">{`{
   "verdict": "AI" | "HUMAN" | "UNCERTAIN",
   "confidence": 0.94,
   "credits_remaining": 498,

@@ -124,7 +124,7 @@ export default function ScraperPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
               <Globe className="w-5 h-5 text-primary" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">Web Scanner</h1>
@@ -145,12 +145,12 @@ export default function ScraperPage() {
                 onChange={e => setUrl(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleScrape()}
                 placeholder="https://example.com/article"
-                className="w-full bg-[#141420] border border-white/[0.07] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full bg-[#141420] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
               />
             </div>
             <button
               onClick={() => handleScrape()} disabled={loading || !url.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-bold disabled:opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               {loading ? 'Scanning…' : 'Scan Site'}
@@ -191,7 +191,7 @@ export default function ScraperPage() {
         <AnimatePresence>
           {error && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="mb-5 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
+              className="mb-5 p-4 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <p className="text-sm text-rose-300">{error}</p>
             </motion.div>
@@ -229,7 +229,7 @@ export default function ScraperPage() {
             <div className="bg-[#0f0f17] border border-white/[0.06] rounded-2xl p-5 space-y-3">
               <div className="h-4 bg-white/[0.04] rounded w-36" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[0,1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-xl bg-white/[0.04]" />)}
+                {[0,1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-lg bg-white/[0.04]" />)}
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-600 py-1">
@@ -377,7 +377,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {result.signals.map((sig, i) => (
-                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-xl border ${sig.flagged ? 'bg-rose-500/5 border-rose-500/15' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
+                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500/5 border-rose-500/15' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
                         <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-rose-400' : 'bg-emerald-400'}`} />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-slate-200">{sig.name}</p>
@@ -402,7 +402,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[#141420] border border-white/5 hover:border-primary/20 transition-colors">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/5 hover:border-primary/20 transition-colors">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-slate-300 truncate">{sp.title}</p>
@@ -448,7 +448,7 @@ export default function ScraperPage() {
                 <div className="mt-3 space-y-1 max-h-56 overflow-y-auto">
                   {result.discovered_links.map((link, i) => (
                     <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[#141420] text-xs group/row">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-primary' : 'bg-cyan-400'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-primary' : 'bg-blue-400'}`} />
                       <span className="text-slate-400 truncate flex-1">{link.text.slice(0, 55)}</span>
                       <a href={link.url} target="_blank" rel="noreferrer"
                         className="text-primary hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">

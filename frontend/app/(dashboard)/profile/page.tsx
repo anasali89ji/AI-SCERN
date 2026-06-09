@@ -464,7 +464,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
               <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-primary/10 text-primary" />
-              <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-cyan-500/10 text-cyan-400" />
+              <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
             </div>
           </>

@@ -68,12 +68,12 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
   return (
     <div className="rounded-2xl border border-border/55 bg-surface overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
       {/* Gradient header banner */}
-      <div className={`h-20 bg-gradient-to-br ${member.gradient} relative`}>
+      <div className={`h-20 bg-[#141420] relative`}>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.12),transparent)]" />
       </div>
       <div className="px-3 sm:px-6 pb-5 -mt-8 sm:-mt-10">
         {/* Avatar */}
-        <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface border-2 ${member.ring} mb-4 bg-gradient-to-br from-primary to-secondary flex items-center justify-center`}>
+        <div className={`w-20 h-20 rounded-full overflow-hidden ring-1 ring-white/[0.08] mb-4 bg-blue-600 flex items-center justify-center`}>
           {member.photo ? (
             <Image
               src={member.photo}

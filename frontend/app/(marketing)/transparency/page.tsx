@@ -32,7 +32,7 @@ const SECTIONS = [
   {
     icon: Database,
     title: 'Data Retention Policy',
-    color: 'cyan',
+    color: 'blue',
     items: [
       'Scan content (text, images, audio, video) is never permanently stored unless you explicitly save a report.',
       'Scan metadata (verdict, confidence score, timestamp) is retained for signed-in users to support scan history. You can delete this at any time from your settings.',
@@ -86,7 +86,7 @@ const SECTIONS = [
 
 const colorMap: Record<string, { bg: string; border: string; icon: string }> = {
   primary: { bg: 'bg-primary/8', border: 'border-primary/20', icon: 'text-primary' },
-  cyan:    { bg: 'bg-cyan/8',    border: 'border-cyan/20',    icon: 'text-cyan'    },
+  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400'    },
   emerald: { bg: 'bg-emerald/8', border: 'border-emerald/20', icon: 'text-emerald' },
   amber:   { bg: 'bg-amber/8',   border: 'border-amber/20',   icon: 'text-amber'   },
   rose:    { bg: 'bg-rose/8',    border: 'border-rose/20',    icon: 'text-rose'    },

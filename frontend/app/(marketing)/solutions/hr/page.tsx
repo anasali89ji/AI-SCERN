@@ -20,7 +20,7 @@ export default function HRPage() {
       tagline="Hire People, Not AI-Written Applications"
       description="AI-polished cover letters and fabricated work samples are flooding application pipelines. Aiscern gives HR teams a fast, accurate way to flag AI-generated content before it wastes interview bandwidth."
       heroIcon={<Users className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      accentColor="cyan"
+      accentColor="blue"
       ctaLabel="Start Free HR Account"
       problemTitle="The Authenticity Problem in Hiring"
       painPoints={[

@@ -279,7 +279,7 @@ function VerdictBanner({ verdict }: { verdict: FinalVerdict }) {
   const Icon    = isAI ? AlertTriangle : isHuman ? CheckCircle : HelpCircle
 
   return (
-    <div className={`bg-gradient-to-br ${bg} border rounded-2xl p-6`}>
+    <div className={`bg-[#0f0f17] border border-white/[0.08] rounded-xl p-6`}>
       <div className="flex items-center gap-4 mb-4">
         <div className={`${color} flex-shrink-0`}>
           <Icon size={40} strokeWidth={1.5} />

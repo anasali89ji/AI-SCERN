@@ -186,8 +186,8 @@ function AudioDetectionPage() {
       <audio ref={audioRef} className="hidden" />
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
-            <Mic className="w-6 h-6 text-cyan" />
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+            <Mic className="w-6 h-6 text-blue-400" />
           </div>
           Audio Detection
         </h1>
@@ -199,12 +199,12 @@ function AudioDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-cyan/30 bg-cyan/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-cyan/15 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-cyan" />
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-blue-500/30 bg-blue-500/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-blue-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-cyan text-base">Tap to Choose Audio File</p>
+                  <p className="font-bold text-blue-400 text-base">Tap to Choose Audio File</p>
                   <p className="text-xs text-text-muted mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
                 </div>
                 <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
@@ -212,11 +212,11 @@ function AudioDetectionPage() {
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-cyan bg-cyan/5 scale-[1.02]' : 'border-border hover:border-cyan/50 hover:bg-surface-hover/30'}`}>
+                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-border hover:border-blue-500/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-cyan' : 'text-text-muted'}`} />
+                className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-blue-400' : 'text-text-muted'}`} />
               </motion.div>
               <div className="text-center">
                 <p className="font-semibold text-text-primary mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
@@ -235,14 +235,14 @@ function AudioDetectionPage() {
                 <div className="mt-3 flex items-center gap-2">
                   <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
                   <div className="flex-1 h-1.5 bg-border rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-gradient-to-r from-cyan to-primary rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
+                    <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
                   </div>
                   <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
                 </div>
 
                 <div className="flex items-center gap-3 mt-3">
                   <button onClick={togglePlay}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan to-primary flex items-center justify-center hover:opacity-90 transition-opacity shrink-0 shadow-lg shadow-cyan/20">
+                    className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-colors shrink-0">
                     {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -314,14 +314,14 @@ function AudioDetectionPage() {
                   <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-cyan to-primary" />
+                      className="h-full rounded-full bg-blue-500" />
                   </div>
                 </div>
               </div>
 
               <div className="card">
                 <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan" />
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Audio Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
@@ -339,7 +339,7 @@ function AudioDetectionPage() {
                         <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-cyan'}`} />
+                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-blue-500'}`} />
                         </div>
                       </div>
                     </motion.div>
@@ -351,7 +351,7 @@ function AudioDetectionPage() {
               {result.segment_scores && result.segment_scores.length > 0 && (
                 <div className="card">
                   <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 rounded-full bg-cyan" />
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
                     Audio Segment Analysis
                   </h3>
                   <div className="space-y-1.5">
@@ -390,15 +390,15 @@ function AudioDetectionPage() {
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 ">
-                <Mic className="w-10 h-10 text-cyan" />
+              <div className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4 ">
+                <Mic className="w-10 h-10 text-blue-400" />
               </div>
               <h3 className="font-semibold text-text-primary mb-2">Upload Audio</h3>
               <p className="text-text-muted text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan/60 shrink-0" />{f}
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -453,7 +453,7 @@ function AudioDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}

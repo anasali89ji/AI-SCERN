@@ -44,7 +44,7 @@ export default function PartnersPage() {
         <section className="py-20 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan/10 border border-cyan/20 text-xs font-semibold text-cyan mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400 mb-6">
               <Handshake className="w-3.5 h-3.5" />
               Partner Program
             </div>
@@ -69,8 +69,8 @@ export default function PartnersPage() {
                 const PIcon = pt.icon
                 return (
                   <div key={i} className="card border border-border/60 rounded-2xl p-6">
-                    <div className="w-10 h-10 rounded-xl bg-cyan/8 border border-cyan/20 flex items-center justify-center mb-4">
-                      <PIcon className="w-5 h-5 text-cyan" />
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+                      <PIcon className="w-5 h-5 text-blue-400" />
                     </div>
                     <h3 className="font-bold text-text-primary mb-2">{pt.title}</h3>
                     <p className="text-sm text-text-muted mb-4 leading-relaxed">{pt.desc}</p>

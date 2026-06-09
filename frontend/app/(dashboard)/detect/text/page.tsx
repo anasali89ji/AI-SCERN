@@ -543,11 +543,11 @@ Analyzed: ${new Date().toLocaleString()}`
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="mx-4 mb-4 rounded-xl border border-cyan/20 bg-cyan/5 overflow-hidden"
+          className="mx-4 mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden"
         >
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan/10 bg-cyan/5">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-            <span className="text-xs font-bold text-cyan tracking-wide uppercase">Web Verification</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-blue-500/5">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-xs font-bold text-blue-400 tracking-wide uppercase">Web Verification</span>
             <span className="ml-auto text-[10px] text-text-muted">Real-time Graph RAG</span>
           </div>
           <pre className="px-4 py-3 text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">

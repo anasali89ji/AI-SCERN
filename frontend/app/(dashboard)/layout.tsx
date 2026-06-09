@@ -78,7 +78,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
     )
   }
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/40 flex-shrink-0 select-none`}>
+    <div className={`${sizeClass} rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm ring-1 ring-blue-500/30 flex-shrink-0 select-none`}>
       {initials}
     </div>
   )

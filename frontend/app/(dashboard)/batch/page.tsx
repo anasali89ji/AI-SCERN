@@ -299,7 +299,7 @@ export default function BatchPage() {
                 </div>
               </div>
               <div className="h-2.5 bg-border rounded-full overflow-hidden">
-                <motion.div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                <motion.div className="h-full bg-blue-500 rounded-full"
                   animate={{ width: `${progress}%` }} transition={{ ease: 'easeOut' }} />
               </div>
               {completed > 0 && avgConf > 0 && (

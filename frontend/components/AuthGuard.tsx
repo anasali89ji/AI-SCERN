@@ -52,7 +52,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Not authenticated — show sign-in wall (no escape)
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+      <div className="absolute inset-0 bg-[#08080d]" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none auth-blur-orb" />
 
       <AnimatePresence>
@@ -62,7 +62,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           transition={{ type: 'spring', damping: 22, stiffness: 300 }}
           className="relative w-full max-w-md z-10"
         >
-          <div className="h-1 w-full bg-gradient-to-r from-primary via-orange-400 to-amber-400 rounded-t-2xl" />
+          <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
           <div className="bg-surface border border-white/10 rounded-b-2xl shadow-2xl shadow-primary/20 p-8 space-y-6">
 
             <div className="text-center space-y-3">

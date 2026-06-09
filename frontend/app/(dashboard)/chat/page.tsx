@@ -67,7 +67,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
     )
   }
   return (
-    <div className={`${cls} bg-gradient-to-br from-primary to-cyan flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
+    <div className={`${cls} bg-blue-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
       {initials}
     </div>
   )
@@ -299,7 +299,7 @@ function MessageBubble({
         {(msg.content || (msg.isStreaming && msg.content)) && (
           <div className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
-              ? 'bg-gradient-to-br from-primary to-cyan text-white rounded-br-sm shadow-lg shadow-primary/15'
+              ? 'bg-blue-600 text-white rounded-br-sm'
               : 'bg-[#0d1117] border border-white/[0.05] rounded-bl-sm'
           }`}>
             {isUser
@@ -632,7 +632,7 @@ export default function ChatPage() {
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
-          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary/20">
+          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
             <Ico.Plus /><span>New conversation</span>
           </button>
           <button onClick={()=>setShowSearch(s=>!s)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] text-xs transition-all">
@@ -830,7 +830,7 @@ export default function ChatPage() {
                 : <button
                     onClick={()=>send()}
                     disabled={!input.trim()&&!attachments.length}
-                    className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-cyan text-white disabled:opacity-25 hover:opacity-90 active:scale-95 transition-all shrink-0 shadow-lg shadow-primary/20"
+                    className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-25 transition-colors shrink-0"
                   >
                     <Ico.Send />
                   </button>

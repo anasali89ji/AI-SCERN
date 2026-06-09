@@ -19,7 +19,7 @@ export default function ResearchPage() {
       tagline="Uphold Scientific Integrity in the AI Age"
       description="AI-generated research content threatens peer review, reproducibility, and scientific trust. Aiscern helps researchers, journal editors, and institutions validate the authenticity of submitted work before it enters the scientific record."
       heroIcon={<Microscope className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      accentColor="cyan"
+      accentColor="blue"
       ctaLabel="Start Free Research Account"
       problemTitle="Scientific Integrity Under Pressure"
       painPoints={[

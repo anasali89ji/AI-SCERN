@@ -20,7 +20,7 @@ const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
 const WORD_STYLES = {
   Text:  { text: 'text-amber',     bg: 'bg-amber'     },
   Image: { text: 'text-primary',   bg: 'bg-primary'   },
-  Audio: { text: 'text-cyan',      bg: 'bg-cyan'      },
+  Audio: { text: 'text-blue-400',      bg: 'bg-blue-500'      },
   Video: { text: 'text-secondary', bg: 'bg-secondary' },
 } as const
 

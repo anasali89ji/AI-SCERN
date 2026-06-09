@@ -82,7 +82,7 @@ export function SignupGate() {
           className="relative w-full max-w-md bg-surface border border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 overflow-hidden"
         >
           {/* Top gradient bar */}
-          <div className="h-1 w-full bg-gradient-to-r from-primary via-orange-400 to-amber-400" />
+          <div className="h-1 w-full bg-blue-600" />
 
           <div className="p-8 space-y-6">
             {/* Logo + heading */}

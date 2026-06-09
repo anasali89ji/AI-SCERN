@@ -65,7 +65,7 @@ const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, u
 const mediaColors = {
   image: 'text-primary bg-primary/10',
   video: 'text-secondary bg-secondary/10',
-  audio: 'text-cyan bg-cyan/10',
+  audio: 'text-blue-400 bg-blue-500/10',
   text:  'text-amber bg-amber/10',
   url:   'text-emerald bg-emerald/10',
 }
@@ -127,7 +127,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
                 <span className="font-bold text-text-primary">{conf}%</span>
               </div>
               <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
+                <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
               </div>
             </div>
           )}
@@ -387,7 +387,7 @@ export default function HistoryPage() {
                           <div className="text-right hidden sm:block w-12">
                             <p className="text-sm font-bold text-text-primary tabular-nums">{conf}%</p>
                             <div className="h-1 bg-border rounded-full overflow-hidden mt-0.5">
-                              <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                              <div className="h-full bg-blue-600 rounded-full"
                                 style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
                             </div>
                           </div>

@@ -73,7 +73,7 @@ export default function PipelinePage() {
   }
 
   const COLORS: Record<string, string> = {
-    text: 'text-amber', image: 'text-primary', audio: 'text-cyan', video: 'text-secondary'
+    text: 'text-amber', image: 'text-primary', audio: 'text-blue-400', video: 'text-secondary'
   }
 
   return (

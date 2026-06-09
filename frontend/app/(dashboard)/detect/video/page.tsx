@@ -400,7 +400,7 @@ function VideoDetectionPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
                   <div className="flex-1 h-1.5 bg-border rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-gradient-to-r from-secondary to-primary rounded-full transition-all"
+                    <div className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${progress * 100}%` }} />
                   </div>
                   <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
@@ -493,7 +493,7 @@ function VideoDetectionPage() {
                   <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-secondary to-primary" />
+                      className="h-full rounded-full bg-blue-500" />
                   </div>
                 </div>
 

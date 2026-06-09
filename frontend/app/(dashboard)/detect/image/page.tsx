@@ -182,7 +182,7 @@ Analyzed: ${new Date().toLocaleString()}`
             // On desktop, keep the drag-and-drop zone
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               <div className="space-y-3">
-                <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
                   <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
                     <Upload className="w-8 h-8 text-primary" />
                   </div>
@@ -201,7 +201,7 @@ Analyzed: ${new Date().toLocaleString()}`
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-surface-hover/30'}`}>
+                ${isDragActive ? 'border-primary bg-primary/5 ' : 'border-border hover:border-primary/50 hover:bg-surface-hover/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
                 className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -317,7 +317,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   <div className="h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-secondary" />
+                      className="h-full rounded-full bg-blue-500" />
                   </div>
                 </div>
               </div>
@@ -414,11 +414,11 @@ Analyzed: ${new Date().toLocaleString()}`
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="mb-4 rounded-xl border border-cyan/20 bg-cyan/5 overflow-hidden"
+          className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden"
         >
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-cyan/10 bg-cyan/5">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-            <span className="text-xs font-bold text-cyan tracking-wide uppercase">Web Verification</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-blue-500/5">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-xs font-bold text-blue-400 tracking-wide uppercase">Web Verification</span>
             <span className="ml-auto text-[10px] text-text-muted">Real-time Graph RAG</span>
           </div>
           <pre className="px-4 py-3 text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
