@@ -61,19 +61,19 @@ const RETENTION = [
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-[#08080d] text-slate-100">
       <SiteNav />
 
       <main className="pt-24 pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 2xl:px-8">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-semibold mb-4">
             <Shield className="w-3 h-3" /> Security
           </div>
           <h1 className="text-3xl sm:text-5xl font-black mb-4">
             How we protect <span className="gradient-text">your data</span>
           </h1>
-          <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-slate-500 text-base sm:text-lg max-w-2xl mx-auto">
             A plain-English explanation of what data we collect, how it's secured, and how long we keep it.
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function SecurityPage() {
           <h2 className="font-black text-lg mb-3 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-400" /> The short version
           </h2>
-          <ul className="space-y-2 text-sm text-text-muted">
+          <ul className="space-y-2 text-sm text-slate-500">
             {[
               'Uploaded files are deleted within 24 hours — we do not keep your images, audio, or video',
               'Text content previews (first 500 chars) are stored for your History — delete anytime',
@@ -102,16 +102,16 @@ export default function SecurityPage() {
         {/* Security practices */}
         <div className="grid sm:grid-cols-2 gap-5 mb-14">
           {PRACTICES.map(({ icon: Icon, title, items }) => (
-            <div key={title} className="rounded-xl border border-white/[0.08] bg-surface p-5">
+            <div key={title} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
                   <Icon className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <h3 className="font-bold text-sm">{title}</h3>
               </div>
               <ul className="space-y-2">
                 {items.map(item => (
-                  <li key={item} className="flex items-start gap-2 text-xs text-text-muted leading-relaxed">
+                  <li key={item} className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
                     <span className="w-1 h-1 rounded-full bg-primary/60 mt-1.5 shrink-0" />
                     {item}
                   </li>
@@ -128,15 +128,15 @@ export default function SecurityPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/[0.08] bg-surface">
-                  <th className="text-left px-4 py-3 font-semibold text-text-primary w-1/2">Data</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-primary">Retention</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-100 w-1/2">Data</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-100">Retention</th>
                 </tr>
               </thead>
               <tbody>
                 {RETENTION.map(({ item, retention }, i) => (
-                  <tr key={item} className={i % 2 === 0 ? 'bg-background' : 'bg-surface'}>
-                    <td className="px-4 py-3 text-text-muted text-xs">{item}</td>
-                    <td className="px-4 py-3 text-text-muted text-xs">{retention}</td>
+                  <tr key={item} className={i % 2 === 0 ? 'bg-background' : 'bg-[#0f0f17]'}>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{item}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{retention}</td>
                   </tr>
                 ))}
               </tbody>
@@ -150,10 +150,10 @@ export default function SecurityPage() {
             <AlertTriangle className="w-5 h-5 text-yellow-400" />
             <h2 className="font-black text-lg">Responsible disclosure</h2>
           </div>
-          <p className="text-sm text-text-muted leading-relaxed mb-3">
+          <p className="text-sm text-slate-500 leading-relaxed mb-3">
             If you discover a security vulnerability in Aiscern, please report it responsibly before disclosing publicly. We investigate all credible reports promptly.
           </p>
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-slate-500">
             Contact: <a href="mailto:security@aiscern.com" className="text-primary hover:underline">security@aiscern.com</a>
           </p>
         </section>

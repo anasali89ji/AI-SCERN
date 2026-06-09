@@ -10,12 +10,12 @@ export default function CreditDisplay() {
     <div className="card p-4">
       <div className="flex items-center gap-2">
         <Zap className="w-4 h-4 text-primary" />
-        <span className="text-sm font-semibold text-text-primary">Access</span>
-        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-surface-active text-primary">
+        <span className="text-sm font-semibold text-slate-100">Access</span>
+        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#141420] text-primary">
           Free &amp; Unlimited
         </span>
       </div>
-      <p className="text-xs text-text-muted mt-2">
+      <p className="text-xs text-slate-500 mt-2">
         All detections are free. No limits, no subscription required.
       </p>
     </div>

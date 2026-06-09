@@ -81,7 +81,7 @@ export default function ResearchPage() {
                   <div key={i} className="rounded-xl border border-white/[0.08] p-4 hover:bg-muted/30 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <a href={paper.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-medium text-foreground hover:text-primary transition-colors group">
+                        <a href={paper.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-medium text-foreground hover:text-white transition-colors group">
                           <span>{paper.title}</span>
                           <ExternalLink className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 opacity-60 group-hover:opacity-100" />
                         </a>

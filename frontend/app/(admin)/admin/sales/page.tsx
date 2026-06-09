@@ -13,7 +13,7 @@ export default function SalesRevenue() {
   return (
     <RoleGuard required="MANAGER">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Sales & Revenue</h1>
+        <h1 className="text-2xl font-black text-slate-100">Sales & Revenue</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="MRR"             value="$4,820"  delta="8.2%" positive icon={DollarSign}  color={C.success}   />
           <StatCard title="ARR"             value="$57,840" delta="8.2%" positive icon={TrendingUp}  color={C.primary}   />
@@ -21,7 +21,7 @@ export default function SalesRevenue() {
           <StatCard title="Churn Rate"      value="2.1%"    delta="0.3%" positive={false} icon={UserMinus} color={C.danger} />
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Monthly Revenue (12 months)</h3>
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Monthly Revenue (12 months)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={revenue}>
               <XAxis dataKey="m" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />
@@ -34,13 +34,13 @@ export default function SalesRevenue() {
           </ResponsiveContainer>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Sales Funnel Conversion</h3>
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Sales Funnel Conversion</h3>
           <div className="flex items-end gap-2 h-32">
             {funnel.map((f,i)=>(
               <div key={f.stage} className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-xs font-bold text-text-primary">{f.v}%</span>
+                <span className="text-xs font-bold text-slate-100">{f.v}%</span>
                 <div className="w-full rounded-t-lg" style={{height:`${f.v*1.2}%`,background:C.primary,opacity:0.2+i*0.25}} />
-                <span className="text-xs text-text-muted text-center leading-tight">{f.stage}</span>
+                <span className="text-xs text-slate-500 text-center leading-tight">{f.stage}</span>
               </div>
             ))}
           </div>

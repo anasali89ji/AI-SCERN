@@ -14,7 +14,7 @@ export default function ApiUsage() {
   return (
     <RoleGuard required="ANALYST">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">API Usage</h1>
+        <h1 className="text-2xl font-black text-slate-100">API Usage</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="API Calls Today"    value="34,240" delta="8%"   positive icon={Code2}         color={C.primary}   />
           <StatCard title="This Month"         value="842k"   delta="21%"  positive icon={Code2}         color={C.secondary} />
@@ -23,7 +23,7 @@ export default function ApiUsage() {
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Daily API Calls (30 days)</h3>
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Daily API Calls (30 days)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={daily}>
               <XAxis dataKey="d" tick={{fontSize:9,fill:'#94a3b8'}} axisLine={false} tickLine={false} interval={4} />
@@ -37,9 +37,9 @@ export default function ApiUsage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Usage by Endpoint</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Usage by Endpoint</h3>
             <table className="w-full text-sm min-w-[320px]">
-              <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
+              <thead><tr className="border-b border-white/[0.08] text-xs text-slate-500">
                 <th className="text-left py-2 font-medium">Endpoint</th>
                 <th className="text-right py-2 font-medium">Calls</th>
                 <th className="text-right py-2 font-medium">P50</th>
@@ -48,9 +48,9 @@ export default function ApiUsage() {
               <tbody>
                 {endpoints.map(e=>(
                   <tr key={e.ep} className="border-b border-white/[0.06] text-xs">
-                    <td className="py-2 text-primary font-medium">{e.ep}</td>
-                    <td className="py-2 text-right text-text-primary">{e.calls.toLocaleString()}</td>
-                    <td className="py-2 text-right text-text-muted">{e.p50}</td>
+                    <td className="py-2 text-blue-400 font-medium">{e.ep}</td>
+                    <td className="py-2 text-right text-slate-100">{e.calls.toLocaleString()}</td>
+                    <td className="py-2 text-right text-slate-500">{e.p50}</td>
                     <td className="py-2 text-right" style={{color:parseFloat(e.errors)>3?C.danger:C.warning}}>{e.errors}</td>
                   </tr>
                 ))}
@@ -59,15 +59,15 @@ export default function ApiUsage() {
           </div>
 
           <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Error Analysis</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Error Analysis</h3>
             <div className="space-y-3">
               {errors.map(e=>(
                 <div key={e.code} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
                   <div>
                     <span className="text-sm font-bold text-rose mr-2">{e.code}</span>
-                    <span className="text-xs text-text-muted">{e.label}</span>
+                    <span className="text-xs text-slate-500">{e.label}</span>
                   </div>
-                  <span className="text-sm font-black text-text-primary">{e.count}</span>
+                  <span className="text-sm font-black text-slate-100">{e.count}</span>
                 </div>
               ))}
             </div>

@@ -117,8 +117,8 @@ function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; 
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between py-4 text-left gap-4 group"
       >
-        <span className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">{q}</span>
-        <ChevronDown className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <span className="text-sm font-semibold text-slate-100 group-hover:text-white transition-colors">{q}</span>
+        <ChevronDown className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -130,9 +130,9 @@ function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; 
             className="overflow-hidden"
           >
             <div className="pb-5">
-              <p className="text-sm text-text-muted leading-relaxed mb-3">{a}</p>
+              <p className="text-sm text-slate-500 leading-relaxed mb-3">{a}</p>
               {link && (
-                <Link href={link.href} className="text-xs text-primary hover:underline font-medium">
+                <Link href={link.href} className="text-xs text-blue-400 hover:underline font-medium">
                   {link.label} →
                 </Link>
               )}
@@ -146,20 +146,20 @@ function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; 
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-[#08080d] text-slate-100">
       <SiteNav />
 
       <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
 
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-semibold mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-primary/8 text-blue-400 text-xs font-semibold mb-5">
             <HelpCircle className="w-3.5 h-3.5" />
             Frequently Asked Questions
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4">
             Frequently Asked <span className="gradient-text">Questions</span>
           </h1>
-          <p className="text-text-muted text-base">
+          <p className="text-slate-500 text-base">
             Everything you need to know about Aiscern. Can&apos;t find what you are looking for?{' '}
             <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">
               Contact us at contact@aiscern.com
@@ -170,10 +170,10 @@ export default function FAQPage() {
         <div className="space-y-8 mb-12">
           {FAQ_SECTIONS.map(section => (
             <div key={section.title}>
-              <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-1 px-1">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1 px-1">
                 {section.title}
               </h2>
-              <div className="rounded-xl border border-white/[0.08] bg-surface px-6">
+              <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] px-6">
                 {section.items.map(item => (
                   <FAQItem key={item.q} {...item} />
                 ))}
@@ -182,13 +182,13 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div className="text-center rounded-xl border border-white/[0.08] bg-surface/50 p-8">
-          <Mail className="w-8 h-8 text-primary mx-auto mb-3 opacity-80" />
-          <p className="text-sm font-semibold text-text-primary mb-1">Still have questions?</p>
-          <p className="text-xs text-text-muted mb-4">We respond within 24–48 hours.</p>
+        <div className="text-center rounded-xl border border-white/[0.08] bg-[#0f0f17]/50 p-8">
+          <Mail className="w-8 h-8 text-blue-400 mx-auto mb-3 opacity-80" />
+          <p className="text-sm font-semibold text-slate-100 mb-1">Still have questions?</p>
+          <p className="text-xs text-slate-500 mb-4">We respond within 24–48 hours.</p>
           <a
             href="mailto:contact@aiscern.com"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.08] text-sm font-semibold text-text-secondary hover:border-primary/50 hover:text-text-primary transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.08] text-sm font-semibold text-slate-400 hover:border-blue-500/50 hover:text-slate-100 transition-all"
           >
             contact@aiscern.com
           </a>

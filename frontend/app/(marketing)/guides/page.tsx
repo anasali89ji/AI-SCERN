@@ -72,7 +72,7 @@ const GUIDES = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
-  primary: { bg: 'bg-primary/8', border: 'border-primary/20', icon: 'text-primary', badge: 'text-primary bg-primary/10 border-primary/20' },
+  primary: { bg: 'bg-primary/8', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'text-primary bg-blue-500/10 border-blue-500/20' },
   cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    badge: 'text-blue-400 bg-blue-500/10 border-blue-500/20'         },
   emerald: { bg: 'bg-emerald/8', border: 'border-emerald/20', icon: 'text-emerald', badge: 'text-emerald bg-emerald/10 border-emerald/20' },
   amber:   { bg: 'bg-amber/8',   border: 'border-amber/20',   icon: 'text-amber',   badge: 'text-amber bg-amber/10 border-amber/20'       },
@@ -83,19 +83,19 @@ export default function GuidesPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-background pt-16">
+      <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400 mb-6">
               <BookOpen className="w-3.5 h-3.5" />
               User Guides
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-4 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-black text-slate-100 mb-4 leading-tight">
               How to Use<br /><span className="gradient-text">Aiscern</span>
             </h1>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
               Step-by-step guides for every detection modality. Learn how to get the most accurate results and interpret what the scores mean.
             </p>
           </div>
@@ -115,15 +115,15 @@ export default function GuidesPage() {
                         <GIcon className={`w-5 h-5 ${c.icon}`} />
                       </div>
                       <div>
-                        <h2 className="font-bold text-text-primary mb-1">{guide.title}</h2>
-                        <p className="text-sm text-text-muted leading-relaxed">{guide.desc}</p>
+                        <h2 className="font-bold text-slate-100 mb-1">{guide.title}</h2>
+                        <p className="text-sm text-slate-500 leading-relaxed">{guide.desc}</p>
                       </div>
                     </div>
 
                     {/* Steps */}
                     <ol className="space-y-2">
                       {guide.steps.map((step, j) => (
-                        <li key={j} className="flex items-start gap-2.5 text-xs text-text-secondary">
+                        <li key={j} className="flex items-start gap-2.5 text-xs text-slate-400">
                           <span className={`w-5 h-5 rounded-full ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${c.icon}`}>
                             {j + 1}
                           </span>
@@ -141,9 +141,9 @@ export default function GuidesPage() {
             </div>
 
             {/* More Resources */}
-            <div className="mt-12 p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
-              <h2 className="text-lg font-bold text-text-primary mb-2">Need more help?</h2>
-              <p className="text-sm text-text-muted mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
+            <div className="mt-12 p-6 rounded-xl border border-blue-500/20 bg-blue-500/5 text-center">
+              <h2 className="text-lg font-bold text-slate-100 mb-2">Need more help?</h2>
+              <p className="text-sm text-slate-500 mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/faq" className="btn-secondary text-sm">FAQ</Link>
                 <Link href="/docs/api" className="btn-secondary text-sm">API Docs</Link>

@@ -41,8 +41,8 @@ export function FeedbackBar({ scanId, verdict }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surface border border-white/[0.08]">
-      <span className="text-sm text-text-muted">Was this result accurate?</span>
+    <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#0f0f17] border border-white/[0.08]">
+      <span className="text-sm text-slate-500">Was this result accurate?</span>
       <div className="flex items-center gap-2 ml-auto">
         <button
           onClick={() => send('correct')}

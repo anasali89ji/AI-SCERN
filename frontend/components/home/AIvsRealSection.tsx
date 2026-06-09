@@ -56,9 +56,9 @@ const COMPARISON_CARDS: ComparisonCardData[] = [
 const ComparisonCard = memo(function ComparisonCard({ card }: { card: ComparisonCardData }) {
   const isAI = card.verdict === 'AI'
   return (
-    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-surface border border-white/[0.08] rounded-xl sm:rounded-xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
+    <div className="flex-shrink-0 w-60 sm:w-64 lg:w-72 bg-[#0f0f17] border border-white/[0.08] rounded-xl sm:rounded-xl overflow-hidden hover:border-white/[0.12] transition-colors duration-300 group" style={{ contain: 'layout style paint', minWidth: 0 }}>
       {card.type === 'image' && card.img ? (
-        <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-surface-active">
+        <div className="relative h-28 sm:h-36 lg:h-44 overflow-hidden bg-[#141420]">
           <div className="absolute inset-0" style={{
             background: isAI ? 'linear-gradient(135deg,#1e3a8a80,#1e3a8a50)' : 'linear-gradient(135deg,#064e3b80,#052e1650)',
           }} />
@@ -79,9 +79,9 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
           </div>
         </div>
       ) : (
-        <div className="h-28 sm:h-36 lg:h-44 p-2 sm:p-4 bg-surface-active flex flex-col justify-center relative overflow-hidden">
+        <div className="h-28 sm:h-36 lg:h-44 p-2 sm:p-4 bg-[#141420] flex flex-col justify-center relative overflow-hidden">
           <div className={`absolute top-0 left-0 w-1 h-full ${isAI ? 'bg-rose' : 'bg-emerald'}`} />
-          <p className="text-xs sm:text-sm text-text-muted leading-relaxed line-clamp-4 italic pl-3">
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed line-clamp-4 italic pl-3">
             &ldquo;{card.preview}&rdquo;
           </p>
           <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
@@ -92,7 +92,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
       )}
       <div className="p-3 flex items-center justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-sm font-semibold text-text-primary truncate">{card.label}</p>
+          <p className="text-[10px] sm:text-sm font-semibold text-slate-100 truncate">{card.label}</p>
           <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 ${isAI ? 'bg-rose/10 text-rose' : 'bg-emerald/10 text-emerald'}`}>
             {card.tag}
           </span>
@@ -155,7 +155,7 @@ export default function AIvsRealSection() {
           <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black mb-3">
             AI vs <span className="gradient-text">Authentic</span>
           </h2>
-          <p className="text-text-muted text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-2">
+          <p className="text-slate-500 text-sm sm:text-base lg:text-lg max-w-xl mx-auto px-2">
             See how Aiscern tells AI-generated content apart from authentic human work.
           </p>
         </motion.div>
@@ -164,7 +164,7 @@ export default function AIvsRealSection() {
           {/* 5 unique cards × 2 (CSS duplication) = 10 DOM nodes per row, 20 total */}
           <MarqueeRow cards={COMPARISON_CARDS.slice(0, 5)} direction="left" />
           <MarqueeRow cards={COMPARISON_CARDS.slice(5, 10)} direction="right" />
-          <p className="text-center text-xs text-text-muted pt-2">⚠️ Illustrative examples — not real detection results. Try the live detector above.</p>
+          <p className="text-center text-xs text-slate-500 pt-2">⚠️ Illustrative examples — not real detection results. Try the live detector above.</p>
         </div>
       </div>
     </section>

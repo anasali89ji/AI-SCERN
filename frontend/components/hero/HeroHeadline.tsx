@@ -19,9 +19,9 @@ const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
 // Full static class strings — Tailwind must see these to include in bundle
 const WORD_STYLES = {
   Text:  { text: 'text-amber',     bg: 'bg-amber'     },
-  Image: { text: 'text-primary',   bg: 'bg-primary'   },
+  Image: { text: 'text-blue-400',   bg: 'bg-blue-600'   },
   Audio: { text: 'text-blue-400',      bg: 'bg-blue-500'      },
-  Video: { text: 'text-secondary', bg: 'bg-secondary' },
+  Video: { text: 'text-slate-400', bg: 'bg-slate-700' },
 } as const
 
 const INTERVAL = 2500
@@ -111,7 +111,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           </AnimatePresence>
         </div>
 
-        <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-text-secondary whitespace-nowrap">
+        <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-slate-400 whitespace-nowrap">
           with AI
         </span>
       </motion.div>

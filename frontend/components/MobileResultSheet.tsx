@@ -65,10 +65,10 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.06]">
-              <h3 className="font-bold text-text-primary">{title}</h3>
+              <h3 className="font-bold text-slate-100">{title}</h3>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-surface-active text-text-muted transition-colors"
+                className="p-2 rounded-xl hover:bg-[#141420] text-slate-500 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />

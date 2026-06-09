@@ -56,8 +56,8 @@ export function MobileNav() {
               </div>
               <div className="px-4 pb-2">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs font-black text-text-muted uppercase tracking-widest">More tools</p>
-                  <button onClick={() => setMoreOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-active text-text-muted transition-colors">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">More tools</p>
+                  <button onClick={() => setMoreOpen(false)} className="p-1.5 rounded-lg hover:bg-[#141420] text-slate-500 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -67,7 +67,7 @@ export function MobileNav() {
                     return (
                       <Link key={href} href={href} onClick={() => setMoreOpen(false)}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all active:scale-95
-                          ${active ? 'bg-primary/15 text-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}>
+                          ${active ? 'bg-primary/15 text-primary' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-400'}`}>
                         <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                         <span className="text-[9px] font-bold uppercase tracking-wider leading-none text-center">{label}</span>
                       </Link>
@@ -90,15 +90,15 @@ export function MobileNav() {
             return (
               <Link key={href} href={href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0
-                  ${active ? 'text-primary' : 'text-text-muted hover:text-text-secondary active:scale-95'}`}>
+                  ${active ? 'text-blue-400' : 'text-slate-500 hover:text-slate-400 active:scale-95'}`}>
                 <Icon className={`w-5 h-5 transition-all ${active ? 'drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]' : ''}`} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={`text-[9px] font-bold uppercase tracking-wider leading-none truncate w-full text-center ${active ? 'text-primary' : ''}`}>{label}</span>
+                <span className={`text-[9px] font-bold uppercase tracking-wider leading-none truncate w-full text-center ${active ? 'text-blue-400' : ''}`}>{label}</span>
               </Link>
             )
           })}
           <button onClick={() => setMoreOpen(true)}
             className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-xl transition-all duration-200 min-w-0 active:scale-95
-              ${isMoreActive || moreOpen ? 'text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
+              ${isMoreActive || moreOpen ? 'text-blue-400' : 'text-slate-500 hover:text-slate-400'}`}>
             <MoreHorizontal className={`w-5 h-5 ${moreOpen ? 'drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]' : ''}`} strokeWidth={1.8} />
             <span className="text-[9px] font-bold uppercase tracking-wider leading-none">More</span>
           </button>

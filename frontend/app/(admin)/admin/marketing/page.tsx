@@ -14,7 +14,7 @@ export default function Marketing() {
   return (
     <RoleGuard required="MARKETING">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Marketing Analytics</h1>
+        <h1 className="text-2xl font-black text-slate-100">Marketing Analytics</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Monthly Visitors"  value="48,320" delta="22%"  positive icon={Globe}       color={C.primary}   />
           <StatCard title="Bounce Rate"       value="36.4%"  delta="2.1%" positive icon={MousePointer} color={C.warning}   />
@@ -23,7 +23,7 @@ export default function Marketing() {
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Traffic Sources</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Traffic Sources</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={sources} dataKey="v" cx="50%" cy="50%" outerRadius={75} label={({name,v})=>`${name} ${v}%`} labelLine={false}>
@@ -34,9 +34,9 @@ export default function Marketing() {
             </ResponsiveContainer>
           </div>
           <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Top SEO Keywords</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Top SEO Keywords</h3>
             <table className="w-full text-sm min-w-[320px]">
-              <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
+              <thead><tr className="border-b border-white/[0.08] text-xs text-slate-500">
                 <th className="text-left py-2 font-medium">Keyword</th>
                 <th className="text-center py-2 font-medium">Pos.</th>
                 <th className="text-center py-2 font-medium">CTR</th>
@@ -45,10 +45,10 @@ export default function Marketing() {
               <tbody>
                 {keywords.map(k=>(
                   <tr key={k.kw} className="border-b border-white/[0.06] text-xs">
-                    <td className="py-2 text-text-secondary">{k.kw}</td>
+                    <td className="py-2 text-slate-400">{k.kw}</td>
                     <td className="py-2 text-center font-bold" style={{color:k.pos<=5?C.success:C.warning}}>#{k.pos}</td>
-                    <td className="py-2 text-center text-text-muted">{k.ctr}</td>
-                    <td className="py-2 text-right text-text-primary font-semibold">{k.clicks.toLocaleString()}</td>
+                    <td className="py-2 text-center text-slate-500">{k.ctr}</td>
+                    <td className="py-2 text-right text-slate-100 font-semibold">{k.clicks.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -56,9 +56,9 @@ export default function Marketing() {
           </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Top Landing Pages</h3>
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Top Landing Pages</h3>
           <table className="w-full text-sm min-w-[320px]">
-            <thead><tr className="border-b border-white/[0.08] text-xs text-text-muted">
+            <thead><tr className="border-b border-white/[0.08] text-xs text-slate-500">
               <th className="text-left py-2 font-medium">Page</th>
               <th className="text-right py-2 font-medium">Sessions</th>
               <th className="text-right py-2 font-medium">Bounce</th>
@@ -66,9 +66,9 @@ export default function Marketing() {
             <tbody>
               {pages.map(p=>(
                 <tr key={p.page} className="border-b border-white/[0.06] text-xs">
-                  <td className="py-2 text-primary font-medium">{p.page}</td>
-                  <td className="py-2 text-right text-text-primary">{p.sessions.toLocaleString()}</td>
-                  <td className="py-2 text-right text-text-muted">{p.bounce}</td>
+                  <td className="py-2 text-blue-400 font-medium">{p.page}</td>
+                  <td className="py-2 text-right text-slate-100">{p.sessions.toLocaleString()}</td>
+                  <td className="py-2 text-right text-slate-500">{p.bounce}</td>
                 </tr>
               ))}
             </tbody>

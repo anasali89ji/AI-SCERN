@@ -96,7 +96,7 @@ function FrameStrip({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-text-muted font-medium">Extracted Frames ({frames.length})</p>
+      <p className="text-xs text-slate-500 font-medium">Extracted Frames ({frames.length})</p>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {frames.map((f, i) => {
           const score = frameScores?.find(fs => fs.frame === f.index)
@@ -111,7 +111,7 @@ function FrameStrip({
                 )}
               </div>
               <div className="flex justify-between items-center mt-0.5 px-0.5">
-                <span className="text-[9px] text-text-disabled">{formatDur(f.timeSec)}</span>
+                <span className="text-[9px] text-slate-600">{formatDur(f.timeSec)}</span>
                 {score && (
                   <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose' : 'text-emerald'}`}>
                     {Math.round(score.ai_score * 100)}%
@@ -122,7 +122,7 @@ function FrameStrip({
           )
         })}
       </div>
-      <div className="flex items-center gap-4 text-xs text-text-muted">
+      <div className="flex items-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-rose/60" />Suspicious frame
         </span>
@@ -315,13 +315,13 @@ function VideoDetectionPage() {
     <SignupGate />
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-            <Video className="w-6 h-6 text-secondary" />
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-700/10 flex items-center justify-center shrink-0">
+            <Video className="w-6 h-6 text-slate-400" />
           </div>
           Video Detection
         </h1>
-        <p className="text-text-muted ml-14 text-sm">
+        <p className="text-slate-500 ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
         </p>
       </div>
@@ -332,29 +332,29 @@ function VideoDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-secondary/5 rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-xl bg-secondary/15 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-secondary" />
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-slate-700/5 rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-slate-700/15 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-slate-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-secondary text-base">Tap to Choose Video File</p>
-                  <p className="text-xs text-text-muted mt-1">MP4 · WEBM · MOV · AVI · Max 100MB</p>
+                  <p className="font-bold text-slate-400 text-base">Tap to Choose Video File</p>
+                  <p className="text-xs text-slate-500 mt-1">MP4 · WEBM · MOV · AVI · Max 100MB</p>
                 </div>
                 <input type="file" accept="video/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
               </label>
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-secondary bg-secondary/5 scale-[1.02]' : 'border-white/[0.08] hover:border-secondary/50 hover:bg-surface-hover/30'}`}>
+                ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.02]' : 'border-white/[0.08] hover:border-secondary/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-xl bg-secondary/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-secondary' : 'text-text-muted'}`} />
+                className="w-20 h-20 rounded-xl bg-slate-700/10 flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-slate-400' : 'text-slate-500'}`} />
               </motion.div>
               <div className="text-center">
-                <p className="font-semibold text-text-primary mb-1">{isDragActive ? 'Drop video here' : 'Drag & drop a video'}</p>
-                <p className="text-sm text-text-muted">or click to browse</p>
-                <p className="text-xs text-text-disabled mt-2">MP4 · WEBM · MOV · AVI · Max 100MB</p>
+                <p className="font-semibold text-slate-100 mb-1">{isDragActive ? 'Drop video here' : 'Drag & drop a video'}</p>
+                <p className="text-sm text-slate-500">or click to browse</p>
+                <p className="text-xs text-slate-600 mt-2">MP4 · WEBM · MOV · AVI · Max 100MB</p>
               </div>
             </div>
             )
@@ -364,25 +364,25 @@ function VideoDetectionPage() {
                 <video ref={videoRef} className="w-full max-h-64 object-contain" onEnded={() => setPlaying(false)} />
 
                 {loading ? (
-                  <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center gap-3">
+                  <div className="absolute inset-0 bg-[#08080d]/90 flex flex-col items-center justify-center gap-3">
                     <div className="relative w-16 h-16">
                       <div className="absolute inset-0 rounded-full border-2 border-secondary/20" />
                       <div className="absolute inset-0 rounded-full border-2 border-t-secondary animate-spin" />
-                      <div className="absolute inset-2 bg-secondary/10 rounded-full flex items-center justify-center">
-                        {phase === 'extracting' ? <Scan className="w-5 h-5 text-secondary" /> : <Eye className="w-5 h-5 text-secondary" />}
+                      <div className="absolute inset-2 bg-slate-700/10 rounded-full flex items-center justify-center">
+                        {phase === 'extracting' ? <Scan className="w-5 h-5 text-slate-400" /> : <Eye className="w-5 h-5 text-slate-400" />}
                       </div>
                     </div>
-                    <p className="text-sm text-secondary font-semibold">{loadingLabel}</p>
+                    <p className="text-sm text-slate-400 font-semibold">{loadingLabel}</p>
                     {phase === 'extracting' && (
                       <div className="flex gap-1 mt-1">
                         {FRAME_POSITIONS.map((_, i) => (
                           <div key={i} className={`w-2 h-2 rounded-full transition-all duration-300
-                            ${i < framesDone ? 'bg-secondary' : 'bg-secondary/20'}`} />
+                            ${i < framesDone ? 'bg-slate-700' : 'bg-slate-700/20'}`} />
                         ))}
                       </div>
                     )}
                     {phase === 'analyzing' && (
-                      <p className="text-xs text-text-muted animate-pulse">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
+                      <p className="text-xs text-slate-500 animate-pulse">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
                     )}
                   </div>
                 ) : (
@@ -398,22 +398,22 @@ function VideoDetectionPage() {
               {/* Seek bar */}
               <div className="px-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
+                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
                   <div className="flex-1 h-1.5 bg-border rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
                     <div className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${progress * 100}%` }} />
                   </div>
-                  <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
+                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
                 </div>
               </div>
 
               {/* File info */}
               <div className="flex items-center justify-between px-1">
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-text-secondary font-medium truncate">{file.name}</p>
-                  <p className="text-[10px] sm:text-xs text-text-muted">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-medium truncate">{file.name}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
+                <button onClick={reset} className="text-slate-500 hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -444,10 +444,10 @@ function VideoDetectionPage() {
           )}
 
           <div className="card py-3 px-4 border-white/[0.08]">
-            <div className="flex items-start gap-2 text-xs text-text-muted">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-secondary/60" />
+            <div className="flex items-start gap-2 text-xs text-slate-500">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400/60" />
               <span>
-                <span className="text-text-secondary font-medium">How it works:</span> Your browser extracts {FRAME_POSITIONS.length} frames directly from the video,
+                <span className="text-slate-400 font-medium">How it works:</span> Your browser extracts {FRAME_POSITIONS.length} frames directly from the video,
                 then Aiscern's vision engine analyzes each frame for deepfake artifacts. No video data is stored.
               </span>
             </div>
@@ -463,9 +463,9 @@ function VideoDetectionPage() {
               {/* Verdict card */}
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
-                  <div className="mb-3 text-xs font-medium text-text-muted">
-                    Hey <span className="text-text-primary font-semibold">{displayName}</span>, here's what we found
-                    {file ? <> for <span className="text-text-primary font-medium">"{file.name}"</span></> : null}:
+                  <div className="mb-3 text-xs font-medium text-slate-500">
+                    Hey <span className="text-slate-100 font-semibold">{displayName}</span>, here's what we found
+                    {file ? <> for <span className="text-slate-100 font-medium">"{file.name}"</span></> : null}:
                   </div>
                 )}
                 <div className="flex items-start gap-3 sm:gap-4 min-w-0">
@@ -480,13 +480,13 @@ function VideoDetectionPage() {
                           : `${displayName}, this video is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-text-muted text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
 
                 {/* Confidence bar */}
                 <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-2 gap-2">
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
@@ -500,7 +500,7 @@ function VideoDetectionPage() {
                 {/* Frame timeline */}
                 {result.frame_scores && result.frame_scores.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-xs text-text-muted mb-2 font-medium">Per-Frame AI Probability Timeline</p>
+                    <p className="text-xs text-slate-500 mb-2 font-medium">Per-Frame AI Probability Timeline</p>
                     <div className="flex items-end gap-1 h-12">
                       {result.frame_scores.map((fs, i) => (
                         <motion.div key={i}
@@ -514,7 +514,7 @@ function VideoDetectionPage() {
                           }`} />
                       ))}
                     </div>
-                    <div className="flex justify-between text-[10px] text-text-disabled mt-1">
+                    <div className="flex justify-between text-[10px] text-slate-600 mt-1">
                       <span>0s</span>
                       <span>{duration > 0 ? formatDur(duration) : '—'}</span>
                     </div>
@@ -524,8 +524,8 @@ function VideoDetectionPage() {
 
               {/* Detection signals */}
               <div className="card">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-secondary" />
+                <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-700" />
                   Detection Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
@@ -533,17 +533,17 @@ function VideoDetectionPage() {
                     <motion.div key={s.name}
                       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-white/[0.08] min-w-0">
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
-                          <span className="text-xs sm:text-sm text-text-secondary font-medium truncate">{s.name}</span>
+                          <span className="text-xs sm:text-sm text-slate-400 font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
                             ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>
                             {s.weight}%
                           </span>
                         </div>
-                        <p className="text-xs text-text-muted truncate">{s.description}</p>
+                        <p className="text-xs text-slate-500 truncate">{s.description}</p>
                         <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }}
                             animate={{ width: `${Math.round(s.value * 100)}%` }}
@@ -558,7 +558,7 @@ function VideoDetectionPage() {
 
               {/* Footer */}
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-text-muted font-mono truncate">
+                <span className="text-xs text-slate-500 font-mono truncate">
                   {result.processing_time}ms
                 </span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
@@ -569,14 +569,14 @@ function VideoDetectionPage() {
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 ">
-                <Video className="w-10 h-10 text-secondary" />
+              <div className="w-20 h-20 rounded-xl bg-slate-700/10 flex items-center justify-center mx-auto mb-4 ">
+                <Video className="w-10 h-10 text-slate-400" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Upload a Video</h3>
-              <p className="text-text-muted text-sm max-w-xs">
+              <h3 className="font-semibold text-slate-100 mb-2">Upload a Video</h3>
+              <p className="text-slate-500 text-sm max-w-xs">
                 Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500 w-full">
                 {[
                   'Browser frame extraction',
                   'Aiscern vision engine',
@@ -585,8 +585,8 @@ function VideoDetectionPage() {
                   'Per-frame confidence scores',
                   'Real deepfake detection',
                 ].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary/60 shrink-0" />{f}
+                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -603,7 +603,7 @@ function VideoDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-primary/30">
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -611,22 +611,22 @@ function VideoDetectionPage() {
       )}
       {result && (
         <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
             <Info className="w-4 h-4 text-primary" />
             Detection Models &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-text-muted">
-            <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-500">
+            <p><span className="text-slate-400 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
                 { name: 'DFDC Dataset', desc: 'Meta DeepFake Detection Challenge', url: 'https://ai.meta.com/datasets/dfdc/' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141420] transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p className="text-slate-400 font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -642,8 +642,8 @@ function VideoDetectionPage() {
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
+            <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}
           </div>
         </div>
       )}

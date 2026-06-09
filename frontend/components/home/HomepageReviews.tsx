@@ -35,14 +35,14 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
     <motion.div
       initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
       transition={{ delay: i * 0.1 }}
-      className="card border-white/[0.06] hover:border-primary/20 transition-colors"
+      className="card border-white/[0.06] hover:border-white/[0.12] transition-colors"
     >
       <div className="flex gap-0.5 mb-4" aria-label={`${starCount} out of 5 stars`}>
         {Array.from({ length: starCount }).map((_, j) => (
           <span key={j} className="text-amber text-sm" aria-hidden="true">★</span>
         ))}
       </div>
-      <p className="text-text-secondary text-sm leading-relaxed mb-4">
+      <p className="text-slate-400 text-sm leading-relaxed mb-4">
         &ldquo;{r.body ?? r.text}&rdquo;
       </p>
       <div className="flex items-center gap-3">
@@ -54,10 +54,10 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
           {r.is_anonymous ? '?' : (r.display_name?.charAt(0) ?? 'U').toUpperCase()}
         </div>
         <div>
-          <div className="text-sm font-semibold text-text-primary">
+          <div className="text-sm font-semibold text-slate-100">
             {r.is_anonymous ? 'Anonymous' : (r.display_name ?? 'Aiscern User')}
           </div>
-          <div className="text-xs text-text-muted">{r.tool_used ?? 'Aiscern User'}</div>
+          <div className="text-xs text-slate-500">{r.tool_used ?? 'Aiscern User'}</div>
         </div>
       </div>
     </motion.div>

@@ -54,7 +54,7 @@ export default function NavClient() {
       className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-primary/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl'
+          ? 'border-b border-blue-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl'
           : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
         }`}
     >
@@ -65,19 +65,19 @@ export default function NavClient() {
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
           {[['/#tools', 'Tools'], ['/#how', 'How It Works']].map(([href, label]) => (
-            <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
+            <a key={href} href={href} className="relative hover:text-slate-100 transition-colors duration-200 group">
               {label}
               <span className="hidden" />
             </a>
           ))}
-          <Link href={user ? '/chat' : '/signup'} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
+          <Link href={user ? '/chat' : '/signup'} className="relative hover:text-slate-100 transition-colors duration-200 group flex items-center gap-1">
             <MessageSquare className="w-3.5 h-3.5" />AI Chat
             <span className="hidden" />
           </Link>
           {['/reviews', '/blog', '/pricing'].map(href => (
-            <Link key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group capitalize">
+            <Link key={href} href={href} className="relative hover:text-slate-100 transition-colors duration-200 group capitalize">
               {href.slice(1)}
               <span className="hidden" />
             </Link>
@@ -87,8 +87,8 @@ export default function NavClient() {
         {/* CTA */}
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
-            <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-[background-color,border-color] duration-200 group">
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold hover:bg-blue-600/20 transition-[background-color,border-color] duration-200 group">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                 {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
               </span>
               <span className="hidden sm:inline">Dashboard</span>
@@ -96,7 +96,7 @@ export default function NavClient() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/30 transition-[background-color,border-color] duration-200">
+              <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] text-sm font-semibold text-slate-100 hover:bg-[#141420] hover:border-white/[0.12] transition-[background-color,border-color] duration-200">
                 Sign In
               </Link>
               <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-bold transition-[transform,box-shadow] duration-200"
@@ -108,7 +108,7 @@ export default function NavClient() {
             </>
           )}
           <button
-            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors"
+            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface text-slate-500 hover:text-slate-100 transition-colors"
             onClick={() => setMobileNavOpen(o => !o)}
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileNavOpen}
@@ -147,14 +147,14 @@ export default function NavClient() {
               ].map((link, i) => (
                 <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
                   <Link href={link.href} onClick={() => setMobileNavOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-slate-500 hover:text-slate-100 transition-colors text-sm font-medium">
                     <link.Icon className="w-4 h-4" />{link.label}
                   </Link>
                 </motion.div>
               ))}
               {!loading && !user && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/[0.06]">
-                  <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-colors text-sm font-medium">
+                  <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-slate-500 hover:text-slate-100 transition-colors text-sm font-medium">
                     <Lock className="w-4 h-4" />Sign In
                   </Link>
                   <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>

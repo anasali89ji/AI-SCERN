@@ -10,7 +10,7 @@ export const metadata = {
 }
 
 const ACCURACY = [
-  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-primary' },
+  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-blue-600' },
   { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets',          color: 'bg-blue-500'   },
   { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500' },
   { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-amber-500'  },
@@ -44,19 +44,19 @@ const LIMITATIONS = [
 
 export default function MethodologyPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-[#08080d] text-slate-100">
       <SiteNav />
 
       <main className="pt-24 pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 2xl:px-8">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-semibold mb-4">
             <FlaskConical className="w-3 h-3" /> Transparency
           </div>
           <h1 className="text-3xl sm:text-5xl font-black mb-4">
             Detection <span className="gradient-text">Methodology</span>
           </h1>
-          <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-slate-500 text-base sm:text-lg max-w-2xl mx-auto">
             How Aiscern detects AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
           </p>
         </div>
@@ -69,26 +69,26 @@ export default function MethodologyPage() {
               <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-full border border-white/[0.08] bg-surface text-text-muted font-mono">
+              <span className="text-xs px-2.5 py-1 rounded-full border border-white/[0.08] bg-[#0f0f17] text-slate-500 font-mono">
                 v4.0.0
               </span>
-              <span className="text-xs px-2.5 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary font-semibold">
+              <span className="text-xs px-2.5 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 font-semibold">
                 Last validated: April 2026
               </span>
             </div>
           </div>
-          <p className="text-text-muted text-sm mb-6 leading-relaxed">
+          <p className="text-slate-500 text-sm mb-6 leading-relaxed">
             Benchmarks measured on held-out test sets not used during training. Figures represent overall accuracy (true positive rate + true negative rate averaged). Test sets include content from all major AI generators available at the time of evaluation.
           </p>
           <div className="space-y-4">
             {ACCURACY.map(({ type, score, model, color }) => (
-              <div key={type} className="rounded-xl border border-white/[0.08] bg-surface p-5">
+              <div key={type} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <span className="font-bold text-text-primary">{type} Detection</span>
-                    <p className="text-xs text-text-muted mt-0.5">{model}</p>
+                    <span className="font-bold text-slate-100">{type} Detection</span>
+                    <p className="text-xs text-slate-500 mt-0.5">{model}</p>
                   </div>
-                  <span className="text-2xl font-black text-text-primary">~{score}%</span>
+                  <span className="text-2xl font-black text-slate-100">~{score}%</span>
                 </div>
                 <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
                   <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${score}%` }} />
@@ -96,7 +96,7 @@ export default function MethodologyPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-text-disabled mt-4">
+          <p className="text-xs text-slate-600 mt-4">
             * Accuracy varies by content type, generator, and compression level. Figures updated with each model version release. See Limitations section below.
           </p>
         </section>
@@ -107,32 +107,32 @@ export default function MethodologyPage() {
             <Cpu className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-black">Ensemble Approach</h2>
           </div>
-          <p className="text-text-muted text-sm leading-relaxed mb-6">
+          <p className="text-slate-500 text-sm leading-relaxed mb-6">
             No single signal reliably distinguishes AI content from human content across all edge cases. Aiscern combines multiple independent signals through a trained ensemble model. Each signal is weighted based on its empirically measured reliability for the specific content type, then combined into a single confidence score.
           </p>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-white/[0.08] bg-surface p-5">
-              <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
+              <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary" /> Text Signals
               </h3>
               <div className="space-y-3">
                 {SIGNALS_TEXT.map(s => (
                   <div key={s.name}>
-                    <p className="text-xs font-semibold text-text-primary mb-0.5">{s.name}</p>
-                    <p className="text-xs text-text-muted leading-relaxed">{s.desc}</p>
+                    <p className="text-xs font-semibold text-slate-100 mb-0.5">{s.name}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-surface p-5">
-              <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
+              <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-400" /> Image Signals
               </h3>
               <div className="space-y-3">
                 {SIGNALS_IMAGE.map(s => (
                   <div key={s.name}>
-                    <p className="text-xs font-semibold text-text-primary mb-0.5">{s.name}</p>
-                    <p className="text-xs text-text-muted leading-relaxed">{s.desc}</p>
+                    <p className="text-xs font-semibold text-slate-100 mb-0.5">{s.name}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
                   </div>
                 ))}
               </div>
@@ -156,10 +156,10 @@ export default function MethodologyPage() {
             ].map(({ range, label, color, desc }) => (
               <div key={range} className={`rounded-xl border ${color} p-4 flex gap-4`}>
                 <div className="w-20 shrink-0">
-                  <p className="text-xs font-mono font-bold text-text-primary">{range}</p>
-                  <p className="text-xs font-semibold text-text-muted mt-0.5">{label}</p>
+                  <p className="text-xs font-mono font-bold text-slate-100">{range}</p>
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">{label}</p>
                 </div>
-                <p className="text-xs text-text-muted leading-relaxed">{desc}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -171,13 +171,13 @@ export default function MethodologyPage() {
             <AlertTriangle className="w-5 h-5 text-yellow-400" />
             <h2 className="text-xl font-black">Known Limitations</h2>
           </div>
-          <p className="text-text-muted text-sm leading-relaxed mb-5">
+          <p className="text-slate-500 text-sm leading-relaxed mb-5">
             We publish these limitations openly because we believe responsible use of AI detection requires honest understanding of what it cannot do.
-            <strong className="text-text-primary"> Never use a single detection result as sole evidence for high-stakes decisions.</strong>
+            <strong className="text-slate-100"> Never use a single detection result as sole evidence for high-stakes decisions.</strong>
           </p>
           <ul className="space-y-2">
             {LIMITATIONS.map(l => (
-              <li key={l} className="flex items-start gap-3 text-sm text-text-muted">
+              <li key={l} className="flex items-start gap-3 text-sm text-slate-500">
                 <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 mt-0.5 shrink-0" />
                 {l}
               </li>
@@ -186,9 +186,9 @@ export default function MethodologyPage() {
         </section>
 
         {/* Model update cadence */}
-        <section className="rounded-xl border border-white/[0.08] bg-surface p-6 mb-10">
+        <section className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 mb-10">
           <h2 className="font-black text-lg mb-3">Model Update Cadence</h2>
-          <p className="text-text-muted text-sm leading-relaxed">
+          <p className="text-slate-500 text-sm leading-relaxed">
             Detection models are retrained quarterly or whenever a major new AI generator reaches significant market penetration. Model versions are tracked in our changelog. The accuracy figures on this page reflect the most recent production model. Fine-tuning data is sourced from public benchmarks, synthetic test sets, and anonymized user feedback (opt-in only).
           </p>
         </section>
@@ -196,10 +196,10 @@ export default function MethodologyPage() {
         {/* CTA */}
         <div className="text-center">
           <Link href="/detect/text"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
             Try Detection Free →
           </Link>
-          <p className="text-xs text-text-disabled mt-3">No account required. Free tier available — no credit card needed.</p>
+          <p className="text-xs text-slate-600 mt-3">No account required. Free tier available — no credit card needed.</p>
         </div>
       </main>
 

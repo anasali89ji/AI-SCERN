@@ -27,7 +27,7 @@ function LoginContent() {
   if (redirecting) return (
     <div className="min-h-screen bg-[#050510] flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
         <p className="text-sm text-slate-400">Redirecting to dashboard…</p>
       </div>
     </div>
@@ -59,7 +59,7 @@ function LoginContent() {
         {/* Custom header */}
         <div className="bg-[#0c0c20] border-2 border-[#2f2f58] border-b-0 rounded-t-2xl px-7 pt-7 pb-5">
           <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-blue-300 bg-primary/10 border border-primary/25 px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-blue-300 bg-blue-500/10 border border-primary/25 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Secure sign in
             </span>
@@ -103,7 +103,7 @@ function LoginContent() {
               formFieldSuccessText: 'text-emerald-400 text-[12.5px] mt-2 font-medium',
               formFieldWarningText: 'text-amber-400 text-[12.5px] mt-2 font-medium',
               otpCodeFieldInput: 'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[20px] font-bold rounded-[10px] text-center w-11 h-12 focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
-              formButtonPrimary: 'w-full bg-primary hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+              formButtonPrimary: 'w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
               formButtonReset: 'text-primary hover:text-blue-300 text-[13px] font-medium transition-colors',
               dividerRow: 'my-5',
               dividerLine: 'bg-[#2f2f58]',
@@ -123,7 +123,7 @@ function LoginContent() {
               footerPages: '!hidden',
               identityPreviewText: 'text-slate-200 text-[14px]',
               identityPreviewEditButton: 'text-primary hover:text-blue-300 text-[13px] transition-colors',
-              spinner: 'text-primary',
+              spinner: 'text-blue-400',
               alternativeMethodsBlockButton: 'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 text-[13px] font-medium',
             },
           }}
@@ -149,7 +149,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#050510] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     }>
       <LoginContent />

@@ -128,7 +128,7 @@ export default function ScraperPage() {
               <Globe className="w-5 h-5 text-primary" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">Web Scanner</h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">RAG</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-blue-400 border border-primary/25">RAG</span>
           </div>
           <p className="text-sm text-slate-400 ml-12">
             Analyze any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal detection.
@@ -145,7 +145,7 @@ export default function ScraperPage() {
                 onChange={e => setUrl(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleScrape()}
                 placeholder="https://example.com/article"
-                className="w-full bg-[#141420] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full bg-[#141420] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/30 transition-colors"
               />
             </div>
             <button
@@ -164,7 +164,7 @@ export default function ScraperPage() {
               <div className="flex gap-1">
                 {[1, 2].map(d => (
                   <button key={d} onClick={() => setDepth(d)}
-                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-primary text-white' : 'bg-[#141420] text-slate-400 hover:bg-primary/20'}`}>
+                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-primary text-white' : 'bg-[#141420] text-slate-400 hover:bg-blue-600/20'}`}>
                     {d}
                   </button>
                 ))}
@@ -179,7 +179,7 @@ export default function ScraperPage() {
               <span className="text-[10px] text-slate-600 font-medium">Try:</span>
               {EXAMPLES.map(ex => (
                 <button key={ex.url} onClick={() => handleScrape(ex.url)}
-                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-primary hover:bg-primary/15 border border-white/5 hover:border-primary/30 transition-colors">
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-blue-400 hover:bg-primary/15 border border-white/5 hover:border-white/[0.12] transition-colors">
                   {ex.label}
                 </button>
               ))}
@@ -301,7 +301,7 @@ export default function ScraperPage() {
                   <div className="p-3">
                     <p className="text-xs font-semibold text-white truncate">{result.title}</p>
                     <a href={result.url} target="_blank" rel="noreferrer"
-                      className="text-[10px] text-primary hover:underline flex items-center gap-1 mt-0.5">
+                      className="text-[10px] text-blue-400 hover:underline flex items-center gap-1 mt-0.5">
                       <ExternalLink className="w-3 h-3" />{result.domain}
                     </a>
                     {result.description && (
@@ -326,7 +326,7 @@ export default function ScraperPage() {
                           'bg-amber-500/15 text-amber-400 border-amber-500/25'}`}>
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-blue-400 border border-primary/25">
                           Aiscern RAG Engine
                         </span>
                       </div>
@@ -402,12 +402,12 @@ export default function ScraperPage() {
                   </h3>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/5 hover:border-primary/20 transition-colors">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/5 hover:border-white/[0.12] transition-colors">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-slate-300 truncate">{sp.title}</p>
                           <a href={sp.url} target="_blank" rel="noreferrer"
-                            className="text-[10px] text-slate-500 hover:text-primary transition-colors truncate block">
+                            className="text-[10px] text-slate-500 hover:text-white transition-colors truncate block">
                             {(() => { try { const u = new URL(sp.url); return u.hostname + u.pathname.slice(0, 40) } catch { return sp.url } })()}
                           </a>
                         </div>
@@ -448,14 +448,14 @@ export default function ScraperPage() {
                 <div className="mt-3 space-y-1 max-h-56 overflow-y-auto">
                   {result.discovered_links.map((link, i) => (
                     <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[#141420] text-xs group/row">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-primary' : 'bg-blue-400'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-blue-600' : 'bg-blue-400'}`} />
                       <span className="text-slate-400 truncate flex-1">{link.text.slice(0, 55)}</span>
                       <a href={link.url} target="_blank" rel="noreferrer"
                         className="text-primary hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
                       <button onClick={() => handleScrape(link.url)} title="Scan this page"
-                        className="text-slate-500 hover:text-primary transition-colors shrink-0 ml-1">
+                        className="text-slate-500 hover:text-white transition-colors shrink-0 ml-1">
                         <Zap className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -478,9 +478,9 @@ export default function ScraperPage() {
                   ].map(d => (
                     <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                       className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141420] transition-colors group">
-                      <Database className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      <Database className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-slate-300 font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                        <p className="text-slate-300 font-medium group-hover:text-white transition-colors">{d.name}</p>
                         <p>{d.desc}</p>
                       </div>
                     </a>
@@ -495,8 +495,8 @@ export default function ScraperPage() {
         {/* Empty state */}
         {!result && !loading && !error && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-              <Globe className="w-8 h-8 text-primary opacity-60" />
+            <div className="w-16 h-16 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4">
+              <Globe className="w-8 h-8 text-blue-400 opacity-60" />
             </div>
             <p className="text-sm text-slate-400 font-medium">Enter any website URL above</p>
             <p className="text-xs text-slate-600 mt-1 max-w-xs">

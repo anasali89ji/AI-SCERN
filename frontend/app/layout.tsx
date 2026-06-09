@@ -123,7 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })}}
         />
       </head>
-      <body className="bg-background text-text-primary antialiased">
+      <body className="bg-background text-slate-100 antialiased">
         {/* Skip to main content — keyboard accessibility */}
         <a
           href="#main-content"

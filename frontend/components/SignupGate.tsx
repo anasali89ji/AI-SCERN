@@ -79,7 +79,7 @@ export function SignupGate() {
           initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', damping: 20 }}
-          className="relative w-full max-w-md bg-surface border border-primary/30 rounded-xl  overflow-hidden"
+          className="relative w-full max-w-md bg-[#0f0f17] border border-blue-500/20 rounded-xl  overflow-hidden"
         >
           {/* Top gradient bar */}
           <div className="h-1 w-full bg-blue-600" />
@@ -94,18 +94,18 @@ export function SignupGate() {
                 height={50}
                 className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]"
               />
-              <h2 className="text-2xl font-black text-text-primary">
+              <h2 className="text-2xl font-black text-slate-100">
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
               </h2>
-              <p className="text-text-muted text-sm leading-relaxed">
+              <p className="text-slate-500 text-sm leading-relaxed">
                 Create your free account to keep detecting — no credit card, no limits, no cost. Ever.
               </p>
             </div>
 
             {/* Perks */}
-            <ul className="space-y-2.5 bg-surface-active rounded-xl p-4">
+            <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
               {PERKS.map(p => (
-                <li key={p} className="flex items-center gap-2.5 text-sm text-text-secondary">
+                <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
                   <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0" />
                   {p}
                 </li>
@@ -114,17 +114,17 @@ export function SignupGate() {
 
             {/* CTA buttons */}
             <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90  transition-all">
+              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700  transition-all">
                 <Zap className="w-4 h-4" />
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#141420] transition-all">
                 Already have an account? Sign In
               </Link>
             </div>
 
-            <p className="text-center text-xs text-text-disabled">
+            <p className="text-center text-xs text-slate-600">
               <Shield className="w-3 h-3 inline mr-1" />
               Free tier available · No credit card · No spam
             </p>

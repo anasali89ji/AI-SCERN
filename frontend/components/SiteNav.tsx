@@ -76,7 +76,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
         </Link>
 
         {backHref ? (
-          <Link href={backHref} className="text-sm text-text-muted hover:text-text-primary transition-colors">
+          <Link href={backHref} className="text-sm text-slate-500 hover:text-slate-100 transition-colors">
             ← {backLabel ?? 'Back'}
           </Link>
         ) : (
@@ -88,7 +88,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                   return (
                     <div key={l.href} className="relative" ref={dropdownRef}>
                       <button
-                        className="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors font-medium"
+                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-100 transition-colors font-medium"
                         onClick={() => setSolutionsOpen(o => !o)}
                         aria-expanded={solutionsOpen}
                         aria-haspopup="true"
@@ -100,8 +100,8 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0a0a12] border border-white/[0.08] rounded-xl shadow-2xl p-4 z-[80]">
                           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/[0.06]">
                             <Layers className="w-4 h-4 text-primary" />
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Industry Solutions</span>
-                            <Link href="/solutions" className="ml-auto text-xs text-primary hover:underline" onClick={() => setSolutionsOpen(false)}>View all →</Link>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Industry Solutions</span>
+                            <Link href="/solutions" className="ml-auto text-xs text-blue-400 hover:underline" onClick={() => setSolutionsOpen(false)}>View all →</Link>
                           </div>
                           <div className="grid grid-cols-3 gap-1">
                             {SOLUTIONS_LINKS.map(sl => {
@@ -109,8 +109,8 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                               return (
                                 <Link key={sl.href} href={sl.href} onClick={() => setSolutionsOpen(false)}
                                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-primary/8 transition-colors group">
-                                  <SIcon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                                  <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">{sl.label}</span>
+                                  <SIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                                  <span className="text-xs text-slate-400 group-hover:text-slate-100 transition-colors">{sl.label}</span>
                                 </Link>
                               )
                             })}
@@ -122,7 +122,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                 }
                 return (
                   <Link key={l.href} href={l.href}
-                    className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
+                    className="text-sm text-slate-500 hover:text-slate-100 transition-colors font-medium">
                     {l.label}
                   </Link>
                 )
@@ -133,16 +133,16 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             <div className="hidden sm:flex items-center gap-3">
               {user ? (
                 <Link href="/dashboard"
-                  className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
                   Dashboard
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
+                  <Link href="/login" className="text-sm text-slate-500 hover:text-slate-100 transition-colors font-medium">
                     Sign in
                   </Link>
                   <Link href="/signup"
-                    className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                    className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
                     Get started
                   </Link>
                 </>
@@ -151,7 +151,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
 
             {/* Mobile hamburger */}
             <button
-              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface"
+              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:text-slate-100 transition-colors rounded-lg hover:bg-surface"
               onClick={() => setOpen(o => !o)}
               aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
@@ -176,7 +176,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
               {/* Solutions accordion */}
               <div>
                 <button
-                  className="w-full flex items-center justify-between text-sm text-text-secondary hover:text-text-primary transition-colors font-medium py-3 px-3 rounded-lg hover:bg-surface min-h-[44px]"
+                  className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-slate-100 transition-colors font-medium py-3 px-3 rounded-lg hover:bg-surface min-h-[44px]"
                   onClick={() => setMobileSolOpen(o => !o)}
                 >
                   Solutions
@@ -185,15 +185,15 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                 {mobileSolOpen && (
                   <div className="pl-4 pb-1 space-y-0.5">
                     <Link href="/solutions" onClick={() => setOpen(false)}
-                      className="block text-xs text-primary py-2 px-3 rounded-lg hover:bg-surface font-semibold">
+                      className="block text-xs text-blue-400 py-2 px-3 rounded-lg hover:bg-surface font-semibold">
                       View All Solutions →
                     </Link>
                     {SOLUTIONS_LINKS.map(sl => {
                       const SIcon = sl.icon
                       return (
                         <Link key={sl.href} href={sl.href} onClick={() => setOpen(false)}
-                          className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary py-2 px-3 rounded-lg hover:bg-surface transition-colors">
-                          <SIcon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                          className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-100 py-2 px-3 rounded-lg hover:bg-surface transition-colors">
+                          <SIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                           {sl.label}
                         </Link>
                       )
@@ -204,7 +204,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
 
               {NAV_LINKS.filter(l => !l.hasDropdown).map(l => (
                 <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
-                  className="block text-sm text-text-secondary hover:text-text-primary transition-colors font-medium py-3 px-3 rounded-lg hover:bg-surface active:scale-95 min-h-[44px] flex items-center">
+                  className="block text-sm text-slate-400 hover:text-slate-100 transition-colors font-medium py-3 px-3 rounded-lg hover:bg-surface active:scale-95 min-h-[44px] flex items-center">
                   {l.label}
                 </Link>
               ))}
@@ -212,17 +212,17 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
               <div className="pt-3 mt-2 border-t border-white/[0.06] flex flex-col gap-2">
                 {user ? (
                   <Link href="/dashboard" onClick={() => setOpen(false)}
-                    className="block text-center px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                    className="block text-center px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
                     Dashboard
                   </Link>
                 ) : (
                   <>
                     <Link href="/login" onClick={() => setOpen(false)}
-                      className="block text-center text-sm text-text-secondary py-2 hover:text-text-primary transition-colors">
+                      className="block text-center text-sm text-slate-400 py-2 hover:text-slate-100 transition-colors">
                       Sign in
                     </Link>
                     <Link href="/signup" onClick={() => setOpen(false)}
-                      className="block text-center px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                      className="block text-center px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
                       Get started free
                     </Link>
                   </>

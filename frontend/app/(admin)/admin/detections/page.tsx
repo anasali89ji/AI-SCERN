@@ -14,7 +14,7 @@ export default function DetectionAnalytics() {
   return (
     <RoleGuard required="ANALYST">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Detection Analytics</h1>
+        <h1 className="text-2xl font-black text-slate-100">Detection Analytics</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Scans Today"     value="14,280" delta="12%" positive icon={Scan}          color={C.primary}   />
           <StatCard title="This Month"      value="312k"   delta="18%" positive icon={TrendingUp}    color={C.secondary} />
@@ -23,7 +23,7 @@ export default function DetectionAnalytics() {
         </div>
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">30-Day Volume by Modality</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">30-Day Volume by Modality</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={line30}>
                 <XAxis dataKey="d" tick={{fontSize:9,fill:'#94a3b8'}} axisLine={false} tickLine={false} interval={4} />
@@ -38,7 +38,7 @@ export default function DetectionAnalytics() {
             </ResponsiveContainer>
           </div>
           <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Modality Breakdown</h3>
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Modality Breakdown</h3>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie data={modPie} dataKey="v" nameKey="name" cx="50%" cy="50%" outerRadius={65} label={({name,v})=>`${name} ${v}%`} labelLine={false}>
@@ -50,7 +50,7 @@ export default function DetectionAnalytics() {
           </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Top Detected AI Sources</h3>
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Top Detected AI Sources</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={aiSrcs} layout="vertical">
               <XAxis type="number" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />

@@ -130,7 +130,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
         {navGroups.map(group => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-2">
                 {group.label}
               </p>
             )}
@@ -145,9 +145,9 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                     prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                      ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
+                      ${active ? 'bg-primary/15 text-blue-400 border-l-2 border-primary' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
                       ${collapsed ? 'justify-center' : ''}`}>
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-primary' : ''}`} />
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-400' : ''}`} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
                   </Link>
                 )
@@ -163,15 +163,15 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
               onClick={() => setHistoryOpen(h => !h)}
               className="w-full flex items-center justify-between px-3 py-1.5 group"
             >
-              <span className="text-xs font-semibold text-text-disabled uppercase tracking-widest">Recent Chats</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-text-disabled transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
+              <span className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Recent Chats</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-600 transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
             </button>
             {historyOpen && (
               <div className="space-y-0.5 mt-0.5">
                 {chatPreviews.map(chat => (
                   <button key={chat.id}
                     onClick={() => { onChatSelect(chat.id); onNavClick() }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-500 hover:bg-[#141420] hover:text-slate-100 transition-all text-left"
                   >
                     <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
                     <span className="text-xs truncate flex-1">{chat.title}</span>
@@ -185,7 +185,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
         {/* Account section — always visible, icon-only when collapsed (fixes BUG-16) */}
         <div>
           {!collapsed && (
-            <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-2">
               Account
             </p>
           )}
@@ -199,9 +199,9 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                   prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                    ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
+                    ${active ? 'bg-primary/15 text-blue-400 border-l-2 border-primary' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
                     ${collapsed ? 'justify-center' : ''}`}>
-                  <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
+                  <Icon className={`w-5 h-5 ${active ? 'text-blue-400' : ''}`} />
                   {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
                 </Link>
               )
@@ -213,22 +213,22 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
       {/* User footer */}
       <div className="border-t border-white/[0.08] p-3">
         {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
+          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-[#141420] transition-colors">
             <UserAvatar user={user} size={8} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-secondary truncate">
+              <p className="text-xs font-medium text-slate-400 truncate">
                 {user?.displayName || user?.email?.split('@')[0] || 'User'}
               </p>
               <p className="text-[10px] text-emerald font-medium">&#x25CF; Online</p>
             </div>
             <button onClick={signOut} title="Sign out"
-              className="text-text-muted hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose/10">
+              className="text-slate-500 hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose/10">
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
           <button onClick={signOut} title="Sign out"
-            className="w-full flex justify-center py-2 text-text-muted hover:text-rose transition-colors rounded-xl hover:bg-rose/10">
+            className="w-full flex justify-center py-2 text-slate-500 hover:text-rose transition-colors rounded-xl hover:bg-rose/10">
             <LogOut className="w-5 h-5" />
           </button>
         )}
@@ -260,11 +260,11 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
 
   const menuContent = (
     <>
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-white/[0.08] bg-surface-active">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-white/[0.08] bg-[#141420]">
         <UserAvatar user={user} size={11} />
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-text-primary truncate">{name}</p>
-          <p className="text-xs text-text-muted truncate">{email}</p>
+          <p className="font-bold text-slate-100 truncate">{name}</p>
+          <p className="text-xs text-slate-500 truncate">{email}</p>
           <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald bg-emerald/10 px-2 py-0.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
             Active
@@ -279,7 +279,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
           { href: '/history',   icon: Clock,           label: 'Scan History' },
         ].map(item => (
           <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-hover transition-colors text-sm text-text-secondary hover:text-text-primary">
+            className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[#141420] transition-colors text-sm text-slate-400 hover:text-slate-100">
             <item.icon className="w-4 h-4 flex-shrink-0" />
             <span className="font-medium">{item.label}</span>
           </Link>
@@ -287,7 +287,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       </div>
       <div className="p-2 border-t border-white/[0.08]">
         <button onClick={() => { setOpen(false); signOut() }}
-          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose/10 transition-colors text-sm text-text-muted hover:text-rose w-full">
+          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose/10 transition-colors text-sm text-slate-500 hover:text-rose w-full">
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span className="font-medium">Sign Out</span>
         </button>
@@ -298,13 +298,13 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
   return (
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
+        className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-[#141420] transition-colors">
         <UserAvatar user={user} size={9} />
         <div className="hidden sm:block text-left min-w-0">
-          <p className="text-sm font-semibold text-text-primary truncate max-w-[120px]">{name}</p>
-          <p className="text-xs text-text-muted truncate max-w-[120px]">{email}</p>
+          <p className="text-sm font-semibold text-slate-100 truncate max-w-[120px]">{name}</p>
+          <p className="text-xs text-slate-500 truncate max-w-[120px]">{email}</p>
         </div>
-        <ChevronDown className={`w-4 h-4 text-text-muted transition-transform hidden sm:block ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform hidden sm:block ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Desktop dropdown */}
@@ -315,7 +315,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ type: 'tween', duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
+            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-[#0f0f17] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
           >
             {menuContent}
           </motion.div>
@@ -334,7 +334,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
+              className="absolute bottom-0 left-0 right-0 bg-[#0f0f17] rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               {/* Drag handle */}
@@ -383,11 +383,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
-      <div className="flex h-[100dvh] bg-background overflow-hidden">
+      <div className="flex h-[100dvh] bg-[#08080d] overflow-hidden">
         {/* Desktop sidebar */}
         <motion.aside animate={{ width: collapsed ? 72 : 260 }}
           transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="hidden lg:flex flex-col bg-surface border-r border-white/[0.08] relative flex-shrink-0 2xl:!w-[280px]" style={collapsed ? { width: 72 } : undefined}>
+          className="hidden lg:flex flex-col bg-[#0f0f17] border-r border-white/[0.08] relative flex-shrink-0 2xl:!w-[280px]" style={collapsed ? { width: 72 } : undefined}>
           <Sidebar
             user={user} signOut={signOut}
             collapsed={collapsed} pathname={pathname}
@@ -396,7 +396,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onChatSelect={handleChatSelect}
           />
           <button onClick={() => setCollapsed(!collapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-white/[0.08] flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-text-muted hover:text-white z-10">
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#0f0f17] border border-white/[0.08] flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-slate-500 hover:text-white z-10">
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
           </button>
         </motion.aside>
@@ -410,7 +410,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-white/[0.08] z-50 flex flex-col">
+                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-[#0f0f17] border-r border-white/[0.08] z-50 flex flex-col">
                 <Sidebar
                   user={user} signOut={signOut}
                   collapsed={false} pathname={pathname}
@@ -424,16 +424,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-14 sm:h-16 2xl:h-18 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-surface flex-shrink-0 sticky top-0 z-30">
+          <header className="h-14 sm:h-16 2xl:h-18 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-[#0f0f17] flex-shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
-              <button onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
+              <button onClick={() => setMobileOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-100">
                 <Menu className="w-6 h-6" />
               </button>
               <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity">
                 <Image src="/logo.png" alt="Aiscern" width={28} height={28} className="object-contain" />
                 <span className="font-bold gradient-text text-sm">Aiscern</span>
               </Link>
-              <div className="hidden lg:flex items-center gap-2 text-sm text-text-muted">
+              <div className="hidden lg:flex items-center gap-2 text-sm text-slate-500">
                 <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
                 All systems operational
               </div>

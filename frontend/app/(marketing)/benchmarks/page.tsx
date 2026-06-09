@@ -63,7 +63,7 @@ function BenchTable({ rows }: { rows: typeof TEXT_RESULTS }) {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className={`border-b border-white/[0.08] last:border-0 ${row.model.startsWith('Ensemble') ? 'bg-primary/5 font-semibold' : 'hover:bg-muted/30'}`}>
+            <tr key={i} className={`border-b border-white/[0.08] last:border-0 ${row.model.startsWith('Ensemble') ? 'bg-blue-500/5 font-semibold' : 'hover:bg-muted/30'}`}>
               <td className="px-4 py-3 text-foreground">{row.model}</td>
               <td className="px-4 py-3 text-center tabular-nums">{row.auc.toFixed(2)}</td>
               <td className="px-4 py-3 text-center tabular-nums">{(row.precision*100).toFixed(1)}%</td>
@@ -121,14 +121,14 @@ export default function BenchmarksPage() {
           <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-white/[0.08] bg-muted/40 text-xs text-muted-foreground uppercase tracking-wide"><th className="px-4 py-3 text-left font-medium">Modality</th><th className="px-4 py-3 text-left font-medium">Dataset</th><th className="px-4 py-3 text-left font-medium">Size</th></tr></thead>
-              <tbody>{DATASETS.map((d,i) => (<tr key={i} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/30"><td className="px-4 py-3 text-muted-foreground">{d.modality}</td><td className="px-4 py-3"><a href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">{d.name}<ExternalLink className="h-3 w-3" /></a></td><td className="px-4 py-3 text-muted-foreground tabular-nums">{d.size}</td></tr>))}</tbody>
+              <tbody>{DATASETS.map((d,i) => (<tr key={i} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/30"><td className="px-4 py-3 text-muted-foreground">{d.modality}</td><td className="px-4 py-3"><a href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-400 hover:underline">{d.name}<ExternalLink className="h-3 w-3" /></a></td><td className="px-4 py-3 text-muted-foreground tabular-nums">{d.size}</td></tr>))}</tbody>
             </table>
           </div>
         </section>
 
         <div className="rounded-xl border border-white/[0.08] bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground mb-3">Full results with confidence intervals and per-generator breakdowns available as CSV.</p>
-          <a href="/benchmarks/results.csv" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
+          <a href="/benchmarks/results.csv" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-blue-700 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
           <p className="mt-3 text-xs text-muted-foreground"><Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link> · <Link href="/research" className="underline underline-offset-2 hover:text-foreground">Research Citations</Link></p>
         </div>
       </main>

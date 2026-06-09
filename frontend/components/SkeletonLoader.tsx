@@ -1,6 +1,6 @@
 'use client'
 export function SkeletonLine({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse bg-surface-hover rounded-lg ${className}`} />
+  return <div className={`animate-pulse bg-[#141420] rounded-lg ${className}`} />
 }
 
 export function SkeletonCard({ className = '' }: { className?: string }) {

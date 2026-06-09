@@ -338,7 +338,7 @@ function MessageBubble({
               'Scan another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
-                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all">
+                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 hover:border-primary/40 hover:text-white hover:bg-blue-500/5 transition-all">
                 {chip}
               </button>
             ))}
@@ -760,9 +760,9 @@ export default function ChatPage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {SUGGESTIONS.map(({Ic: I, text, cat})=>(
                   <button key={text} onClick={()=>send(text)}
-                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/20 text-left transition-all group cursor-pointer"
+                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.12] text-left transition-all group cursor-pointer"
                   >
-                    <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary/70 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors mt-0.5">
+                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-primary/70 flex items-center justify-center shrink-0 group-hover:bg-blue-600/20 transition-colors mt-0.5">
                       <I />
                     </div>
                     <div className="min-w-0">
@@ -805,7 +805,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-2 px-3 py-3 rounded-xl border border-white/[0.09] bg-[#0d1117] focus-within:border-primary/50  transition-all duration-200">
+            <div className="flex items-end gap-2 px-3 py-3 rounded-xl border border-white/[0.09] bg-[#0d1117] focus-within:border-blue-500/30  transition-all duration-200">
               <button onClick={()=>fileRef.current?.click()}
                 className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
                 title="Attach image, audio or video">
