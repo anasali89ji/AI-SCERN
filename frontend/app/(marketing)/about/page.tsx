@@ -60,7 +60,7 @@ const TEAM = [
     location: 'Remote',
     skills:   'Product Management',
     gradient: 'from-emerald-600/30 via-teal-600/20 to-cyan-600/30',
-    ring:     'border-emerald/30',
+    ring:     'border-emerald-500/30',
   },
 ]
 
@@ -93,10 +93,10 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
         <p className="text-sm text-slate-500 leading-relaxed mb-4">{member.bio}</p>
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 px-2.5 py-1 rounded-full bg-[#141420] border border-white/[0.08]">
-            <MapPin className="w-3 h-3 text-primary" /> {member.location}
+            <MapPin className="w-3 h-3 text-blue-400" /> {member.location}
           </span>
           <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 px-2.5 py-1 rounded-full bg-[#141420] border border-white/[0.08]">
-            <Briefcase className="w-3 h-3 text-primary" /> {member.skills}
+            <Briefcase className="w-3 h-3 text-blue-400" /> {member.skills}
           </span>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function AboutPage() {
               <div key={title} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-primary" />
+                    <Icon className="w-4 h-4 text-blue-400" />
                   </div>
                   <h3 className="font-bold text-slate-100">{title}</h3>
                 </div>
@@ -179,7 +179,7 @@ export default function AboutPage() {
         {/* Tech stack — moved after team (1.3 fix) */}
         <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-4 sm:p-6 mb-10 sm:mb-14">
           <div className="flex items-center gap-2 mb-4">
-            <GitBranch className="w-5 h-5 text-primary" />
+            <GitBranch className="w-5 h-5 text-blue-400" />
             <h2 className="font-black text-lg">Built with</h2>
           </div>
           <p className="text-slate-500 text-sm leading-relaxed mb-4">

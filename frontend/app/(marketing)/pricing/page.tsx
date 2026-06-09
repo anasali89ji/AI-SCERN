@@ -149,7 +149,7 @@ export default function PricingPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
           {TIERS.map(tier => (
-            <div key={tier.name} className={`relative rounded-xl border ${tier.color} ${tier.highlight ? 'bg-[#141420]' : 'bg-[#0f0f17]'} p-6 flex flex-col`}>
+            <div key={tier.name} className={`relative rounded-xl border ${tier.color} ${tier.highlight ? 'bg-[#0f0f17]' : 'bg-[#0f0f17]'} p-6 flex flex-col`}>
               {tier.label && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold whitespace-nowrap">{tier.label}</div>
               )}
@@ -167,11 +167,9 @@ export default function PricingPage() {
                   </div>
                 )}
                 {yearly && tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
-                  <p className="text-xs text-emerald mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
+                  <p className="text-xs text-emerald-400 mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
                 )}
               </div>
-
-              {/* Key limits */}
               <div className="space-y-2 mb-6 flex-1">
                 <LimitRow label="Scans/day" value={String(tier.limits.scansPerDay)} />
                 <LimitRow label="File size" value={typeof tier.limits.fileSizeMB === 'number' ? `${tier.limits.fileSizeMB} MB` : String(tier.limits.fileSizeMB)} />
@@ -201,7 +199,6 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {/* Limit rows */}
                 {FEATURE_ROWS.map(row => (
                   <tr key={row.key} className="border-b border-white/[0.08] hover:bg-muted/20">
                     <td className="px-4 py-3 text-slate-400 flex items-center gap-1.5">
@@ -219,14 +216,13 @@ export default function PricingPage() {
                     })}
                   </tr>
                 ))}
-                {/* Binary feature rows */}
                 {BINARY_FEATURES.map(feat => (
                   <tr key={feat.label} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/20">
                     <td className="px-4 py-3 text-slate-400">{feat.label}</td>
                     {(['free', 'pro', 'team', 'enterprise'] as const).map(plan => (
                       <td key={plan} className="px-4 py-3 text-center">
                         {feat[plan]
-                          ? <Check className="w-4 h-4 text-emerald mx-auto" />
+                          ? <Check className="w-4 h-4 text-emerald-400 mx-auto" />
                           : <X className="w-4 h-4 text-slate-600 mx-auto" />
                         }
                       </td>
@@ -279,7 +275,7 @@ export default function PricingPage() {
             <a href="mailto:sales@aiscern.com" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors">
               <Users className="w-4 h-4" /> Contact Sales
             </a>
-            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-100 hover:border-primary/40 transition-colors">
+            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-100 hover:border-blue-500/50/40 transition-colors">
               View DPA
             </Link>
           </div>

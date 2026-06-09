@@ -27,9 +27,9 @@ import { SignupGate } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose',    border: 'border-rose/30',    bg: 'bg-rose/5',    label: 'DEEPFAKE / AI DETECTED' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald', border: 'border-emerald/30', bg: 'bg-emerald/5', label: 'AUTHENTIC VIDEO' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber',   border: 'border-amber/30',   bg: 'bg-amber/5',   label: 'UNCERTAIN' },
+  AI:        { icon: AlertTriangle, color: 'text-rose-500',    border: 'border-rose-500/30',    bg: 'bg-rose-500/5',    label: 'DEEPFAKE / AI DETECTED' },
+  HUMAN:     { icon: CheckCircle,  color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', label: 'AUTHENTIC VIDEO' },
+  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber-500',   border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   label: 'UNCERTAIN' },
 }
 
 // Sample 6 frames spread across the video at 0%, 12%, 28%, 46%, 68%, 90%
@@ -104,7 +104,7 @@ function FrameStrip({
           return (
             <div key={i} className="relative group">
               <div className={`relative rounded-lg overflow-hidden border-2 transition-all
-                ${isSuspicious ? 'border-rose/50' : 'border-emerald/30'}`}>
+                ${isSuspicious ? 'border-rose-500/50' : 'border-emerald-500/30'}`}>
                 <img src={f.preview} alt={`Frame ${i + 1}`} className="w-full h-10 object-cover" />
                 {score?.face_detected && (
                   <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-400" title="Face detected" />
@@ -113,7 +113,7 @@ function FrameStrip({
               <div className="flex justify-between items-center mt-0.5 px-0.5">
                 <span className="text-[9px] text-slate-600">{formatDur(f.timeSec)}</span>
                 {score && (
-                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose' : 'text-emerald'}`}>
+                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose-500' : 'text-emerald-400'}`}>
                     {Math.round(score.ai_score * 100)}%
                   </span>
                 )}
@@ -124,10 +124,10 @@ function FrameStrip({
       </div>
       <div className="flex items-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose/60" />Suspicious frame
+          <span className="w-2 h-2 rounded-full bg-rose-500/60" />Suspicious frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald/60" />Clean frame
+          <span className="w-2 h-2 rounded-full bg-emerald-500/60" />Clean frame
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-400" />Face detected
@@ -398,7 +398,7 @@ function VideoDetectionPage() {
               <div className="px-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-border rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
+                  <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
                     <div className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${progress * 100}%` }} />
                   </div>
@@ -412,7 +412,7 @@ function VideoDetectionPage() {
                   <p className="text-xs sm:text-sm text-slate-400 font-medium truncate">{file.name}</p>
                   <p className="text-[10px] sm:text-xs text-slate-500">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-slate-500 hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
+                <button onClick={reset} className="text-slate-500 hover:text-rose p-2 rounded-lg hover:bg-rose-500/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -437,7 +437,7 @@ function VideoDetectionPage() {
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose/30 bg-rose/5 flex items-center gap-2 text-rose text-sm py-3">
+              className="card border-rose-500/30 bg-rose-500/5 flex items-center gap-2 text-rose-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </motion.div>
           )}
@@ -489,7 +489,7 @@ function VideoDetectionPage() {
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
+                  <div className="h-2.5 sm:h-3 bg-white/[0.08] rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className="h-full rounded-full bg-blue-500" />
@@ -538,12 +538,12 @@ function VideoDetectionPage() {
                         <div className="flex justify-between mb-1 gap-2">
                           <span className="text-xs sm:text-sm text-slate-400 font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
-                            ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>
+                            ${s.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>
                             {s.weight}%
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 truncate">{s.description}</p>
-                        <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
+                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }}
                             animate={{ width: `${Math.round(s.value * 100)}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
@@ -611,7 +611,7 @@ function VideoDetectionPage() {
       {result && (
         <details className="card mt-2 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" />
+            <Info className="w-4 h-4 text-blue-400" />
             Detection Models &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-slate-500">
@@ -639,7 +639,7 @@ function VideoDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

@@ -94,7 +94,7 @@ function renderMarkdown(md: string): string {
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-slate-100">$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em class="italic">$1</em>')
     // Inline code
-    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-[#0f0f17] border border-white/[0.08] text-xs font-mono text-primary">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-[#0f0f17] border border-white/[0.08] text-xs font-mono text-blue-400">$1</code>')
     // Unordered list items
     .replace(/^[-*] (.+)$/gm, '<li class="ml-5 list-disc text-slate-500 leading-relaxed mb-1">$1</li>')
     // Ordered list items

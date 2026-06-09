@@ -152,7 +152,7 @@ export default function FAQPage() {
       <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
 
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-primary/8 text-blue-400 text-xs font-semibold mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-5">
             <HelpCircle className="w-3.5 h-3.5" />
             Frequently Asked Questions
           </div>

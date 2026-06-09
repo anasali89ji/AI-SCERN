@@ -298,7 +298,7 @@ export default function BatchPage() {
                   <span className="font-bold text-slate-100">{progress}%</span>
                 </div>
               </div>
-              <div className="h-2.5 bg-border rounded-full overflow-hidden">
+              <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
                 <motion.div className="h-full bg-blue-500 rounded-full"
                   animate={{ width: `${progress}%` }} transition={{ ease: 'easeOut' }} />
               </div>
@@ -322,9 +322,9 @@ export default function BatchPage() {
               )}
               {[
                 { label: 'Completed', value: completed, color: 'text-slate-100' },
-                { label: 'AI Detected', value: aiCount, color: 'text-rose' },
-                { label: 'Human/Real', value: humanCount, color: 'text-emerald' },
-                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber' : 'text-slate-500' },
+                { label: 'AI Detected', value: aiCount, color: 'text-rose-500' },
+                { label: 'Human/Real', value: humanCount, color: 'text-emerald-400' },
+                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-500' : 'text-slate-500' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
                   <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
@@ -347,7 +347,7 @@ export default function BatchPage() {
               </button>
             ) : (
               <button onClick={togglePause}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber/10 text-amber border border-amber/30 hover:bg-amber/20'}`}>
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'}`}>
                 {paused ? <><Play className="w-4 h-4" />Resume</> : <><Pause className="w-4 h-4" />Pause</>}
               </button>
             )}
@@ -376,8 +376,8 @@ export default function BatchPage() {
 
           {/* Cross-tool correlation alert */}
           {correlation && (
-            <div className="p-4 rounded-xl border border-rose/30 bg-rose/5 flex items-start gap-3 mb-2">
-              <AlertTriangle className="w-5 h-5 text-rose shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/5 flex items-start gap-3 mb-2">
+              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-rose">Correlated AI Pattern Detected</p>
                 <p className="text-sm text-slate-500 mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
@@ -412,9 +412,9 @@ export default function BatchPage() {
                   transition={{ delay: Math.min(i * 0.02, 0.2) }}
                   className={`card flex items-center gap-3 py-3 px-4 transition-all ${
                     bf.status === 'processing' ? 'border-primary/40 bg-primary/3' :
-                    bf.verdict === 'AI' ? 'border-rose/15' :
-                    bf.verdict === 'HUMAN' ? 'border-emerald/15' :
-                    bf.status === 'error' ? 'border-amber/20 bg-amber/3' : ''
+                    bf.verdict === 'AI' ? 'border-rose-500/15' :
+                    bf.verdict === 'HUMAN' ? 'border-emerald-500/15' :
+                    bf.status === 'error' ? 'border-amber-500/20 bg-amber-500/3' : ''
                   }`}>
 
                   {/* Status icon */}
@@ -434,7 +434,7 @@ export default function BatchPage() {
                       <span className="text-xs text-slate-500">{formatFileSize(bf.file.size)}</span>
                       <span className="text-xs text-slate-600 uppercase">{detectType(bf.file)}</span>
                       {bf.status === 'error' && bf.error && (
-                        <span className="text-xs text-amber truncate">{bf.error}</span>
+                        <span className="text-xs text-amber-500 truncate">{bf.error}</span>
                       )}
                       {bf.processingTime && (
                         <span className="text-xs text-slate-600">{bf.processingTime}ms</span>
@@ -455,7 +455,7 @@ export default function BatchPage() {
                   {/* Remove */}
                   {bf.status === 'queued' && (
                     <button onClick={() => removeFile(bf.id)}
-                      className="text-slate-500 hover:text-rose p-1 rounded hover:bg-rose/10 transition-colors shrink-0">
+                      className="text-slate-500 hover:text-rose p-1 rounded hover:bg-rose-500/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   )}

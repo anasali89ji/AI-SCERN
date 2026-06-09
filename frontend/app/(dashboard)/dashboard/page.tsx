@@ -13,24 +13,24 @@ import { useAuth } from '@/components/auth-provider'
 
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
+  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber-500',     desc: 'Detect AI-written content'    },
   { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-blue-400', desc: 'Deepfake & AI image detection' },
   { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-blue-600/20 to-blue-600/5',        iconColor: 'text-blue-400',      desc: 'Voice clone detection'         },
-  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
-  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
+  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose-500',      desc: 'Deepfake video analysis'       },
+  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald-400',   desc: 'Scan up to 20 files at once'         },
   { href: '/chat',         icon: Zap,       label: 'ARIA',  color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
 ]
 
 function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose flex-shrink-0" />
-  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
-  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber flex-shrink-0" />
+  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
-  const s = verdict === 'AI' ? 'text-rose bg-rose/10 border-rose/20'
-          : verdict === 'HUMAN' ? 'text-emerald bg-emerald/10 border-emerald/20'
-          : 'text-amber bg-amber/10 border-amber/20'
+  const s = verdict === 'AI' ? 'text-rose bg-rose-500/10 border-rose-500/20'
+          : verdict === 'HUMAN' ? 'text-emerald bg-emerald-500/10 border-emerald-500/20'
+          : 'text-amber bg-amber-500/10 border-amber-500/20'
   return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${s}`}>{verdict}</span>
 }
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
       {isPulling && (
         <div className="flex items-center justify-center py-2 lg:hidden">
           <div className="flex items-center gap-2 text-xs text-slate-500 bg-[#0f0f17] px-4 py-2 rounded-full border border-white/[0.06]">
-            <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
@@ -167,10 +167,10 @@ export default function DashboardPage() {
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {[
-          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-blue-500/10 text-primary'  },
-          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose/10 text-rose'        },
-          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
-          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
+          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-blue-500/10 text-blue-400'  },
+          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose-500/10 text-rose-500'        },
+          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald-500/10 text-emerald-400'  },
+          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber-500/10 text-amber-500'      },
         ].map((s, i) => (
           <div key={s.label}
             className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-5 flex items-center gap-3 hover:border-white/[0.12] transition-all">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             className="mb-4 bg-[#0f0f17] border border-white/[0.08] rounded-xl p-5">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-xl bg-blue-600/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-primary" />
+                <Sparkles className="w-5 h-5 text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-slate-100 mb-1">Welcome to Aiscern! 🎉</h3>
@@ -206,11 +206,11 @@ export default function DashboardPage() {
                     <FileText className="w-3.5 h-3.5" /> Try Text Detection
                   </Link>
                   <Link href="/detect/image"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-primary/40 hover:text-slate-100 transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-blue-500/50/40 hover:text-slate-100 transition-all">
                     <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
                   </Link>
                   <Link href="/batch"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-primary/40 hover:text-slate-100 transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-blue-500/50/40 hover:text-slate-100 transition-all">
                     <Layers className="w-3.5 h-3.5" /> Try Batch Scan
                   </Link>
                 </div>
@@ -249,12 +249,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex rounded-full overflow-hidden h-3 gap-0.5">
             <div className="bg-rose transition-all duration-700" style={{ width: `${aiPct}%` }} />
-            <div className="bg-amber/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
+            <div className="bg-amber-500/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
             <div className="bg-emerald transition-all duration-700" style={{ width: `${humanPct}%` }} />
           </div>
           <div className="flex items-center gap-4 mt-2.5 text-xs text-slate-500">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose" />{aiPct}% AI</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500/60" />{100-aiPct-humanPct}% Uncertain</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function DashboardPage() {
           </div>
         ) : fetchError ? (
           <div className="bg-surface border border-white/[0.08] rounded-xl p-8 text-center">
-            <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
+            <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
             <p className="text-slate-500 text-sm font-medium">Couldn't load scan history</p>
             <p className="text-slate-600 text-xs mt-1 mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}

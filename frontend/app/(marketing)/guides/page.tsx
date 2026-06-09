@@ -72,11 +72,12 @@ const GUIDES = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
-  primary: { bg: 'bg-primary/8', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'text-primary bg-blue-500/10 border-blue-500/20' },
-  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    badge: 'text-blue-400 bg-blue-500/10 border-blue-500/20'         },
-  emerald: { bg: 'bg-emerald/8', border: 'border-emerald/20', icon: 'text-emerald', badge: 'text-emerald bg-emerald/10 border-emerald/20' },
-  amber:   { bg: 'bg-amber/8',   border: 'border-amber/20',   icon: 'text-amber',   badge: 'text-amber bg-amber/10 border-amber/20'       },
-  rose:    { bg: 'bg-rose/8',    border: 'border-rose/20',    icon: 'text-rose',    badge: 'text-rose bg-rose/10 border-rose/20'           },
+  primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  cyan:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', badge: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  amber:   { bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   icon: 'text-amber-500',   badge: 'text-amber-500 bg-amber-500/10 border-amber-500/20'   },
+  rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/20',    icon: 'text-rose-500',    badge: 'text-rose-500 bg-rose-500/10 border-rose-500/20'     },
 }
 
 export default function GuidesPage() {

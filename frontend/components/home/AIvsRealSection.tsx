@@ -73,7 +73,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-20" />
-          <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white ${isAI ? 'bg-rose/80 border border-rose/40' : 'bg-emerald/80 border border-emerald/40'}`}>
+          <div className={`absolute top-2.5 right-2.5 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white ${isAI ? 'bg-rose-500/80 border border-rose-500/40' : 'bg-emerald-500/80 border border-emerald-500/40'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" /> : <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" aria-hidden="true" />}
             {card.verdict}
           </div>
@@ -84,7 +84,7 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
           <p className="text-xs sm:text-sm text-slate-500 leading-relaxed line-clamp-4 italic pl-3">
             &ldquo;{card.preview}&rdquo;
           </p>
-          <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
+          <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isAI ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" /> : <CheckCircle className="w-2.5 h-2.5" aria-hidden="true" />}
             {card.verdict}
           </div>
@@ -93,12 +93,12 @@ const ComparisonCard = memo(function ComparisonCard({ card }: { card: Comparison
       <div className="p-3 flex items-center justify-between">
         <div className="min-w-0">
           <p className="text-[10px] sm:text-sm font-semibold text-slate-100 truncate">{card.label}</p>
-          <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 ${isAI ? 'bg-rose/10 text-rose' : 'bg-emerald/10 text-emerald'}`}>
+          <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 ${isAI ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-400'}`}>
             {card.tag}
           </span>
         </div>
         <div className="flex-shrink-0 ml-2">
-          <span className={`text-xs font-bold px-2 py-1 rounded-full ${isAI ? 'bg-rose/10 text-rose border border-rose/20' : 'bg-emerald/10 text-emerald border border-emerald/20'}`}>
+          <span className={`text-xs font-bold px-2 py-1 rounded-full ${isAI ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
             {isAI ? '⚠ AI' : '✓ Real'}
           </span>
         </div>
@@ -148,7 +148,7 @@ export default function AIvsRealSection() {
       <div className="max-w-7xl 2xl:max-w-[1400px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
           className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose/30 bg-rose/5 text-rose text-[11px] sm:text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/30 bg-rose-500/5 text-rose-500 text-[11px] sm:text-xs font-semibold mb-3">
             <Scan className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" aria-hidden="true" />
             Real-World Detection Examples
           </div>

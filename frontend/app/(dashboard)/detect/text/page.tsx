@@ -66,7 +66,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = 50_000
-  const charColor = charCount > 45_000 ? 'text-rose' : charCount > 70_000 ? 'text-amber' : 'text-slate-500'
+  const charColor = charCount > 45_000 ? 'text-rose-500' : charCount > 70_000 ? 'text-amber-500' : 'text-slate-500'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -167,13 +167,13 @@ Analyzed: ${new Date().toLocaleString()}`
   }
 
   const verdictStyles: Record<Verdict, string> = {
-    AI: 'border-rose/30 bg-rose/5',
-    HUMAN: 'border-emerald/30 bg-emerald/5',
-    UNCERTAIN: 'border-amber/30 bg-amber/5',
+    AI: 'border-rose-500/30 bg-rose-500/5',
+    HUMAN: 'border-emerald-500/30 bg-emerald-500/5',
+    UNCERTAIN: 'border-amber-500/30 bg-amber-500/5',
   }
 
   const verdictColor: Record<Verdict, string> = {
-    AI: 'text-rose', HUMAN: 'text-emerald', UNCERTAIN: 'text-amber'
+    AI: 'text-rose-500', HUMAN: 'text-emerald-400', UNCERTAIN: 'text-amber-500'
   }
 
   const shareResult = async () => {
@@ -190,7 +190,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-amber" />
           </div>
           Text Detection
@@ -229,7 +229,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setPdfMode(false)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber/15 text-amber border border-amber/30' : 'text-slate-500 hover:text-slate-400'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
@@ -243,24 +243,24 @@ Analyzed: ${new Date().toLocaleString()}`
               <div>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-blue-500/30','bg-primary/8') }}
-                  onDragLeave={e => { e.currentTarget.classList.remove('border-blue-500/30','bg-primary/8') }}
+                  onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-blue-500/30','bg-blue-500/10') }}
+                  onDragLeave={e => { e.currentTarget.classList.remove('border-blue-500/30','bg-blue-500/10') }}
                   onDrop={e => {
                     e.preventDefault()
-                    e.currentTarget.classList.remove('border-blue-500/30','bg-primary/8')
+                    e.currentTarget.classList.remove('border-blue-500/30','bg-blue-500/10')
                     const f = e.dataTransfer.files?.[0]
                     if (f && (f.type === 'application/pdf' || f.name.endsWith('.pdf'))) handlePdfUpload(f)
                     else if (f) setError('Please upload a PDF file.')
                   }}
                   className={`flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3
-                    ${pdfFile ? 'border-primary/40 bg-blue-500/5' : 'border-white/[0.08] hover:border-primary/40 hover:bg-blue-500/5'}`}>
+                    ${pdfFile ? 'border-primary/40 bg-blue-500/5' : 'border-white/[0.08] hover:border-blue-500/50/40 hover:bg-blue-500/5'}`}>
                   {pdfLoading ? (
                     <div className="flex flex-col items-center gap-2 w-full px-6">
                       <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
                       <p className="text-sm font-medium text-slate-100">Extracting text from PDF…</p>
                       <p className="text-xs text-slate-500">Running {pdfFile && pdfFile.size > 1024*1024*5 ? 'multi-page' : ''} analysis — this takes 10–30 seconds</p>
                       <div className="w-full max-w-xs bg-[#141420] rounded-full h-1.5 mt-1 overflow-hidden">
-                        <div className="h-full bg-blue-600 rounded-full animate-pulse" style={{width:'60%'}} />
+                        <div className="h-full bg-blue-600 rounded-full" style={{width:'45%'}} />
                       </div>
                     </div>
                   ) : pdfFile ? (
@@ -308,19 +308,19 @@ Analyzed: ${new Date().toLocaleString()}`
             {/* Char limit warning */}
             {charCount > 70_000 && (
               <div className="mt-2">
-                <div className="h-1 bg-border rounded-full overflow-hidden">
+                <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${charCount > 45_000 ? 'bg-rose' : 'bg-amber'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
                 </div>
-                <p className={`text-xs mt-1 ${charCount > 45_000 ? 'text-rose' : 'text-amber'}`}>{(50_000 - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
+                <p className={`text-xs mt-1 ${charCount > 45_000 ? 'text-rose-500' : 'text-amber-500'}`}>{(50_000 - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
               </div>
             )}
             {/* Progress to minimum */}
             {charCount < 50 && charCount > 0 && (
               <div className="mt-2">
-                <div className="h-1 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-amber rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
+                <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
                 </div>
-                <p className="text-xs text-amber mt-1">{50 - charCount} more characters needed</p>
+                <p className="text-xs text-amber-500 mt-1">{50 - charCount} more characters needed</p>
               </div>
             )}
 
@@ -348,8 +348,8 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose/30 bg-rose/5">
-              <div className="flex items-center gap-2 text-rose text-sm">
+              className="card border-rose-500/30 bg-rose-500/5">
+              <div className="flex items-center gap-2 text-rose-500 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
               </div>
             </motion.div>
@@ -364,9 +364,9 @@ Analyzed: ${new Date().toLocaleString()}`
                 className="card flex flex-col items-center justify-center py-16 gap-4">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full border-2 border-blue-500/20 flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-primary" />
+                    <FileText className="w-8 h-8 text-blue-400" />
                   </div>
-                  <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  
                 </div>
                 <div className="text-center space-y-1">
                   <p className="font-semibold text-slate-100">Analyzing text patterns…</p>
@@ -421,7 +421,7 @@ Analyzed: ${new Date().toLocaleString()}`
                       <span>Human ←</span>
                       <span>→ AI</span>
                     </div>
-                    <div className="h-2.5 bg-border rounded-full overflow-hidden relative">
+                    <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden relative">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
                         className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber to-rose' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald/50 to-emerald' : 'bg-gradient-to-r from-amber/50 to-amber'}`}
@@ -433,7 +433,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 {/* Signals */}
                 <div className="card">
                   <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
                     Detection Signals ({result.signals.length})
                   </h3>
                   <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
@@ -444,11 +444,11 @@ Analyzed: ${new Date().toLocaleString()}`
                         <div className="flex items-center gap-3 mb-2">
                           <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                           <span className="text-sm text-slate-400 flex-1 font-medium">{signal.name}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>
                             {signal.weight}%
                           </span>
                         </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden ml-5">
+                        <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden ml-5">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${signal.weight}%` }}
                             transition={{ delay: i * 0.08 + 0.3, duration: 0.5 }}
                             className={`h-full rounded-full ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`}
@@ -471,10 +471,10 @@ Analyzed: ${new Date().toLocaleString()}`
                       {paragraphScores.map((s, i) => {
                         const pct = s.confidence
                         const bg =
-                          pct >= 80 ? 'bg-rose/30 text-rose-200' :
-                          pct >= 60 ? 'bg-amber/20 text-amber-200' :
+                          pct >= 80 ? 'bg-rose-500/30 text-rose-200' :
+                          pct >= 60 ? 'bg-amber-500/20 text-amber-200' :
                           pct >= 40 ? 'bg-yellow-900/20 text-slate-400' :
-                                      'bg-emerald/10 text-emerald-300'
+                                      'bg-emerald-500/10 text-emerald-300'
                         return (
                           <span key={i} title={`${pct}% AI probability`}
                             className={`${bg} rounded px-0.5 mr-0.5 cursor-help transition-colors`}>
@@ -485,7 +485,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </p>
                     {/* Legend */}
                     <div className="flex items-center gap-3 flex-wrap">
-                      {[['bg-emerald/10 text-emerald-300','< 40% AI'],['bg-yellow-900/20 text-slate-400','40–59%'],['bg-amber/20 text-amber-200','60–79%'],['bg-rose/30 text-rose-200','≥ 80%']].map(([cls, label]) => (
+                      {[['bg-emerald-500/10 text-emerald-300','< 40% AI'],['bg-yellow-900/20 text-slate-400','40–59%'],['bg-amber-500/20 text-amber-200','60–79%'],['bg-rose-500/30 text-rose-200','≥ 80%']].map(([cls, label]) => (
                         <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
                       ))}
                     </div>
@@ -517,7 +517,7 @@ Analyzed: ${new Date().toLocaleString()}`
             {!result && !loading && (
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="card flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 rounded-xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-10 h-10 text-amber" />
                 </div>
                 <h3 className="font-semibold text-slate-100 mb-2">Ready to Analyze</h3>
@@ -546,7 +546,7 @@ Analyzed: ${new Date().toLocaleString()}`
           className="mx-4 mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden"
         >
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-blue-500/5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
             <span className="text-xs font-bold text-blue-400 tracking-wide uppercase">Web Verification</span>
             <span className="ml-auto text-[10px] text-slate-500">Real-time Graph RAG</span>
           </div>
@@ -571,7 +571,7 @@ Analyzed: ${new Date().toLocaleString()}`
       {result && (
         <details className="card mt-4 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" />
+            <Info className="w-4 h-4 text-blue-400" />
             Detection Models &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-slate-500">
@@ -601,7 +601,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

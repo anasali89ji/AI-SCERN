@@ -125,7 +125,7 @@ export default function ScraperPage() {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary" />
+              <Globe className="w-5 h-5 text-blue-400" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">Web Scanner</h1>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-blue-400 border border-primary/25">RAG</span>
@@ -179,7 +179,7 @@ export default function ScraperPage() {
               <span className="text-[10px] text-slate-600 font-medium">Try:</span>
               {EXAMPLES.map(ex => (
                 <button key={ex.url} onClick={() => handleScrape(ex.url)}
-                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-blue-400 hover:bg-primary/15 border border-white/[0.08] hover:border-white/[0.12] transition-colors">
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141420] text-blue-400 hover:bg-blue-700/15 border border-white/[0.08] hover:border-white/[0.12] transition-colors">
                   {ex.label}
                 </button>
               ))}
@@ -371,7 +371,7 @@ export default function ScraperPage() {
               {result.signals.length > 0 && (
                 <div className="bg-[#0f0f17] border border-white/[0.07] rounded-xl p-5">
                   <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-primary" />
+                    <Shield className="w-4 h-4 text-blue-400" />
                     Detection Signals
                     <span className="ml-auto text-[10px] text-slate-500 font-normal">{result.signals.filter(s => s.flagged).length} flagged of {result.signals.length}</span>
                   </h3>
@@ -396,7 +396,7 @@ export default function ScraperPage() {
               {result.sub_pages.length > 0 && (
                 <div className="bg-[#0f0f17] border border-white/[0.07] rounded-xl p-5">
                   <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-primary" />
+                    <BookOpen className="w-4 h-4 text-blue-400" />
                     Sub-pages Analyzed
                     <span className="ml-auto text-[10px] text-slate-500 font-normal">{result.sub_pages.length} pages</span>
                   </h3>
@@ -440,7 +440,7 @@ export default function ScraperPage() {
               {/* Discovered Links */}
               <details className="bg-[#0f0f17] border border-white/[0.07] rounded-xl p-4 group">
                 <summary className="cursor-pointer text-sm font-semibold text-slate-300 flex items-center gap-2 list-none select-none">
-                  <Link2 className="w-4 h-4 text-primary" />
+                  <Link2 className="w-4 h-4 text-blue-400" />
                   Discovered Links
                   <span className="text-xs text-slate-500 font-normal">{result.discovered_links.length} of {result.total_links} total</span>
                   <ChevronDown className="w-4 h-4 text-slate-500 ml-auto group-open:rotate-180 transition-transform" />
@@ -466,7 +466,7 @@ export default function ScraperPage() {
               {/* Datasets info */}
               <details className="bg-[#0f0f17] border border-white/[0.07] rounded-xl p-4">
                 <summary className="cursor-pointer text-sm font-semibold text-slate-300 flex items-center gap-2 list-none select-none">
-                  <Info className="w-4 h-4 text-primary" />Detection Models &amp; Reference Datasets
+                  <Info className="w-4 h-4 text-blue-400" />Detection Models &amp; Reference Datasets
                   <ChevronDown className="w-4 h-4 text-slate-500 ml-auto" />
                 </summary>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500">

@@ -158,9 +158,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />}
-      {icon === 'warn' && <Clock className="w-4 h-4 text-amber flex-shrink-0 mt-0.5" />}
-      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose flex-shrink-0 mt-0.5" />}
+      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />}
+      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />}
+      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />}
       <div>
         <p className="font-semibold text-slate-100 text-sm">{label}</p>
         <p className="text-slate-500 text-xs mt-0.5">{detail}</p>

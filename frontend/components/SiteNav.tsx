@@ -99,7 +99,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                       {solutionsOpen && (
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0a0a12] border border-white/[0.08] rounded-xl shadow-2xl p-4 z-[80]">
                           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/[0.06]">
-                            <Layers className="w-4 h-4 text-primary" />
+                            <Layers className="w-4 h-4 text-blue-400" />
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Industry Solutions</span>
                             <Link href="/solutions" className="ml-auto text-xs text-blue-400 hover:underline" onClick={() => setSolutionsOpen(false)}>View all →</Link>
                           </div>
@@ -108,7 +108,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                               const SIcon = sl.icon
                               return (
                                 <Link key={sl.href} href={sl.href} onClick={() => setSolutionsOpen(false)}
-                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-primary/8 transition-colors group">
+                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-700/8 transition-colors group">
                                   <SIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                                   <span className="text-xs text-slate-400 group-hover:text-slate-100 transition-colors">{sl.label}</span>
                                 </Link>
@@ -151,7 +151,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
 
             {/* Mobile hamburger */}
             <button
-              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:text-slate-100 transition-colors rounded-lg hover:bg-surface"
+              className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:text-slate-100 transition-colors rounded-lg hover:bg-[#0f0f17]"
               onClick={() => setOpen(o => !o)}
               aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}

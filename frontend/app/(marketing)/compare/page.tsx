@@ -44,9 +44,9 @@ const ROWS: CompareRow[] = [
 ]
 
 function Cell({ value }: { value: CellValue }) {
-  if (value === 'yes') return <CheckCircle className="w-5 h-5 text-emerald mx-auto" />
+  if (value === 'yes') return <CheckCircle className="w-5 h-5 text-emerald-400 mx-auto" />
   if (value === 'no')  return <XCircle className="w-5 h-5 text-rose/60 mx-auto" />
-  if (value === 'partial') return <Minus className="w-5 h-5 text-amber mx-auto" />
+  if (value === 'partial') return <Minus className="w-5 h-5 text-amber-500 mx-auto" />
   return <span className="text-xs text-slate-400">{value}</span>
 }
 

@@ -105,7 +105,7 @@ export default function SecurityPage() {
             <div key={title} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Icon className="w-3.5 h-3.5 text-primary" />
+                  <Icon className="w-3.5 h-3.5 text-blue-400" />
                 </div>
                 <h3 className="font-bold text-sm">{title}</h3>
               </div>
@@ -127,7 +127,7 @@ export default function SecurityPage() {
           <div className="rounded-xl border border-white/[0.08] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.08] bg-surface">
+                <tr className="border-b border-white/[0.08] bg-[#0f0f17]">
                   <th className="text-left px-4 py-3 font-semibold text-slate-100 w-1/2">Data</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-100">Retention</th>
                 </tr>

@@ -185,7 +185,7 @@ export default function ReviewsPage() {
                     className={`w-full flex items-center gap-2 rounded-lg px-1 py-0.5 transition-all ${starFilter === b.n ? 'bg-blue-500/10' : 'hover:bg-[#141420]'}`}>
                     <span className="text-xs text-slate-500 w-3">{b.n}</span>
                     <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                    <div className="flex-1 bg-border rounded-full h-1.5 overflow-hidden">
+                    <div className="flex-1 bg-white/[0.08] rounded-full h-1.5 overflow-hidden">
                       <div className="h-full bg-amber-400 rounded-full transition-all duration-700"
                         style={{ width: `${b.pct}%` }} />
                     </div>
@@ -196,7 +196,7 @@ export default function ReviewsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
               {[
-                { label: 'Verified Users',  value: stats?.verified ?? '—', icon: CheckCircle, color: 'text-emerald' },
+                { label: 'Verified Users',  value: stats?.verified ?? '—', icon: CheckCircle, color: 'text-emerald-400' },
                 { label: 'Anonymous',       value: stats?.anonymous ?? '—', icon: EyeOff, color: 'text-slate-500' },
                 { label: 'Helpful votes',   value: stats?.helpfulVotes ?? '—', icon: ThumbsUp, color: 'text-blue-400' },
                 { label: '5-star reviews',  value: displayStats.breakdown.find(b => b.n === 5)?.count ?? 0, icon: Star, color: 'text-amber-400' },
@@ -220,14 +220,14 @@ export default function ReviewsPage() {
           </div>
           {SORT_OPTIONS.map(o => (
             <button key={o.value} onClick={() => { setSort(o.value); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${sort === o.value ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
+              className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${sort === o.value ? 'bg-blue-600 text-white' : 'bg-[#0f0f17] border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
               {o.label}
             </button>
           ))}
-          <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
+          <div className="w-px h-5 bg-white/[0.08] mx-1 hidden sm:block" />
           {STAR_FILTERS.map(f => (
             <button key={f.value} onClick={() => { setStarFilter(f.value); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-400 text-black' : 'bg-surface border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
+              className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-500 text-white' : 'bg-[#0f0f17] border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
               {f.label}
             </button>
           ))}
@@ -280,7 +280,7 @@ export default function ReviewsPage() {
                           {r.display_name}
                         </span>
                         {r.verified && (
-                          <span className="flex items-center gap-1 text-[10px] text-emerald bg-emerald/10 px-1.5 py-0.5 rounded-full border border-emerald/20 font-medium">
+                          <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
                             <CheckCircle className="w-2.5 h-2.5" /> Verified
                           </span>
                         )}
@@ -331,12 +331,12 @@ export default function ReviewsPage() {
         {pages > 1 && (
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page === 1}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-slate-500 hover:text-slate-100 hover:border-primary/40 transition-all disabled:opacity-40">
+              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-slate-500 hover:text-slate-100 hover:border-blue-500/50/40 transition-all disabled:opacity-40">
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
             <span className="text-sm text-slate-500">Page {page} of {pages}</span>
             <button onClick={() => setPage(p => Math.min(pages,p+1))} disabled={page === pages}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-slate-500 hover:text-slate-100 hover:border-primary/40 transition-all disabled:opacity-40">
+              className="flex items-center gap-1 px-4 py-2 rounded-xl border border-white/[0.08] text-sm text-slate-500 hover:text-slate-100 hover:border-blue-500/50/40 transition-all disabled:opacity-40">
               Next <ChevronRight className="w-4 h-4" />
             </button>
           </div>

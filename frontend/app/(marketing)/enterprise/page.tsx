@@ -67,8 +67,8 @@ export default function EnterprisePage() {
                 const FIcon = f.icon
                 return (
                   <div key={i} className="card p-5 rounded-xl border border-white/[0.08]">
-                    <div className="w-10 h-10 rounded-xl bg-primary/8 border border-blue-500/20 flex items-center justify-center mb-4">
-                      <FIcon className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+                      <FIcon className="w-5 h-5 text-blue-400" />
                     </div>
                     <h3 className="font-semibold text-slate-100 text-sm mb-2">{f.title}</h3>
                     <p className="text-xs text-slate-500 leading-relaxed">{f.desc}</p>
@@ -91,7 +91,7 @@ export default function EnterprisePage() {
                   <ul className="space-y-2 text-xs text-slate-500">
                     {[plan.scans, plan.api, plan.support].map((item, j) => (
                       <li key={j} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                         {item}
                       </li>
                     ))}

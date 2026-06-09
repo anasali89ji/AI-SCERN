@@ -65,7 +65,7 @@ export default function MethodologyPage() {
         <section className="mb-14">
           <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary" />
+              <BarChart3 className="w-5 h-5 text-blue-400" />
               <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
             </div>
             <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export default function MethodologyPage() {
         {/* How it works — ensemble */}
         <section className="mb-14">
           <div className="flex items-center gap-2 mb-6">
-            <Cpu className="w-5 h-5 text-primary" />
+            <Cpu className="w-5 h-5 text-blue-400" />
             <h2 className="text-xl font-black">Ensemble Approach</h2>
           </div>
           <p className="text-slate-500 text-sm leading-relaxed mb-6">
@@ -113,7 +113,7 @@ export default function MethodologyPage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
               <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary" /> Text Signals
+                <span className="w-2 h-2 rounded-full bg-blue-600" /> Text Signals
               </h3>
               <div className="space-y-3">
                 {SIGNALS_TEXT.map(s => (
@@ -143,7 +143,7 @@ export default function MethodologyPage() {
         {/* Confidence score interpretation */}
         <section className="mb-14">
           <div className="flex items-center gap-2 mb-6">
-            <CheckCircle2 className="w-5 h-5 text-primary" />
+            <CheckCircle2 className="w-5 h-5 text-blue-400" />
             <h2 className="text-xl font-black">Interpreting Confidence Scores</h2>
           </div>
           <div className="space-y-3">

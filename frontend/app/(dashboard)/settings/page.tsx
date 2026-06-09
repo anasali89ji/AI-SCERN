@@ -35,7 +35,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
     <div className="flex items-center justify-between py-4 border-b border-white/[0.06] last:border-0 gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon className="w-4 h-4 text-primary" />
+          <Icon className="w-4 h-4 text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -56,7 +56,7 @@ function Section({ title, icon: Icon, children }: { title: string; icon: any; ch
     <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
       className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6">
       <h2 className="font-bold text-slate-100 flex items-center gap-2 mb-1 pb-3 border-b border-white/[0.06]">
-        <Icon className="w-4 h-4 text-primary" /> {title}
+        <Icon className="w-4 h-4 text-blue-400" /> {title}
       </h2>
       {children}
     </motion.div>
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
   if (loading) return (
     <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
-      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
     </div>
   )
 
@@ -218,7 +218,7 @@ export default function SettingsPage() {
         <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-primary">
+              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
               {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
@@ -231,7 +231,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-white/[0.08] text-slate-500 hover:text-slate-400'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-400'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -241,7 +241,7 @@ export default function SettingsPage() {
         <SettingRow icon={Languages} label="Language" description="Interface display language"
           action={
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-primary">
+              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
               <option value="en">English</option>
               <option value="ur">اردو (Urdu)</option>
               <option value="ar">العربية (Arabic)</option>
@@ -261,7 +261,7 @@ export default function SettingsPage() {
         <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-primary">
+              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>

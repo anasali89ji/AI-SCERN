@@ -102,7 +102,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-[#08080d] text-slate-100">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d] sm:bg-[#08080d]/80 sm:backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d]">
         <div className="max-w-2xl 2xl:max-w-3xl mx-auto h-full px-4 sm:px-6 2xl:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
@@ -143,7 +143,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         {signals.length > 0 && (
           <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5 mb-6">
             <h2 className="font-bold text-sm mb-4 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" /> Detection signals
+              <Shield className="w-4 h-4 text-blue-400" /> Detection signals
             </h2>
             <div className="space-y-3">
               {signals.map((s, i) => (

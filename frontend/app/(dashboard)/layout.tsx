@@ -219,16 +219,16 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
               <p className="text-xs font-medium text-slate-400 truncate">
                 {user?.displayName || user?.email?.split('@')[0] || 'User'}
               </p>
-              <p className="text-[10px] text-emerald font-medium">&#x25CF; Online</p>
+              <p className="text-[10px] text-emerald-400 font-medium">&#x25CF; Online</p>
             </div>
             <button onClick={signOut} title="Sign out"
-              className="text-slate-500 hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose/10">
+              className="text-slate-500 hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose-500/10">
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
           <button onClick={signOut} title="Sign out"
-            className="w-full flex justify-center py-2 text-slate-500 hover:text-rose transition-colors rounded-xl hover:bg-rose/10">
+            className="w-full flex justify-center py-2 text-slate-500 hover:text-rose transition-colors rounded-xl hover:bg-rose-500/10">
             <LogOut className="w-5 h-5" />
           </button>
         )}
@@ -265,8 +265,8 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="font-bold text-slate-100 truncate">{name}</p>
           <p className="text-xs text-slate-500 truncate">{email}</p>
-          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald bg-emerald/10 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
+          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Active
           </span>
         </div>
@@ -287,7 +287,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       </div>
       <div className="p-2 border-t border-white/[0.08]">
         <button onClick={() => { setOpen(false); signOut() }}
-          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose/10 transition-colors text-sm text-slate-500 hover:text-rose w-full">
+          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 transition-colors text-sm text-slate-500 hover:text-rose w-full">
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span className="font-medium">Sign Out</span>
         </button>
@@ -396,7 +396,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onChatSelect={handleChatSelect}
           />
           <button onClick={() => setCollapsed(!collapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#0f0f17] border border-white/[0.08] flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-slate-500 hover:text-white z-10">
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#0f0f17] border border-white/[0.08] flex items-center justify-center hover:bg-blue-700 hover:border-blue-500/50 transition-all text-slate-500 hover:text-white z-10">
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
           </button>
         </motion.aside>

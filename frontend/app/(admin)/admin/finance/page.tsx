@@ -33,7 +33,7 @@ export default function Finance() {
     <RoleGuard required="EXECUTIVE">
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-8 max-w-sm w-full text-center">
-          <div className="w-14 h-14 rounded-xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
             <DollarSign className="w-7 h-7 text-amber-400" />
           </div>
           <h2 className="text-lg font-bold text-slate-100 mb-2">Financial Access</h2>
@@ -52,11 +52,11 @@ export default function Finance() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-black text-slate-100">Financial Dashboard</h1>
-          <span className="text-xs text-amber-400 bg-amber/10 border border-amber/20 px-3 py-1 rounded-full font-medium">🔒 Restricted</span>
+          <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full font-medium">🔒 Restricted</span>
         </div>
 
         {/* Investor metrics */}
-        <div className="rounded-xl border border-amber/20 bg-amber/5 p-5">
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
           <h3 className="text-sm font-bold text-slate-100 mb-4">Investor Metrics</h3>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
             {metrics.map(({label,value})=>(

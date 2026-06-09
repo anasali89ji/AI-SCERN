@@ -25,9 +25,9 @@ const LazyFeedbackBar = dynamic(
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose',    border: 'border-rose/30',    bg: 'bg-rose/5',    label: 'AI GENERATED' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald', border: 'border-emerald/30', bg: 'bg-emerald/5', label: 'HUMAN CREATED' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber',   border: 'border-amber/30',   bg: 'bg-amber/5',   label: 'UNCERTAIN' },
+  AI:        { icon: AlertTriangle, color: 'text-rose-500',    border: 'border-rose-500/30',    bg: 'bg-rose-500/5',    label: 'AI GENERATED' },
+  HUMAN:     { icon: CheckCircle,  color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', label: 'HUMAN CREATED' },
+  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber-500',   border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   label: 'UNCERTAIN' },
 }
 
 function ImageDetectionPage() {
@@ -167,7 +167,7 @@ Analyzed: ${new Date().toLocaleString()}`
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-            <ImageIcon className="w-6 h-6 text-primary" />
+            <ImageIcon className="w-6 h-6 text-blue-400" />
           </div>
           Image Detection
         </h1>
@@ -184,7 +184,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="space-y-3">
                 <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-blue-500/20 bg-blue-500/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
                   <div className="w-16 h-16 rounded-xl bg-primary/15 flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-primary" />
+                    <Upload className="w-8 h-8 text-blue-400" />
                   </div>
                   <div className="text-center">
                     <p className="font-bold text-blue-400 text-base">Tap to Take Photo or Choose File</p>
@@ -247,7 +247,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Detect Another" className="text-slate-500 hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose/10 shrink-0">
+              title="Detect Another" className="text-slate-500 hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose-500/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -267,7 +267,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose/30 bg-rose/5 flex items-center gap-2 text-rose text-sm py-3">
+              className="card border-rose-500/30 bg-rose-500/5 flex items-center gap-2 text-rose-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </motion.div>
           )}
@@ -314,7 +314,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className="shrink-0">Confidence Score</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-3 bg-border rounded-full overflow-hidden">
+                  <div className="h-3 bg-white/[0.08] rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className="h-full rounded-full bg-blue-500" />
@@ -324,7 +324,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
               <div className="card">
                 <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
                   Detection Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
@@ -336,10 +336,10 @@ Analyzed: ${new Date().toLocaleString()}`
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                           <span className="text-sm text-slate-400 font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>{s.weight}%</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>{s.weight}%</span>
                         </div>
                         <p className="text-xs text-slate-500 truncate">{s.description}</p>
-                        <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
+                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
                             className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
@@ -378,7 +378,7 @@ Analyzed: ${new Date().toLocaleString()}`
               className="card flex flex-col items-center justify-center py-16 gap-4">
               <div className="relative">
                 <div className="w-20 h-20 rounded-full border-2 border-blue-500/20 flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-primary" />
+                  <ImageIcon className="w-8 h-8 text-blue-400" />
                 </div>
                 <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
               </div>
@@ -392,7 +392,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4 ">
-                <ImageIcon className="w-10 h-10 text-primary" />
+                <ImageIcon className="w-10 h-10 text-blue-400" />
               </div>
               <h3 className="font-semibold text-slate-100 mb-2">Upload an Image</h3>
               <p className="text-slate-500 text-sm max-w-xs">Drop any image to scan for GAN artifacts, metadata anomalies, and AI generation patterns</p>
@@ -417,7 +417,7 @@ Analyzed: ${new Date().toLocaleString()}`
           className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden"
         >
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-blue-500/5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
             <span className="text-xs font-bold text-blue-400 tracking-wide uppercase">Web Verification</span>
             <span className="ml-auto text-[10px] text-slate-500">Real-time Graph RAG</span>
           </div>
@@ -442,7 +442,7 @@ Analyzed: ${new Date().toLocaleString()}`
       {result && (
         <details className="card mt-2 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" />
+            <Info className="w-4 h-4 text-blue-400" />
             Detection Models &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-slate-500">
@@ -472,7 +472,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

@@ -118,7 +118,7 @@ function CreditsCard({ userId }: { userId: string }) {
     <div className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-bold text-slate-100 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-primary" /> Credits &amp; Usage
+          <Zap className="w-4 h-4 text-blue-400" /> Credits &amp; Usage
         </h2>
         <button
           onClick={() => setRefresh(r => r + 1)}
@@ -350,7 +350,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] text-sm font-semibold text-slate-400 hover:bg-[#141420] hover:border-primary/40 transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] text-sm font-semibold text-slate-400 hover:bg-[#141420] hover:border-blue-500/50/40 transition-all">
                   <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
@@ -363,7 +363,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="text-[11px] text-slate-500 uppercase tracking-widest mb-1 block">Display Name</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    className="w-full bg-[#141420] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary"
+                    className="w-full bg-[#141420] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500/50"
                     placeholder="Your full name" />
                 </div>
                 <div>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">@</span>
                     <input value={username} onChange={e => checkUsername(e.target.value)}
-                      className="w-full bg-[#141420] border border-white/[0.08] rounded-xl pl-7 pr-9 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary"
+                      className="w-full bg-[#141420] border border-white/[0.08] rounded-xl pl-7 pr-9 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500/50"
                       placeholder="yourname" maxLength={30} />
                     {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-white/[0.08] border-t-primary animate-spin" />}
                     {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400" />}
@@ -393,7 +393,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="text-[11px] text-slate-500 uppercase tracking-widest mb-1 block">Bio</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
-                    className="w-full bg-[#141420] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"
+                    className="w-full bg-[#141420] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500/50 resize-none"
                     placeholder="A short bio (optional)" maxLength={160} />
                   <p className="text-[10px] text-slate-500 text-right mt-0.5">{bio.length}/160</p>
                 </div>
@@ -456,14 +456,14 @@ export default function ProfilePage() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-              <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-blue-500/10 text-primary" />
+              <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500/10 text-rose-400" />
               <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald-500/10 text-emerald-400" />
               <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500/10 text-amber-400" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
-              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-blue-500/10 text-primary" />
+              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
             </div>
@@ -474,7 +474,7 @@ export default function ProfilePage() {
       {/* ── Account Details ───────────────────────────────────── */}
       <div className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6 space-y-3">
         <h2 className="font-bold text-slate-100 flex items-center gap-2 mb-1">
-          <Shield className="w-5 h-5 text-primary" /> Account Details
+          <Shield className="w-5 h-5 text-blue-400" /> Account Details
         </h2>
         {([
           ['Email address',  user?.email,                               ''],

@@ -83,8 +83,8 @@ const RELEASES: {
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
   new:         { label: 'New',         style: 'bg-blue-500/10 text-blue-400 border border-primary/25' },
-  improvement: { label: 'Improved',    style: 'bg-emerald/10 text-emerald border border-emerald/25' },
-  fix:         { label: 'Fix',         style: 'bg-amber/10 text-amber border border-amber/25' },
+  improvement: { label: 'Improved',    style: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' },
+  fix:         { label: 'Fix',         style: 'bg-amber-500/10 text-amber-500 border border-amber-500/25' },
   infra:       { label: 'Infra',       style: 'bg-surface text-slate-500 border border-white/[0.08]' },
 }
 
@@ -96,7 +96,7 @@ export default function ChangelogPage() {
       <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
 
         <div className="mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-primary/8 text-blue-400 text-xs font-semibold mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-5">
             <Tag className="w-3.5 h-3.5" />
             Version History
           </div>
@@ -112,7 +112,7 @@ export default function ChangelogPage() {
           {RELEASES.map((release, i) => (
             <div key={release.version} className="relative pl-6 border-l-2 border-white/[0.08]">
               {/* Version dot */}
-              <div className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-primary" />
+              <div className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-blue-600" />
 
               <div className="mb-3">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -121,7 +121,7 @@ export default function ChangelogPage() {
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>
                   {i === 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/25 uppercase tracking-wider">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 uppercase tracking-wider">
                       Latest
                     </span>
                   )}

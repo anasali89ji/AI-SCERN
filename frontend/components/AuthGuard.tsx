@@ -51,7 +51,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#08080d] flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-[#08080d]" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none auth-blur-orb" />
+      
 
       <AnimatePresence>
         <motion.div
@@ -79,7 +79,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
-                  <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   {p}
                 </li>
               ))}

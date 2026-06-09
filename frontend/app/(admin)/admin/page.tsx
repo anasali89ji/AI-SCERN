@@ -86,7 +86,7 @@ export default function AdminOverview() {
             <button onClick={fetchStats} className="p-1.5 rounded-lg border border-white/[0.08] hover:bg-[#141420] transition-colors">
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
             </button>
-            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald/10 border border-emerald/20 text-[10px] text-emerald font-semibold">
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />LIVE
             </span>
           </div>
@@ -120,7 +120,7 @@ export default function AdminOverview() {
               ) : (
                 (stats?.recentSessions || []).map((s: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#141420]/50 transition-colors">
-                    <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-[9px] font-black text-primary">
+                    <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-[9px] font-black text-blue-400">
                       {(s.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -425,7 +425,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="py-12 sm:py-20 border-y border-white/[0.06] bg-[#0f0f17]/50">
+        <section className="py-12 sm:py-16 border-y border-white/[0.06] bg-[#0f0f17]/50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
@@ -433,7 +433,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="text-center">
-                  <div className="text-4xl sm:text-5xl font-bold text-white mb-2 tabular-nums">
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2 tabular-nums">
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <p className="text-slate-400 text-xs sm:text-sm font-medium">{stat.label}</p>
@@ -449,7 +449,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="py-16 sm:py-28 px-4 sm:px-6">
+        <section id="tools" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-14 sm:mb-20">
@@ -495,7 +495,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-16 sm:py-28 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section id="how" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-5xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-16 sm:mb-20">
@@ -563,7 +563,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES ══ */}
-        <section className="py-16 sm:py-28 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-6xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-14">
@@ -640,7 +640,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-3xl mx-auto text-center">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}>
               <div className="flex justify-center mb-8">

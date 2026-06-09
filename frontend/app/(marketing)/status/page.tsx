@@ -38,8 +38,8 @@ export default function StatusPage() {
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10 text-center">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6 ${
               allOperational
-                ? 'bg-emerald/10 border border-emerald/20 text-emerald'
-                : 'bg-amber/10 border border-amber/20 text-amber'
+                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                : 'bg-amber-500/10 border border-amber-500/20 text-amber-500'
             }`}>
               {allOperational ? (
                 <><CheckCircle className="w-4 h-4" /> All Systems Operational</>
@@ -73,7 +73,7 @@ export default function StatusPage() {
                     <span className="text-xs text-slate-500 flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {service.latency}
                     </span>
-                    <span className="text-xs font-semibold text-emerald capitalize">{service.status}</span>
+                    <span className="text-xs font-semibold text-emerald-400 capitalize">{service.status}</span>
                   </div>
                 </div>
               ))}
@@ -107,7 +107,7 @@ export default function StatusPage() {
                     <div key={i} className="card border border-white/[0.08] rounded-xl p-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-semibold text-slate-100">{inc.title}</span>
-                        <span className={`text-xs font-bold ${inc.status === 'resolved' ? 'text-emerald' : 'text-amber'}`}>{inc.status}</span>
+                        <span className={`text-xs font-bold ${inc.status === 'resolved' ? 'text-emerald-400' : 'text-amber-500'}`}>{inc.status}</span>
                       </div>
                       <div className="text-xs text-slate-500 mb-2">{inc.date}</div>
                       <p className="text-xs text-slate-400">{inc.desc}</p>

@@ -47,7 +47,7 @@ export default function RoadmapPage() {
 
           {/* Header */}
           <div className="mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-primary/8 text-blue-400 text-xs font-semibold mb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-5">
               <Clock className="w-3 h-3" /> Product Roadmap
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-slate-100 mb-4">
@@ -66,7 +66,7 @@ export default function RoadmapPage() {
             <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 space-y-3">
               {CURRENT.map(item => (
                 <div key={item} className="flex items-start gap-3">
-                  <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-slate-400">{item}</span>
                 </div>
               ))}
@@ -76,7 +76,7 @@ export default function RoadmapPage() {
           {/* Next 3 Months */}
           <section className="mb-14">
             <h2 className="text-xl font-black text-slate-100 mb-5 flex items-center gap-2">
-              <ArrowRight className="w-5 h-5 text-primary" /> Next 3 Months
+              <ArrowRight className="w-5 h-5 text-blue-400" /> Next 3 Months
             </h2>
             <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 space-y-3">
               {NEXT_3_MONTHS.map(({ item }) => (
@@ -95,7 +95,7 @@ export default function RoadmapPage() {
             </h2>
             <div className="space-y-3">
               {LIMITATIONS.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-amber/20 bg-amber/4 p-4">
+                <div key={title} className="rounded-xl border border-amber-500/20 bg-amber-500/4 p-4">
                   <p className="text-sm font-bold text-slate-100 mb-1">{title}</p>
                   <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
                 </div>

@@ -104,11 +104,12 @@ const SOLUTIONS = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  primary: { bg: 'bg-primary/8', border: 'border-primary/25', text: 'text-blue-400', icon: 'text-blue-400' },
+  primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'text-blue-400' },
+  blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'text-blue-400' },
   cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/25',    text: 'text-blue-400',    icon: 'text-blue-400'    },
-  amber:   { bg: 'bg-amber/8',   border: 'border-amber/25',   text: 'text-amber',   icon: 'text-amber'   },
-  emerald: { bg: 'bg-emerald/8', border: 'border-emerald/25', text: 'text-emerald', icon: 'text-emerald' },
-  rose:    { bg: 'bg-rose/8',    border: 'border-rose/25',    text: 'text-rose',    icon: 'text-rose'    },
+  amber:   { bg: 'bg-amber-500/8',   border: 'border-amber-500/25',   text: 'text-amber-500',   icon: 'text-amber-500'   },
+  emerald: { bg: 'bg-emerald-500/8', border: 'border-emerald-500/25', text: 'text-emerald-400', icon: 'text-emerald-400' },
+  rose:    { bg: 'bg-rose-500/8',    border: 'border-rose-500/25',    text: 'text-rose-500',    icon: 'text-rose-500'    },
 }
 
 export default function SolutionsHub() {

@@ -48,7 +48,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
           <button onClick={reset} className="px-3 bg-[#141420] text-slate-500 text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose text-white font-bold flex items-center gap-1.5 text-sm">
+          <button onClick={onDelete} className="px-4 bg-rose-500 text-white font-bold flex items-center gap-1.5 text-sm">
             <Trash2 className="w-4 h-4" /> Delete
           </button>
         </div>
@@ -66,8 +66,8 @@ const mediaColors = {
   image: 'text-primary bg-blue-500/10',
   video: 'text-slate-400 bg-slate-700/10',
   audio: 'text-blue-400 bg-blue-500/10',
-  text:  'text-amber bg-amber/10',
-  url:   'text-emerald bg-emerald/10',
+  text:  'text-amber bg-amber-500/10',
+  url:   'text-emerald bg-emerald-500/10',
 }
 
 function normalizeConf(c: number | null) {
@@ -126,7 +126,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
                 <span className="text-slate-500">Confidence</span>
                 <span className="font-bold text-slate-100">{conf}%</span>
               </div>
-              <div className="h-1.5 bg-border rounded-full overflow-hidden">
+              <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
                 <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function HistoryPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                <Clock className="w-6 h-6 text-primary" />
+                <Clock className="w-6 h-6 text-blue-400" />
               </div>
               Scan History
             </h1>
@@ -283,7 +283,7 @@ export default function HistoryPage() {
               ))}
             </div>
 
-            <div className="h-4 w-px bg-border hidden sm:block mx-1" />
+            <div className="h-4 w-px bg-white/[0.08] hidden sm:block mx-1" />
 
             {/* Verdict filter */}
             <div className="flex items-center gap-1 flex-wrap">
@@ -323,7 +323,7 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-slate-500 hover:text-rose hover:border-rose/30">
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-slate-500 hover:text-rose hover:border-rose-500/30">
                 <Trash2 className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
@@ -351,7 +351,7 @@ export default function HistoryPage() {
               <AnimatePresence initial={false}>
                 {paginated.map((scan, i) => {
                   const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileText
-                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-slate-500 bg-surface'
+                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-slate-500 bg-[#0f0f17]'
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
@@ -359,7 +359,7 @@ export default function HistoryPage() {
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
-                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
+                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-blue-500/50/25 transition-all group cursor-pointer"
                       onClick={() => setSelectedScan(scan)}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
@@ -386,7 +386,7 @@ export default function HistoryPage() {
                         {conf != null && (
                           <div className="text-right hidden sm:block w-12">
                             <p className="text-sm font-bold text-slate-100 tabular-nums">{conf}%</p>
-                            <div className="h-1 bg-border rounded-full overflow-hidden mt-0.5">
+                            <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden mt-0.5">
                               <div className="h-full bg-blue-600 rounded-full"
                                 style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
                             </div>
@@ -398,7 +398,7 @@ export default function HistoryPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose hover:bg-rose/10 transition-colors disabled:opacity-50">
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose hover:bg-rose-500/10 transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

@@ -49,7 +49,7 @@ function LoginContent() {
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2.5 mb-7 relative z-10 group">
         <Image src="/logo.png" alt="Aiscern logo" width={36} height={24}
-          className="object-contain drop-shadow-[0_0_14px_rgba(245,100,0,0.6)] group-hover:drop-shadow-[0_0_20px_rgba(245,100,0,0.75)] transition-all duration-200" priority />
+          className="object-contain object-contain" priority />
         <span className="text-xl font-black gradient-text tracking-tight">Aiscern</span>
       </Link>
 
@@ -88,21 +88,21 @@ function LoginContent() {
             },
             elements: {
               rootBox: 'w-full',
-              card: 'bg-[#0c0c20] border-2 border-[#2f2f58] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-2xl overflow-hidden p-0',
-              cardBox: 'rounded-b-2xl',
+              card: 'bg-[#0c0c20] border-2 border-[#2f2f58] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-xl overflow-hidden p-0',
+              cardBox: 'rounded-b-xl',
               header: '!hidden',
               main: 'px-7 pb-2 pt-6',
               formFieldRow: 'mb-4',
               formFieldLabelRow: 'flex items-center justify-between mb-2',
               formFieldLabel: 'text-[12px] font-semibold tracking-[0.07em] uppercase text-slate-300',
               formFieldHintText: 'text-slate-400 text-[12px] mt-1.5',
-              formFieldInput: 'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-primary focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
+              formFieldInput: 'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-blue-500/50 focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
               formFieldInputShowPasswordButton: 'text-slate-500 hover:text-slate-300 transition-colors pr-1',
               formFieldAction: 'text-primary hover:text-blue-300 text-[12px] font-medium transition-colors',
               formFieldErrorText: 'text-rose-400 text-[12.5px] mt-2 font-medium',
               formFieldSuccessText: 'text-emerald-400 text-[12.5px] mt-2 font-medium',
               formFieldWarningText: 'text-amber-400 text-[12.5px] mt-2 font-medium',
-              otpCodeFieldInput: 'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[20px] font-bold rounded-[10px] text-center w-11 h-12 focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
+              otpCodeFieldInput: 'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[20px] font-bold rounded-[10px] text-center w-11 h-12 focus:outline-none focus:border-blue-500/50 focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
               formButtonPrimary: 'w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
               formButtonReset: 'text-primary hover:text-blue-300 text-[13px] font-medium transition-colors',
               dividerRow: 'my-5',
@@ -134,7 +134,7 @@ function LoginContent() {
       <div className="relative z-10 flex items-center gap-3 mt-6 flex-wrap justify-center">
         {TRUST_PILLS.map(({ icon: Icon, label }) => (
           <span key={label} className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-slate-400 bg-white/[0.04] border border-white/[0.08] px-3 py-1.5 rounded-full">
-            <Icon className="w-3.5 h-3.5 text-primary" />
+            <Icon className="w-3.5 h-3.5 text-blue-400" />
             {label}
           </span>
         ))}

@@ -54,8 +54,8 @@ export default function NavClient() {
       className={`fixed top-0 left-0 right-0 z-50 h-16 transition-[background-color,border-color,box-shadow,transform] duration-200
         ${hidden ? 'nav-hidden' : 'nav-visible'}
         ${scrolled
-          ? 'border-b border-blue-500/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl'
-          : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
+          ? 'border-b border-white/[0.08] bg-[#08080d]'
+          : 'border-b border-transparent bg-[#08080d]'
         }`}
     >
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">

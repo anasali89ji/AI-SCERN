@@ -18,7 +18,7 @@ const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
 
 // Full static class strings — Tailwind must see these to include in bundle
 const WORD_STYLES = {
-  Text:  { text: 'text-amber',     bg: 'bg-amber'     },
+  Text:  { text: 'text-amber-500',     bg: 'bg-amber'     },
   Image: { text: 'text-blue-400',   bg: 'bg-blue-600'   },
   Audio: { text: 'text-blue-400',      bg: 'bg-blue-500'      },
   Video: { text: 'text-slate-400', bg: 'bg-slate-700' },

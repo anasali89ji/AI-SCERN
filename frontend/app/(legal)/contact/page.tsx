@@ -85,7 +85,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#08080d] text-slate-100">
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d] sm:bg-[#08080d]/80 sm:backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d]">
         <div className="max-w-5xl mx-auto h-full px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-8 rounded-lg object-cover" />
@@ -129,9 +129,9 @@ export default function ContactPage() {
             ))}
 
             {/* Response time */}
-            <div className="p-4 rounded-xl border border-white/[0.08] bg-surface">
+            <div className="p-4 rounded-xl border border-white/[0.08] bg-[#0f0f17]">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-primary" />
+                <Clock className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-semibold text-slate-100">Response Time</span>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed">
@@ -167,7 +167,7 @@ export default function ContactPage() {
             </div>
 
             {/* Social */}
-            <div className="p-4 rounded-xl border border-white/[0.08] bg-surface">
+            <div className="p-4 rounded-xl border border-white/[0.08] bg-[#0f0f17]">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3 font-semibold">Follow Us</p>
               <div className="flex gap-3">
                 {[
@@ -178,7 +178,7 @@ export default function ContactPage() {
                   <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                     title={label}
                     className="w-9 h-9 rounded-lg border border-white/[0.08] bg-[#141420]
-                      hover:border-primary/40 hover:bg-blue-500/5 transition-all flex items-center justify-center">
+                      hover:border-blue-500/50/40 hover:bg-blue-500/5 transition-all flex items-center justify-center">
                     <Icon className="w-4 h-4 text-slate-500" />
                   </a>
                 ))}
