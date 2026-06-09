@@ -436,7 +436,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl font-bold text-white mb-2 tabular-nums">
+                  <div className="text-4xl sm:text-5xl font-bold text-white mb-2 tabular-nums">
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <p className="text-slate-400 text-xs sm:text-sm font-medium">{stat.label}</p>

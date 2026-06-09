@@ -64,7 +64,7 @@ function SignUpContent() {
               Free access
             </span>
           </div>
-          <h1 className="text-white font-bold text-[22px] tracking-tight leading-tight">Create your account</h1>
+          <h1 className="text-white font-bold text-2xl tracking-tight leading-tight">Create your account</h1>
           <p className="text-slate-400 text-[13.5px] mt-1.5 leading-relaxed">Join Aiscern — AI detection, completely free</p>
         </div>
 

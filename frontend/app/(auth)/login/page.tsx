@@ -64,7 +64,7 @@ function LoginContent() {
               Secure sign in
             </span>
           </div>
-          <h1 className="text-white font-bold text-[22px] tracking-tight leading-tight">Welcome back</h1>
+          <h1 className="text-white font-bold text-2xl tracking-tight leading-tight">Welcome back</h1>
           <p className="text-slate-400 text-[13.5px] mt-1.5 leading-relaxed">Sign in to your Aiscern account</p>
         </div>
 
