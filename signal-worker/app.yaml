@@ -1,0 +1,82 @@
+# AI-SCERN Detection Worker — DigitalOcean App Platform Spec
+# Deploy: doctl apps create --spec signal-worker/app.yaml
+# Docs: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+
+name: aiscern-detection-worker
+
+services:
+  - name: detection-worker
+    source_dir: /signal-worker
+
+    github:
+      repo: anasali89ji/AI-SCERN
+      branch: preview/master-bug-fixes
+      deploy_on_push: true
+
+    dockerfile_path: signal-worker/Dockerfile
+
+    # Run the unified v4 entry point
+    run_command: python main.py
+
+    environment_slug: python
+
+    # Sizing:
+    #  basic-xxs = $5/mo,  512MB RAM — may OOM on heavy requests
+    #  basic-xs  = $12/mo, 1GB RAM   — recommended for CPU text + image
+    #  basic-s   = $24/mo, 2GB RAM   — if loading distilgpt2 + opencv in same request
+    instance_count: 1
+    instance_size_slug: basic-xs
+
+    http_port: 8080
+    routes:
+      - path: /
+
+    # Health check — must return 200 quickly; /health does not load any models
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 5
+      failure_threshold: 3
+      success_threshold: 1
+
+    envs:
+      - key: PORT
+        value: "8080"
+
+      - key: LOG_LEVEL
+        value: "INFO"
+
+      - key: ALLOWED_ORIGINS
+        value: "https://aiscern.com,https://www.aiscern.com"
+
+      # Hardware — set to "true" only on GPU-enabled droplets
+      - key: GPU_ENABLED
+        value: "false"
+
+      # DO App Platform uses ephemeral /tmp — safe for model caches
+      - key: MODEL_CACHE_DIR
+        value: "/tmp/aiscern-models"
+
+      # OCR — tessdata is installed by the Dockerfile
+      - key: TESSDATA_PREFIX
+        value: "/usr/share/tesseract-ocr/4.00/tessdata"
+
+      # Request limits
+      - key: MAX_IMAGE_SIZE_MB
+        value: "10"
+      - key: MAX_TEXT_LENGTH
+        value: "10000"
+
+      # Secrets — set these in the DO App Platform dashboard, NOT here
+      - key: DATABASE_URL
+        type: SECRET
+        value: ${DATABASE_URL}
+
+      - key: REDIS_URL
+        type: SECRET
+        value: ${REDIS_URL}
+
+      - key: OPENAI_API_KEY
+        type: SECRET
+        value: ${OPENAI_API_KEY}
