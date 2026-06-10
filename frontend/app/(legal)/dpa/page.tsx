@@ -30,7 +30,7 @@ export default function DpaPage() {
         <div className="mb-10">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl font-black text-text-primary mb-3">Data Processing Agreement</h1>
+              <h1 className="text-4xl font-bold font-display text-text-primary mb-3">Data Processing Agreement</h1>
               <p className="text-text-muted">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
             </div>
             <a

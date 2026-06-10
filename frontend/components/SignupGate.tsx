@@ -94,7 +94,7 @@ export function SignupGate() {
                 height={50}
                 className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]"
               />
-              <h2 className="text-2xl font-black text-text-primary">
+              <h2 className="text-2xl font-semibold font-display text-text-primary">
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
               </h2>
               <p className="text-text-muted text-sm leading-relaxed">

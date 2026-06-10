@@ -69,7 +69,7 @@ export default function NavClient() {
           {[['/#tools', 'Tools'], ['/#how', 'How It Works']].map(([href, label]) => (
             <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
               {label}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-[width] duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
             </a>
           ))}
           <Link href={user ? '/chat' : '/signup'} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
@@ -79,7 +79,7 @@ export default function NavClient() {
           {['/reviews', '/blog', '/pricing'].map(href => (
             <Link key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group capitalize">
               {href.slice(1)}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-[width] duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-blue-500 group-hover:w-full transition-[width] duration-300 rounded-full" />
             </Link>
           ))}
         </div>

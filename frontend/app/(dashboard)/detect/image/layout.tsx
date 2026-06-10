@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Free AI Image Detector — Detect Midjourney, DALL-E & Deepfakes | Aiscern',
     description: 'Upload any image and instantly know if it was AI-generated or a deepfake. 82%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/image',
-    images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Image+Detector&tool=Image&color=%237c3aed', width: 1200, height: 630 }],
+    images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Image+Detector&tool=Image&color=%232563eb', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',

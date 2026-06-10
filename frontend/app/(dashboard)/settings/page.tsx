@@ -14,8 +14,6 @@ import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
 
-
-
 // ── Toggle ───────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -185,15 +183,15 @@ export default function SettingsPage() {
   )
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-2xl 2xl:max-w-3xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-text-primary">Settings</h1>
+          <h1 className="text-xl font-semibold text-text-primary">Settings</h1>
           <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
-          style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+          style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -10,11 +11,9 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
-
-
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-primary', desc: 'Deepfake & AI image detection' },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-blue-500/20 to-blue-500/5', iconColor: 'text-blue-400', desc: 'Deepfake & AI image detection' },
   { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
   { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
   { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
@@ -139,12 +138,12 @@ export default function DashboardPage() {
   const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto space-y-4 sm:space-y-6 2xl:space-y-8 overflow-x-hidden">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
       {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
       {isPulling && (
         <div className="flex items-center justify-center py-2 lg:hidden">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface px-4 py-2 rounded-full border border-border/40">
+          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border/40">
             <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -155,14 +154,14 @@ export default function DashboardPage() {
       )}
 
       {/* ── Welcome ── */}
-      <div>
-        <h1 className="text-xl sm:text-3xl font-black text-text-primary">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl sm:text-3xl font-semibold font-display text-text-primary">
           Welcome back, <span className="gradient-text">{name}</span> 👋
         </h1>
         <p className="text-text-muted text-sm mt-1">
           {totalScans === 0 ? 'Run your first scan below.' : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
         </p>
-      </div>
+      </motion.div>
 
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
@@ -172,16 +171,17 @@ export default function DashboardPage() {
           { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
           { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
         ].map((s, i) => (
-          <div key={s.label}
+          <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
             className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
             <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
               <s.icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
+              <p className="text-base sm:text-2xl font-semibold font-display text-text-primary tabular-nums leading-tight">{s.value}</p>
               <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
@@ -189,7 +189,7 @@ export default function DashboardPage() {
       <div>
         {/* New user onboarding card */}
         {totalScans === 0 && !loading && (
-          <div
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -216,14 +216,15 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
         <div className="flex items-center justify-between mb-3 px-0.5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {TOOLS.map((t, i) => (
-            <div key={t.href}>
+            <motion.div key={t.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.04 }} whileHover={{ y: -2, scale: 1.02 }}>
               <Link href={t.href}
                 className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
                 <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
@@ -234,14 +235,14 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{t.desc}</p>
                 </div>
               </Link>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
 
       {/* ── AI/Human balance bar ── */}
       {totalScans > 0 && (
-        <div
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="bg-surface border border-border/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
@@ -257,7 +258,7 @@ export default function DashboardPage() {
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* ── Recent scans ── */}
@@ -306,7 +307,8 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-2">
             {scans.map((scan, i) => (
-              <div key={scan.id}
+              <motion.div key={scan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, ease: 'easeOut' }}
                 className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
                 <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">
@@ -321,7 +323,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <VerdictBadge verdict={scan.verdict} />
-              </div>
+              </motion.div>
             ))}
           </div>
         )}

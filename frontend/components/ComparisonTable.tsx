@@ -2,7 +2,7 @@
 import { Check, X, Minus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-const FEATURES = [
+const FEATURES: Array<{ name: string } & Record<string, boolean | string>> = [
   { name: 'Text AI Detection',           aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },
   { name: 'Image Deepfake Detection',     aiscern: true,  gptzero: false, turnitin: false,       originality: false },
   { name: 'Audio AI Detection',           aiscern: true,  gptzero: false, turnitin: false,       originality: false },
@@ -43,7 +43,7 @@ export default function ComparisonTable() {
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest">
             Competitive Edge
           </div>
-          <h2 className="text-3xl md:text-4xl font-black">
+          <h2 className="text-3xl md:text-4xl font-bold font-display">
             The <span className="gradient-text">Only Platform</span> That Detects All 4 Media Types
           </h2>
           <p className="text-text-muted max-w-xl mx-auto">
@@ -75,7 +75,7 @@ export default function ComparisonTable() {
                   <td className="p-4 text-sm text-text-secondary">{row.name}</td>
                   {COLS.map(col => (
                     <td key={col.key} className={`p-4 text-center ${col.highlight ? 'bg-primary/5 border-x border-primary/10' : ''}`}>
-                      <Cell v={(row as any)[col.key]} isDetectai={col.highlight} />
+                      <Cell v={row[col.key] as boolean | string} isDetectai={col.highlight} />
                     </td>
                   ))}
                 </tr>

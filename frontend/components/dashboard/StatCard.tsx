@@ -19,7 +19,7 @@ export function StatCard({ title, value, delta, positive = true, icon: Icon, col
           <Icon className="w-4 h-4" style={{ color }} />
         </div>
       </div>
-      <div className={`text-2xl font-black text-text-primary mb-1 ${blurred ? 'blur-md select-none' : ''}`}>{value}</div>
+      <div className={`text-2xl font-semibold font-display text-text-primary mb-1 ${blurred ? 'blur-md select-none' : ''}`}>{value}</div>
       {delta && (
         <p className={`text-xs font-medium ${positive ? 'text-emerald-400' : 'text-rose'}`}>
           {positive ? '↑' : '↓'} {delta} vs last period

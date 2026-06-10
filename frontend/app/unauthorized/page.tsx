@@ -9,7 +9,7 @@ export default function UnauthorizedPage() {
         <div className="w-20 h-20 rounded-3xl bg-rose/10 border border-rose/20 flex items-center justify-center mx-auto mb-6">
           <Lock className="w-10 h-10 text-rose" />
         </div>
-        <h1 className="text-3xl font-black text-text-primary mb-3">Access Restricted</h1>
+        <h1 className="text-3xl font-semibold font-display text-text-primary mb-3">Access Restricted</h1>
         <p className="text-text-muted mb-2">Your current role does not have permission to view this page.</p>
         <p className="text-sm text-text-disabled mb-8">
           Contact <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">contact@aiscern.com</a> to request access.

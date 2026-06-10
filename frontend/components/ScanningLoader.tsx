@@ -52,7 +52,7 @@ export default function ScanningLoader({
         className={`rounded-2xl border border-white/[0.05] bg-surface p-5 space-y-4 ${className}`}
       >
         {/* Header */}
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
           {mediaType ? `Scanning ${mediaType}` : 'Scanning'}…
         </p>
 
@@ -118,7 +118,7 @@ export default function ScanningLoader({
 
                   {/* Upload progress bar */}
                   {isCurrent && s.id === 'uploading' && uploadProgress > 0 && (
-                    <div className="mt-1.5 h-1 bg-white/8 rounded-full overflow-hidden">
+                    <div className="mt-1.5 h-1 bg-white/[0.08] rounded-full overflow-hidden">
                       <motion.div
                         className="h-full rounded-full"
                         style={{ background: s.color }}

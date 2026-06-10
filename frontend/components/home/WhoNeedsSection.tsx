@@ -4,6 +4,7 @@
  * Extracted from app/page.tsx for route-based code splitting.
  * Loaded via next/dynamic only when this section enters the viewport.
  */
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -128,8 +129,11 @@ const WHO_NEEDS = [
 function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
   const CardIcon = card.icon
   return (
-    <div
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-all duration-300 hover:-translate-y-1 who-card"
+    <motion.div
+      initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
+     
+      transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.06] hover:border-white/[0.10] transition-transform duration-500 hover:-translate-y-1.5"
       style={{ boxShadow: `0 0 0 1px ${card.color}18, 0 2px 12px rgba(0,0,0,0.3)` }}
     >
       {/* ── Image panel ── */}
@@ -141,7 +145,11 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           loading="lazy"
           sizes="(max-width: 640px) 338px, (max-width: 1024px) 50vw, 33vw"
           quality={72}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          onError={e => {
+            const el = e.target as HTMLImageElement
+            el.style.display = 'none'
+            // The gradient background underneath shows as fallback
+          }}
         />
         <div className="absolute inset-0" style={{ background: `${card.color}28` }} />
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -160,7 +168,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           style={{ background: `radial-gradient(ellipse at 50% 120%, ${card.glow} 0%, transparent 65%)` }}
         />
         <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3 z-10">
-          <h3 className="text-[13px] sm:text-sm font-black text-white leading-snug drop-shadow-lg">{card.role}</h3>
+          <h3 className="text-[13px] sm:text-sm font-semibold text-white leading-snug drop-shadow-lg">{card.role}</h3>
         </div>
       </div>
 
@@ -214,28 +222,32 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
           <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true" />
         </Link>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 // ─── Section (default export) ──────────────────────────────────────────────
 export default function WhoNeedsSection() {
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 2xl:py-40 px-5 sm:px-8 lg:px-12 2xl:px-16 bg-background border-b border-border/20 [overflow:clip]">
+    <section className="relative py-16 sm:py-24 lg:py-32 px-5 sm:px-8 lg:px-12 bg-background border-b border-border/20 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px] blur-orb" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px] blur-orb" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] rounded-full bg-primary/4 blur-[100px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[400px] rounded-full bg-secondary/4 blur-[100px]" />
       </div>
-      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative z-10">
-        <div className="text-center mb-12 sm:mb-16">
+      <div className="max-w-6xl mx-auto relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12 sm:mb-16"
+        >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-[11px] sm:text-xs font-black uppercase tracking-widest mb-5">
             <Users className="w-3 h-3" />
             Who Uses Aiscern
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl 2xl:text-6xl font-black mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4 leading-tight">
             Used by Professionals <span className="gradient-text">Across Industries</span>
           </h2>
-          <p className="text-text-muted text-sm sm:text-base 2xl:text-lg max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
+          <p className="text-text-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
             <strong className="text-text-secondary">AI-generated content</strong> is a problem in every field.
             Aiscern gives professionals detection tools to identify it —{' '}
             <strong className="text-primary">free tier available</strong>, across all four modalities.
@@ -247,15 +259,19 @@ export default function WhoNeedsSection() {
               </span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5 2xl:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5">
           {WHO_NEEDS.map((card, i) => (
             <WhoNeedsCard key={card.role} card={card} i={i} />
           ))}
         </div>
 
-        <div className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+        >
           <Link href="/detect/text"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] transition-[transform,background-color,box-shadow] duration-200">
             <Brain className="w-4 h-4" />
@@ -266,7 +282,7 @@ export default function WhoNeedsSection() {
             <Eye className="w-4 h-4" />
             See How It Works
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

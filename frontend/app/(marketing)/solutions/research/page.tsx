@@ -1,53 +1,56 @@
 import type { Metadata } from 'next'
+import { Microscope } from 'lucide-react'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Microscope, Brain, FileSearch, Layers, BarChart3, Shield, CheckCircle, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Academic Research — Aiscern',
-  description: 'Validate authenticity of research papers, datasets, and experiment logs. Maintain scientific integrity with ensemble AI detection and API access.',
-  openGraph: {
-    title: 'AI Detection for Academic Research — Aiscern',
-    url: 'https://aiscern.com/solutions/research',
-    siteName: 'Aiscern',
-  },
+  title: 'AI Detection for Research & Academia | Aiscern',
+  description: 'Verify paper authenticity, validate citations and detect AI-generated sections before journal submission.',
 }
 
-export default function ResearchPage() {
+export default function ResearchSolutionPage() {
   return (
     <SolutionPage
-      industry="Academic Research"
-      tagline="Uphold Scientific Integrity in the AI Age"
-      description="AI-generated research content threatens peer review, reproducibility, and scientific trust. Aiscern helps researchers, journal editors, and institutions validate the authenticity of submitted work before it enters the scientific record."
-      heroIcon={<Microscope className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      accentColor="cyan"
-      ctaLabel="Start Free Research Account"
-      problemTitle="Scientific Integrity Under Pressure"
-      painPoints={[
-        { title: 'AI-generated papers with hallucinated citations', desc: 'LLMs generate plausible-sounding but non-existent citations. Published papers with hallucinated references undermine evidence-based research practices.' },
-        { title: 'Synthetic datasets in empirical research', desc: 'AI-generated datasets that do not reflect real-world phenomena can produce misleading research conclusions that persist in literature long after publication.' },
-        { title: 'Peer review overload enabling AI submission proliferation', desc: 'Overwhelmed reviewers cannot manually detect AI-generated papers. Automated pre-screening is now a practical necessity for high-volume journals.' },
-        { title: 'Data fabrication in experiment logs and lab notes', desc: 'AI assistance in generating experiment logs, results tables, and analysis text blurs the line between AI-assisted writing and outright fabrication.' },
+      industry="Research"
+      tagline="Validate Research. Protect Scientific Integrity."
+      description="Aiscern helps researchers, journal editors and academic institutions check papers for AI-generated passages, hallucinated citations and synthetic data narratives before they enter the scientific record."
+      icon={<Microscope className="w-16 h-16" />}
+      color="#0891b2"
+      heroImage="/solutions/hero-research.jpg"
+      actionImage="/solutions/action-research.jpg"
+      stats={[
+        { value: '~85%', label: 'Academic text accuracy' },
+        { value: '3+',   label: 'Model ensemble' },
+        { value: 'PDF',  label: 'Upload supported' },
       ]}
-      features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Research Paper Analysis', desc: 'Full-document ensemble detection on academic papers with ≥96% AUC. Section-level confidence breakdown for targeted review.' },
-        { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Heatmap', desc: 'Identify which specific paragraphs and sections are AI-flagged — crucial for peer reviewers assessing partial AI use.' },
-        { icon: <Layers className="w-5 h-5" />, title: 'Batch Journal Submission Screening', desc: 'Process entire submission batches. API integration available for journal management systems (OJS, ScholarOne, Editorial Manager).' },
-        { icon: <BarChart3 className="w-5 h-5" />, title: 'Statistical Confidence Reporting', desc: 'Detailed confidence intervals and model breakdown — the kind of methodological transparency academic contexts demand.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trail for IRB', desc: 'Timestamped reports with scan IDs for institutional review board documentation and research integrity committees.' },
-        { icon: <Lock className="w-5 h-5" />, title: 'Data Privacy for Research', desc: 'Submitted manuscripts are processed ephemerally. We do not train on your research content or retain it beyond the session.' },
+      painPoints={[
+        {
+          problem: 'AI-hallucinated citations appearing in literature reviews without authors noticing.',
+          solution: 'Text detection flags suspiciously fluent AI prose that may contain fabricated references.',
+        },
+        {
+          problem: 'Graduate students submitting AI-drafted thesis sections without disclosure.',
+          solution: 'Sentence-level heatmap pinpoints exactly which paragraphs are likely AI-generated.',
+        },
+        {
+          problem: 'Journal editors unable to screen high submission volumes for AI-generated content.',
+          solution: 'Batch upload PDFs for rapid screening before editorial assignment.',
+        },
+        {
+          problem: 'No defensible record when authors dispute AI-use allegations post-publication.',
+          solution: 'Timestamped, permalinked reports for editorial records and retraction investigations.',
+        },
       ]}
       useCases={[
-        { title: 'Journal Pre-Submission Screening', desc: 'A scientific journal integrates Aiscern\'s API into its submission portal. Every paper triggers automated AI screening before assignment to peer reviewers, with a dashboard showing confidence scores across the submission queue.' },
-        { title: 'Institutional Research Integrity Audits', desc: 'A university research integrity office conducts periodic audits of funded research outputs, using Aiscern to flag submissions for closer review by the standing committee.' },
-        { title: 'Grant Application Verification', desc: 'A funding body screens research proposals during evaluation to identify AI-generated project descriptions, ensuring that funded research reflects genuine investigator thinking.' },
+        { title: 'Pre-Submission Paper Check', desc: 'Authors verify their own work before submitting to journals or conferences.' },
+        { title: 'Journal Editorial Screening', desc: 'Editors batch-screen incoming manuscripts for AI-generated content at first review.' },
+        { title: 'Thesis & Dissertation Review', desc: 'Examine graduate research chapter by chapter with sentence-level detail.' },
+        { title: 'Literature Review Validation', desc: 'Detect AI-generated background sections that may contain hallucinated citations.' },
+        { title: 'Grant Proposal Audit', desc: 'Verify research narratives and methodology descriptions in funding applications.' },
+        { title: 'Conference Paper Screening', desc: 'Programme committees scan submissions for AI-generated content before acceptance.' },
       ]}
-      faqs={[
-        { q: 'How does Aiscern handle domain-specific scientific writing?', a: 'Scientific writing has domain-specific vocabularies and citation patterns. Our ensemble is trained on diverse academic corpora. Highly technical domain-specific writing may show wider confidence intervals. We recommend interpreting uncertain-zone scores (39–61%) with additional human review.' },
-        { q: 'Can Aiscern detect AI use in only parts of a paper?', a: 'Yes — our sentence-level analysis highlights individual paragraphs and sentences that score above the AI threshold. This is particularly useful for papers where AI was used to generate introductions or discussion sections while methods and results are genuine.' },
-        { q: 'Does detection work on preprints and arXiv-style papers?', a: 'Yes. Aiscern analyzes the text content of papers regardless of their publication status. PDF upload is supported — text is extracted and analyzed through the full ensemble.' },
-        { q: 'What about legitimate AI-assisted writing tools used by researchers?', a: 'We distinguish between AI-assisted writing (grammar, clarity editing — typically scores 39–61%) and AI-generated content (≥62%). Many journals now require disclosure of AI assistance; Aiscern helps quantify the extent of that assistance.' },
-        { q: 'Is there academic pricing available?', a: 'Yes. Educational institutions and non-commercial research organizations qualify for discounted plans. Contact us at /contact with your institutional email for academic pricing details.' },
-      ]}
+      ctaHref="/detect/text"
+      ctaLabel="Scan a Research Paper"
+      toolName="AI Text Detector"
     />
   )
 }

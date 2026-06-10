@@ -76,7 +76,7 @@ export function OnboardingWizard() {
     <AnimatePresence>
       <motion.div
         initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-        className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4"
+        className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
       >
         <motion.div
           key={step}
@@ -85,22 +85,22 @@ export function OnboardingWizard() {
           className="w-full max-w-lg bg-[#07070d] border border-[#1e1e35] rounded-3xl p-8 shadow-2xl relative overflow-hidden"
         >
           {/* Top gradient */}
-          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#2563eb)` }} />
+          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#0891b2)` }} />
 
           {/* Progress dots */}
           <div className="flex justify-center gap-2 mb-8">
             {STEPS.map((s,i) => (
-              <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stepIdx ? 'bg-[#2563eb] w-8' : 'bg-[#1e1e35] w-4'}`} />
+              <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stepIdx ? 'bg-blue-600 w-8' : 'bg-[#1e1e35] w-4'}`} />
             ))}
           </div>
 
           {/* STEP: welcome */}
           {step === 'welcome' && (
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
+              <h2 className="text-2xl font-semibold font-display text-white">Welcome to Aiscern</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 The most accurate AI content detection platform. Let's get you set up in 30 seconds.
               </p>
@@ -108,11 +108,11 @@ export function OnboardingWizard() {
                 {[['Accurate','Multi-model ensemble'],['Fast','Results in seconds'],['Private','Files never stored']].map(([h,s]) => (
                   <div key={h} className="bg-[#ffffff05] border border-[#1e1e35] rounded-xl p-3 text-center">
                     <p className="text-xs font-bold text-white">{h}</p>
-                    <p className="text-[10px] text-[#4a5568] mt-0.5">{s}</p>
+                    <p className="text-[10px] text-text-muted mt-0.5">{s}</p>
                   </div>
                 ))}
               </div>
-              <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 Get Started <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -122,8 +122,8 @@ export function OnboardingWizard() {
           {step === 'modalities' && (
             <div className="space-y-5">
               <div className="text-center">
-                <h2 className="text-xl font-black text-white">What will you detect?</h2>
-                <p className="text-[#4a5568] text-xs mt-1">Select all that apply — you can use all of them anytime</p>
+                <h2 className="text-xl font-semibold text-white">What will you detect?</h2>
+                <p className="text-text-muted text-xs mt-1">Select all that apply — you can use all of them anytime</p>
               </div>
               <div className="space-y-2">
                 {MODALITY_OPTIONS.map(m => {
@@ -135,18 +135,18 @@ export function OnboardingWizard() {
                       className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-[#2563eb50] bg-[#2563eb12]' : 'border-[#1e1e35] bg-[#ffffff03] hover:border-[#2a2a45]'}`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[#2563eb30]' : 'bg-[#ffffff08]'}`}>
-                        <Icon className={`w-4 h-4 ${active ? 'text-[#60a5fa]' : 'text-[#4a5568]'}`} />
+                        <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-text-muted'}`} />
                       </div>
                       <div className="flex-1">
                         <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-[#94a3b8]'}`}>{m.label}</p>
-                        <p className="text-[11px] text-[#4a5568]">{m.sub}</p>
+                        <p className="text-[11px] text-text-muted">{m.sub}</p>
                       </div>
-                      {active && <Check className="w-4 h-4 text-[#60a5fa] flex-shrink-0" />}
+                      {active && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                     </button>
                   )
                 })}
               </div>
-              <button onClick={next} className="w-full py-3.5 rounded-2xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+              <button onClick={next} className="w-full py-3.5 rounded-2xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 Continue <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
             </div>
@@ -157,21 +157,21 @@ export function OnboardingWizard() {
             <div className="space-y-5">
               <div className="text-center">
                 <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
-                  <User className="w-5 h-5 text-[#60a5fa]" />
+                  <User className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-black text-white">Choose a username</h2>
-                <p className="text-[#4a5568] text-xs mt-1">This is optional — you can set it later in your profile</p>
+                <h2 className="text-xl font-semibold text-white">Choose a username</h2>
+                <p className="text-text-muted text-xs mt-1">This is optional — you can set it later in your profile</p>
               </div>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">@</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm">@</span>
                 <input
                   value={username}
                   onChange={e => checkUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
                   placeholder="yourname"
                   maxLength={30}
-                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#2563eb] transition-colors"
+                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-blue-600 transition-colors"
                 />
-                {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-[#2563eb] animate-spin" />}
+                {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-blue-600 animate-spin" />}
                 {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />}
                 {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-400" />}
               </div>
@@ -182,7 +182,7 @@ export function OnboardingWizard() {
                   <div className="flex flex-wrap gap-2">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
-                        className="px-3 py-1 rounded-lg border border-[#2563eb30] bg-[#2563eb12] text-[#60a5fa] text-xs hover:bg-[#2563eb20]">
+                        className="px-3 py-1 rounded-lg border border-[#2563eb30] bg-[#2563eb12] text-primary text-xs hover:bg-[#2563eb20]">
                         @{s}
                       </button>
                     ))}
@@ -195,7 +195,7 @@ export function OnboardingWizard() {
                 </button>
                 <button onClick={next} disabled={uStatus === 'checking'}
                   className="flex-1 py-3 rounded-2xl font-bold text-sm text-white disabled:opacity-50"
-                  style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                  style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                   Continue
                 </button>
               </div>
@@ -208,11 +208,11 @@ export function OnboardingWizard() {
               <motion.div
                 animate={{ scale:[1,1.05,1] }} transition={{ duration:1.5, repeat:Infinity }}
                 className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
-                style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}
+                style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}
               >
                 <Zap className="w-8 h-8 text-white" />
               </motion.div>
-              <h2 className="text-2xl font-black text-white">You're all set!</h2>
+              <h2 className="text-2xl font-semibold font-display text-white">You're all set!</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 Your account is ready. Start with a free scan — no upload required for text detection.
               </p>
@@ -226,14 +226,14 @@ export function OnboardingWizard() {
                     <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-white">{h} </span>
-                      <span className="text-xs text-[#4a5568]">{s}</span>
+                      <span className="text-xs text-text-muted">{s}</span>
                     </div>
                   </div>
                 ))}
               </div>
               <button onClick={finish} disabled={saving}
                 className="w-full py-3.5 rounded-2xl font-bold text-sm text-white disabled:opacity-70 transition-all hover:scale-[1.02]"
-                style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                style={{ background:'linear-gradient(135deg,#2563eb,#0891b2)' }}>
                 {saving ? 'Setting up…' : 'Go to Dashboard →'}
               </button>
             </div>

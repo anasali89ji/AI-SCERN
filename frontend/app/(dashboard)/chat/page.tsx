@@ -1,11 +1,16 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
 import { ToolCard, TOOL_META } from '@/components/ToolCard'
 import dynamic from 'next/dynamic'
+
+// ── Post-session component — only shown after first message ───────────────────
+const LazyReviewSuggestion = dynamic(
+  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
+  { ssr: false }
+)
 
 const STORAGE_KEY = 'aiscern_chats_v2'
 
@@ -48,7 +53,7 @@ interface Chat        { id: string; title: string; messages: Message[]; createdA
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
-    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 overflow-hidden border border-white/[0.06]`}>
+    <div className={`${cls} bg-black flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/10 overflow-hidden border border-white/[0.06]`}>
       <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
     </div>
   )
@@ -67,7 +72,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
     )
   }
   return (
-    <div className={`${cls} bg-gradient-to-br from-primary to-cyan flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
+    <div className={`${cls} bg-gradient-to-br from-blue-700 to-cyan-800 flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
       {initials}
     </div>
   )
@@ -123,18 +128,14 @@ function Markdown({ content }: { content: string }) {
   let html = ''
   let inCode = false
   let codeLines: string[] = []
-  let inList = false
-
-  const closeList = () => { if (inList) { html += '</ul>'; inList = false } }
 
   for (const line of lines) {
     const codeMatch = line.match(/^```(\w+)?$/)
     if (codeMatch) {
-      closeList()
       if (!inCode) { inCode = true; codeLines = [] }
       else {
         const escaped = codeLines.join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        html += `<pre class="bg-black/40 border border-white/[0.07] rounded-xl p-3 my-3 overflow-x-auto text-xs font-mono text-blue-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
+        html += `<pre class="bg-black/50 border border-white/8 rounded-xl p-4 my-3 overflow-x-auto text-xs font-mono text-emerald-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
         inCode = false; codeLines = []
       }
       continue
@@ -142,43 +143,25 @@ function Markdown({ content }: { content: string }) {
     if (inCode) { codeLines.push(line); continue }
 
     let l = line
-    // inline code
     l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
-      `<code class="px-1.5 py-0.5 rounded-md bg-primary/15 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
-    // bold / italic
+      `<code class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+    if (l.startsWith('### ')) { html += `<h3 class="text-sm font-bold text-white mt-5 mb-1.5">${l.slice(4)}</h3>`; continue }
+    if (l.startsWith('## '))  { html += `<h2 class="text-base font-bold text-white mt-5 mb-2">${l.slice(3)}</h2>`; continue }
+    if (l.startsWith('# '))   { html += `<h1 class="text-lg font-bold text-white mt-5 mb-3">${l.slice(2)}</h1>`; continue }
+    if (l.startsWith('- '))   { html += `<li class="flex gap-2 items-start py-0.5"><span class="mt-2 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span><span>${l.slice(2)}</span></li>`; continue }
+    if (/^\d+\. /.test(l)) {
+      const m = l.match(/^(\d+)\. (.+)/)
+      if (m) { html += `<li class="flex gap-2 items-start py-0.5"><span class="text-blue-400 text-xs font-mono mt-0.5 w-4 shrink-0">${m[1]}.</span><span>${m[2]}</span></li>`; continue }
+    }
     l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
-    // links
-    l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2 hover:text-blue-300">$1</a>')
-
-    if (l.startsWith('### ')) { closeList(); html += `<h3 class="text-sm font-bold text-white mt-4 mb-1.5 leading-snug">${l.slice(4)}</h3>`; continue }
-    if (l.startsWith('## '))  { closeList(); html += `<h2 class="text-base font-bold text-white mt-5 mb-2 leading-snug">${l.slice(3)}</h2>`; continue }
-    if (l.startsWith('# '))   { closeList(); html += `<h1 class="text-lg font-bold text-white mt-5 mb-2 leading-snug">${l.slice(2)}</h1>`; continue }
-
-    // bullet: -, *, •
-    const bulletMatch = l.match(/^[\-\*•]\s+(.+)/)
-    if (bulletMatch) {
-      if (!inList) { html += '<ul class="my-1.5 space-y-1">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
-      continue
-    }
-    // numbered list
-    const numMatch = l.match(/^(\d+)[.):]\s+(.+)/)
-    if (numMatch) {
-      if (!inList) { html += '<ol class="my-1.5 space-y-1 list-none">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="text-primary/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
-      continue
-    }
-
-    closeList()
-    if (l.trim() === '') { html += '<div class="h-2"></div>'; continue }
-    html += `<p class="leading-relaxed">${l}</p>`
+    l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">$1</a>')
+    if (l === '') { html += '<br/>'; continue }
+    html += `<span>${l}</span><br/>`
   }
-  closeList()
 
   return (
-    <div className="text-sm leading-relaxed text-gray-300 space-y-0.5"
+    <div className="text-sm leading-relaxed text-gray-300"
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
     />
   )
@@ -187,40 +170,13 @@ function Markdown({ content }: { content: string }) {
 // ── Animated typing dots (shown while streaming but no text yet) ────────────
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-3.5">
+    <div className="flex items-center gap-1 px-4 py-3">
       {[0,1,2].map(i => (
-        <span key={i}
-          className="w-2 h-2 rounded-full bg-primary/60"
-          style={{ animation: `aria-dot-bounce 1.4s cubic-bezier(0.4,0,0.6,1) ${i * 0.18}s infinite` }} />
+        <span key={i} className="w-1.5 h-1.5 rounded-full bg-blue-400/70"
+          style={{ animation: `aria-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
       ))}
     </div>
   )
-}
-
-// ── Smooth token-by-token fade-in for streaming text ──────────────────────
-function StreamingMessage({ content }: { content: string }) {
-  const [displayed, setDisplayed] = useState('')
-  const [target, setTarget] = useState(content)
-  const rafRef = useRef<number>(0)
-
-  useEffect(() => { setTarget(content) }, [content])
-
-  useEffect(() => {
-    if (displayed.length >= target.length) return
-    const step = () => {
-      setDisplayed(prev => {
-        if (prev.length >= target.length) return prev
-        // Reveal in small chunks for smooth feel
-        const chunk = Math.min(4, target.length - prev.length)
-        return target.slice(0, prev.length + chunk)
-      })
-      rafRef.current = requestAnimationFrame(step)
-    }
-    rafRef.current = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [target, displayed.length])
-
-  return <Markdown content={displayed} />
 }
 
 // ── Message bubble ─────────────────────────────────────────────────────────
@@ -242,7 +198,6 @@ function MessageBubble({
   return (
     <div
       className={`flex gap-2 sm:gap-3 group aria-msg-in ${isUser ? 'justify-end' : 'justify-start'}`}
-      style={{ animation: 'aria-msg-in 0.22s cubic-bezier(0.25,0.46,0.45,0.94) both' }}
     >
       {/* ARIA avatar — Aiscern logo */}
       {!isUser && (
@@ -251,7 +206,7 @@ function MessageBubble({
         </div>
       )}
 
-      <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[78%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-1 max-w-[88%] sm:max-w-[82%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
         {/* Attachments */}
         {msg.attachments?.map((att,i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-white/[0.06] max-w-[240px] sm:max-w-[280px]">
@@ -279,7 +234,7 @@ function MessageBubble({
 
         {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
         {!isUser && msg.isThinking && !msg.content && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05] text-xs text-gray-500">
             <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -290,7 +245,7 @@ function MessageBubble({
 
         {/* Typing dots while waiting for first token */}
         {showTypingDots && (
-          <div className="rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05]">
+          <div className="rounded-2xl rounded-bl-sm bg-[#131328] border border-white/[0.05]">
             <TypingDots />
           </div>
         )}
@@ -299,18 +254,16 @@ function MessageBubble({
         {(msg.content || (msg.isStreaming && msg.content)) && (
           <div className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
-              ? 'bg-gradient-to-br from-primary to-cyan text-white rounded-br-sm shadow-lg shadow-primary/15'
-              : 'bg-[#0d1117] border border-white/[0.05] rounded-bl-sm'
+              ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-br-sm shadow-lg shadow-blue-500/15'
+              : 'bg-[#131328] border border-white/[0.05] rounded-bl-sm'
           }`}>
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
-              : msg.isStreaming
-                ? <StreamingMessage content={msg.content} />
-                : <Markdown content={msg.content} />
+              : <Markdown content={msg.content} />
             }
             {/* Blinking cursor while streaming */}
             {msg.isStreaming && msg.content && (
-              <span className="inline-block w-0.5 h-[14px] bg-primary/80 animate-[blink_1s_ease-in-out_infinite] ml-0.5 align-middle rounded-full" />
+              <span className="inline-block w-0.5 h-4 bg-blue-400 animate-pulse ml-0.5 align-middle rounded-full" />
             )}
           </div>
         )}
@@ -377,41 +330,54 @@ export default function ChatPage() {
   const [hydrated, setHydrated]         = useState(false)
   const [searchQuery, setSearchQuery]   = useState('')
   const [showSearch, setShowSearch]     = useState(false)
+  // FIX B.8: Voice input state
+  const [isListening, setIsListening]   = useState(false)
+  const recognitionRef = useRef<any>(null)
+  const endRef       = useRef<HTMLDivElement>(null)
   const taRef        = useRef<HTMLTextAreaElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const activeChat   = chats.find(c=>c.id===activeChatId)
 
-  const router = useRouter()
+  // FIX B.8: Start/stop Web Speech API voice recognition
+  const toggleVoice = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return   // browser doesn't support it — button hidden via feature detect
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      return
+    }
+
+    const rec = new SpeechRecognition()
+    rec.lang          = 'en-US'
+    rec.interimResults = true
+    rec.maxAlternatives = 1
+    recognitionRef.current = rec
+
+    rec.onstart  = () => setIsListening(true)
+    rec.onend    = () => setIsListening(false)
+    rec.onerror  = () => setIsListening(false)
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results as SpeechRecognitionResultList)
+        .map((r: any) => r[0].transcript)
+        .join('')
+      setInput(transcript)
+      // Auto-submit on final result
+      if (e.results[e.results.length - 1].isFinal) {
+        rec.stop()
+        setTimeout(() => send(transcript), 100)
+      }
+    }
+    rec.start()
+  }, [isListening])
 
   useEffect(() => {
     const saved = loadChats()
     if (saved.length > 0) { setChats(saved); setActiveChatId(saved[0].id) }
     setHydrated(true)
-
-    // Handle hash-based chat selection from sidebar nav
-    const checkHash = () => {
-      const hash = window.location.hash.slice(1)
-      if (hash && hash.startsWith('c')) {
-        setActiveChatId(hash)
-        // Clean the hash from URL without navigation
-        window.history.replaceState(null, '', '/chat')
-      }
-    }
-    checkHash()
-    window.addEventListener('hashchange', checkHash)
-    return () => window.removeEventListener('hashchange', checkHash)
   }, [])
-
-  // Scroll to bottom when switching chats
-  useEffect(() => {
-    if (activeChatId) {
-      setTimeout(() => {
-        const el = messagesAreaRef.current
-        if (el) el.scrollTop = el.scrollHeight
-      }, 50)
-    }
-  }, [activeChatId])
 
   // Fix 4.1: iOS keyboard avoidance — visualViewport shrinks when keyboard opens
   // Without this, the keyboard covers the chat input on iPhone Safari
@@ -427,44 +393,12 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => { if (!hydrated) return; saveChats(chats) }, [chats, hydrated])
-  // Smart auto-scroll: only scroll when user is near bottom, or on new message
-  const messagesAreaRef = useRef<HTMLDivElement>(null)
-  const isNearBottom = useCallback(() => {
-    const el = messagesAreaRef.current
-    if (!el) return true
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
-  }, [])
-
-  const scrollToBottom = useCallback((force = false) => {
-    const el = messagesAreaRef.current
-    if (!el) return
-    if (force || isNearBottom()) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-    }
-  }, [isNearBottom])
-
-  // Scroll on new message added (force) or streaming chunk only if near bottom
-  const prevMsgCount = useRef(0)
-  useEffect(() => {
-    const count = activeChat?.messages.length ?? 0
-    const isNew = count > prevMsgCount.current
-    prevMsgCount.current = count
-    if (isNew) {
-      // New message — always scroll
-      setTimeout(() => scrollToBottom(true), 30)
-    } else {
-      // Streaming chunk — only scroll if already near bottom
-      scrollToBottom(false)
-    }
-  }, [activeChat?.messages.length, activeChat?.messages[activeChat?.messages.length-1]?.content?.length, scrollToBottom])
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}) }, [activeChat?.messages.length, activeChat?.messages[activeChat?.messages.length-1]?.content?.length])
 
   useEffect(() => {
     const ta = taRef.current; if (!ta) return
-    // Reset then re-measure — use requestAnimationFrame to avoid layout thrash
-    requestAnimationFrame(() => {
-      ta.style.height = 'auto'
-      ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
-    })
+    ta.style.height = 'auto'
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
   }, [input])
 
   const now = () => new Date().toISOString()
@@ -610,7 +544,7 @@ export default function ChatPage() {
     : chats
 
   if (!hydrated) return (
-    <div className="flex h-[calc(100dvh-4rem)] items-center justify-center bg-[#080c14]">
+    <div className="flex h-[calc(100dvh-4rem)] items-center justify-center bg-[#09090f]">
       <div className="text-gray-700 text-sm">Loading conversations…</div>
     </div>
   )
@@ -619,7 +553,8 @@ export default function ChatPage() {
   const userName     = user?.fullName || user?.firstName || user?.username
 
   return (
-    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] bg-[#080c14] overflow-hidden">
+    <>
+    <div ref={chatContainerRef} className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#09090f]">
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/70 z-20 lg:hidden" onClick={()=>setSidebarOpen(false)} />
@@ -628,11 +563,11 @@ export default function ChatPage() {
       {/* ── Sidebar ── */}
       <aside className={`
         fixed lg:relative z-30 lg:z-auto w-[15.5rem] sm:w-[17rem] h-full flex flex-col
-        bg-[#0d1117] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
+        bg-[#0c0c1a] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
-          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-cyan text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary/20">
+          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-blue-500/15">
             <Ico.Plus /><span>New conversation</span>
           </button>
           <button onClick={()=>setShowSearch(s=>!s)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] text-xs transition-all">
@@ -642,7 +577,7 @@ export default function ChatPage() {
             <input
               value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
               placeholder="Search…" autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-primary/40"
+              className="w-full px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-blue-500/40"
             />
           )}
         </div>
@@ -692,13 +627,13 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#080c14]">
+        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl">
           <button onClick={()=>setSidebarOpen(s=>!s)} className="lg:hidden p-2 rounded-lg hover:bg-white/8 text-gray-500 hover:text-white transition-colors shrink-0">
             <Ico.Menu />
           </button>
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 overflow-hidden">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shadow-lg shadow-blue-500/10 shrink-0 overflow-hidden">
               <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
             </div>
             <div className="min-w-0">
@@ -715,7 +650,18 @@ export default function ChatPage() {
                 <Ico.Download />
               </button>
             )}
-
+            <div className="hidden sm:flex items-center gap-1">
+              {(['Text','Image','Audio','Video'] as const).map(l => {
+                const icons = { Text:Ico.FileText, Image:Ico.Image, Audio:Ico.Music, Video:Ico.Video }
+                const I = icons[l]
+                return (
+                  <div key={l} className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-white/[0.04] text-gray-600 border border-white/[0.06]">
+                    <span className="text-gray-500"><I /></span>
+                    <span className="hidden md:inline">{l}</span>
+                  </div>
+                )
+              })}
+            </div>
             {/* User avatar in header */}
             {user && (
               <div className="ml-1">
@@ -726,20 +672,20 @@ export default function ChatPage() {
         </header>
 
         {/* Messages area */}
-        <div ref={messagesAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
+        <div className="flex-1 overflow-y-auto">
           {!activeChat || activeChat.messages.length===0 ? (
-            <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl 2xl:max-w-3xl mx-auto w-full">
+            <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
-                <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
+                <div className="w-14 h-14 rounded-2xl bg-black border border-white/[0.06] flex items-center justify-center shadow-2xl shadow-blue-500/10 overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#080c14] flex items-center justify-center">
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#09090f] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse" />
                 </div>
               </div>
 
-              <h1 className="text-2xl font-black text-white mb-0.5 tracking-tight">ARIA</h1>
+              <h1 className="text-2xl font-semibold font-display text-white mb-0.5 tracking-tight">ARIA</h1>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">Aiscern AI Detection Assistant</p>
               <p className="text-gray-600 text-xs sm:text-sm text-center mb-4 max-w-sm leading-relaxed">
                 Ask anything about AI detection, upload media for deepfake analysis, or explore Aiscern's capabilities.
@@ -760,9 +706,9 @@ export default function ChatPage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {SUGGESTIONS.map(({Ic: I, text, cat})=>(
                   <button key={text} onClick={()=>send(text)}
-                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/20 text-left transition-all group cursor-pointer"
+                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-blue-500/20 text-left transition-all group cursor-pointer"
                   >
-                    <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary/70 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors mt-0.5">
+                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400/70 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors mt-0.5">
                       <I />
                     </div>
                     <div className="min-w-0">
@@ -774,7 +720,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl 2xl:max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
+            <div className="max-w-3xl mx-auto w-full px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-6">
               {activeChat.messages.map(msg=>(
                 <MessageBubble
                   key={msg.id} msg={msg}
@@ -784,14 +730,14 @@ export default function ChatPage() {
                   userName={userName}
                 />
               ))}
-              <div className="h-4" />
+              <div ref={endRef} className="h-4" />
             </div>
           )}
         </div>
 
         {/* Input bar */}
-        <div className="shrink-0 border-t border-white/[0.06] bg-[#080c14] px-3 sm:px-4 py-2.5 sm:py-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
-          <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
+        <div className="shrink-0 border-t border-white/[0.06] bg-[#09090f]/80 backdrop-blur-xl px-3 sm:px-4 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <div className="max-w-3xl mx-auto">
 
             {attachments.length>0 && (
               <div className="flex flex-wrap gap-2 mb-2.5">
@@ -805,44 +751,61 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-2 px-3 py-3 rounded-2xl border border-white/[0.09] bg-[#0d1117] focus-within:border-primary/50 focus-within:shadow-xl focus-within:shadow-primary/8 transition-all duration-200">
+            <div className="flex items-end gap-1.5 sm:gap-2 px-2 py-2 rounded-2xl border border-white/[0.07] bg-[#111128] focus-within:border-blue-500/40 focus-within:shadow-lg focus-within:shadow-blue-500/8 transition-all">
               <button onClick={()=>fileRef.current?.click()}
-                className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
+                className="p-2 rounded-xl text-gray-700 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0 mb-0.5"
                 title="Attach image, audio or video">
                 <Ico.Clip />
               </button>
               <input ref={fileRef} type="file" className="hidden" multiple accept="image/*,audio/*,video/*,.txt,.pdf"
                 onChange={e=>handleFiles(e.target.files)} />
 
+              {/* FIX B.8: Voice input — hidden if Web Speech API unavailable */}
+              {typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) && (
+                <button onClick={toggleVoice}
+                  title={isListening ? 'Stop recording' : 'Voice input'}
+                  className={`p-2 rounded-xl transition-all shrink-0 mb-0.5 ${
+                    isListening
+                      ? 'text-rose-400 bg-rose-500/15 animate-pulse'
+                      : 'text-gray-700 hover:text-gray-400 hover:bg-white/8'
+                  }`}>
+                  <Ico.Mic />
+                </button>
+              )}
+
               <textarea
                 ref={taRef} value={input}
                 onChange={e=>setInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
-                placeholder='Ask anything, or upload media to analyze…'
+                placeholder={isListening ? 'Listening…' : 'Ask anything, or upload media to analyze…'}
                 rows={1}
                 inputMode="text"
                 enterKeyHint="send"
-                className="flex-1 bg-transparent text-sm text-gray-200 placeholder:text-gray-600 resize-none outline-none leading-relaxed py-2 min-h-[40px] max-h-[120px]"
+                className="flex-1 bg-transparent text-sm text-gray-200 placeholder:text-gray-700 resize-none outline-none leading-relaxed py-2 min-h-[36px] max-h-[160px]"
               />
 
               {loading
-                ? <button onClick={stop} className="p-2.5 rounded-xl bg-red-500/12 text-red-400 hover:bg-red-500/20 transition-colors shrink-0 active:scale-95" title="Stop"><Ico.Stop /></button>
+                ? <button onClick={stop} className="p-2 rounded-xl bg-red-500/12 text-red-400 hover:bg-red-500/20 transition-colors shrink-0 mb-0.5 active:scale-95" title="Stop"><Ico.Stop /></button>
                 : <button
                     onClick={()=>send()}
                     disabled={!input.trim()&&!attachments.length}
-                    className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-cyan text-white disabled:opacity-25 hover:opacity-90 active:scale-95 transition-all shrink-0 shadow-lg shadow-primary/20"
+                    className="p-2 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 text-white disabled:opacity-25 hover:opacity-90 active:scale-95 transition-all shrink-0 mb-0.5 shadow-lg shadow-blue-500/15"
                   >
                     <Ico.Send />
                   </button>
               }
             </div>
 
-            <p className="text-center text-[10px] text-gray-800 mt-1.5 select-none hidden sm:block">
+            <p className="text-center text-[10px] sm:text-xs text-gray-800 mt-2 select-none">
               Shift+Enter for new line · Supports image, audio, video up to 20 MB · Conversations auto-saved
             </p>
           </div>
         </div>
       </main>
     </div>
+    <div className="px-4 pb-4 max-w-full">
+      <LazyReviewSuggestion toolName="AI Detection Assistant" />
+    </div>
+  </>
   )
 }

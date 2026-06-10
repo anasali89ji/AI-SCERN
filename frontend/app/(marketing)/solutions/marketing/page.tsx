@@ -1,53 +1,56 @@
 import type { Metadata } from 'next'
+import { Megaphone } from 'lucide-react'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Megaphone, Eye, Brain, Layers, BarChart3, Shield, FileSearch, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Marketing & Brand — Aiscern',
-  description: 'Audit UGC, influencer deliverables, and agency content for AI generation. Protect your brand voice with ensemble-based detection.',
-  openGraph: {
-    title: 'AI Detection for Marketing — Aiscern',
-    url: 'https://aiscern.com/solutions/marketing',
-    siteName: 'Aiscern',
-  },
+  title: 'AI Detection for Marketing | Aiscern',
+  description: 'Audit UGC campaigns, influencer content and brand assets for undisclosed AI generation before they go live.',
 }
 
-export default function MarketingPage() {
+export default function MarketingSolutionPage() {
   return (
     <SolutionPage
-      industry="Marketing & Brand"
-      tagline="Verify Your Content Is Genuinely Human"
-      description="Brand authenticity depends on genuine human creativity. Aiscern helps marketing teams verify that UGC campaigns, influencer deliverables, and agency content reflect real human effort — not AI-generated filler."
-      heroIcon={<Megaphone className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      accentColor="amber"
-      ctaLabel="Start Free Marketing Account"
-      problemTitle="The Brand Authenticity Problem"
-      painPoints={[
-        { title: 'Influencers delivering AI-generated captions and reviews', desc: 'Paid partners and micro-influencers increasingly use AI to produce sponsored content, violating authenticity guidelines and FTC disclosure requirements.' },
-        { title: 'UGC campaigns contaminated with synthetic submissions', desc: 'Customer stories, reviews, and photo contest entries can be AI-generated, undermining the genuine social proof that UGC campaigns depend on.' },
-        { title: 'Agency content with AI filler reducing brand differentiation', desc: 'Content agencies billing for creative work that is largely AI-generated deliver generic output that erodes brand voice over time.' },
-        { title: 'Deepfake imagery in competitor analysis and industry research', desc: 'Synthetic images circulating on social media can be misidentified as real product photos, misleading competitive intelligence.' },
+      industry="Marketing"
+      tagline="Keep Your Brand Authentically Human"
+      description="Aiscern helps marketing teams audit user-generated content, influencer deliverables and campaign assets for undisclosed AI generation — protecting brand trust and FTC compliance."
+      icon={<Megaphone className="w-16 h-16" />}
+      color="#d97706"
+      heroImage="/solutions/hero-marketing.jpg"
+      actionImage="/solutions/action-marketing.jpg"
+      stats={[
+        { value: '~85%', label: 'UGC text accuracy' },
+        { value: '~82%', label: 'Image forensics' },
+        { value: 'Bulk', label: 'Scan available' },
       ]}
-      features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with ≥96% ensemble AUC.' },
-        { icon: <Eye className="w-5 h-5" />, title: 'Image Authenticity', desc: 'Detect AI-generated brand imagery, synthetic product photos, and fabricated lifestyle content.' },
-        { icon: <Layers className="w-5 h-5" />, title: 'Bulk Content Audits', desc: 'Scan entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
-        { icon: <BarChart3 className="w-5 h-5" />, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },
-        { icon: <FileSearch className="w-5 h-5" />, title: 'Influencer Content Review', desc: 'Analyze deliverable packages from influencer partners before approving payment or publishing.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
+      painPoints={[
+        {
+          problem: 'Influencers submitting AI-generated content as authentic product reviews violating FTC guidelines.',
+          solution: 'Text detection and image forensics flag AI-generated testimonials and product photography.',
+        },
+        {
+          problem: 'UGC campaigns flooded with AI-generated fake reviews and synthetic community content.',
+          solution: 'Batch scan incoming UGC submissions before they are approved for brand channels.',
+        },
+        {
+          problem: 'Brand-generated content indistinguishable from competitor AI spam, hurting SEO authority.',
+          solution: 'Audit your own content pipeline and certify human-authored pieces for transparency.',
+        },
+        {
+          problem: 'No documentation process when platforms flag brand content as AI-generated.',
+          solution: 'Shareable detection reports show which content passed authenticity checks before publication.',
+        },
       ]}
       useCases={[
-        { title: 'UGC Campaign Verification', desc: 'A consumer brand running a "real customer stories" campaign scans all 2,000 written submissions through Aiscern before featuring them, ensuring only genuine customer voices appear in campaign materials.' },
-        { title: 'Influencer Deliverable Auditing', desc: 'A brand manager runs all sponsored post drafts from 50 micro-influencers through Aiscern before approving. 12 posts score as high-probability AI-generated, triggering revision requests and contract clause enforcement.' },
-        { title: 'Agency Content Quality Control', desc: 'A marketing director audits monthly content deliverables from a retained content agency using Aiscern, ensuring that blog posts and email copy reflect genuine creative work rather than AI-generated boilerplate.' },
+        { title: 'UGC Review Campaigns', desc: 'Batch-scan incoming user submissions before approving them for brand promotion.' },
+        { title: 'Influencer Deliverable Audit', desc: 'Check influencer copy, images and video scripts for AI generation before paying out.' },
+        { title: 'Review Authenticity', desc: 'Verify customer reviews on your site or third-party platforms for synthetic content.' },
+        { title: 'Content Pipeline QA', desc: 'Scan your own content team outputs to maintain authentic brand voice.' },
+        { title: 'Social Listening', desc: 'Analyse competitor brand mentions and viral content for AI-generated engagement.' },
+        { title: 'Ad Copy Verification', desc: 'Ensure agency-produced ad copy meets human-authored authenticity standards.' },
       ]}
-      faqs={[
-        { q: 'Can Aiscern detect AI content that has been edited by a human?', a: 'Human editing reduces AI confidence scores, particularly extensive editing. Lightly edited AI content typically scores 45–75%. Heavily edited content may fall below our 62% AI threshold. We report confidence ranges, not binary verdicts, to reflect this nuance.' },
-        { q: 'How does detection work for short-form content like social captions?', a: 'Short texts (under 150 words) have wider confidence intervals because there is less linguistic signal to analyze. We recommend supplementing with longer form analysis when assessing short-form content.' },
-        { q: 'Can we use Aiscern results in influencer contract disputes?', a: 'Our reports are technical analysis documents, not legal evidence. We recommend using them alongside your contract terms and legal counsel\'s guidance in any dispute resolution process.' },
-        { q: 'Does Aiscern detect AI-generated product images from tools like Midjourney?', a: 'Yes. Our image ensemble is trained on output from Midjourney, DALL-E, Stable Diffusion, Ideogram, and other major generators. Benchmark accuracy for diffusion model imagery is ≥93% AUC on our test datasets.' },
-        { q: 'Is there a way to screen content before it is submitted by influencers?', a: 'Yes — our API can be integrated into submission portals, content management platforms, and influencer management tools to screen content at upload time.' },
-      ]}
+      ctaHref="/detect/text"
+      ctaLabel="Audit UGC Content"
+      toolName="AI Text Detector"
     />
   )
 }

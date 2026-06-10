@@ -100,7 +100,7 @@ export default function ChangelogPage() {
             <Tag className="w-3.5 h-3.5" />
             Version History
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold font-display mb-4">
             <span className="gradient-text">Changelog</span>
           </h1>
           <p className="text-text-muted text-base">
@@ -116,7 +116,7 @@ export default function ChangelogPage() {
 
               <div className="mb-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-lg font-black text-text-primary">{release.version}</span>
+                  <span className="text-lg font-semibold text-text-primary">{release.version}</span>
                   <div className="flex items-center gap-1 text-xs text-text-muted">
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>

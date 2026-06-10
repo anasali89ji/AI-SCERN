@@ -11,12 +11,12 @@ export const metadata = {
 }
 
 const CATEGORY_GRADIENT: Record<string, string> = {
-  Guides:     'from-primary/30 to-secondary/30',
+  Guides:     'from-blue-900/60 to-indigo-900/60',
   Education:  'from-blue-900/60  to-cyan-900/60',
   Comparison: 'from-emerald-900/60 to-teal-900/60',
   Technical:  'from-orange-900/60 to-red-900/60',
 }
-const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-primary/25 to-secondary/25'
+const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-blue-900/50 to-indigo-900/50'
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -31,7 +31,7 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
           <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 mb-3 inline-block">
             {post.category}
           </span>
-          <h2 className="text-xl sm:text-3xl font-black text-white mb-2">{post.title}</h2>
+          <h2 className="text-xl sm:text-3xl font-semibold font-display text-white mb-2">{post.title}</h2>
           <div className="flex items-center gap-3 text-xs text-white/60">
             <span>{formatDate(post.date)}</span>
             <span>·</span>
@@ -80,12 +80,12 @@ export default function BlogPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-24 pb-20 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
+      <main className="pt-24 pb-20 max-w-5xl mx-auto px-4">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
             <Tag className="w-3 h-3" /> Insights & Guides
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold font-display mb-4">
             Aiscern <span className="gradient-text">Blog</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">

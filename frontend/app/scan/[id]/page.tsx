@@ -106,7 +106,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         <div className="max-w-2xl 2xl:max-w-3xl mx-auto h-full px-4 sm:px-6 2xl:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
-            <span className="font-black text-lg gradient-text">Aiscern</span>
+            <span className="font-semibold text-lg gradient-text">Aiscern</span>
           </Link>
           <span className="text-xs text-text-muted">Shared scan result</span>
         </div>
@@ -118,7 +118,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
           <div className="flex justify-center mb-4">
             <VerdictIcon verdict={scan.verdict} />
           </div>
-          <h1 className="text-3xl font-black mb-1">{verdictLabel(scan.verdict)}</h1>
+          <h1 className="text-3xl font-semibold font-display mb-1">{verdictLabel(scan.verdict)}</h1>
           <p className="text-text-muted text-sm mb-6 capitalize">{scan.media_type} analysis · {dateStr}</p>
           <ConfidenceBar score={scan.confidence_score} verdict={scan.verdict} />
         </div>

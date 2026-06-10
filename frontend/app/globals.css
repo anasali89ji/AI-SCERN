@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Z-index design system ──────────────────────────────────────────────── */
+:root {
+  --z-base:     0;
+  --z-raised:   10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-nav:      500;
+  --z-toast:    600;
+  --z-cursor:   9999;
+}
+
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html {
@@ -190,10 +203,9 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Prevent horizontal scroll on mobile */
+/* Prevent horizontal scroll on mobile — use wrapper clip, NOT body overflow */
+/* Note: overflow-x:hidden on body breaks position:sticky + IntersectionObserver on iOS */
 @media (max-width: 640px) {
-  body { overflow-x: hidden; }
-
   /* Make tables scroll horizontally on mobile */
   table { display: block; overflow-x: auto; white-space: nowrap; }
 
@@ -271,71 +283,16 @@ h1 {
 }
 
 
-/* ── Hero root network card animations (CSS-only — no hydration flash) ── */
-/* ── Hero node card animations — single composite animation per element ──
-   Merged fade-in + bob into ONE animation to avoid non-composited conflicts.
-   GPU-composited: only `transform` + `opacity` used, no layout properties. */
-
-@keyframes node-in-bob-a {
-  /* 0-16%: fade in from scale 0.85 */
-  0%   { opacity: 0;   transform: translateY(0px)  scale(0.85); }
-  16%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
-  /* 16-58%: bob down */
-  37%  { opacity: 1;   transform: translateY(-6px) scale(1);    }
-  /* 58-100%: bob back + repeat */
-  58%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
-  79%  { opacity: 1;   transform: translateY(-6px) scale(1);    }
-  100% { opacity: 1;   transform: translateY(0px)  scale(1);    }
-}
-@keyframes node-in-bob-b {
-  0%   { opacity: 0;   transform: translateY(0px)  scale(0.85); }
-  14%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
-  35%  { opacity: 1;   transform: translateY(-9px) scale(1);    }
-  56%  { opacity: 1;   transform: translateY(0px)  scale(1);    }
-  77%  { opacity: 1;   transform: translateY(-9px) scale(1);    }
-  100% { opacity: 1;   transform: translateY(0px)  scale(1);    }
-}
-
-.node-card {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-a 5s ease-in-out infinite;
-  animation-fill-mode: forwards;
-}
-.node-card-bob-a {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-a 5s ease-in-out infinite;
-  animation-fill-mode: forwards;
-}
-.node-card-bob-b {
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: node-in-bob-b 6s ease-in-out infinite;
-  animation-fill-mode: forwards;
-}
-
 /* ── Mobile: faster scroll animations so cards are visible ── */
 @media (max-width: 640px) {
   .animate-scroll-left  { animation-duration: 18s; }
   .animate-scroll-right { animation-duration: 22s; }
 }
 
-
-/* ── Hero text fade-up (replaces Framer Motion — no LCP penalty) ── */
-@keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero-fade-up {
-  opacity: 0;
-  animation: hero-fade-up 0.55s ease-out forwards;
-}
-
 /* ── Global mobile responsiveness fixes ── */
 
-/* Prevent horizontal overflow on all pages */
-html, body {
+/* Prevent horizontal overflow — only on html, not body (body overflow breaks iOS sticky) */
+html {
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -361,17 +318,6 @@ html, body {
   .card {
     min-width: 0;
   }
-}
-
-/* ── Hero node cards — smooth pop-in with zero CLS ── */
-.node-card-bob-a,
-.node-card-bob-b {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  /* contain: layout ensures the translateY never causes document reflow */
-  contain: layout style;
-  /* preserve-3d removed — promotes full 3D GPU layer, causes scanline glitches on mobile */
-  transform-style: flat;
 }
 
 /* ── Comparison scrolling rows — smooth on all devices ── */
@@ -406,10 +352,6 @@ img {
 /* ── Accessibility: contrast fixes ── 
    text-disabled was #334155 (fails WCAG AA on #0a0a0f background)
    text-muted was #64748b (borderline — upgrade for better legibility) */
-.text-text-disabled,
-[class*="text-text-disabled"] {
-  color: #64748b !important; /* upgraded from #475569 — better WCAG AA contrast */
-}
 
 /* ═══════════════════════════════════════════════════════════════
    MOBILE-FIRST PROFESSIONAL POLISH
@@ -442,7 +384,6 @@ img {
   @apply bg-surface border border-border rounded-2xl p-4 sm:p-6;
   /* backdrop-filter removed — causes GPU compositing glitches on mobile */
 }
-.card:hover { border-color: rgba(37, 99, 235, 0.2); }
 
 /* ── Section spacing — tighter on mobile ── */
 @media (max-width: 639px) {
@@ -455,7 +396,6 @@ img {
 .badge-human { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold; background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
 
 /* ── Nav improvements ── */
-nav a { transition: color 0.15s ease; }
 
 /* ── Smooth page transitions ── */
 main { animation: page-in 0.3s ease-out; }
@@ -487,34 +427,68 @@ html { scroll-behavior: smooth; }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BIG SCREEN RESPONSIVE — 1280px, 1440px, 1600px, 1920px, 2560px
-   Ensures content scales up gracefully on large laptops, desktops,
-   and ultra-wide monitors. Only layout/spacing — no visual changes.
+   BIG SCREEN RESPONSIVE — 1280px, 1440px, 1920px+
+   Ensures content scales up gracefully on wide monitors
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1280px (xl) — large laptop ── */
+/* 1280px — xl: standard desktop, already handled by max-w-7xl */
 @media (min-width: 1280px) {
-  /* Tailwind's built-in max-w classes already handle this tier;
-     we just ensure no accidental shrinkage. */
+  .max-w-5xl { max-width: 64rem; }
+  .max-w-6xl { max-width: 76rem; }
+  .max-w-7xl { max-width: 88rem; }
   body { font-size: 16px; }
 }
 
-/* ── 1440px (2xl) — wide desktop / 1440p display ── */
+/* 1440px — 2xl: wide desktop / laptop */
 @media (min-width: 1440px) {
-  /* Expand content containers so they fill the wider viewport */
-  .max-w-3xl { max-width: 54rem;  }   /* was 48rem  */
-  .max-w-4xl { max-width: 64rem;  }   /* was 56rem  */
-  .max-w-5xl { max-width: 76rem;  }   /* was 64rem  */
-  .max-w-6xl { max-width: 88rem;  }   /* was 72rem  */
-  .max-w-7xl { max-width: 100rem; }   /* was 80rem  */
+  /* Scale up section padding */
+  section { padding-top: clamp(3rem, 5vw, 6rem); padding-bottom: clamp(3rem, 5vw, 6rem); }
 
-  /* Section vertical rhythm — more breathing room */
-  section.cv-auto { padding-top: clamp(4rem, 6vw, 7rem); padding-bottom: clamp(4rem, 6vw, 7rem); }
+  /* Hero text scales up */
+  .hero-title { font-size: clamp(3rem, 5vw, 5rem) !important; }
 
-  /* Card padding increase */
-  .card  { padding: 1.75rem; }
+  /* Content containers get more breathing room */
+  .max-w-5xl { max-width: 72rem; }
+  .max-w-6xl { max-width: 84rem; }
+  .max-w-7xl { max-width: 96rem; }
 
-  /* Fluid container utility */
+  /* Cards get slightly more padding */
+  .card { padding: 1.75rem; }
+
+  /* Nav height increase */
+  nav, header { min-height: 4rem; }
+}
+
+/* 1920px — full HD and ultra-wide */
+@media (min-width: 1920px) {
+  body { font-size: 17px; }
+
+  .max-w-5xl { max-width: 80rem; }
+  .max-w-6xl { max-width: 96rem; }
+  .max-w-7xl { max-width: 112rem; }
+
+  /* Hero section scales text proportionally */
+  h1 { font-size: clamp(3.5rem, 4.5vw, 7rem); }
+  h2 { font-size: clamp(2rem, 3vw, 4rem); }
+
+  /* More padding on ultra-wide */
+  .px-4 { padding-left: clamp(1rem, 3vw, 4rem); padding-right: clamp(1rem, 3vw, 4rem); }
+}
+
+/* 2560px — 2K / ultra-wide */
+@media (min-width: 2560px) {
+  body { font-size: 18px; }
+
+  .max-w-5xl { max-width: 90rem; }
+  .max-w-6xl { max-width: 108rem; }
+  .max-w-7xl { max-width: 120rem; }
+
+  /* Prevent text from being tiny relative to screen */
+  p, li, td, th { font-size: 1.05rem; }
+}
+
+/* Fluid container — replaces fixed max-width classes on very wide screens */
+@media (min-width: 1440px) {
   .fluid-container {
     width: min(90%, 1400px);
     margin-left: auto;
@@ -522,65 +496,21 @@ html { scroll-behavior: smooth; }
   }
 }
 
-/* ── 1600px — between 2xl and 3xl ── */
-@media (min-width: 1600px) {
-  .max-w-3xl { max-width: 60rem;  }
-  .max-w-4xl { max-width: 70rem;  }
-  .max-w-5xl { max-width: 82rem;  }
-  .max-w-6xl { max-width: 96rem;  }
-  .max-w-7xl { max-width: 110rem; }
+/* Grid columns auto-expand on wide screens */
+@media (min-width: 1440px) {
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
-  /* Detect pages: side-by-side panel layout activates here */
+/* Detect pages — sidebar + content layout on very wide screens */
+@media (min-width: 1600px) {
   .detect-layout {
     display: grid;
-    grid-template-columns: 1fr 440px;
+    grid-template-columns: 1fr 420px;
     gap: 2rem;
     align-items: start;
   }
-}
-
-/* ── 1920px (3xl) — Full HD and ultra-wide ── */
-@media (min-width: 1920px) {
-  body { font-size: 17px; }
-
-  .max-w-3xl { max-width: 66rem;  }
-  .max-w-4xl { max-width: 78rem;  }
-  .max-w-5xl { max-width: 90rem;  }
-  .max-w-6xl { max-width: 108rem; }
-  .max-w-7xl { max-width: 120rem; }
-
-  /* Hero section — allow H1 to breathe at full HD */
-  .hero-title { font-size: clamp(3.5rem, 4.5vw, 7rem) !important; }
-
-  /* Sections get maximum vertical rhythm */
-  section.cv-auto { padding-top: clamp(5rem, 7vw, 9rem); padding-bottom: clamp(5rem, 7vw, 9rem); }
-}
-
-/* ── 2560px — 2K / ultra-wide ── */
-@media (min-width: 2560px) {
-  body { font-size: 18px; }
-
-  .max-w-3xl { max-width: 72rem;  }
-  .max-w-4xl { max-width: 84rem;  }
-  .max-w-5xl { max-width: 100rem; }
-  .max-w-6xl { max-width: 120rem; }
-  .max-w-7xl { max-width: 136rem; }
-
-  /* Slightly larger base text so lines don't feel narrow */
-  p, li, td, th { font-size: 1.05rem; }
-}
-
-/* Fluid container utility — also available at narrower breakpoints */
-.fluid-container {
-  width: min(92vw, 1400px);
-  margin-left: auto;
-  margin-right: auto;
-}
-@media (min-width: 1920px) {
-  .fluid-container { width: min(88vw, 1600px); }
-}
-@media (min-width: 2560px) {
-  .fluid-container { width: min(80vw, 2000px); }
 }
 
 /* ── Phase 9: Mobile Nav + Touch + UI Improvements ──────────────────────────── */
@@ -829,6 +759,8 @@ section > .max-w-7xl > .border-t {
   border-color: rgba(28, 28, 46, 0.9);
 }
 
+.card:hover { border-color: rgba(37, 99, 235, 0.2); }
+
 /* Softer card borders on mobile */
 @media (max-width: 640px) {
   .card { border-color: rgba(28, 28, 46, 0.6); }
@@ -840,12 +772,6 @@ section > .max-w-7xl > .border-t {
 /* These are already handled per-element above in Module B */
 
 /* Prevent any border from using pure white above 12% opacity on dark surfaces */
-@media (prefers-color-scheme: dark) {
-  [class*="border-white/1"]:not([class*="border-white/[0."]) {
-    /* border-white/10, /18, /14, /12, /13, /16 — cap at equivalent of /8 */
-    opacity: 0.8;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    PREMIUM UI OVERHAUL — Phase 2.5 (May 2026)
@@ -949,31 +875,6 @@ section > .max-w-7xl > .border-t {
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-.bento-shimmer {
-  position: relative;
-}
-.bento-shimmer::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(37,99,235,0.6) 0%,
-    rgba(59,130,246,0.4) 25%,
-    rgba(37,99,235,0.2) 50%,
-    rgba(249,115,22,0.3) 75%,
-    rgba(37,99,235,0.6) 100%
-  );
-  background-size: 300% 300%;
-  animation: border-shimmer 6s linear infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
 /* ── Stagger entrance animation classes ──────────────────────────────── */
 @keyframes slide-up-fade {
   from { opacity: 0; transform: translateY(32px); }
@@ -1142,7 +1043,6 @@ section > .max-w-7xl > .border-t {
 @media (prefers-reduced-motion: reduce) {
   .hero-mesh-1, .hero-mesh-2, .hero-mesh-3,
   .marquee-left, .marquee-right,
-  .bento-shimmer::before,
   .spotlight-card::before,
   .eq-bar,
   .scanline,
@@ -1184,10 +1084,6 @@ section > .max-w-7xl > .border-t {
 .lift-hover:hover { transform: translateY(-4px); }
 
 /* Shimmer loading for async content */
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
 .animate-shimmer {
   animation: shimmer 1.5s infinite linear;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
@@ -1199,6 +1095,94 @@ section > .max-w-7xl > .border-t {
   .blur-orb, .hero-mesh-blur {
     display: none !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HERO NODE CARDS — CSS-ONLY ENTRANCE + FLOAT ANIMATIONS
+   No canvas, no requestAnimationFrame, no JS animation dependency.
+   Composited via transform only (no filter/opacity stacking on mobile).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes node-in-bob-a {
+  0%   { opacity: 0; transform: translateY(16px) scale(0.88); }
+  60%  { opacity: 1; transform: translateY(-6px) scale(1.02); }
+  80%  { transform: translateY(2px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes node-in-bob-b {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.85); }
+  65%  { opacity: 1; transform: translateY(-8px) scale(1.03); }
+  82%  { transform: translateY(3px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes node-float-a {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes node-float-b {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+.node-card-bob-a {
+  animation:
+    node-in-bob-a 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both,
+    node-float-a  4s ease-in-out 1.5s infinite;
+  will-change: transform;
+}
+.node-card-bob-b {
+  animation:
+    node-in-bob-b 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.75s both,
+    node-float-b  5s ease-in-out 1.8s infinite;
+  will-change: transform;
+}
+/* Static variants for reduced-motion / low-spec mobile (applied via @media blocks below) */
+@keyframes node-in-bob-a-static {
+  from { opacity: 0; transform: translateY(8px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+@keyframes node-in-bob-b-static {
+  from { opacity: 0; transform: translateY(8px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* Hero fade-up utility (CSS-only, no framer dep) */
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-fade-up {
+  animation: hero-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hero-fade-up-delay-1 { animation-delay: 0.1s; }
+.hero-fade-up-delay-2 { animation-delay: 0.22s; }
+.hero-fade-up-delay-3 { animation-delay: 0.35s; }
+.hero-fade-up-delay-4 { animation-delay: 0.48s; }
+
+/* ── Hero grid dot subtle pulse ─────────────────────────────────────────── */
+@keyframes dot-grid-breathe {
+  0%, 100% { opacity: 0.018; }
+  50%       { opacity: 0.032; }
+}
+.hero-dot-grid {
+  animation: dot-grid-breathe 8s ease-in-out infinite;
+}
+
+/* ── Hero badge shimmer ──────────────────────────────────────────────────── */
+@keyframes badge-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.hero-badge-shimmer {
+  background: linear-gradient(
+    105deg,
+    rgba(37,99,235,0.08) 0%,
+    rgba(37,99,235,0.18) 40%,
+    rgba(8,145,178,0.12) 60%,
+    rgba(37,99,235,0.08) 100%
+  );
+  background-size: 200% auto;
+  animation: badge-shimmer 3s linear infinite;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1222,7 +1206,6 @@ section > .max-w-7xl > .border-t {
 }
 
 /* ── 2. Restrict will-change to only elements currently animating ── */
-/*    Too many will-change declarations = too many compositor layers      */
 @media (max-width: 768px) {
   .node-card-bob-a,
   .node-card-bob-b,
@@ -1245,14 +1228,6 @@ section > .max-w-7xl > .border-t {
   .node-card-bob-b {
     animation: node-in-bob-b-static 0.7s ease-out forwards !important;
   }
-  @keyframes node-in-bob-a-static {
-    from { opacity: 0; transform: translateY(8px) scale(0.92); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    }
-  }
-  @keyframes node-in-bob-b-static {
-    from { opacity: 0; transform: translateY(8px) scale(0.92); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    }
-  }
 }
 
 /* ── 4. Large blur orbs — reduce blur radius on mobile to cut texture size ── */
@@ -1260,7 +1235,6 @@ section > .max-w-7xl > .border-t {
   .blur-orb { display: none !important; }
 }
 @media (min-width: 641px) and (max-width: 1024px) {
-  /* Tablet: halve the blur radius via a filter fallback */
   .blur-orb { filter: blur(40px) !important; }
 }
 
@@ -1273,7 +1247,6 @@ section > .max-w-7xl > .border-t {
 }
 
 /* ── 6. Section overflow-hidden → overflow-clip (doesn't create stacking ctx) */
-/*    overflow-hidden on sections with fixed children = blank on iOS Safari   */
 @supports (overflow: clip) {
   section[class*="overflow-hidden"] {
     overflow: clip !important;
@@ -1281,7 +1254,6 @@ section > .max-w-7xl > .border-t {
 }
 
 /* ── 7. Prevent fixed nav from creating a compositor crash on low-end chips ── */
-/*    Use a solid near-opaque bg instead of transparent + blur on mobile      */
 @media (max-width: 768px) {
   nav[class*="fixed"][class*="backdrop-blur"],
   nav[class*="fixed"] {
@@ -1317,7 +1289,6 @@ section > .max-w-7xl > .border-t {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .bento-shimmer::before,
   .spotlight-card::before,
   .marquee-left,
   .marquee-right,
@@ -1333,13 +1304,11 @@ section > .max-w-7xl > .border-t {
 }
 
 /* ── WhoNeedsSection cards — pure CSS, no JS animation dependency ── */
-/* Cards are visible immediately; no opacity:0 initial state            */
 .who-card {
-  transform: translateZ(0);   /* own layer, isolate from parent */
+  transform: translateZ(0);
   backface-visibility: hidden;
 }
 @media (hover: hover) {
-  /* Hover lift only on devices that actually support hover */
   .who-card:hover {
     transform: translateY(-4px) translateZ(0);
     transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1347,8 +1316,6 @@ section > .max-w-7xl > .border-t {
 }
 
 /* ── Dashboard / Profile stat cards — always visible ── */
-/* Framer Motion initial:opacity:0 causes blank cards on slow CPUs.    */
-/* These sections now use plain <div> — no animation needed.            */
 .stat-card {
   opacity: 1 !important;
   transform: none !important;
@@ -1356,33 +1323,18 @@ section > .max-w-7xl > .border-t {
 
 /* ═══════════════════════════════════════════════════════════
    LARGE-SCREEN SAFETY NET
-   These rules ensure NO page breaks or gets clipped on
-   big desktops regardless of what inline Tailwind classes do.
-   Applied globally — safe for all screen sizes.
    ═══════════════════════════════════════════════════════════ */
 
-/* 1. Every direct page wrapper stays bounded */
 @media (min-width: 1440px) {
-  /* Tables inside cards should scroll, never overflow their card */
   .card table,
   .card .overflow-x-auto { max-width: 100%; }
-
-  /* Grid layouts on dashboard — give cells room to breathe */
   .grid.grid-cols-2 { gap: clamp(0.5rem, 1vw, 1.25rem); }
   .grid.grid-cols-4,
   .grid.grid-cols-3 { gap: clamp(0.75rem, 1.2vw, 1.5rem); }
-
-  /* Prevent any fixed-width element from causing horizontal overflow */
-  img, video, canvas, svg:not(.icon) {
-    max-width: 100%;
-  }
+  img, video, canvas, svg:not(.icon) { max-width: 100%; }
 }
 
-/* 2. Dashboard inner content max-width safety net */
 @media (min-width: 1440px) {
-  /* Any page that uses the old bare max-w-6xl without 2xl: override
-     gets bumped up by the globals.css max-w override already in place.
-     This just adds a fallback for any we missed. */
   [class*="max-w-6xl"] { max-width: min(88rem, 96vw); }
   [class*="max-w-5xl"] { max-width: min(76rem, 94vw); }
   [class*="max-w-4xl"] { max-width: min(64rem, 92vw); }
@@ -1395,7 +1347,6 @@ section > .max-w-7xl > .border-t {
   [class*="max-w-7xl"] { max-width: min(120rem, 92vw); }
 }
 
-/* 3. Marketing page sections — never let background bleed edges */
 @media (min-width: 1440px) {
   section[class*="py-"] {
     padding-left: max(1.5rem, calc((100vw - 1400px) / 2 * 0.1));
@@ -1403,7 +1354,6 @@ section > .max-w-7xl > .border-t {
   }
 }
 
-/* 4. Headings — clamp to readable size even on 4K */
 @media (min-width: 1920px) {
   h1 { font-size: clamp(2.5rem, 4vw, 6rem); }
   h2 { font-size: clamp(1.75rem, 2.8vw, 4rem); }

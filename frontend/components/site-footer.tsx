@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Mail, ArrowRight, ExternalLink, Zap, Headphones, Shield } from 'lucide-react'
+import { Mail, ArrowRight, ExternalLink, Zap } from 'lucide-react'
 
 const PLATFORM_LINKS = [
   { label: 'Text Detector',  href: '/detect/text',  title: 'Free AI Text Detector' },
@@ -15,14 +15,10 @@ const PLATFORM_LINKS = [
 
 const COMPANY_LINKS = [
   { label: 'About',       href: '/about',       title: 'About Aiscern' },
-  { label: 'Solutions',    href: '/solutions',    title: 'Industry Solutions — Aiscern' },
   { label: 'Methodology', href: '/methodology', title: 'Detection Methodology' },
   { label: 'Benchmarks',  href: '/benchmarks',  title: 'Accuracy Benchmarks' },
   { label: 'Research',    href: '/research',    title: 'Research Citations' },
-  { label: 'Transparency',href: '/transparency',title: 'Data Transparency — Aiscern' },
   { label: 'Pricing',     href: '/pricing',     title: 'Pricing — Aiscern' },
-  { label: 'Enterprise',  href: '/enterprise',  title: 'Enterprise — Aiscern' },
-  { label: 'Compare',     href: '/compare',     title: 'AI Detector Comparison' },
   { label: 'Roadmap',     href: '/roadmap',     title: 'Product Roadmap' },
   { label: 'Changelog',   href: '/changelog',   title: 'Release Changelog' },
   { label: 'FAQ',         href: '/faq',         title: 'Frequently Asked Questions' },
@@ -69,7 +65,7 @@ export function SiteFooter() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
 
-      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 2xl:px-10 pt-14 pb-8 relative">
+      <div className="max-w-6xl mx-auto px-4 pt-14 pb-8 relative">
 
         {/* Main grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 mb-12">
@@ -80,15 +76,19 @@ export function SiteFooter() {
               <Image src="/logo.png" alt="Aiscern AI Detection Platform Logo"
                 width={31} height={36}
                 className="object-contain h-8 w-auto drop-shadow-[0_0_10px_rgba(245,100,0,0.45)]" />
-              <span className="font-black text-xl gradient-text">Aiscern</span>
+              <span className="font-semibold text-xl gradient-text">Aiscern</span>
             </div>
 
             <p className="text-text-muted text-sm leading-relaxed mb-4">
               Multi-modal AI content detection. Ensemble-based analysis across text, image, audio, and video. Free tier available.
             </p>
 
+            <span className="inline-flex items-center gap-1.5 text-xs text-amber/80 bg-amber/8 border border-amber/20 px-2.5 py-1 rounded-full mb-4">
+              🚧 Early Access — Some features are experimental
+            </span>
+
             <p className="text-xs text-text-muted">
-              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Islamabad, Pakistan
             </p>
 
             {/* Social icons */}
@@ -105,18 +105,8 @@ export function SiteFooter() {
               </a>
               <a href="mailto:contact@aiscern.com"
                 className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/8 transition-[color,border-color,background-color] duration-200"
-                title="contact@aiscern.com">
+                title="Email Aiscern">
                 <Mail className="w-4 h-4" />
-              </a>
-              <a href="mailto:support@aiscern.com"
-                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-cyan-400 hover:border-cyan-400/30 hover:bg-cyan-400/8 transition-[color,border-color,background-color] duration-200"
-                title="support@aiscern.com">
-                <Headphones className="w-4 h-4" />
-              </a>
-              <a href="mailto:security@aiscern.com"
-                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-emerald-400 hover:border-emerald-400/30 hover:bg-emerald-400/8 transition-[color,border-color,background-color] duration-200"
-                title="security@aiscern.com">
-                <Shield className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -182,21 +172,14 @@ export function SiteFooter() {
         <div className="border-t border-border/20 pt-6 mb-5">
           <p className="text-xs text-text-disabled text-center leading-relaxed max-w-2xl mx-auto">
             Detection results are probabilistic, not definitive. Use human judgment for high-stakes decisions.
-            Accuracy benchmarks reflect current model performance and will improve over time.
+            Aiscern is an early-access product — accuracy benchmarks reflect current model performance and will improve over time.
           </p>
         </div>
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-text-disabled">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-3 text-xs text-text-disabled">
-              <a href="mailto:contact@aiscern.com" className="hover:text-primary transition-colors">contact@aiscern.com</a>
-              <span className="opacity-30">·</span>
-              <a href="mailto:support@aiscern.com" className="hover:text-cyan-400 transition-colors">support@aiscern.com</a>
-              <span className="opacity-30">·</span>
-              <a href="mailto:security@aiscern.com" className="hover:text-emerald-400 transition-colors">security@aiscern.com</a>
-            </div>
-            © {new Date().getFullYear()} Aiscern · Built with precision in Mandi Bahauddin, Pakistan
+            © {new Date().getFullYear()} Aiscern · Built with precision in Islamabad, Pakistan
           </p>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">

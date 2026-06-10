@@ -14,7 +14,7 @@ export default function ApiUsage() {
   return (
     <RoleGuard required="ANALYST">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">API Usage</h1>
+        <h1 className="text-2xl font-semibold font-display text-text-primary">API Usage</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="API Calls Today"    value="34,240" delta="8%"   positive icon={Code2}         color={C.primary}   />
           <StatCard title="This Month"         value="842k"   delta="21%"  positive icon={Code2}         color={C.secondary} />

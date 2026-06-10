@@ -17,7 +17,7 @@ function StatCard({ title, value, sub, icon: Icon, color, loading }: any) {
         {loading ? (
           <div className="h-6 w-16 bg-surface-active animate-pulse rounded mt-1" />
         ) : (
-          <p className="text-xl font-black text-text-primary mt-0.5">{value}</p>
+          <p className="text-xl font-semibold text-text-primary mt-0.5">{value}</p>
         )}
         {sub && <p className="text-[10px] text-text-muted mt-0.5">{sub}</p>}
       </div>
@@ -78,7 +78,7 @@ export default function AdminOverview() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-black text-text-primary">Platform Overview</h1>
+            <h1 className="text-xl font-semibold text-text-primary">Platform Overview</h1>
             <p className="text-xs text-text-muted mt-0.5">Live data · Auto-refreshes every 30s</p>
           </div>
           <div className="flex items-center gap-2">

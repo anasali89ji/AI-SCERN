@@ -6,7 +6,7 @@ import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Briefcase } from '
 
 export const metadata = {
   title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
+  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Islamabad, Pakistan.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
@@ -26,7 +26,7 @@ const VALUES = [
   {
     icon: Brain,
     title: 'Ensemble over single models',
-    desc:  'No single signal reliably catches all AI content. We combine multiple independent detection signals into one weighted verdict, so each scan is cross-verified before delivering a result.',
+    desc:  'No single signal reliably catches all AI content. We combine perplexity analysis, frequency fingerprints, geometric checks, and trained classifiers into one weighted verdict.',
   },
   {
     icon: Zap,
@@ -36,7 +36,7 @@ const VALUES = [
   {
     icon: Globe,
     title: 'Built for everyone',
-    desc:  'Developed in Mandi Bahauddin, Pakistan. We believe access to AI literacy tools should not depend on geography or budget.',
+    desc:  'Developed in Islamabad, Pakistan. We believe access to AI literacy tools should not depend on geography or budget.',
   },
 ]
 
@@ -45,11 +45,11 @@ const TEAM = [
   {
     name:     'Anas Ali',
     role:     'Founder & CEO',
-    bio:      'Building Aiscern from Mandi Bahauddin, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
+    bio:      'Building Aiscern from Islamabad, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
     photo:    '/anas-ali.jpg',
-    location: 'Mandi Bahauddin, Pakistan',
+    location: 'Islamabad, Pakistan',
     skills:   'Full-Stack + AI/ML',
-    gradient: 'from-primary/30 via-secondary/20 to-primary/20',
+    gradient: 'from-primary/30 via-secondary/20 to-cyan/30',
     ring:     'border-primary/30',
   },
   {
@@ -83,12 +83,12 @@ function TeamCard({ member }: { member: typeof TEAM[0] }) {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-2xl font-black text-white select-none">
+            <span className="text-2xl font-semibold font-display text-white select-none">
               {member.name.charAt(0)}
             </span>
           )}
         </div>
-        <h3 className="text-lg font-black text-text-primary">{member.name}</h3>
+        <h3 className="text-lg font-semibold text-text-primary">{member.name}</h3>
         <p className="text-sm text-primary font-bold mb-3">{member.role}</p>
         <p className="text-sm text-text-muted leading-relaxed mb-4">{member.bio}</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -109,13 +109,13 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background text-text-primary">
       <SiteNav />
 
-      <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-3 sm:px-4 2xl:px-8">
+      <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl mx-auto px-3 sm:px-4">
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
             <Users className="w-3 h-3" /> About us
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold font-display mb-4">
             AI detection that&apos;s <span className="gradient-text">actually free</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
@@ -127,7 +127,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-16">
           {STATS.map(s => (
             <div key={s.label} className="rounded-2xl border border-border/55 bg-surface p-5 text-center">
-              <p className="text-3xl font-black gradient-text mb-1">{s.value}</p>
+              <p className="text-3xl font-semibold font-display gradient-text mb-1">{s.value}</p>
               <p className="text-xs font-bold text-text-primary mb-0.5">{s.label}</p>
               <p className="text-xs text-text-disabled">{s.sub}</p>
             </div>
@@ -136,7 +136,7 @@ export default function AboutPage() {
 
         {/* Mission */}
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-8 mb-10 sm:mb-14">
-          <h2 className="text-lg sm:text-xl font-black mb-3">Our mission</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-3">Our mission</h2>
           <p className="text-text-muted leading-relaxed mb-4">
             AI-generated content is proliferating faster than the tools to understand it. Deepfakes influence elections. Synthetic text floods classrooms. AI audio clones voices of public figures. The people most affected by this — journalists, teachers, researchers, everyday users — often have the least access to reliable detection tools.
           </p>
@@ -147,7 +147,7 @@ export default function AboutPage() {
 
         {/* Values */}
         <div className="mb-14">
-          <h2 className="text-lg sm:text-xl font-black mb-4 sm:mb-6 text-center">What we stand for</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center">What we stand for</h2>
           <div className="grid sm:grid-cols-2 gap-5">
             {VALUES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="rounded-xl border border-border/55 bg-surface p-5">
@@ -165,7 +165,7 @@ export default function AboutPage() {
 
         {/* ── Team — always before tech stack (1.3 fix) ── */}
         <div className="mb-14">
-          <h2 className="text-lg sm:text-xl font-black mb-2 text-center">The team</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 text-center">The team</h2>
           <p className="text-text-muted text-sm text-center mb-8 max-w-lg mx-auto">
             A small, focused team building AI transparency tools from Pakistan.
           </p>
@@ -180,7 +180,7 @@ export default function AboutPage() {
         <div className="rounded-2xl border border-border/55 bg-surface p-4 sm:p-6 mb-10 sm:mb-14">
           <div className="flex items-center gap-2 mb-4">
             <GitBranch className="w-5 h-5 text-primary" />
-            <h2 className="font-black text-lg">Built with</h2>
+            <h2 className="font-semibold text-lg">Built with</h2>
           </div>
           <p className="text-text-muted text-sm leading-relaxed mb-4">
             Aiscern is built on Next.js 15, TypeScript, Tailwind CSS, Supabase, Cloudflare R2, and a pipeline of HuggingFace inference models backed by NVIDIA NIM for GPU acceleration. Detection models are an ensemble of fine-tuned classifiers trained on public benchmarks and continuously updated as new generators emerge.
@@ -196,8 +196,8 @@ export default function AboutPage() {
 
         {/* CTA */}
         <div className="text-center space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black">Try it free</h2>
-          <p className="text-text-muted">No account needed. Free tier available — no credit card required.</p>
+          <h2 className="text-xl sm:text-2xl font-semibold font-display">Try it free</h2>
+          <p className="text-text-muted">No account needed. Core features free during early access.</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/detect/text" className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
               Detect Text →

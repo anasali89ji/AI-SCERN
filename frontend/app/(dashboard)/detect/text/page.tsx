@@ -66,7 +66,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = 50_000
-  const charColor = charCount > 45_000 ? 'text-rose' : charCount > 70_000 ? 'text-amber' : 'text-text-muted'
+  const charColor = charCount > 70_000 ? 'text-rose' : charCount > 45_000 ? 'text-amber' : 'text-text-muted'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -189,7 +189,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <>
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-semibold font-display text-text-primary mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-amber" />
           </div>
@@ -397,7 +397,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
-                        <h3 className={`text-base sm:text-2xl font-black ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
+                        <h3 className={`text-base sm:text-2xl font-semibold font-display ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
                           {displayName
                             ? result.verdict === 'AI'
                               ? `${displayName}, this is AI Generated`
@@ -407,7 +407,7 @@ Analyzed: ${new Date().toLocaleString()}`
                             : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
                         </h3>
                         <div className="text-right shrink-0">
-                          <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
+                          <div className="text-2xl sm:text-4xl font-bold font-display gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
                           <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
                         </div>
                       </div>
@@ -602,7 +602,7 @@ Analyzed: ${new Date().toLocaleString()}`
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
-            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
+            <p className="font-semibold text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>

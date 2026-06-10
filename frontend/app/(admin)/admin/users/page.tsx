@@ -41,7 +41,7 @@ type ReviewModal = { request: UpgradeRequest; action: 'approve' | 'reject' }
 const PLAN_COLOR: Record<string, string> = {
   free:       'bg-slate/10 text-slate-400 border-slate/20',
   pro:        'bg-primary/10 text-primary border-primary/30',
-  team:       'bg-primary/10 text-primary border-primary/30',
+  team:       'bg-blue-500/10 text-blue-400 border-blue-500/30',
   enterprise: 'bg-amber/10 text-amber border-amber/30',
 }
 
@@ -182,12 +182,12 @@ export default function UsersAdmin() {
 
   return (
     <RoleGuard required="SUPPORT">
-      <div className="p-6 2xl:p-8 max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1900px] mx-auto">
+      <div className="p-6 max-w-7xl mx-auto">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl font-black text-text-primary">User Management</h1>
+            <h1 className="text-xl font-semibold text-text-primary">User Management</h1>
             <p className="text-xs text-text-muted mt-0.5">{total.toLocaleString()} total users</p>
           </div>
           <button
@@ -306,7 +306,7 @@ export default function UsersAdmin() {
                               )}
                               <button
                                 onClick={() => setModal({ userId: u.id, action: 'set_plan', email: u.email, currentPlan: u.plan })}
-                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
                               >
                                 <ChevronDown className="w-2.5 h-2.5" /> Change Plan
                               </button>
@@ -524,7 +524,7 @@ export default function UsersAdmin() {
           USER ACTION MODAL (ban / grant_pro / revoke / etc.)
       ══════════════════════════════════════════════════════════════════════ */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <div className="flex items-start gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -535,7 +535,7 @@ export default function UsersAdmin() {
               }`}>
                 {modal.action === 'grant_pro'   && <Crown      className="w-5 h-5 text-primary" />}
                 {modal.action === 'revoke_pro'  && <UserX      className="w-5 h-5 text-rose" />}
-                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-primary" />}
+                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-blue-400" />}
                 {modal.action === 'reset_daily' && <RotateCcw  className="w-5 h-5 text-slate-400" />}
                 {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose" />}
                 {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald" />}
@@ -624,7 +624,7 @@ export default function UsersAdmin() {
           UPGRADE REQUEST REVIEW MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {reviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-start gap-3 mb-5">
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald/10' : 'bg-rose/10'}`}>
