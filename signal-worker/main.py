@@ -1,79 +1,93 @@
 """
-Aiscern — Python Signal Worker
-FastAPI service implementing Layers 1, 3, 4, and local SynthID detection.
+Aiscern Detection Worker v4.0.0 — Unified Entry Point
+DigitalOcean App Platform deployment.
 
-Deploy to: Render.com Web Service (free tier) or HuggingFace Space (Docker)
-POST /analyze-signals — main analysis endpoint
-GET  /health         — health check
+Routes:
+  GET  /health                  Health check + engine/GPU status
+  POST /analyze                 Auto-detect content type and route
+  POST /analyze/image           Full image analysis (v2 layers + v3 forensics)
+  POST /analyze/text            Text AI-detection (perplexity, burstiness, stylometry)
+  POST /analyze-signals         v2 compat: Layers 1, 3, 4, SynthID (JSON body with imageUrl)
+  POST /diffusion-inversion     v2 Layer 5: DDIM inversion (GPU required)
+  POST /diffusion-snapback      v2 Layer 5b: snap-back reconstruction (GPU required)
 """
 
 import os
-import time
+import signal
 import logging
+import time
+import datetime
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl
-from typing import Optional
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from analyzers.pixel_integrity      import analyze_pixel_integrity
-from analyzers.diffusion_inversion  import diffusion_inversion_score
-from analyzers.diffusion_snapback   import diffusion_snapback_score
-from analyzers.noise_stats      import analyze_noise_stats
-from analyzers.frequency_domain import analyze_frequency_domain
-from analyzers.synthid_local    import check_synthid
-from utils.image_loader         import load_image_from_url
-from utils.evidence_builder     import build_layer_report
+# Structured logging — DO captures stdout/stderr
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger("aiscern.worker")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-# ── Pydantic models ───────────────────────────────────────────────────────────
+def _gpu_status() -> Dict[str, Any]:
+    try:
+        import torch
+        if torch.cuda.is_available():
+            props = torch.cuda.get_device_properties(0)
+            vram  = round(props.total_memory / 1e9, 1)
+            return {
+                "available": True,
+                "name": props.name,
+                "vram_gb": vram,
+                "l5_ready": vram >= 4.0,
+            }
+    except Exception:
+        pass
+    return {"available": False, "name": None, "vram_gb": 0.0, "l5_ready": False}
 
-class TargetRegion(BaseModel):
-    x:      float
-    y:      float
-    width:  float
-    height: float
-    reason: str
 
-class AnalyzeRequest(BaseModel):
-    imageUrl:      str
-    jobId:         str
-    targetRegions: list[TargetRegion] = []
-
-class DiffusionRequest(BaseModel):
-    imageUrl: str
-
-class AnalyzeResponse(BaseModel):
-    jobId:            str
-    status:           str
-    processingTimeMs: int
-    layers:           list[dict]
-    synthid:          dict
-    error:            Optional[str] = None
-
-# ── App ───────────────────────────────────────────────────────────────────────
+# ── Lifespan ──────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Signal worker starting up")
+    logger.info("Aiscern detection worker v4.0.0 starting")
+    logger.info("GPU_ENABLED=%s", os.getenv("GPU_ENABLED", "false"))
+
+    # Graceful shutdown on SIGTERM (DO sends this before killing the container)
+    def _shutdown(signum, frame):
+        from utils.model_cache import clear_all_models
+        logger.info("SIGTERM received — clearing model cache")
+        clear_all_models()
+
+    signal.signal(signal.SIGTERM, _shutdown)
+
     yield
-    logger.info("Signal worker shutting down")
+
+    from utils.model_cache import clear_all_models
+    clear_all_models()
+    logger.info("Worker shutdown complete")
+
+
+# ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Aiscern Signal Worker",
-    description="Forensic image analysis — Layers 1, 3, 4, SynthID",
-    version="1.0.0",
+    title="Aiscern Detection Worker",
+    description="Unified AI-content detection: image forensics + text analysis",
+    version="4.0.0",
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url=None,
 )
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
-# Restrict cross-origin access to known Aiscern origins only.
-# Do NOT use allow_origins=["*"] — this is an internal forensic API that
-# processes image URLs; wildcard CORS would expose it to arbitrary third-party sites.
-_RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://aiscern.com")
-ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
+# ── CORS ──────────────────────────────────────────────────────────────────────
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "https://aiscern.com")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -83,152 +97,267 @@ app.add_middleware(
     allow_credentials=False,
 )
 
+# ── Pydantic models ───────────────────────────────────────────────────────────
+
+class TargetRegion(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+    reason: str = ""
+
+
+class AnalyzeSignalsRequest(BaseModel):
+    imageUrl: str
+    jobId: str
+    targetRegions: List[TargetRegion] = []
+    includeDiffusion: bool = False
+
+
+class AnalyzeTextRequest(BaseModel):
+    text: str
+    jobId: str = ""
+    options: Optional[Dict[str, bool]] = None
+
+
+class DiffusionRequest(BaseModel):
+    imageUrl: str
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
-async def health():
-    import torch
-    gpu_available = torch.cuda.is_available() if True else False
-    try:
-        import torch
-        gpu_available = torch.cuda.is_available()
-        gpu_name      = torch.cuda.get_device_name(0) if gpu_available else None
-        vram_gb       = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 1) if gpu_available else 0
-    except Exception:
-        gpu_available = False
-        gpu_name      = None
-        vram_gb       = 0
+async def health() -> Dict[str, Any]:
+    """
+    Health check — must respond within 1-2s for DO load balancer.
+    Lazy: does NOT import or load any ML models.
+    """
+    from utils.model_cache import cache_info
+
+    gpu    = _gpu_status()
+    cache  = cache_info()
+
     return {
-        "status":  "healthy",
-        "service": "aiscern-signal-worker",
-        "version": "2.0.0",
-        "layers": {
-            "l1_pixel":            "available",
-            "l3_noise":            "available",
-            "l4_frequency":        "available",
-            "l5_diffusion":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
-            "l5b_snapback":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
+        "status": "healthy",
+        "service": "aiscern-detection-worker",
+        "version": "4.0.0",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "engines": {
+            "image_v2": "available",
+            "image_v3_forensics": "available",
+            "text": "available",
+            "audio": "not_implemented",
+            "video": "not_implemented",
+            "l5_diffusion_inversion": "available" if gpu["l5_ready"] else "unavailable_no_gpu",
+            "l5b_diffusion_snapback": "available" if gpu["l5_ready"] else "unavailable_no_gpu",
         },
-        "gpu": {
-            "available": gpu_available,
-            "name":      gpu_name,
-            "vram_gb":   vram_gb,
-        },
-        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+        "gpu": gpu,
+        "model_cache": cache,
     }
 
+
+@app.post("/analyze/image")
+async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Full image analysis via file upload (multipart/form-data).
+    Runs v2 layers (L1, L3, L4, SynthID) + v3 forensic cascade (6 layers).
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image (image/*)")
+
+    contents = await file.read()
+    max_mb = int(os.getenv("MAX_IMAGE_SIZE_MB", 10))
+    if len(contents) > max_mb * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"Image must be under {max_mb}MB")
+
+    from engines.image_engine import analyze_image_from_bytes
+    result = analyze_image_from_bytes(
+        image_bytes=contents,
+        content_type=file.content_type,
+        job_id=f"upload_{int(time.time())}",
+    )
+
+    if result.get("status") == "error":
+        raise HTTPException(status_code=500, detail=result.get("error", "Analysis failed"))
+
+    return result
+
+
+@app.post("/analyze/text")
+async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
+    """
+    Text AI-detection.
+    Runs perplexity (distilgpt2), burstiness, stylometry, and repetition analysis.
+    """
+    max_len = int(os.getenv("MAX_TEXT_LENGTH", 10000))
+    if len(req.text) > max_len:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Text exceeds maximum length of {max_len} characters"
+        )
+
+    from engines.text_engine import analyze_text
+    return analyze_text(
+        text=req.text,
+        job_id=req.jobId,
+        options=req.options,
+    )
+
+
+@app.post("/analyze-signals")
+async def analyze_signals(req: AnalyzeSignalsRequest) -> Dict[str, Any]:
+    """
+    v2 compatibility endpoint.
+    Accepts imageUrl + optional targetRegions, runs v2+v3 image analysis.
+    Response preserves the original v2 schema (jobId, status, processingTimeMs, layers, synthid)
+    while also including the new forensics and composite_score fields.
+    """
+    from engines.image_engine import analyze_image_from_url
+
+    target_regions = [r.dict() for r in req.targetRegions]
+
+    result = await analyze_image_from_url(
+        image_url=req.imageUrl,
+        job_id=req.jobId,
+        target_regions=target_regions,
+        include_gpu_layers=req.includeDiffusion,
+    )
+
+    if result.get("status") == "error":
+        raise HTTPException(status_code=500, detail=result.get("error", "Analysis failed"))
+
+    return result
+
+
+@app.post("/analyze")
+async def analyze_auto(request: Request) -> Dict[str, Any]:
+    """
+    Auto-routing endpoint.
+    Inspects Content-Type and routes to image or text analysis.
+    - multipart/form-data with 'file' field → /analyze/image
+    - application/json with 'text' field   → /analyze/text
+    - application/json with 'imageUrl'     → /analyze-signals
+    """
+    content_type = request.headers.get("content-type", "")
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        file = form.get("file")
+        if not file:
+            raise HTTPException(status_code=400, detail="No 'file' field in multipart form")
+        contents = await file.read()
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="File must be an image")
+
+        from engines.image_engine import analyze_image_from_bytes
+        return analyze_image_from_bytes(
+            image_bytes=contents,
+            content_type=file.content_type,
+            job_id=f"auto_{int(time.time())}",
+        )
+
+    elif "application/json" in content_type:
+        body = await request.json()
+
+        if "text" in body:
+            from engines.text_engine import analyze_text
+            max_len = int(os.getenv("MAX_TEXT_LENGTH", 10000))
+            text = str(body["text"])[:max_len]
+            return analyze_text(
+                text=text,
+                job_id=body.get("jobId", ""),
+                options=body.get("options"),
+            )
+
+        elif "imageUrl" in body:
+            from engines.image_engine import analyze_image_from_url
+            return await analyze_image_from_url(
+                image_url=body["imageUrl"],
+                job_id=body.get("jobId", ""),
+                target_regions=body.get("targetRegions", []),
+                include_gpu_layers=body.get("includeDiffusion", False),
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="JSON body must contain either 'text' (for text detection) or 'imageUrl' (for image detection)"
+            )
+
+    else:
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported Content-Type. Use multipart/form-data (image) or application/json (text or imageUrl)"
+        )
+
+
 @app.post("/diffusion-inversion")
-async def diffusion_inversion_endpoint(req: DiffusionRequest):
+async def diffusion_inversion_endpoint(req: DiffusionRequest) -> Dict[str, Any]:
     """
     Layer 5: DDIM inversion manifold test.
     Requires GPU with >=4GB VRAM. Returns 503 if GPU unavailable.
     """
-    import torch
-    if not torch.cuda.is_available():
-        from fastapi.responses import JSONResponse
+    gpu = _gpu_status()
+    if not gpu["l5_ready"]:
         return JSONResponse(
             status_code=503,
-            content={"error": "GPU not available", "score": 0.5, "confidence": 0.0}
+            content={
+                "error": "GPU not available or insufficient VRAM",
+                "score": 0.5,
+                "confidence": 0.0,
+                "gpu": gpu,
+            },
         )
     try:
-        result = diffusion_inversion_score(req.imageUrl)
-        return result
+        from analyzers.diffusion_inversion import diffusion_inversion_score
+        return diffusion_inversion_score(req.imageUrl)
     except Exception as e:
-        logger.error(f"[L5] Diffusion inversion failed: {e}", exc_info=True)
-        from fastapi.responses import JSONResponse
+        logger.error("[L5] Diffusion inversion failed: %s", e, exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"error": str(e), "score": 0.5, "confidence": 0.0}
+            content={"error": str(e), "score": 0.5, "confidence": 0.0},
         )
+
 
 @app.post("/diffusion-snapback")
-async def diffusion_snapback_endpoint(req: DiffusionRequest):
+async def diffusion_snapback_endpoint(req: DiffusionRequest) -> Dict[str, Any]:
     """
     Layer 5b: Diffusion snap-back multi-strength reconstruction dynamics.
-    Runs 4 img2img passes. Requires GPU with >=4GB VRAM. Returns 503 if unavailable.
+    Requires GPU with >=4GB VRAM. Returns 503 if GPU unavailable.
     """
-    import torch
-    if not torch.cuda.is_available():
-        from fastapi.responses import JSONResponse
+    gpu = _gpu_status()
+    if not gpu["l5_ready"]:
         return JSONResponse(
             status_code=503,
-            content={"error": "GPU not available", "snapBackScore": 0.5, "confidence": 0.0}
+            content={
+                "error": "GPU not available or insufficient VRAM",
+                "snapBackScore": 0.5,
+                "confidence": 0.0,
+                "gpu": gpu,
+            },
         )
     try:
-        result = diffusion_snapback_score(req.imageUrl)
-        return result
+        from analyzers.diffusion_snapback import diffusion_snapback_score
+        return diffusion_snapback_score(req.imageUrl)
     except Exception as e:
-        logger.error(f"[L5b] Snap-back failed: {e}", exc_info=True)
-        from fastapi.responses import JSONResponse
+        logger.error("[L5b] Snap-back failed: %s", e, exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"error": str(e), "snapBackScore": 0.5, "confidence": 0.0}
+            content={"error": str(e), "snapBackScore": 0.5, "confidence": 0.0},
         )
 
-@app.post("/analyze-signals", response_model=AnalyzeResponse)
-async def analyze_signals(req: AnalyzeRequest):
-    start_ms = int(time.time() * 1000)
 
-    try:
-        logger.info(f"[{req.jobId}] Loading image from {req.imageUrl[:60]}…")
-        img_array, img_pil = await load_image_from_url(req.imageUrl)
-        logger.info(f"[{req.jobId}] Image loaded: {img_array.shape}")
-
-        target_regions = [r.dict() for r in req.targetRegions]
-
-        # Run all 3 layers + SynthID in parallel-ish
-        # (asyncio not used for CPU-bound numpy — run sequentially,
-        #  use ThreadPoolExecutor if needed for production)
-        layers = []
-
-        # Layer 1: Pixel Integrity
-        try:
-            l1 = analyze_pixel_integrity(img_array, img_pil, target_regions)
-            layers.append(l1)
-            logger.info(f"[{req.jobId}] L1 score={l1['layerSuspicionScore']:.2f}")
-        except Exception as e:
-            logger.warning(f"[{req.jobId}] L1 failed: {e}")
-            layers.append(build_layer_report(1, "Pixel Integrity", [], "failure", 0))
-
-        # Layer 3: Noise & Statistical
-        try:
-            l3 = analyze_noise_stats(img_array, img_pil)
-            layers.append(l3)
-            logger.info(f"[{req.jobId}] L3 score={l3['layerSuspicionScore']:.2f}")
-        except Exception as e:
-            logger.warning(f"[{req.jobId}] L3 failed: {e}")
-            layers.append(build_layer_report(3, "Noise & Statistical", [], "failure", 0))
-
-        # Layer 4: Frequency Domain
-        try:
-            l4 = analyze_frequency_domain(img_array, img_pil, target_regions)
-            layers.append(l4)
-            logger.info(f"[{req.jobId}] L4 score={l4['layerSuspicionScore']:.2f}")
-        except Exception as e:
-            logger.warning(f"[{req.jobId}] L4 failed: {e}")
-            layers.append(build_layer_report(4, "Frequency Domain", [], "failure", 0))
-
-        # SynthID local check
-        synthid = {"detected": False, "confidence": 0.0}
-        try:
-            synthid = check_synthid(img_array)
-        except Exception as e:
-            logger.warning(f"[{req.jobId}] SynthID check failed: {e}")
-
-        elapsed = int(time.time() * 1000) - start_ms
-        return AnalyzeResponse(
-            jobId=req.jobId,
-            status="success",
-            processingTimeMs=elapsed,
-            layers=layers,
-            synthid=synthid,
-        )
-
-    except Exception as e:
-        logger.error(f"[{req.jobId}] Fatal error: {e}", exc_info=True)
-        elapsed = int(time.time() * 1000) - start_ms
-        raise HTTPException(status_code=500, detail=str(e))
+# ── Entry ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
+    port = int(os.getenv("PORT", 8080))
+    logger.info("Starting uvicorn on port %d", port)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=False,
+        access_log=True,
+        log_level=os.getenv("LOG_LEVEL", "info").lower(),
+    )
