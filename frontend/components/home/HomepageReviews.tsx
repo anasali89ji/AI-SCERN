@@ -20,13 +20,9 @@ interface Review {
   tool_used?: string
 }
 
-const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg,#2563eb,#1d4ed8)',
-  'linear-gradient(135deg,#0ea5e9,#06b6d4)',
-  'linear-gradient(135deg,#10b981,#16a34a)',
-  'linear-gradient(135deg,#f43f5e,#dc2626)',
-  'linear-gradient(135deg,#f59e0b,#d97706)',
-  'linear-gradient(135deg,#2563eb,#1d4ed8)',
+const AVATAR_COLORS = [
+  'bg-blue-600', 'bg-sky-600', 'bg-emerald-600',
+  'bg-rose-600', 'bg-amber-600', 'bg-indigo-600',
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {
@@ -47,8 +43,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
       </p>
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-          style={{ background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length] }}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
           aria-hidden="true"
         >
           {r.is_anonymous ? '?' : (r.display_name?.charAt(0) ?? 'U').toUpperCase()}

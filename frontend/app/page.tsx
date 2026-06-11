@@ -425,7 +425,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="py-12 sm:py-16 border-y border-white/[0.06] bg-[#0f0f17]/50">
+        <section className="py-12 sm:py-16 border-y border-white/[0.06] bg-[#0f0f17]/50" style={{ contentVisibility: "auto", containIntrinsicSize: "0 300px" }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
@@ -449,7 +449,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6">
+        <section id="tools" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
           <div className="max-w-6xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-14 sm:mb-20">
@@ -495,7 +495,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section id="how" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
           <div className="max-w-5xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-16 sm:mb-20">
