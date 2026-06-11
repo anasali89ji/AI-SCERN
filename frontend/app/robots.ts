@@ -1,5 +1,13 @@
 import { MetadataRoute } from 'next'
 
+/**
+ * robots.ts — Security fix: do NOT list auth-protected paths in Disallow.
+ * Auth-only pages (/dashboard, /admin, etc.) already redirect unauthenticated
+ * users to /login, so Google can never index them. Advertising these paths
+ * via robots.txt only helps attackers enumerate targets (Security Report §2.2).
+ *
+ * Only /api/ is explicitly disallowed (API routes should never be crawled).
+ */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -37,18 +45,8 @@ export default function robots(): MetadataRoute.Robots {
           '/dpa',
           '/accessibility',
         ],
-        disallow: [
-          '/dashboard',
-          '/history',
-          '/profile',
-          '/settings',
-          '/batch',
-          '/scraper',
-          '/pipeline',
-          '/admin',
-          '/api/',
-          '/unauthorized',
-        ],
+        // Only block API crawling — do NOT list private paths here
+        disallow: ['/api/'],
       },
     ],
     sitemap: 'https://aiscern.com/sitemap.xml',
