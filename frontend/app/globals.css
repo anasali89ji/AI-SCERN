@@ -28,8 +28,13 @@
 }
 
 @layer components {
-  /* gradient-text: kept as solid white for backward compat */
-  .gradient-text { color: #f1f5f9; }
+  /* gradient-text: blue-to-indigo gradient for hero/brand text */
+  .gradient-text {
+    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 50%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
   .btn-primary {
     @apply bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg
@@ -76,6 +81,19 @@
 }
 
 /* Keyframes */
+@keyframes heroPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.hero-bg {
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(37,99,235,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(99,102,241,0.03) 0%, transparent 50%);
+}
+.hero-bg-animated {
+  animation: heroPulse 8s ease-in-out infinite;
+}
+
 @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeIn   { from { opacity:0; }  to { opacity:1; } }
 @keyframes aria-dot-bounce { 0%,60%,100% { transform:translateY(0); opacity:0.5; } 30% { transform:translateY(-4px); opacity:1; } }
@@ -140,7 +158,7 @@ nav a { transition: color 0.15s ease; }
 }
 @media (max-width:768px) {
   .dashboard-grid { grid-template-columns:1fr !important; }
-  nav[class*="fixed"] { background-color:#08080d !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+  nav[class*="fixed"] { background-color:rgba(8,8,13,0.95) !important; backdrop-filter:blur(12px) !important; -webkit-backdrop-filter:blur(12px) !important; }
 }
 @media (max-width:1023px) { .detect-grid { grid-template-columns:1fr !important; } }
 

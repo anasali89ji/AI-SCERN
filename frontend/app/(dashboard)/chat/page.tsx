@@ -144,13 +144,13 @@ function Markdown({ content }: { content: string }) {
     let l = line
     // inline code
     l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
-      `<code class="px-1.5 py-0.5 rounded-md bg-primary/15 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+      `<code class="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
     // bold / italic
     l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
     // links
     l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2 hover:text-blue-300">$1</a>')
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline underline-offset-2 hover:text-blue-300">$1</a>')
 
     if (l.startsWith('### ')) { closeList(); html += `<h3 class="text-sm font-bold text-white mt-4 mb-1.5 leading-snug">${l.slice(4)}</h3>`; continue }
     if (l.startsWith('## '))  { closeList(); html += `<h2 class="text-base font-bold text-white mt-5 mb-2 leading-snug">${l.slice(3)}</h2>`; continue }
@@ -160,14 +160,14 @@ function Markdown({ content }: { content: string }) {
     const bulletMatch = l.match(/^[\-\*•]\s+(.+)/)
     if (bulletMatch) {
       if (!inList) { html += '<ul class="my-1.5 space-y-1">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
+      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
       continue
     }
     // numbered list
     const numMatch = l.match(/^(\d+)[.):]\s+(.+)/)
     if (numMatch) {
       if (!inList) { html += '<ol class="my-1.5 space-y-1 list-none">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="text-primary/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
+      html += `<li class="flex gap-2 items-start"><span class="text-blue-400/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
       continue
     }
 
@@ -190,7 +190,7 @@ function TypingDots() {
     <div className="flex items-center gap-1.5 px-4 py-3.5">
       {[0,1,2].map(i => (
         <span key={i}
-          className="w-2 h-2 rounded-full bg-primary/60"
+          className="w-2 h-2 rounded-full bg-blue-400/60"
           style={{ animation: `aria-dot-bounce 1.4s cubic-bezier(0.4,0,0.6,1) ${i * 0.18}s infinite` }} />
       ))}
     </div>
@@ -280,7 +280,7 @@ function MessageBubble({
         {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
         {!isUser && msg.isThinking && !msg.content && (
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
-            <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 animate-spin text-blue-400/60 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
@@ -762,7 +762,7 @@ export default function ChatPage() {
                   <button key={text} onClick={()=>send(text)}
                     className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.12] text-left transition-all group cursor-pointer"
                   >
-                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-primary/70 flex items-center justify-center shrink-0 group-hover:bg-blue-600/20 transition-colors mt-0.5">
+                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400/70 flex items-center justify-center shrink-0 group-hover:bg-blue-600/20 transition-colors mt-0.5">
                       <I />
                     </div>
                     <div className="min-w-0">

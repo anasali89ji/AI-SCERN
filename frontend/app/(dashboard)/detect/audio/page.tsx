@@ -6,11 +6,12 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
+import { Mic, Upload, X, AlertTriangle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -26,9 +27,9 @@ import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose-500',    border: 'border-rose-500/30',    bg: 'bg-rose-500/5',    label: 'AI GENERATED VOICE' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', label: 'AUTHENTIC HUMAN VOICE' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber-500',   border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   label: 'UNCERTAIN' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'AI GENERATED VOICE' },
+  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC HUMAN VOICE' },
+  UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
 
 const WAVE_HEIGHTS = Array.from({ length: 40 }, (_, i) => 6 + Math.sin(i * 0.8) * 14 + Math.cos(i * 0.3) * 10)
@@ -181,6 +182,10 @@ function AudioDetectionPage() {
 
   return (
     <>
+    {/* Screen reader announcement of analysis results */}
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {result && `Analysis complete. Verdict: ${verdictConfig[result.verdict as Verdict]?.label ?? result.verdict}. Confidence: ${formatConfidence(result.confidence)}.`}
+    </div>
     <SignupGate />
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <audio ref={audioRef} className="hidden" />

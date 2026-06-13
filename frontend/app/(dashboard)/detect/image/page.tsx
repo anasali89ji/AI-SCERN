@@ -6,11 +6,13 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
+import { Image as ImageIcon, Upload, X, AlertTriangle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
+import { IMAGE_MAX_SIZE_BYTES } from '@/lib/constants'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -25,9 +27,9 @@ const LazyFeedbackBar = dynamic(
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose-500',    border: 'border-rose-500/30',    bg: 'bg-rose-500/5',    label: 'AI GENERATED' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', label: 'HUMAN CREATED' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber-500',   border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   label: 'UNCERTAIN' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'AI GENERATED' },
+  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'HUMAN CREATED' },
+  UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
 
 function ImageDetectionPage() {
@@ -63,7 +65,7 @@ function ImageDetectionPage() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tiff'] },
-    maxSize: 10 * 1024 * 1024, multiple: false,
+    maxSize: IMAGE_MAX_SIZE_BYTES, multiple: false,
     onDropRejected: (files) => {
       const err = files[0]?.errors[0]
       setError(err?.code === 'file-too-large' ? 'File exceeds 10MB limit' : 'Invalid file type. Use JPG, PNG, WEBP, GIF or BMP.')
@@ -150,6 +152,10 @@ Analyzed: ${new Date().toLocaleString()}`
 
   return (
     <>
+    {/* Screen reader announcement of analysis results */}
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {result && `Analysis complete. Verdict: ${verdictConfig[result.verdict as Verdict]?.label ?? result.verdict}. Confidence: ${formatConfidence(result.confidence)}.`}
+    </div>
     <div className="p-4 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       {/* Zoom modal */}
       {zoomed && preview && (

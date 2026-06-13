@@ -32,7 +32,7 @@ const config: Config = {
         'surface-active': '#141420',
         'surface-hover':  'rgba(255,255,255,0.04)',
         'surface-border': 'rgba(255,255,255,0.08)',
-        border:           '#1c1c2e',
+        border:           'rgba(255, 255, 255, 0.08)',
         'text-primary':   '#f1f5f9',
         'text-secondary': '#a0aec0',
         'text-muted':     '#94a3b8',

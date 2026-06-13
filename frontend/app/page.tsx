@@ -356,7 +356,7 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-16 sm:pb-24">
+        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-16 sm:pb-24 hero-bg hero-bg-animated">
           {/* Subtle radial background — no orbs, no mesh */}
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at 50% 30%, #0f0f17 0%, #08080d 65%)' }} />

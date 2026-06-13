@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
@@ -19,7 +20,17 @@ export const metadata: Metadata = {
   },
 }
 
-const SOLUTIONS = [
+type Solution = {
+  href:    string
+  icon:    LucideIcon
+  color:   string
+  title:   string
+  tagline: string
+  desc:    string
+  cta:     string
+}
+
+const SOLUTIONS: Solution[] = [
   {
     href: '/solutions/education',
     icon: GraduationCap,
@@ -32,7 +43,7 @@ const SOLUTIONS = [
   {
     href: '/solutions/hr',
     icon: Users,
-    color: 'blue',
+    color: 'cyan',
     title: 'Human Resources',
     tagline: 'Hire with confidence',
     desc: 'Verify authenticity of cover letters, CVs, and work samples. Catch AI-written applications before they reach interview stage.',
@@ -86,7 +97,7 @@ const SOLUTIONS = [
   {
     href: '/solutions/research',
     icon: Microscope,
-    color: 'blue',
+    color: 'cyan',
     title: 'Academic Research',
     tagline: 'Uphold scientific integrity',
     desc: 'Validate authenticity of papers, datasets, and experiment logs. Integrate with your research workflow via API.',
@@ -104,12 +115,12 @@ const SOLUTIONS = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'text-blue-400' },
-  blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'text-blue-400' },
-  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/25',    text: 'text-blue-400',    icon: 'text-blue-400'    },
-  amber:   { bg: 'bg-amber-500/8',   border: 'border-amber-500/25',   text: 'text-amber-500',   icon: 'text-amber-500'   },
-  emerald: { bg: 'bg-emerald-500/8', border: 'border-emerald-500/25', text: 'text-emerald-400', icon: 'text-emerald-400' },
-  rose:    { bg: 'bg-rose-500/8',    border: 'border-rose-500/25',    text: 'text-rose-500',    icon: 'text-rose-500'    },
+  primary: { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
+  blue:    { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
+  cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-cyan-400',    icon: 'text-cyan-400'    },
+  amber:   { bg: 'bg-amber-500/10', border: 'border-amber-500/25',   text: 'text-amber-500',   icon: 'text-amber-500'   },
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400', icon: 'text-emerald-400' },
+  rose:    { bg: 'bg-rose-500/10',  border: 'border-rose-500/25',    text: 'text-rose-500',    icon: 'text-rose-500'    },
 }
 
 export default function SolutionsHub() {

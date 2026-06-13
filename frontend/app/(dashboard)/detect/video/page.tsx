@@ -6,12 +6,13 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Video, Upload, X, AlertTriangle, CheckCircle, HelpCircle,
+  Video, Upload, X, AlertTriangle,
   Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -27,9 +28,9 @@ import { SignupGate } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose-500',    border: 'border-rose-500/30',    bg: 'bg-rose-500/5',    label: 'DEEPFAKE / AI DETECTED' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', label: 'AUTHENTIC VIDEO' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber-500',   border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   label: 'UNCERTAIN' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'DEEPFAKE / AI DETECTED' },
+  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC VIDEO' },
+  UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
 
 // Sample 6 frames spread across the video at 0%, 12%, 28%, 46%, 68%, 90%
@@ -311,6 +312,10 @@ function VideoDetectionPage() {
 
   return (
     <>
+    {/* Screen reader announcement of analysis results */}
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {result && `Analysis complete. Verdict: ${verdictConfig[result.verdict as Verdict]?.label ?? result.verdict}. Confidence: ${formatConfidence(result.confidence)}.`}
+    </div>
     <SignupGate />
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">

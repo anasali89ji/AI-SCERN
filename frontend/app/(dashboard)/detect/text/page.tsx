@@ -10,6 +10,7 @@ import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
 import dynamic from 'next/dynamic'
+import { TEXT_MAX_CHARS, TEXT_MIN_CHARS, TEXT_WARN_CHARS, PDF_MAX_SIZE_BYTES } from '@/lib/constants'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -65,8 +66,8 @@ function TextDetectionPage() {
 
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
-  const charLimit = 50_000
-  const charColor = charCount > 45_000 ? 'text-rose-500' : charCount > 70_000 ? 'text-amber-500' : 'text-slate-500'
+  const charLimit = TEXT_MAX_CHARS
+  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-500' : charCount > 70_000 ? 'text-amber-500' : 'text-slate-500'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -75,7 +76,7 @@ function TextDetectionPage() {
       setError('Please upload a PDF file')
       return
     }
-    if (file.size > 20 * 1024 * 1024) {
+    if (file.size > PDF_MAX_SIZE_BYTES) {
       setError('PDF too large (max 20MB)')
       return
     }
@@ -187,6 +188,10 @@ Analyzed: ${new Date().toLocaleString()}`
 
   return (
     <>
+    {/* Screen reader announcement of analysis results */}
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {result && `Analysis complete. Verdict: ${result.verdict === 'AI' ? 'AI GENERATED' : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : 'UNCERTAIN'}. Confidence: ${formatConfidence(result.confidence)}.`}
+    </div>
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
@@ -309,9 +314,9 @@ Analyzed: ${new Date().toLocaleString()}`
             {charCount > 70_000 && (
               <div className="mt-2">
                 <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${charCount > 45_000 ? 'bg-rose' : 'bg-amber'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
+                  <div className={`h-full rounded-full transition-all ${charCount > TEXT_WARN_CHARS ? 'bg-rose' : 'bg-amber'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
                 </div>
-                <p className={`text-xs mt-1 ${charCount > 45_000 ? 'text-rose-500' : 'text-amber-500'}`}>{(50_000 - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
+                <p className={`text-xs mt-1 ${charCount > TEXT_WARN_CHARS ? 'text-rose-500' : 'text-amber-500'}`}>{(TEXT_MAX_CHARS - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
               </div>
             )}
             {/* Progress to minimum */}
