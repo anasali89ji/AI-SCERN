@@ -83,7 +83,7 @@ export function CookieConsent() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-[#0f0f17] shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] bg-[#0f0f17] "
     >
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -100,7 +100,7 @@ export function CookieConsent() {
 
             {/* Expanded preferences */}
             {expanded && (
-              <div className="mt-3 space-y-2 rounded-lg border border-border p-3 bg-muted/30">
+              <div className="mt-3 space-y-2 rounded-lg border border-white/[0.08] p-3 bg-muted/30">
                 {/* Necessary — always on */}
                 <label className="flex items-center justify-between gap-2 text-xs">
                   <span>
@@ -152,21 +152,21 @@ export function CookieConsent() {
           <div className="flex flex-shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end">
             <button
               onClick={acceptAll}
-              className="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="rounded-md bg-blue-600 px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-blue-700 transition-colors"
             >
               Accept all
             </button>
             {expanded ? (
               <button
                 onClick={savePreferences}
-                className="rounded-md border border-border px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
+                className="rounded-md border border-white/[0.08] px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
               >
                 Save preferences
               </button>
             ) : (
               <button
                 onClick={rejectAll}
-                className="rounded-md border border-border px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
+                className="rounded-md border border-white/[0.08] px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
               >
                 Reject optional
               </button>

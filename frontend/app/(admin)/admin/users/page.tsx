@@ -40,9 +40,9 @@ type ReviewModal = { request: UpgradeRequest; action: 'approve' | 'reject' }
 
 const PLAN_COLOR: Record<string, string> = {
   free:       'bg-slate/10 text-slate-400 border-slate/20',
-  pro:        'bg-primary/10 text-primary border-primary/30',
-  team:       'bg-primary/10 text-primary border-primary/30',
-  enterprise: 'bg-amber/10 text-amber border-amber/30',
+  pro:        'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  team:       'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  enterprise: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
 }
 
 function PlanBadge({ plan, grantedBy }: { plan: string; grantedBy?: string | null }) {
@@ -56,15 +56,15 @@ function PlanBadge({ plan, grantedBy }: { plan: string; grantedBy?: string | nul
 }
 
 function StatusBadge({ user }: { user: User }) {
-  if (user.is_banned)         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose/10 text-rose border border-rose/20">Banned</span>
-  if (!user.dashboard_access) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber/10 text-amber border border-amber/20">Revoked</span>
-  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20">Active</span>
+  if (user.is_banned)         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">Banned</span>
+  if (!user.dashboard_access) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">Revoked</span>
+  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
 }
 
 function RequestStatusBadge({ status }: { status: string }) {
-  if (status === 'pending')  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber/10 text-amber border border-amber/20"><Clock className="w-2.5 h-2.5" />Pending</span>
-  if (status === 'approved') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20"><CheckCircle2 className="w-2.5 h-2.5" />Approved</span>
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose/10 text-rose border border-rose/20"><XCircle className="w-2.5 h-2.5" />Rejected</span>
+  if (status === 'pending')  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20"><Clock className="w-2.5 h-2.5" />Pending</span>
+  if (status === 'approved') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="w-2.5 h-2.5" />Approved</span>
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20"><XCircle className="w-2.5 h-2.5" />Rejected</span>
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -187,25 +187,25 @@ export default function UsersAdmin() {
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl font-black text-text-primary">User Management</h1>
-            <p className="text-xs text-text-muted mt-0.5">{total.toLocaleString()} total users</p>
+            <h1 className="text-xl font-black text-slate-100">User Management</h1>
+            <p className="text-xs text-slate-500 mt-0.5">{total.toLocaleString()} total users</p>
           </div>
           <button
             onClick={tab === 'users' ? fetchUsers : fetchRequests}
-            className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary px-3 py-1.5 rounded-lg border border-border hover:border-border/80 transition-colors"
+            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/[0.08]/80 transition-colors"
           >
             <RefreshCw className="w-3 h-3" /> Refresh
           </button>
         </div>
 
         {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 mb-5 p-1 bg-surface border border-border rounded-xl w-fit">
+        <div className="flex gap-1 mb-5 p-1 bg-[#0f0f17] border border-white/[0.08] rounded-xl w-fit">
           <button
             onClick={() => setTab('users')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
               tab === 'users'
-                ? 'bg-primary/15 text-primary border border-primary/30'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-primary/15 text-blue-400 border border-blue-500/20'
+                : 'text-slate-500 hover:text-slate-100'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -215,14 +215,14 @@ export default function UsersAdmin() {
             onClick={() => setTab('requests')}
             className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
               tab === 'requests'
-                ? 'bg-primary/15 text-primary border border-primary/30'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-primary/15 text-blue-400 border border-blue-500/20'
+                : 'text-slate-500 hover:text-slate-100'
             }`}
           >
             <Inbox className="w-3.5 h-3.5" />
             Upgrade Requests
             {pendingCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-amber text-black text-[9px] font-black rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-amber-500 text-black text-[9px] font-black rounded-full flex items-center justify-center">
                 {pendingCount > 99 ? '99+' : pendingCount}
               </span>
             )}
@@ -236,53 +236,53 @@ export default function UsersAdmin() {
           <>
             <div className="flex flex-wrap gap-2 mb-4">
               <div className="flex-1 min-w-48 relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
                   placeholder="Search by email…"
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-surface border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-[#0f0f17] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                 />
               </div>
               {['all', 'active', 'free', 'pro', 'banned', 'revoked'].map(f => (
                 <button key={f}
                   onClick={() => { setFilter(f); setPage(1) }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary hover:border-border/80'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100 hover:border-white/[0.08]/80'}`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] overflow-hidden">
               <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[600px]">
-                <thead className="border-b border-border bg-surface/80">
+                <thead className="border-b border-white/[0.08] bg-[#0f0f17]/80">
                   <tr>
                     {['User', 'Plan', 'Status', 'Daily Scans', 'Joined', 'Actions'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-text-muted font-semibold uppercase tracking-wide text-[10px]">{h}</th>
+                      <th key={h} className="text-left px-4 py-3 text-slate-500 font-semibold uppercase tracking-wide text-[10px]">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={6} className="text-center py-12 text-text-muted">Loading…</td></tr>
+                    <tr><td colSpan={6} className="text-center py-12 text-slate-500">Loading…</td></tr>
                   ) : users.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-12 text-text-muted">No users found</td></tr>
+                    <tr><td colSpan={6} className="text-center py-12 text-slate-500">No users found</td></tr>
                   ) : users.map((u, i) => (
-                    <tr key={u.id} className={`border-b border-border/40 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
+                    <tr key={u.id} className={`border-b border-white/[0.06] hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-[#0f0f17]/40'}`}>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-text-primary truncate max-w-48">{u.email}</div>
-                        {u.display_name && <div className="text-text-muted text-[10px]">{u.display_name}</div>}
+                        <div className="font-medium text-slate-100 truncate max-w-48">{u.email}</div>
+                        {u.display_name && <div className="text-slate-500 text-[10px]">{u.display_name}</div>}
                         {u.plan_granted_by && <div className="text-[9px] text-primary/60 mt-0.5">Pro granted by admin</div>}
                         {u.plan_expires_at && <div className="text-[9px] text-amber/70">Expires {new Date(u.plan_expires_at).toLocaleDateString()}</div>}
                       </td>
                       <td className="px-4 py-3"><PlanBadge plan={u.plan || 'free'} grantedBy={u.plan_granted_by} /></td>
                       <td className="px-4 py-3"><StatusBadge user={u} /></td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-text-secondary">{u.daily_scans ?? 0}</span>
-                        <span className="text-text-muted"> / {u.plan === 'enterprise' ? '∞' : u.plan === 'team' ? '500' : u.plan === 'pro' ? '100' : '10'}</span>
+                        <span className="font-mono text-slate-400">{u.daily_scans ?? 0}</span>
+                        <span className="text-slate-500"> / {u.plan === 'enterprise' ? '∞' : u.plan === 'team' ? '500' : u.plan === 'pro' ? '100' : '10'}</span>
                       </td>
-                      <td className="px-4 py-3 text-text-muted whitespace-nowrap">
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
@@ -290,7 +290,7 @@ export default function UsersAdmin() {
                           {!isPro(u) ? (
                             <button
                               onClick={() => { setModal({ userId: u.id, action: 'grant_pro', email: u.email, currentPlan: u.plan }); setExpiryDays('') }}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-600/20 transition-colors"
                             >
                               <Crown className="w-2.5 h-2.5" /> Grant Pro
                             </button>
@@ -299,14 +299,14 @@ export default function UsersAdmin() {
                               {u.plan_granted_by && (
                                 <button
                                   onClick={() => setModal({ userId: u.id, action: 'revoke_pro', email: u.email })}
-                                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
                                 >
                                   <UserX className="w-2.5 h-2.5" /> Revoke Pro
                                 </button>
                               )}
                               <button
                                 onClick={() => setModal({ userId: u.id, action: 'set_plan', email: u.email, currentPlan: u.plan })}
-                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-600/20 transition-colors"
                               >
                                 <ChevronDown className="w-2.5 h-2.5" /> Change Plan
                               </button>
@@ -321,14 +321,14 @@ export default function UsersAdmin() {
                           {!u.is_banned ? (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'ban', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
                             >
                               <Ban className="w-2.5 h-2.5" /> Ban
                             </button>
                           ) : (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'unban', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
                             >
                               <CheckCircle className="w-2.5 h-2.5" /> Unban
                             </button>
@@ -336,14 +336,14 @@ export default function UsersAdmin() {
                           {u.dashboard_access ? (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'revoke', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-amber/10 text-amber border border-amber/20 hover:bg-amber/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
                             >
                               <ShieldOff className="w-2.5 h-2.5" /> Revoke
                             </button>
                           ) : (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'restore', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
                             >
                               <ShieldCheck className="w-2.5 h-2.5" /> Restore
                             </button>
@@ -359,17 +359,17 @@ export default function UsersAdmin() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-slate-500">
                   Showing {((page - 1) * 25) + 1}–{Math.min(page * 25, total)} of {total}
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-slate-500 disabled:opacity-30 transition-colors">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-xs text-text-muted px-2 py-1">{page} / {totalPages}</span>
+                  <span className="text-xs text-slate-500 px-2 py-1">{page} / {totalPages}</span>
                   <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-slate-500 disabled:opacity-30 transition-colors">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -383,11 +383,11 @@ export default function UsersAdmin() {
         ════════════════════════════════════════════════════════════════════ */}
         {tab === 'requests' && (
           <>
-            <div className="flex items-start gap-3 p-4 mb-4 rounded-xl bg-amber/5 border border-amber/20">
-              <ArrowUpCircle className="w-4 h-4 text-amber mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-3 p-4 mb-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+              <ArrowUpCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-xs font-semibold text-amber">Manual Upgrade Approval Queue</p>
-                <p className="text-[11px] text-text-muted mt-0.5">
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Free users (10 credits/day) can request a Pro upgrade. Review and approve or reject each request.
                   Approved users are immediately upgraded to Pro with 100 scans/day across all 4 modalities.
                 </p>
@@ -398,7 +398,7 @@ export default function UsersAdmin() {
               {['pending', 'approved', 'rejected', 'all'].map(s => (
                 <button key={s}
                   onClick={() => { setReqFilter(s); setReqPage(1) }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
                 >
                   {s === 'pending'  && <Clock className="w-3 h-3" />}
                   {s === 'approved' && <CheckCircle2 className="w-3 h-3" />}
@@ -406,59 +406,59 @@ export default function UsersAdmin() {
                   {s === 'all'      && <Inbox className="w-3 h-3" />}
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                   {s === 'pending' && pendingCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.5 rounded bg-amber/20 text-amber text-[9px] font-black">{pendingCount}</span>
+                    <span className="ml-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[9px] font-black">{pendingCount}</span>
                   )}
                 </button>
               ))}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="border-b border-border bg-surface/80">
+                <thead className="border-b border-white/[0.08] bg-[#0f0f17]/80">
                   <tr>
                     {['User', 'Current Plan', 'Requesting', 'Status', 'Message', 'Submitted', 'Actions'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-text-muted font-semibold uppercase tracking-wide text-[10px]">{h}</th>
+                      <th key={h} className="text-left px-4 py-3 text-slate-500 font-semibold uppercase tracking-wide text-[10px]">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {reqLoading ? (
-                    <tr><td colSpan={7} className="text-center py-12 text-text-muted">Loading…</td></tr>
+                    <tr><td colSpan={7} className="text-center py-12 text-slate-500">Loading…</td></tr>
                   ) : requests.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="text-center py-16">
-                        <div className="flex flex-col items-center gap-2 text-text-muted">
+                        <div className="flex flex-col items-center gap-2 text-slate-500">
                           <Inbox className="w-8 h-8 opacity-30" />
                           <p className="text-xs">No {reqFilter === 'all' ? '' : reqFilter} upgrade requests</p>
                         </div>
                       </td>
                     </tr>
                   ) : requests.map((r, i) => (
-                    <tr key={r.id} className={`border-b border-border/40 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-surface/40'}`}>
+                    <tr key={r.id} className={`border-b border-white/[0.06] hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-[#0f0f17]/40'}`}>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-text-primary truncate max-w-44">{r.user_email || '—'}</div>
-                        {r.user_display_name && <div className="text-text-muted text-[10px]">{r.user_display_name}</div>}
-                        <div className="text-[9px] text-text-muted font-mono mt-0.5 truncate max-w-44 opacity-60">{r.user_id}</div>
+                        <div className="font-medium text-slate-100 truncate max-w-44">{r.user_email || '—'}</div>
+                        {r.user_display_name && <div className="text-slate-500 text-[10px]">{r.user_display_name}</div>}
+                        <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate max-w-44 opacity-60">{r.user_id}</div>
                       </td>
                       <td className="px-4 py-3"><PlanBadge plan={r.current_plan || 'free'} /></td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/30">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                           <Crown className="w-2.5 h-2.5" />{(r.requested_plan || 'pro').toUpperCase()}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <RequestStatusBadge status={r.status} />
                         {r.reviewed_at && (
-                          <div className="text-[9px] text-text-muted mt-0.5">{new Date(r.reviewed_at).toLocaleDateString()}</div>
+                          <div className="text-[9px] text-slate-500 mt-0.5">{new Date(r.reviewed_at).toLocaleDateString()}</div>
                         )}
                       </td>
                       <td className="px-4 py-3 max-w-[180px]">
                         {r.user_message ? (
-                          <p className="text-[10px] text-text-secondary line-clamp-2 italic" title={r.user_message}>
+                          <p className="text-[10px] text-slate-400 line-clamp-2 italic" title={r.user_message}>
                             "{r.user_message}"
                           </p>
                         ) : (
-                          <span className="text-[10px] text-text-muted italic">No message</span>
+                          <span className="text-[10px] text-slate-500 italic">No message</span>
                         )}
                         {r.admin_note && (
                           <p className="text-[9px] text-primary/70 mt-0.5 line-clamp-1" title={r.admin_note}>
@@ -466,7 +466,7 @@ export default function UsersAdmin() {
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-text-muted whitespace-nowrap text-[10px]">
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-[10px]">
                         {new Date(r.requested_at).toLocaleDateString()}
                         <div className="text-[9px] opacity-60">
                           {new Date(r.requested_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -477,19 +477,19 @@ export default function UsersAdmin() {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => { setReviewModal({ request: r, action: 'approve' }); setReviewNote(''); setReviewExpiry('') }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-colors"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
                             >
                               <CheckCircle2 className="w-3 h-3" /> Approve
                             </button>
                             <button
                               onClick={() => { setReviewModal({ request: r, action: 'reject' }); setReviewNote(''); setReviewExpiry('') }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
                             >
                               <XCircle className="w-3 h-3" /> Reject
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-text-muted italic">Reviewed</span>
+                          <span className="text-[10px] text-slate-500 italic">Reviewed</span>
                         )}
                       </td>
                     </tr>
@@ -500,17 +500,17 @@ export default function UsersAdmin() {
 
             {reqTotalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-slate-500">
                   Showing {((reqPage - 1) * 20) + 1}–{Math.min(reqPage * 20, reqTotal)} of {reqTotal}
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => setReqPage(p => Math.max(1, p - 1))} disabled={reqPage === 1}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-slate-500 disabled:opacity-30 transition-colors">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-xs text-text-muted px-2 py-1">{reqPage} / {reqTotalPages}</span>
+                  <span className="text-xs text-slate-500 px-2 py-1">{reqPage} / {reqTotalPages}</span>
                   <button onClick={() => setReqPage(p => Math.min(reqTotalPages, p + 1))} disabled={reqPage === reqTotalPages}
-                    className="p-1.5 rounded-lg border border-border text-text-muted disabled:opacity-30 transition-colors">
+                    className="p-1.5 rounded-lg border border-white/[0.08] text-slate-500 disabled:opacity-30 transition-colors">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -525,17 +525,17 @@ export default function UsersAdmin() {
       ══════════════════════════════════════════════════════════════════════ */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-sm ">
             <div className="flex items-start gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 modal.action === 'grant_pro'  ? 'bg-primary/15' :
-                modal.action === 'revoke_pro' ? 'bg-rose/10' :
-                modal.action === 'ban'        ? 'bg-rose/10' :
-                modal.action === 'reset_daily'? 'bg-slate/10' : 'bg-amber/10'
+                modal.action === 'revoke_pro' ? 'bg-rose-500/10' :
+                modal.action === 'ban'        ? 'bg-rose-500/10' :
+                modal.action === 'reset_daily'? 'bg-slate/10' : 'bg-amber-500/10'
               }`}>
-                {modal.action === 'grant_pro'   && <Crown      className="w-5 h-5 text-primary" />}
+                {modal.action === 'grant_pro'   && <Crown      className="w-5 h-5 text-blue-400" />}
                 {modal.action === 'revoke_pro'  && <UserX      className="w-5 h-5 text-rose" />}
-                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-primary" />}
+                {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-blue-400" />}
                 {modal.action === 'reset_daily' && <RotateCcw  className="w-5 h-5 text-slate-400" />}
                 {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose" />}
                 {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald" />}
@@ -543,10 +543,10 @@ export default function UsersAdmin() {
                 {modal.action === 'restore'     && <ShieldCheck className="w-5 h-5 text-emerald" />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-text-primary capitalize">
+                <h3 className="text-sm font-bold text-slate-100 capitalize">
                   {modal.action.replace(/_/g, ' ')}
                 </h3>
-                <p className="text-xs text-text-muted mt-0.5 truncate max-w-xs">{modal.email}</p>
+                <p className="text-xs text-slate-500 mt-0.5 truncate max-w-xs">{modal.email}</p>
               </div>
             </div>
 
@@ -554,11 +554,11 @@ export default function UsersAdmin() {
               <div className="space-y-3 mb-4">
                 {modal.action === 'set_plan' && (
                   <div>
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">Plan</label>
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">Plan</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {['free', 'pro', 'team', 'enterprise'].map(p => (
                         <button key={p} onClick={() => setPlanChoice(p)}
-                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-primary/50 text-primary' : 'border-border text-text-muted hover:text-text-primary'}`}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-blue-500/30 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
                         >
                           {p.toUpperCase()}
                         </button>
@@ -567,13 +567,13 @@ export default function UsersAdmin() {
                   </div>
                 )}
                 <div>
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">
+                  <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
                     Expires in (days) — leave blank for no expiry
                   </label>
                   <input type="number" min="1" max="3650"
                     value={expiryDays} onChange={e => setExpiryDays(e.target.value)}
                     placeholder="e.g. 30 (optional)"
-                    className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                    className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                   />
                 </div>
               </div>
@@ -581,15 +581,15 @@ export default function UsersAdmin() {
 
             {['ban', 'revoke'].includes(modal.action) && (
               <div className="mb-4">
-                <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">Reason (optional)</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">Reason (optional)</label>
                 <textarea value={reason} onChange={e => setReason(e.target.value)}
                   rows={2} placeholder="e.g. TOS violation"
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
+                  className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
                 />
               </div>
             )}
 
-            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-border/50">
+            <div className="text-xs text-slate-500 mb-4 bg-background/60 rounded-lg px-3 py-2 border border-white/[0.08]">
               {modal.action === 'grant_pro'   && 'User will get 100 scans/day + all 4 modalities. No charge to user.'}
               {modal.action === 'revoke_pro'  && 'User will revert to free plan (10 scans/day, text + image only).'}
               {modal.action === 'set_plan'    && `User will be set to ${planChoice} plan with matching limits.`}
@@ -602,16 +602,16 @@ export default function UsersAdmin() {
 
             <div className="flex gap-2">
               <button onClick={() => { setModal(null); setReason(''); setExpiryDays('') }}
-                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-xs font-semibold text-slate-500 hover:text-slate-100 transition-colors">
                 Cancel
               </button>
               <button onClick={doAction} disabled={!!actionLoading}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
                   ['ban', 'revoke', 'revoke_pro'].includes(modal.action)
-                    ? 'bg-rose text-white hover:bg-rose/90'
+                    ? 'bg-rose text-white hover:bg-rose-500/90'
                     : modal.action === 'grant_pro' || modal.action === 'set_plan'
-                    ? 'bg-primary text-white hover:bg-primary/90'
-                    : 'bg-emerald/90 text-white hover:bg-emerald'
+                    ? 'bg-primary text-white hover:bg-blue-700'
+                    : 'bg-emerald-500/90 text-white hover:bg-emerald'
                 }`}>
                 {actionLoading ? 'Processing…' : 'Confirm'}
               </button>
@@ -625,56 +625,56 @@ export default function UsersAdmin() {
       ══════════════════════════════════════════════════════════════════════ */}
       {reviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-md ">
             <div className="flex items-start gap-3 mb-5">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald/10' : 'bg-rose/10'}`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
                 {reviewModal.action === 'approve'
                   ? <CheckCircle2 className="w-5 h-5 text-emerald" />
                   : <XCircle className="w-5 h-5 text-rose" />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-text-primary">
+                <h3 className="text-sm font-bold text-slate-100">
                   {reviewModal.action === 'approve' ? 'Approve Upgrade Request' : 'Reject Upgrade Request'}
                 </h3>
-                <p className="text-xs text-text-muted mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {reviewModal.request.user_email || reviewModal.request.user_id}
                 </p>
               </div>
             </div>
 
             {/* Plan change summary */}
-            <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-background/60 border border-border/50">
+            <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-background/60 border border-white/[0.08]">
               <PlanBadge plan={reviewModal.request.current_plan || 'free'} />
-              <ChevronRight className="w-3 h-3 text-text-muted" />
+              <ChevronRight className="w-3 h-3 text-slate-500" />
               <PlanBadge plan={reviewModal.request.requested_plan || 'pro'} />
-              <span className="text-[10px] text-text-muted ml-auto">10 → 100 scans/day</span>
+              <span className="text-[10px] text-slate-500 ml-auto">10 → 100 scans/day</span>
             </div>
 
             {/* User's message */}
             {reviewModal.request.user_message && (
-              <div className="mb-4 p-3 rounded-lg bg-background/60 border border-border/50">
-                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">User's message</p>
-                <p className="text-xs text-text-secondary italic">"{reviewModal.request.user_message}"</p>
+              <div className="mb-4 p-3 rounded-lg bg-background/60 border border-white/[0.08]">
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">User's message</p>
+                <p className="text-xs text-slate-400 italic">"{reviewModal.request.user_message}"</p>
               </div>
             )}
 
             {/* Expiry (approve only) */}
             {reviewModal.action === 'approve' && (
               <div className="mb-4">
-                <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
                   Expires in (days) — leave blank for permanent Pro
                 </label>
                 <input type="number" min="1" max="3650"
                   value={reviewExpiry} onChange={e => setReviewExpiry(e.target.value)}
                   placeholder="e.g. 365 (optional)"
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted"
+                  className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                 />
               </div>
             )}
 
             {/* Admin note */}
             <div className="mb-5">
-              <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wide block mb-1.5">
+              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
                 Note to user {reviewModal.action === 'approve' ? '(optional)' : '(recommended)'}
               </label>
               <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)}
@@ -682,11 +682,11 @@ export default function UsersAdmin() {
                 placeholder={reviewModal.action === 'approve'
                   ? 'e.g. Welcome to Pro! Enjoy the full platform.'
                   : 'e.g. Please reapply after 30 days.'}
-                className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none focus:border-primary/50 text-text-primary placeholder:text-text-muted resize-none"
+                className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
               />
             </div>
 
-            <div className="text-xs text-text-muted mb-4 bg-background/60 rounded-lg px-3 py-2 border border-border/50">
+            <div className="text-xs text-slate-500 mb-4 bg-background/60 rounded-lg px-3 py-2 border border-white/[0.08]">
               {reviewModal.action === 'approve'
                 ? 'User is immediately upgraded to Pro. They receive an in-app notification with your note.'
                 : 'User stays on free plan. They are notified and can reapply in the future.'}
@@ -694,14 +694,14 @@ export default function UsersAdmin() {
 
             <div className="flex gap-2">
               <button onClick={() => { setReviewModal(null); setReviewNote(''); setReviewExpiry('') }}
-                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-text-muted hover:text-text-primary transition-colors">
+                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-xs font-semibold text-slate-500 hover:text-slate-100 transition-colors">
                 Cancel
               </button>
               <button onClick={doReview} disabled={reviewLoading}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
                   reviewModal.action === 'approve'
-                    ? 'bg-emerald/90 text-white hover:bg-emerald'
-                    : 'bg-rose text-white hover:bg-rose/90'
+                    ? 'bg-emerald-500/90 text-white hover:bg-emerald'
+                    : 'bg-rose text-white hover:bg-rose-500/90'
                 }`}>
                 {reviewLoading ? 'Processing…' : reviewModal.action === 'approve' ? 'Approve & Upgrade' : 'Reject Request'}
               </button>

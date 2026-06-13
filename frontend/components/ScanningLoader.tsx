@@ -49,7 +49,7 @@ export default function ScanningLoader({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: reduced ? 0 : -8 }}
         transition={{ duration: reduced ? 0 : 0.2 }}
-        className={`rounded-2xl border border-white/[0.05] bg-surface p-5 space-y-4 ${className}`}
+        className={`rounded-xl border border-white/[0.05] bg-[#0f0f17] p-5 space-y-4 ${className}`}
       >
         {/* Header */}
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
@@ -71,7 +71,7 @@ export default function ScanningLoader({
               >
                 {/* Step circle */}
                 <div
-                  className="relative w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                  className="relative w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200"
                   style={{
                     borderColor: isDone
                       ? '#10b981'

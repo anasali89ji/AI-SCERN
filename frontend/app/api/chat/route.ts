@@ -150,7 +150,6 @@ async function analyzeImageForensic(
         },
       }
     } catch (err) {
-      console.warn('[analyzeImageForensic] Semantic RAG failed, falling back to NVIDIA vision:', err)
       // fall through to base64 / NVIDIA path
     }
   }
@@ -395,7 +394,7 @@ AISCERN — COMPANY & FOUNDER INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FOUNDER & OWNER:
-Aiscern was founded and is owned by Anas Ali (also known as Saghir), a student entrepreneur from Mandi Bahauddin, Pakistan.
+Aiscern is an independent, bootstrapped AI content detection platform.
 Anas built Aiscern independently as a solo founder, handling all product design, engineering, machine learning, and infrastructure himself while balancing his academic studies.
 
 MISSION:

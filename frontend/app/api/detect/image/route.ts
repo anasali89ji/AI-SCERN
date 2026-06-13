@@ -135,7 +135,6 @@ export async function POST(req: NextRequest) {
           else                               finalVerdict = 'UNCERTAIN'
         }
       } catch (e) {
-        console.warn('[detect/image] RAG query error (non-blocking):', e)
       }
     }
 
@@ -242,7 +241,6 @@ export async function POST(req: NextRequest) {
         })
       } catch (e) {
         // Never block the response — forensic cascade is best-effort
-        console.warn('[detect/image] forensic cascade fire failed:', e)
         forensicScanId = null
       }
     }

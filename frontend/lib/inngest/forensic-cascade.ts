@@ -77,7 +77,6 @@ async function callSignalWorker(
 ): Promise<SignalWorkerResponse> {
   const workerUrl = process.env.SIGNAL_WORKER_URL
   if (!workerUrl) {
-    console.warn('[signal-worker] SIGNAL_WORKER_URL not configured — L1-L4 skipped')
     return {
       jobId, status: 'error',
       processingTimeMs: 0, layers: [],
@@ -89,7 +88,6 @@ async function callSignalWorker(
   // Health check before committing to retries
   const healthy = await checkSignalWorkerHealth(workerUrl)
   if (!healthy) {
-    console.warn('[signal-worker] Health check failed — L1-L4 skipped (L6 absence boost active)')
     return {
       jobId, status: 'error',
       processingTimeMs: 0, layers: [],
@@ -118,7 +116,6 @@ async function callSignalWorker(
     } catch (err) {
       const isLastAttempt = attempt === maxRetries - 1
       if (isLastAttempt) {
-        console.warn(`[signal-worker] All ${maxRetries} attempts failed:`, (err as Error).message)
         return {
           jobId, status: 'error',
           processingTimeMs: 0, layers: [],
@@ -127,7 +124,6 @@ async function callSignalWorker(
         }
       }
       const delay = baseDelayMs * Math.pow(2, attempt)
-      console.warn(`[signal-worker] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`)
       await new Promise(r => setTimeout(r, delay))
     }
   }
@@ -235,7 +231,6 @@ export const imageForensicCascade = inngest.createFunction(
           contentType: 'image/jpeg',
         }
       } catch (err) {
-        console.warn(`[forensic-cascade] R2 buffer fetch failed for ${r2Key}: ${err}`)
         // Fallback: try to fetch from public URL
         const res = await fetch(imageUrl, { signal: AbortSignal.timeout(10_000) })
         if (!res.ok) throw new Error('Cannot download image from R2 or URL')
@@ -261,7 +256,6 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await callSignalWorker(imageUrl, scanId)
         } catch (err) {
-          console.warn(`[forensic-cascade] Signal worker failed: ${err}`)
           return {
             jobId: scanId, status: 'error' as const,
             processingTimeMs: 0, layers: [] as LayerReport[],
@@ -282,7 +276,6 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runSemanticRAG(imageUrl)
         } catch (err) {
-          console.warn(`[forensic-cascade] Semantic RAG failed: ${err}`)
           return {
             layerReport: {
               layer: 6, layerName: 'Semantic Vector-Less RAG',
@@ -299,7 +292,6 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runPerspectiveSwarm(imageUrl)
         } catch (err) {
-          console.warn(`[forensic-cascade] Perspective swarm failed: ${err}`)
           return {
             layerReport: {
               layer: 7, layerName: 'Perspective Swarm',
@@ -316,7 +308,6 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runPhysicsBiologySwarm(imageUrl)
         } catch (err) {
-          console.warn(`[forensic-cascade] Physics-biology swarm failed: ${err}`)
           return {
             layerReport: {
               layer: 8, layerName: 'Physics & Biology Swarm',
@@ -346,7 +337,6 @@ export const imageForensicCascade = inngest.createFunction(
             evidence: [] as EvidenceNode[], layerSuspicionScore: 0.5,
           }
         } catch (err) {
-          console.warn(`[forensic-cascade] L5 diffusion analysis failed: ${err}`)
           return {
             layer: 5, layerName: 'Diffusion Analysis',
             processingTimeMs: 0, status: 'failure' as const,
@@ -360,7 +350,6 @@ export const imageForensicCascade = inngest.createFunction(
         try {
           return await runEnsembleClassifier(imageUrl)
         } catch (err) {
-          console.warn(`[forensic-cascade] L9 ensemble classifier failed: ${err}`)
           return {
             layer: 9, layerName: 'Neural Ensemble',
             processingTimeMs: 0, status: 'failure' as const,
@@ -460,7 +449,6 @@ export const imageForensicCascade = inngest.createFunction(
           imageUrl, imgBuf, synthidResult ?? undefined, exifSW, exifCam
         )
       } catch (err) {
-        console.warn(`[forensic-cascade] Provenance check failed: ${err}`)
         return {
           layerReport: {
             layer: 10, layerName: 'Provenance & Traceability',
@@ -493,7 +481,6 @@ export const imageForensicCascade = inngest.createFunction(
           bayesianScore: roughBayesianScore,
         })
       } catch (err) {
-        console.warn(`[forensic-cascade] Contradiction graph failed: ${err}`)
         return null
       }
     })

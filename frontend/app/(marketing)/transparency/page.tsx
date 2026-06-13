@@ -32,7 +32,7 @@ const SECTIONS = [
   {
     icon: Database,
     title: 'Data Retention Policy',
-    color: 'cyan',
+    color: 'blue',
     items: [
       'Scan content (text, images, audio, video) is never permanently stored unless you explicitly save a report.',
       'Scan metadata (verdict, confidence score, timestamp) is retained for signed-in users to support scan history. You can delete this at any time from your settings.',
@@ -85,30 +85,31 @@ const SECTIONS = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string }> = {
-  primary: { bg: 'bg-primary/8', border: 'border-primary/20', icon: 'text-primary' },
-  cyan:    { bg: 'bg-cyan/8',    border: 'border-cyan/20',    icon: 'text-cyan'    },
-  emerald: { bg: 'bg-emerald/8', border: 'border-emerald/20', icon: 'text-emerald' },
-  amber:   { bg: 'bg-amber/8',   border: 'border-amber/20',   icon: 'text-amber'   },
-  rose:    { bg: 'bg-rose/8',    border: 'border-rose/20',    icon: 'text-rose'    },
+  primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
+  blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
+  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400'    },
+  emerald: { bg: 'bg-emerald-500/8', border: 'border-emerald-500/20', icon: 'text-emerald-400' },
+  amber:   { bg: 'bg-amber-500/8',   border: 'border-amber-500/20',   icon: 'text-amber-500'   },
+  rose:    { bg: 'bg-rose-500/8',    border: 'border-rose-500/20',    icon: 'text-rose-500'    },
 }
 
 export default function TransparencyPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-background pt-16">
+      <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald/10 border border-emerald/20 text-xs font-semibold text-emerald mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 mb-6">
               <Shield className="w-3.5 h-3.5" />
               Full Transparency
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-4 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-black text-slate-100 mb-4 leading-tight">
               How We Handle<br /><span className="gradient-text">Your Data</span>
             </h1>
-            <p className="text-lg text-text-secondary leading-relaxed">
+            <p className="text-lg text-slate-400 leading-relaxed">
               We believe users deserve to know exactly how their content is processed. No vague policies — just a clear, direct explanation of what happens to your data.
             </p>
           </div>
@@ -126,7 +127,7 @@ export default function TransparencyPage() {
               ].map((badge, i) => {
                 const BIcon = badge.icon
                 return (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border/60 text-sm text-text-secondary">
+                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0f0f17] border border-white/[0.08] text-sm text-slate-400">
                     <BIcon className="w-4 h-4 text-emerald" />
                     {badge.label}
                   </div>
@@ -143,17 +144,17 @@ export default function TransparencyPage() {
               const SIcon = section.icon
               const c = colorMap[section.color]
               return (
-                <div key={section.title} className="card border border-border/60 rounded-2xl p-6">
+                <div key={section.title} className="card border border-white/[0.08] rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <SIcon className={`w-5 h-5 ${c.icon}`} />
                     </div>
-                    <h2 className="text-lg font-bold text-text-primary">{section.title}</h2>
+                    <h2 className="text-lg font-bold text-slate-100">{section.title}</h2>
                   </div>
                   <ul className="space-y-3">
                     {section.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-text-secondary leading-relaxed">
-                        <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-slate-400 leading-relaxed">
+                        <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                         {item}
                       </li>
                     ))}
@@ -163,9 +164,9 @@ export default function TransparencyPage() {
             })}
 
             {/* Contact */}
-            <div className="text-center p-6 rounded-2xl border border-primary/20 bg-primary/5">
-              <h2 className="text-lg font-bold text-text-primary mb-2">Questions about your data?</h2>
-              <p className="text-sm text-text-muted mb-4">Contact our privacy team or submit a GDPR data request.</p>
+            <div className="text-center p-6 rounded-xl border border-blue-500/20 bg-blue-500/5">
+              <h2 className="text-lg font-bold text-slate-100 mb-2">Questions about your data?</h2>
+              <p className="text-sm text-slate-500 mb-4">Contact our privacy team or submit a GDPR data request.</p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/contact" className="btn-primary text-sm">Contact Privacy Team</Link>
                 <Link href="/privacy" className="btn-secondary text-sm">Full Privacy Policy</Link>

@@ -12,14 +12,14 @@ const LAST_REVIEWED = 'May 17, 2026'
 
 export default function AccessibilityPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-surface sticky top-0 z-10">
+    <div className="min-h-screen bg-[#08080d] flex flex-col">
+      <header className="border-b border-white/[0.08] bg-[#0f0f17] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
             <span className="font-black gradient-text">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-100 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -27,8 +27,8 @@ export default function AccessibilityPage() {
 
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-text-primary mb-3">Accessibility Statement</h1>
-          <p className="text-text-muted">Last reviewed: {LAST_REVIEWED}</p>
+          <h1 className="text-4xl font-black text-slate-100 mb-3">Accessibility Statement</h1>
+          <p className="text-slate-500">Last reviewed: {LAST_REVIEWED}</p>
         </div>
 
         {/* Status badge */}
@@ -149,21 +149,21 @@ export default function AccessibilityPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">{title}</h2>
-      <div className="space-y-3 text-text-secondary text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-slate-100 mb-4 pb-2 border-b border-white/[0.08]">{title}</h2>
+      <div className="space-y-3 text-slate-400 text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
 
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border border-border bg-surface/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />}
-      {icon === 'warn' && <Clock className="w-4 h-4 text-amber flex-shrink-0 mt-0.5" />}
-      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose flex-shrink-0 mt-0.5" />}
+    <div className="flex items-start gap-3 p-3 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50">
+      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />}
+      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />}
+      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />}
       <div>
-        <p className="font-semibold text-text-primary text-sm">{label}</p>
-        <p className="text-text-muted text-xs mt-0.5">{detail}</p>
+        <p className="font-semibold text-slate-100 text-sm">{label}</p>
+        <p className="text-slate-500 text-xs mt-0.5">{detail}</p>
       </div>
     </div>
   )

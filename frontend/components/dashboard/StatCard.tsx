@@ -12,16 +12,16 @@ interface Props {
 
 export function StatCard({ title, value, delta, positive = true, icon: Icon, color = '#0ea5e9', blurred = false }: Props) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
+    <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-sm text-text-muted font-medium">{title}</p>
+        <p className="text-sm text-slate-500 font-medium">{title}</p>
         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${color}20` }}>
           <Icon className="w-4 h-4" style={{ color }} />
         </div>
       </div>
-      <div className={`text-2xl font-black text-text-primary mb-1 ${blurred ? 'blur-md select-none' : ''}`}>{value}</div>
+      <div className={`text-2xl font-black text-slate-100 mb-1 ${blurred ? 'blur-md select-none' : ''}`}>{value}</div>
       {delta && (
-        <p className={`text-xs font-medium ${positive ? 'text-emerald-400' : 'text-rose'}`}>
+        <p className={`text-xs font-medium ${positive ? 'text-emerald-400' : 'text-rose-500'}`}>
           {positive ? '↑' : '↓'} {delta} vs last period
         </p>
       )}

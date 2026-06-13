@@ -47,8 +47,8 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {/* Delete reveal — shown when swiped */}
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
-          <button onClick={reset} className="px-3 bg-surface-active text-text-muted text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose text-white font-bold flex items-center gap-1.5 text-sm">
+          <button onClick={reset} className="px-3 bg-[#141420] text-slate-500 text-xs">Cancel</button>
+          <button onClick={onDelete} className="px-4 bg-rose-500 text-white font-bold flex items-center gap-1.5 text-sm">
             <Trash2 className="w-4 h-4" /> Delete
           </button>
         </div>
@@ -63,11 +63,11 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
 
 const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
 const mediaColors = {
-  image: 'text-primary bg-primary/10',
-  video: 'text-secondary bg-secondary/10',
-  audio: 'text-cyan bg-cyan/10',
-  text:  'text-amber bg-amber/10',
-  url:   'text-emerald bg-emerald/10',
+  image: 'text-primary bg-blue-500/10',
+  video: 'text-slate-400 bg-slate-700/10',
+  audio: 'text-blue-400 bg-blue-500/10',
+  text:  'text-amber bg-amber-500/10',
+  url:   'text-emerald bg-emerald-500/10',
 }
 
 function normalizeConf(c: number | null) {
@@ -84,38 +84,38 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
         transition={{ type: 'tween', duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         className="card w-full max-w-md" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-text-primary">Scan Details</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors">
+          <h3 className="font-bold text-slate-100">Scan Details</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#141420] text-slate-500 hover:text-slate-100 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-text-muted">Type</span>
-            <span className="text-text-primary font-medium capitalize">{scan.media_type}</span>
+            <span className="text-slate-500">Type</span>
+            <span className="text-slate-100 font-medium capitalize">{scan.media_type}</span>
           </div>
           {scan.file_name && (
             <div className="flex justify-between gap-4">
-              <span className="text-text-muted shrink-0">File</span>
-              <span className="text-text-primary font-medium text-right truncate">{scan.file_name}</span>
+              <span className="text-slate-500 shrink-0">File</span>
+              <span className="text-slate-100 font-medium text-right truncate">{scan.file_name}</span>
             </div>
           )}
           {scan.file_size && (
             <div className="flex justify-between">
-              <span className="text-text-muted">Size</span>
-              <span className="text-text-primary">{formatFileSize(scan.file_size)}</span>
+              <span className="text-slate-500">Size</span>
+              <span className="text-slate-100">{formatFileSize(scan.file_size)}</span>
             </div>
           )}
           {scan.content_preview && (
             <div>
-              <span className="text-text-muted block mb-1">Content preview</span>
-              <p className="text-text-secondary text-xs leading-relaxed p-2 bg-surface-active rounded-lg line-clamp-3">
+              <span className="text-slate-500 block mb-1">Content preview</span>
+              <p className="text-slate-400 text-xs leading-relaxed p-2 bg-[#141420] rounded-lg line-clamp-3">
                 {scan.content_preview}
               </p>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-text-muted">Verdict</span>
+            <span className="text-slate-500">Verdict</span>
             <span className={scan.verdict === 'AI' ? 'badge-ai' : scan.verdict === 'HUMAN' ? 'badge-human' : 'badge-uncertain'}>
               {scan.verdict}
             </span>
@@ -123,18 +123,18 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
           {conf != null && (
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-text-muted">Confidence</span>
-                <span className="font-bold text-text-primary">{conf}%</span>
+                <span className="text-slate-500">Confidence</span>
+                <span className="font-bold text-slate-100">{conf}%</span>
               </div>
-              <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
+              <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
               </div>
             </div>
           )}
 
           <div className="flex justify-between">
-            <span className="text-text-muted">Analyzed</span>
-            <span className="text-text-secondary">{new Date(scan.created_at).toLocaleString()}</span>
+            <span className="text-slate-500">Analyzed</span>
+            <span className="text-slate-400">{new Date(scan.created_at).toLocaleString()}</span>
           </div>
         </div>
       </motion.div>
@@ -240,13 +240,13 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6 text-blue-400" />
               </div>
               Scan History
             </h1>
-            <p className="text-text-muted ml-14 text-sm">
+            <p className="text-slate-500 ml-14 text-sm">
               {scans.length > 0 ? `${scans.length} total scans` : 'All your previous detection results'}
             </p>
           </div>
@@ -260,12 +260,12 @@ export default function HistoryPage() {
         <div className="card mb-5 space-y-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input type="text" placeholder="Search by filename or content…" value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               className="input-field pl-9 py-2" />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary">
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-100">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -274,22 +274,22 @@ export default function HistoryPage() {
           <div className="flex flex-wrap gap-2 items-center">
             {/* Media type filter */}
             <div className="flex items-center gap-1 flex-wrap">
-              <Filter className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
                   {f}
                 </button>
               ))}
             </div>
 
-            <div className="h-4 w-px bg-border hidden sm:block mx-1" />
+            <div className="h-4 w-px bg-white/[0.08] hidden sm:block mx-1" />
 
             {/* Verdict filter */}
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
                   {f}
                 </button>
               ))}
@@ -298,7 +298,7 @@ export default function HistoryPage() {
             {/* Sort */}
             <div className="ml-auto">
               <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-xs bg-surface border border-border/55 rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
+                className="text-xs bg-[#0f0f17] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-slate-500 focus:outline-none focus:border-blue-500/30">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="confidence">By confidence</option>
@@ -309,11 +309,11 @@ export default function HistoryPage() {
 
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-slate-500">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
             {(search || mediaFilter !== 'all' || verdictFilter !== 'all') && (
               <button onClick={() => { setSearch(''); setMediaFilter('all'); setVerdictFilter('all') }}
-                className="ml-2 text-primary hover:underline text-xs">Clear filters</button>
+                className="ml-2 text-blue-400 hover:underline text-xs">Clear filters</button>
             )}
           </p>
           <div className="flex gap-2">
@@ -323,7 +323,7 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-text-muted hover:text-rose hover:border-rose/30">
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-slate-500 hover:text-rose hover:border-rose-500/30">
                 <Trash2 className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
@@ -333,13 +333,13 @@ export default function HistoryPage() {
         {/* Content */}
         {loading ? (
           <div className="space-y-3">
-            {[...Array(6)].map((_, i) => <div key={i} className="card h-20 animate-pulse bg-surface-active" />)}
+            {[...Array(6)].map((_, i) => <div key={i} className="card h-20 animate-pulse bg-[#141420]" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="card flex flex-col items-center justify-center py-20 text-center">
-            <Clock className="w-12 h-12 text-text-muted mx-auto mb-4" />
-            <h3 className="font-semibold text-text-primary mb-2">No scans found</h3>
-            <p className="text-text-muted text-sm">
+            <Clock className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+            <h3 className="font-semibold text-slate-100 mb-2">No scans found</h3>
+            <p className="text-slate-500 text-sm">
               {search || mediaFilter !== 'all' || verdictFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'Start detecting AI content to see your history here'}
@@ -351,7 +351,7 @@ export default function HistoryPage() {
               <AnimatePresence initial={false}>
                 {paginated.map((scan, i) => {
                   const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileText
-                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-text-muted bg-surface'
+                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-slate-500 bg-[#0f0f17]'
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
@@ -359,7 +359,7 @@ export default function HistoryPage() {
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
-                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
+                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-blue-500/50/25 transition-all group cursor-pointer"
                       onClick={() => setSelectedScan(scan)}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
@@ -367,13 +367,13 @@ export default function HistoryPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
+                        <p className="text-sm font-medium text-slate-100 truncate">
                           {scan.file_name || scan.source_url || (scan.content_preview?.substring(0, 60)) || 'Unknown content'}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs text-text-muted uppercase">{scan.media_type}</span>
-                          {scan.file_size && <span className="text-xs text-text-muted">{formatFileSize(scan.file_size)}</span>}
-                          <span className="text-xs text-text-disabled">{formatRelativeTime(scan.created_at)}</span>
+                          <span className="text-xs text-slate-500 uppercase">{scan.media_type}</span>
+                          {scan.file_size && <span className="text-xs text-slate-500">{formatFileSize(scan.file_size)}</span>}
+                          <span className="text-xs text-slate-600">{formatRelativeTime(scan.created_at)}</span>
                         </div>
                       </div>
 
@@ -385,20 +385,20 @@ export default function HistoryPage() {
                         )}
                         {conf != null && (
                           <div className="text-right hidden sm:block w-12">
-                            <p className="text-sm font-bold text-text-primary tabular-nums">{conf}%</p>
-                            <div className="h-1 bg-border rounded-full overflow-hidden mt-0.5">
-                              <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                            <p className="text-sm font-bold text-slate-100 tabular-nums">{conf}%</p>
+                            <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden mt-0.5">
+                              <div className="h-full bg-blue-600 rounded-full"
                                 style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
                             </div>
                           </div>
                         )}
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                           <button onClick={() => setSelectedScan(scan)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors">
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-blue-500/10 transition-colors">
                             <Eye className="w-4 h-4" />
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-rose hover:bg-rose/10 transition-colors disabled:opacity-50">
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose hover:bg-rose-500/10 transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

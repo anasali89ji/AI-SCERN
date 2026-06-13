@@ -14,7 +14,7 @@ export default function Support() {
   return (
     <RoleGuard required="SUPPORT">
       <div className="space-y-6">
-        <h1 className="text-2xl font-black text-text-primary">Customer Support</h1>
+        <h1 className="text-2xl font-black text-slate-100">Customer Support</h1>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="CSAT Score"      value="94%"   delta="2%"  positive icon={Star}             color={C.warning}   />
           <StatCard title="NPS Score"       value="62"    delta="4"   positive icon={HeadphonesIcon}   color={C.primary}   />
@@ -23,8 +23,8 @@ export default function Support() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Ticket Categories</h3>
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Ticket Categories</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={categories} dataKey="v" cx="50%" cy="50%" outerRadius={75} label={({name,v})=>`${name} ${v}%`} labelLine={false}>
@@ -35,12 +35,12 @@ export default function Support() {
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Ticket Status</h3>
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Ticket Status</h3>
             <div className="space-y-3">
               {[{label:'Open',count:12,color:C.danger},{label:'In Progress',count:5,count2:5,color:C.warning},{label:'Resolved',count:148,color:C.success}].map(s=>(
-                <div key={s.label} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/50">
-                  <span className="text-sm text-text-secondary">{s.label}</span>
+                <div key={s.label} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
+                  <span className="text-sm text-slate-400">{s.label}</span>
                   <span className="text-lg font-black" style={{color:s.color}}>{s.count}</span>
                 </div>
               ))}
@@ -48,36 +48,36 @@ export default function Support() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5 overflow-x-auto">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Top 5 Common Issues</h3>
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5 overflow-x-auto">
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Top 5 Common Issues</h3>
           <table className="w-full text-sm min-w-[320px]">
-            <thead><tr className="border-b border-border text-xs text-text-muted">
+            <thead><tr className="border-b border-white/[0.08] text-xs text-slate-500">
               <th className="text-left py-2 font-medium">Issue</th>
               <th className="text-right py-2 font-medium">Tickets</th>
             </tr></thead>
             <tbody>
               {issues.map((r,i)=>(
-                <tr key={i} className="border-b border-border/40 text-xs">
-                  <td className="py-2 text-text-secondary">{r.issue}</td>
-                  <td className="py-2 text-right font-bold text-text-primary">{r.count}</td>
+                <tr key={i} className="border-b border-white/[0.06] text-xs">
+                  <td className="py-2 text-slate-400">{r.issue}</td>
+                  <td className="py-2 text-right font-bold text-slate-100">{r.count}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Latest Reviews</h3>
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Latest Reviews</h3>
           <div className="space-y-3">
             {latestReviews.map((r,i)=>(
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">{r.name[0]}</div>
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-white/[0.08]">
+                <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">{r.name[0]}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-text-primary">{r.name}</span>
+                    <span className="text-xs font-semibold text-slate-100">{r.name}</span>
                     <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}</span>
                   </div>
-                  <p className="text-xs text-text-muted">{r.text}</p>
+                  <p className="text-xs text-slate-500">{r.text}</p>
                 </div>
               </div>
             ))}

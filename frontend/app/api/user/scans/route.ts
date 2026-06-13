@@ -48,7 +48,6 @@ export async function GET(req: NextRequest) {
 
     // If status column doesn't exist yet, retry without status filter
     if (error && error.message?.includes('status')) {
-      console.warn('[user/scans] status column missing — retrying without filter')
       let fallbackQuery = db
         .from('scans')
         .select('id,media_type,verdict,confidence_score,created_at,file_name,file_size,content_preview,model_used,processing_time,signals', { count: 'exact' })

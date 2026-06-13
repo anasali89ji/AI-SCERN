@@ -63,7 +63,7 @@ export default function ResearchPage() {
       <main className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 2xl:px-8 py-16 sm:py-24 2xl:py-32">
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <BookOpen className="h-7 w-7 text-primary" />
+            <BookOpen className="h-7 w-7 text-blue-400" />
             <h1 className="text-3xl font-bold tracking-tight">Research Citations</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl">
@@ -75,13 +75,13 @@ export default function ResearchPage() {
         <div className="space-y-12">
           {PAPERS.map((section) => (
             <section key={section.category}>
-              <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border">{section.category}</h2>
+              <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-white/[0.08]">{section.category}</h2>
               <div className="space-y-4">
                 {section.entries.map((paper, i) => (
-                  <div key={i} className="rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors">
+                  <div key={i} className="rounded-xl border border-white/[0.08] p-4 hover:bg-muted/30 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <a href={paper.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-medium text-foreground hover:text-primary transition-colors group">
+                        <a href={paper.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-medium text-foreground hover:text-white transition-colors group">
                           <span>{paper.title}</span>
                           <ExternalLink className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 opacity-60 group-hover:opacity-100" />
                         </a>
@@ -96,7 +96,7 @@ export default function ResearchPage() {
           ))}
         </div>
 
-        <div className="mt-12 rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground">
+        <div className="mt-12 rounded-xl border border-white/[0.08] bg-muted/30 p-6 text-sm text-muted-foreground">
           <p className="font-medium text-foreground mb-1">Missing a citation?</p>
           <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-primary underline underline-offset-2">research@aiscern.com</a> and we will add it promptly.</p>
           <p className="mt-3">Also see: <Link href="/benchmarks" className="underline underline-offset-2 hover:text-foreground">Benchmarks</Link> · <Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link></p>

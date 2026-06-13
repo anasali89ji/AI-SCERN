@@ -50,7 +50,6 @@ export async function runDiffusionSnapBack(imageUrl: string): Promise<LayerRepor
 
   const workerUrl = process.env.SIGNAL_WORKER_URL
   if (!workerUrl) {
-    console.warn('[L5b] SIGNAL_WORKER_URL not set — diffusion snap-back skipped')
     return failure(start)
   }
 
@@ -63,7 +62,6 @@ export async function runDiffusionSnapBack(imageUrl: string): Promise<LayerRepor
     })
 
     if (!res.ok) {
-      console.warn(`[L5b] Snap-back returned ${res.status} — skipping`)
       return failure(start)
     }
 
@@ -72,7 +70,6 @@ export async function runDiffusionSnapBack(imageUrl: string): Promise<LayerRepor
 
   } catch (err) {
     const isTimeout = err instanceof Error && err.name === 'TimeoutError'
-    console.warn(`[L5b] Diffusion snap-back ${isTimeout ? 'timed out' : 'failed'}:`, err)
     return {
       layer: 5, layerName: LAYER_NAMES[5],
       processingTimeMs: Date.now() - start,

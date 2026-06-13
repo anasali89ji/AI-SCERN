@@ -6,11 +6,12 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
+import { Mic, Upload, X, AlertTriangle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -26,9 +27,9 @@ import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { icon: AlertTriangle, color: 'text-rose',    border: 'border-rose/30',    bg: 'bg-rose/5',    label: 'AI GENERATED VOICE' },
-  HUMAN:     { icon: CheckCircle,  color: 'text-emerald', border: 'border-emerald/30', bg: 'bg-emerald/5', label: 'AUTHENTIC HUMAN VOICE' },
-  UNCERTAIN: { icon: HelpCircle,   color: 'text-amber',   border: 'border-amber/30',   bg: 'bg-amber/5',   label: 'UNCERTAIN' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'AI GENERATED VOICE' },
+  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC HUMAN VOICE' },
+  UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
 
 const WAVE_HEIGHTS = Array.from({ length: 40 }, (_, i) => 6 + Math.sin(i * 0.8) * 14 + Math.cos(i * 0.3) * 10)
@@ -181,17 +182,21 @@ function AudioDetectionPage() {
 
   return (
     <>
+    {/* Screen reader announcement of analysis results */}
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {result && `Analysis complete. Verdict: ${verdictConfig[result.verdict as Verdict]?.label ?? result.verdict}. Confidence: ${formatConfidence(result.confidence)}.`}
+    </div>
     <SignupGate />
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <audio ref={audioRef} className="hidden" />
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center shrink-0">
-            <Mic className="w-6 h-6 text-cyan" />
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+            <Mic className="w-6 h-6 text-blue-400" />
           </div>
           Audio Detection
         </h1>
-        <p className="text-text-muted ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
+        <p className="text-slate-500 ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -199,61 +204,61 @@ function AudioDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-cyan/30 bg-cyan/5 rounded-2xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-cyan/15 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-cyan" />
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-blue-500/30 bg-blue-500/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-blue-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-cyan text-base">Tap to Choose Audio File</p>
-                  <p className="text-xs text-text-muted mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
+                  <p className="font-bold text-blue-400 text-base">Tap to Choose Audio File</p>
+                  <p className="text-xs text-slate-500 mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
                 </div>
                 <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
               </label>
             ) : (
             <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-cyan bg-cyan/5 scale-[1.02]' : 'border-border hover:border-cyan/50 hover:bg-surface-hover/30'}`}>
+              className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
+                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-cyan' : 'text-text-muted'}`} />
+                className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-blue-400' : 'text-slate-500'}`} />
               </motion.div>
               <div className="text-center">
-                <p className="font-semibold text-text-primary mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
-                <p className="text-sm text-text-muted">or click to browse</p>
-                <p className="text-xs text-text-disabled mt-2">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
+                <p className="font-semibold text-slate-100 mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
+                <p className="text-sm text-slate-500">or click to browse</p>
+                <p className="text-xs text-slate-600 mt-2">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
               </div>
               <WaveformVisualizer playing={false} />
             </div>
             )
           ) : (
             <div className="card space-y-4">
-              <div className="p-4 rounded-xl bg-surface-active border border-border">
+              <div className="p-4 rounded-xl bg-[#141420] border border-white/[0.08]">
                 <WaveformVisualizer playing={playing} progress={progress} />
 
                 {/* Seek bar */}
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-border rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-gradient-to-r from-cyan to-primary rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
+                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
+                  <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
+                    <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
                   </div>
-                  <span className="text-xs text-text-muted w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
+                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
                 </div>
 
                 <div className="flex items-center gap-3 mt-3">
                   <button onClick={togglePlay}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan to-primary flex items-center justify-center hover:opacity-90 transition-opacity shrink-0 shadow-lg shadow-cyan/20">
+                    className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-colors shrink-0">
                     {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-secondary font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-text-muted">
+                    <p className="text-sm text-slate-400 font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-slate-500">
                       {formatFileSize(file.size)}
                       {duration > 0 && ` · ${formatDuration(duration)}`}
                     </p>
                   </div>
                   <button onClick={reset}
-              title="Detect Another" className="text-text-muted hover:text-rose p-2 rounded-lg hover:bg-rose/10 transition-colors shrink-0">
+              title="Detect Another" className="text-slate-500 hover:text-rose p-2 rounded-lg hover:bg-rose-500/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -273,7 +278,7 @@ function AudioDetectionPage() {
           )}
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose/30 bg-rose/5 flex items-center gap-2 text-rose text-sm py-3">
+              className="card border-rose-500/30 bg-rose-500/5 flex items-center gap-2 text-rose-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </motion.div>
           )}
@@ -286,9 +291,9 @@ function AudioDetectionPage() {
               className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
-                  <div className="mb-3 text-xs font-medium text-text-muted">
-                    Hey <span className="text-text-primary font-semibold">{displayName}</span>, here's what we found
-                    {file ? <> for <span className="text-text-primary font-medium">"{file.name}"</span></> : null}:
+                  <div className="mb-3 text-xs font-medium text-slate-500">
+                    Hey <span className="text-slate-100 font-semibold">{displayName}</span>, here's what we found
+                    {file ? <> for <span className="text-slate-100 font-medium">"{file.name}"</span></> : null}:
                   </div>
                 )}
                 <div className="flex items-start gap-3 sm:gap-4 min-w-0">
@@ -303,43 +308,43 @@ function AudioDetectionPage() {
                           : `${displayName}, this audio is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-text-muted text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
                 <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-2 gap-2">
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
+                  <div className="h-2.5 sm:h-3 bg-white/[0.08] rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-cyan to-primary" />
+                      className="h-full rounded-full bg-blue-500" />
                   </div>
                 </div>
               </div>
 
               <div className="card">
-                <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan" />
+                <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Audio Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
                     <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
-                          <span className="text-xs sm:text-sm text-text-secondary font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>{s.weight}%</span>
+                          <span className="text-xs sm:text-sm text-slate-400 font-medium truncate">{s.name}</span>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>{s.weight}%</span>
                         </div>
-                        <p className="text-xs text-text-muted truncate">{s.description}</p>
-                        <div className="h-1 bg-border rounded-full mt-1.5 overflow-hidden">
+                        <p className="text-xs text-slate-500 truncate">{s.description}</p>
+                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-cyan'}`} />
+                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-blue-500'}`} />
                         </div>
                       </div>
                     </motion.div>
@@ -350,29 +355,29 @@ function AudioDetectionPage() {
               {/* Segment timeline */}
               {result.segment_scores && result.segment_scores.length > 0 && (
                 <div className="card">
-                  <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 rounded-full bg-cyan" />
+                  <h3 className="font-semibold text-slate-100 mb-3 flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
                     Audio Segment Analysis
                   </h3>
                   <div className="space-y-1.5">
                     {result.segment_scores.map((seg: any, i: number) => (
                       <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-text-muted w-16 shrink-0 font-mono">
+                        <span className="text-xs text-slate-500 w-16 shrink-0 font-mono">
                           {seg.start_sec}s – {seg.end_sec}s
                         </span>
-                        <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-white/[0.08] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${seg.ai_score > 0.62 ? 'bg-rose' : seg.ai_score > 0.38 ? 'bg-amber' : 'bg-emerald'}`}
                             style={{ width: `${Math.round(seg.ai_score * 100)}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-bold w-10 text-right ${seg.ai_score > 0.62 ? 'text-rose' : seg.ai_score > 0.38 ? 'text-amber' : 'text-emerald'}`}>
+                        <span className={`text-xs font-bold w-10 text-right ${seg.ai_score > 0.62 ? 'text-rose-500' : seg.ai_score > 0.38 ? 'text-amber-500' : 'text-emerald-400'}`}>
                           {Math.round(seg.ai_score * 100)}%
                         </span>
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-text-muted">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose" />AI-synthetic</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber" />Uncertain</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald" />Authentic</span>
@@ -381,7 +386,7 @@ function AudioDetectionPage() {
               )}
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-text-muted font-mono truncate">{result.processing_time}ms</span>
+                <span className="text-xs text-slate-500 font-mono truncate">{result.processing_time}ms</span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
                   <Download className="w-3.5 h-3.5" /> Export Report
                 </button>
@@ -390,15 +395,15 @@ function AudioDetectionPage() {
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 animate-float">
-                <Mic className="w-10 h-10 text-cyan" />
+              <div className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4 ">
+                <Mic className="w-10 h-10 text-blue-400" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Upload Audio</h3>
-              <p className="text-text-muted text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
+              <h3 className="font-semibold text-slate-100 mb-2">Upload Audio</h3>
+              <p className="text-slate-500 text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan/60 shrink-0" />{f}
+                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -415,7 +420,7 @@ function AudioDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -423,12 +428,12 @@ function AudioDetectionPage() {
       )}
       {result && (
         <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" />
+          <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
+            <Info className="w-4 h-4 text-blue-400" />
             Detection Models &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-text-muted">
-            <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-500">
+            <p><span className="text-slate-400 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
@@ -436,10 +441,10 @@ function AudioDetectionPage() {
                 { name: 'MelodyMachine V2', desc: 'Deepfake audio detection dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141420] transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                    <p className="text-slate-400 font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -453,10 +458,10 @@ function AudioDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
+            <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}
           </div>
         </div>
       )}

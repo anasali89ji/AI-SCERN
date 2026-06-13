@@ -32,15 +32,15 @@ export default function Finance() {
   if (!authed) return (
     <RoleGuard required="EXECUTIVE">
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="rounded-2xl border border-border bg-surface/60 p-8 max-w-sm w-full text-center">
-          <div className="w-14 h-14 rounded-2xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-4">
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-8 max-w-sm w-full text-center">
+          <div className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
             <DollarSign className="w-7 h-7 text-amber-400" />
           </div>
-          <h2 className="text-lg font-bold text-text-primary mb-2">Financial Access</h2>
-          <p className="text-sm text-text-muted mb-6">Re-authentication required for financial data.</p>
+          <h2 className="text-lg font-bold text-slate-100 mb-2">Financial Access</h2>
+          <p className="text-sm text-slate-500 mb-6">Re-authentication required for financial data.</p>
           <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleAuth()}
             placeholder="Enter PIN (demo: 0000)"
-            className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text-primary mb-4 focus:outline-none focus:border-primary/50 text-center tracking-widest" />
+            className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-100 mb-4 focus:outline-none focus:border-blue-500/30 text-center tracking-widest" />
           <button onClick={handleAuth} className="w-full btn-primary py-3 text-sm">Authenticate</button>
         </div>
       </div>
@@ -51,18 +51,18 @@ export default function Finance() {
     <RoleGuard required="EXECUTIVE">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-text-primary">Financial Dashboard</h1>
-          <span className="text-xs text-amber-400 bg-amber/10 border border-amber/20 px-3 py-1 rounded-full font-medium">🔒 Restricted</span>
+          <h1 className="text-2xl font-black text-slate-100">Financial Dashboard</h1>
+          <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full font-medium">🔒 Restricted</span>
         </div>
 
         {/* Investor metrics */}
-        <div className="rounded-xl border border-amber/20 bg-amber/5 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">Investor Metrics</h3>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+          <h3 className="text-sm font-bold text-slate-100 mb-4">Investor Metrics</h3>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
             {metrics.map(({label,value})=>(
               <div key={label} className="text-center">
-                <div className="text-lg font-black text-text-primary">{value}</div>
-                <div className="text-xs text-text-muted mt-1">{label}</div>
+                <div className="text-lg font-black text-slate-100">{value}</div>
+                <div className="text-xs text-slate-500 mt-1">{label}</div>
               </div>
             ))}
           </div>
@@ -75,8 +75,8 @@ export default function Finance() {
           <StatCard title="Gross Margin"   value="57%"    delta="3%"  positive icon={Percent}     color={C.secondary} />
         </div>
 
-        <div className="rounded-xl border border-border bg-surface/60 p-5">
-          <h3 className="text-sm font-bold text-text-primary mb-4">P&L — Revenue vs Costs (12 months)</h3>
+        <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+          <h3 className="text-sm font-bold text-slate-100 mb-4">P&L — Revenue vs Costs (12 months)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={plData}>
               <XAxis dataKey="m" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />
@@ -91,8 +91,8 @@ export default function Finance() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Cost Breakdown</h3>
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Cost Breakdown</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={costPie} dataKey="v" cx="50%" cy="50%" outerRadius={75} label={({name,v})=>`${name} ${v}%`} labelLine={false}>
@@ -102,8 +102,8 @@ export default function Finance() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl border border-border bg-surface/60 p-5">
-            <h3 className="text-sm font-bold text-text-primary mb-4">Cash Flow Trend</h3>
+          <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Cash Flow Trend</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={plData}>
                 <XAxis dataKey="m" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false} />

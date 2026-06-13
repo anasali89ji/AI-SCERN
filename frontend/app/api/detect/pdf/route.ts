@@ -130,7 +130,6 @@ export async function POST(req: NextRequest) {
         rawPdfText = textResult?.text ?? ''
         if (typeof parser.destroy === 'function') await parser.destroy()
       } catch (pdfErr: any) {
-        console.warn('[pdf] pdf-parse failed, using latin1 fallback:', pdfErr?.message)
         // Hard fallback for text-based PDFs: strip binary bytes
         rawPdfText = buffer.toString('latin1')
           .replace(/[^\x20-\x7E\n]/g, ' ')

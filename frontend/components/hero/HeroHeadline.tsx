@@ -18,10 +18,10 @@ const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
 
 // Full static class strings — Tailwind must see these to include in bundle
 const WORD_STYLES = {
-  Text:  { text: 'text-amber',     bg: 'bg-amber'     },
-  Image: { text: 'text-primary',   bg: 'bg-primary'   },
-  Audio: { text: 'text-cyan',      bg: 'bg-cyan'      },
-  Video: { text: 'text-secondary', bg: 'bg-secondary' },
+  Text:  { text: 'text-amber-500',     bg: 'bg-amber'     },
+  Image: { text: 'text-blue-400',   bg: 'bg-blue-600'   },
+  Audio: { text: 'text-blue-400',      bg: 'bg-blue-500'      },
+  Video: { text: 'text-slate-400', bg: 'bg-slate-700' },
 } as const
 
 const INTERVAL = 2500
@@ -111,7 +111,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           </AnimatePresence>
         </div>
 
-        <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-text-secondary whitespace-nowrap">
+        <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-slate-400 whitespace-nowrap">
           with AI
         </span>
       </motion.div>
@@ -149,7 +149,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
                   'transition-transform duration-300',
                   active
                     ? `w-3.5 sm:w-4 ${WORD_STYLES[w].bg} scale-x-100`
-                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/50',
+                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/[0.05]0',
                 ].join(' ')}
               />
             </button>

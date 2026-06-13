@@ -31,7 +31,7 @@ export interface SolutionPageProps {
   tagline: string
   description: string
   heroIcon: ReactNode
-  accentColor: 'primary' | 'cyan' | 'amber' | 'emerald' | 'rose'
+  accentColor: 'primary' | 'blue' | 'cyan' | 'amber' | 'emerald' | 'rose'
   ctaLabel: string
   problemTitle: string
   painPoints: SolutionPainPoint[]
@@ -45,49 +45,58 @@ export interface SolutionPageProps {
 
 const colorMap = {
   primary: {
-    badge:   'bg-primary/10 border-primary/20 text-primary',
-    iconBg:  'bg-primary/10 border-primary/20',
-    icon:    'text-primary',
-    glow:    'rgba(37,99,235,0.12)',
-    heroGlow:'rgba(37,99,235,0.15)',
-    check:   'text-primary',
-    btn:     'bg-primary hover:bg-primary/90',
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
+  },
+  blue: {
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
   },
   cyan: {
-    badge:   'bg-cyan/10 border-cyan/20 text-cyan',
-    iconBg:  'bg-cyan/10 border-cyan/20',
-    icon:    'text-cyan',
-    glow:    'rgba(6,182,212,0.12)',
-    heroGlow:'rgba(6,182,212,0.15)',
-    check:   'text-cyan',
-    btn:     'bg-cyan hover:bg-cyan/90',
+    badge:   'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg:  'bg-blue-500/10 border-blue-500/20',
+    icon:    'text-blue-400',
+    glow:    'rgba(37,99,235,0.08)',
+    heroGlow:'rgba(37,99,235,0.10)',
+    check:   'text-blue-400',
+    btn:     'bg-blue-600 hover:bg-blue-700',
   },
   amber: {
-    badge:   'bg-amber/10 border-amber/20 text-amber',
-    iconBg:  'bg-amber/10 border-amber/20',
-    icon:    'text-amber',
+    badge:   'bg-amber-500/10 border-amber-500/20 text-amber-500',
+    iconBg:  'bg-amber-500/10 border-amber-500/20',
+    icon:    'text-amber-500',
     glow:    'rgba(245,158,11,0.12)',
     heroGlow:'rgba(245,158,11,0.15)',
-    check:   'text-amber',
-    btn:     'bg-amber hover:bg-amber/90',
+    check:   'text-amber-500',
+    btn:     'bg-amber hover:bg-amber-500/90',
   },
   emerald: {
-    badge:   'bg-emerald/10 border-emerald/20 text-emerald',
-    iconBg:  'bg-emerald/10 border-emerald/20',
-    icon:    'text-emerald',
+    badge:   'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+    iconBg:  'bg-emerald-500/10 border-emerald-500/20',
+    icon:    'text-emerald-400',
     glow:    'rgba(16,185,129,0.12)',
     heroGlow:'rgba(16,185,129,0.15)',
-    check:   'text-emerald',
-    btn:     'bg-emerald hover:bg-emerald/90',
+    check:   'text-emerald-400',
+    btn:     'bg-emerald hover:bg-emerald-500/90',
   },
   rose: {
-    badge:   'bg-rose/10 border-rose/20 text-rose',
-    iconBg:  'bg-rose/10 border-rose/20',
-    icon:    'text-rose',
+    badge:   'bg-rose-500/10 border-rose-500/20 text-rose-500',
+    iconBg:  'bg-rose-500/10 border-rose-500/20',
+    icon:    'text-rose-500',
     glow:    'rgba(244,63,94,0.12)',
     heroGlow:'rgba(244,63,94,0.15)',
-    check:   'text-rose',
-    btn:     'bg-rose hover:bg-rose/90',
+    check:   'text-rose-500',
+    btn:     'bg-rose hover:bg-rose-500/90',
   },
 }
 
@@ -97,10 +106,10 @@ function FAQ({ faqs }: { faqs: SolutionFAQ[] }) {
       {faqs.map((faq, i) => (
         <details key={i} className="group py-4">
           <summary className="flex items-center justify-between cursor-pointer list-none">
-            <span className="text-sm font-semibold text-text-primary pr-4">{faq.q}</span>
-            <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0 group-open:rotate-180 transition-transform duration-200" />
+            <span className="text-sm font-semibold text-slate-100 pr-4">{faq.q}</span>
+            <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0 group-open:rotate-180 transition-transform duration-200" />
           </summary>
-          <p className="mt-3 text-sm text-text-muted leading-relaxed">{faq.a}</p>
+          <p className="mt-3 text-sm text-slate-500 leading-relaxed">{faq.a}</p>
         </details>
       ))}
     </div>
@@ -119,7 +128,7 @@ export function SolutionPage(props: SolutionPageProps) {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-background pt-16">
+      <main className="min-h-screen bg-[#08080d] pt-16">
 
         {/* JSON-LD Schema */}
         <script
@@ -151,10 +160,10 @@ export function SolutionPage(props: SolutionPageProps) {
                   <Zap className="w-3.5 h-3.5" />
                   {industry} Solution
                 </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-4 leading-tight">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-100 mb-4 leading-tight">
                   {tagline}
                 </h1>
-                <p className="text-lg text-text-secondary mb-8 leading-relaxed max-w-xl">
+                <p className="text-lg text-slate-400 mb-8 leading-relaxed max-w-xl">
                   {description}
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
@@ -165,14 +174,14 @@ export function SolutionPage(props: SolutionPageProps) {
                     Try Free Demo
                   </Link>
                 </div>
-                <p className="mt-4 text-xs text-text-muted">No credit card required · Free tier always available</p>
+                <p className="mt-4 text-xs text-slate-500">No credit card required · Free tier always available</p>
               </div>
               {/* Abstract geometric illustration */}
               <div className="flex-shrink-0 lg:w-64 xl:w-80">
-                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
+                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
                   style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
                   {heroIcon}
-                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
+                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#0f0f17] border border-white/[0.08] flex items-center justify-center">
                     <CheckCircle className={`w-4 h-4 ${c.icon}`} />
                   </div>
                 </div>
@@ -182,17 +191,17 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* The Problem */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-16 md:py-20 border-t border-white/[0.08]/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
-              <p className="text-text-secondary max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-3">{problemTitle}</h2>
+              <p className="text-slate-400 max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               {painPoints.map((p, i) => (
-                <div key={i} className="card border border-border/60 p-5 rounded-xl">
-                  <h3 className="font-semibold text-text-primary mb-2 text-sm">{p.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{p.desc}</p>
+                <div key={i} className="card border border-white/[0.08] p-5 rounded-xl">
+                  <h3 className="font-semibold text-slate-100 mb-2 text-sm">{p.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{p.desc}</p>
                 </div>
               ))}
             </div>
@@ -203,8 +212,8 @@ export function SolutionPage(props: SolutionPageProps) {
         <section className="py-16 md:py-20 bg-surface/30">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">How Aiscern Solves It</h2>
-              <p className="text-text-secondary max-w-xl mx-auto">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-3">How Aiscern Solves It</h2>
+              <p className="text-slate-400 max-w-xl mx-auto">
                 Our ensemble-based detection pipeline combines 8+ specialized models with a confidence threshold system.
                 <Link href="/methodology" className="text-primary hover:underline ml-1">Learn about our methodology →</Link>
               </p>
@@ -212,19 +221,19 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {features.map((f, i) => {
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-border/60 hover:border-primary/20 transition-colors">
+                  <div key={i} className="card p-5 rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-colors">
                     <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4`}>
                       {f.icon}
                     </div>
-                    <h3 className="font-semibold text-text-primary text-sm mb-2">{f.title}</h3>
-                    <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
+                    <h3 className="font-semibold text-slate-100 text-sm mb-2">{f.title}</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">{f.desc}</p>
                   </div>
                 )
               })}
             </div>
 
             {/* Accuracy disclaimer */}
-            <p className="mt-6 text-xs text-text-muted text-center border border-border/30 rounded-lg p-3 max-w-xl mx-auto">
+            <p className="mt-6 text-xs text-slate-500 text-center border border-white/[0.06] rounded-lg p-3 max-w-xl mx-auto">
               ℹ️ Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
               <Link href="/methodology" className="text-primary hover:underline ml-1">See full benchmarks →</Link>
             </p>
@@ -234,13 +243,13 @@ export function SolutionPage(props: SolutionPageProps) {
         {/* Use Cases */}
         <section className="py-16 md:py-20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">Real-World Use Cases</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-10 text-center">Real-World Use Cases</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {useCases.map((uc, i) => (
-                <div key={i} className="relative p-6 rounded-2xl border border-border/60 bg-surface/20">
+                <div key={i} className="relative p-6 rounded-xl border border-white/[0.08] bg-[#0f0f17]">
                   <div className={`text-3xl font-black mb-3 ${c.icon} opacity-30`}>0{i+1}</div>
-                  <h3 className="font-semibold text-text-primary mb-2">{uc.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{uc.desc}</p>
+                  <h3 className="font-semibold text-slate-100 mb-2">{uc.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{uc.desc}</p>
                 </div>
               ))}
             </div>
@@ -251,17 +260,17 @@ export function SolutionPage(props: SolutionPageProps) {
         {testimonialQuote && (
           <section className="py-12 bg-surface/30">
             <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-              <blockquote className="text-lg text-text-secondary italic leading-relaxed mb-4">
+              <blockquote className="text-lg text-slate-400 italic leading-relaxed mb-4">
                 &ldquo;{testimonialQuote}&rdquo;
               </blockquote>
               {testimonialAuthor && (
-                <cite className="not-italic text-sm text-text-muted">
-                  <span className="text-text-primary font-semibold">{testimonialAuthor}</span>
+                <cite className="not-italic text-sm text-slate-500">
+                  <span className="text-slate-100 font-semibold">{testimonialAuthor}</span>
                   {testimonialRole && <span>, {testimonialRole}</span>}
                 </cite>
               )}
               {!testimonialAuthor && (
-                <div className="text-sm text-text-muted">
+                <div className="text-sm text-slate-500">
                   <Link href="/reviews" className="text-primary hover:underline">Be among the first to leave a review →</Link>
                 </div>
               )}
@@ -272,22 +281,22 @@ export function SolutionPage(props: SolutionPageProps) {
         {/* FAQ */}
         <section className="py-16 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="card border border-border/60 rounded-2xl p-6">
+            <div className="card border border-white/[0.08] rounded-xl p-6">
               <FAQ faqs={faqs} />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-16 md:py-20 border-t border-white/[0.08]/20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-4">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-4">
               Ready to detect AI content in {industry.toLowerCase()}?
             </h2>
-            <p className="text-text-secondary mb-8">
+            <p className="text-slate-400 mb-8">
               Start with a free account — no credit card, no commitment. Upgrade when you need more scans.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">

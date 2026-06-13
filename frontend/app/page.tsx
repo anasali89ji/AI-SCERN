@@ -1,12 +1,11 @@
 'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { formatConfidence } from '@/lib/utils/helpers'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -21,225 +20,13 @@ import {
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
-// ─── Sections (SSR enabled — critical for render) ────────────────────────────
-// Static imports — no Suspense boundaries, no skeleton flash, no $RC JS dependency
-// dynamic() caused sections to show as skeleton placeholders when JS was slow
 import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import HomepageReviews from '@/components/home/HomepageReviews'
 
-// Aliases for backward compat with existing JSX usage
 const DynamicWhoNeedsSection = WhoNeedsSection
 const DynamicAIvsRealSection = AIvsRealSection
 const DynamicHomepageReviews = HomepageReviews
-
-// ─── Canvas Particle Network ─────────────────────────────────────────────────
-// ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
-// The canvas requestAnimationFrame + filter:blur combo on mobile causes GPU
-// compositing overflow → purple/blue scanline glitch artifacts on Android/iOS.
-function NetworkBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06)_0%,transparent_50%)]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.03] rounded-full blur-[120px] blur-orb hidden sm:block" />
-      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-secondary/[0.03] rounded-full blur-[100px] blur-orb hidden sm:block" />
-      {/* Dot grid hidden on mobile/low-power devices to prevent GPU glitches */}
-      <div className="absolute inset-0 opacity-[0.015] hidden sm:block"
-           style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-    </div>
-  )
-}
-
-// ─── Root Network (preserved from original) ───────────────────────────────────
-const AI_NODES_LG = [
-  { x: 3,  y: 12, delay: 0.00 }, { x: 14, y: 28, delay: 0.15 },
-  { x: 2,  y: 46, delay: 0.30 }, { x: 18, y: 60, delay: 0.45 },
-  { x: 7,  y: 76, delay: 0.60 }, { x: 28, y: 15, delay: 0.10 },
-  { x: 32, y: 36, delay: 0.25 }, { x: 24, y: 54, delay: 0.40 },
-  { x: 35, y: 70, delay: 0.55 }, { x: 20, y: 88, delay: 0.70 },
-]
-const REAL_NODES_LG = [
-  { x: 96, y: 12, delay: 0.00 }, { x: 83, y: 28, delay: 0.15 },
-  { x: 97, y: 46, delay: 0.30 }, { x: 79, y: 60, delay: 0.45 },
-  { x: 91, y: 76, delay: 0.60 }, { x: 68, y: 15, delay: 0.10 },
-  { x: 64, y: 36, delay: 0.25 }, { x: 73, y: 54, delay: 0.40 },
-  { x: 62, y: 70, delay: 0.55 }, { x: 77, y: 88, delay: 0.70 },
-]
-const AI_EDGES_LG   = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const REAL_EDGES_LG = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const AI_NODES_MD = [
-  { x: 2,  y: 10, delay: 0.00 }, { x: 12, y: 28, delay: 0.15 },
-  { x: 3,  y: 50, delay: 0.30 }, { x: 15, y: 68, delay: 0.45 },
-  { x: 5,  y: 82, delay: 0.60 }, { x: 22, y: 42, delay: 0.25 },
-]
-const REAL_NODES_MD = [
-  { x: 97, y: 10, delay: 0.00 }, { x: 86, y: 28, delay: 0.15 },
-  { x: 96, y: 50, delay: 0.30 }, { x: 83, y: 68, delay: 0.45 },
-  { x: 93, y: 82, delay: 0.60 }, { x: 76, y: 42, delay: 0.25 },
-]
-const AI_EDGES_MD   = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const REAL_EDGES_MD = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const AI_NODES_SM   = [{ x: 1, y: 18, delay: 0.00 }, { x: 2, y: 50, delay: 0.25 }, { x: 1, y: 80, delay: 0.50 }]
-const REAL_NODES_SM = [{ x: 98, y: 18, delay: 0.00 }, { x: 97, y: 50, delay: 0.25 }, { x: 98, y: 80, delay: 0.50 }]
-const AI_EDGES_SM   = [[0,1],[1,2]]
-const REAL_EDGES_SM = [[0,1],[1,2]]
-
-const FLOAT_BADGES = [
-  { Icon: Search, label: 'AI Text',  pct: 'Detected', color: '#2563eb', delay: 0,   pulse: true  },
-  { Icon: Eye,    label: 'Deepfake', pct: 'Flagged',  color: '#2563eb', delay: 0.5, pulse: false },
-]
-
-function useBreakpoint() {
-  const [bp, setBp] = useState<'sm'|'md'|'lg'|null>(null)
-  useEffect(() => {
-    const update = () => { const w = window.innerWidth; setBp(w < 640 ? 'sm' : w < 1024 ? 'md' : 'lg') }
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
-  return bp ?? 'lg'
-}
-
-function RootNetworkNode({ node, file, side, index, size }: {
-  node: { x: number; y: number; delay: number }
-  file: string; side: 'ai' | 'real'; index: number
-  size: { w: number; h: number }
-}) {
-  const isAI = side === 'ai'
-  const { w, h } = size
-  const safeLeft = node.x < 10
-    ? `max(4px, calc(${node.x}% - ${w / 2}px))`
-    : node.x > 90
-    ? `min(calc(100% - ${w + 4}px), calc(${node.x}% - ${w / 2}px))`
-    : `calc(${node.x}% - ${w / 2}px)`
-  const bobClass = index % 2 === 0 ? 'node-card-bob-a' : 'node-card-bob-b'
-  return (
-    <div
-      className={`absolute rounded-xl pointer-events-none overflow-hidden ${bobClass}`}
-      style={{
-        left: safeLeft, top: `calc(${node.y}% - ${h / 2}px)`,
-        width: w, height: h, zIndex: 2,
-        animationDelay: `${node.delay}s, ${node.delay}s`,
-        boxShadow: isAI ? '0 4px 24px rgba(37,99,235,0.12)' : '0 4px 24px rgba(16,185,129,0.08)',
-      }}
-    >
-      <div className="absolute inset-0" style={{
-        background: isAI ? 'linear-gradient(160deg,#1e40af,#1e3a8a)' : 'linear-gradient(160deg,#065f46,#052e16)',
-      }} />
-      <img src={file} alt="" decoding="async"
-        className="absolute inset-0 w-full h-full object-cover" style={{ display: 'block' }}
-        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        loading={index < 2 ? 'eager' : 'lazy'}
-        fetchPriority={index === 0 ? 'high' : 'low'}
-      />
-      <div className="absolute inset-0 bg-black/35" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      <div className={`absolute bottom-1 left-1 text-[7px] font-black px-1 py-0.5 rounded leading-none z-10 ${isAI ? 'bg-rose/80 text-white' : 'bg-emerald/80 text-white'}`}>
-        {isAI ? 'AI' : '✓'}
-      </div>
-      <div className="absolute inset-0 rounded-xl"
-        style={{ boxShadow: isAI ? 'inset 0 0 0 1px rgba(37,99,235,0.3)' : 'inset 0 0 0 1px rgba(16,185,129,0.3)' }} />
-    </div>
-  )
-}
-
-function RootNetworkSVG({ nodes, edges, color, side }: {
-  nodes: { x: number; y: number }[]; edges: number[][]; color: string; side: 'ai' | 'real'
-}) {
-  const reduced = useReducedMotion()
-  return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 100 100" preserveAspectRatio="none" style={{ opacity: 0.25, zIndex: 1 }}>
-      {edges.map(([a, b], i) => {
-        const n1 = nodes[a], n2 = nodes[b]
-        const cx = (n1.x + n2.x) / 2 + (side === 'ai' ? -3 : 3), cy = (n1.y + n2.y) / 2
-        return reduced ? (
-          <path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
-            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity={0.6} />
-        ) : (
-          <motion.path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
-            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
-            transition={{ delay: 0.4 + i * 0.07, duration: 1.4, ease: 'easeInOut' }}
-          />
-        )
-      })}
-      {nodes.map((n, i) => (
-        reduced ? (
-          <circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color} opacity={0.5} />
-        ) : (
-          <motion.circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color}
-            initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ delay: 0.7 + i * 0.08, duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )
-      ))}
-    </svg>
-  )
-}
-
-function FloatingCards() {
-  const bp = useBreakpoint()
-  const aiNodes   = bp === 'sm' ? AI_NODES_SM   : bp === 'md' ? AI_NODES_MD   : AI_NODES_LG
-  const realNodes = bp === 'sm' ? REAL_NODES_SM : bp === 'md' ? REAL_NODES_MD : REAL_NODES_LG
-  const aiEdges   = bp === 'sm' ? AI_EDGES_SM   : bp === 'md' ? AI_EDGES_MD   : AI_EDGES_LG
-  const realEdges = bp === 'sm' ? REAL_EDGES_SM : bp === 'md' ? REAL_EDGES_MD : REAL_EDGES_LG
-  const cardSize  = bp === 'sm' ? { w: 34, h: 44 } : bp === 'md' ? { w: 48, h: 60 } : { w: 64, h: 80 }
-  const badgePositions = bp === 'sm'
-    ? [{ x: '28%', y: '6%' }, { x: '54%', y: '6%' }]
-    : [{ x: '22%', y: '7%' }, { x: '66%', y: '7%' }]
-  return (
-    <>
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#2563eb" side="ai"   />
-        <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
-        {aiNodes.map((node, i) => (
-          <RootNetworkNode key={`ai-${i}`} node={node}
-            file={`/hero/ai/ai-${String(i+1).padStart(2,'0')}.webp`}
-            side="ai" index={i} size={cardSize} />
-        ))}
-        {realNodes.map((node, i) => (
-          <RootNetworkNode key={`real-${i}`} node={node}
-            file={`/hero/real/real-${String(i+1).padStart(2,'0')}.webp`}
-            side="real" index={i} size={cardSize} />
-        ))}
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8"
-          style={{ top: 72, left: 8 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <Bot className="w-2.5 h-2.5 text-rose" />
-          <span className="text-[8px] font-bold text-rose/80 uppercase tracking-wide hidden md:inline">AI Generated</span>
-        </motion.div>
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8"
-          style={{ top: 72, right: 8 }} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <CheckCircle className="w-2.5 h-2.5 text-emerald" />
-          <span className="text-[8px] font-bold text-emerald/80 uppercase tracking-wide hidden md:inline">Authentic</span>
-        </motion.div>
-      </div>
-      {FLOAT_BADGES.map((item, i) => {
-        const Icon = item.Icon; const pos = badgePositions[i]
-        return (
-          <motion.div key={i}
-            className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border select-none"
-            style={{ left: pos.x, top: pos.y, zIndex: 10, background: `${item.color}12`, borderColor: `${item.color}30` }}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }}
-            transition={{ opacity: { delay: item.delay + 1.0, duration: 0.5 }, y: { delay: item.delay, duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }}>
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}22`, color: item.color }}>
-              <Icon className="w-3 h-3" strokeWidth={2} />
-            </div>
-            <div className="hidden md:block">
-              <div className="text-[8px] font-medium leading-none mb-0.5" style={{ color: `${item.color}bb` }}>{item.label}</div>
-              <div className="text-[10px] font-bold text-white leading-none">{item.pct}</div>
-            </div>
-            {item.pulse && (
-              <motion.div className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: item.color }}
-                animate={{ scale: [1, 1.6, 1], opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }} />
-            )}
-          </motion.div>
-        )
-      })}
-    </>
-  )
-}
 
 // ─── CountUp ────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -292,20 +79,17 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
   ]
   return (
     <div className="relative">
-      <div className="rounded-2xl border border-primary/20 bg-surface p-4 sm:p-5 shadow-2xl shadow-primary/5">
+      <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald" />
-            </span>
-            <span className="text-sm font-bold text-text-primary">Live AI Detector</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald/10 text-emerald font-semibold border border-emerald/20">Free</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span className="text-sm font-bold text-slate-100">Live AI Detector</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">Free</span>
           </div>
           <div className="flex gap-2">
             {examples.map(ex => (
               <button key={ex.label} onClick={() => setText(ex.text)}
-                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-primary/40 text-text-muted hover:text-primary transition-all min-h-0">
+                className="text-xs px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all min-h-0">
                 {ex.label}
               </button>
             ))}
@@ -313,11 +97,11 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)}
           placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
+          className="w-full h-24 sm:h-28 bg-[#08080d] border border-white/[0.08] rounded-lg px-3 sm:px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:border-blue-500/40 transition-all" />
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-          <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
+          <span className="text-xs text-slate-500">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
           <button onClick={analyze} disabled={loading || text.length < 50}
-            className="btn-primary px-5 py-2 text-sm disabled:opacity-40 flex items-center gap-2 min-h-[36px]">
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-sm font-medium rounded-lg disabled:opacity-40 flex items-center gap-2 min-h-[36px] transition-colors">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
             {loading ? 'Scanning…' : 'Analyze Free'}
           </button>
@@ -326,27 +110,27 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
           {result && (
             <motion.div initial={{ opacity: 0, y: 8, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
-              <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose/5 border-rose/20' : result.verdict === 'HUMAN' ? 'bg-emerald/5 border-emerald/20' : 'bg-amber/5 border-amber/20'}`}>
-                <div className="flex items-center justify-between mb-3 gap-2 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose shrink-0" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald shrink-0" /> : <HelpCircle className="w-5 h-5 text-amber shrink-0" />}
-                    <span className={`font-bold text-base leading-tight ${result.verdict === 'AI' ? 'text-rose' : result.verdict === 'HUMAN' ? 'text-emerald' : 'text-amber'}`}>
+              <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose-500/5 border-rose-500/20' : result.verdict === 'HUMAN' ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <div className="flex items-center gap-2">
+                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose-400 shrink-0" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" /> : <HelpCircle className="w-5 h-5 text-amber-400 shrink-0" />}
+                    <span className={`font-bold text-base ${result.verdict === 'AI' ? 'text-rose-400' : result.verdict === 'HUMAN' ? 'text-emerald-400' : 'text-amber-400'}`}>
                       {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
                     </span>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatConfidence(result.confidence || 0)}</div>
-                    <div className="text-[10px] text-text-muted">confidence</div>
+                    <div className="text-2xl font-black text-slate-100 tabular-nums">{formatConfidence(result.confidence || 0)}</div>
+                    <div className="text-[10px] text-slate-500">confidence</div>
                   </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-background overflow-hidden">
+                <div className="h-1.5 rounded-full bg-[#08080d] overflow-hidden">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
                     transition={{ duration: 1.0, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-rose to-pink-400' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald to-teal-400' : 'bg-gradient-to-r from-amber to-yellow-400'}`} />
+                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-rose-500' : result.verdict === 'HUMAN' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                 </div>
-                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
-                  <p className="text-xs text-text-muted">✓ Free · Sign in to save results</p>
-                  <Link href="/detect/text" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
+                <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-xs text-slate-500">✓ Free · Sign in to save results</p>
+                  <Link href="/detect/text" className="text-xs text-blue-400 hover:underline font-medium flex items-center gap-1">
                     Full text detector <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -360,20 +144,11 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 }
 
 // ─── Spotlight Card ───────────────────────────────────────────────────────────
-function SpotlightCard({ children, className = '', color = 'rgba(37,99,235,0.12)' }: {
-  children: React.ReactNode; className?: string; color?: string
+function SpotlightCard({ children, className = '' }: {
+  children: React.ReactNode; className?: string
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    ref.current.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
-    ref.current.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
-  }, [])
   return (
-    <div ref={ref} onMouseMove={onMouseMove}
-      className={`spotlight-card ${className}`}
-      style={{ '--spotlight-color': color } as React.CSSProperties}>
+    <div className={`group relative rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-colors duration-200 ${className}`}>
       {children}
     </div>
   )
@@ -398,33 +173,16 @@ function useNavScrollBehavior() {
   return { scrolled, hidden }
 }
 
-// ─── Scroll indicator ─────────────────────────────────────────────────────────
-function HeroScrollIndicator() {
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => {
-    const onScroll = () => { if (window.scrollY > 100) setHidden(true) }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  if (hidden) return null
-  return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce opacity-30 pointer-events-none">
-      <span className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">Scroll</span>
-      <ChevronDown className="w-4 h-4 text-text-muted" />
-    </div>
-  )
-}
-
 // ─── Constants ───────────────────────────────────────────────────────────────
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/8 to-transparent',        desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#2563eb' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/8 to-transparent',         desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#06b6d4' },
-  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-secondary', bg: 'from-secondary/8 to-transparent',    desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
-  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/8 to-transparent',      desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
-  { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose',      bg: 'from-rose/8 to-transparent',         desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
+  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber-400',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-blue-400',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#2563eb' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-slate-300',     desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#64748b' },
+  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-blue-400',      desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
+  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald-400',   desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
+  { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose-400',      desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
 ]
 
 const STATS = [
@@ -442,10 +200,10 @@ const HOW_IT_WORKS = [
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,   color: 'text-primary', bg: 'from-primary/10 to-transparent', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
-  { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/10 to-transparent', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
-  { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/10 to-transparent',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
-  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/10 to-transparent',     title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start' },
+  { icon: Database,   title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
+  { icon: Shield,     title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
+  { icon: TrendingUp, title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
+  { icon: Zap,        title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start' },
 ]
 
 const PROFESSIONALS = [
@@ -464,10 +222,8 @@ const PROFESSIONALS = [
 export default function HomePage() {
   const { user, loading } = useAuth()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const reduced = useReducedMotion()
   const { scrolled, hidden } = useNavScrollBehavior()
 
-  // iOS scroll lock — prevent body scrolling while mobile nav is open
   useEffect(() => {
     if (mobileNavOpen) {
       document.body.style.overflow  = 'hidden'
@@ -484,8 +240,8 @@ export default function HomePage() {
       document.body.style.width     = ''
     }
   }, [mobileNavOpen])
-  const [datasetRows, setDatasetRows] = useState<number | null>(null)
 
+  const [datasetRows, setDatasetRows] = useState<number | null>(null)
   useEffect(() => {
     fetch('/api/dataset-stats')
       .then(r => r.json())
@@ -494,7 +250,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
+    <div className="min-h-screen bg-[#08080d] text-slate-100 overflow-x-hidden w-full max-w-[100vw]">
 
       {/* Schema JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `[
@@ -504,73 +260,56 @@ export default function HomePage() {
       ]` }} />
 
       {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
+      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-200
         ${hidden ? 'nav-hidden' : 'nav-visible'}
-        ${scrolled
-          ? 'border-b border-primary/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
-          : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
-        }`}>
-        <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
+        bg-[#08080d]/95 border-b ${scrolled ? 'border-white/[0.08]' : 'border-transparent'}`}>
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-            <span className="font-black text-xl gradient-text">Aiscern</span>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0" title="Aiscern — Free AI Content Detector">
+            <span className="font-black text-xl text-white">Aiscern</span>
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
             {[['#tools','Tools'],['#how','How It Works']].map(([href, label]) => (
-              <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
-                {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
-              </a>
+              <a key={href} href={href} className="hover:text-white transition-colors duration-200">{label}</a>
             ))}
-            <Link href={user ? "/chat" : "/signup"} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
+            <Link href={user ? "/chat" : "/signup"} className="hover:text-white transition-colors duration-200 flex items-center gap-1">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-all duration-300 rounded-full" />
             </Link>
-            {[['/ reviews','Reviews',''],['/ blog','Blog',''],['/ pricing','Pricing','']].map(([href, label]) => (
-              <Link key={label} href={href.replace(/ /g,'')} className="relative hover:text-text-primary transition-colors duration-200 group">
-                {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
-              </Link>
+            {[['/reviews','Reviews'],[ '/blog','Blog'],['/pricing','Pricing']].map(([href, label]) => (
+              <Link key={label} href={href} className="hover:text-white transition-colors duration-200">{label}</Link>
             ))}
           </div>
 
           {/* CTA */}
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-all duration-200 group">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600/10 border border-blue-500/30 text-blue-400 text-sm font-semibold hover:bg-blue-600/20 transition-all duration-200">
+                <span className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                   {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
                 </span>
                 <span className="hidden sm:inline">Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/30 transition-all duration-200">
+                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg border border-white/[0.08] text-sm font-medium text-slate-300 hover:text-white hover:border-white/[0.12] transition-all duration-200">
                   Sign In
                 </Link>
-                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                <Link href="/signup" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors duration-200">
                   <Zap className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Get Started</span>
                   <span className="sm:hidden">Join</span>
                 </Link>
               </>
             )}
-            <button className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors"
+            <button className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition-colors"
               onClick={() => setMobileNavOpen(o => !o)}
               aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileNavOpen}
-              aria-controls="mobile-nav-panel">
-              <AnimatePresence mode="wait" initial={false}>
-                {mobileNavOpen
-                  ? <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><X className="w-5 h-5" /></motion.div>
-                  : <motion.div key="m" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}><Menu className="w-5 h-5" /></motion.div>
-                }
-              </AnimatePresence>
+              aria-expanded={mobileNavOpen}>
+              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -582,9 +321,8 @@ export default function HomePage() {
               id="mobile-nav-panel"
               role="dialog"
               aria-label="Navigation menu"
-              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden"
-              onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setMobileNavOpen(false)}>
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-white/[0.06] bg-[#08080d] overflow-hidden">
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
                   { href: '#tools', label: 'Tools', Icon: Cpu },
@@ -593,23 +331,21 @@ export default function HomePage() {
                   { href: '/reviews', label: 'Reviews', Icon: Star },
                   { href: '/blog', label: 'Blog', Icon: FileText },
                   { href: '/pricing', label: 'Pricing', Icon: Zap },
-                ].map((link, i) => (
-                  <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                    <Link href={link.href} onClick={() => setMobileNavOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
-                      <link.Icon className="w-4 h-4" />{link.label}
-                    </Link>
-                  </motion.div>
+                ].map((link) => (
+                  <Link key={link.href} href={link.href} onClick={() => setMobileNavOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
+                    <link.Icon className="w-4 h-4" />{link.label}
+                  </Link>
                 ))}
                 {!loading && !user && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/40">
-                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
+                  <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/[0.06]">
+                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
                       <Lock className="w-4 h-4" />Sign In
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
                       <Zap className="w-4 h-4" />Get Started Free
                     </Link>
-                  </motion.div>
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -620,93 +356,66 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
-
-          {/* Animated mesh gradients */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="hero-mesh-1 absolute top-1/4 left-1/3 w-[700px] h-[700px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-            <div className="hero-mesh-2 absolute top-1/3 right-1/4 w-[600px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.09) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-            <div className="hero-mesh-3 absolute bottom-1/4 left-1/5 w-[500px] h-[500px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-          </div>
-
-          <NetworkBackground />
-          <FloatingCards />
-
-          {/* Center glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 65%)' }} />
+        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-16 sm:pb-24 hero-bg hero-bg-animated">
+          {/* Subtle radial background — no orbs, no mesh */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse at 50% 30%, #0f0f17 0%, #08080d 65%)' }} />
 
           {/* Content */}
-          <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl mx-auto w-full">
+          <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto w-full animate-fade-in-up">
 
-            {/* Animated badge */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
               <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
               <span className="sm:hidden">8+ models · Free tier available</span>
-            </motion.div>
-
-            {/* H1 + Rotating modality animation */}
-            <div className="mb-4 sm:mb-7">
-              <HeroHeadline />
             </div>
 
+            {/* H1 */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
+              Detect AI Content<br />with Confidence
+            </h1>
+
             {/* Subheadline */}
-            <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
-              <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Free tier available — no account required for basic scans.</span>
-            </motion.p>
+            <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+              Free, accurate detection for text, images, audio, and video. Built on ensemble models with published benchmarks.
+            </p>
 
             {/* CTAs */}
-            <motion.div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-9 sm:mb-14"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
               {user ? (
                 <>
                   <Link href="/dashboard"
-                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', boxShadow: '0 8px 32px rgba(37,99,235,0.35)' }}>
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
-                      {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
-                    </span>
+                    className="w-full sm:w-auto px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
                     Go to Dashboard
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/40 transition-all duration-200">
-                    <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
+                  <Link href="/chat" className="w-full sm:w-auto px-8 py-3 rounded-lg border border-white/[0.08] hover:border-white/[0.12] text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />ARIA Assistant
                   </Link>
                 </>
               ) : (
                 <>
                   <Link href="/detect/text"
-                    className="group relative overflow-hidden btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Start Free Scan
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    className="w-full sm:w-auto px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                    <Zap className="w-4 h-4" />
+                    Start Detecting
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center gap-2 hover:border-primary/30">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber" />Create Free Account
+                  <Link href="/methodology" className="w-full sm:w-auto px-8 py-3 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                    View Methodology
                   </Link>
                 </>
               )}
-            </motion.div>
+            </div>
+
+            {/* Trust bar */}
+            <p className="text-sm text-slate-500 mb-12">Free forever · No credit card · 50K+ scans</p>
 
             {/* Live demo */}
-            <motion.div className="max-w-2xl 2xl:max-w-3xl mx-auto w-full"
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
+            <div className="max-w-2xl mx-auto w-full">
               <LiveDemo isLoggedIn={!!user} />
-            </motion.div>
-
-            <HeroScrollIndicator />
+            </div>
           </div>
         </section>
 
@@ -716,21 +425,18 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 2xl:py-24 border-y border-border/20 bg-surface/20 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 2xl:px-10 3xl:px-16 relative">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 2xl:gap-14">
+        <section className="py-12 sm:py-16 border-y border-white/[0.06] bg-[#0f0f17]/50" style={{ contentVisibility: "auto", containIntrinsicSize: "0 300px" }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
               {STATS.map((stat, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-2 tabular-nums"
-                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2 tabular-nums">
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
-                  <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
+                  <p className="text-slate-400 text-xs sm:text-sm font-medium">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -743,58 +449,44 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 2xl:py-32 3xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
-
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
+        <section id="tools" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
+          <div className="max-w-6xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-14 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Cpu className="w-3 h-3" /> Six Powerful Tools
-              </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-4">
-                Detection <span className="gradient-text">Tools</span>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Six Powerful Tools</p>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-4">
+                Detection Tools
               </h2>
-              <p className="text-text-muted text-base sm:text-lg 2xl:text-xl max-w-2xl 2xl:max-w-3xl mx-auto leading-relaxed">
+              <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
                 Six detection tools covering text, images, audio, and video. Each delivers a clear authenticity score in seconds.
               </p>
-              <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
-                initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 2xl:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {TOOLS.map((tool, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
                   transition={{ delay: i * 0.08, duration: 0.5 }}>
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
-                    <SpotlightCard color={`${tool.accent}18`}
-                      className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 2xl:p-7 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
-                      {/* Scanline on hover */}
-                      <div className="scanline" aria-hidden="true" />
-
+                    <div className="group rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 hover:border-white/[0.12] hover:bg-[#141420] hover:-translate-y-0.5 transition-all duration-200 h-full cursor-pointer">
                       <div className="flex items-start justify-between mb-5">
-                        <div className={`w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${tool.color}`}
                           style={{ background: `${tool.accent}14`, border: `1px solid ${tool.accent}20` }}>
-                          <tool.icon className="w-6 h-6 2xl:w-7 2xl:h-7" strokeWidth={1.8} />
+                          <tool.icon className="w-5 h-5" strokeWidth={1.8} />
                         </div>
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tool.color}`}
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${tool.color}`}
                           style={{ background: `${tool.accent}12`, border: `1px solid ${tool.accent}22` }}>
                           {tool.accuracy}
                         </span>
                       </div>
-
-                      <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-text-primary mb-2 group-hover:text-primary transition-colors duration-200 leading-tight">
+                      <h3 className="text-base font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors duration-200">
                         {tool.label}
                       </h3>
-                      <p className="text-sm 2xl:text-base text-text-muted leading-relaxed">{tool.desc}</p>
-
-                      <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors duration-200">
+                      <p className="text-sm text-slate-400 leading-relaxed">{tool.desc}</p>
+                      <div className="mt-5 flex items-center gap-1 text-xs font-medium text-slate-500 group-hover:text-blue-400 transition-colors duration-200">
                         Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
-                    </SpotlightCard>
+                    </div>
                   </Link>
                 </motion.div>
               ))}
@@ -803,115 +495,86 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
+        <section id="how" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
+          <div className="max-w-5xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-16 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
-                <Activity className="w-3 h-3" /> Simple Process
-              </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
-                How It <span className="gradient-text">Works</span>
-              </h2>
-              <p className="text-text-muted text-base sm:text-lg">From upload to verdict in seconds.</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Simple Process</p>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-4">How It Works</h2>
+              <p className="text-slate-400 text-base">From upload to verdict in seconds.</p>
             </motion.div>
 
-            <div className="relative">
-              {/* Animated vertical connector */}
-              <div className="absolute left-7 lg:left-1/2 top-0 bottom-0 w-px hidden sm:block overflow-hidden">
-                <motion.div className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, rgba(37,99,235,0.8) 0%, rgba(37,99,235,0.4) 60%, transparent 100%)' }}
-                  initial={{ scaleY: 0, originY: 0 }} animate={{ scaleY: 1 }}
-                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
-              </div>
-
-              <div className="space-y-10 sm:space-y-16">
-                {HOW_IT_WORKS.map((step, i) => {
-                  const StepIcon = HOW_IT_WORKS_ICONS[i]
-                  return (
-                    <motion.div key={i}
-                      initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.15 }}
-                      transition={{ duration: 0.6, delay: i * 0.1 }}
-                      className={`flex items-center gap-5 sm:gap-8 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
-                      <div className="flex-1 hidden lg:block" />
-                      <div className="relative z-10 flex-shrink-0">
-                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.15))', border: '1px solid rgba(37,99,235,0.3)', boxShadow: '0 8px 32px rgba(37,99,235,0.12)' }}>
-                          <StepIcon className="w-6 h-6 text-primary" strokeWidth={1.7} />
-                          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] font-black text-white shadow-lg">
-                            {i + 1}
-                          </div>
+            <div className="space-y-10 sm:space-y-16">
+              {HOW_IT_WORKS.map((step, i) => {
+                const StepIcon = HOW_IT_WORKS_ICONS[i]
+                return (
+                  <motion.div key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className={`flex items-center gap-6 sm:gap-10 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
+                    <div className="flex-1 hidden lg:block" />
+                    <div className="relative z-10 flex-shrink-0">
+                      <div className="w-14 h-14 rounded-xl flex items-center justify-center border border-blue-500/20 bg-blue-500/10">
+                        <StepIcon className="w-6 h-6 text-blue-400" strokeWidth={1.7} />
+                        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
+                          {i + 1}
                         </div>
                       </div>
-                      <div className="flex-1 max-w-md">
-                        <div className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">{step.n}</div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-text-primary mb-2">{step.title}</h3>
-                        <p className="text-sm sm:text-base text-text-muted leading-relaxed">{step.desc}</p>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
+                    </div>
+                    <div className="flex-1 max-w-md">
+                      <div className="text-xs font-medium text-blue-400/60 uppercase tracking-widest mb-1">{step.n}</div>
+                      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">{step.title}</h3>
+                      <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </motion.div>
+                )
+              })}
             </div>
           </div>
         </section>
 
-        {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-12 sm:mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Star className="w-3 h-3" /> User Stories
-              </div>
-              <h2 className="text-2xl sm:text-4xl 2xl:text-5xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
-              <p className="text-sm 2xl:text-base text-text-muted max-w-lg 2xl:max-w-xl mx-auto leading-relaxed">
+        {/* ══ REVIEWS ══ */}
+        <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
+          <div className="max-w-5xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
+              className="text-center mb-12">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">User Stories</p>
+              <h2 className="text-2xl sm:text-4xl font-semibold text-white tracking-tight mb-3">What Users Are Saying</h2>
+              <p className="text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
                 Real feedback from users across education, journalism, HR, and research.
               </p>
             </motion.div>
 
             <ErrorBoundary>
-                <DynamicHomepageReviews />
-              </ErrorBoundary>
+              <DynamicHomepageReviews />
+            </ErrorBoundary>
 
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all duration-200">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-sm font-medium text-blue-400 hover:bg-blue-500/15 transition-all duration-200">
                 Share Your Feedback
               </a>
-              <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
+              <Link href="/reviews" className="text-sm text-slate-400 hover:text-white transition-colors font-medium">
                 See all reviews →
               </Link>
             </div>
           </div>
         </section>
 
-        {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
-
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
+        {/* ══ TRUST / FEATURES ══ */}
+        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
+          <div className="max-w-6xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
               className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
-                <Shield className="w-3 h-3" /> Trust & Accuracy
-              </div>
-              <h2 className="text-3xl sm:text-5xl 2xl:text-6xl font-black text-text-primary">
-                Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Trust & Accuracy</p>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+                Built for accuracy. Benchmarked on public datasets.
               </h2>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 2xl:gap-6 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel }, idx) => {
-                // Override dataset stat with live HF count
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
+              {TRUST_FEATURES.map(({ icon: Icon, title, desc, large, stat, statSuffix, statLabel }, idx) => {
                 const isDataset = title === 'Benchmarked Datasets'
                 const liveStat = isDataset && datasetRows
                   ? datasetRows >= 1_000_000
@@ -925,39 +588,36 @@ export default function HomePage() {
                 const displayLabel  = liveStat ? liveStat.label : statLabel
                 const displayTarget = parseFloat(displayStat) || 0
                 return (
-                <motion.div key={title}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
-                  <SpotlightCard color="rgba(37,99,235,0.10)"
-                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <Icon className="w-5 h-5" strokeWidth={1.8} />
-                    </div>
-                    {displayStat !== undefined && (
-                      <div className="mb-3">
-                        <div className="text-3xl sm:text-4xl font-black tabular-nums"
-                          style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                          <CountUp target={displayTarget} suffix={displaySuffix} />
-                        </div>
-                        <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
+                  <motion.div key={title}
+                    initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
+                    transition={{ delay: idx * 0.1, duration: 0.5 }}
+                    className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
+                    <div className="h-full p-6 rounded-xl border border-white/[0.08] bg-[#0f0f17] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5 border border-white/[0.06] bg-white/[0.03]">
+                        <Icon className="w-5 h-5 text-blue-400" strokeWidth={1.8} />
                       </div>
-                    )}
-                    <h3 className="font-bold text-text-primary text-base mb-2">{title}</h3>
-                    <p className="text-sm text-text-muted leading-relaxed">{desc}</p>
-                  </SpotlightCard>
-                </motion.div>
-              )
+                      {displayStat !== undefined && (
+                        <div className="mb-3">
+                          <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
+                            <CountUp target={displayTarget} suffix={displaySuffix} />
+                          </div>
+                          <div className="text-xs text-slate-500 font-medium">{displayLabel}</div>
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-white text-base mb-2">{title}</h3>
+                      <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+                    </div>
+                  </motion.div>
+                )
               })}
             </div>
 
-            {/* Professionals list */}
+            {/* Professionals */}
             <div className="text-center mb-10">
-              <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-5">Built for professionals across</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-5">Built for professionals across</p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {PROFESSIONALS.map(({ label, icon: Icon }) => (
-                  <span key={label} className="prof-item inline-flex items-center gap-2 text-sm font-medium text-text-muted px-3.5 py-2 rounded-xl border border-border/60 bg-surface/30 cursor-default">
+                  <span key={label} className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 px-3.5 py-2 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50 hover:border-blue-500/30 hover:text-white transition-colors duration-200 cursor-default">
                     <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
                     {label}
                   </span>
@@ -966,80 +626,50 @@ export default function HomePage() {
             </div>
 
             {/* Methodology note */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5, delay: 0.2 }}
+              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-xl border border-white/[0.08] bg-[#0f0f17]">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <FlaskConical className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">How our detection works</span>
+                <FlaskConical className="w-4 h-4 text-blue-400" />
+                <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">How our detection works</span>
               </div>
-              <p className="text-sm text-text-muted leading-relaxed">
+              <p className="text-sm text-slate-400 leading-relaxed">
                 Each scan analyzes content using multiple independent detection signals. Results are combined into a single confidence score, and a clear AI or Human verdict is returned in seconds.
               </p>
             </motion.div>
           </div>
         </section>
 
-        {/* ══ PROFESSIONALS MARQUEE ══ */}
-        <section className="py-10 sm:py-14 border-t border-border/15 [overflow:clip] relative">
-          <div className="relative">
-            <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-              style={{ background: 'linear-gradient(90deg, #08080d 0%, transparent 100%)' }} />
-            <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-              style={{ background: 'linear-gradient(-90deg, #08080d 0%, transparent 100%)' }} />
-            <div className="marquee-track marquee-left py-2">
-              {[...PROFESSIONALS, ...PROFESSIONALS, ...PROFESSIONALS].map((prof, i) => (
-                <div key={i} className="prof-item inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border/50 bg-surface/40 text-text-muted text-sm font-medium cursor-default mx-3 flex-shrink-0">
-                  <prof.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
-                  {prof.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 2xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
-          </div>
-          <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{ backgroundImage: `linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
-
-          <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
-            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>
+        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}>
               <div className="flex justify-center mb-8">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full blur-2xl opacity-60"
-                    style={{ background: 'radial-gradient(circle, rgba(245,100,0,0.5) 0%, transparent 70%)' }} />
-                  <Image src="/logo.png" alt="Aiscern" width={68} height={80}
-                    className="relative object-contain h-16 sm:h-20 2xl:h-24 w-auto drop-shadow-[0_0_28px_rgba(245,100,0,0.55)]" />
-                </div>
+                <Image src="/logo.png" alt="Aiscern" width={68} height={80}
+                  className="object-contain h-16 sm:h-20 w-auto" />
               </div>
 
-              <h2 className="text-4xl sm:text-6xl 2xl:text-7xl font-black mb-6 leading-tight">
-                Start <span className="gradient-text">Detecting</span><br />AI Content Free
+              <h2 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-6 leading-tight">
+                Start Detecting<br />AI Content Free
               </h2>
-              <p className="text-text-muted text-lg sm:text-xl 2xl:text-2xl mb-10 max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
+              <p className="text-slate-400 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
                 Core features free — no credit card required. No account needed for basic scans.
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={user ? '/dashboard' : '/detect/text'}
-                  className="group relative overflow-hidden btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/8 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
                   {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2 hover:border-primary/30">
-                  <Sparkles className="w-5 h-5 text-amber" />Create Free Account
+                <Link href="/signup" className="px-8 py-3 rounded-lg border border-white/[0.08] hover:border-white/[0.12] text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                  Create Free Account
                 </Link>
               </div>
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs 2xl:text-sm text-text-muted">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500">
                 {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
                   <div key={t} className="flex items-center gap-1.5">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald" />{t}
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />{t}
                   </div>
                 ))}
               </div>

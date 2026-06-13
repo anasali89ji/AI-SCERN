@@ -77,9 +77,9 @@ function ConfidenceBar({ score, verdict }: { score: number; verdict: string }) {
   const barColor = verdict === 'AI' ? 'bg-red-500' : verdict === 'HUMAN' ? 'bg-emerald-500' : 'bg-yellow-500'
   return (
     <div>
-      <div className="flex justify-between text-xs text-text-muted mb-1.5">
+      <div className="flex justify-between text-xs text-slate-500 mb-1.5">
         <span>Confidence</span>
-        <span className="font-bold text-text-primary">{pct}%</span>
+        <span className="font-bold text-slate-100">{pct}%</span>
       </div>
       <div className="h-2.5 rounded-full bg-surface-2 overflow-hidden">
         <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
@@ -100,56 +100,56 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
   })
 
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-[#08080d] text-slate-100">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-[#08080d] sm:bg-background/80 sm:backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d]">
         <div className="max-w-2xl 2xl:max-w-3xl mx-auto h-full px-4 sm:px-6 2xl:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
             <span className="font-black text-lg gradient-text">Aiscern</span>
           </Link>
-          <span className="text-xs text-text-muted">Shared scan result</span>
+          <span className="text-xs text-slate-500">Shared scan result</span>
         </div>
       </nav>
 
       <main className="pt-24 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
         {/* Header card */}
-        <div className={`rounded-2xl border p-8 text-center mb-6 ${verdictColor(scan.verdict)}`}>
+        <div className={`rounded-xl border p-8 text-center mb-6 ${verdictColor(scan.verdict)}`}>
           <div className="flex justify-center mb-4">
             <VerdictIcon verdict={scan.verdict} />
           </div>
           <h1 className="text-3xl font-black mb-1">{verdictLabel(scan.verdict)}</h1>
-          <p className="text-text-muted text-sm mb-6 capitalize">{scan.media_type} analysis · {dateStr}</p>
+          <p className="text-slate-500 text-sm mb-6 capitalize">{scan.media_type} analysis · {dateStr}</p>
           <ConfidenceBar score={scan.confidence_score} verdict={scan.verdict} />
         </div>
 
         {/* Metadata */}
-        <div className="rounded-2xl border border-border bg-surface p-5 mb-6 space-y-3">
+        <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5 mb-6 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Content type</span>
+            <span className="text-slate-500">Content type</span>
             <span className="capitalize font-medium">{scan.media_type}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Detection model</span>
+            <span className="text-slate-500">Detection model</span>
             <span className="font-medium text-xs font-mono">{scan.model_used ?? 'ensemble'}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Scan ID</span>
-            <span className="font-mono text-xs text-text-disabled">{scan.id.slice(0, 8)}…</span>
+            <span className="text-slate-500">Scan ID</span>
+            <span className="font-mono text-xs text-slate-600">{scan.id.slice(0, 8)}…</span>
           </div>
         </div>
 
         {/* Signals */}
         {signals.length > 0 && (
-          <div className="rounded-2xl border border-border bg-surface p-5 mb-6">
+          <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5 mb-6">
             <h2 className="font-bold text-sm mb-4 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" /> Detection signals
+              <Shield className="w-4 h-4 text-blue-400" /> Detection signals
             </h2>
             <div className="space-y-3">
               {signals.map((s, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-text-muted">{s.name}</span>
+                    <span className="text-slate-500">{s.name}</span>
                     <span className="font-bold">{Math.round((s.value ?? 0) * 100)}%</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
@@ -167,7 +167,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         {/* Disclaimer */}
         <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 mb-8 flex gap-3">
           <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-text-muted leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             AI detection is probabilistic, not absolute. This result should be one input in a broader assessment.
             Accuracy is approximately 82–85% depending on content type. See our{' '}
             <Link href="/methodology" className="text-primary underline">methodology</Link> for details.
@@ -177,10 +177,10 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         {/* CTA */}
         <div className="text-center space-y-3">
           <Link href={`/detect/${scan.media_type}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
             Verify this yourself →
           </Link>
-          <p className="text-xs text-text-disabled flex items-center justify-center gap-1.5">
+          <p className="text-xs text-slate-600 flex items-center justify-center gap-1.5">
             <Clock className="w-3 h-3" /> Free · No account required
           </p>
         </div>

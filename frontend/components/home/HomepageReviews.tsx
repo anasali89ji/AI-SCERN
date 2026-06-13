@@ -20,13 +20,9 @@ interface Review {
   tool_used?: string
 }
 
-const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg,#2563eb,#1d4ed8)',
-  'linear-gradient(135deg,#0ea5e9,#06b6d4)',
-  'linear-gradient(135deg,#10b981,#16a34a)',
-  'linear-gradient(135deg,#f43f5e,#dc2626)',
-  'linear-gradient(135deg,#f59e0b,#d97706)',
-  'linear-gradient(135deg,#2563eb,#1d4ed8)',
+const AVATAR_COLORS = [
+  'bg-blue-600', 'bg-sky-600', 'bg-emerald-600',
+  'bg-rose-600', 'bg-amber-600', 'bg-indigo-600',
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {
@@ -35,29 +31,28 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
     <motion.div
       initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.1 }}
       transition={{ delay: i * 0.1 }}
-      className="card border-border/30 hover:border-primary/20 transition-colors"
+      className="card border-white/[0.06] hover:border-white/[0.12] transition-colors"
     >
       <div className="flex gap-0.5 mb-4" aria-label={`${starCount} out of 5 stars`}>
         {Array.from({ length: starCount }).map((_, j) => (
           <span key={j} className="text-amber text-sm" aria-hidden="true">★</span>
         ))}
       </div>
-      <p className="text-text-secondary text-sm leading-relaxed mb-4">
+      <p className="text-slate-400 text-sm leading-relaxed mb-4">
         &ldquo;{r.body ?? r.text}&rdquo;
       </p>
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-          style={{ background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length] }}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
           aria-hidden="true"
         >
           {r.is_anonymous ? '?' : (r.display_name?.charAt(0) ?? 'U').toUpperCase()}
         </div>
         <div>
-          <div className="text-sm font-semibold text-text-primary">
+          <div className="text-sm font-semibold text-slate-100">
             {r.is_anonymous ? 'Anonymous' : (r.display_name ?? 'Aiscern User')}
           </div>
-          <div className="text-xs text-text-muted">{r.tool_used ?? 'Aiscern User'}</div>
+          <div className="text-xs text-slate-500">{r.tool_used ?? 'Aiscern User'}</div>
         </div>
       </div>
     </motion.div>
@@ -79,7 +74,7 @@ export default function HomepageReviews() {
   if (loading) return (
     <div className="grid sm:grid-cols-3 gap-4 sm:gap-6" aria-busy="true" aria-label="Loading reviews">
       {[0, 1, 2].map(i => (
-        <div key={i} className="card border-border/50 h-40 animate-pulse bg-surface/60 rounded-2xl" />
+        <div key={i} className="card border-white/[0.08] h-40 animate-pulse bg-surface/60 rounded-xl" />
       ))}
     </div>
   )

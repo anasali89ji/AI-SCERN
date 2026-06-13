@@ -25,16 +25,13 @@ function formatLog(entry: LogEntry): string {
 export const logger = {
   debug: (service: string, message: string, data?: Record<string, unknown>) => {
     if (process.env.NODE_ENV === 'development') {
-      console.debug(formatLog({ level: 'debug', service, message, data }))
     }
   },
 
   info: (service: string, message: string, data?: Record<string, unknown>) => {
-    console.log(formatLog({ level: 'info', service, message, data }))
   },
 
   warn: (service: string, message: string, data?: Record<string, unknown>) => {
-    console.warn(formatLog({ level: 'warn', service, message, data }))
   },
 
   error: async (

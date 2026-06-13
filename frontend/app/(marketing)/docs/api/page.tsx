@@ -37,29 +37,29 @@ const { verdict, confidence } = await response.json()`,
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <div className="border-b border-border px-6 py-4">
+    <div className="min-h-screen bg-[#08080d] text-slate-100">
+      <div className="border-b border-white/[0.08] px-6 py-4">
         <Link href="/" className="text-xl font-black gradient-text">Aiscern</Link>
       </div>
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
         <div>
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
-          <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
+          <p className="text-slate-500">Programmatic access to Aiscern detection. Free for all registered users.</p>
         </div>
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">Authentication</h2>
-          <p className="text-text-muted text-sm">Include your API key in every request using the <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">X-API-Key</code> header.</p>
-          <p className="text-text-muted text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> — free for all users.</p>
+          <p className="text-slate-500 text-sm">Include your API key in every request using the <code className="bg-[#141420] px-1.5 py-0.5 rounded text-blue-400 text-xs">X-API-Key</code> header.</p>
+          <p className="text-slate-500 text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> — free for all users.</p>
         </section>
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">POST /api/v1/detect/text</h2>
-          <p className="text-text-muted text-sm">Analyze a text sample for AI generation.</p>
+          <p className="text-slate-500 text-sm">Analyze a text sample for AI generation.</p>
           <h3 className="font-semibold text-sm">Request Body</h3>
-          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`{ "text": "string (50–10,000 characters)" }`}</pre>
+          <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`{ "text": "string (50–10,000 characters)" }`}</pre>
           <h3 className="font-semibold text-sm">Response</h3>
-          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+          <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-blue-400">{`{
   "verdict": "AI" | "HUMAN" | "UNCERTAIN",
   "confidence": 0.94,
   "credits_remaining": 498,
@@ -71,8 +71,8 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">Code Examples</h2>
           {Object.entries(CODE).map(([lang, code]) => (
             <div key={lang}>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2">{lang}</h3>
-              <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-text-secondary">{code}</pre>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">{lang}</h3>
+              <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-slate-400">{code}</pre>
             </div>
           ))}
         </section>
@@ -81,15 +81,15 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">Rate Limits</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-border">
-                {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-text-muted text-xs">{h}</th>)}
+              <thead><tr className="border-b border-white/[0.08]">
+                {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-slate-500 text-xs">{h}</th>)}
               </tr></thead>
               <tbody>
                 {[['Free', 'Unlimited', '60 req/min']].map(([plan, credits, limit]) => (
-                  <tr key={plan} className="border-b border-border/50">
-                    <td className="py-2 px-3 text-text-primary font-semibold">{plan}</td>
-                    <td className="py-2 px-3 text-text-secondary">{credits}</td>
-                    <td className="py-2 px-3 text-text-secondary">{limit}</td>
+                  <tr key={plan} className="border-b border-white/[0.08]">
+                    <td className="py-2 px-3 text-slate-100 font-semibold">{plan}</td>
+                    <td className="py-2 px-3 text-slate-400">{credits}</td>
+                    <td className="py-2 px-3 text-slate-400">{limit}</td>
                   </tr>
                 ))}
               </tbody>

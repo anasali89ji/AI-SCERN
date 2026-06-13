@@ -62,6 +62,19 @@ export async function POST(req: NextRequest) {
       if (file.size > 25 * 1024 * 1024)
         return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Audio must be under 25MB' } }, { status: 400 })
 
+      // MIME validation — only accept audio types (Security Report §file-upload-risk)
+      const ALLOWED_AUDIO_MIMES = new Set([
+        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
+        'audio/ogg', 'audio/flac', 'audio/x-flac', 'audio/aac', 'audio/mp4',
+        'audio/x-m4a', 'audio/webm', 'audio/3gpp', 'audio/amr',
+      ])
+      if (file.type && !ALLOWED_AUDIO_MIMES.has(file.type)) {
+        return NextResponse.json(
+          { success: false, error: { code: 'INVALID_FILE_TYPE', message: 'Only audio files are accepted (mp3, wav, ogg, flac, aac, m4a, webm)' } },
+          { status: 415 }
+        )
+      }
+
       const bytes = await file.arrayBuffer()
       buffer   = Buffer.from(bytes)
       fileName = file.name
@@ -118,7 +131,6 @@ export async function POST(req: NextRequest) {
 
     const forensicData = forensicSettled.status === 'fulfilled' ? forensicSettled.value : null
     if (forensicSettled.status === 'rejected') {
-      console.warn('[detect/audio] Forensic pipeline non-fatal error:', forensicSettled.reason)
     }
 
     // Blend HF + forensic when forensic data is available
@@ -164,7 +176,6 @@ export async function POST(req: NextRequest) {
           finalVerdict = finalConfidence >= 0.60 ? 'AI' : finalConfidence <= 0.40 ? 'HUMAN' : 'UNCERTAIN'
         }
       } catch (e) {
-        console.warn('[detect/audio] RAG query error (non-blocking):', e)
       }
     }
 

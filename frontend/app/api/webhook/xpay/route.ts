@@ -38,7 +38,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 4. HMAC signature verification (timing-safe)
   if (!verifyXPayWebhook(payload, rawBody)) {
-    console.warn('[webhook:xpay] Bad signature, order:', payload?.order_id)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
@@ -90,7 +89,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error('[webhook:xpay] Plan update failed (non-fatal):', err)
   }
 
-  console.log(`[webhook:xpay] ✓ +${credits} credits → user ${userId} (order ${order_id})`)
 
   return NextResponse.json({
     received:      true,

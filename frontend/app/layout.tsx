@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: 'Aiscern — Free Multi-Modal AI Detection | Text, Image, Audio, Video',
     template: '%s | Aiscern',
   },
-  description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks. Built by Anas Ali in Mandi Bahauddin.',
+  description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks. Enterprise API available.',
   keywords: [
     'ai detector','free ai detector','ai text detector','chatgpt detector','claude detector',
     'gemini detector','ai content detector','detect ai generated text','chatgpt checker',
@@ -123,12 +123,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })}}
         />
       </head>
-      <body className="bg-background text-text-primary antialiased">
+      <body className="bg-background text-slate-100 antialiased">
         {/* Skip to main content — keyboard accessibility */}
         <a
           href="#main-content"
           aria-label="Skip to main content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
         >
           Skip to main content
         </a>

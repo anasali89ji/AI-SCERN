@@ -72,7 +72,7 @@ function StatusBadge({ status }: { status: 'anomalous' | 'normal' | 'inconclusiv
 
 function EvidenceRow({ ev }: { ev: EvidenceNode }) {
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+    <div className="flex items-start gap-3 py-2 border-b border-white/[0.08] last:border-0">
       <div className="mt-0.5 flex-shrink-0">
         <StatusBadge status={ev.status} />
       </div>
@@ -99,7 +99,7 @@ function LayerCard({ report }: { report: LayerReport }) {
   const anomalies = report.evidence.filter(e => e.status === 'anomalous')
 
   return (
-    <div className={`bg-white/5 border ${border} rounded-xl p-4 transition-all`}>
+    <div className={`bg-white/[0.05] border ${border} rounded-xl p-4 transition-all`}>
       <div className="flex items-center gap-3 mb-3">
         <div className="text-white/50">{LAYER_ICONS[report.layer]}</div>
         <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ function LayerCard({ report }: { report: LayerReport }) {
           </div>
 
           {expanded && report.evidence.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/5">
+            <div className="mt-3 pt-3 border-t border-white/[0.08]">
               {report.evidence.map((ev, i) => <EvidenceRow key={i} ev={ev} />)}
             </div>
           )}
@@ -173,7 +173,7 @@ function AgentCard({ agent }: { agent: SemanticAgentReport }) {
   const border   = failed ? 'border-white/10' : score > 0.65 ? 'border-red-500/20' : score < 0.35 ? 'border-green-500/20' : 'border-yellow-500/20'
 
   return (
-    <div className={`bg-white/5 border ${border} rounded-xl p-3`}>
+    <div className={`bg-white/[0.05] border ${border} rounded-xl p-3`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-white/80">
           {AGENT_LABELS[agent.agentName] || agent.agentName}
@@ -201,7 +201,7 @@ function AgentCard({ agent }: { agent: SemanticAgentReport }) {
           </div>
 
           {expanded && anomalies.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
+            <div className="mt-2 pt-2 border-t border-white/[0.08] space-y-1">
               {anomalies.slice(0, 4).map((ev, i) => (
                 <p key={i} className="text-xs text-white/60 leading-relaxed">
                   <span className="text-red-400 font-mono">{ev.artifactType}:</span> {ev.detail}
@@ -225,7 +225,7 @@ function ProvenanceBadge({ provenance }: { provenance: ProvenanceReport }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {/* Reverse search */}
-      <div className={`rounded-xl p-3 border ${provenance.reverseSearchHits > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+      <div className={`rounded-xl p-3 border ${provenance.reverseSearchHits > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-white/[0.05] border-white/10'}`}>
         <div className="text-xs text-white/40 mb-1">Reverse Search</div>
         <div className={`text-lg font-bold ${provenance.reverseSearchHits > 0 ? 'text-green-400' : 'text-white/60'}`}>
           {provenance.reverseSearchHits > 0 ? `${provenance.reverseSearchHits} hit${provenance.reverseSearchHits > 1 ? 's' : ''}` : 'No hits'}
@@ -236,7 +236,7 @@ function ProvenanceBadge({ provenance }: { provenance: ProvenanceReport }) {
       </div>
 
       {/* C2PA */}
-      <div className={`rounded-xl p-3 border ${provenance.c2paValid ? 'bg-green-500/10 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+      <div className={`rounded-xl p-3 border ${provenance.c2paValid ? 'bg-green-500/10 border-green-500/20' : 'bg-white/[0.05] border-white/10'}`}>
         <div className="text-xs text-white/40 mb-1">C2PA</div>
         <div className={`text-sm font-bold ${provenance.c2paValid ? 'text-green-400' : 'text-white/40'}`}>
           {provenance.c2paValid ? `✓ ${provenance.c2paSigner || 'Valid'}` : 'Not found'}
@@ -244,7 +244,7 @@ function ProvenanceBadge({ provenance }: { provenance: ProvenanceReport }) {
       </div>
 
       {/* SynthID */}
-      <div className={`rounded-xl p-3 border ${provenance.synthidDetected ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/10'}`}>
+      <div className={`rounded-xl p-3 border ${provenance.synthidDetected ? 'bg-red-500/10 border-red-500/20' : 'bg-white/[0.05] border-white/10'}`}>
         <div className="text-xs text-white/40 mb-1">SynthID</div>
         <div className={`text-sm font-bold ${provenance.synthidDetected ? 'text-red-400' : 'text-white/40'}`}>
           {provenance.synthidDetected
@@ -254,7 +254,7 @@ function ProvenanceBadge({ provenance }: { provenance: ProvenanceReport }) {
       </div>
 
       {/* Camera */}
-      <div className="rounded-xl p-3 border bg-white/5 border-white/10">
+      <div className="rounded-xl p-3 border bg-white/[0.05] border-white/10">
         <div className="text-xs text-white/40 mb-1">EXIF</div>
         <div className="text-sm font-bold text-white/60 truncate">
           {provenance.exifCameraModel || provenance.exifSoftware || 'No EXIF'}
@@ -279,7 +279,7 @@ function VerdictBanner({ verdict }: { verdict: FinalVerdict }) {
   const Icon    = isAI ? AlertTriangle : isHuman ? CheckCircle : HelpCircle
 
   return (
-    <div className={`bg-gradient-to-br ${bg} border rounded-2xl p-6`}>
+    <div className={`bg-[#0f0f17] border border-white/[0.08] rounded-xl p-6`}>
       <div className="flex items-center gap-4 mb-4">
         <div className={`${color} flex-shrink-0`}>
           <Icon size={40} strokeWidth={1.5} />
@@ -343,7 +343,7 @@ function CrossValidationMap({ verdict }: { verdict: FinalVerdict }) {
         const disagrees = disagreeingLayers.includes(n)
         const cls = agrees ? 'bg-green-500/20 border-green-500/40 text-green-300'
                   : disagrees ? 'bg-red-500/20 border-red-500/40 text-red-300'
-                  : 'bg-white/5 border-white/10 text-white/30'
+                  : 'bg-white/[0.05] border-white/10 text-white/30'
         return (
           <div key={n} className={`px-2.5 py-1 rounded-lg border text-xs font-mono ${cls}`}>
             L{n}
@@ -455,7 +455,7 @@ export default function ForensicScanPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Header */}
-      <div className="border-b border-white/5 bg-white/[0.02]">
+      <div className="border-b border-white/[0.08] bg-white/[0.02]">
         <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 2xl:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Shield className="text-blue-400" size={20} />
@@ -553,7 +553,7 @@ export default function ForensicScanPage() {
             {/* Existing Ensemble */}
             {scan?.existingEnsembleResult && (
               <section>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="bg-white/[0.05] border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-white/40 uppercase tracking-widest mb-2">
                     Existing Ensemble (HuggingFace + NVIDIA NIM)
                   </div>
@@ -578,7 +578,7 @@ export default function ForensicScanPage() {
 
             {/* Metadata footer */}
             <section>
-              <div className="flex flex-wrap gap-4 text-xs text-white/25 font-mono border-t border-white/5 pt-4">
+              <div className="flex flex-wrap gap-4 text-xs text-white/25 font-mono border-t border-white/[0.08] pt-4">
                 <span>ID: {scan?.id}</span>
                 {scan?.processingTimeMs && <span>Time: {scan.processingTimeMs}ms</span>}
                 {scan?.createdAt && <span>Created: {new Date(scan.createdAt).toLocaleString()}</span>}

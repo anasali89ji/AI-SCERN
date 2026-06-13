@@ -32,14 +32,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Still initializing
   if (!checked || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#08080d] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Image src="/logo.png" alt="Aiscern" width={56} height={38}
             className="object-contain drop-shadow-[0_0_12px_rgba(245,100,0,0.5)] animate-pulse" />
           <div className="flex gap-1">
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div className="w-5 h-5 rounded-full border-2 border-blue-600/30 border-t-blue-600 animate-spin" />
           </div>
         </div>
       </div>
@@ -51,9 +49,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // Not authenticated — show sign-in wall (no escape)
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none auth-blur-orb" />
+    <div className="min-h-screen bg-[#08080d] flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[#08080d]" />
+      
 
       <AnimatePresence>
         <motion.div
@@ -62,44 +60,44 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           transition={{ type: 'spring', damping: 22, stiffness: 300 }}
           className="relative w-full max-w-md z-10"
         >
-          <div className="h-1 w-full bg-gradient-to-r from-primary via-orange-400 to-amber-400 rounded-t-2xl" />
-          <div className="bg-surface border border-white/10 rounded-b-2xl shadow-2xl shadow-primary/20 p-8 space-y-6">
+          <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
+          <div className="bg-surface border border-white/10 rounded-b-xl  p-8 space-y-6">
 
             <div className="text-center space-y-3">
               <Link href="/">
                 <Image src="/logo.png" alt="Aiscern" width={72} height={50}
                   className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]" />
               </Link>
-              <h1 className="text-2xl font-black text-text-primary">
+              <h1 className="text-2xl font-black text-slate-100">
                 Sign in to <span className="gradient-text">Aiscern</span>
               </h1>
-              <p className="text-text-muted text-sm leading-relaxed">
+              <p className="text-slate-500 text-sm leading-relaxed">
                 Create a free account to access AI detection tools — no credit card, no limits.
               </p>
             </div>
 
-            <ul className="space-y-2.5 bg-surface-active rounded-xl p-4">
+            <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
               {PERKS.map(p => (
-                <li key={p} className="flex items-center gap-2.5 text-sm text-text-secondary">
-                  <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0" />
+                <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   {p}
                 </li>
               ))}
             </ul>
 
             <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
+              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700  transition-all">
                 <Zap className="w-4 h-4" />
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#141420] transition-all">
                 <Lock className="w-4 h-4" />
                 Already have an account? Sign In
               </Link>
             </div>
 
-            <p className="text-center text-xs text-text-disabled flex items-center justify-center gap-1.5">
+            <p className="text-center text-xs text-slate-600 flex items-center justify-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-emerald" />
               Free tier available · No credit card required
             </p>

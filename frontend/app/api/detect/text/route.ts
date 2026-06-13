@@ -83,7 +83,6 @@ export async function POST(req: NextRequest) {
           else                               finalVerdict = 'UNCERTAIN'
         }
       } catch (e) {
-        console.warn('[detect/text] RAG query error (non-blocking):', e)
         // Continue with original result on RAG failure
       }
     }

@@ -50,27 +50,27 @@ export function ReviewSuggestion({ toolName }: Props) {
 
   return (
     <>
-      <div className="mt-6 rounded-xl border border-border bg-surface/60 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div className="mt-6 rounded-xl border border-white/[0.08] bg-surface/60 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
         {alreadyReviewed ? (
-          <div className="flex items-center gap-2 text-sm text-text-muted">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
             <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span>You reviewed {toolName} —</span>
             <button onClick={() => setModalOpen(true)} className="text-primary hover:underline font-medium">Edit review</button>
           </div>
         ) : (
           <>
-            <span className="text-sm text-text-secondary font-medium">How was {toolName}?</span>
+            <span className="text-sm text-slate-400 font-medium">How was {toolName}?</span>
             <div className="flex items-center gap-1">
               {[1,2,3,4,5].map(n => (
                 <button key={n}
                   onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
                   onClick={() => handleStarClick(n)}
-                  className="transition-transform hover:scale-110">
+                  className="transition-transform">
                   <Star className={`w-6 h-6 transition-colors ${n <= (hover || preRating) ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
                 </button>
               ))}
             </div>
-            <button onClick={dismiss} className="p-1 rounded-lg hover:bg-surface-active text-text-disabled hover:text-text-muted transition-colors ml-auto">
+            <button onClick={dismiss} className="p-1 rounded-lg hover:bg-[#141420] text-slate-600 hover:text-slate-500 transition-colors ml-auto">
               <X className="w-4 h-4" />
             </button>
           </>

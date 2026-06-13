@@ -132,7 +132,7 @@ export function ToolCard({ tool, result }: ToolCardProps) {
               )
             })}
           </div>
-          <button onClick={copyResult} className="mt-3 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
+          <button onClick={copyResult} className="mt-3 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]">
             {copied ? <Ico.Check /> : <Ico.Copy />}
             {copied ? 'Copied' : 'Copy result'}
           </button>

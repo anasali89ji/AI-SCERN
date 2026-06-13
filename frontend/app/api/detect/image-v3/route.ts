@@ -182,7 +182,6 @@ export async function POST(req: NextRequest) {
     // Run all layers in parallel
     const pythonPromise = callPythonWorker(imageBuffer, mimeType).catch(
       (e) => {
-        console.warn("[detect/image-v3] Python worker unavailable:", e.message);
         return emptyPythonResult();
       }
     );

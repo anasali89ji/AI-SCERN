@@ -13,24 +13,24 @@ import { useAuth } from '@/components/auth-provider'
 
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-primary', desc: 'Deepfake & AI image detection' },
-  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
-  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
-  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
+  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber-500',     desc: 'Detect AI-written content'    },
+  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-blue-400', desc: 'Deepfake & AI image detection' },
+  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-blue-600/20 to-blue-600/5',        iconColor: 'text-blue-400',      desc: 'Voice clone detection'         },
+  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose-500',      desc: 'Deepfake video analysis'       },
+  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald-400',   desc: 'Scan up to 20 files at once'         },
   { href: '/chat',         icon: Zap,       label: 'ARIA',  color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
 ]
 
 function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose flex-shrink-0" />
-  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
-  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber flex-shrink-0" />
+  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
-  const s = verdict === 'AI' ? 'text-rose bg-rose/10 border-rose/20'
-          : verdict === 'HUMAN' ? 'text-emerald bg-emerald/10 border-emerald/20'
-          : 'text-amber bg-amber/10 border-amber/20'
+  const s = verdict === 'AI' ? 'text-rose bg-rose-500/10 border-rose-500/20'
+          : verdict === 'HUMAN' ? 'text-emerald bg-emerald-500/10 border-emerald-500/20'
+          : 'text-amber bg-amber-500/10 border-amber-500/20'
   return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${s}`}>{verdict}</span>
 }
 
@@ -144,8 +144,8 @@ export default function DashboardPage() {
       {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
       {isPulling && (
         <div className="flex items-center justify-center py-2 lg:hidden">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface px-4 py-2 rounded-full border border-border/40">
-            <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 text-xs text-slate-500 bg-[#0f0f17] px-4 py-2 rounded-full border border-white/[0.06]">
+            <svg className="w-3.5 h-3.5 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
@@ -156,10 +156,10 @@ export default function DashboardPage() {
 
       {/* ── Welcome ── */}
       <div>
-        <h1 className="text-xl sm:text-3xl font-black text-text-primary">
+        <h1 className="text-xl sm:text-3xl font-black text-slate-100">
           Welcome back, <span className="gradient-text">{name}</span> 👋
         </h1>
-        <p className="text-text-muted text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           {totalScans === 0 ? 'Run your first scan below.' : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
         </p>
       </div>
@@ -167,19 +167,19 @@ export default function DashboardPage() {
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {[
-          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-primary/10 text-primary'  },
-          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose/10 text-rose'        },
-          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
-          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
+          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-blue-500/10 text-blue-400'  },
+          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose-500/10 text-rose-500'        },
+          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald-500/10 text-emerald-400'  },
+          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber-500/10 text-amber-500'      },
         ].map((s, i) => (
           <div key={s.label}
-            className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
+            className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-5 flex items-center gap-3 hover:border-white/[0.12] transition-all">
             <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
               <s.icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
-              <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
+              <p className="text-base sm:text-2xl font-black text-slate-100 tabular-nums leading-tight">{s.value}</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">{s.label}</p>
             </div>
           </div>
         ))}
@@ -190,27 +190,27 @@ export default function DashboardPage() {
         {/* New user onboarding card */}
         {totalScans === 0 && !loading && (
           <div
-            className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
+            className="mb-4 bg-[#0f0f17] border border-white/[0.08] rounded-xl p-5">
             <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-primary" />
+              <div className="w-11 h-11 rounded-xl bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-text-primary mb-1">Welcome to Aiscern! 🎉</h3>
-                <p className="text-xs sm:text-sm text-text-muted mb-3 leading-relaxed">
+                <h3 className="font-bold text-slate-100 mb-1">Welcome to Aiscern! 🎉</h3>
+                <p className="text-xs sm:text-sm text-slate-500 mb-3 leading-relaxed">
                   You're all set. Pick a detection tool below to run your first scan — completely free, no limits.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Link href="/detect/text"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all">
                     <FileText className="w-3.5 h-3.5" /> Try Text Detection
                   </Link>
                   <Link href="/detect/image"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-blue-500/50/40 hover:text-slate-100 transition-all">
                     <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
                   </Link>
                   <Link href="/batch"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-xs font-semibold text-slate-500 hover:border-blue-500/50/40 hover:text-slate-100 transition-all">
                     <Layers className="w-3.5 h-3.5" /> Try Batch Scan
                   </Link>
                 </div>
@@ -219,19 +219,19 @@ export default function DashboardPage() {
           </div>
         )}
         <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Detection Tools</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {TOOLS.map((t, i) => (
             <div key={t.href}>
               <Link href={t.href}
-                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
-                <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
+                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg- ${t.color} border border-white/[0.08] hover:border-white/[0.12] transition-all text-center group`}>
+                <div className={`w-10 h-10 rounded-xl bg-[#08080d]/80 flex items-center justify-center ${t.iconColor} group- transition-transform`}>
                   <t.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-text-primary">{t.label}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{t.desc}</p>
+                  <p className="text-sm font-bold text-slate-100">{t.label}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">{t.desc}</p>
                 </div>
               </Link>
             </div>
@@ -242,19 +242,19 @@ export default function DashboardPage() {
       {/* ── AI/Human balance bar ── */}
       {totalScans > 0 && (
         <div
-          className="bg-surface border border-border/50 rounded-2xl p-5">
+          className="bg-surface border border-white/[0.08] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
-            <span className="text-xs text-text-muted">{totalScans} total scans</span>
+            <h2 className="text-sm font-semibold text-slate-100">Detection Balance</h2>
+            <span className="text-xs text-slate-500">{totalScans} total scans</span>
           </div>
           <div className="flex rounded-full overflow-hidden h-3 gap-0.5">
             <div className="bg-rose transition-all duration-700" style={{ width: `${aiPct}%` }} />
-            <div className="bg-amber/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
+            <div className="bg-amber-500/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
             <div className="bg-emerald transition-all duration-700" style={{ width: `${humanPct}%` }} />
           </div>
-          <div className="flex items-center gap-4 mt-2.5 text-xs text-text-muted">
+          <div className="flex items-center gap-4 mt-2.5 text-xs text-slate-500">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose" />{aiPct}% AI</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500/60" />{100-aiPct-humanPct}% Uncertain</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
           </div>
         </div>
@@ -263,14 +263,14 @@ export default function DashboardPage() {
       {/* ── Recent scans ── */}
       <div>
         <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Recent Scans</h2>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Recent Scans</h2>
           <div className="flex items-center gap-2">
             <button onClick={loadDashboard} title="Refresh"
-              className="text-text-disabled hover:text-text-muted transition-colors p-1 rounded-lg hover:bg-surface-hover">
+              className="text-slate-600 hover:text-slate-500 transition-colors p-1 rounded-lg hover:bg-[#141420]">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
             {scans.length > 0 && (
-              <Link href="/history" className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+              <Link href="/history" className="text-xs text-blue-400 hover:text-white/80 font-medium flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -280,26 +280,26 @@ export default function DashboardPage() {
         {loading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-[#0f0f17] border border-white/[0.08] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : fetchError ? (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center">
-            <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">Couldn't load scan history</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Check your connection and try again</p>
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-8 text-center">
+            <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm font-medium">Couldn't load scan history</p>
+            <p className="text-slate-600 text-xs mt-1 mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#141420] border border-white/[0.08] text-sm font-semibold text-slate-400 hover:text-slate-100 transition-all">
               <RefreshCw className="w-4 h-4" /> Retry
             </button>
           </div>
         ) : scans.length === 0 ? (
-          <div className="bg-surface border border-border rounded-2xl p-10 text-center">
-            <Shield className="w-10 h-10 text-text-disabled mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">No scans yet</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Pick a tool above to run your first detection</p>
+          <div className="bg-surface border border-white/[0.08] rounded-xl p-10 text-center">
+            <Shield className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm font-medium">No scans yet</p>
+            <p className="text-slate-600 text-xs mt-1 mb-4">Pick a tool above to run your first detection</p>
             <Link href="/detect/text"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all">
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all">
               <FileText className="w-4 h-4" /> Try Text Detector
             </Link>
           </div>
@@ -307,17 +307,17 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {scans.map((scan, i) => (
               <div key={scan.id}
-                className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
-                <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
+                className="flex items-center gap-3 bg-[#0f0f17] border border-white/[0.08] rounded-xl px-4 py-3 hover:border-white/[0.12] transition-all">
+                <div className="text-slate-500">{mediaIcon(scan.media_type)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary truncate">
+                  <p className="text-sm text-slate-100 truncate">
                     {scan.content_preview?.slice(0, 60) || `${scan.media_type} scan`}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <VerdictIcon verdict={scan.verdict} />
-                    <span className="text-[11px] text-text-muted">{timeAgo(scan.created_at)}</span>
-                    <span className="text-[11px] text-text-disabled">·</span>
-                    <span className="text-[11px] text-text-muted">{Math.round((scan.confidence_score ?? 0) * 100)}% conf</span>
+                    <span className="text-[11px] text-slate-500">{timeAgo(scan.created_at)}</span>
+                    <span className="text-[11px] text-slate-600">·</span>
+                    <span className="text-[11px] text-slate-500">{Math.round((scan.confidence_score ?? 0) * 100)}% conf</span>
                   </div>
                 </div>
                 <VerdictBadge verdict={scan.verdict} />

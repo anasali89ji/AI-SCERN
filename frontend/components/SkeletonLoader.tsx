@@ -1,11 +1,11 @@
 'use client'
 export function SkeletonLine({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse bg-surface-hover rounded-lg ${className}`} />
+  return <div className={`animate-pulse bg-[#141420] rounded-lg ${className}`} />
 }
 
 export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-surface border border-border rounded-2xl p-5 space-y-3 ${className}`}>
+    <div className={`bg-surface border border-white/[0.08] rounded-xl p-5 space-y-3 ${className}`}>
       <SkeletonLine className="h-4 w-1/3" />
       <SkeletonLine className="h-3 w-2/3" />
       <SkeletonLine className="h-3 w-1/2" />
@@ -22,7 +22,7 @@ export function PageLoader() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[1,2,3,4].map(i => (
-          <div key={i} className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div key={i} className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-5 space-y-3">
             <SkeletonLine className="h-3 w-20" />
             <SkeletonLine className="h-7 w-16" />
           </div>

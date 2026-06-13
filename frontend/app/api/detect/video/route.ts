@@ -169,6 +169,19 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
 
+    // MIME validation — only accept video types (Security Report §file-upload-risk)
+    const ALLOWED_VIDEO_MIMES = new Set([
+      'video/mp4', 'video/mpeg', 'video/ogg', 'video/webm',
+      'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+      'video/3gpp', 'video/x-flv', 'video/x-ms-wmv',
+    ])
+    if (file.type && !ALLOWED_VIDEO_MIMES.has(file.type)) {
+      return NextResponse.json(
+        { success: false, error: { code: 'INVALID_FILE_TYPE', message: 'Only video files are accepted (mp4, webm, mov, avi, mkv, ogg)' } },
+        { status: 415 }
+      )
+    }
+
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
     const result = await analyzeVideo(file.name, file.size, ext)
 
