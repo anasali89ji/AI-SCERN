@@ -14,8 +14,12 @@ export interface UseCaseItem {
 }
 
 export interface PainPoint {
-  problem: string
-  solution: string
+  /** Primary label — use either 'title' or 'problem' */
+  title?: string
+  problem?: string
+  /** Detail text — use either 'desc' or 'solution' */
+  desc?: string
+  solution?: string
 }
 
 export interface SolutionPageProps {
@@ -26,25 +30,35 @@ export interface SolutionPageProps {
   /** Longer description for the hero */
   description: string
   /** Lucide icon component for fallback */
-  icon: ReactNode
+  icon?: ReactNode
   /** Primary accent color (CSS hex or rgba) */
-  color: string
+  color?: string
   /** Optional hero image path — /solutions/hero-education.jpg */
   heroImage?: string
   /** Optional product-in-action image — /solutions/action-education.jpg */
   actionImage?: string
+  /** Optional section heading above pain points */
+  problemTitle?: string
   /** Pain point cards */
   painPoints: PainPoint[]
+  /** Feature highlights (icon, title, desc) */
+  features?: Array<{ icon: React.ReactNode; title: string; desc: string }>
+  /** FAQ items — accepts {question,answer} or shorthand {q,a} */
+  faqs?: Array<{ question?: string; answer?: string; q?: string; a?: string }>
+  /** Hero icon (overrides heroImage) */
+  heroIcon?: React.ReactNode
+  /** Accent color key for colorMap */
+  accentColor?: 'primary' | 'blue' | 'cyan' | 'amber' | 'emerald' | 'rose'
   /** Use case list */
   useCases: UseCaseItem[]
   /** Relevant detect tool link */
-  ctaHref: string
+  ctaHref?: string
   /** CTA button label */
-  ctaLabel: string
+  ctaLabel?: string
   /** Detect tool label for the CTA */
-  toolName: string
+  toolName?: string
   /** Key stats to display */
-  stats: Array<{ value: string; label: string }>
+  stats?: Array<{ value: string; label: string }>
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -116,7 +130,7 @@ export function SolutionPage({
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="flex flex-wrap gap-6 mb-8"
               >
-                {stats.map(s => (
+                {(stats ?? []).map(s => (
                   <div key={s.label}>
                     <div className="text-2xl font-bold font-display" style={{ color }}>{s.value}</div>
                     <div className="text-xs text-text-muted">{s.label}</div>
@@ -130,7 +144,7 @@ export function SolutionPage({
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex flex-col sm:flex-row gap-3"
               >
-                <Link href={ctaHref} className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold">
+                <Link href={ctaHref ?? "/detect/text"} className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold">
                   {ctaLabel}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -202,11 +216,11 @@ export function SolutionPage({
               >
                 <div className="flex gap-3 mb-3">
                   <AlertTriangle className="w-5 h-5 text-rose flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-text-secondary">{p.problem}</p>
+                  <p className="text-sm text-text-secondary">{p.title ?? p.problem ?? ''}</p>
                 </div>
                 <div className="flex gap-3">
                   <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color }} />
-                  <p className="text-sm text-text-primary font-medium">{p.solution}</p>
+                  <p className="text-sm text-text-primary font-medium">{p.desc ?? p.solution ?? ''}</p>
                 </div>
               </motion.div>
             ))}
@@ -280,7 +294,7 @@ export function SolutionPage({
             </h2>
             <p className="text-text-muted mb-8">Free tier available — no credit card required. 10 scans per day.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={ctaHref} className="btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold">
+              <Link href={ctaHref ?? "/detect/text"} className="btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold">
                 {ctaLabel}
                 <ArrowRight className="w-5 h-5" />
               </Link>
