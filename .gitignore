@@ -46,3 +46,4 @@ setup-secrets.sh
 .vercel/
 .vercel
 !.vercel/project.json
+.env.do

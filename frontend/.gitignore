@@ -2,3 +2,4 @@
 # Vercel (removed)
 .vercel
 !.vercel/project.json
+.env.do
