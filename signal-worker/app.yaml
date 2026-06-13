@@ -10,7 +10,7 @@ services:
 
     github:
       repo: anasali89ji/AI-SCERN
-      branch: preview/master-bug-fixes
+      branch: main
       deploy_on_push: true
 
     dockerfile_path: signal-worker/Dockerfile
