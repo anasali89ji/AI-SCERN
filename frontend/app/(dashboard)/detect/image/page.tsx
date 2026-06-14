@@ -78,18 +78,23 @@ function ImageDetectionPage() {
 
       // Try R2 presigned upload first (bypasses Vercel 4.5MB body limit)
       try {
+        // 5s timeout on presign — if R2 is slow, fall through to direct upload
+        const presignCtrl = new AbortController()
+        const presignTimer = setTimeout(() => presignCtrl.abort(), 5000)
         const presignRes = await fetch('/api/upload', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size, mediaType: 'image' }),
+          signal:  presignCtrl.signal,
         })
+        clearTimeout(presignTimer)
         const presignData = await presignRes.json()
         if (presignData.success && presignData.uploadUrl) {
           setUploadProgress(0)
           await uploadToR2WithProgress(presignData.uploadUrl, file, setUploadProgress)
           r2Key = presignData.key
         }
-      } catch { /* fallback to direct upload */ }
+      } catch { /* fallback to direct upload — R2 slow or unavailable */ }
 
       let res: Response
       if (r2Key) {

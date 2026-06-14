@@ -36,12 +36,18 @@ function getR2Client(): S3Client {
     throw new Error('R2 credentials not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.')
   }
   _client = new S3Client({
-    region: 'auto',
+    region:   'auto',
     endpoint: `https://${R2_ACCOUNT}.r2.cloudflarestorage.com`,
     credentials: {
       accessKeyId:     R2_ACCESS_KEY,
       secretAccessKey: R2_SECRET,
     },
+    // Connection pool + timeout optimizations
+    requestHandler: {
+      connectionTimeout: 3000,   // 3s to establish TCP (was default 0 = infinite)
+      socketTimeout:     10000,  // 10s to receive response (was default 0 = infinite)
+    } as any,
+    maxAttempts: 2,  // 1 retry only — fast-fail, don't wait for 3 retries
   })
   return _client
 }
@@ -101,6 +107,7 @@ export async function createPresignedUpload(
     Key:           key,
     ContentType:   mimeType,
     ContentLength: fileSize,
+    CacheControl:  'private, max-age=3600',  // R2 CDN caches the object on read
     Metadata: {
       'user-id':    userId,
       'media-type': mediaType,
@@ -108,7 +115,7 @@ export async function createPresignedUpload(
     },
   })
 
-  const uploadUrl = await getSignedUrl(getR2Client(), cmd, { expiresIn: 3600 })
+  const uploadUrl = await getSignedUrl(getR2Client(), cmd, { expiresIn: 300 })  // 5 min — was 1hr (faster signing)
 
   return { uploadUrl, key, expiresIn: 3600 }
 }
