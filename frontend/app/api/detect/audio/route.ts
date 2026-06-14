@@ -12,6 +12,8 @@ import { queryDetectionRAG }         from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
   const rl = await checkRateLimitDB('audio', ip)
   if (rl.limited) return NextResponse.json(

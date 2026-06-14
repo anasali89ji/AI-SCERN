@@ -155,79 +155,153 @@ export const processFeedbackJob = inngest.createFunction(
     })
   })
 
-// ── 5. Keep HuggingFace models warm (every 14 min) ───────────────────────────
+// ── 5. Keep HuggingFace models warm (every 10 min) ───────────────────────────
+// HF Inference API cold-starts take 20-45s — this prevents that by pinging
+// every 10 min. Models stay warm for ~15 min after last request.
+// Covers ALL models used in image + text + audio detection pipelines.
 export const hfModelWarmup = inngest.createFunction(
-  { id: 'hf-model-warmup', name: 'Keep HuggingFace models warm',
-    triggers: [{ cron: '*/14 * * * *' }],
+  {
+    id: 'hf-model-warmup',
+    name: 'Keep HuggingFace models warm',
+    triggers: [{ cron: '*/10 * * * *' }],  // every 10 min (was 14 — too slow)
+    concurrency: { limit: 1 },              // never overlap runs
   },
   async ({ step }) => {
     const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
     if (!HF_TOKEN) return { skipped: true, reason: 'No HF token' }
 
-    const models = [
-      'openai-community/roberta-base-openai-detector',
-      'Hello-SimpleAI/chatgpt-detector-roberta',
-      'umm-maybe/AI-image-detector',
-      'Organika/sdxl-detector',
-      'mo-thecreator/Deepfake-audio-detection',
-    ]
+    const HF_API = 'https://api-inference.huggingface.co/models'
+    const WARM_TEXT = 'The quick brown fox jumps over the lazy dog. This sentence is written by a human.'
 
-    const warmText = 'This is an automated warmup ping to keep the model warm for users.'
-
-    const results = await step.run('ping-hf-models', async () => {
-      const pings = await Promise.allSettled(models.map(model =>
-        fetch(`https://api-inference.huggingface.co/models/${model}`, {
-          method: 'POST',
+    // ── Text models (6 total) ─────────────────────────────────────────────────
+    const textResults = await step.run('warm-text-models', async () => {
+      const TEXT_MODELS = [
+        'saghi776/aiscern-text-detector',           // fine-tuned DeBERTa (primary)
+        'openai-community/roberta-base-openai-detector',
+        'Hello-SimpleAI/chatgpt-detector-roberta',
+        'andreas122001/roberta-mixed-detector',
+        'valurank/distilroberta-ai-text-detection',
+        'TrustSafeAI/roberta-base-ai-detector',
+      ]
+      const pings = await Promise.allSettled(TEXT_MODELS.map(model =>
+        fetch(`${HF_API}/${model}`, {
+          method:  'POST',
           headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inputs: warmText }),
-          signal: AbortSignal.timeout(8000),
-        }).then(r => ({ model, status: r.status })).catch(e => ({ model, error: (e as Error).message }))
+          body:    JSON.stringify({ inputs: WARM_TEXT }),
+          signal:  AbortSignal.timeout(12_000),
+        }).then(r => ({ model: model.split('/').pop(), status: r.status, warm: r.status !== 503 }))
+          .catch(e => ({ model: model.split('/').pop(), error: (e as Error).message, warm: false }))
       ))
-      return pings.map(p => p.status === 'fulfilled' ? p.value : { error: 'failed' })
+      return pings.map(p => p.status === 'fulfilled' ? p.value : { warm: false })
     })
 
-    // ── Signal Worker keepalive (HuggingFace Space) ───────────────────────────
-    // Ping every 14 min to prevent cold starts on the Python forensic worker.
-    const signalWorkerResult = await step.run('ping-signal-worker', async () => {
-      const workerUrl = process.env.SIGNAL_WORKER_URL
-      if (!workerUrl) return { skipped: true, reason: 'SIGNAL_WORKER_URL not set' }
+    // ── Image models (6 total) — send a tiny 1x1 white JPEG ──────────────────
+    // HF image models need binary data to warm up, not JSON text.
+    // A 1x1 white JPEG is 631 bytes — minimal network cost, enough to wake the model.
+    const imageResults = await step.run('warm-image-models', async () => {
+      // Minimal valid JPEG (1x1 white pixel) as base64
+      const TINY_JPEG_B64 =
+        '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U' +
+        'HRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgN' +
+        'DRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy' +
+        'MjL/wAARCAABAAEDASIAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAA' +
+        'AAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA' +
+        '/9oADAMBAAIRAxEAPwCwABmX/9k='
+      const tinyJpeg = Buffer.from(TINY_JPEG_B64, 'base64')
+
+      const IMAGE_MODELS = [
+        'saghi776/aiscern-image-detector',   // fine-tuned ViT-Large (primary)
+        'Organika/sdxl-detector',
+        'umm-maybe/AI-image-detector',
+        'Nahrawy/AIorNot',
+        'haywoodsloan/ai-image-detector',
+        'dima806/deepfake_vs_real_image_detection',
+      ]
+      const pings = await Promise.allSettled(IMAGE_MODELS.map(model =>
+        fetch(`${HF_API}/${model}`, {
+          method:  'POST',
+          headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/octet-stream' },
+          body:    tinyJpeg,
+          signal:  AbortSignal.timeout(15_000),
+        }).then(r => ({ model: model.split('/').pop(), status: r.status, warm: r.status !== 503 }))
+          .catch(e => ({ model: model.split('/').pop(), error: (e as Error).message, warm: false }))
+      ))
+      return pings.map(p => p.status === 'fulfilled' ? p.value : { warm: false })
+    })
+
+    // ── Audio model ───────────────────────────────────────────────────────────
+    const audioResult = await step.run('warm-audio-model', async () => {
       try {
-        const res = await fetch(`${workerUrl}/health`, {
-          signal: AbortSignal.timeout(30_000),
+        const res = await fetch(`${HF_API}/mo-thecreator/Deepfake-audio-detection`, {
+          method:  'POST',
+          headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ inputs: WARM_TEXT }),
+          signal:  AbortSignal.timeout(10_000),
         })
+        return { status: res.status, warm: res.status !== 503 }
+      } catch (e) { return { warm: false, error: (e as Error).message } }
+    })
+
+    // ── DO Python worker keepalive ────────────────────────────────────────────
+    // PYTHON_WORKER_URL is the DigitalOcean worker (was: SIGNAL_WORKER_URL)
+    const doWorkerResult = await step.run('ping-do-worker', async () => {
+      const workerUrl = process.env.PYTHON_WORKER_URL
+      if (!workerUrl) return { skipped: true, reason: 'PYTHON_WORKER_URL not set' }
+      try {
+        const res = await fetch(`${workerUrl}/health`, { signal: AbortSignal.timeout(15_000) })
         const body = await res.json().catch(() => ({}))
-        return { status: res.status, ok: res.ok, body }
+        return { status: res.status, ok: res.ok, version: (body as any).version }
       } catch (e) {
         return { ok: false, error: (e as Error).message }
       }
     })
 
-    return { warmed_at: new Date().toISOString(), results, signal_worker: signalWorkerResult }
+    const textWarm  = (textResults  as any[]).filter((r: any) => r.warm).length
+    const imageWarm = (imageResults as any[]).filter((r: any) => r.warm).length
+
+    return {
+      warmed_at:    new Date().toISOString(),
+      text_models:  { total: 6, warm: textWarm,  results: textResults  },
+      image_models: { total: 6, warm: imageWarm, results: imageResults },
+      audio_model:  audioResult,
+      do_worker:    doWorkerResult,
+    }
   })
 
-// ── 6. Self-ping to prevent Vercel cold starts (every 5 min) ─────────────────
+// ── 6. Keep Vercel serverless functions warm (every 4 min) ───────────────────
+// Vercel cold-starts add 2-5s to first request. Ping every 4 min to prevent.
+// Pings both text and image detect endpoints so both stay in memory.
 export const vercelWarmup = inngest.createFunction(
-  { id: 'vercel-warmup', name: 'Keep Vercel functions warm',
-    triggers: [{ cron: '*/5 * * * *' }],
+  {
+    id: 'vercel-warmup',
+    name: 'Keep Vercel functions warm',
+    triggers: [{ cron: '*/4 * * * *' }],   // every 4 min (was 5)
+    concurrency: { limit: 1 },
   },
   async ({ step }) => {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aiscern.com'
+    const baseUrl       = process.env.NEXT_PUBLIC_SITE_URL || 'https://aiscern.com'
+    const internalSecret = process.env.INTERNAL_API_SECRET || ''
 
+    // Health check
     await step.run('ping-health', async () => {
       const res = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(5000) })
       return { status: res.status, ok: res.ok }
     })
 
-    await step.run('warm-text-endpoint', async () => {
+    // Warm text detect function (loads Brain + signal modules into memory)
+    await step.run('warm-text-detect', async () => {
       const res = await fetch(`${baseUrl}/api/detect/text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '',
-        },
-        body: JSON.stringify({ text: 'This is an automated warmup request to prevent cold starts on the Vercel serverless function for Aiscern AI detection platform.' }),
-        signal: AbortSignal.timeout(10000),
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': internalSecret },
+        body:    JSON.stringify({ text: 'The quick brown fox jumps over the lazy dog. This is a warmup ping to keep the Vercel serverless function loaded in memory.' }),
+        signal:  AbortSignal.timeout(20_000),
       })
+      return { status: res.status }
+    })
+
+    // Warm upload presign function (keeps R2 client initialised)
+    await step.run('warm-warmup-endpoint', async () => {
+      const res = await fetch(`${baseUrl}/api/warmup`, { signal: AbortSignal.timeout(5000) })
       return { status: res.status }
     })
 
