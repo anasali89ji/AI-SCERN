@@ -160,7 +160,8 @@ async def health() -> Dict[str, Any]:
 async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Full image analysis via file upload (multipart/form-data).
-    Runs v2 layers (L1, L3, L4, SynthID) + v3 forensic cascade (6 layers).
+    Runs v2 layers (L1, L3, L4, SynthID) + v3 forensic cascade (6 layers)
+    all in parallel via ThreadPoolExecutor.
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image (image/*)")
@@ -170,11 +171,17 @@ async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     if len(contents) > max_mb * 1024 * 1024:
         raise HTTPException(status_code=400, detail=f"Image must be under {max_mb}MB")
 
+    import asyncio
     from engines.image_engine import analyze_image_from_bytes
-    result = analyze_image_from_bytes(
-        image_bytes=contents,
-        content_type=file.content_type,
-        job_id=f"upload_{int(time.time())}",
+
+    # Run CPU-heavy analysis in thread pool — never block the event loop
+    loop   = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,
+        analyze_image_from_bytes,
+        contents,
+        file.content_type,
+        f"upload_{int(time.time())}",
     )
 
     if result.get("status") == "error":
@@ -188,6 +195,7 @@ async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
     """
     Text AI-detection.
     Runs perplexity (distilgpt2), burstiness, stylometry, and repetition analysis.
+    Uses run_in_executor so CPU-heavy inference never blocks the event loop.
     """
     max_len = int(os.getenv("MAX_TEXT_LENGTH", 10000))
     if len(req.text) > max_len:
@@ -196,11 +204,13 @@ async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
             detail=f"Text exceeds maximum length of {max_len} characters"
         )
 
+    import asyncio
     from engines.text_engine import analyze_text
-    return analyze_text(
-        text=req.text,
-        job_id=req.jobId,
-        options=req.options,
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None,
+        lambda: analyze_text(text=req.text, job_id=req.jobId, options=req.options),
     )
 
 
@@ -351,13 +361,17 @@ async def diffusion_snapback_endpoint(req: DiffusionRequest) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8080))
-    logger.info("Starting uvicorn on port %d", port)
+    port    = int(os.getenv("PORT", 8080))
+    workers = int(os.getenv("UVICORN_WORKERS", 2))  # 2 workers on basic-xs (1GB RAM safe)
+    logger.info("Starting uvicorn on port %d with %d workers", port, workers)
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
+        workers=workers,
         reload=False,
         access_log=True,
         log_level=os.getenv("LOG_LEVEL", "info").lower(),
+        timeout_keep_alive=30,   # close idle connections faster
+        limit_concurrency=20,    # never queue more than 20 simultaneous requests
     )
