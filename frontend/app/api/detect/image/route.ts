@@ -10,6 +10,10 @@ import { logModelPredictions }       from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG } from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
+// Vercel Hobby: 60s max. Pro/Enterprise: up to 300s.
+// Image pipeline (HF ensemble + Gemini + brain) can take 25–45s.
+// Without this, Vercel kills the function at the default 10s → "failed to fetch"
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'

@@ -10,6 +10,9 @@ import { logModelPredictions } from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG } from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
+// Text pipeline (Brain + 6 HF models + optional Gemini) can take 20–35s.
+// Without this, Vercel kills at default 10s → "failed to fetch"
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'

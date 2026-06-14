@@ -20,6 +20,8 @@ import { getR2Buffer, r2Available } from "@/lib/storage/r2";
 import { contentHash } from "@/lib/cache/detection-cache";
 import { fireScanCompleted } from "@/lib/inngest/send-scan-event";
 
+export const maxDuration = 60
+
 const PYTHON_WORKER_URL =
   process.env.PYTHON_WORKER_URL || "http://localhost:8001";
 
