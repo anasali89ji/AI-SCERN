@@ -11,8 +11,7 @@ import { logModelPredictions }       from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG }         from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
-
-export async function POST(req: NextRequest) {
+export const maxDuration = 60
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
   const rl = await checkRateLimitDB('audio', ip)
   if (rl.limited) return NextResponse.json(
