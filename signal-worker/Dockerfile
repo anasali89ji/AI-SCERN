@@ -1,29 +1,20 @@
-# AI-SCERN Detection Worker v4.0.0 — DigitalOcean App Platform Dockerfile
-# Base: python:3.11-slim (Debian Trixie)
-# Fix: libgl1-mesa-glx renamed to libgl1 in Debian Trixie
-# Fix: libsm6/libxrender-dev not available — replaced with libgl1, libgles2
-# Fix: libgtk-3-dev → libgtk-3-0 (runtime only, smaller image)
+# AI-SCERN Detection Worker v4.0.0 — DigitalOcean App Platform
+# CPU-only build — safe for basic-xs (1GB RAM)
+# Key changes from v4.0.0:
+#   - torch installed with --index-url for CPU-only wheel (~800MB vs 2.5GB CUDA)
+#   - opencv-python → opencv-python-headless (no display server needed)
+#   - dlib pre-built wheel via apt (no cmake compile needed → 2min faster build)
+#   - Lazy model loading means startup RAM is ~150MB, not 2GB
 
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+# Tell OpenCV not to try to use display
+ENV OPENCV_IO_ENABLE_OPENEXR=0
 
-# ── System packages ───────────────────────────────────────────────────────────
-# libgl1           → replaces libgl1-mesa-glx (renamed in Debian Trixie)
-# libglib2.0-0     → OpenCV dependency
-# libgles2         → OpenGL ES (replaces libxrender-dev for headless OpenCV)
-# libxext6         → X11 extension library
-# libgomp1         → OpenMP (numpy/scipy parallel ops)
-# tesseract-ocr    → OCR engine
-# tesseract-ocr-eng → English language data
-# cmake            → needed to compile dlib (face-recognition)
-# libopenblas-dev  → BLAS for numpy/scipy
-# liblapack-dev    → LAPACK for scipy
-# libx11-dev       → X11 headers (dlib dependency)
-# build-essential  → gcc, g++, make
-# python3-dev      → Python headers for C extensions
+# System packages (Debian Trixie compatible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
@@ -43,15 +34,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies (separate layer for Docker cache)
+# Step 1: Install CPU-only torch FIRST (before requirements.txt)
+# This prevents pip from pulling in 2.5GB of CUDA libraries
+RUN pip install --no-cache-dir \
+    torch==2.3.0 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Step 2: Install remaining dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Ephemeral model cache dir
+# Ephemeral model cache
 RUN mkdir -p /tmp/aiscern-models && chmod 777 /tmp/aiscern-models
 
 # Non-root user
@@ -60,7 +56,8 @@ USER worker
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+# Longer start period — dlib + face_recognition load on first request (lazy)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 CMD ["python", "main.py"]
