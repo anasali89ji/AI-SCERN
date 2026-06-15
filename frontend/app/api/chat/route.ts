@@ -3,7 +3,7 @@ import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 export const maxDuration = 60
 
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 export const dynamic    = 'force-dynamic'
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
@@ -493,10 +493,10 @@ PROFILE & SETTINGS — /settings
    • Account deletion option
 
 REST API — /docs/api
-   • Free API for developers: POST /api/v1/detect/text
-   • Send text content, receive verdict + confidence + signals in JSON
-   • No authentication required for basic usage
-   • API key available in settings for higher rate limits
+   • Free API for developers: POST /api/v1/detect/{text,image,audio}
+   • Send text/image/audio content, receive verdict + confidence + signals in JSON
+   • Requires an X-API-Key header — generate a free key in Settings → API Access
+   • Video API coming soon (dashboard-only for now)
 
 PRICING — /pricing
    • Aiscern is completely free — no subscription, no credit card, no scan limits
@@ -629,15 +629,29 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { messages, attachments } = body
-    if (!messages?.length) return new Response('Missing messages', { status: 400 })
+    if (!messages?.length) return NextResponse.json({ success: false, error: { code: 'NO_MESSAGES', message: 'Missing messages' } }, { status: 400 })
 
     const apiKey  = process.env.NVIDIA_API_KEY || ''
     const cfToken = process.env.CLOUDFLARE_API_TOKEN || ''
     const baseUrl = req.nextUrl.origin
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ text: '⚠️ AI assistant not configured. Please contact support.' }), {
-        headers: { 'Content-Type': 'application/json' },
+      const encoder = new TextEncoder()
+      const stream  = new ReadableStream({
+        start(controller) {
+          const send = (obj: Record<string, unknown>) =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+          send({ type: 'text', text: '⚠️ AI assistant not configured. Please contact support.' })
+          send({ type: 'done' })
+          controller.close()
+        },
+      })
+      return new Response(stream, {
+        headers: {
+          'Content-Type':  'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection':    'keep-alive',
+        },
       })
     }
 

@@ -190,10 +190,22 @@ Full API documentation: [aiscern.com/docs/api](https://aiscern.com/docs/api)
 ```bash
 # Example: Detect text via API
 curl -X POST https://aiscern.com/api/v1/detect/text \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"text": "Your content here"}'
+
+# Example: Detect an image via API
+curl -X POST https://aiscern.com/api/v1/detect/image \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -F "file=@photo.jpg"
+
+# Example: Detect an audio clip via API
+curl -X POST https://aiscern.com/api/v1/detect/audio \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -F "file=@clip.mp3"
 ```
+
+Video detection is currently dashboard-only (`/dashboard/detect/video`) — a `/api/v1/detect/video` endpoint is planned but not yet implemented (requires browser-side frame extraction).
 
 ---
 

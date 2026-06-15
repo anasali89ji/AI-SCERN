@@ -15,6 +15,10 @@ import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2PublicUrl }            from '@/lib/storage/r2'
 import { nanoid }                    from 'nanoid'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { checkRateLimitDB }          from '@/lib/ratelimit-db'
+
+export const dynamic    = 'force-dynamic'
+export const maxDuration = 60
 
 // Max image size for forensic scan: 10MB
 const MAX_SIZE_BYTES = 10 * 1024 * 1024
@@ -29,6 +33,16 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    // ── IP rate limit (this is an unauthenticated, expensive endpoint) ───────
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
+    const rl = await checkRateLimitDB('image', ip)
+    if (rl.limited) {
+      return NextResponse.json(
+        { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
+        { status: 429 }
+      )
+    }
+
     // ── Auth check (optional — allows anon scans) ────────────────────────────
     const authHeader = req.headers.get('authorization')
     let userId: string | null = null

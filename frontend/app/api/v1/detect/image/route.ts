@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeText }               from '@/lib/inference/hf-analyze'
+import { analyzeImage }              from '@/lib/inference/hf-analyze'
 import { checkRateLimitRedis }       from '@/lib/cache/redis'
 import {
   extractApiKey, resolveApiKey, recordApiUsage,
   missingKeyResponse, invalidOrExhaustedKeyResponse,
 } from '@/lib/api-v1/auth'
 
-export const dynamic = 'force-dynamic'
+export const dynamic    = 'force-dynamic'
+export const maxDuration = 60
 
 // ── handler ───────────────────────────────────────────────────────────────────
+// POST /api/v1/detect/image
+// Body: multipart/form-data with a "file" field (image/*, max 10MB)
 export async function POST(req: NextRequest) {
   const apiKey = extractApiKey(req)
   if (!apiKey) return missingKeyResponse()
@@ -26,20 +29,30 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Parse & validate body
-  const body = await req.json().catch(() => ({}))
-  const { text } = body as { text?: unknown }
+  const contentType = req.headers.get('content-type') ?? ''
+  if (!contentType.includes('multipart/form-data')) {
+    return NextResponse.json(
+      { error: 'Body must be multipart/form-data with a "file" field containing the image.' },
+      { status: 400 },
+    )
+  }
 
-  if (!text || typeof text !== 'string')
-    return NextResponse.json({ error: 'Body must be JSON with a "text" string field.' }, { status: 400 })
-  if (text.length < 50)
-    return NextResponse.json({ error: 'text must be at least 50 characters.' }, { status: 400 })
-  if (text.length > 10_000)
-    return NextResponse.json({ error: 'text must be under 10,000 characters.' }, { status: 400 })
+  let file: File | null
+  try {
+    const form = await req.formData()
+    file = form.get('file') as File | null
+  } catch {
+    return NextResponse.json({ error: 'Invalid multipart form data.' }, { status: 400 })
+  }
+
+  if (!file) return NextResponse.json({ error: '"file" field required (multipart/form-data).' }, { status: 400 })
+  if (!file.type.startsWith('image/')) return NextResponse.json({ error: 'File must be an image.' }, { status: 400 })
+  if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'Image must be under 10MB.' }, { status: 400 })
 
   try {
     const start  = Date.now()
-    const result = await analyzeText(text)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const result = await analyzeImage(buffer, file.type, file.name)
 
     recordApiUsage(resolved)
 
@@ -53,7 +66,7 @@ export async function POST(req: NextRequest) {
       api_version:     'v1',
     })
   } catch (err: unknown) {
-    console.error('[v1/detect/text]', err instanceof Error ? err.message : err)
+    console.error('[v1/detect/image]', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Analysis failed. Please try again.' }, { status: 500 })
   }
 }

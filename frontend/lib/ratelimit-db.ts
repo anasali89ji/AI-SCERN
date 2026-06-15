@@ -31,6 +31,7 @@ const DB_LIMITS: Record<string, { max: number; windowMinutes: number }> = {
   image:     { max: 20, windowMinutes: 1 },
   audio:     { max: 15, windowMinutes: 1 },
   video:     { max: 10, windowMinutes: 1 },
+  pdf:       { max: 15, windowMinutes: 1 },
   scraper:   { max:  5, windowMinutes: 1 },
   upload:    { max: 30, windowMinutes: 1 },
   batch:     { max:  3, windowMinutes: 1 },

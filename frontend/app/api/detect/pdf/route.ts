@@ -80,7 +80,7 @@ function extractParagraphs(text: string): { text: string; start: number }[] {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  const rl = await checkRateLimitDB('video', ip)
+  const rl = await checkRateLimitDB('pdf', ip)
   if (rl.limited) {
     return NextResponse.json(
       { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
