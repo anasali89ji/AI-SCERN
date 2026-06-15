@@ -94,6 +94,15 @@ interface CreditsData {
   scans_today: number; daily_limit: number; daily_pct: number
   scans_month: number; scans_total: number
   plan_updated_at: string | null
+  credit_period_start: string | null
+  credit_period_end: string | null
+}
+
+function formatResetDate(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function CreditsCard({ userId }: { userId: string }) {
@@ -159,11 +168,15 @@ function CreditsCard({ userId }: { userId: string }) {
             )}
           </div>
 
-          {/* Credits balance */}
+          {/* Credits balance — the user's real, billable monthly quota */}
           {data.credits_total > 0 && (
             <UsageBar
               label="Scan Credits"
-              sublabel="Resets with your plan · used for audio & video"
+              sublabel={
+                data.credit_period_end
+                  ? `Resets ${formatResetDate(data.credit_period_end)}`
+                  : 'Resets with your plan'
+              }
               used={data.credits_used}
               total={data.credits_total}
               unlimited={false}
@@ -171,14 +184,15 @@ function CreditsCard({ userId }: { userId: string }) {
             />
           )}
 
-          {/* Daily scans */}
+          {/* Daily scans — secondary anti-abuse throttle for paid plans,
+              primary limit for free users (no credit balance) */}
           <UsageBar
-            label="Daily Scans"
+            label={data.is_paid ? 'Daily Activity (abuse protection)' : 'Daily Scans'}
             sublabel={`Resets at midnight · ${data.daily_limit === -1 ? 'Unlimited' : data.daily_limit + '/day'}`}
             used={data.scans_today}
             total={data.daily_limit}
             unlimited={data.daily_limit === -1}
-            color="#06b6d4"
+            color={data.is_paid ? '#64748b' : '#06b6d4'}
           />
 
           {/* Monthly / total stats row */}

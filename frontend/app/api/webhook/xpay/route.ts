@@ -78,12 +78,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const admin = getSupabaseAdmin()
     const tier  = planId.includes('enterprise') ? 'enterprise' : planId.includes('pro') ? 'pro' : 'starter'
+    const now       = new Date()
+    const periodEnd = new Date(now)
+    periodEnd.setMonth(periodEnd.getMonth() + (plan.period === 'yearly' ? 12 : 1))
     await admin
       .from('profiles')
       .update({
-        plan:            tier,
-        plan_period:     plan.period,
-        plan_updated_at: new Date().toISOString(),
+        plan:                tier,
+        plan_period:         plan.period,
+        plan_updated_at:     now.toISOString(),
+        credit_period_start: now.toISOString(),
+        credit_period_end:   periodEnd.toISOString(),
       })
       .eq('id', userId)
   } catch (err) {

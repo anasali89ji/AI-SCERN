@@ -9,7 +9,7 @@ type Params = Promise<{ id: string }>
 const PLAN_CONFIG: Record<string, { credits: number; daily_scans: number; label: string }> = {
   free:       { credits: 0,    daily_scans: 10,   label: 'Free'       },
   starter:    { credits: 100,  daily_scans: 100,  label: 'Starter'    },
-  pro:        { credits: 500,  daily_scans: 500,  label: 'Pro'        },
+  pro:        { credits: 500,  daily_scans: 200,  label: 'Pro'        },
   enterprise: { credits: 9999, daily_scans: -1,   label: 'Enterprise' },
 }
 
@@ -46,6 +46,10 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
   const userName  = (profile.display_name as string) ?? ''
 
   // 2. Update profile — all plan columns atomically
+  const now = new Date()
+  const periodEnd = new Date(now)
+  periodEnd.setMonth(periodEnd.getMonth() + 1)
+
   const { error: updateErr } = await db
     .from('profiles')
     .update({
@@ -54,7 +58,9 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
       subscription_status: newPlan === 'free' ? 'free' : 'active',
       credits_balance:     cfg.credits,
       credits_remaining:   cfg.credits,
-      plan_updated_at:     new Date().toISOString(),
+      plan_updated_at:     now.toISOString(),
+      credit_period_start: newPlan === 'free' ? null : now.toISOString(),
+      credit_period_end:   newPlan === 'free' ? null : periodEnd.toISOString(),
     })
     .eq('id', id)
 
