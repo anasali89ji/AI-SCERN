@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   // ── Auth ────────────────────────────────────────────────────────────────────
   const { userId } = await auth()
   if (!userId) {
-    return NextResponse.json({ success: false, error: 'Unauthenticated' }, { status: 401 })
+    return NextResponse.json({ success: false, error: { code: 'UNAUTHENTICATED', message: 'Unauthenticated' } }, { status: 401 })
   }
 
   // ── Parse body ──────────────────────────────────────────────────────────────
@@ -46,16 +46,16 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ success: false, error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ success: false, error: { code: 'INVALID_JSON', message: 'Invalid JSON' } }, { status: 400 })
   }
 
   const { scan_id, ground_truth, note, content } = body
 
   if (!scan_id || typeof scan_id !== 'string') {
-    return NextResponse.json({ success: false, error: 'scan_id required' }, { status: 400 })
+    return NextResponse.json({ success: false, error: { code: 'NO_SCAN_ID', message: 'scan_id required' } }, { status: 400 })
   }
   if (ground_truth !== 'AI' && ground_truth !== 'HUMAN') {
-    return NextResponse.json({ success: false, error: 'ground_truth must be AI or HUMAN' }, { status: 400 })
+    return NextResponse.json({ success: false, error: { code: 'INVALID_GROUND_TRUTH', message: 'ground_truth must be AI or HUMAN' } }, { status: 400 })
   }
 
   const db = getSupabaseAdmin()
@@ -69,10 +69,10 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error || !scan) {
-      return NextResponse.json({ success: false, error: 'Scan not found' }, { status: 404 })
+      return NextResponse.json({ success: false, error: { code: 'SCAN_NOT_FOUND', message: 'Scan not found' } }, { status: 404 })
     }
     if (scan.user_id !== userId) {
-      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: 'Forbidden' } }, { status: 403 })
     }
   }
 
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
   if (upsertErr) {
     console.error('[feedback] upsert error:', upsertErr.message)
-    return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+    return NextResponse.json({ success: false, error: { code: 'DATABASE_ERROR', message: 'Database error' } }, { status: 500 })
   }
 
   // ── RAG indexing (fire-and-forget) ──────────────────────────────────────────

@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse }    from 'next/server'
 import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
+import { fireScanCompleted }            from '@/lib/inngest/send-scan-event'
 import { analyzeText }                  from '@/lib/inference/hf-analyze'
 import { analyzeTextWithBrain }         from '@/lib/inference/text-detection-brain'
 import { fetchPageContent }             from '@/lib/utils/fetch-page'
@@ -252,12 +253,12 @@ function extractPageMeta(content: string, url: string): PageMeta {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  const rl  = await checkRateLimit('text', ip)
+  const rl  = await checkRateLimit('scraper', ip)
   if (rl.limited) return NextResponse.json(rateLimitResponse(), { status: 429 })
 
   let userId: string
   try {
-    const guard = await creditGuard(req, 'text')
+    const guard = await creditGuard(req, 'url')
     userId      = guard.userId
   } catch (err) {
     if (err instanceof HTTPError) return httpErrorResponse(err)
@@ -343,6 +344,8 @@ export async function POST(req: NextRequest) {
         scanId = sr?.id ?? null
       } catch { /* non-fatal */ }
     }
+
+    if (scanId) fireScanCompleted({ scan_id: scanId, user_id: userId, media_type: 'text', verdict, confidence: blendedConf, model_used: `WebScanner-v1+${textResult.model_used}` })
 
     return NextResponse.json({
       success:     true,

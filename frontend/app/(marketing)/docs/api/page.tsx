@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'API Documentation | Aiscern AI Detection REST API',
-  description: 'Integrate AI content detection into your app. Free REST API for detecting AI text, images, audio and video.',
+  description: 'Integrate AI content detection into your app. Free REST API for detecting AI-generated text, images, and audio. Video API coming soon.',
   alternates: { canonical: 'https://aiscern.com/docs/api' },
 }
 
@@ -66,6 +66,42 @@ export default function ApiDocsPage() {
   "processing_time": 1240
 }`}</pre>
         </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/image</h2>
+          <p className="text-text-muted text-sm">Analyze an image for AI generation. Send as <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">multipart/form-data</code> with a <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">file</code> field (max 10MB).</p>
+          <h3 className="font-semibold text-sm">Request</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`curl -X POST https://aiscern.com/api/v1/detect/image \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@photo.jpg"`}</pre>
+          <h3 className="font-semibold text-sm">Response</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+  "verdict": "AI" | "HUMAN" | "UNCERTAIN",
+  "confidence": 0.87,
+  "processing_time": 3120
+}`}</pre>
+        </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/audio</h2>
+          <p className="text-text-muted text-sm">Analyze an audio clip for AI generation (voice cloning, TTS). Send as <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">multipart/form-data</code> with a <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">file</code> field (max 25MB).</p>
+          <h3 className="font-semibold text-sm">Request</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`curl -X POST https://aiscern.com/api/v1/detect/audio \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@clip.mp3"`}</pre>
+          <h3 className="font-semibold text-sm">Response</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+  "verdict": "AI" | "HUMAN" | "UNCERTAIN",
+  "confidence": 0.71,
+  "processing_time": 2870
+}`}</pre>
+        </section>
+
+        <section className="card p-6 space-y-2">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/video</h2>
+          <p className="text-text-muted text-sm">Coming soon — video detection requires browser-side frame extraction and is currently only available through the <Link href="/dashboard/detect/video" className="text-primary hover:underline">dashboard</Link>.</p>
+        </section>
+
 
         <section className="card p-6 space-y-5">
           <h2 className="text-xl font-bold">Code Examples</h2>

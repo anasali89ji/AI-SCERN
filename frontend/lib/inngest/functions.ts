@@ -207,7 +207,7 @@ export const hfModelWarmup = inngest.createFunction(
         'MjL/wAARCAABAAEDASIAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAA' +
         'AAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA' +
         '/9oADAMBAAIRAxEAPwCwABmX/9k='
-      const tinyJpeg = Buffer.from(TINY_JPEG_B64, 'base64')
+      const tinyJpeg = new Uint8Array(Buffer.from(TINY_JPEG_B64, 'base64'))
 
       const IMAGE_MODELS = [
         'saghi776/aiscern-image-detector',   // fine-tuned ViT-Large (primary)

@@ -254,7 +254,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true, scan_id: scanId,
       forensic_scan_id: forensicScanId,
-      result:  { ...result, processing_time: processingTime, file_name: fileName, file_size: fileSize },
+      result:  {
+        ...result,
+        verdict: finalVerdict,
+        confidence: finalConfidence,
+        processing_time: processingTime,
+        file_name: fileName,
+        file_size: fileSize,
+        rag_stats: ragResult ? {
+          rag_applied: ragResult.rag_applied,
+          retrieval_confidence: ragResult.retrieval_confidence,
+          neighbour_count: ragResult.neighbour_count,
+          ai_ratio: ragResult.ai_ratio,
+        } : undefined,
+      },
     })
   } catch (err) {
     console.error('[detect/image]', err)
