@@ -23,7 +23,7 @@ async function handleCredits(req: NextRequest, { params }: { params: Params }) {
   // Fetch current profile
   const { data: profile, error: fetchErr } = await db
     .from('profiles')
-    .select('id, credits_balance, credits_remaining, email, display_name')
+    .select('id, credits_balance, credits_remaining, credit_period_start, credit_period_end, email, display_name')
     .eq('id', id)
     .maybeSingle()
 
@@ -35,10 +35,22 @@ async function handleCredits(req: NextRequest, { params }: { params: Params }) {
   const userEmail  = (profile.email as string) ?? ''
   const userName   = (profile.display_name as string) ?? ''
 
-  // Update profile
+  // Update profile — if this user has no active billing period yet (e.g. a
+  // manual credit grant on a free account), start one now so the profile
+  // page can show an accurate "Resets on <date>". Top-ups within an existing
+  // period don't push the renewal date out.
+  const updatePayload: Record<string, unknown> = { credits_balance: newBalance, credits_remaining: newBalance }
+  if (!profile.credit_period_end) {
+    const now = new Date()
+    const periodEnd = new Date(now)
+    periodEnd.setMonth(periodEnd.getMonth() + 1)
+    updatePayload.credit_period_start = now.toISOString()
+    updatePayload.credit_period_end   = periodEnd.toISOString()
+  }
+
   const { error: updateErr } = await db
     .from('profiles')
-    .update({ credits_balance: newBalance, credits_remaining: newBalance })
+    .update(updatePayload)
     .eq('id', id)
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })

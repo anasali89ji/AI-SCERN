@@ -187,17 +187,15 @@ export function deductCreditStep(userId: string, scanType: string): SagaStep<boo
     },
     async compensate() {
       if (!deducted) return
-      // Refund: decrement daily_scans and restore credits_remaining if it was a credit scan
+      // Refund: restore credits_balance for paid plans. (The daily_count
+      // increment in user_scan_counts is an anti-abuse throttle and is
+      // intentionally NOT rolled back — it reflects that an attempt was made.)
       const sql = authDb()
       await sql`
         UPDATE profiles
-        SET    daily_scans       = GREATEST(0, daily_scans - 1),
-               scan_count        = GREATEST(0, COALESCE(scan_count, 0) - 1),
-               credits_remaining = CASE
-                 WHEN credits_remaining IS NOT NULL THEN credits_remaining + 1
-                 ELSE credits_remaining
-               END
-        WHERE  id = ${userId}
+        SET    credits_balance = COALESCE(credits_balance, 0) + 1,
+               updated_at      = NOW()
+        WHERE  id = ${userId} AND plan != 'free'
       `.catch(() => { /* best-effort refund */ })
     },
   }
@@ -287,13 +285,19 @@ export function recordCreditPurchaseStep(
     name: 'record-credit-purchase',
     async execute() {
       const sql = authDb()
-      // Real schema: credit_transactions(id, user_id, delta, reason, balance_after,
-      //              order_id, transaction_type, amount_pkr, plan_id, status, created_at)
+      // Schema (v10_credits_and_billing.sql): credit_transactions(id, user_id,
+      // order_id, transaction_type, credits, amount_pkr, amount_usd, plan_id,
+      // status, scan_id, metadata, created_at, updated_at).
+      // NOTE: this previously inserted into non-existent `delta`/`reason`
+      // columns, which threw a Postgres error on every XPay purchase and
+      // failed the whole saga before profiles.credits_balance was ever
+      // updated (Module G fix).
       const rows = await sql<[{ id: string }]>`
         INSERT INTO credit_transactions
-          (user_id, delta, reason, order_id, transaction_type, amount_pkr, plan_id, status, created_at)
+          (user_id, credits, order_id, transaction_type, amount_pkr, plan_id, status, metadata, created_at)
         VALUES
-          (${userId}, ${credits}, 'xpay_purchase', ${orderId}, 'purchase', ${amountPkr}, ${planId}, 'completed', NOW())
+          (${userId}, ${credits}, ${orderId}, 'purchase', ${amountPkr}, ${planId}, 'completed',
+           ${JSON.stringify({ reason: 'xpay_purchase' })}::jsonb, NOW())
         ON CONFLICT (order_id) DO UPDATE SET status = 'completed', updated_at = NOW()
         RETURNING id
       `
@@ -324,15 +328,18 @@ export function topUpCreditsStep(
     name: 'topup-credits',
     async execute() {
       const sql = authDb()
-      // Real column name in profiles is credits_remaining (not credits_balance)
-      const rows = await sql<[{ credits_remaining: number }]>`
+      // G.1.5: credits_balance is the canonical column (check_and_increment_scan,
+      // plan_limits, and the admin RPCs all center on it). The v14
+      // trg_sync_credits trigger mirrors writes to credits_remaining for any
+      // legacy reads.
+      const rows = await sql<[{ credits_balance: number }]>`
         UPDATE profiles
-        SET    credits_remaining = COALESCE(credits_remaining, 0) + ${credits},
-               updated_at        = NOW()
+        SET    credits_balance = COALESCE(credits_balance, 0) + ${credits},
+               updated_at      = NOW()
         WHERE  id = ${userId}
-        RETURNING credits_remaining
+        RETURNING credits_balance
       `
-      newBalance = rows[0]?.credits_remaining ?? 0
+      newBalance = rows[0]?.credits_balance ?? 0
       return newBalance
     },
     async compensate() {
@@ -340,8 +347,8 @@ export function topUpCreditsStep(
       const sql = authDb()
       await sql`
         UPDATE profiles
-        SET    credits_remaining = GREATEST(0, COALESCE(credits_remaining, 0) - ${credits}),
-               updated_at        = NOW()
+        SET    credits_balance = GREATEST(0, COALESCE(credits_balance, 0) - ${credits}),
+               updated_at      = NOW()
         WHERE  id = ${userId}
       `.catch(() => { /* best-effort */ })
     },

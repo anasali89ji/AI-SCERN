@@ -152,8 +152,150 @@ video,pdf,web,batch,feedback}`, `v1/detect/text`, `v2/forensic-scan`,
 
 ---
 
-## Module G — Credits / Pro Plan Consumption (not started yet)
-## Module A — ARIA RAG-first engine (not started yet)
+## Module G — Credits / Pro Plan Consumption Logic (CRITICAL BUG)
+
+### Root cause
+`check_and_increment_scan()` (v10) only ever decremented `profiles.credits_balance`
+inside the "daily limit already exceeded → overage" branch. Under normal usage
+no single user does 500 scans in one calendar day, so `credits_balance` was
+**never decremented** — it stayed pinned at whatever value was set when the
+plan was granted, while `user_scan_counts.daily_count` reset to 0 every
+midnight via the `reset-daily-scan-counts` cron. The "Scan Credits" usage bar
+therefore permanently showed `0 / 500 used (0%)`.
+
+Separately, `/api/user/credits/route.ts` computed `creditsUsed` from a
+month-filtered `credit_transactions` sum (`creditsGranted - balance`). If the
+plan was granted in a prior calendar month, `creditsGranted` for *this* month
+is `0`, so `creditsUsed` was always `0` regardless of the actual balance —
+a second, independent reason the usage bar always read 0%.
+
+### G.1 — New migration: `supabase/migrations/v16_credit_metering_fix.sql`
+**⚠️ This SQL migration must be run manually in the Supabase SQL Editor — it
+is not auto-applied.**
+
+- Added `profiles.credit_period_start` / `profiles.credit_period_end`
+  (`TIMESTAMPTZ`), backfilled for existing paid users from `plan_updated_at`
+  (or `NOW()` if never set) + 1 month.
+- `plan_limits.daily_scans` for `'pro'` changed from `500` → `200`. Under the
+  new model `credits_balance` (500/month) is the real quota; `daily_scans` is
+  now purely an anti-abuse throttle so a script can't burn the entire monthly
+  pool in one sitting, while staying far above any human's normal daily use.
+  `free` (10/day, no credits), `starter` (100/day, matches its 100
+  credits/month), and `enterprise` (`-1` = unlimited) were left unchanged.
+- **Rewrote `check_and_increment_scan(p_user_id, p_media_type)`**:
+  - New return columns: `credits_remaining INTEGER`, `credit_period_end
+    TIMESTAMPTZ` (previously the function returned neither, so
+    `credit-guard.ts`'s `result.credits_remaining` read was always
+    `undefined`).
+  - **`free` plan**: unchanged daily-limit-only behavior, no credit balance
+    touched.
+  - **Paid plans** (`starter`/`pro`/`enterprise`):
+    1. Modality check (unchanged).
+    2. **Primary check**: `credits_balance >= credits_per_scan`. If not →
+       `modality_credits_exhausted` (this reason already existed in
+       `credit-guard.ts`'s `mapDenyCode`, it just could never be reached
+       before).
+    3. **Secondary check** (anti-abuse): `daily_count >= daily_scans` (unless
+       `-1`). If exceeded → `daily_limit_reached`.
+    4. Otherwise: decrement `credits_balance` by `credits_per_scan`
+       (unconditionally, every scan — not just on overage), increment
+       `daily_count`, return `allowed = true` with the new
+       `credits_remaining`.
+  - Removed the old `credit_overage` reason/branch entirely — credits are now
+    always the primary gate, so "overage" (continue scanning past the daily
+    limit by spending credits) no longer applies; once `daily_scans` is hit
+    for the day, the user simply waits until tomorrow (credits are preserved).
+  - Audited every `cron.schedule` across `supabase/migrations/*.sql`:
+    confirmed `reset-daily-scan-counts` (the only cron) only `DELETE`s from
+    `user_scan_counts` and never touches `credits_balance`/`credits_remaining`.
+    Nothing to remove.
+
+### G.1.5 — `credits_balance` vs `credits_remaining` de-duplication
+Kept both columns (the `v14_admin_credits_rpc.sql` `trg_sync_credits` trigger
+already mirrors every write between them at the Postgres level, and confirmed
+`authDb()` in `lib/db/saga.ts` points at the **same** Supabase Postgres
+database as `getSupabaseAdmin()` — so the trigger fires for raw-SQL writes
+too, no second desync bug). **`credits_balance` is now the canonical column**
+for all new/updated code:
+- `frontend/lib/db/saga.ts` `topUpCreditsStep` now reads/writes
+  `credits_balance` (was `credits_remaining`).
+- `frontend/lib/db/saga.ts` `deductCreditStep`'s `compensate()` previously
+  referenced non-existent `profiles.daily_scans` / `profiles.scan_count`
+  columns (this whole `runCreateScanSaga`/`deductCreditStep` path is unused
+  dead code today, but was fixed to refund `credits_balance` correctly in
+  case it's wired up later).
+- **Found and fixed a second, unrelated critical bug while in this file**:
+  `recordCreditPurchaseStep` (used by `runCreditPurchaseSaga`, called from
+  the XPay webhook on every successful payment) inserted into
+  `credit_transactions` columns `delta`/`reason` which **do not exist** in
+  the v10 schema (`credit_transactions` has `credits`/`metadata`, not
+  `delta`/`reason`). This INSERT would throw on every real XPay purchase,
+  failing the whole saga before `credits_balance` was ever topped up — i.e.
+  **paying customers' credit purchases were silently failing at the DB
+  layer**. Fixed the INSERT to use the real v10 columns
+  (`credits`, `metadata` jsonb).
+
+### G.2 — `frontend/app/api/user/credits/route.ts`
+- `creditsUsed` is now `Math.max(0, planCfg.total_credits - balance)` — a
+  direct subtraction, always correct regardless of which month the plan was
+  granted. Removed the `credit_transactions`-sum (`creditsGranted`/
+  `creditsConsumed`) calculation entirely (it was unused for anything else in
+  this response).
+- `credits_pct = Math.round((creditsUsed / credits_total) * 100)`, using the
+  corrected `creditsUsed`.
+- `PLAN_LIMITS.pro.daily_scans` updated `500 → 200` to match the v16
+  migration.
+- Now selects and returns `credit_period_start` / `credit_period_end` from
+  `profiles` (G.1.4) so the profile page can render "Resets on <date>".
+- Normalized the two error responses to `{ success: false, error: {code,
+  message} }`.
+
+### G.3 — `frontend/app/(dashboard)/profile/page.tsx` "Scan Credits" UsageBar
+- `CreditsData` type extended with `credit_period_start`/`credit_period_end`.
+- Added a `formatResetDate()` helper (`"Jul 15, 2026"` style).
+- "Scan Credits" `sublabel` changed from the inaccurate hardcoded
+  `"Resets with your plan · used for audio & video"` (credits now meter **all**
+  modalities, per G.1) to `` `Resets ${formatResetDate(credit_period_end)}` ``,
+  falling back to the old generic string only if the period isn't set
+  (shouldn't happen post-migration for paid users).
+- "Daily Scans" bar: for paid plans (`is_paid`), relabeled to **"Daily
+  Activity (abuse protection)"** and given a muted gray accent (`#64748b`)
+  instead of cyan, since it's now a secondary throttle, not the user's real
+  quota. Free-tier users still see "Daily Scans" in cyan as their primary
+  limit (unchanged).
+
+### G.4 — Admin panel (`admin/app/api/users/[id]/{plan,credits}/route.ts`)
+- `admin/.../plan/route.ts`: `PLAN_CONFIG.pro.daily_scans` updated `500 → 200`
+  (matches v16/G.2). On every plan change, now sets
+  `credit_period_start = NOW()` and `credit_period_end = NOW() + 1 month`
+  (or both `null` for a downgrade to `free`, which has no credit balance).
+- `admin/.../credits/route.ts` (manual `delta` credit grants): if the user
+  has no `credit_period_end` yet (e.g. a free user receiving their first
+  manual grant), starts a fresh 1-month period. If a period is already
+  active, a top-up does **not** push the renewal date out — only a real plan
+  change/renewal does that.
+
+### G.1.3 — `frontend/app/api/webhook/xpay/route.ts`
+On every successful XPay payment (the only "genuine renewal event" in this
+codebase), now also sets `credit_period_start = NOW()` and
+`credit_period_end = NOW() + (1 month or 12 months for yearly plans)` on the
+profile, alongside the existing `plan`/`plan_period`/`plan_updated_at` update.
+`runCreditPurchaseSaga`'s `topUpCreditsStep` remains **additive**
+(`credits_balance += credits`) rather than a hard reset — this was a
+deliberate choice to avoid wiping out a user's unused balance on what might be
+a one-time top-up purchase rather than a subscription renewal; XPay's webhook
+payload doesn't currently distinguish the two. Documented here as a follow-up
+candidate if "no credit rollover" becomes a hard product requirement.
+
+### Module G status: ✅ both `frontend` and `admin` build green
+(`npm run build` in both, no type errors).
+
+**Action required from Anas**: run
+`supabase/migrations/v16_credit_metering_fix.sql` in the Supabase SQL Editor
+for the Aiscern project before this takes effect in production.
+
+---
+
 ## Module C — Image detection layer re-weighting (not started yet — includes
 the `image-v3` merge/delete decided above in H.3)
 ## Module F — Settings persistence (not started yet)
