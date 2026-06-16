@@ -1,0 +1,75 @@
+/**
+ * components/auth/clerkAppearance.ts
+ * Shared Clerk appearance config used by both login and signup pages.
+ * B.1: single source of truth — style changes here apply everywhere.
+ * B.2: OTP input uses w-9 h-10 (was w-11 h-12) to prevent 6-input overflow at 320px.
+ */
+
+export const clerkAppearance = {
+  layout: {
+    socialButtonsPlacement:  'bottom',
+    socialButtonsVariant:    'blockButton',
+    showOptionalFields:      false,
+  },
+  variables: {
+    colorPrimary:                 '#2563eb',
+    colorBackground:              '#0c0c20',
+    colorInputBackground:         '#080818',
+    colorInputText:               '#f1f5ff',
+    colorText:                    '#e8edff',
+    colorTextSecondary:           '#94a3c4',   // bumped from slate-600 for WCAG AA
+    colorTextOnPrimaryBackground: '#ffffff',
+    colorNeutral:                 '#3a3a62',
+    colorDanger:                  '#f87171',
+    colorSuccess:                 '#34d399',
+    colorWarning:                 '#fbbf24',
+    borderRadius:                 '10px',
+    fontFamily:                   'inherit',
+    fontSize:                     '14px',
+    spacingUnit:                  '16px',
+    fontWeight:                   { normal: 400, medium: 500, bold: 700 },
+  },
+  elements: {
+    rootBox:                     'w-full',
+    card:                        'bg-[#0c0c20] border-2 border-[#2f2f58] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-2xl overflow-hidden p-0',
+    cardBox:                     'rounded-b-2xl',
+    header:                      '!hidden',
+    main:                        'px-6 sm:px-7 pb-2 pt-6',
+    formFieldRow:                'mb-4',
+    formFieldLabelRow:           'flex items-center justify-between mb-2',
+    formFieldLabel:              'text-[12px] font-semibold tracking-[0.07em] uppercase text-slate-300',
+    formFieldHintText:           'text-slate-400 text-[12px] mt-1.5',
+    formFieldInput:              'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-primary focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
+    formFieldInputShowPasswordButton: 'text-slate-500 hover:text-slate-300 transition-colors pr-1',
+    formFieldAction:             'text-primary hover:text-blue-300 text-[12px] font-medium transition-colors',
+    formFieldErrorText:          'text-rose-400 text-[12.5px] mt-2 font-medium',
+    formFieldSuccessText:        'text-emerald-400 text-[12.5px] mt-2 font-medium',
+    formFieldWarningText:        'text-amber-400 text-[12.5px] mt-2 font-medium',
+    // B.2: reduced from w-11 h-12 → w-9 h-10 so 6×OTP fits at 320px
+    otpCodeFieldInput:           'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[18px] font-bold rounded-[10px] text-center w-9 h-10 focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
+    formButtonPrimary:           'w-full bg-primary hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+    formButtonReset:             'text-primary hover:text-blue-300 text-[13px] font-medium transition-colors',
+    dividerRow:                  'my-5',
+    dividerLine:                 'bg-[#2f2f58]',
+    dividerText:                 'text-slate-500 text-[11px] px-3 uppercase tracking-widest',
+    socialButtonsBlockButton:    'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 shadow-sm',
+    socialButtonsBlockButtonText:'text-[13.5px] font-semibold',
+    socialButtonsBlockButtonArrow:'hidden',
+    socialButtonsProviderIcon:   'w-4 h-4',
+    alert:                       'border-2 rounded-[10px] px-4 py-3 my-4 bg-rose-500/8 border-rose-500/35',
+    alertText:                   'text-rose-300 leading-relaxed text-[13px]',
+    alertTextDanger:             'text-rose-300 text-[13px]',
+    alertTextWarning:            'text-amber-300 text-[13px]',
+    footer:                      'px-6 sm:px-7 pt-3 pb-6',
+    footerAction:                'text-center',
+    footerActionText:            'text-slate-400 text-[13.5px]',
+    footerActionLink:            'text-primary hover:text-blue-300 font-semibold text-[13.5px] transition-colors ml-1 hover:underline underline-offset-2',
+    footerPages:                 '!hidden',
+    identityPreviewText:         'text-slate-200 text-[14px]',
+    identityPreviewEditButton:   'text-primary hover:text-blue-300 text-[13px] transition-colors',
+    spinner:                     'text-primary',
+    alternativeMethodsBlockButton:'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 text-[13px] font-medium',
+    formFieldCheckboxInput:      'accent-blue-600 w-4 h-4 rounded border-2 border-[#2f2f58]',
+    formFieldCheckboxLabel:      'text-slate-300 text-[12.5px]',
+  },
+}

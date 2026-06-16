@@ -419,12 +419,12 @@ function HeroScrollIndicator() {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/8 to-transparent',        desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/8 to-transparent',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#2563eb' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/8 to-transparent',         desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#06b6d4' },
-  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-secondary', bg: 'from-secondary/8 to-transparent',    desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
-  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/8 to-transparent',      desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
-  { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose',      bg: 'from-rose/8 to-transparent',         desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
+  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/20 via-amber/8 to-transparent',          border: 'border-amber/25',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~94%', accent: '#f59e0b' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/20 via-primary/8 to-transparent',      border: 'border-primary/25',   desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~97%', accent: '#2563eb' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/20 via-cyan/8 to-transparent',            border: 'border-cyan/25',      desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~91%', accent: '#06b6d4' },
+  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-violet-400',bg: 'from-violet-500/20 via-violet-500/8 to-transparent',border: 'border-violet-500/25',desc: 'Frame-by-frame deepfake analysis',                accuracy: '~88%', accent: '#8b5cf6' },
+  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/20 via-emerald/8 to-transparent',      border: 'border-emerald/25',   desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
+  { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose',      bg: 'from-rose/20 via-rose/8 to-transparent',            border: 'border-rose/25',      desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
 ]
 
 const STATS = [
