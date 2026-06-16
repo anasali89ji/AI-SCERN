@@ -35,14 +35,30 @@ export async function GET() {
 
   const uptimeSeconds = Math.floor((Date.now() - START_TIME) / 1000)
 
+  // C.2.1 — signal-worker (Python CV) health check (carries 25% image-detection weight)
+  let workerStatus: 'ok' | 'offline' | 'unconfigured' = 'unconfigured'
+  const workerUrl = process.env.PYTHON_WORKER_URL
+  if (workerUrl) {
+    try {
+      const wCtl = new AbortController()
+      const wTmo = setTimeout(() => wCtl.abort(), 3000)
+      const wRes = await fetch(`${workerUrl}/health`, { signal: wCtl.signal })
+      clearTimeout(wTmo)
+      workerStatus = wRes.ok ? 'ok' : 'offline'
+    } catch {
+      workerStatus = 'offline'
+    }
+  }
+
   return NextResponse.json({
     status: 'ok',
     platform,
     region,
     uptime: uptimeSeconds,
     db: dbStatus,
+    signal_worker: workerStatus,
     timestamp: new Date().toISOString(),
-    version: '2.0.0',
+    version: '2.1.0',
   }, {
     status: 200,
     headers: {

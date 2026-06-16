@@ -358,6 +358,102 @@ Prevents ARIA from treating static FAQ copy as "live analysis" output.
 
 ## Module C — Image detection layer re-weighting (not started yet — includes
 the `image-v3` merge/delete decided above in H.3)
+
+## Module C — Image Detection: Brain+CV-First Ensemble (v8.0)
+
+### C.1 — Re-architected ensemble weighting in `frontend/lib/inference/hf-analyze.ts`
+
+**Old (v7.0 — LLM-first):**
+- LLM Vision (Gemini + Grok + NIM + OpenRouter, all parallel): **45–55%**
+- HF ViT ensemble: 25%
+- Image Brain (16-signal pixel): 20% ← capped with comment "reduced from 50%"
+- Pixel signals: 10%
+- LLM High-Confidence Override Floor: if any single LLM > 0.75 → floor `aiScore` at 0.62
+
+**New (v8.0 — Brain+CV-first):**
+- **Image Brain** (16-signal pixel-decoded, zero API cost): **35%** ← +15%
+- **Python CV Worker** (6-layer forensic, `signal-worker`): **25%** ← was 0% (unused!)
+- HF ViT ensemble: 20% ← unchanged
+- Pixel signals: 10% ← unchanged
+- LLM Vision (Gemini only by default): **10%** ← down from 45–55%
+
+**C.1.1 — Python CV Worker wired into main flow:**
+Extracted the `callPythonWorker` pattern from `app/api/detect/image-v3/route.ts`
+into a private `callPythonCVWorker()` function in `hf-analyze.ts`. Runs in
+parallel with Brain + HF via `Promise.all`. `PYTHON_WORKER_URL` non-availability
+returns `null` with no error — weight gracefully redistributed to Brain+Pixel,
+never to LLM. Added `SIGNAL_WORKER_TIMEOUT_MS` (15s) as abort timeout.
+
+**C.1.4 — Reduced LLM calls from 4 → at most 1 (normally):**
+- **Gemini** runs by default as the single LLM opinion (required by existing
+  `GEMINI_API_KEY` in `.env.example`).
+- **Grok** fires only as a fallback when Gemini is unavailable (key missing or
+  `geminiAvailable()` returns false) — not always-parallel as before.
+- **NVIDIA NIM** and **OpenRouter Qwen2.5-VL** are **removed from the primary
+  flow entirely**. They were parallel calls that each cost latency + API budget
+  for a combined 15% internal weight — with Brain+CV now carrying 60% of the
+  weight, 4 independent LLM opinions are redundant.
+
+**C.1.3 — Removed LLM High-Confidence Override Floor:**
+Old: `if (llmMax > 0.75) aiScore = Math.max(aiScore, 0.62)` — a single LLM
+call could flip a confident HUMAN verdict to AI regardless of what Brain+CV
+said. This is now gone. Replaced with a narrow **LLM Consensus Assist**:
+if `llmScore > 0.80` AND Brain+CV both agree (`> 0.55`), LLM may add at most
++0.08 to the final score. A lone LLM call against an otherwise-HUMAN-confident
+image changes nothing beyond its 10% weight contribution.
+
+**Weight redistribution when layers are unavailable** (never falls back to LLM
+as primary): missing CV → Brain+12%, Pixel+5%; missing HF → Brain+10%,
+CV+5%; missing LLM → weight already minimal; missing CV+HF → Brain+Pixel only.
+
+**C.1.5 — Updated engine descriptor:**
+`model_used` now reports e.g.
+`Aiscern-ImageEngine-v8(Brain35%+CV25%+HF20%+Pixel10%+LLM10%)` so scan
+metadata and the admin panel accurately describe the running configuration.
+`model_version: '8.0.0'`.
+
+### C.2 — Python worker as first-class monitored dependency
+
+**C.2.1 — `frontend/app/api/health/route.ts`** extended with `signal_worker`
+field: probes `${PYTHON_WORKER_URL}/health` with 3s timeout on every health
+check. Returns `'ok' | 'offline' | 'unconfigured'`. Version bumped to `2.1.0`.
+Admin dashboard and monitoring can now see worker status before image scan
+failures surface.
+
+**C.2.2 — `signal-worker/main_v3.py` CORS hardened:**
+Default `ALLOWED_ORIGINS` changed from wildcard `"*"` to
+`"https://aiscern.com,https://www.aiscern.com,http://localhost:3000"`.
+Production URL configurable via `ALLOWED_ORIGINS` env var. `allow_credentials`
+explicitly set to `False`. (The `main.py` already had `https://aiscern.com`
+as the default — only `main_v3.py` needed fixing.)
+`/health` endpoint already existed in `main_v3.py` — no change needed.
+
+**C.2.3 — Deleted `frontend/app/api/detect/image-v3/route.ts`:**
+This standalone route was the only caller of the Python CV worker previously.
+Its logic has been merged into `hf-analyze.ts`'s `analyzeImage()` function
+(C.1.1), which is already called by the production `/api/detect/image` route.
+The separate `image-v3` route created an unmaintained parallel code path and
+is no longer needed. All image scans (both dashboard and API) now use the
+v8 ensemble automatically.
+
+### C.3 — ARIA's image capability description updated
+
+`ARIA_FORENSIC_CAPABILITY` in `app/api/chat/route.ts` rewritten to describe
+the **actual** pipeline layers honestly without violating the zero-disclosure
+rules (no model names, no API providers, no internal system names):
+- Removed the misleading "9-agent pipeline" framing (that was the deep
+  `/forensic/[scanId]` pipeline, not the primary `/detect/image` pipeline).
+- Now describes the four real layers: Pixel Forensic, Computer Vision Forensic,
+  Deep Learning Ensemble, Optical Signal Analysis, LLM Vision (secondary).
+- Removed the "ALWAYS state which generator was attributed" instruction —
+  generator attribution is only surfaced when Brain explicitly fires a
+  `generatorHints` signal, not on every scan.
+- Added explicit `NEVER mention` guard for Brain/signal-worker/HF/Gemini/etc.
+
+### Module C status: ✅ build green
+
+---
+
 ## Module F — Settings persistence (not started yet)
 ## Module B — Auth pages redesign (not started yet)
 ## Module D — Bright tool-card accents / anti-vibecode pass (not started yet)
