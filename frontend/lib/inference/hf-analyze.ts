@@ -18,6 +18,7 @@ import { extractImageSignals, extractImageSignalsExtended, aggregateImageSignals
 import { preprocessImage } from './preprocess-image'
 import { hashBuffer, hashText, getCachedScan, setCachedScan } from '@/lib/cache/scan-cache'
 import { extractAudioSignals, extractAudioSignalsExtended, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
+import { SIGNAL_WORKER_TIMEOUT_MS } from '@/lib/forensic/constants'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
 import { buildVideoSignals }                                                   from './signals/video-signals'
@@ -427,327 +428,297 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const inferenceBuffer = preprocessed.buffer
   const inferenceMime   = preprocessed.mimeType
 
-  // ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
-  const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length, mimeType)
+  // ── Python CV Worker (6-layer forensic, C.1.1) ────────────────────────────
+// Runs in parallel with Brain + HF. PYTHON_WORKER_URL must point at the
+// signal-worker DigitalOcean droplet. Non-availability degrades gracefully
+// (weight redistributed to Brain+Pixel, never to LLM as a last resort).
+const PYTHON_WORKER_URL = process.env.PYTHON_WORKER_URL || ''
 
-  // ── LLM Vision Analysis — ALWAYS runs (not conditional on brain score) ──────
-  // Gemini + Grok run in parallel with the HF models. Modern AI images fool
-  // pixel-based brain analysis but are reliably caught by vision LLMs with
-  // forensic prompts. These carry 45% combined weight in the final ensemble.
-  const geminiPromise = geminiAvailable()
-    ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
+interface PythonCVResult {
+  composite_cv_score: number
+  cv_signals:         Record<string, number>
+  version:            string
+}
+
+async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promise<PythonCVResult | null> {
+  if (!PYTHON_WORKER_URL) return null
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.jpg')
+    const res = await fetch(`${PYTHON_WORKER_URL}/analyze/image`, {
+      method: 'POST', body: form,
+      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as PythonCVResult
+    if (typeof data.composite_cv_score !== 'number') return null
+    return data
+  } catch { return null }
+}
+
+// ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
+const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length, mimeType)
+
+// ── Python CV Worker (25% weight C.1 new scheme) — parallel ───────────────
+const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
+
+// ── LLM Vision Analysis — SECONDARY TIEBREAKER ONLY (C.1) ──────────────────
+// NEW in v8: LLM Vision is the last-resort tiebreaker, NOT the backbone.
+// Only Gemini runs by default (required by GEMINI_API_KEY in .env.example).
+// Grok/NIM/OpenRouter are opt-in fallbacks when Gemini fails or unavailable
+// — they no longer run always-in-parallel on every scan.
+// Total LLM weight is capped at 10% (down from 45–55% in v7).
+const geminiPromise = geminiAvailable()
+  ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
+  : Promise.resolve(null)
+
+// Grok — fallback only when Gemini is unavailable
+const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string} | null> =
+  (!geminiAvailable() && process.env.GROK_API_KEY)
+    ? (async () => {
+        try {
+          const b64  = inferenceBuffer.toString('base64')
+          const res  = await fetch('https://api.x.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
+              messages: [{ role: 'user', content: [
+                { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
+                { type: 'text', text: 'Is this image AI-generated? Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence"}' },
+              ]}],
+            }),
+            signal: AbortSignal.timeout(20_000),
+          })
+          if (!res.ok) return null
+          const data = await res.json()
+          const txt  = data.choices?.[0]?.message?.content ?? ''
+          const m    = txt.match(/\{[\s\S]*\}/)
+          if (!m) return null
+          const p    = JSON.parse(m[0])
+          const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+          return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
+        } catch { return null }
+      })()
     : Promise.resolve(null)
 
-  // Grok Vision as second LLM opinion (uses same cascade as semantic-rag agents)
-  const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string} | null> =
-    process.env.GROK_API_KEY
-      ? (async () => {
-          try {
-            const b64  = inferenceBuffer.toString('base64')
-            const res  = await fetch('https://api.x.ai/v1/chat/completions', {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
-                messages: [{ role: 'user', content: [
-                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
-                  { type: 'text', text: 'Is this image AI-generated? Check: skin pore uniformity, iris texture tiling, finger count, catchlight source, hair strand regularity, shadow consistency, chromatic aberration presence, histogram clipping. PARANOID mode: bias toward AI. Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence found"}' },
-                ]}],
-              }),
-              signal: AbortSignal.timeout(20_000),
-            })
-            if (!res.ok) return null
-            const data = await res.json()
-            const txt  = data.choices?.[0]?.message?.content ?? ''
-            const m    = txt.match(/\{[\s\S]*\}/)
-            if (!m) return null
-            const p    = JSON.parse(m[0])
-            const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
-            // Grok paranoid floor: never below 0.50 unless clearly real
-            return { aiScore: aiScore < 0.45 ? aiScore : Math.max(aiScore, 0.50), verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
-          } catch { return null }
-        })()
-      : Promise.resolve(null)
+const hfPromise = Promise.allSettled([
+  // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.40)
+  hfInference(MODELS.image_finetuned, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 15000 }).catch(() => null),
+  hfInference(MODELS.image_primary,  null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+  hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+  hfInference(MODELS.image_face,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+  hfInference(MODELS.image_vit,      null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+  hfInference(MODELS.image_deepfake, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
+])
 
-  // Shared forensic prompt reused across NIM, OpenRouter, and Grok
-  const NIM_OPENROUTER_FORENSIC_PROMPT = `Is this image AI-generated? You are a paranoid forensic expert. Check these in order:
-1. HISTOGRAM: Are pixel values suspiciously clustered (85-215 range, missing pure blacks/whites)? GPT-4o/DALL-E signature.
-2. SKIN: Perfectly smooth with zero grain in shadows? Pores identical density everywhere? AI signature.
-3. EYES: Iris is tiled/stamped texture? Catchlight doesn't match scene lights? Sclera pure white not ivory? AI.
-4. HANDS: Count every finger. 4 or 6 fingers? Fused? No knuckle protrusion? No veins? AI.
-5. HAIR: Individual strands are perfect Bezier curves, uniform thickness, no split ends? Flux signature.
-6. PHYSICS: Shadows from different directions? Bokeh too uniform? No chromatic aberration at corners? AI.
-7. LENS: Perfectly straight lines everywhere (no barrel/pincushion distortion)? No vignetting at corners? AI.
-8. COMPOSITION: Rule-of-thirds perfectly applied? Background too harmonious? No accidental imperfections? AI.
-Default to AI if uncertain. Only call HUMAN if you see real camera evidence (lens distortion + chromatic aberration + irregular noise + composition imperfections).
-Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "specific evidence in one sentence"}`
+// Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
+let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-  // ── NVIDIA NIM Vision (Llama 3.2 90B) ────────────────────────────────────
-  const nimPromise: Promise<{aiScore: number} | null> =
-    process.env.NVIDIA_API_KEY
-      ? (async () => {
-          try {
-            const b64 = inferenceBuffer.toString('base64')
-            const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'meta/llama-3.2-90b-vision-instruct',
-                max_tokens: 120,
-                temperature: 0.1,
-                stream: false,
-                messages: [{ role: 'user', content: [
-                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}` } },
-                  { type: 'text',      text: NIM_OPENROUTER_FORENSIC_PROMPT },
-                ]}],
-              }),
-              signal: AbortSignal.timeout(25_000),
-            })
-            if (!res.ok) return null
-            const data = await res.json()
-            const txt  = (data.choices?.[0]?.message?.content ?? '') as string
-            const m    = txt.match(/\{[\s\S]*?\}/)
-            if (!m) return null
-            const p    = JSON.parse(m[0])
-            const s    = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
-            return { aiScore: s < 0.45 ? s : Math.max(s, 0.50) }
-          } catch { return null }
-        })()
-      : Promise.resolve(null)
+const [geminiResult, grokResult, hfResults, cvWorkerResult] = await Promise.all([
+  geminiPromise, grokPromise, hfPromise, cvWorkerPromise,
+])
 
-  // ── OpenRouter Vision (Qwen2.5-VL 72B — free tier) ────────────────────────
-  const openRouterVisionPromise: Promise<{aiScore: number} | null> =
-    process.env.OPENROUTER_API_KEY
-      ? (async () => {
-          try {
-            const b64 = inferenceBuffer.toString('base64')
-            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://aiscern.com',
-                'X-Title': 'Aiscern Forensic',
-              },
-              body: JSON.stringify({
-                model: 'qwen/qwen2.5-vl-72b-instruct:free',
-                max_tokens: 120,
-                temperature: 0.1,
-                messages: [{ role: 'user', content: [
-                  { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}` } },
-                  { type: 'text',      text: NIM_OPENROUTER_FORENSIC_PROMPT },
-                ]}],
-              }),
-              signal: AbortSignal.timeout(25_000),
-            })
-            if (!res.ok) return null
-            const data = await res.json()
-            const txt  = (data.choices?.[0]?.message?.content ?? '') as string
-            const m    = txt.match(/\{[\s\S]*?\}/)
-            if (!m) return null
-            const p    = JSON.parse(m[0])
-            const s    = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
-            return { aiScore: s < 0.45 ? s : Math.max(s, 0.50) }
-          } catch { return null }
-        })()
-      : Promise.resolve(null)
+try {
+  const cal = await getCalibrationStats()
+  if (cal?.ai_sample_count >= 10) imgSignals = applyCalibration(imgSignals, cal)
+} catch {}
+const imgSignalScore = aggregateImageSignals(imgSignals)
 
-  const hfPromise = Promise.allSettled([
-    // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.40)
-    hfInference(MODELS.image_finetuned, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 15000 }).catch(() => null),
-    hfInference(MODELS.image_primary,  null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_sdxl,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_face,     null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_vit,      null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-    hfInference(MODELS.image_deepfake, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
-  ])
-
-  // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
-  let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
-
-  const [geminiResult, grokResult, nimResult, orResult, hfResults] = await Promise.all([geminiPromise, grokPromise, nimPromise, openRouterVisionPromise, hfPromise])
-
+const mlScores: { model: string; aiScore: number; weight: number }[] = []
+const parseImg = (val: unknown, w: number, m: string) => {
+  if (!val || !Array.isArray(val)) return
   try {
-    const cal = await getCalibrationStats()
-    if (cal?.ai_sample_count >= 10) imgSignals = applyCalibration(imgSignals, cal)
+    const raw = val as { label: string; score: number }[]
+    const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake|generated/i.test(s.label))
+    const huE = raw.find(s => /real|human|authentic|label_0|photo/i.test(s.label))
+    if (aiE || huE) mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
   } catch {}
-  const imgSignalScore = aggregateImageSignals(imgSignals)
+}
+parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.40, MODELS.image_finetuned)
+parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.22, MODELS.image_primary)
+parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.18, MODELS.image_sdxl)
+parseImg(hfResults[3].status === 'fulfilled' ? hfResults[3].value : null, 0.08, MODELS.image_face)
+parseImg(hfResults[4].status === 'fulfilled' ? hfResults[4].value : null, 0.08, MODELS.image_vit)
+parseImg(hfResults[5].status === 'fulfilled' ? hfResults[5].value : null, 0.04, MODELS.image_deepfake)
 
-  const mlScores: { model: string; aiScore: number; weight: number }[] = []
-  const parseImg = (val: unknown, w: number, m: string) => {
-    if (!val || !Array.isArray(val)) return
-    try {
-      const raw = val as { label: string; score: number }[]
-      const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake|generated/i.test(s.label))
-      const huE = raw.find(s => /real|human|authentic|label_0|photo/i.test(s.label))
-      if (aiE || huE) mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
-    } catch {}
+const mlTotalW    = mlScores.reduce((s, m) => s + m.weight, 0) || 1
+const mlScore     = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
+const geminiScore = geminiResult?.aiScore ?? null
+const grokScore   = grokResult?.aiScore   ?? null
+const cvScore     = cvWorkerResult?.composite_cv_score ?? null
+
+// ── IMAGE ENSEMBLE v8.0 — Brain+CV-first, LLM as secondary tiebreaker ────────
+//
+// WEIGHT RATIONALE (C.1 — sums to 1.0 per path):
+//   Image Brain (16-signal, TS, pixel-decoded): 35%  ← was 20%
+//   Python CV worker (6-layer, signal-worker):  25%  ← was 0% (unused!)
+//   HF ViT ensemble models:                     20%  ← unchanged
+//   Raw pixel signals (extractImageSignals):    10%  ← unchanged
+//   LLM Vision (Gemini only by default):        10%  ← was 45–55%
+//
+// Fallback weight redistribution when a layer is unavailable:
+//   Missing CV worker → extra weight to Brain (+12%) and Pixel (+5%) first.
+//   Missing HF       → extra weight to Brain (+10%) and CV (+10%).
+//   Missing LLM      → weight absorbed by Brain (it was only 10% anyway).
+//   *** LLM is NEVER the primary fallback — only the last-resort tiebreaker ***
+//
+// LLM score: Gemini runs by default. Grok fires only when Gemini is unavailable.
+// NIM and OpenRouter are no longer part of the primary flow (C.1.4).
+const llmScores: number[] = []
+if (geminiScore !== null) llmScores.push(geminiScore)
+if (grokScore   !== null) llmScores.push(grokScore)
+const llmScore = llmScores.length ? llmScores.reduce((a, b) => a + b, 0) / llmScores.length : null
+
+let aiScore:   number
+let modelUsed: string
+let engineDesc: string
+
+const cvAvailable = cvScore !== null
+const hfAvailable = mlScore !== null
+const llmAvailable = llmScore !== null
+
+if (cvAvailable && hfAvailable && llmAvailable) {
+  // Full ensemble: Brain(35%) + CV(25%) + HF(20%) + Pixel(10%) + LLM(10%)
+  aiScore    = brainResult.score * 0.35 + cvScore * 0.25 + mlScore * 0.20 + imgSignalScore * 0.10 + llmScore * 0.10
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain35%+CV25%+HF20%+Pixel10%+LLM10%)`
+  engineDesc = `Brain (35%) + CV-Worker (25%) + ${mlScores.length} HF ViT (20%) + Pixel (10%) + LLM (10%)`
+} else if (cvAvailable && hfAvailable) {
+  // No LLM: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
+  aiScore    = brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain37%+CV28%+HF20%+Pixel15%)`
+  engineDesc = `Brain (37%) + CV-Worker (28%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM`
+} else if (cvAvailable && llmAvailable) {
+  // No HF: Brain(42%) + CV(33%) + Pixel(15%) + LLM(10%)
+  aiScore    = brainResult.score * 0.42 + cvScore * 0.33 + imgSignalScore * 0.15 + llmScore * 0.10
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain42%+CV33%+Pixel15%+LLM10%)`
+  engineDesc = `Brain (42%) + CV-Worker (33%) + Pixel (15%) + LLM (10%) — HF cold-starting`
+} else if (cvAvailable) {
+  // CV + Brain + Pixel only
+  aiScore    = brainResult.score * 0.47 + cvScore * 0.38 + imgSignalScore * 0.15
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain47%+CV38%+Pixel15%)`
+  engineDesc = `Brain (47%) + CV-Worker (38%) + Pixel (15%) — no LLM or HF`
+} else if (hfAvailable && llmAvailable) {
+  // No CV: Brain(45%) + HF(25%) + Pixel(20%) + LLM(10%)
+  aiScore    = brainResult.score * 0.45 + mlScore * 0.25 + imgSignalScore * 0.20 + llmScore * 0.10
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain45%+HF25%+Pixel20%+LLM10%)`
+  engineDesc = `Brain (45%) + ${mlScores.length} HF ViT (25%) + Pixel (20%) + LLM (10%) — CV worker offline`
+} else if (hfAvailable) {
+  // No CV, no LLM: Brain(50%) + HF(30%) + Pixel(20%)
+  aiScore    = brainResult.score * 0.50 + mlScore * 0.30 + imgSignalScore * 0.20
+  modelUsed  = `Aiscern-ImageEngine-v8(Brain50%+HF30%+Pixel20%)`
+  engineDesc = `Brain (50%) + ${mlScores.length} HF ViT (30%) + Pixel (20%) — no CV or LLM`
+} else {
+  // Fallback — only Brain + pixels (still better than LLM-only!)
+  aiScore    = brainResult.score * 0.65 + imgSignalScore * 0.35
+  modelUsed  = 'Aiscern-ImageEngine-v8(Brain65%+Pixel35%)'
+  engineDesc = 'Image Brain (65%) + Pixel signals (35%) — configure PYTHON_WORKER_URL for best accuracy'
+}
+
+// ── LLM Consensus Override (C.1.3 — replaces High-Confidence Override Floor) ─
+// Old behavior (REMOVED): a single LLM call > 0.75 floored aiScore at 0.62.
+// New behavior: LLM can only ADD UP TO 0.08 to the final score when:
+//   (a) it strongly agrees with Brain+CV (both >0.55), AND
+//   (b) its own score is >0.80
+// This prevents a lone LLM vision call from flipping an otherwise-confident
+// HUMAN verdict to AI — it can only reinforce a borderline case.
+if (llmScore !== null && llmScore > 0.80) {
+  const nonLlmScore = aiScore - (llmScore * 0.10)   // remove LLM contribution
+  const brainCvAgree = (brainResult.score > 0.55) && (cvScore === null || cvScore > 0.55)
+  if (brainCvAgree) {
+    // Allow LLM to push a borderline case toward AI, capped at +0.08
+    aiScore = Math.min(aiScore + 0.08, Math.max(aiScore, nonLlmScore + (llmScore - 0.50) * 0.10))
   }
-  parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.40, MODELS.image_finetuned)
-  parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.22, MODELS.image_primary)
-  parseImg(hfResults[2].status === 'fulfilled' ? hfResults[2].value : null, 0.18, MODELS.image_sdxl)
-  parseImg(hfResults[3].status === 'fulfilled' ? hfResults[3].value : null, 0.08, MODELS.image_face)
-  parseImg(hfResults[4].status === 'fulfilled' ? hfResults[4].value : null, 0.08, MODELS.image_vit)
-  parseImg(hfResults[5].status === 'fulfilled' ? hfResults[5].value : null, 0.04, MODELS.image_deepfake)
+  // If Brain+CV don't agree, LLM high score changes nothing — it already has its 10%
+}
 
-  const mlTotalW    = mlScores.reduce((s, m) => s + m.weight, 0) || 1
-  const mlScore     = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
-  const geminiScore = geminiResult?.aiScore ?? null
-  const grokScore   = grokResult?.aiScore   ?? null
+// ── Legacy Generator Override (kept from v6/v7, narrowed scope) ───────────
+// Only fires if Brain explicitly detects a known generator fingerprint AND
+// its own score is already above 0.52 (near-borderline) — never on a
+// confident-HUMAN verdict.
+if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0 && brainResult.score > 0.52) {
+  aiScore = Math.max(aiScore, brainResult.score * 0.88)
+}
 
-  // ── IMAGE ENSEMBLE v7.0 — LLM-first architecture ──────────────────────────
-  //
-  // WEIGHT RATIONALE (sums to 1.0 per path):
-  //   LLM Vision (Gemini + Grok): 45% — catches modern AI that fools pixels
-  //   HF ViT ensemble:            25% — strong for diffusion-era images
-  //   Image Brain (pixel-based):  20% — still useful for texture/noise signals
-  //   Pixel signals:              10% — supplementary physical signals
-  //
-  // Why reduce Brain from 50% → 20%:
-  //   Brain is calibrated on GAN/CIFAKE-era images (StyleGAN2, SD 1.4).
-  //   Modern AI (GPT-4o, Flux, Gemini) passes pixel tests with near-100% success.
-  //   LLM vision with forensic prompts is the only reliable detector for 2025/2026.
-  //
-  // LLM score computation: if both Gemini and Grok run, average them.
-  // If only one runs, use that one. If neither runs, drop to legacy path.
+const calibratedImgScore = calibrateScore(aiScore)
+const editSig  = imgSignals.find(s => s.name === 'Edit Signature')
+const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30
+const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' = isEdited ? 'AI' : toVerdict(calibratedImgScore, 'image')
 
-  // Collect all available LLM vision scores
-  const nimScore = (nimResult as {aiScore: number} | null)?.aiScore ?? null
-  const orScore  = (orResult  as {aiScore: number} | null)?.aiScore ?? null
+const topSignal  = [...imgSignals].sort((a, b) => b.score - a.score)[0]
+const geminiSigs = geminiResult?.signals ?? []
 
-  const llmScores: number[] = []
-  if (geminiScore !== null) llmScores.push(geminiScore)
-  if (grokScore   !== null) llmScores.push(grokScore)
-  if (nimScore    !== null) llmScores.push(nimScore)
-  if (orScore     !== null) llmScores.push(orScore)
+// Format brain signals for output
+const brainSignalsFormatted = brainResult.signals
+  .sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
+  .slice(0, 5)
+  .map(sig => ({
+    name:        sig.name,
+    category:    'Image Brain',
+    description: sig.evidence,
+    weight:      Math.round(sig.weight * 50),
+    value:       Math.round(sig.score * 1000) / 1000,
+    flagged:     sig.score > 0.62,
+  }))
 
-  // Weighted LLM average — Gemini and Grok carry more weight (stronger forensic prompts)
-  // NIM and OpenRouter carry slightly less (generic vision models, same prompt)
-  const llmWeightedScore = llmScores.length === 0 ? null : (() => {
-    const weights: number[] = []
-    const vals:    number[] = []
-    if (geminiScore !== null) { vals.push(geminiScore); weights.push(0.35) }
-    if (grokScore   !== null) { vals.push(grokScore);   weights.push(0.30) }
-    if (nimScore    !== null) { vals.push(nimScore);     weights.push(0.20) }
-    if (orScore     !== null) { vals.push(orScore);      weights.push(0.15) }
-    const totalW = weights.reduce((a, b) => a + b, 0)
-    return vals.reduce((sum, v, i) => sum + v * (weights[i] / totalW), 0)
-  })()
-  const llmScore = llmWeightedScore
-
-  let aiScore:   number
-  let modelUsed: string
-  let engineDesc: string
-
-  if (llmScore !== null && mlScore !== null) {
-    // Full ensemble: LLM(45%) + HF(25%) + Brain(20%) + Pixels(10%)
-    aiScore    = llmScore * 0.45 + mlScore * 0.25 + brainResult.score * 0.20 + imgSignalScore * 0.10
-    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+${mlScores.length}HF+Brain+Pixel)`
-    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (45%) + ${mlScores.length} HF ViT (25%) + Brain (20%) + Pixel (10%)`
-  } else if (llmScore !== null) {
-    // LLM-only + Brain + Pixels: LLM(55%) + Brain(30%) + Pixels(15%)
-    aiScore    = llmScore * 0.55 + brainResult.score * 0.30 + imgSignalScore * 0.15
-    modelUsed  = `Aiscern-ImageEngine-v7(${llmScores.length}LLM+Brain+Pixel)`
-    engineDesc = `LLM Vision x${llmScores.length} [Gemini/Grok/NIM/OR] (55%) + Brain (30%) + Pixel (15%) — HF cold-starting`
-  } else if (mlScore !== null) {
-    // Legacy path — no LLM: HF(40%) + Brain(40%) + Pixels(20%)
-    aiScore    = mlScore * 0.40 + brainResult.score * 0.40 + imgSignalScore * 0.20
-    modelUsed  = `Aiscern-ImageEngine-v7(Legacy-${mlScores.length}HF+Brain+Pixel)`
-    engineDesc = `${mlScores.length} HF ViT models (40%) + Brain (40%) + Pixel signals (20%) — no LLM available`
-  } else {
-    // Fallback — only brain + pixels
-    aiScore    = brainResult.score * 0.60 + imgSignalScore * 0.40
-    modelUsed  = 'Aiscern-ImageEngine-v7(BrainOnly)'
-    engineDesc = 'Image Brain (60%) + Pixel signals (40%) — configure GEMINI_API_KEY or GROK_API_KEY for best accuracy'
-  }
-
-  // ── LLM High-Confidence Override Floor ────────────────────────────────────
-  // If EITHER LLM returned a strong AI signal (> 0.75), apply a floor of 0.62.
-  // This prevents pixel-brain drag from reversing a clear LLM verdict.
-  const llmMax = llmScores.length ? Math.max(...llmScores) : 0
-  if (llmMax > 0.75) {
-    aiScore = Math.max(aiScore, 0.62)
-  }
-  // If BOTH LLMs agree strongly (> 0.85), floor at 0.75 (very high confidence)
-  if (llmScores.length === 2 && llmScores.every(s => s > 0.85)) {
-    aiScore = Math.max(aiScore, 0.75)
-  }
-
-  // ── Legacy Generator Override Floor (kept from v6) ─────────────────────────
-  if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0) {
-    aiScore = Math.max(aiScore, brainResult.score * 0.88)
-  }
-
-  const calibratedImgScore = calibrateScore(aiScore)
-  const editSig  = imgSignals.find(s => s.name === 'Edit Signature')
-  const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30
-  const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' = isEdited ? 'AI' : toVerdict(calibratedImgScore, 'image')
-
-  const topSignal  = [...imgSignals].sort((a, b) => b.score - a.score)[0]
-  const geminiSigs = geminiResult?.signals ?? []
-
-  // Format brain signals for output
-  const brainSignalsFormatted = brainResult.signals
-    .sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
-    .slice(0, 5)
-    .map(sig => ({
-      name:        sig.name,
-      category:    'Image Brain',
-      description: sig.evidence,
-      weight:      Math.round(sig.weight * 50),
-      value:       Math.round(sig.score * 1000) / 1000,
-      flagged:     sig.score > 0.62,
+// CV worker signals
+const cvSignalsFormatted = cvWorkerResult?.cv_signals
+  ? Object.entries(cvWorkerResult.cv_signals).slice(0, 4).map(([name, score]) => ({
+      name:        name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      category:    'CV Forensic',
+      description: `Python 6-layer CV forensic signal: ${name}`,
+      weight:      25,
+      value:       Math.round(score * 1000) / 1000,
+      flagged:     score > 0.60,
     }))
+  : []
 
-  return {
-    verdict,
-    confidence:    Math.round(calibratedImgScore * 1000) / 1000,
-    model_used:    modelUsed,
-    model_version: '6.0.0',
-    signals: [
-      {
-        name:        'Image Detection Brain',
-        category:    'ML',
-        description: `${engineDesc}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). ` +
-          (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '') +
-          `Top: ${brainResult.findings[0] ?? 'pixel pattern analysis'}` +
-          (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : ''),
-        weight:  50,
-        value:   Math.round(brainResult.score * 1000) / 1000,
-        flagged: brainResult.score > 0.60,
-      },
-      ...brainSignalsFormatted,
-      ...imgSignals.map(sig => ({
-        name:        sig.name,
-        category:    'Pixel Analysis',
-        description: sig.description,
-        weight:      Math.round(sig.weight * 20),
-        value:       sig.score,
-        flagged:     sig.score > 0.58,
-      })),
-    ],
-    model_breakdown: [
-      { model_id: 'image-brain-v2', raw_score: brainResult.score, verdict: scoreToVerdict(brainResult.score), latency_ms: 0 },
-      ...(geminiScore !== null ? [{ model_id: 'gemini-2.0-flash-vision', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
-      ...(grokScore   !== null ? [{ model_id: 'grok-2-vision',           raw_score: grokScore,   verdict: scoreToVerdict(grokScore),   latency_ms: 0 }] : []),
-      ...(nimScore    !== null ? [{ model_id: 'nvidia-llama-3.2-90b',    raw_score: nimScore,    verdict: scoreToVerdict(nimScore),    latency_ms: 0 }] : []),
-      ...(orScore     !== null ? [{ model_id: 'openrouter-qwen2.5-vl',   raw_score: orScore,     verdict: scoreToVerdict(orScore),     latency_ms: 0 }] : []),
-      ...mlScores.map(m => ({ model_id: m.model, raw_score: m.aiScore, verdict: scoreToVerdict(m.aiScore), latency_ms: 0 })),
-      { model_id: 'pixel-signals-v2', raw_score: imgSignalScore, verdict: scoreToVerdict(imgSignalScore), latency_ms: 0 },
-    ],
-    summary: verdict === 'AI'
-      ? `AI-generated image detected with ${Math.round(calibratedImgScore * 100)}% confidence. ` +
-        (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '') +
-        `Key signals: ${brainResult.findings.slice(0, 2).join(' | ')}.`
-      : verdict === 'HUMAN'
-      ? `Image appears authentic — ${Math.round((1 - calibratedImgScore) * 100)}% confidence. ` +
-        `Natural camera characteristics: ${topSignal?.name ?? 'organic noise floor detected'}.`
-      : `Analysis inconclusive (${Math.round(calibratedImgScore * 100)}% AI probability). ` +
-        `${brainResult.generatorHints.length ? `Possible generator: ${brainResult.generatorHints[0]}.` : 'Try a higher-resolution original image for accuracy.'}`,
-  }
+return {
+  verdict,
+  confidence:    Math.round(calibratedImgScore * 1000) / 1000,
+  model_used:    modelUsed,
+  model_version: '8.0.0',
+  signals: [
+    {
+      name:        'Image Detection Brain',
+      category:    'ML',
+      description: `${engineDesc}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). ` +
+        (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '') +
+        `Top: ${brainResult.findings[0] ?? 'pixel pattern analysis'}` +
+        (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : ''),
+      weight:  50,
+      value:   Math.round(brainResult.score * 1000) / 1000,
+      flagged: brainResult.score > 0.60,
+    },
+    ...brainSignalsFormatted,
+    ...cvSignalsFormatted,
+    ...imgSignals.map(sig => ({
+      name:        sig.name,
+      category:    'Pixel Analysis',
+      description: sig.description,
+      weight:      Math.round(sig.weight * 20),
+      value:       sig.score,
+      flagged:     sig.score > 0.58,
+    })),
+  ],
+  model_breakdown: [
+    { model_id: 'image-brain-v2',      raw_score: brainResult.score, verdict: scoreToVerdict(brainResult.score), latency_ms: 0 },
+    ...(cvScore     !== null ? [{ model_id: 'python-cv-worker-v3',     raw_score: cvScore,     verdict: scoreToVerdict(cvScore),     latency_ms: 0 }] : []),
+    ...(geminiScore !== null ? [{ model_id: 'gemini-2.0-flash-vision', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
+    ...(grokScore   !== null ? [{ model_id: 'grok-2-vision',           raw_score: grokScore,   verdict: scoreToVerdict(grokScore),   latency_ms: 0 }] : []),
+    ...mlScores.map(m => ({ model_id: m.model, raw_score: m.aiScore, verdict: scoreToVerdict(m.aiScore), latency_ms: 0 })),
+    { model_id: 'pixel-signals-v2', raw_score: imgSignalScore, verdict: scoreToVerdict(imgSignalScore), latency_ms: 0 },
+  ],
+  summary: verdict === 'AI'
+    ? `AI-generated image detected with ${Math.round(calibratedImgScore * 100)}% confidence. ` +
+      (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '') +
+      `Key signals: ${brainResult.findings.slice(0, 2).join(' | ')}.`
+    : verdict === 'HUMAN'
+    ? `Image appears authentic — ${Math.round((1 - calibratedImgScore) * 100)}% confidence. ` +
+      `Natural camera characteristics: ${topSignal?.name ?? 'organic noise floor detected'}.`
+    : `Analysis inconclusive (${Math.round(calibratedImgScore * 100)}% AI probability). ` +
+      `${brainResult.generatorHints.length ? `Possible generator: ${brainResult.generatorHints[0]}.` : 'Try a higher-resolution original image for accuracy.'}`,
+}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

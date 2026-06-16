@@ -31,11 +31,15 @@ app_v3 = FastAPI(
     description="6-layer cascade forensic image analysis pipeline"
 )
 
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://aiscern.com,https://www.aiscern.com,http://localhost:3000")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app_v3.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
 
 
