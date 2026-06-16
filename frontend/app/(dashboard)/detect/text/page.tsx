@@ -6,6 +6,7 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
@@ -42,6 +43,7 @@ function avgSentenceLen(text: string) {
 
 function TextDetectionPage() {
   const { user: currentUser } = useAuth()
+  const { showConfidence, showSignals, highAccMode, autoDownloadPdf } = useDetectSettings(currentUser?.uid)
   // Derive first name for personalized messages
   const displayName: string | null =
     currentUser?.displayName?.split(' ')[0] ||
@@ -108,7 +110,7 @@ function TextDetectionPage() {
     try {
       const res = await fetch('/api/detect/text', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.trim() }),
+        body: JSON.stringify({ text: text.trim(), high_acc_mode: highAccMode }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
@@ -124,6 +126,12 @@ function TextDetectionPage() {
             verdict:    s.ai_score >= 0.55 ? 'AI' : 'HUMAN',
           }))
         )
+      }
+      // F.2: auto-download plain-text report if setting enabled
+      if (autoDownloadPdf && data.result) {
+        const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${data.result.verdict}\nConfidence: ${formatConfidence(data.result.confidence)}\nSummary: ${data.result.summary}\n\nText analyzed:\n${text.trim()}`], { type: 'text/plain' })
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+        a.download = `aiscern-text-analysis-${Date.now()}.txt`; a.click()
       }
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
@@ -406,10 +414,12 @@ Analyzed: ${new Date().toLocaleString()}`
                               : `${displayName}, this is Uncertain`
                             : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
                         </h3>
-                        <div className="text-right shrink-0">
-                          <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
-                          <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
-                        </div>
+                        {showConfidence && (
+                          <div className="text-right shrink-0">
+                            <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
+                            <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
+                          </div>
+                        )}
                       </div>
                       <p className="text-text-muted text-xs sm:text-sm leading-relaxed">{result.summary}</p>
                     </div>
@@ -430,7 +440,8 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 </div>
 
-                {/* Signals */}
+                {/* Signals — gated on showSignals setting (F.2) */}
+                {showSignals && (
                 <div className="card">
                   <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary" />
@@ -458,6 +469,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     ))}
                   </div>
                 </div>
+                )} {/* end showSignals */}
 
                 {/* FIX B.6: Sentence-level AI probability heatmap */}
                 {paragraphScores.length > 0 && (

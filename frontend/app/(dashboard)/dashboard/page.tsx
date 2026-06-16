@@ -9,6 +9,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useDetectSettings } from '@/hooks/useDetectSettings'
 
 
 
@@ -52,6 +53,8 @@ function mediaIcon(type: string) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { defaultModality } = useDetectSettings(user?.uid)
+  const defaultToolHref = `/detect/${defaultModality === 'url' ? 'text' : defaultModality}`
   const router = useRouter()
   const [stats,   setStats]   = useState<any>(null)
   const [scans,   setScans]   = useState<any[]>([])
@@ -201,9 +204,9 @@ export default function DashboardPage() {
                   You're all set. Pick a detection tool below to run your first scan — completely free, no limits.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Link href="/detect/text"
+                  <Link href={defaultToolHref}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all">
-                    <FileText className="w-3.5 h-3.5" /> Try Text Detection
+                    <FileText className="w-3.5 h-3.5" /> Start Scanning
                   </Link>
                   <Link href="/detect/image"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
