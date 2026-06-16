@@ -198,27 +198,39 @@ function TypingDots() {
 }
 
 // ── Smooth token-by-token fade-in for streaming text ──────────────────────
-function StreamingMessage({ content }: { content: string }) {
-  const [displayed, setDisplayed] = useState('')
-  const [target, setTarget] = useState(content)
-  const rafRef = useRef<number>(0)
+function StreamingMessage({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
+  const [displayed, setDisplayed] = useState(content)
+  const rafRef   = useRef<number>(0)
+  const targetRef = useRef(content)
 
-  useEffect(() => { setTarget(content) }, [content])
+  // Keep target ref in sync without triggering extra renders
+  useEffect(() => { targetRef.current = content }, [content])
 
   useEffect(() => {
-    if (displayed.length >= target.length) return
+    // If streaming is done or content already fully shown, skip rAF entirely
+    if (!isStreaming || displayed.length >= content.length) {
+      setDisplayed(content)
+      return
+    }
+
+    let cancelled = false
     const step = () => {
+      if (cancelled) return
+      const target = targetRef.current
       setDisplayed(prev => {
         if (prev.length >= target.length) return prev
-        // Reveal in small chunks for smooth feel
-        const chunk = Math.min(4, target.length - prev.length)
-        return target.slice(0, prev.length + chunk)
+        // Reveal 8 chars per frame (~120wpm at 60fps) — fast enough to feel live
+        return target.slice(0, prev.length + 8)
       })
-      rafRef.current = requestAnimationFrame(step)
+      // Only schedule next frame if there's still text to reveal
+      if (displayed.length < targetRef.current.length) {
+        rafRef.current = requestAnimationFrame(step)
+      }
     }
     rafRef.current = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [target, displayed.length])
+    return () => { cancelled = true; cancelAnimationFrame(rafRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, isStreaming])
 
   return <Markdown content={displayed} />
 }
@@ -277,14 +289,21 @@ function MessageBubble({
           <ToolCard key={i} tool={te.tool} result={te.result} />
         ))}
 
-        {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
+        {/* A.3 thinking indicator — shown during NIM cold start only, hidden as soon as
+            first text chunk arrives (isThinking cleared by SSE 'text' handler).
+            Not shown for KB-direct bypass responses (no thinking event emitted). */}
         {!isUser && msg.isThinking && !msg.content && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
-            <svg className="w-3 h-3 animate-spin text-primary/60 shrink-0" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <span className="text-gray-500">Connecting to ARIA…</span>
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-400">
+            <span className="inline-flex gap-[3px] items-center">
+              {[0,1,2].map(i => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s`, animationDuration: '0.9s' }}
+                />
+              ))}
+            </span>
+            <span className="text-gray-500 text-[11px]">ARIA is thinking…</span>
           </div>
         )}
 
@@ -305,7 +324,7 @@ function MessageBubble({
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
               : msg.isStreaming
-                ? <StreamingMessage content={msg.content} />
+                ? <StreamingMessage content={msg.content} isStreaming={msg.isStreaming} />
                 : <Markdown content={msg.content} />
             }
             {/* Blinking cursor while streaming */}
