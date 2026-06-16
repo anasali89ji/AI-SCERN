@@ -1,6 +1,7 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
+import { retrieveARIAKnowledge, formatKBContext } from '@/lib/rag/aria-rag'
 export const maxDuration = 60
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -367,11 +368,19 @@ Build on the existing result — do not re-explain what was already shown. Answe
   const urgencyGuide = intent.urgency === 'high' ? `
 USER HAS INDICATED URGENCY — Lead with the most critical information immediately. Skip preamble.` : ''
 
-  const resultsBlock = injectedContext
-    ? `
-═══ LIVE ANALYSIS CONTEXT (interpret this for the user, do not copy-paste raw numbers) ═══
-${injectedContext}
-═══ END CONTEXT ═══`
+  // A.4: Split injected context into KB knowledge vs live analysis context.
+  const kbTagEnd = '</aiscern_knowledge>'
+  const kbEndIdx = injectedContext.indexOf(kbTagEnd)
+  const kbEndPos = kbEndIdx !== -1 ? kbEndIdx + kbTagEnd.length : -1
+  const kbBlock  = kbEndPos !== -1 ? injectedContext.slice(0, kbEndPos) : ''
+  const liveCtx  = kbEndPos !== -1 ? injectedContext.slice(kbEndPos).trim() : injectedContext
+
+  const kbSection = kbBlock
+    ? `\n═══ AISCERN KNOWLEDGE BASE — use as ground truth for all Aiscern-specific facts ═══\n${kbBlock}\n═══ END KNOWLEDGE BASE ═══`
+    : ''
+
+  const resultsBlock = liveCtx
+    ? `\n═══ LIVE ANALYSIS CONTEXT (interpret for the user, do not copy-paste raw numbers) ═══\n${liveCtx}\n═══ END CONTEXT ═══`
     : ''
 
   return `You are ARIA — the intelligent AI assistant built into Aiscern, a leading platform for detecting AI-generated content across text, images, audio, and video.
@@ -615,6 +624,7 @@ ${ARIA_AUDIO_CAPABILITY}
 ${detectionGuide}
 ${followupGuide}
 ${urgencyGuide}
+${kbSection}
 ${resultsBlock}`
 }
 
@@ -665,9 +675,21 @@ export async function POST(req: NextRequest) {
     // ── GRAPH RAG — build conversation knowledge graph & inject context ────────
     const graphContext = buildGraphRAGContext(history, lastUserMsg)
 
+    // ── ARIA KB RAG — retrieve static knowledge (A.1) ────────────────────────
+    // Run in parallel with intent detection / tool calls (both are already done).
+    // retrieval is < 5ms for keyword path, < 4s for embedding path (4s timeout).
+    const historyForRAG = history.map((m: ChatMessage) => ({
+      role:    m.role as string,
+      content: typeof m.content === 'string' ? m.content : '',
+    }))
+    const ragResult = await retrieveARIAKnowledge(lastUserMsg, historyForRAG)
+
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
-    // Conversation graph (history-based) first
+    // 1. KB knowledge first (most factual, grounding ARIA's persona and Aiscern facts)
+    const kbContext = formatKBContext(ragResult.contextChunks)
+    if (kbContext) contextParts.push(kbContext)
+    // 2. Conversation graph (history-based)
     if (graphContext) contextParts.push(graphContext)
     const toolEvents: Array<{ tool: string; result: Record<string, unknown> }> = []
 
@@ -756,6 +778,45 @@ export async function POST(req: NextRequest) {
         ? m.content
         : (m.content?.[0]?.text || String(m.content) || ''),
     }))
+
+    // ── RAG DIRECT BYPASS (A.1.2) — answer from KB, skip NIM entirely ─────────
+    // Fires only for high-confidence FAQ matches (score >= 0.80) when no tool
+    // calls were needed (no image attached, no text analysis, no pipeline stats).
+    // This eliminates the 30-90s NIM cold-start delay for the most common queries
+    // (founder info, pricing, accuracy, file formats, contact, etc.).
+    if (
+      ragResult.bypassNIM &&
+      ragResult.directAnswer &&
+      toolEvents.length === 0 &&
+      imageAttachments.length === 0
+    ) {
+      const enc    = new TextEncoder()
+      const answer = ragResult.directAnswer
+      const bypass = new ReadableStream({
+        start(controller) {
+          const s = (obj: Record<string, unknown>) =>
+            controller.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`))
+          // Stream in 6-char chunks to get the same smooth appearance as NIM
+          let i = 0
+          const tick = () => {
+            if (i >= answer.length) { s({ type: 'done' }); controller.close(); return }
+            const chunk = answer.slice(i, i + 6); i += 6
+            s({ type: 'text', text: chunk })
+            // Use setImmediate-like approach with tiny setTimeout for non-blocking chunks
+            setTimeout(tick, 12)
+          }
+          tick()
+        },
+      })
+      return new Response(bypass, {
+        headers: {
+          'Content-Type':  'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection':    'keep-alive',
+          'X-ARIA-Source': 'kb-direct',
+        },
+      })
+    }
 
     // ── STREAM RESPONSE ───────────────────────────────────────────────────────
     const encoder = new TextEncoder()

@@ -296,6 +296,66 @@ for the Aiscern project before this takes effect in production.
 
 ---
 
+## Module A — ARIA Chat: RAG-first Engine + Response Performance
+
+### A.1 — ARIA Knowledge Base & Retrieval Module
+
+**New: `frontend/lib/rag/aria-knowledge.json`** — 18 curated KB chunks
+covering every common question about Aiscern: founder/mission, pricing, contact,
+each detection tool (text/image/audio/video) with accuracy/formats/limits, batch
+analyser, web scanner, REST API, dashboard/history, settings, confidence score
+interpretation, platform status, detection ethics. Each chunk has: `id`, `title`,
+`tags` (keyword fallback), `body` (system prompt context), `direct_answer` (NIM
+bypass), `embedding: null` (slot for precomputed 384-dim MiniLM vectors).
+
+**New: `frontend/lib/rag/aria-rag.ts`** — Retrieval module with two-level scoring:
+1. Cosine similarity to a MiniLM query embedding (4s HF timeout, skipped gracefully)
+2. BM25-style keyword/tag scoring (< 1ms, always available)
+Combined: `cosine × 0.7 + keyword × 0.3`. Expands query with last assistant turn.
+Returns `{ contextChunks[], bypassNIM, directAnswer, topScore }`.
+`formatKBContext()` renders chunks as `<aiscern_knowledge>` XML for system prompt.
+
+**`app/api/chat/route.ts`** — KB retrieval wired in after intent detection.
+Chunks prepended to `contextParts` before graph-RAG `<conversation_context>`,
+so ARIA sees factual Aiscern knowledge first.
+
+### A.1.2 — RAG Direct-Answer Bypass (eliminates NIM cold-start for FAQ queries)
+
+When `topScore >= 0.80` AND chunk has `direct_answer` AND no tool calls needed:
+the chat route **skips NVIDIA NIM entirely** and streams the KB answer as SSE
+chunks (8 chars per `setTimeout(12ms)`). Eliminates the 30–90s cold-start delay
+for the most common queries (founder, pricing, accuracy, file formats, contact,
+etc.). Includes `X-ARIA-Source: kb-direct` header for monitoring.
+`isKnowledgeQuery()` guard prevents bypass on detection requests ("analyze this",
+"is this AI", "check this file") — those always go to NIM.
+
+### A.2 — StreamingMessage rAF performance fix
+
+Previously ran `requestAnimationFrame` continuously even on settled/completed
+messages, burning ~16ms/frame per message in the chat viewport.
+- `isStreaming` prop added: rAF loop only starts when `isStreaming={true}`.
+- Reveal rate: 4 → **8 chars/frame** (still smooth, catches up faster).
+- Settled messages render immediately with no rAF overhead.
+
+### A.3 — Thinking indicator refinement
+
+Replaced spinning `<svg>` + "Connecting to ARIA…" with three bouncing dots +
+"ARIA is thinking…" — less anxiety-inducing, visually consistent with the
+typing-dots pattern. KB bypass responses correctly skip the indicator entirely
+(no `thinking` SSE event emitted on that path).
+
+### A.4 — KB vs live-analysis context labelling in system prompt
+
+`buildSystemPrompt` now splits `injectedContext` on `</aiscern_knowledge>`:
+- KB block → `═══ AISCERN KNOWLEDGE BASE — use as ground truth ═══`
+- Tool/analysis context → `═══ LIVE ANALYSIS CONTEXT (interpret for the user) ═══`
+
+Prevents ARIA from treating static FAQ copy as "live analysis" output.
+
+### Module A status: ✅ build green
+
+---
+
 ## Module C — Image detection layer re-weighting (not started yet — includes
 the `image-v3` merge/delete decided above in H.3)
 ## Module F — Settings persistence (not started yet)

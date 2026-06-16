@@ -1,0 +1,157 @@
+{
+  "_comment": "Aiscern / ARIA knowledge base — chunked for retrieveARIAKnowledge(). Each chunk: title, tags (keyword-fallback matching), body (injected into <knowledge> block when relevant), direct_answer (nullable — used by the A.2 RAG-direct bypass when similarity >= 0.80). 'embedding' fields are precomputed 384-dim MiniLM vectors; left null until `npm run aria:embed` is run with HUGGINGFACE_API_TOKEN set (see scripts/precompute-aria-embeddings.ts). Retrieval falls back to keyword/BM25-style scoring when embeddings are null or HF is unavailable, so this corpus works correctly even with zero embeddings computed.",
+  "chunks": [
+    {
+      "id": "founder_info",
+      "title": "Founder & Mission",
+      "tags": ["founder", "who built", "who made", "who owns", "anas", "saghir", "mission", "origin", "story", "creator", "company"],
+      "body": "Aiscern was founded and is owned by Anas Ali (also known as Saghir), a student entrepreneur from Mandi Bahauddin, Pakistan. He built Aiscern independently as a solo founder, handling product design, engineering, machine learning, and infrastructure himself while balancing his academic studies. Aiscern's mission is to make AI content detection universally accessible — a free, high-accuracy tool that anyone can use without a subscription or paywall. As AI-generated text, images, audio, and video become increasingly indistinguishable from authentic content, Aiscern provides infrastructure for verifying truth. The platform was born from the gap between expensive enterprise detection tools and the lack of a free, multi-modal public option for journalists, educators, researchers, and everyday users.",
+      "direct_answer": "Aiscern was founded and is built by Anas Ali (also known as Saghir), a solo student entrepreneur from Mandi Bahauddin, Pakistan, who handles product design, engineering, ML, and infrastructure himself. Aiscern's mission is to make multi-modal AI content detection free and accessible to everyone — no subscription or paywall required.",
+      "embedding": null
+    },
+    {
+      "id": "what_makes_different",
+      "title": "What makes Aiscern different",
+      "tags": ["different", "unique", "why aiscern", "compare", "competitors", "free", "no subscription", "no account"],
+      "body": "Aiscern is completely free — no subscription, no hidden fees, no credit card required for core detection. It's multi-modal from day one, covering text, image, audio, and video in a single platform. It's built by a solo founder passionate about digital integrity rather than a large corporate team, uses an ensemble-based detection approach for higher accuracy than single-model systems, and provides transparent confidence scoring with human-readable explanations. No account is required for basic scans — instant access for everyone. The platform is live at aiscern.com and is in active development, with new features and improved models being added continuously.",
+      "direct_answer": "Aiscern is free, multi-modal (text/image/audio/video) AI detection with no account required for basic scans, transparent confidence scoring, and an ensemble-based approach for higher accuracy than single-model tools. It's built and actively maintained by a solo founder, live now at aiscern.com.",
+      "embedding": null
+    },
+    {
+      "id": "pricing",
+      "title": "Pricing & Plans",
+      "tags": ["pricing", "price", "cost", "subscription", "plan", "plans", "free plan", "paid", "credits", "upgrade", "how much"],
+      "body": "Aiscern's core detection tools (text, image, audio, video) are free to use — no subscription or credit card required for basic scans. For users who need higher daily limits, batch processing, URL/web scanning, or API access, paid plans are available: Starter (100 credits/month, 100 scans/day), Pro (500 credits/month, with a 200/day anti-abuse cap), and Enterprise (effectively unlimited credits and daily scans). Credits are consumed per scan across all modalities and reset each billing period. Free-plan users get 10 scans/day across text and image only. Visit aiscern.com/pricing or /dashboard/credits to see current plan details and manage a subscription.",
+      "direct_answer": "Aiscern's core detection (text, image, audio, video) is free with no account required. Paid plans — Starter, Pro, and Enterprise — add higher monthly scan credits, batch processing, URL scanning, and API access. Check aiscern.com/pricing or your dashboard's Credits page for current details.",
+      "embedding": null
+    },
+    {
+      "id": "contact",
+      "title": "Contact & Support",
+      "tags": ["contact", "email", "support", "help", "reach", "partnership", "enterprise inquiry", "security issue", "bug report"],
+      "body": "For general inquiries, email contact@aiscern.com. For technical support, email support@aiscern.com. For security issues, email security@aiscern.com. For partnerships and enterprise inquiries, contact temah@aiscern.com. Documentation for the developer API is at aiscern.com/docs/api. For persistent technical problems, users should be directed to email support rather than attempting to resolve infrastructure issues in chat.",
+      "direct_answer": "You can reach Aiscern at contact@aiscern.com for general questions, support@aiscern.com for technical support, security@aiscern.com for security issues, and temah@aiscern.com for partnerships/enterprise.",
+      "embedding": null
+    },
+    {
+      "id": "text_detector",
+      "title": "AI Text Detector",
+      "tags": ["text detection", "detect text", "ai writing", "chatgpt detector", "text accuracy", "text format", "essay checker", "/detect/text"],
+      "body": "The AI Text Detector at /detect/text detects AI-written content from ChatGPT, Claude, Gemini, GPT-4, and 50+ AI writing models. It analyzes writing patterns, stylometric signals, and linguistic entropy, and provides a sentence-level confidence heatmap highlighting the most suspicious passages. Accuracy is approximately 94% on AI-generated text. Supported input: plain text (paste), .txt upload, and PDF upload up to 20MB. The tool includes sample AI text and sample human text buttons for reference.",
+      "direct_answer": "The AI Text Detector (/detect/text) analyzes writing for AI-generation signals from ChatGPT, Claude, Gemini, GPT-4 and 50+ models, with ~94% accuracy. It accepts pasted text, .txt files, or PDFs up to 20MB, and shows a sentence-level confidence heatmap.",
+      "embedding": null
+    },
+    {
+      "id": "image_detector",
+      "title": "Deepfake Image Detector",
+      "tags": ["image detection", "deepfake image", "ai image", "midjourney", "dall-e", "stable diffusion", "image format", "image accuracy", "/detect/image"],
+      "body": "The Deepfake Image Detector at /detect/image detects AI-generated images from Midjourney, DALL-E 3, Stable Diffusion, Adobe Firefly, and deepfake face swaps. It analyzes GAN artifacts, diffusion fingerprints, facial boundary inconsistencies, and pixel-level patterns. Accuracy is approximately 97% on AI-generated images. Supported formats: JPG, JPEG, PNG, WebP, GIF, BMP, TIFF, up to 10MB. Uncompressed or lightly compressed images give the best results.",
+      "direct_answer": "The Deepfake Image Detector (/detect/image) catches AI-generated images from Midjourney, DALL-E 3, Stable Diffusion, Adobe Firefly, and face-swap deepfakes with ~97% accuracy. It accepts JPG, PNG, WebP, GIF, BMP, and TIFF up to 10MB — uncompressed images work best.",
+      "embedding": null
+    },
+    {
+      "id": "audio_detector",
+      "title": "AI Audio & Voice Clone Detector",
+      "tags": ["audio detection", "voice clone", "tts detector", "elevenlabs", "audio format", "audio accuracy", "/detect/audio"],
+      "body": "The AI Audio & Voice Clone Detector at /detect/audio detects AI-synthesised voice, ElevenLabs voice cloning, TTS synthesis, and audio deepfakes. It analyzes prosody, spectral patterns, acoustic signatures, and temporal consistency. Accuracy is approximately 91% on AI-generated audio. Supported formats: MP3, WAV, OGG, M4A, FLAC, AAC, up to 50MB. It provides a segment-by-segment timeline showing confidence over time.",
+      "direct_answer": "The Audio & Voice Clone Detector (/detect/audio) flags AI-synthesised voices, ElevenLabs cloning, and TTS audio with ~91% accuracy. It accepts MP3, WAV, OGG, M4A, FLAC, and AAC up to 50MB, and shows a segment-by-segment confidence timeline.",
+      "embedding": null
+    },
+    {
+      "id": "video_detector",
+      "title": "Deepfake Video Detector",
+      "tags": ["video detection", "deepfake video", "video format", "video accuracy", "/detect/video", "frame analysis"],
+      "body": "The Deepfake Video Detector at /detect/video performs frame-by-frame deepfake detection with per-frame AI confidence scores. It identifies face swaps, synthetic faces, GAN artifacts, and temporal inconsistencies. Accuracy is approximately 88% on AI-generated/deepfake video. Supported formats: MP4, WebM, MOV, AVI, MKV, up to 100MB. A visual frame grid shows which frames triggered detection.",
+      "direct_answer": "The Deepfake Video Detector (/detect/video) does frame-by-frame analysis for face swaps, synthetic faces, and temporal inconsistencies with ~88% accuracy. It accepts MP4, WebM, MOV, AVI, and MKV up to 100MB, with a frame grid showing which frames triggered detection.",
+      "embedding": null
+    },
+    {
+      "id": "batch_analyser",
+      "title": "Batch Analyser",
+      "tags": ["batch", "bulk", "multiple files", "batch analysis", "/batch", "csv export"],
+      "body": "The Batch Analyser (/batch) processes multiple files simultaneously in a single job, supporting all media types — images, audio, video, text, and PDFs mixed together. Maximum file size per item is 100MB. It runs concurrent processing with real-time progress tracking, lets users export results as CSV or PDF report, and supports retrying failed items with one click. Batch analysis is available on Pro and Enterprise plans.",
+      "direct_answer": "The Batch Analyser (/batch) lets you scan many files at once (any mix of text, image, audio, video, PDF — up to 100MB each) with real-time progress, CSV/PDF export, and one-click retry. It's available on Pro and Enterprise plans.",
+      "embedding": null
+    },
+    {
+      "id": "web_scanner",
+      "title": "Web Scanner",
+      "tags": ["web scanner", "url scan", "scrape", "website detection", "/scraper"],
+      "body": "The Web Scanner (/scraper) lets a user enter any URL to scan all AI-generated content on a webpage. It detects AI text, AI images, and synthetic media embedded in the page, and shows an overall AI score, an asset-by-asset breakdown, and a confidence ring visualization.",
+      "direct_answer": "The Web Scanner (/scraper) scans an entire webpage by URL for AI-generated text and images, giving an overall AI score plus an asset-by-asset breakdown.",
+      "embedding": null
+    },
+    {
+      "id": "chat_assistant",
+      "title": "ARIA — AI Detection Assistant",
+      "tags": ["aria", "chat assistant", "chatbot", "/chat", "what can you do"],
+      "body": "ARIA (/chat) is Aiscern's general-purpose AI assistant specializing in detection guidance. It can answer questions about results, help interpret confidence scores, advise on next steps, and accepts image uploads for direct analysis within the chat. ARIA also supports full general knowledge — coding, science, writing, analysis, and more.",
+      "direct_answer": null,
+      "embedding": null
+    },
+    {
+      "id": "dashboard_features",
+      "title": "Dashboard & Scan History",
+      "tags": ["dashboard", "history", "scan history", "usage stats", "/dashboard", "/history"],
+      "body": "The dashboard (/dashboard) provides tool cards with quick-launch links to all detection tools, a list of the last 10 scans with verdict/confidence/tool used, usage statistics (total scans, AI vs human detected, by modality), and real-time updates as scans complete. The full Scan History (/history) shows a complete log of all scans for signed-in users, filterable by verdict (AI/HUMAN/UNCERTAIN), media type, and date range, with options to delete individual scans, clear all history, or download scan reports.",
+      "direct_answer": "Your dashboard (/dashboard) shows quick links to every detection tool, your last 10 scans, and overall usage stats. The full Scan History page (/history) lets you filter, delete, or download all past scans.",
+      "embedding": null
+    },
+    {
+      "id": "settings_profile",
+      "title": "Profile & Settings",
+      "tags": ["settings", "profile", "api key", "preferences", "account", "/settings", "delete account", "export data"],
+      "body": "The Profile & Settings page (/settings) includes API key management for programmatic access via the REST API, notification preferences (email alerts for batch completion), language preference, an AI-detection threshold control, data export (download preferences as JSON), and an account deletion option.",
+      "direct_answer": "In Settings (/settings) you can manage your API key, notification preferences, language, detection threshold, export your data, or delete your account.",
+      "embedding": null
+    },
+    {
+      "id": "api_docs",
+      "title": "REST API for Developers",
+      "tags": ["api", "rest api", "developer", "api key", "integrate", "/api/v1", "docs"],
+      "body": "Aiscern offers a free REST API for developers at /docs/api. Currently POST /api/v1/detect/text, /api/v1/detect/image, and /api/v1/detect/audio are available — send text/image/audio content and receive a verdict, confidence score, and signals in JSON. Every request requires an X-API-Key header; generate a free key in Settings → API Access. A /api/v1/detect/video endpoint is planned but not yet available — video detection is currently dashboard-only.",
+      "direct_answer": "Aiscern has a free REST API at aiscern.com/docs/api: POST /api/v1/detect/text, /detect/image, and /detect/audio (requires an X-API-Key header from Settings → API Access). A video API endpoint is coming soon — video detection is dashboard-only for now.",
+      "embedding": null
+    },
+    {
+      "id": "confidence_guide",
+      "title": "Confidence Score Interpretation",
+      "tags": ["confidence score", "confidence", "verdict", "threshold", "what does the score mean", "uncertain", "how confident"],
+      "body": "Verdict thresholds: AI (>=62% confidence) means strong signals of AI generation; UNCERTAIN (38-62%) means mixed or ambiguous signals — content may be partially AI-edited; HUMAN (<=38%) means minimal AI indicators, likely authentic. In plain language: 90-100% is near-certain AI generation; 70-89% is strong AI indicators; 50-69% is borderline (human review advised); 30-49% is weak AI signals, likely human; 0-29% is very likely authentic human content. Accuracy can be affected by heavy image compression, background noise in audio, very short texts (under 150 words), or content that is a mix of human and AI editing.",
+      "direct_answer": "Confidence scores: 90-100% = near-certain AI, 70-89% = strong AI signals, 50-69% = borderline/uncertain (human review advised), 30-49% = likely human with some AI-style patterns, 0-29% = very likely authentic. The verdict cutoffs are AI >=62%, UNCERTAIN 38-62%, HUMAN <=38%.",
+      "embedding": null
+    },
+    {
+      "id": "platform_status",
+      "title": "Platform Status",
+      "tags": ["status", "is aiscern down", "active development", "new features", "early access", "available"],
+      "body": "Aiscern is currently in active development and early access. New features, improved models, and expanded capabilities are being added continuously. The platform is live at aiscern.com.",
+      "direct_answer": "Aiscern is live at aiscern.com and in active development/early access, with new features and improved models being added continuously.",
+      "embedding": null
+    },
+    {
+      "id": "accuracy_summary",
+      "title": "Detection Accuracy by Modality",
+      "tags": ["accuracy", "how accurate", "accuracy rate", "error rate", "reliable"],
+      "body": "Approximate accuracy by modality: AI Text Detector ~94%, Deepfake Image Detector ~97%, AI Audio/Voice Clone Detector ~91%, Deepfake Video Detector ~88%. These figures are based on internal evaluation and can vary depending on content quality (e.g. heavy compression, very short text, or background noise reduce accuracy). Detection results are probabilistic, not definitive — human review is recommended for high-stakes decisions.",
+      "direct_answer": "Approximate accuracy: text ~94%, images ~97%, audio ~91%, video ~88%. These are probabilistic estimates, not certainties — human review is recommended for high-stakes decisions.",
+      "embedding": null
+    },
+    {
+      "id": "file_limits_summary",
+      "title": "Supported File Formats & Size Limits",
+      "tags": ["file format", "file size", "max size", "supported formats", "upload limit"],
+      "body": "File size and format limits by tool: Text — .txt or PDF up to 20MB. Image — JPG, JPEG, PNG, WebP, GIF, BMP, TIFF up to 10MB. Audio — MP3, WAV, OGG, M4A, FLAC, AAC up to 50MB. Video — MP4, WebM, MOV, AVI, MKV up to 100MB. Batch Analyser items can be up to 100MB each, any supported type mixed together.",
+      "direct_answer": "Size/format limits: text (.txt/PDF) up to 20MB; images (JPG/PNG/WebP/GIF/BMP/TIFF) up to 10MB; audio (MP3/WAV/OGG/M4A/FLAC/AAC) up to 50MB; video (MP4/WebM/MOV/AVI/MKV) up to 100MB; batch items up to 100MB each.",
+      "embedding": null
+    },
+    {
+      "id": "ethics_evasion",
+      "title": "Responsible Use & Evasion Policy",
+      "tags": ["bypass detection", "evade detection", "fool ai detector", "cheat", "trick the detector"],
+      "body": "Aiscern does not help users create content designed to evade AI detection, and does not provide instructions for bypassing or fooling AI detection systems. Detection results are probabilistic — they should inform, not replace, human judgment, especially for high-stakes decisions like academic integrity or legal matters.",
+      "direct_answer": "Aiscern's assistant won't help bypass or fool AI detectors — that's against the platform's responsible-use policy. Detection results are meant to inform human judgment, not replace it.",
+      "embedding": null
+    }
+  ]
+}
