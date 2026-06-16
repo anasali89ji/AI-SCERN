@@ -1453,3 +1453,131 @@ section > .max-w-7xl > .border-t {
 /* Preserve brand blue in light mode */
 .light .text-primary { color: #2563eb; }
 .light .bg-primary { background-color: #2563eb; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MODULE E — Mobile Responsiveness Sweep
+   Targeted fixes that complement the existing per-component responsive classes.
+   All rules are mobile-first and use max-width guards so they don't affect
+   desktop layout.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* E.1 — Comparison tables: wrap inside a horizontal-scroll container.
+   Applies to /compare and /pricing feature-comparison tables. */
+@media (max-width: 767px) {
+  table.min-w-\[640px\],
+  table.min-w-\[600px\] {
+    min-width: 540px;
+  }
+  /* Parent wrapper gets overflow-x: auto — set via JS/CSS combo below */
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+}
+
+/* E.1 — Prevent hero background blobs from expanding viewport */
+.hero-mesh-1, .hero-mesh-2, .hero-mesh-3 {
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+/* E.2 — Chat page: ensure message list pre/code blocks don't overflow */
+.chat-message-content pre,
+.chat-message-content code {
+  max-width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* E.2 — Chat page: keep attachment preview strip from overflowing on small screens */
+.attachment-strip {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.attachment-strip::-webkit-scrollbar { display: none; }
+
+/* E.3 — Detect page dropzones: always at least 160px tall on mobile (tappable) */
+@media (max-width: 639px) {
+  .detect-dropzone {
+    min-height: 160px !important;
+  }
+  /* Collapse side-by-side result panels to stacked */
+  .detect-result-split {
+    grid-template-columns: 1fr !important;
+  }
+  /* Frame grid: max 2 columns on mobile, no overflow */
+  .frame-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Confidence ring: never wider than the viewport */
+  .confidence-ring-container {
+    max-width: min(260px, 80vw);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* E.1 — Ensure no section produces horizontal scroll at 320px */
+@media (max-width: 359px) {
+  .hero-content h1 {
+    font-size: clamp(1.75rem, 9vw, 3rem) !important;
+    line-height: 1.15 !important;
+  }
+  /* Stats bar pills: wrap gracefully */
+  .stats-bar {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+  .stats-bar > * {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* E.3 — Audio/video result timeline: horizontal scroll within container */
+.audio-timeline-container,
+.video-frame-strip {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+/* E.1 — Dashboard tool cards: touch target minimum */
+@media (max-width: 639px) {
+  .tool-card {
+    min-height: 140px;
+  }
+}
+
+/* E.1 — Modals and toasts: full-width with safe margin on mobile */
+@media (max-width: 639px) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    max-width: calc(100vw - 2rem) !important;
+    left: 1rem !important;
+    right: 1rem !important;
+  }
+}
+
+/* E.1 — Settings rows: don't let inline selects overflow */
+@media (max-width: 639px) {
+  .settings-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  .settings-row select {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* E.2 — Chat: hide desktop sidebar shadow on mobile to avoid layout bleed */
+@media (max-width: 1023px) {
+  aside.fixed.z-30 {
+    box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+  }
+}

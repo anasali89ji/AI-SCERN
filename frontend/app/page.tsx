@@ -442,10 +442,10 @@ const HOW_IT_WORKS = [
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,   color: 'text-primary', bg: 'from-primary/10 to-transparent', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
-  { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/10 to-transparent', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
-  { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/10 to-transparent',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
-  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/10 to-transparent',     title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start' },
+  { icon: Database,   color: 'text-primary', bg: 'from-primary/18 to-transparent', border: 'border-primary/20', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples', accent: '#2563eb' },
+  { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/18 to-transparent', border: 'border-emerald/20', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited',    accent: '#10b981' },
+  { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/18 to-transparent',   border: 'border-amber/20',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed', accent: '#f59e0b' },
+  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/18 to-transparent',     border: 'border-cyan/20',    title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start',        accent: '#06b6d4' },
 ]
 
 const PROFESSIONALS = [
@@ -770,18 +770,27 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
                   transition={{ delay: i * 0.08, duration: 0.5 }}>
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
-                    <SpotlightCard color={`${tool.accent}18`}
-                      className={`group tool-card relative overflow-hidden rounded-2xl border border-border/60 p-5 sm:p-6 2xl:p-7 bg-gradient-to-br ${tool.bg} h-full cursor-pointer`}>
+                    <SpotlightCard color={`${tool.accent}28`}
+                      className={`group tool-card relative overflow-hidden rounded-2xl border ${tool.border} p-5 sm:p-6 2xl:p-7 h-full cursor-pointer transition-all duration-300 bg-surface`}>
+                      {/* Accent gradient overlay */}
+                      <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                        style={{ background: `linear-gradient(135deg, ${tool.accent}12 0%, ${tool.accent}05 40%, transparent 100%)` }} />
+                      {/* Top accent band */}
+                      <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl pointer-events-none"
+                        style={{ background: `linear-gradient(90deg, transparent, ${tool.accent}80, transparent)` }} />
+                      {/* Hover glow */}
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                        style={{ boxShadow: `0 0 32px ${tool.accent}22 inset, 0 0 0 1px ${tool.accent}30` }} />
                       {/* Scanline on hover */}
                       <div className="scanline" aria-hidden="true" />
 
                       <div className="flex items-start justify-between mb-5">
                         <div className={`w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
-                          style={{ background: `${tool.accent}14`, border: `1px solid ${tool.accent}20` }}>
+                          style={{ background: `${tool.accent}22`, border: `1px solid ${tool.accent}45` }}>
                           <tool.icon className="w-6 h-6 2xl:w-7 2xl:h-7" strokeWidth={1.8} />
                         </div>
                         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tool.color}`}
-                          style={{ background: `${tool.accent}12`, border: `1px solid ${tool.accent}22` }}>
+                          style={{ background: `${tool.accent}18`, border: `1px solid ${tool.accent}40` }}>
                           {tool.accuracy}
                         </span>
                       </div>
@@ -910,7 +919,7 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 2xl:gap-6 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel }, idx) => {
+              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel, accent }, idx) => {
                 // Override dataset stat with live HF count
                 const isDataset = title === 'Benchmarked Datasets'
                 const liveStat = isDataset && datasetRows
@@ -924,15 +933,21 @@ export default function HomePage() {
                 const displaySuffix = liveStat ? liveStat.suffix : statSuffix
                 const displayLabel  = liveStat ? liveStat.label : statLabel
                 const displayTarget = parseFloat(displayStat) || 0
+                const accentHex     = accent ?? '#2563eb'
                 return (
                 <motion.div key={title}
                   initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
-                  <SpotlightCard color="rgba(37,99,235,0.10)"
-                    className={`h-full p-6 sm:p-7 rounded-2xl border border-border/60 bg-gradient-to-br ${bg} hover:border-primary/25 transition-all duration-300 ${large ? 'bento-shimmer' : ''}`}>
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color}`}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <SpotlightCard color={`${accentHex}22`}
+                    className={`group relative h-full p-6 sm:p-7 rounded-2xl bg-surface bg-gradient-to-br ${bg} transition-all duration-300 ${large ? 'bento-shimmer' : ''} overflow-hidden`}>
+                    {/* Accent border + top accent line */}
+                    <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ boxShadow: `inset 0 0 0 1px ${accentHex}28` }} />
+                    <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl pointer-events-none"
+                      style={{ background: `linear-gradient(90deg, transparent, ${accentHex}70, transparent)` }} />
+                    <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color} group-hover:scale-110 transition-transform duration-300`}
+                      style={{ background: `${accentHex}18`, border: `1px solid ${accentHex}38` }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />
                     </div>
                     {displayStat !== undefined && (
