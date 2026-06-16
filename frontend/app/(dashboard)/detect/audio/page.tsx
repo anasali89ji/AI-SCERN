@@ -8,6 +8,7 @@ import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
@@ -59,6 +60,7 @@ function formatDuration(secs: number) {
 
 function AudioDetectionPage() {
   const { user: currentUser } = useAuth()
+  const { showConfidence, showSignals, highAccMode, autoDownloadPdf } = useDetectSettings(currentUser?.uid)
   const displayName: string | null =
     currentUser?.displayName?.split(' ')[0] ||
     currentUser?.email?.split('@')[0] ||

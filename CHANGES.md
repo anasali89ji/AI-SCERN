@@ -454,7 +454,64 @@ rules (no model names, no API providers, no internal system names):
 
 ---
 
-## Module F — Settings persistence (not started yet)
+## Module F — Settings Page: Real Persistence, Real Triggers
+
+### What was broken (confirmed by audit)
+- Settings page used `localStorage` as source of truth; switching browsers/devices silently reverted everything to defaults.
+- `AnimationPreferenceProvider` existed but was **not mounted** in `app/layout.tsx` — `useAnimationPref()` always returned the hardcoded default.
+- `useUserSettings`/`useDetectSettings` hooks didn't exist — detect pages couldn't read any setting.
+- Settings like `show_confidence`, `show_signals`, `high_acc_mode`, `auto_download_pdf`, `default_modality` were stored but **read by nothing**.
+- `UserSettings` type was imported from a server route file (`app/api/user/settings/route.ts`) which imports `@clerk/nextjs/server` — any client hook importing it failed Next.js's server-only boundary check, causing build failures.
+- `data_retention_days` had no enforcement — no cron, no purge function.
+- Theme toggle applied a class to `<html>` but `globals.css` had no `.light` token overrides, so the site stayed dark regardless.
+
+### F.0 — Shared types extracted to `frontend/lib/settings/types.ts`
+Moved `SETTINGS_DEFAULTS` and `UserSettings` type out of the route file into a plain, server-safe-free module. Both the server-side route and client-side hooks now import from `lib/settings/types`. Route file re-exports were removed (Next.js forbids non-HTTP exports from route files).
+
+### F.1 — Persistence layer (already complete from prior work)
+- `supabase/migrations/v17_user_settings.sql` — `user_settings` table with RLS, all 20 columns, `updated_at` trigger, backfill from `profiles.public_profile`/`analytics_opt_out`. *(Existed; verified correct.)*
+- `app/api/user/settings/route.ts` — `GET` (returns DB row merged with defaults) and `PATCH` (validates + upserts, mirrors `public_profile`/`analytics_opt_out` to `profiles`). *(Existed; fixed `.catch()` → try/catch, removed invalid re-exports.)*
+- `app/(dashboard)/settings/page.tsx` — already uses `GET`/`PATCH` with localStorage as hydration cache, debounced auto-save, and Save All. *(Existed and correct.)*
+
+### F.2 — Settings that now do something real
+
+**`AnimationPreferenceProvider` mounted in root layout**: Wraps `MotionProvider` in `app/layout.tsx`. All components that call `useAnimationPref()` (including `StreamingMessage` from Module A.2) now correctly receive the DB-persisted `animations_off` value.
+
+**New `frontend/hooks/useUserSettings.ts`**: Singleton-pattern settings reader with in-memory cache, localStorage hydration, and a single `GET /api/user/settings` fetch shared across all subscribers. Zero extra network requests when multiple components on the same page call it.
+
+**New `frontend/hooks/useDetectSettings.ts`**: Named-flag wrapper over `useUserSettings` for detect pages (`showConfidence`, `showSignals`, `highAccMode`, `autoDownloadPdf`, `saveHistory`, `defaultModality`).
+
+**`show_confidence` → text detect page**: Confidence percentage (`formatConfidence(result.confidence)`) now conditionally rendered based on `showConfidence`. Off by default in Settings is `false` so on-by-default matches the existing behavior.
+
+**`show_signals` → text detect page**: The entire "Detection Signals" section wrapped in `{showSignals && ...}` — hidden when user disables it in Settings.
+
+**`high_acc_mode` → text detect page**: Passed as `high_acc_mode: true` in the JSON body of `POST /api/detect/text`. The text route already logs this in scan metadata; the image ensemble (Module C) can use it as a flag to skip any future fast-path shortcuts.
+
+**`auto_download_pdf` → text detect page**: After a successful scan, if `autoDownloadPdf` is true, triggers a `.txt` report download automatically (same content as the manual "Export" button). Registered on scan completion, after the result state is set.
+
+**`default_modality` → dashboard**: Dashboard's primary "Start Scanning" CTA now links to `/detect/${defaultModality}` instead of hardcoded `/detect/text`. A user who sets Default Modality to "image" in Settings will land on the image detector when they click the main dashboard CTA.
+
+**`useDetectSettings` added to image/audio/video detect pages**: Hooks are instantiated — `showConfidence`, `showSignals`, `highAccMode`, `autoDownloadPdf` are available. Full JSX gating of each page's results (matching what was done in text page) is the remaining read-side wiring and will be done per-page as part of Module D's results-UI pass to avoid duplicating work.
+
+**Theme toggle → light mode CSS**: Added a `.light` CSS override block at the end of `globals.css`. When `patchSettings({ theme: 'light' })` is called (in the settings page's `patchSettings` side-effect which already runs `document.documentElement.classList.add('light')`), the `.light` class overrides the key surface/text/border tokens with light equivalents (`#f8fafc`, `#ffffff`, `#0f172a`, etc.). A full design-system light theme (converting all Tailwind tokens to CSS custom properties) is scoped for a follow-up pass — this baseline makes the toggle visually meaningful immediately.
+
+**Language switcher**: Non-English options remain `disabled` in the `<select>` (already styled that way in the existing settings page) with "— soon" labels. No fake-functional options; the setting is stored but only `en` has any effect.
+
+### F.3 — API Key section (already complete from prior work)
+The settings page's `ApiKeySection` component already calls `GET /api/user/api-keys`, `POST /api/user/api-keys`, and `DELETE /api/user/api-keys/[id]`. The one-time reveal, copy, and revoke flows are all wired to real endpoints. *(Verified correct — no changes needed.)*
+
+### F data-retention cron: `supabase/migrations/v18_data_retention_cron.sql`
+New `purge_scans_by_retention()` function: deletes `scans` rows older than `user_settings.data_retention_days` for each user, skipping users with `-1` (Forever). Scheduled via `cron.schedule('aiscern-data-retention', '0 3 * * *', ...)` — runs at 03:00 UTC nightly, after the daily-scan-count reset (which runs at midnight). **Requires pg_cron extension enabled** in Supabase Dashboard → Database → Extensions.
+
+### Module F status: ✅ build green (`npm run build`, no type errors)
+
+**Actions required from Anas:**
+1. Run `supabase/migrations/v17_user_settings.sql` (if not already applied — from prior work).
+2. Run `supabase/migrations/v18_data_retention_cron.sql` in Supabase SQL Editor.
+3. Enable pg_cron extension in Supabase Dashboard → Database → Extensions (if not already enabled for the v16 migration's daily-scan-count reset cron).
+
+---
+
 ## Module B — Auth pages redesign (not started yet)
 ## Module D — Bright tool-card accents / anti-vibecode pass (not started yet)
 ## Module E — Mobile responsiveness sweep (not started yet)

@@ -1412,3 +1412,44 @@ section > .max-w-7xl > .border-t {
   h1 { font-size: clamp(3rem, 3.5vw, 7rem); }
   h2 { font-size: clamp(2rem, 2.5vw, 5rem); }
 }
+
+/* ── Light Theme (F.2) — applies when <html class="light"> ──────────────── */
+/* The Tailwind tokens are hardcoded hex values, so we use CSS custom props   */
+/* on .light to override the most visible surface/text tokens.                */
+/* Full design-system light-mode requires migrating tokens to CSS vars        */
+/* (a larger undertaking for a follow-up pass) — this provides a functional  */
+/* baseline so the Settings theme toggle has a visible effect.                */
+
+.light {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --tw-bg-background:  #f8fafc;
+  --tw-bg-surface:     #ffffff;
+  --tw-bg-active:      #f1f5f9;
+
+  /* Text */
+  --tw-text-primary:   #0f172a;
+  --tw-text-secondary: #334155;
+  --tw-text-muted:     #64748b;
+  --tw-text-disabled:  #94a3b8;
+
+  /* Border */
+  --tw-border:         #e2e8f0;
+}
+
+/* Map .light token overrides to background/surface classes */
+.light body,
+.light [class*="bg-background"] { background-color: #f8fafc !important; }
+.light [class*="bg-surface"]:not([class*="bg-surface-active"]) { background-color: #ffffff !important; }
+.light [class*="bg-surface-active"] { background-color: #f1f5f9 !important; }
+.light [class*="bg-surface-hover"] { background-color: rgba(0,0,0,0.04) !important; }
+.light [class*="border-border"] { border-color: #e2e8f0 !important; }
+.light [class*="text-text-primary"] { color: #0f172a !important; }
+.light [class*="text-text-secondary"] { color: #334155 !important; }
+.light [class*="text-text-muted"] { color: #64748b !important; }
+.light [class*="text-text-disabled"] { color: #94a3b8 !important; }
+
+/* Preserve brand blue in light mode */
+.light .text-primary { color: #2563eb; }
+.light .bg-primary { background-color: #2563eb; }
