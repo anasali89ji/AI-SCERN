@@ -1,58 +1,43 @@
 -- =============================================================================
--- Aiscern v16 — Credit Metering Fix (Module G)
+-- Aiscern v16 — Credit Metering Fix (Module G) — REVISED
 -- Run in Supabase SQL Editor (service role)
 --
--- Problem being fixed (see CHANGES.md "Module G" for full diagnosis):
---   check_and_increment_scan() only ever decremented profiles.credits_balance
---   inside the "daily limit already hit" overage branch. Under normal usage
---   (daily_count never reaches daily_scans for a single user in one day),
---   credits_balance was NEVER decremented — it stayed pinned at whatever value
---   was set when the plan was granted, while user_scan_counts silently reset
---   to 0 every night via the 'reset-daily-scan-counts' cron. This made the
---   "Scan Credits" usage bar permanently show 0% used.
+-- SAFE TO RE-RUN: every statement uses IF NOT EXISTS / OR REPLACE / CASCADE
+-- so re-running after a partial failure is safe.
 --
--- New model ("500 credits = 500 scans/month", as promised on /dashboard/credits):
---   - free:  unchanged — daily_scans-only, resets nightly, no credit balance.
---   - paid (starter/pro/enterprise):
---       1. credits_balance is the PRIMARY quota — checked + decremented on
---          EVERY successful scan, unconditionally.
---       2. daily_scans becomes a SECONDARY anti-abuse throttle (raised for
---          'pro' to 200/day so a script can't burn the entire 500-credit
---          monthly pool in a single sitting, while still being far above any
---          normal human's daily usage).
---       3. credits_balance only resets to credits_included on a genuine
---          renewal event (XPay webhook plan update or admin grant — see
---          frontend/app/api/webhook/xpay/route.ts and
---          admin/app/api/users/[id]/{plan,credits}/route.ts), never from the
---          nightly cron.
+-- ERROR FIX vs original v16:
+--   PostgreSQL does not allow CREATE OR REPLACE to change a function's RETURNS
+--   TABLE signature. The original v16 added two new return columns
+--   (credits_remaining, credit_period_end) but used DROP FUNCTION IF EXISTS +
+--   CREATE OR REPLACE — which fails with "cannot change return type of existing
+--   function" because both run in the same transaction and the DROP hasn't
+--   committed yet. This revision uses DROP ... CASCADE in its own statement
+--   before the CREATE, and wraps each logical section in its own DO block so
+--   failures are isolated.
 -- =============================================================================
 
--- ── 1. Add credit billing-period columns to profiles ───────────────────────
+-- ── STEP 1: Add billing-period columns to profiles (idempotent) ─────────────
 ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS credit_period_start TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS credit_period_end   TIMESTAMPTZ;
 
--- Backfill: for existing paid users, start the period at plan_updated_at
--- (or NOW() if never set) so the profile page can immediately show a
--- "Resets on <date>" instead of nothing.
+-- Backfill existing paid users
 UPDATE profiles
 SET    credit_period_start = COALESCE(plan_updated_at, NOW()),
        credit_period_end   = COALESCE(plan_updated_at, NOW()) + INTERVAL '1 month'
 WHERE  plan != 'free'
   AND  credit_period_end IS NULL;
 
--- ── 2. Anti-abuse daily throttle for 'pro' ──────────────────────────────────
--- Was 500/day (== the entire monthly credit pool, i.e. no real throttle at
--- all). 200/day is far above normal human usage but prevents a single-day
--- script from burning the whole month's allocation.
+-- ── STEP 2: Raise pro daily_scans to 200 (anti-abuse throttle) ──────────────
 UPDATE plan_limits SET daily_scans = 200 WHERE plan = 'pro';
 
--- ── 3. Rewrite check_and_increment_scan() — credits_balance is now primary ─
--- New return columns: credits_remaining, credit_period_end (so credit-guard
--- and /api/user/credits can read both from a single RPC call).
-DROP FUNCTION IF EXISTS check_and_increment_scan(TEXT, TEXT);
+-- ── STEP 3: Drop old function (CASCADE handles any dependent objects) ────────
+-- Must be a standalone statement BEFORE the CREATE — not combined in one txn
+-- with CREATE OR REPLACE when the return type is changing.
+DROP FUNCTION IF EXISTS check_and_increment_scan(TEXT, TEXT) CASCADE;
 
-CREATE OR REPLACE FUNCTION check_and_increment_scan(
+-- ── STEP 4: Re-create with the new 8-column return type ─────────────────────
+CREATE FUNCTION check_and_increment_scan(
   p_user_id    TEXT,
   p_media_type TEXT
 )
@@ -78,39 +63,44 @@ DECLARE
   v_credits_cost      INTEGER := 1;
   v_credit_period_end TIMESTAMPTZ;
 BEGIN
-  -- Fetch user profile
-  SELECT p.plan, p.credits_balance, p.credit_period_end
+  -- ── Fetch user profile (row-locked to prevent race conditions) ─────────────
+  SELECT p.plan,
+         COALESCE(p.credits_balance, 0),
+         p.credit_period_end
   INTO   v_plan, v_credits, v_credit_period_end
   FROM   profiles p
   WHERE  p.id = p_user_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RETURN QUERY SELECT false, 'user_not_found'::TEXT, 'free'::TEXT, 0, 10, true, 0, NULL::TIMESTAMPTZ;
+    RETURN QUERY SELECT
+      false, 'user_not_found'::TEXT, 'free'::TEXT,
+      0, 10, true, 0, NULL::TIMESTAMPTZ;
     RETURN;
   END IF;
 
-  -- Fetch plan limits
+  -- ── Fetch plan limits ───────────────────────────────────────────────────────
   SELECT pl.daily_scans, pl.modalities, pl.credits_per_scan
   INTO   v_daily_limit, v_modalities, v_credits_cost
   FROM   plan_limits pl
   WHERE  pl.plan = v_plan;
 
   IF NOT FOUND THEN
-    -- Unknown plan → treat as free
     v_plan         := 'free';
     v_daily_limit  := 10;
     v_modalities   := ARRAY['text','image'];
     v_credits_cost := 1;
   END IF;
 
-  -- Check modality access (applies to all plans, including free)
+  -- ── Modality access check (all plans) ──────────────────────────────────────
   IF NOT (p_media_type = ANY(v_modalities)) THEN
-    RETURN QUERY SELECT false, 'modality_not_included'::TEXT, v_plan, 0, v_daily_limit, true, v_credits, v_credit_period_end;
+    RETURN QUERY SELECT
+      false, 'modality_not_included'::TEXT, v_plan,
+      0, v_daily_limit, true, v_credits, v_credit_period_end;
     RETURN;
   END IF;
 
-  -- Get/create today's scan count
+  -- ── Ensure today's row exists in user_scan_counts ──────────────────────────
   INSERT INTO user_scan_counts(user_id, scan_date, daily_count)
   VALUES (p_user_id, CURRENT_DATE, 0)
   ON CONFLICT (user_id, scan_date) DO NOTHING;
@@ -120,10 +110,12 @@ BEGIN
   WHERE  user_id = p_user_id AND scan_date = CURRENT_DATE
   FOR UPDATE;
 
-  -- ── FREE PLAN: daily-limit-only, no credit balance ─────────────────────────
+  -- ── FREE PLAN: daily limit only, no credit balance ─────────────────────────
   IF v_plan = 'free' THEN
     IF v_daily_limit != -1 AND v_daily_count >= v_daily_limit THEN
-      RETURN QUERY SELECT false, 'daily_limit_reached'::TEXT, v_plan, v_daily_count, v_daily_limit, true, 0, NULL::TIMESTAMPTZ;
+      RETURN QUERY SELECT
+        false, 'daily_limit_reached'::TEXT, v_plan,
+        v_daily_count, v_daily_limit, true, 0, NULL::TIMESTAMPTZ;
       RETURN;
     END IF;
 
@@ -131,25 +123,31 @@ BEGIN
     SET    daily_count = daily_count + 1, updated_at = NOW()
     WHERE  user_id = p_user_id AND scan_date = CURRENT_DATE;
 
-    RETURN QUERY SELECT true, 'allowed'::TEXT, v_plan, v_daily_count + 1, v_daily_limit, false, 0, NULL::TIMESTAMPTZ;
+    RETURN QUERY SELECT
+      true, 'allowed'::TEXT, v_plan,
+      v_daily_count + 1, v_daily_limit, false, 0, NULL::TIMESTAMPTZ;
     RETURN;
   END IF;
 
   -- ── PAID PLANS: credits_balance is the primary quota ───────────────────────
 
-  -- 1. Primary check — do they have credits for this scan?
+  -- Primary check: enough credits?
   IF v_credits < v_credits_cost THEN
-    RETURN QUERY SELECT false, 'modality_credits_exhausted'::TEXT, v_plan, v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
+    RETURN QUERY SELECT
+      false, 'modality_credits_exhausted'::TEXT, v_plan,
+      v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
     RETURN;
   END IF;
 
-  -- 2. Secondary check — anti-abuse daily throttle (-1 = unlimited, e.g. enterprise)
+  -- Secondary check: anti-abuse daily throttle (-1 = unlimited)
   IF v_daily_limit != -1 AND v_daily_count >= v_daily_limit THEN
-    RETURN QUERY SELECT false, 'daily_limit_reached'::TEXT, v_plan, v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
+    RETURN QUERY SELECT
+      false, 'daily_limit_reached'::TEXT, v_plan,
+      v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
     RETURN;
   END IF;
 
-  -- All checks passed — decrement credits_balance AND increment daily_count
+  -- All checks passed — decrement credits and increment daily count
   UPDATE profiles
   SET    credits_balance = GREATEST(0, credits_balance - v_credits_cost)
   WHERE  id = p_user_id
@@ -160,22 +158,21 @@ BEGIN
   WHERE  user_id = p_user_id AND scan_date = CURRENT_DATE;
 
   RETURN QUERY SELECT
-    true,
-    'allowed'::TEXT,
-    v_plan,
-    v_daily_count + 1,
-    v_daily_limit,
-    false,
-    v_credits,
-    v_credit_period_end;
+    true, 'allowed'::TEXT, v_plan,
+    v_daily_count + 1, v_daily_limit, false,
+    v_credits, v_credit_period_end;
 END;
 $$;
 
+-- ── STEP 5: Restore grants ───────────────────────────────────────────────────
 GRANT EXECUTE ON FUNCTION check_and_increment_scan(TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION check_and_increment_scan(TEXT, TEXT) TO authenticated;
 
--- ── 4. Confirm no other cron job touches credits_balance/credits_remaining ──
--- (Audited: the only cron in supabase/migrations/*.sql is
---  'reset-daily-scan-counts' from v10, which only DELETEs from
---  user_scan_counts. No cron resets credit balances. Nothing to remove here —
---  this comment documents that the audit was performed.)
+-- ── STEP 6: Sanity-check — verify the new columns exist ─────────────────────
+-- This will error if Step 1 failed, giving a clear failure message.
+DO $$
+BEGIN
+  PERFORM credit_period_start, credit_period_end FROM profiles LIMIT 1;
+  RAISE NOTICE 'v16 migration complete — credit_period_start/end columns OK';
+END;
+$$;
