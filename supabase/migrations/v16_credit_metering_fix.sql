@@ -1,14 +1,18 @@
 -- =============================================================================
--- Aiscern v16 — Credit Metering Fix (Module G) — v3 SELF-CONTAINED
+-- Aiscern v16 — Credit Metering Fix (Module G) — v4 SELF-CONTAINED
 -- Run in Supabase SQL Editor (service role). Safe to re-run.
 --
--- This revision is fully self-contained: it creates plan_limits and
--- user_scan_counts if they don't already exist, so it works whether or not
--- v10_credits_and_billing.sql was previously run.
+-- v4 change: drops plan_limits if it exists with a wrong schema, then
+-- recreates it cleanly. This fixes: "column 'plan' of relation 'plan_limits'
+-- does not exist" caused by a pre-existing table with a different column layout.
 -- =============================================================================
 
--- ── STEP 1: Ensure plan_limits table exists ──────────────────────────────────
-CREATE TABLE IF NOT EXISTS plan_limits (
+-- ── STEP 0: Drop stale plan_limits (wrong schema) ────────────────────────────
+-- We always recreate it so the column set is guaranteed correct.
+DROP TABLE IF EXISTS plan_limits CASCADE;
+
+-- ── STEP 1: Create plan_limits with correct schema ───────────────────────────
+CREATE TABLE plan_limits (
   plan             TEXT PRIMARY KEY,
   daily_scans      INTEGER NOT NULL DEFAULT 10,
   credits_included INTEGER NOT NULL DEFAULT 0,
@@ -17,18 +21,12 @@ CREATE TABLE IF NOT EXISTS plan_limits (
   credits_per_scan INTEGER NOT NULL DEFAULT 1
 );
 
--- Seed / update all four plans
+-- Seed all four plans
 INSERT INTO plan_limits (plan, daily_scans, credits_included, modalities, overage_allowed, credits_per_scan) VALUES
   ('free',       10,   0,    ARRAY['text','image'],                              false, 1),
   ('starter',    100,  100,  ARRAY['text','image','audio','video','url'],         false, 1),
   ('pro',        200,  500,  ARRAY['text','image','audio','video','url','batch'], true,  1),
-  ('enterprise', -1,   9999, ARRAY['text','image','audio','video','url','batch'], true,  1)
-ON CONFLICT (plan) DO UPDATE SET
-  daily_scans      = EXCLUDED.daily_scans,
-  credits_included = EXCLUDED.credits_included,
-  modalities       = EXCLUDED.modalities,
-  overage_allowed  = EXCLUDED.overage_allowed,
-  credits_per_scan = EXCLUDED.credits_per_scan;
+  ('enterprise', -1,   9999, ARRAY['text','image','audio','video','url','batch'], true,  1);
 
 -- ── STEP 2: Ensure user_scan_counts table exists ─────────────────────────────
 CREATE TABLE IF NOT EXISTS user_scan_counts (
@@ -41,11 +39,11 @@ CREATE TABLE IF NOT EXISTS user_scan_counts (
 
 CREATE INDEX IF NOT EXISTS idx_scan_counts_date ON user_scan_counts(scan_date);
 
--- ── STEP 3: Ensure credits_balance column exists on profiles ─────────────────
+-- ── STEP 3: Ensure required columns exist on profiles ────────────────────────
 ALTER TABLE profiles
-  ADD COLUMN IF NOT EXISTS credits_balance  INTEGER   NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS credits_remaining INTEGER,
-  ADD COLUMN IF NOT EXISTS plan_updated_at  TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS credits_balance     INTEGER     NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS credits_remaining   INTEGER,
+  ADD COLUMN IF NOT EXISTS plan_updated_at     TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS credit_period_start TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS credit_period_end   TIMESTAMPTZ;
 
@@ -56,12 +54,10 @@ SET    credit_period_start = COALESCE(plan_updated_at, NOW()),
 WHERE  plan != 'free'
   AND  credit_period_end IS NULL;
 
--- ── STEP 5: Drop old function with CASCADE ───────────────────────────────────
--- Required because we are changing the RETURNS TABLE signature (6 → 8 columns).
--- CREATE OR REPLACE cannot change return type — DROP first.
+-- ── STEP 5: Drop old function (return-type change requires DROP first) ────────
 DROP FUNCTION IF EXISTS check_and_increment_scan(TEXT, TEXT) CASCADE;
 
--- ── STEP 6: Create new function ──────────────────────────────────────────────
+-- ── STEP 6: Recreate function with 8-column return type ──────────────────────
 CREATE FUNCTION check_and_increment_scan(
   p_user_id    TEXT,
   p_media_type TEXT
@@ -148,13 +144,11 @@ BEGIN
 
   -- PAID PLANS: credits_balance is the primary quota
 
-  -- Primary check: enough credits?
   IF v_credits < v_credits_cost THEN
     RETURN QUERY SELECT false, 'modality_credits_exhausted'::TEXT, v_plan, v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
     RETURN;
   END IF;
 
-  -- Secondary check: anti-abuse daily throttle (-1 = unlimited)
   IF v_daily_limit != -1 AND v_daily_count >= v_daily_limit THEN
     RETURN QUERY SELECT false, 'daily_limit_reached'::TEXT, v_plan, v_daily_count, v_daily_limit, true, v_credits, v_credit_period_end;
     RETURN;
@@ -178,7 +172,7 @@ $$;
 GRANT EXECUTE ON FUNCTION check_and_increment_scan(TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION check_and_increment_scan(TEXT, TEXT) TO authenticated;
 
--- ── STEP 8: Enable RLS on new tables if not already set ─────────────────────
+-- ── STEP 8: RLS on new tables ────────────────────────────────────────────────
 ALTER TABLE plan_limits      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_scan_counts ENABLE ROW LEVEL SECURITY;
 
@@ -206,6 +200,6 @@ DECLARE
   v_plan_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO v_plan_count FROM plan_limits;
-  RAISE NOTICE 'v16 migration complete — plan_limits has % rows, check_and_increment_scan() recreated with 8-column return type', v_plan_count;
+  RAISE NOTICE 'v16 v4 migration complete — plan_limits has % rows, check_and_increment_scan() recreated with 8-column return type', v_plan_count;
 END;
 $$;
