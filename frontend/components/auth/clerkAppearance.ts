@@ -1,75 +1,121 @@
 /**
  * components/auth/clerkAppearance.ts
- * Shared Clerk appearance config used by both login and signup pages.
- * B.1: single source of truth — style changes here apply everywhere.
- * B.2: OTP input uses w-9 h-10 (was w-11 h-12) to prevent 6-input overflow at 320px.
+ *
+ * Unified Clerk appearance — applied to both SignIn and SignUp.
+ * Design system: deep navy base (#050510), primary blue (#2563eb),
+ * all inputs use a single-border style with precise focus rings.
+ * Card is borderless (shell handles the frame); internal spacing is tight.
  */
 
 export const clerkAppearance = {
   layout: {
-    socialButtonsPlacement:  'bottom',
-    socialButtonsVariant:    'blockButton',
-    showOptionalFields:      false,
+    socialButtonsPlacement: 'bottom' as const,
+    socialButtonsVariant:   'blockButton' as const,
+    showOptionalFields:     false,
   },
   variables: {
     colorPrimary:                 '#2563eb',
-    colorBackground:              '#0c0c20',
-    colorInputBackground:         '#080818',
-    colorInputText:               '#f1f5ff',
+    colorBackground:              'transparent',  // shell controls the bg
+    colorInputBackground:         '#0a0a1f',
+    colorInputText:               '#e8edff',
     colorText:                    '#e8edff',
-    colorTextSecondary:           '#94a3c4',   // bumped from slate-600 for WCAG AA
+    colorTextSecondary:           '#8892b0',
     colorTextOnPrimaryBackground: '#ffffff',
-    colorNeutral:                 '#3a3a62',
+    colorNeutral:                 '#2a2a50',
     colorDanger:                  '#f87171',
     colorSuccess:                 '#34d399',
     colorWarning:                 '#fbbf24',
-    borderRadius:                 '10px',
+    borderRadius:                 '8px',
     fontFamily:                   'inherit',
     fontSize:                     '14px',
-    spacingUnit:                  '16px',
-    fontWeight:                   { normal: 400, medium: 500, bold: 700 },
+    spacingUnit:                  '14px',
+    fontWeight:                   { normal: 400, medium: 500, bold: 600 } as Record<string, number>,
   },
   elements: {
-    rootBox:                     'w-full',
-    card:                        'bg-[#0c0c20] border-2 border-[#2f2f58] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-2xl overflow-hidden p-0',
-    cardBox:                     'rounded-b-2xl',
-    header:                      '!hidden',
-    main:                        'px-6 sm:px-7 pb-2 pt-6',
-    formFieldRow:                'mb-4',
-    formFieldLabelRow:           'flex items-center justify-between mb-2',
-    formFieldLabel:              'text-[12px] font-semibold tracking-[0.07em] uppercase text-slate-300',
-    formFieldHintText:           'text-slate-400 text-[12px] mt-1.5',
-    formFieldInput:              'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-primary focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
+    // Root / card structure
+    rootBox:  'w-full',
+    card:     '!bg-transparent !shadow-none !border-none !p-0 !rounded-none',
+    cardBox:  '!rounded-none',
+    header:   '!hidden',
+
+    // Form layout
+    main:         'px-6 sm:px-8 pb-5 pt-5',
+    formFieldRow: 'mb-[14px]',
+
+    // Labels
+    formFieldLabelRow:  'flex items-center justify-between mb-1.5',
+    formFieldLabel:     'text-[11.5px] font-semibold tracking-[0.08em] uppercase text-slate-400',
+    formFieldHintText:  'text-slate-500 text-[12px] mt-1.5 leading-relaxed',
+
+    // Inputs
+    formFieldInput: [
+      'w-full bg-[#0a0a1f] text-[#e8edff] placeholder:text-slate-600',
+      'border border-[#252550] rounded-[8px]',
+      'text-[14px] px-3.5 py-[10px] leading-normal',
+      'transition-all duration-150',
+      'focus:outline-none focus:border-[#2563eb] focus:bg-[#0b0b23]',
+      'focus:ring-[3px] focus:ring-[#2563eb]/15',
+      'hover:border-[#33336a]',
+    ].join(' '),
     formFieldInputShowPasswordButton: 'text-slate-500 hover:text-slate-300 transition-colors pr-1',
-    formFieldAction:             'text-primary hover:text-blue-300 text-[12px] font-medium transition-colors',
-    formFieldErrorText:          'text-rose-400 text-[12.5px] mt-2 font-medium',
-    formFieldSuccessText:        'text-emerald-400 text-[12.5px] mt-2 font-medium',
-    formFieldWarningText:        'text-amber-400 text-[12.5px] mt-2 font-medium',
-    // B.2: reduced from w-11 h-12 → w-9 h-10 so 6×OTP fits at 320px
-    otpCodeFieldInput:           'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[18px] font-bold rounded-[10px] text-center w-9 h-10 focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
-    formButtonPrimary:           'w-full bg-primary hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-    formButtonReset:             'text-primary hover:text-blue-300 text-[13px] font-medium transition-colors',
-    dividerRow:                  'my-5',
-    dividerLine:                 'bg-[#2f2f58]',
-    dividerText:                 'text-slate-500 text-[11px] px-3 uppercase tracking-widest',
-    socialButtonsBlockButton:    'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 shadow-sm',
-    socialButtonsBlockButtonText:'text-[13.5px] font-semibold',
+    formFieldAction: 'text-[#4b82f7] hover:text-[#7aa5fa] text-[12px] font-medium transition-colors',
+
+    // Error / success
+    formFieldErrorText:   'text-rose-400 text-[12px] mt-1.5 leading-relaxed',
+    formFieldSuccessText: 'text-emerald-400 text-[12px] mt-1.5',
+    formFieldWarningText: 'text-amber-400 text-[12px] mt-1.5',
+
+    // OTP code input — 6 cells, tight sizing for all viewports
+    otpCodeFieldInput: [
+      'bg-[#0a0a1f] border border-[#252550] text-white',
+      'font-mono text-[18px] font-bold rounded-[8px] text-center',
+      'w-9 h-10',
+      'focus:outline-none focus:border-[#2563eb] focus:ring-[3px] focus:ring-[#2563eb]/15',
+      'transition-all duration-150',
+    ].join(' '),
+
+    // Primary CTA button
+    formButtonPrimary: [
+      'w-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af]',
+      'text-white font-semibold text-[14px] rounded-[8px] py-[11px]',
+      'border-0 shadow-[0_2px_16px_rgba(37,99,235,0.35)]',
+      'hover:shadow-[0_4px_24px_rgba(37,99,235,0.45)]',
+      'transition-all duration-200',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
+    ].join(' '),
+    formButtonReset: 'text-[#4b82f7] hover:text-[#7aa5fa] text-[13px] font-medium transition-colors',
+
+    // Divider
+    dividerRow:  'my-4',
+    dividerLine: 'bg-[#1e1e40]',
+    dividerText: 'text-slate-600 text-[10.5px] px-3 uppercase tracking-widest',
+
+    // Social / OAuth buttons
+    socialButtonsBlockButton:     'w-full bg-[#0d0d25] border border-[#1e1e40] text-slate-300 rounded-[8px] hover:bg-[#111130] hover:border-[#2a2a58] hover:text-white transition-all duration-200 py-[10px]',
+    socialButtonsBlockButtonText: 'text-[13px] font-medium',
     socialButtonsBlockButtonArrow:'hidden',
-    socialButtonsProviderIcon:   'w-4 h-4',
-    alert:                       'border-2 rounded-[10px] px-4 py-3 my-4 bg-rose-500/8 border-rose-500/35',
-    alertText:                   'text-rose-300 leading-relaxed text-[13px]',
-    alertTextDanger:             'text-rose-300 text-[13px]',
-    alertTextWarning:            'text-amber-300 text-[13px]',
-    footer:                      'px-6 sm:px-7 pt-3 pb-6',
-    footerAction:                'text-center',
-    footerActionText:            'text-slate-400 text-[13.5px]',
-    footerActionLink:            'text-primary hover:text-blue-300 font-semibold text-[13.5px] transition-colors ml-1 hover:underline underline-offset-2',
-    footerPages:                 '!hidden',
-    identityPreviewText:         'text-slate-200 text-[14px]',
-    identityPreviewEditButton:   'text-primary hover:text-blue-300 text-[13px] transition-colors',
-    spinner:                     'text-primary',
-    alternativeMethodsBlockButton:'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 text-[13px] font-medium',
-    formFieldCheckboxInput:      'accent-blue-600 w-4 h-4 rounded border-2 border-[#2f2f58]',
-    formFieldCheckboxLabel:      'text-slate-300 text-[12.5px]',
+    socialButtonsProviderIcon:    'w-4 h-4',
+
+    // Alert
+    alert:          'border rounded-[8px] px-4 py-3 my-3 bg-rose-500/[0.07] border-rose-500/30',
+    alertText:      'text-rose-300 leading-relaxed text-[13px]',
+    alertTextDanger:'text-rose-300 text-[13px]',
+
+    // Footer (sign-in/up switch link)
+    footer:          'px-6 sm:px-8 pb-6 pt-2',
+    footerAction:    'text-center',
+    footerActionText:'text-slate-500 text-[13px]',
+    footerActionLink:'text-[#4b82f7] hover:text-[#7aa5fa] font-semibold text-[13px] transition-colors ml-1',
+    footerPages:     '!hidden',
+
+    // Identity preview (email confirmation step)
+    identityPreviewText:       'text-slate-300 text-[14px]',
+    identityPreviewEditButton: 'text-[#4b82f7] hover:text-[#7aa5fa] text-[13px] transition-colors',
+
+    // Misc
+    spinner:                      'text-[#2563eb]',
+    alternativeMethodsBlockButton:'w-full bg-[#0d0d25] border border-[#1e1e40] text-slate-300 rounded-[8px] hover:bg-[#111130] hover:border-[#2a2a58] hover:text-white transition-all duration-200 py-[10px] text-[13px] font-medium',
+    formFieldCheckboxInput:       'accent-blue-600 w-4 h-4 rounded border border-[#252550]',
+    formFieldCheckboxLabel:       'text-slate-400 text-[12.5px] leading-relaxed',
   },
 }

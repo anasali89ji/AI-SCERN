@@ -1,11 +1,11 @@
 'use client'
-import { Suspense }           from 'react'
-import { useEffect, useState } from 'react'
-import { SignIn, useAuth }    from '@clerk/nextjs'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2 }            from 'lucide-react'
-import { AuthShell }          from '@/components/auth/AuthShell'
-import { clerkAppearance }    from '@/components/auth/clerkAppearance'
+import { Suspense }                     from 'react'
+import { useEffect, useState }          from 'react'
+import { SignIn, useAuth }              from '@clerk/nextjs'
+import { useRouter, useSearchParams }   from 'next/navigation'
+import { Loader2 }                      from 'lucide-react'
+import { AuthShell }                    from '@/components/auth/AuthShell'
+import { clerkAppearance }              from '@/components/auth/clerkAppearance'
 
 function LoginContent() {
   const { isSignedIn, isLoaded } = useAuth()

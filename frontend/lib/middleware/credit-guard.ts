@@ -1,16 +1,18 @@
 /**
- * Aiscern — Credit Guard Middleware v2
+ * Aiscern — Credit Guard Middleware v3
  *
  * Guards every /api/detect/* route. In order:
  *  1. Clerk auth → identifies user (or anon IP)
  *  2. Calls check_and_increment_scan() — atomic credit + daily-limit check in Supabase
  *  3. For anon users → Redis rate limit (5/day)
  *
- * The DB function handles:
- *  - Modality access (free tier = text+image only)
- *  - Daily scan limit per plan
- *  - Credit balance deduction for paid plans
- *  - Overage: if daily limit hit but credits remain → deduct from balance
+ * v3 fixes:
+ *   - The DB function now RETURNS JSONB (was RETURNS TABLE). Supabase .rpc()
+ *     returns a plain object for JSONB functions — no array unwrapping needed.
+ *   - Defensive fallback: if data is still an array (running against old DB
+ *     schema before v19 migration), unwrap data[0] automatically.
+ *   - user_not_found: auto-creates profile + fails open (handles first-scan
+ *     race condition where Clerk redirect fires before profile sync completes).
  *
  * Usage in any /api/detect/* route:
  *   const guard = await creditGuard(req, 'image')  // throws HTTPError on failure
@@ -31,7 +33,7 @@ export interface CreditGuardResult {
   dailyScans:       number
   dailyLimit:       number
   unlimited?:       boolean
-  overage?:         boolean     // true if scan came from credit balance overage
+  overage?:         boolean
 }
 
 export class HTTPError extends Error {
@@ -45,14 +47,15 @@ export class HTTPError extends Error {
   }
 }
 
-// Modalities available per plan — mirrors plan_limits table
-// Used as a fast local check before hitting the DB
-const PLAN_MODALITIES: Record<string, string[]> = {
-  free:       ['text', 'image'],
-  starter:    ['text', 'image', 'audio', 'video', 'url'],
-  pro:        ['text', 'image', 'audio', 'video', 'url', 'batch'],
-  enterprise: ['text', 'image', 'audio', 'video', 'url', 'batch'],
-  anon:       ['text', 'image'],
+interface ScanRpcResult {
+  allowed:            boolean
+  reason:             string
+  plan:               string
+  daily_scans:        number
+  daily_limit:        number
+  upgrade_required:   boolean
+  credits_remaining?: number
+  credit_period_end?: string | null
 }
 
 // ── Main guard ────────────────────────────────────────────────────────────────
@@ -74,34 +77,30 @@ export async function creditGuard(
   if (userId) {
     const db = getSupabaseAdmin()
 
-    // check_and_increment_scan is atomic (uses SELECT FOR UPDATE internally)
-    // Safe against concurrent requests from the same user
     const { data, error } = await db.rpc('check_and_increment_scan', {
       p_user_id:    userId,
       p_media_type: scanType,
     })
 
     if (error) {
-      // DB error — fail open (don't block user on our infrastructure error)
       console.error('[creditGuard] DB RPC error:', error.message)
-      return {
-        userId,
-        creditsRemaining: 1,
-        plan:             'free',
-        dailyScans:       0,
-        dailyLimit:       10,
-      }
+      // Fail open — infrastructure error should not block user
+      return { userId, creditsRemaining: 1, plan: 'free', dailyScans: 0, dailyLimit: 10 }
     }
 
-    // RPC returns jsonb — Supabase client parses it into a plain object
-    const result = data as {
-      allowed:          boolean
-      reason:           string
-      plan:             string
-      daily_scans:      number
-      daily_limit:      number
-      upgrade_required: boolean
-      credits_remaining?: number
+    // Defensive unwrap: v19+ returns JSONB (plain object); old schema returns
+    // RETURNS TABLE (array). Handle both so deploys are zero-downtime.
+    const result = (Array.isArray(data) ? data[0] : data) as ScanRpcResult | null
+
+    if (!result) {
+      console.error('[creditGuard] RPC returned null — failing open')
+      return { userId, creditsRemaining: 1, plan: 'free', dailyScans: 0, dailyLimit: 10 }
+    }
+
+    // auto_created = profile was just created inside the DB function
+    // user_not_found = old schema (pre-v19); fail open
+    if (result.reason === 'auto_created' || result.reason === 'user_not_found') {
+      return { userId, creditsRemaining: 10, plan: 'free', dailyScans: 1, dailyLimit: 10 }
     }
 
     if (!result.allowed) {
@@ -121,16 +120,15 @@ export async function creditGuard(
       plan:             result.plan,
       dailyScans:       result.daily_scans,
       dailyLimit:       result.daily_limit,
-      // Use credits_remaining from RPC response (real profile column name)
-      creditsRemaining: result.credits_remaining ?? (unlimited ? 999_999 : Math.max(0, result.daily_limit - result.daily_scans)),
+      creditsRemaining: result.credits_remaining
+        ?? (unlimited ? 999_999 : Math.max(0, result.daily_limit - result.daily_scans)),
       unlimited,
-      overage:          result.reason === 'credit_overage',
+      overage: result.reason === 'credit_overage',
     }
   }
 
   // ── Anonymous user path ──────────────────────────────────────────────────
 
-  // Anon only gets text + image
   if (!['text', 'image'].includes(scanType)) {
     throw new HTTPError(401, `Sign in to use ${scanType} detection.`, {
       code:        'AUTH_REQUIRED',
@@ -138,7 +136,6 @@ export async function creditGuard(
     })
   }
 
-  // IP-based rate limit: 5 anonymous scans per day via Redis
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
           ?? req.headers.get('cf-connecting-ip')
           ?? 'unknown'
@@ -170,7 +167,6 @@ export function httpErrorResponse(err: HTTPError): NextResponse {
   )
 }
 
-// Adds guard metadata to response headers (for debugging / client toasts)
 export function injectGuardHeaders(response: NextResponse, guard: CreditGuardResult): NextResponse {
   response.headers.set('X-Credits-Remaining', String(guard.creditsRemaining))
   response.headers.set('X-Daily-Scans',       String(guard.dailyScans))
@@ -199,10 +195,10 @@ function buildDenyMessage(reason: string, plan: string, scanType: string): strin
 
 function mapDenyCode(reason: string): string {
   const map: Record<string, string> = {
-    modality_not_included:    'MODALITY_LOCKED',
+    modality_not_included:      'MODALITY_LOCKED',
     modality_credits_exhausted: 'CREDITS_EXHAUSTED',
-    daily_limit_reached:      'DAILY_LIMIT_REACHED',
-    user_not_found:           'USER_NOT_FOUND',
+    daily_limit_reached:        'DAILY_LIMIT_REACHED',
+    user_not_found:             'USER_NOT_FOUND',
   }
   return map[reason] ?? 'LIMIT_REACHED'
 }

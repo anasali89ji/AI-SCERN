@@ -1,12 +1,12 @@
 'use client'
-import { Suspense }           from 'react'
-import { useEffect, useState } from 'react'
-import { SignUp, useAuth }    from '@clerk/nextjs'
-import { useRouter }          from 'next/navigation'
-import { Loader2 }            from 'lucide-react'
-import Link                   from 'next/link'
-import { AuthShell }          from '@/components/auth/AuthShell'
-import { clerkAppearance }    from '@/components/auth/clerkAppearance'
+import { Suspense }              from 'react'
+import { useEffect, useState }   from 'react'
+import { SignUp, useAuth }       from '@clerk/nextjs'
+import { useRouter }             from 'next/navigation'
+import { Loader2 }               from 'lucide-react'
+import Link                      from 'next/link'
+import { AuthShell }             from '@/components/auth/AuthShell'
+import { clerkAppearance }       from '@/components/auth/clerkAppearance'
 
 function SignUpContent() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -29,16 +29,16 @@ function SignUpContent() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Start detecting AI content for free"
+      subtitle="Start detecting AI content for free — no card needed"
       badge="Free · No credit card"
       badgeDotColor="blue"
       variant="signup"
       extraFooter={
-        <p className="mt-4 text-[11.5px] text-slate-500 text-center max-w-[320px]">
+        <p className="mt-4 text-[11px] text-slate-600 text-center max-w-[340px] mx-auto leading-relaxed">
           By signing up you confirm you are 13+ years old (16 in EU/EEA) and agree to our{' '}
-          <Link href="/terms"   className="underline underline-offset-2 hover:text-slate-400 transition-colors">Terms</Link>
+          <Link href="/terms"   className="text-slate-500 hover:text-slate-400 underline underline-offset-2 transition-colors">Terms</Link>
           {' '}and{' '}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-400 transition-colors">Privacy Policy</Link>.
+          <Link href="/privacy" className="text-slate-500 hover:text-slate-400 underline underline-offset-2 transition-colors">Privacy Policy</Link>.
         </p>
       }
     >
