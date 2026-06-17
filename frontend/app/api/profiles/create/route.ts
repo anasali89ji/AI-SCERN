@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
       const { error } = await db
         .from('profiles')
         .update({
-          email:       email || '',
-          updated_at:  new Date().toISOString(),
+          email:      email || '',
+          updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
 
@@ -41,13 +41,17 @@ export async function POST(req: NextRequest) {
     }
 
     // ── New user — insert with free defaults ──────────────────────────────
+    // credits_balance = 0  (free plan has no credits; daily_limit is the quota)
+    // credits_remaining = 9999 is kept for legacy UI components that read it;
+    // the canonical quota column is credits_balance (mirrored by trg_sync_credits).
     const { error } = await db.from('profiles').insert({
       id:                userId,
       email:             email || '',
       display_name:      display_name || email?.split('@')[0] || 'User',
       plan:              'free',
       plan_id:           'free',
-      credits_remaining: 9999,
+      credits_balance:   0,        // canonical — synced by trg_sync_credits trigger
+      credits_remaining: 9999,     // legacy display column
       scan_count:        0,
       monthly_scans:     0,
       created_at:        new Date().toISOString(),
@@ -62,8 +66,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, created: true })
-  } catch (err: any) {
-    console.error('[profiles/create] Error:', err?.message)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[profiles/create] Error:', msg)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
