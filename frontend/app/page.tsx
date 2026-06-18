@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -20,118 +20,164 @@ import {
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
-import WhoNeedsSection from '@/components/home/WhoNeedsSection'
-import AIvsRealSection from '@/components/home/AIvsRealSection'
-import HomepageReviews from '@/components/home/HomepageReviews'
+import WhoNeedsSection   from '@/components/home/WhoNeedsSection'
+import AIvsRealSection   from '@/components/home/AIvsRealSection'
+import HomepageReviews   from '@/components/home/HomepageReviews'
 
-const DynamicWhoNeedsSection = WhoNeedsSection
-const DynamicAIvsRealSection = AIvsRealSection
-const DynamicHomepageReviews = HomepageReviews
-
-// ─── CountUp ────────────────────────────────────────────────────────────────
+// ─── CountUp ─────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
+  const [count, setCount]       = useState(0)
   const [animated, setAnimated] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
+
   useEffect(() => {
     if (animated) return
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting || animated) return
       setAnimated(true)
       let start = 0
-      const steps = 60; const step = target / steps
-      const interval = setInterval(() => {
+      const steps  = 60
+      const step   = target / steps
+      const id = setInterval(() => {
         start += step
-        if (start >= target) { setCount(target); clearInterval(interval) }
+        if (start >= target) { setCount(target); clearInterval(id) }
         else setCount(Math.floor(start))
-      }, 1600 / steps)
-    }, { threshold: 0.1 })
+      }, 1400 / steps)
+    }, { threshold: 0.2 })
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
   }, [target, animated])
-  return <span ref={ref} className="counter-value">{count.toLocaleString()}{suffix}</span>
+
+  return <span ref={ref} className="tabular-nums">{count.toLocaleString()}{suffix}</span>
 }
 
 // ─── Live Demo ────────────────────────────────────────────────────────────────
 function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const [text, setText] = useState('')
+  const [text, setText]   = useState('')
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
   const analyze = async () => {
     if (text.length < 50) return
     setLoading(true); setResult(null)
     try {
       const res = await fetch('/api/detect/text', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, user_id: null }),
       })
       if (res.status === 401) { router.push('/signup'); setLoading(false); return }
       const d = await res.json()
-      if (d.success) { setResult(d.result) }
-      else setResult({ verdict: 'UNCERTAIN', summary: d.error?.message || 'Try signing in for full results.' })
-    } catch { setResult({ verdict: 'UNCERTAIN', summary: 'Analysis unavailable. Sign in for full access.' }) }
+      if (d.success) setResult(d.result)
+      else setResult({ verdict: 'UNCERTAIN', summary: d.error?.message || 'Sign in for full results.' })
+    } catch {
+      setResult({ verdict: 'UNCERTAIN', summary: 'Analysis unavailable. Sign in for full access.' })
+    }
     setLoading(false)
   }
+
   const examples = [
     { label: 'AI text',    text: 'The intersection of artificial intelligence and human creativity presents a fascinating paradox in contemporary discourse. As machine learning models become increasingly sophisticated in generating coherent, contextually appropriate text, the boundaries between human and algorithmic authorship continue to blur in unprecedented ways.' },
     { label: 'Human text', text: "I spent all weekend trying to fix my leaky faucet and honestly I have no idea what I'm doing. Watched like 6 YouTube videos and still made it worse. Water is now shooting sideways. My neighbor thinks it's hilarious. Calling a plumber tomorrow. RIP my bank account." },
   ]
+
+  const verdictColor = result?.verdict === 'AI'    ? { text: 'text-rose-400',    border: 'border-rose-500/20',    bg: 'bg-rose-500/[0.06]',    bar: 'bg-rose-500'    }
+                     : result?.verdict === 'HUMAN'  ? { text: 'text-emerald-400', border: 'border-emerald-500/20', bg: 'bg-emerald-500/[0.06]', bar: 'bg-emerald-500' }
+                     :                               { text: 'text-amber-400',   border: 'border-amber-500/20',   bg: 'bg-amber-500/[0.06]',   bar: 'bg-amber-500'   }
+
   return (
-    <div className="relative">
-      <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span className="text-sm font-bold text-slate-100">Live AI Detector</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">Free</span>
-          </div>
-          <div className="flex gap-2">
-            {examples.map(ex => (
-              <button key={ex.label} onClick={() => setText(ex.text)}
-                className="text-xs px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all min-h-0">
-                {ex.label}
-              </button>
-            ))}
-          </div>
+    <div className="rounded-[14px] border border-white/[0.10] bg-[#0f0f17] overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.07] bg-[#08080d]/50">
+        <div className="flex gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/60" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
         </div>
-        <textarea value={text} onChange={e => setText(e.target.value)}
-          placeholder="Paste any text to detect if it's AI-generated… (min 50 characters)"
-          className="w-full h-24 sm:h-28 bg-[#08080d] border border-white/[0.08] rounded-lg px-3 sm:px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:border-blue-500/40 transition-all" />
-        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-          <span className="text-xs text-slate-500">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
-          <button onClick={analyze} disabled={loading || text.length < 50}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-sm font-medium rounded-lg disabled:opacity-40 flex items-center gap-2 min-h-[36px] transition-colors">
+        <span className="text-xs font-medium text-slate-500 ml-1">Live AI Detector</span>
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+          Free
+        </span>
+      </div>
+
+      <div className="p-4 sm:p-5">
+        {/* Example buttons */}
+        <div className="flex gap-2 mb-3">
+          {examples.map(ex => (
+            <button key={ex.label} onClick={() => setText(ex.text)}
+              className="text-xs px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-blue-500/30
+                         text-slate-400 hover:text-blue-400 transition-all duration-200">
+              Try {ex.label}
+            </button>
+          ))}
+        </div>
+
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Paste any text to detect if it's AI-generated… (min 50 chars)"
+          className="w-full h-24 sm:h-28 bg-[#08080d] border border-white/[0.08] rounded-xl
+                     px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600
+                     resize-none focus:outline-none focus:border-blue-500/40 transition-all duration-200"
+        />
+
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-xs text-slate-600">
+            {text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}
+          </span>
+          <button
+            onClick={analyze}
+            disabled={loading || text.length < 50}
+            className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-5 py-2
+                       text-sm font-semibold rounded-xl disabled:opacity-40
+                       flex items-center gap-2 min-h-[38px] transition-all duration-200">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
             {loading ? 'Scanning…' : 'Analyze Free'}
           </button>
         </div>
+
         <AnimatePresence>
           {result && (
-            <motion.div initial={{ opacity: 0, y: 8, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
-              <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose-500/5 border-rose-500/20' : result.verdict === 'HUMAN' ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
-                <div className="flex items-center justify-between mb-3 gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.22,1,0.36,1] }}
+              className="mt-4 overflow-hidden"
+            >
+              <div className={`rounded-xl border ${verdictColor.border} ${verdictColor.bg} p-4`}>
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose-400 shrink-0" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" /> : <HelpCircle className="w-5 h-5 text-amber-400 shrink-0" />}
-                    <span className={`font-bold text-base ${result.verdict === 'AI' ? 'text-rose-400' : result.verdict === 'HUMAN' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {result.verdict === 'AI'
+                      ? <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                      : result.verdict === 'HUMAN'
+                      ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                      : <HelpCircle className="w-5 h-5 text-amber-400 shrink-0" />}
+                    <span className={`font-bold text-base ${verdictColor.text}`}>
                       {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
                     </span>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-slate-100 tabular-nums">{formatConfidence(result.confidence || 0)}</div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-slate-100 tabular-nums">
+                      {formatConfidence(result.confidence || 0)}
+                    </div>
                     <div className="text-[10px] text-slate-500">confidence</div>
                   </div>
                 </div>
                 <div className="h-1.5 rounded-full bg-[#08080d] overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
-                    transition={{ duration: 1.0, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-rose-500' : result.verdict === 'HUMAN' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.9, ease: [0.22,1,0.36,1] }}
+                    style={{ originX: 0, width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
+                    className={`h-full rounded-full ${verdictColor.bar}`}
+                  />
                 </div>
-                <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between flex-wrap gap-2">
-                  <p className="text-xs text-slate-500">✓ Free · Sign in to save results</p>
-                  <Link href="/detect/text" className="text-xs text-blue-400 hover:underline font-medium flex items-center gap-1">
-                    Full text detector <ArrowRight className="w-3 h-3" />
+                <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                  <p className="text-xs text-slate-500">✓ Free · No account needed</p>
+                  <Link href="/detect/text" className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 transition-colors">
+                    Full detector <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
@@ -143,22 +189,12 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
   )
 }
 
-// ─── Spotlight Card ───────────────────────────────────────────────────────────
-function SpotlightCard({ children, className = '' }: {
-  children: React.ReactNode; className?: string
-}) {
-  return (
-    <div className={`group relative rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-colors duration-200 ${className}`}>
-      {children}
-    </div>
-  )
-}
-
 // ─── Nav scroll behavior ──────────────────────────────────────────────────────
 function useNavScrollBehavior() {
   const [scrolled, setScrolled] = useState(false)
-  const [hidden, setHidden] = useState(false)
+  const [hidden, setHidden]     = useState(false)
   const lastY = useRef(0)
+
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY
@@ -173,56 +209,67 @@ function useNavScrollBehavior() {
   return { scrolled, hidden }
 }
 
+// ─── Stagger container ────────────────────────────────────────────────────────
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+}
+const staggerItem = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22,1,0.36,1] } },
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber-400',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-blue-400',      desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~82%', accent: '#2563eb' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-slate-300',     desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~79%', accent: '#64748b' },
-  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-blue-400',      desc: 'Frame-by-frame deepfake analysis',                accuracy: '~76%', accent: '#2563eb' },
-  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald-400',   desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
-  { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose-400',      desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
+  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           color: 'text-amber-400',   desc: 'ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    color: 'text-blue-400',    desc: 'Midjourney, DALL-E, Stable Diffusion',     accuracy: '~82%', accent: '#3b82f6' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  color: 'text-violet-400',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~79%', accent: '#8b5cf6' },
+  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    color: 'text-emerald-400', desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%', accent: '#10b981' },
+  { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   color: 'text-sky-400',     desc: 'Ask anything about AI detection',           accuracy: 'New',  accent: '#0ea5e9' },
+  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     color: 'text-rose-400',    desc: 'Analyze 20 files simultaneously',           accuracy: '20×',  accent: '#f43f5e' },
 ]
 
 const STATS = [
-  { value: 4,  suffix: '',  label: 'Modalities Covered', icon: Layers   },
-  { value: 8,  suffix: '+', label: 'Detection Models',   icon: Brain    },
-  { value: 85, suffix: '%', label: 'Text Accuracy (~)',  icon: FileText },
-  { value: 79, suffix: '%', label: 'Audio Accuracy (~)', icon: Zap      },
+  { value: 4,  suffix: '',   label: 'Modalities Covered', icon: Layers   },
+  { value: 8,  suffix: '+',  label: 'Detection Models',   icon: Brain    },
+  { value: 85, suffix: '%',  label: 'Text Accuracy',      icon: FileText },
+  { value: 79, suffix: '%',  label: 'Audio Accuracy',     icon: Zap      },
 ]
 
 const HOW_IT_WORKS = [
-  { n: '01', title: 'Upload or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL' },
-  { n: '02', title: 'Ensemble Analysis', desc: 'Advanced multi-modal AI analyzes 20+ detection signals across all content types' },
-  { n: '03', title: 'Get Full Report',   desc: 'Confidence score, signal breakdown & sentence-level heatmap' },
-  { n: '04', title: 'Export & Share',    desc: 'Save history, share results, export PDF reports' },
+  { n: '01', title: 'Upload or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL — any format, any size.' },
+  { n: '02', title: 'Ensemble Analysis', desc: 'Multi-model AI analyzes 20+ detection signals across all content types in parallel.' },
+  { n: '03', title: 'Get Full Report',   desc: 'Confidence score, signal breakdown, and sentence-level heatmap in under 3 seconds.' },
+  { n: '04', title: 'Export & Share',    desc: 'Save scan history, share results by link, or export full PDF forensic reports.' },
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,   title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples' },
-  { icon: Shield,     title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited' },
-  { icon: TrendingUp, title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed' },
-  { icon: Zap,        title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start' },
+  { icon: Database,   title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples' },
+  { icon: Shield,     title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited' },
+  { icon: TrendingUp, title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',    wide: false, stat: '20+',   statLabel: 'signals analyzed' },
+  { icon: Zap,        title: 'Free Tier Available',    desc: 'Start detecting for free — no credit card required. Upgrade when you need more scans.',          wide: false, stat: 'Free',  statLabel: 'to start' },
 ]
 
 const PROFESSIONALS = [
-  { label: 'Journalists',      icon: Pen         },
+  { label: 'Journalists',      icon: Pen           },
   { label: 'Educators',        icon: GraduationCap },
-  { label: 'HR Teams',         icon: Users       },
-  { label: 'Legal Pros',       icon: Scale       },
-  { label: 'Security Teams',   icon: ShieldCheck },
-  { label: 'Researchers',      icon: Microscope  },
-  { label: 'Content Creators', icon: Megaphone   },
-  { label: 'Marketing Teams',  icon: TrendingUp  },
-  { label: 'Healthcare',       icon: Heart       },
+  { label: 'HR Teams',         icon: Users         },
+  { label: 'Legal Pros',       icon: Scale         },
+  { label: 'Security Teams',   icon: ShieldCheck   },
+  { label: 'Researchers',      icon: Microscope    },
+  { label: 'Content Creators', icon: Megaphone     },
+  { label: 'Marketing Teams',  icon: TrendingUp    },
+  { label: 'Healthcare',       icon: Heart         },
 ]
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const { user, loading } = useAuth()
+  const { user, loading }   = useAuth()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const { scrolled, hidden } = useNavScrollBehavior()
+  const [datasetRows, setDatasetRows] = useState<number | null>(null)
 
   useEffect(() => {
     if (mobileNavOpen) {
@@ -241,7 +288,6 @@ export default function HomePage() {
     }
   }, [mobileNavOpen])
 
-  const [datasetRows, setDatasetRows] = useState<number | null>(null)
   useEffect(() => {
     fetch('/api/dataset-stats')
       .then(r => r.json())
@@ -253,32 +299,37 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#08080d] text-slate-100 overflow-x-hidden w-full max-w-[100vw]">
 
       {/* Schema JSON-LD */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `[
-        {"@context":"https://schema.org","@type":"WebApplication","@id":"https://aiscern.com/#app","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble-based AI content detection platform for text, images, audio, and video. Free tier available. Published accuracy benchmarks.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["AI Text Detection - ChatGPT Claude Gemini","Deepfake Image Detection","AI Audio Voice Clone Detection","Deepfake Video Detection","Batch Analysis","AI Detection API"],"creator":{"@type":"Person","name":"Anas Ali","url":"https://aiscern.com/about"}},
-        {"@context":"https://schema.org","@type":"Organization","@id":"https://aiscern.com/#org","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png","foundingDate":"2025","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"contact@aiscern.com"}},
-        {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses an ensemble approach combining RoBERTa, ViT, and wav2vec2 models. Current benchmarked accuracy: text ~85%, image ~82%, audio ~79%, video ~76%. See /methodology for details."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image detection. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion and deepfake faces using a multi-model image analysis ensemble."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]}
-      ]` }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([
+        {"@context":"https://schema.org","@type":"WebApplication","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble AI content detection for text, images, audio, and video.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},
+        {"@context":"https://schema.org","@type":"Organization","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png"},
+      ]) }} />
 
       {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-200
+      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
         ${hidden ? 'nav-hidden' : 'nav-visible'}
-        bg-[#08080d]/95 border-b ${scrolled ? 'border-white/[0.08]' : 'border-transparent'}`}>
+        ${scrolled
+          ? 'bg-[#08080d]/90 border-b border-white/[0.08]'
+          : 'bg-transparent border-b border-transparent'}
+        backdrop-blur-xl`}
+        style={{ WebkitBackdropFilter: 'blur(20px)' }}
+      >
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
-
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0" title="Aiscern — Free AI Content Detector">
-            <span className="font-black text-xl text-white">Aiscern</span>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+            <span className="font-black text-xl text-white tracking-tight group-hover:text-blue-400 transition-colors duration-200">
+              Aiscern
+            </span>
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+          <div className="hidden md:flex items-center gap-5 text-sm font-medium text-slate-400">
             {[['#tools','Tools'],['#how','How It Works']].map(([href, label]) => (
               <a key={href} href={href} className="hover:text-white transition-colors duration-200">{label}</a>
             ))}
-            <Link href={user ? "/chat" : "/signup"} className="hover:text-white transition-colors duration-200 flex items-center gap-1">
+            <Link href={user ? '/chat' : '/signup'}
+              className="hover:text-white transition-colors duration-200 flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
             </Link>
-            {[['/reviews','Reviews'],[ '/blog','Blog'],['/pricing','Pricing']].map(([href, label]) => (
+            {[['/reviews','Reviews'],['/pricing','Pricing'],['/blog','Blog']].map(([href, label]) => (
               <Link key={label} href={href} className="hover:text-white transition-colors duration-200">{label}</Link>
             ))}
           </div>
@@ -286,7 +337,10 @@ export default function HomePage() {
           {/* CTA */}
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600/10 border border-blue-500/30 text-blue-400 text-sm font-semibold hover:bg-blue-600/20 transition-all duration-200">
+              <Link href="/dashboard"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl
+                           bg-blue-600/10 border border-blue-500/25 text-blue-400
+                           text-sm font-semibold hover:bg-blue-600/20 transition-all duration-200">
                 <span className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                   {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
                 </span>
@@ -295,21 +349,34 @@ export default function HomePage() {
               </Link>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg border border-white/[0.08] text-sm font-medium text-slate-300 hover:text-white hover:border-white/[0.12] transition-all duration-200">
+                <Link href="/login"
+                  className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl
+                             border border-white/[0.08] text-sm font-medium text-slate-300
+                             hover:text-white hover:border-white/[0.14] transition-all duration-200">
                   Sign In
                 </Link>
-                <Link href="/signup" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors duration-200">
+                <Link href="/signup"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl
+                             bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+                             text-white text-sm font-semibold transition-colors duration-200">
                   <Zap className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Get Started</span>
                   <span className="sm:hidden">Join</span>
                 </Link>
               </>
             )}
-            <button className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition-colors"
+            <button
+              className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-white transition-colors"
               onClick={() => setMobileNavOpen(o => !o)}
               aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileNavOpen}>
-              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              aria-expanded={mobileNavOpen}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {mobileNavOpen
+                  ? <motion.span key="x"    initial={{rotate:-90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:90,opacity:0}} transition={{duration:0.15}}><X className="w-5 h-5" /></motion.span>
+                  : <motion.span key="menu" initial={{rotate:90,opacity:0}}  animate={{rotate:0,opacity:1}} exit={{rotate:-90,opacity:0}} transition={{duration:0.15}}><Menu className="w-5 h-5" /></motion.span>
+                }
+              </AnimatePresence>
             </button>
           </div>
         </div>
@@ -318,31 +385,37 @@ export default function HomePage() {
         <AnimatePresence>
           {mobileNavOpen && (
             <motion.div
-              id="mobile-nav-panel"
-              role="dialog"
-              aria-label="Navigation menu"
-              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-white/[0.06] bg-[#08080d] overflow-hidden">
+              role="dialog" aria-label="Navigation menu"
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: [0.22,1,0.36,1] }}
+              className="md:hidden border-t border-white/[0.07] bg-[#08080d]/98 overflow-hidden"
+              style={{ backdropFilter: 'blur(20px)' }}
+            >
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
-                  { href: '#tools', label: 'Tools', Icon: Cpu },
-                  { href: '#how', label: 'How It Works', Icon: Activity },
-                  { href: user ? '/chat' : '/signup', label: 'AI Detection Assistant', Icon: MessageSquare },
-                  { href: '/reviews', label: 'Reviews', Icon: Star },
-                  { href: '/blog', label: 'Blog', Icon: FileText },
-                  { href: '/pricing', label: 'Pricing', Icon: Zap },
-                ].map((link) => (
+                  { href: '#tools',                      label: 'Tools',                 Icon: Cpu         },
+                  { href: '#how',                        label: 'How It Works',          Icon: Activity    },
+                  { href: user ? '/chat' : '/signup',    label: 'ARIA AI Assistant',     Icon: MessageSquare },
+                  { href: '/reviews',                    label: 'Reviews',               Icon: Star        },
+                  { href: '/blog',                       label: 'Blog',                  Icon: FileText    },
+                  { href: '/pricing',                    label: 'Pricing',               Icon: Zap         },
+                ].map(link => (
                   <Link key={link.href} href={link.href} onClick={() => setMobileNavOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400
+                               hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
                     <link.Icon className="w-4 h-4" />{link.label}
                   </Link>
                 ))}
                 {!loading && !user && (
-                  <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/[0.06]">
-                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
+                  <div className="flex flex-col gap-2 mt-2 pt-3 border-t border-white/[0.07]">
+                    <Link href="/login" onClick={() => setMobileNavOpen(false)}
+                      className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400
+                                 hover:text-white hover:bg-white/[0.04] transition-all text-sm font-medium">
                       <Lock className="w-4 h-4" />Sign In
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+                    <Link href="/signup" onClick={() => setMobileNavOpen(false)}
+                      className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl
+                                 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
                       <Zap className="w-4 h-4" />Get Started Free
                     </Link>
                   </div>
@@ -356,180 +429,238 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-16 sm:pb-24 hero-bg hero-bg-animated">
-          {/* Subtle radial background — no orbs, no mesh */}
+        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-20 sm:pb-28 hero-bg">
+          {/* Radial vignette */}
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 50% 30%, #0f0f17 0%, #08080d 65%)' }} />
+            style={{ background: 'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, #08080d 100%)' }} />
 
-          {/* Content */}
-          <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto w-full animate-fade-in-up">
+          <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto w-full">
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22,1,0.36,1] }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+                         border border-blue-500/25 bg-blue-500/[0.08] text-blue-400
+                         text-xs font-semibold mb-8 sm:mb-10"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
               <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
               <span className="sm:hidden">8+ models · Free tier available</span>
-            </div>
+            </motion.div>
 
-            {/* H1 */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
-              Detect AI Content<br />with Confidence
-            </h1>
+            {/* Headline */}
+            <HeroHeadline />
 
             {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Free, accurate detection for text, images, audio, and video. Built on ensemble models with published benchmarks.
-            </p>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.35, ease: [0.22,1,0.36,1] }}
+              className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mt-8 mb-8 sm:mb-10 leading-relaxed"
+            >
+              Free, accurate detection for text, images, audio, and video.
+              Built on ensemble models with published benchmarks.
+            </motion.p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.44, ease: [0.22,1,0.36,1] }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5"
+            >
               {user ? (
                 <>
-                  <Link href="/dashboard"
-                    className="w-full sm:w-auto px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
-                    Go to Dashboard
-                    <ArrowRight className="w-4 h-4" />
+                  <Link href="/dashboard" className="btn-primary w-full sm:w-auto px-8 py-3 text-base">
+                    Go to Dashboard <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-3 rounded-lg border border-white/[0.08] hover:border-white/[0.12] text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />ARIA Assistant
+                  <Link href="/chat" className="btn-secondary w-full sm:w-auto px-8 py-3 text-base">
+                    <MessageSquare className="w-4 h-4 text-sky-400" />ARIA Assistant
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link href="/detect/text"
-                    className="w-full sm:w-auto px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
-                    <Zap className="w-4 h-4" />
-                    Start Detecting
-                    <ArrowRight className="w-4 h-4" />
+                  <Link href="/detect/text" className="btn-primary w-full sm:w-auto px-8 py-3 text-base">
+                    <Zap className="w-4 h-4" />Start Detecting <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/methodology" className="w-full sm:w-auto px-8 py-3 rounded-lg border border-slate-700 hover:border-slate-600 text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                  <Link href="/methodology" className="btn-secondary w-full sm:w-auto px-8 py-3 text-base">
                     View Methodology
                   </Link>
                 </>
               )}
-            </div>
+            </motion.div>
 
-            {/* Trust bar */}
-            <p className="text-sm text-slate-500 mb-12">Free forever · No credit card · 50K+ scans</p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.58 }}
+              className="text-xs text-slate-600 mb-10"
+            >
+              Free forever · No credit card · 50K+ scans
+            </motion.p>
 
             {/* Live demo */}
-            <div className="max-w-2xl mx-auto w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.52, ease: [0.22,1,0.36,1] }}
+              className="max-w-2xl mx-auto w-full"
+            >
               <LiveDemo isLoggedIn={!!user} />
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ── WHO NEEDS AISCERN ── */}
-        <ErrorBoundary>
-          <DynamicWhoNeedsSection />
-        </ErrorBoundary>
+        <ErrorBoundary><WhoNeedsSection /></ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
-        <section className="py-12 sm:py-16 border-y border-white/[0.06] bg-[#0f0f17]/50" style={{ contentVisibility: "auto", containIntrinsicSize: "0 300px" }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
+        <section className="py-14 sm:py-20 border-y border-white/[0.06] bg-[#0f0f17]/60">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.2 }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12"
+            >
               {STATS.map((stat, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2 tabular-nums">
+                <motion.div key={i} variants={staggerItem} className="text-center">
+                  <div className="text-3xl sm:text-4xl font-black text-white mb-1.5">
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
-                  <p className="text-slate-400 text-xs sm:text-sm font-medium">{stat.label}</p>
+                  <p className="text-slate-500 text-xs sm:text-sm font-medium">{stat.label}</p>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ── AI VS REAL ── */}
-        <ErrorBoundary>
-          <DynamicAIvsRealSection />
-        </ErrorBoundary>
+        <ErrorBoundary><AIvsRealSection /></ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
+        <section id="tools" className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
-              className="text-center mb-14 sm:mb-20">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Six Powerful Tools</p>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-4">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-14 sm:mb-18"
+            >
+              <p className="section-eyebrow mb-3">Six Powerful Tools</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
                 Detection Tools
               </h2>
-              <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
-                Six detection tools covering text, images, audio, and video. Each delivers a clear authenticity score in seconds.
+              <p className="text-slate-400 text-base max-w-xl mx-auto leading-relaxed">
+                Six detection tools covering every content type. Each returns a confidence score in under 3 seconds.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
               {TOOLS.map((tool, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}>
-                  <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
-                    <div className="group rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 hover:border-white/[0.12] hover:bg-[#141420] hover:-translate-y-0.5 transition-all duration-200 h-full cursor-pointer">
+                <motion.div key={i} variants={staggerItem} className="tool-card-wrap">
+                  <Link
+                    href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href}
+                    title={tool.label}
+                    className="block tool-card-inner border border-white/[0.08] hover:border-white/[0.13] transition-colors duration-200"
+                  >
+                    <div className="p-6 h-full flex flex-col group">
                       <div className="flex items-start justify-between mb-5">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${tool.color}`}
-                          style={{ background: `${tool.accent}14`, border: `1px solid ${tool.accent}20` }}>
-                          <tool.icon className="w-5 h-5" strokeWidth={1.8} />
+                        <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${tool.accent}18`, border: `1px solid ${tool.accent}28` }}
+                        >
+                          <tool.icon className={`w-5 h-5 ${tool.color}`} strokeWidth={1.8} />
                         </div>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${tool.color}`}
-                          style={{ background: `${tool.accent}12`, border: `1px solid ${tool.accent}22` }}>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${tool.color}`}
+                          style={{ background: `${tool.accent}12`, border: `1px solid ${tool.accent}22` }}
+                        >
                           {tool.accuracy}
                         </span>
                       </div>
-                      <h3 className="text-base font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors duration-200">
+                      <h3 className={`text-base font-semibold text-white mb-2 transition-colors duration-200 group-hover:${tool.color}`}>
                         {tool.label}
                       </h3>
-                      <p className="text-sm text-slate-400 leading-relaxed">{tool.desc}</p>
-                      <div className="mt-5 flex items-center gap-1 text-xs font-medium text-slate-500 group-hover:text-blue-400 transition-colors duration-200">
+                      <p className="text-sm text-slate-400 leading-relaxed flex-1">{tool.desc}</p>
+                      <div className="mt-5 flex items-center gap-1 text-xs font-medium text-slate-600 group-hover:text-slate-300 transition-colors duration-200">
                         Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
                     </div>
                   </Link>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]" style={{ contentVisibility: "auto", containIntrinsicSize: "0 600px" }}>
-          <div className="max-w-5xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
-              className="text-center mb-16 sm:mb-20">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Simple Process</p>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-4">How It Works</h2>
+        <section id="how" className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 border-t border-white/[0.06] bg-[#0f0f17]/40">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-16 sm:mb-20"
+            >
+              <p className="section-eyebrow mb-3">Simple Process</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">How It Works</h2>
               <p className="text-slate-400 text-base">From upload to verdict in seconds.</p>
             </motion.div>
 
-            <div className="space-y-10 sm:space-y-16">
-              {HOW_IT_WORKS.map((step, i) => {
-                const StepIcon = HOW_IT_WORKS_ICONS[i]
-                return (
-                  <motion.div key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className={`flex items-center gap-6 sm:gap-10 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
-                    <div className="flex-1 hidden lg:block" />
-                    <div className="relative z-10 flex-shrink-0">
-                      <div className="w-14 h-14 rounded-xl flex items-center justify-center border border-blue-500/20 bg-blue-500/10">
-                        <StepIcon className="w-6 h-6 text-blue-400" strokeWidth={1.7} />
-                        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
-                          {i + 1}
+            <div className="relative">
+              {/* Vertical timeline line */}
+              <div className="absolute left-6 sm:left-1/2 sm:-translate-x-px top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.08] to-transparent hidden sm:block" />
+
+              <div className="space-y-10 sm:space-y-0">
+                {HOW_IT_WORKS.map((step, i) => {
+                  const Icon    = HOW_IT_WORKS_ICONS[i]
+                  const isRight = i % 2 === 0
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.5, delay: i * 0.1 }}
+                      className={`relative sm:grid sm:grid-cols-2 sm:gap-16 sm:items-center sm:pb-16`}
+                    >
+                      {/* Content — alternates sides */}
+                      <div className={`${isRight ? 'sm:text-right sm:pr-8' : 'sm:col-start-2 sm:pl-8'} flex sm:block gap-4 sm:gap-0`}>
+                        {/* Mobile: icon inline */}
+                        <div className="sm:hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 border border-blue-500/20">
+                            <Icon className="w-5 h-5 text-blue-400" strokeWidth={1.7} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-blue-500/50 uppercase tracking-widest mb-1">{step.n}</div>
+                          <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{step.title}</h3>
+                          <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{step.desc}</p>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex-1 max-w-md">
-                      <div className="text-xs font-medium text-blue-400/60 uppercase tracking-widest mb-1">{step.n}</div>
-                      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">{step.title}</h3>
-                      <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{step.desc}</p>
-                    </div>
-                  </motion.div>
-                )
-              })}
+
+                      {/* Center icon — desktop */}
+                      <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 items-center justify-center z-10">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#0f0f17] border border-blue-500/25 shadow-[0_0_0_4px_#08080d]">
+                          <Icon className="w-5 h-5 text-blue-400" strokeWidth={1.7} />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </section>
@@ -537,22 +668,25 @@ export default function HomePage() {
         {/* ══ REVIEWS ══ */}
         <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-5xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
-              className="text-center mb-12">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">User Stories</p>
-              <h2 className="text-2xl sm:text-4xl font-semibold text-white tracking-tight mb-3">What Users Are Saying</h2>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-12"
+            >
+              <p className="section-eyebrow mb-3">User Stories</p>
+              <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight mb-3">What Users Are Saying</h2>
               <p className="text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-                Real feedback from users across education, journalism, HR, and research.
+                Real feedback from educators, journalists, HR teams, and researchers.
               </p>
             </motion.div>
-
-            <ErrorBoundary>
-              <DynamicHomepageReviews />
-            </ErrorBoundary>
-
+            <ErrorBoundary><HomepageReviews /></ErrorBoundary>
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-sm font-medium text-blue-400 hover:bg-blue-500/15 transition-all duration-200">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-blue-500/25
+                           bg-blue-500/[0.08] text-sm font-medium text-blue-400 hover:bg-blue-500/[0.14]
+                           transition-all duration-200">
                 Share Your Feedback
               </a>
               <Link href="/reviews" className="text-sm text-slate-400 hover:text-white transition-colors font-medium">
@@ -563,92 +697,128 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES ══ */}
-        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}
-              className="text-center mb-14">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">Trust & Accuracy</p>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-                Built for accuracy. Benchmarked on public datasets.
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-14"
+            >
+              <p className="section-eyebrow mb-3">Trust & Accuracy</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                Built for accuracy.<br className="sm:hidden" /> Benchmarked on public datasets.
               </h2>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, title, desc, large, stat, statSuffix, statLabel }, idx) => {
-                const isDataset = title === 'Benchmarked Datasets'
-                const liveStat = isDataset && datasetRows
-                  ? datasetRows >= 1_000_000
-                    ? { val: Math.round(datasetRows / 100_000) / 10, suffix: 'M+', label: 'training samples' }
-                    : datasetRows >= 1000
-                    ? { val: Math.round(datasetRows / 1000), suffix: 'k+', label: 'training samples' }
-                    : { val: datasetRows, suffix: '+', label: 'training samples' }
-                  : null
-                const displayStat   = liveStat ? String(liveStat.val) : stat
-                const displaySuffix = liveStat ? liveStat.suffix : statSuffix
-                const displayLabel  = liveStat ? liveStat.label : statLabel
-                const displayTarget = parseFloat(displayStat) || 0
-                return (
-                  <motion.div key={title}
-                    initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                    transition={{ delay: idx * 0.1, duration: 0.5 }}
-                    className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
-                    <div className="h-full p-6 rounded-xl border border-white/[0.08] bg-[#0f0f17] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5 border border-white/[0.06] bg-white/[0.03]">
-                        <Icon className="w-5 h-5 text-blue-400" strokeWidth={1.8} />
-                      </div>
-                      {displayStat !== undefined && (
-                        <div className="mb-3">
-                          <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
-                            <CountUp target={displayTarget} suffix={displaySuffix} />
-                          </div>
-                          <div className="text-xs text-slate-500 font-medium">{displayLabel}</div>
-                        </div>
-                      )}
-                      <h3 className="font-semibold text-white text-base mb-2">{title}</h3>
-                      <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+            {/* Bento trust grid */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14"
+            >
+              {TRUST_FEATURES.map(({ icon: Icon, title, desc, wide, stat, statLabel }, idx) => (
+                <motion.div
+                  key={title}
+                  variants={staggerItem}
+                  className={wide ? 'sm:col-span-2' : ''}
+                >
+                  <div className="h-full p-6 rounded-[14px] border border-white/[0.08] bg-[#0f0f17]
+                                  hover:border-white/[0.13] hover:-translate-y-px transition-all duration-200">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5
+                                    border border-white/[0.07] bg-white/[0.03]">
+                      <Icon className="w-5 h-5 text-blue-400" strokeWidth={1.8} />
                     </div>
-                  </motion.div>
-                )
-              })}
-            </div>
+                    <div className="mb-3">
+                      <div className="text-3xl sm:text-4xl font-black text-white">{stat}</div>
+                      <div className="text-xs text-slate-500 font-medium mt-0.5">{statLabel}</div>
+                    </div>
+                    <h3 className="font-semibold text-white text-base mb-2">{title}</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
 
-            {/* Professionals */}
-            <div className="text-center mb-10">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-5">Built for professionals across</p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Professionals pill cloud */}
+            <div className="text-center mb-12">
+              <p className="section-eyebrow mb-5">Built for professionals across</p>
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+                className="flex flex-wrap items-center justify-center gap-2.5"
+              >
                 {PROFESSIONALS.map(({ label, icon: Icon }) => (
-                  <span key={label} className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 px-3.5 py-2 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50 hover:border-blue-500/30 hover:text-white transition-colors duration-200 cursor-default">
+                  <motion.span
+                    key={label}
+                    variants={staggerItem}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-slate-400
+                               px-4 py-2 rounded-xl border border-white/[0.08] bg-[#0f0f17]/80
+                               hover:border-blue-500/25 hover:text-white transition-all duration-200 cursor-default"
+                  >
                     <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
                     {label}
-                  </span>
+                  </motion.span>
                 ))}
-              </div>
+              </motion.div>
             </div>
 
             {/* Methodology note */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-xl border border-white/[0.08] bg-[#0f0f17]">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <FlaskConical className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">How our detection works</span>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="p-6 sm:p-8 rounded-[14px] border border-white/[0.08] bg-[#0f0f17]
+                              font-mono text-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <FlaskConical className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider not-italic">
+                    Detection methodology
+                  </span>
+                </div>
+                <p className="text-slate-400 leading-relaxed not-italic font-sans text-sm">
+                  Each scan runs content through multiple independent detection signals. Results are fused into
+                  a single confidence score using weighted ensemble voting — and a clear AI or Human verdict
+                  is returned in under 3 seconds.
+                </p>
+                <div className="mt-4 flex items-center gap-3 flex-wrap">
+                  <Link href="/methodology" className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-sans not-italic font-medium flex items-center gap-1">
+                    Read full methodology <ArrowRight className="w-3 h-3" />
+                  </Link>
+                  <Link href="/benchmarks" className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-sans not-italic font-medium flex items-center gap-1">
+                    View benchmarks <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Each scan analyzes content using multiple independent detection signals. Results are combined into a single confidence score, and a clear AI or Human verdict is returned in seconds.
-              </p>
             </motion.div>
           </div>
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.5 }}>
-              <div className="flex justify-center mb-8">
-                <Image src="/logo.png" alt="Aiscern" width={68} height={80}
-                  className="object-contain h-16 sm:h-20 w-auto" />
-              </div>
+        <section className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 border-t border-white/[0.06] relative overflow-hidden">
+          {/* Focal radial — NOT an orb, just a soft center light */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 100%, rgba(37,99,235,0.07) 0%, transparent 70%)' }} />
 
-              <h2 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-6 leading-tight">
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.55, ease: [0.22,1,0.36,1] }}
+            >
+              <div className="flex justify-center mb-8">
+                <Image src="/logo.png" alt="Aiscern" width={64} height={80} className="object-contain h-16 sm:h-20 w-auto opacity-90" />
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-5 leading-tight">
                 Start Detecting<br />AI Content Free
               </h2>
               <p className="text-slate-400 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
@@ -656,12 +826,14 @@ export default function HomePage() {
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link href={user ? '/dashboard' : '/detect/text'}
-                  className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
-                  {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
+                <Link
+                  href={user ? '/dashboard' : '/detect/text'}
+                  className="btn-primary px-8 py-3.5 text-base"
+                >
+                  {user ? 'Go to Dashboard' : 'Start Detecting Free'}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link href="/signup" className="px-8 py-3 rounded-lg border border-white/[0.08] hover:border-white/[0.12] text-slate-300 text-base font-medium flex items-center justify-center gap-2 transition-colors duration-200">
+                <Link href="/signup" className="btn-secondary px-8 py-3.5 text-base">
                   Create Free Account
                 </Link>
               </div>
@@ -669,7 +841,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500">
                 {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
                   <div key={t} className="flex items-center gap-1.5">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />{t}
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500/70" />{t}
                   </div>
                 ))}
               </div>
