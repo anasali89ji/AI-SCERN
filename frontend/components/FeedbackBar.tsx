@@ -33,7 +33,7 @@ export function FeedbackBar({ scanId, verdict }: Props) {
 
   if (state === 'sent') {
     return (
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500-500/10 border border-emerald-500/20 text-emerald-400-400 text-sm font-medium">
         <Check className="w-4 h-4 flex-shrink-0" />
         {chosen === 'correct' ? 'Thanks — marked as correct!' : 'Thanks — we\'ll use this to improve.'}
       </div>
@@ -46,13 +46,13 @@ export function FeedbackBar({ scanId, verdict }: Props) {
       <div className="flex items-center gap-2 ml-auto">
         <button
           onClick={() => send('correct')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500-500/10 border border-emerald-500/20 text-emerald-400-400 text-xs font-semibold hover:bg-emerald-500-500/20 transition-all"
         >
           <ThumbsUp className="w-3.5 h-3.5" /> Yes
         </button>
         <button
           onClick={() => send('incorrect')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold hover:bg-rose-500/20 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500-500/10 border border-rose-500/20 text-rose-400-500 text-xs font-semibold hover:bg-rose-500-500/20 transition-all"
         >
           <ThumbsDown className="w-3.5 h-3.5" /> No
         </button>

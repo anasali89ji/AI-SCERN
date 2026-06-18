@@ -72,31 +72,31 @@ const colorMap = {
     btn:     'bg-blue-600 hover:bg-blue-700',
   },
   amber: {
-    badge:   'bg-amber-500/10 border-amber-500/20 text-amber-500',
-    iconBg:  'bg-amber-500/10 border-amber-500/20',
-    icon:    'text-amber-500',
+    badge:   'bg-amber-500-500/10 border-amber-500/20 text-amber-400-500',
+    iconBg:  'bg-amber-500-500/10 border-amber-500/20',
+    icon:    'text-amber-400-500',
     glow:    'rgba(245,158,11,0.12)',
     heroGlow:'rgba(245,158,11,0.15)',
-    check:   'text-amber-500',
-    btn:     'bg-amber hover:bg-amber-500/90',
+    check:   'text-amber-400-500',
+    btn:     'bg-amber-500 hover:bg-amber-500-500/90',
   },
   emerald: {
-    badge:   'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-    iconBg:  'bg-emerald-500/10 border-emerald-500/20',
-    icon:    'text-emerald-400',
+    badge:   'bg-emerald-500-500/10 border-emerald-500/20 text-emerald-400-400',
+    iconBg:  'bg-emerald-500-500/10 border-emerald-500/20',
+    icon:    'text-emerald-400-400',
     glow:    'rgba(16,185,129,0.12)',
     heroGlow:'rgba(16,185,129,0.15)',
-    check:   'text-emerald-400',
-    btn:     'bg-emerald hover:bg-emerald-500/90',
+    check:   'text-emerald-400-400',
+    btn:     'bg-emerald-500 hover:bg-emerald-500-500/90',
   },
   rose: {
-    badge:   'bg-rose-500/10 border-rose-500/20 text-rose-500',
-    iconBg:  'bg-rose-500/10 border-rose-500/20',
-    icon:    'text-rose-500',
+    badge:   'bg-rose-500-500/10 border-rose-500/20 text-rose-400-500',
+    iconBg:  'bg-rose-500-500/10 border-rose-500/20',
+    icon:    'text-rose-400-500',
     glow:    'rgba(244,63,94,0.12)',
     heroGlow:'rgba(244,63,94,0.15)',
-    check:   'text-rose-500',
-    btn:     'bg-rose hover:bg-rose-500/90',
+    check:   'text-rose-400-500',
+    btn:     'bg-rose-500 hover:bg-rose-500-500/90',
   },
 }
 
@@ -215,7 +215,7 @@ export function SolutionPage(props: SolutionPageProps) {
               <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-3">How Aiscern Solves It</h2>
               <p className="text-slate-400 max-w-xl mx-auto">
                 Our ensemble-based detection pipeline combines 8+ specialized models with a confidence threshold system.
-                <Link href="/methodology" className="text-primary hover:underline ml-1">Learn about our methodology →</Link>
+                <Link href="/methodology" className="text-blue-500 hover:underline ml-1">Learn about our methodology →</Link>
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -235,7 +235,7 @@ export function SolutionPage(props: SolutionPageProps) {
             {/* Accuracy disclaimer */}
             <p className="mt-6 text-xs text-slate-500 text-center border border-white/[0.06] rounded-lg p-3 max-w-xl mx-auto">
               ℹ️ Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
-              <Link href="/methodology" className="text-primary hover:underline ml-1">See full benchmarks →</Link>
+              <Link href="/methodology" className="text-blue-500 hover:underline ml-1">See full benchmarks →</Link>
             </p>
           </div>
         </section>
@@ -271,7 +271,7 @@ export function SolutionPage(props: SolutionPageProps) {
               )}
               {!testimonialAuthor && (
                 <div className="text-sm text-slate-500">
-                  <Link href="/reviews" className="text-primary hover:underline">Be among the first to leave a review →</Link>
+                  <Link href="/reviews" className="text-blue-500 hover:underline">Be among the first to leave a review →</Link>
                 </div>
               )}
             </div>

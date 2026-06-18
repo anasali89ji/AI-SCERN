@@ -21,7 +21,7 @@ export function StatCard({ title, value, delta, positive = true, icon: Icon, col
       </div>
       <div className={`text-2xl font-black text-slate-100 mb-1 ${blurred ? 'blur-md select-none' : ''}`}>{value}</div>
       {delta && (
-        <p className={`text-xs font-medium ${positive ? 'text-emerald-400' : 'text-rose-500'}`}>
+        <p className={`text-xs font-medium ${positive ? 'text-emerald-400-400' : 'text-rose-400-500'}`}>
           {positive ? '↑' : '↓'} {delta} vs last period
         </p>
       )}

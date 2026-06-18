@@ -47,9 +47,9 @@ export function formatConfidence(score: number): string {
 
 export function getVerdictColor(verdict: string): string {
   switch (verdict) {
-    case 'AI': return 'text-rose'
-    case 'HUMAN': return 'text-emerald'
-    case 'UNCERTAIN': return 'text-amber'
+    case 'AI': return 'text-rose-400'
+    case 'HUMAN': return 'text-emerald-400'
+    case 'UNCERTAIN': return 'text-amber-400'
     default: return 'text-text-muted'
   }
 }

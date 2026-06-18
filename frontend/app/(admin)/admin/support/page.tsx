@@ -75,7 +75,7 @@ export default function Support() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-semibold text-slate-100">{r.name}</span>
-                    <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}</span>
+                    <span className="text-amber-400-400 text-xs">{'★'.repeat(r.rating)}</span>
                   </div>
                   <p className="text-xs text-slate-500">{r.text}</p>
                 </div>

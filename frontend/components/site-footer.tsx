@@ -79,7 +79,7 @@ export function SiteFooter() {
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
                          border border-white/[0.07] bg-[#0f0f17] text-xs text-slate-400
                          hover:border-white/[0.12] transition-all duration-200 w-fit">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500-400 animate-pulse" />
               All systems operational
             </Link>
           </div>
@@ -123,7 +123,7 @@ export function SiteFooter() {
               New detection models, accuracy benchmarks, and product updates.
             </p>
             {sent ? (
-              <div className="flex items-center gap-2 text-sm text-emerald-400 font-medium">
+              <div className="flex items-center gap-2 text-sm text-emerald-400-400 font-medium">
                 <CheckCircle className="w-4 h-4" />Subscribed. Thanks!
               </div>
             ) : (

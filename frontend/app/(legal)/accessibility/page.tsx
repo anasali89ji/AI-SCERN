@@ -32,11 +32,11 @@ export default function AccessibilityPage() {
         </div>
 
         {/* Status badge */}
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 mb-8 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500-500/5 p-4 mb-8 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-400-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-amber-300 text-sm">Partial Compliance — In Progress</p>
-            <p className="text-amber-400/80 text-xs mt-1">
+            <p className="font-semibold text-amber-400-300 text-sm">Partial Compliance — In Progress</p>
+            <p className="text-amber-400-400/80 text-xs mt-1">
               Aiscern is working toward WCAG 2.1 Level AA compliance. Some areas are not yet fully compliant.
               We are actively addressing known issues and welcome feedback.
             </p>
@@ -106,7 +106,7 @@ export default function AccessibilityPage() {
               We welcome your feedback on the accessibility of Aiscern. Please let us know if you encounter accessibility barriers:
             </p>
             <ul>
-              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-primary hover:underline">accessibility@aiscern.com</a></li>
+              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-blue-500 hover:underline">accessibility@aiscern.com</a></li>
               <li><strong>Response time:</strong> We aim to respond within 2 business days</li>
             </ul>
             <p>
@@ -119,7 +119,7 @@ export default function AccessibilityPage() {
             <p>
               If you are located in the EU and are not satisfied with our response to your accessibility feedback,
               you have the right to contact your national accessibility enforcement authority.
-              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equality and Human Rights Commission</a>.
+              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Equality and Human Rights Commission</a>.
             </p>
           </Section>
 
@@ -158,9 +158,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />}
-      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />}
-      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />}
+      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />}
+      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-400-500 flex-shrink-0 mt-0.5" />}
+      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-400-500 flex-shrink-0 mt-0.5" />}
       <div>
         <p className="font-semibold text-slate-100 text-sm">{label}</p>
         <p className="text-slate-500 text-xs mt-0.5">{detail}</p>

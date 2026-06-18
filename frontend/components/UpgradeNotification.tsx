@@ -65,7 +65,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
         <div className="grid grid-cols-2 gap-2 mb-6">
           {perks.map(perk => (
             <div key={perk} className="flex items-center gap-2 px-3 py-2 bg-[#ffffff06] border border-[#ffffff0c] rounded-xl">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400-400 flex-shrink-0" />
               <span className="text-xs text-[#94a3b8]">{perk}</span>
             </div>
           ))}

@@ -41,7 +41,7 @@ export default function DpaPage() {
               Request Signed DPA
             </a>
           </div>
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500-500/5 px-4 py-3 text-sm text-amber-400-300">
             This DPA is for enterprise and educational customers who require GDPR or CCPA compliance documentation.
             For a countersigned PDF, email <a href="mailto:privacy@aiscern.com" className="underline underline-offset-2">privacy@aiscern.com</a>.
           </div>
@@ -55,7 +55,7 @@ export default function DpaPage() {
               and the customer organisation using Aiscern services (&quot;Data Controller&quot; or &quot;you&quot;).
             </p>
             <p>
-              This DPA supplements the <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and
+              This DPA supplements the <Link href="/terms" className="text-blue-500 hover:underline">Terms of Service</Link> and
               governs the processing of personal data that the Data Controller submits to Aiscern for AI content detection.
             </p>
             <p>This DPA applies where the processing of personal data is subject to:</p>
@@ -181,7 +181,7 @@ export default function DpaPage() {
               <ul>
                 <li>Security incidents logged and triaged within 24 hours</li>
                 <li>Data breaches reported to affected customers within 72 hours (GDPR Article 33)</li>
-                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-primary hover:underline">security.txt</a></li>
+                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-blue-500 hover:underline">security.txt</a></li>
               </ul>
             </SubSection>
           </Section>
@@ -194,7 +194,7 @@ export default function DpaPage() {
             </p>
             <p>
               Copies of applicable SCCs are available upon written request to{' '}
-              <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
+              <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -204,7 +204,7 @@ export default function DpaPage() {
               a written request. This includes access, rectification, erasure, portability, restriction, and objection requests.
             </p>
             <p>
-              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>
+              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>
             </p>
           </Section>
 
@@ -233,7 +233,7 @@ export default function DpaPage() {
             <p>
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
               Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
+              Email: <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a><br />
               Subject: &quot;DPA Request — [Your Organisation Name]&quot;
             </p>
           </Section>

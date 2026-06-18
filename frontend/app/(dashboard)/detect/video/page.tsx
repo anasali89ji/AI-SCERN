@@ -114,7 +114,7 @@ function FrameStrip({
               <div className="flex justify-between items-center mt-0.5 px-0.5">
                 <span className="text-[9px] text-slate-600">{formatDur(f.timeSec)}</span>
                 {score && (
-                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose-500' : 'text-emerald-400'}`}>
+                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose-400-400-500' : 'text-emerald-400-400-400'}`}>
                     {Math.round(score.ai_score * 100)}%
                   </span>
                 )}
@@ -125,10 +125,10 @@ function FrameStrip({
       </div>
       <div className="flex items-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500/60" />Suspicious frame
+          <span className="w-2 h-2 rounded-full bg-rose-500-500-500/60" />Suspicious frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500/60" />Clean frame
+          <span className="w-2 h-2 rounded-full bg-emerald-500-500-500/60" />Clean frame
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-400" />Face detected
@@ -417,7 +417,7 @@ function VideoDetectionPage() {
                   <p className="text-xs sm:text-sm text-slate-400 font-medium truncate">{file.name}</p>
                   <p className="text-[10px] sm:text-xs text-slate-500">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-slate-500 hover:text-rose p-2 rounded-lg hover:bg-rose-500/10 transition-colors shrink-0">
+                <button onClick={reset} className="text-slate-500 hover:text-rose-400-400 p-2 rounded-lg hover:bg-rose-500-500-500/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -442,7 +442,7 @@ function VideoDetectionPage() {
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500/5 flex items-center gap-2 text-rose-500 text-sm py-3">
+              className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </motion.div>
           )}
@@ -513,8 +513,8 @@ function VideoDetectionPage() {
                           transition={{ delay: i * 0.08, duration: 0.5, ease: 'easeOut' }}
                           title={`${fs.time_sec}s — ${Math.round(fs.ai_score * 100)}% AI${(fs as any).face_detected ? ' [face]' : ''}`}
                           className={`flex-1 rounded-sm transition-all ${
-                            fs.ai_score > 0.62 ? 'bg-rose' :
-                            fs.ai_score > 0.45 ? 'bg-amber' : 'bg-emerald'
+                            fs.ai_score > 0.62 ? 'bg-rose-500-500' :
+                            fs.ai_score > 0.45 ? 'bg-amber-500-500' : 'bg-emerald-500-500'
                           }`} />
                       ))}
                     </div>
@@ -538,12 +538,12 @@ function VideoDetectionPage() {
                       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
                       className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
                           <span className="text-xs sm:text-sm text-slate-400 font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
-                            ${s.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                            ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>
                             {s.weight}%
                           </span>
                         </div>
@@ -552,7 +552,7 @@ function VideoDetectionPage() {
                           <motion.div initial={{ width: 0 }}
                             animate={{ width: `${Math.round(s.value * 100)}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                            className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                         </div>
                       </div>
                     </motion.div>
@@ -644,7 +644,7 @@ function VideoDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

@@ -59,7 +59,7 @@ export function CustomCursor() {
         }}
       >
         <motion.div
-          className="rounded-full border border-primary/40"
+          className="rounded-full border border-blue-500/40"
           animate={{
             width: isHovering ? 40 : 24,
             height: isHovering ? 40 : 24,

@@ -143,7 +143,7 @@ export default function ContactPage() {
 
             {/* Temah / PM card */}
             <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5">
-              <p className="text-[11px] text-primary/70 uppercase tracking-wider mb-3 font-bold">
+              <p className="text-[11px] text-blue-500/70 uppercase tracking-wider mb-3 font-bold">
                 Business &amp; Enterprise
               </p>
               <div className="flex items-center gap-3 mb-3">
@@ -189,8 +189,8 @@ export default function ContactPage() {
           {/* Right column — form */}
           <div className="lg:col-span-3">
             {sent ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-10 text-center">
-                <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500-500/5 p-10 text-center">
+                <CheckCircle className="w-12 h-12 text-emerald-400-400 mx-auto mb-4" />
                 <h2 className="text-xl font-bold text-slate-100 mb-2">Message sent!</h2>
                 <p className="text-slate-500 text-sm mb-4">We'll get back to you within 24–48 hours.</p>
                 <button onClick={() => { setSent(false); setForm({ name:'', email:'', subject: SUBJECTS[0], message:'' }) }}
@@ -235,7 +235,7 @@ export default function ContactPage() {
                   {SUBJECT_ROUTING[form.subject] && (
                     <p className="text-[11px] text-slate-600 mt-1.5 pl-1">
                       → Will be sent to{' '}
-                      <span className="text-primary font-medium">
+                      <span className="text-blue-500 font-medium">
                         {SUBJECT_ROUTING[form.subject] === 'security'   ? 'security@aiscern.com' :
                          SUBJECT_ROUTING[form.subject] === 'enterprise'  ? 'temah@aiscern.com'  :
                          SUBJECT_ROUTING[form.subject] === 'support'     ? 'support@aiscern.com' :
@@ -254,7 +254,7 @@ export default function ContactPage() {
                       focus:border-blue-500/30 transition-colors" />
                 </div>
 
-                {error && <p className="text-rose-400 text-sm px-1">{error}</p>}
+                {error && <p className="text-rose-400-400 text-sm px-1">{error}</p>}
 
                 <button onClick={submit}
                   disabled={sending || !form.name || !form.email || !form.message}
@@ -270,11 +270,11 @@ export default function ContactPage() {
                 <div className="pt-2 border-t border-white/[0.06]">
                   <p className="text-[11px] text-slate-600 text-center leading-relaxed">
                     Or email us directly:&nbsp;
-                    <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">contact@aiscern.com</a>
+                    <a href="mailto:contact@aiscern.com" className="text-blue-500 hover:underline">contact@aiscern.com</a>
                     &nbsp;·&nbsp;
-                    <a href="mailto:support@aiscern.com" className="text-primary hover:underline">support@aiscern.com</a>
+                    <a href="mailto:support@aiscern.com" className="text-blue-500 hover:underline">support@aiscern.com</a>
                     &nbsp;·&nbsp;
-                    <a href="mailto:security@aiscern.com" className="text-primary hover:underline">security@aiscern.com</a>
+                    <a href="mailto:security@aiscern.com" className="text-blue-500 hover:underline">security@aiscern.com</a>
                   </p>
                 </div>
               </div>

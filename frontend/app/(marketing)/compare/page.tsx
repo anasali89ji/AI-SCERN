@@ -44,9 +44,9 @@ const ROWS: CompareRow[] = [
 ]
 
 function Cell({ value }: { value: CellValue }) {
-  if (value === 'yes') return <CheckCircle className="w-5 h-5 text-emerald-400 mx-auto" />
-  if (value === 'no')  return <XCircle className="w-5 h-5 text-rose/60 mx-auto" />
-  if (value === 'partial') return <Minus className="w-5 h-5 text-amber-500 mx-auto" />
+  if (value === 'yes') return <CheckCircle className="w-5 h-5 text-emerald-400-400 mx-auto" />
+  if (value === 'no')  return <XCircle className="w-5 h-5 text-rose-400/60 mx-auto" />
+  if (value === 'partial') return <Minus className="w-5 h-5 text-amber-400-500 mx-auto" />
   return <span className="text-xs text-slate-400">{value}</span>
 }
 
@@ -102,7 +102,7 @@ export default function ComparePage() {
                   {ROWS.map((row, i) => (
                     <tr key={i} className={`border-b border-white/[0.06] ${i % 2 === 0 ? 'bg-surface/10' : ''}`}>
                       <td className="px-5 py-3 text-sm text-slate-400 font-medium">{row.feature}</td>
-                      <td className="px-4 py-3 text-center bg-primary/[0.03]"><Cell value={row.aiscern} /></td>
+                      <td className="px-4 py-3 text-center bg-blue-600/[0.03]"><Cell value={row.aiscern} /></td>
                       <td className="px-4 py-3 text-center"><Cell value={row.gptzero} /></td>
                       <td className="px-4 py-3 text-center"><Cell value={row.zerogpt} /></td>
                       <td className="px-4 py-3 text-center"><Cell value={row.originality} /></td>
@@ -113,7 +113,7 @@ export default function ComparePage() {
             </div>
             <p className="text-xs text-slate-500 mt-3 text-center">
               Competitor data based on publicly available information as of June 2026. Accuracy figures are approximate and vary by dataset. See{' '}
-              <Link href="/benchmarks" className="text-primary hover:underline">our benchmarks</Link> for Aiscern&apos;s measured performance.
+              <Link href="/benchmarks" className="text-blue-500 hover:underline">our benchmarks</Link> for Aiscern&apos;s measured performance.
             </p>
           </div>
         </section>
@@ -129,7 +129,7 @@ export default function ComparePage() {
                 { title: 'Open methodology', desc: 'We publish our benchmark datasets, model breakdown, and confidence thresholds at /methodology. Most competitors treat their methods as black boxes.' },
               ].map((d, i) => (
                 <div key={i} className="card border border-white/[0.08] rounded-xl p-5">
-                  <div className="text-2xl font-black text-primary/20 mb-2">0{i+1}</div>
+                  <div className="text-2xl font-black text-blue-500/20 mb-2">0{i+1}</div>
                   <h3 className="font-bold text-slate-100 text-sm mb-2">{d.title}</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">{d.desc}</p>
                 </div>

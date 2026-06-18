@@ -142,7 +142,7 @@ export default function PricingPage() {
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${yearly ? 'translate-x-5' : ''}`} />
             </button>
             <button onClick={() => setYearly(true)} className={`text-sm font-semibold transition-colors ${yearly ? 'text-slate-100' : 'text-slate-500'}`}>
-              Yearly <span className="text-emerald text-xs ml-1">Save 33%</span>
+              Yearly <span className="text-emerald-400 text-xs ml-1">Save 33%</span>
             </button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function PricingPage() {
                   </div>
                 )}
                 {yearly && tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
-                  <p className="text-xs text-emerald-400 mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
+                  <p className="text-xs text-emerald-400-400 mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
                 )}
               </div>
               <div className="space-y-2 mb-6 flex-1">
@@ -209,7 +209,7 @@ export default function PricingPage() {
                       const raw = tier.limits[row.key as keyof typeof tier.limits]
                       const display = row.format ? row.format(raw as never) : String(raw)
                       return (
-                        <td key={tier.name} className={`px-4 py-3 text-center tabular-nums ${tier.highlight ? 'text-primary font-semibold' : 'text-slate-400'}`}>
+                        <td key={tier.name} className={`px-4 py-3 text-center tabular-nums ${tier.highlight ? 'text-blue-500 font-semibold' : 'text-slate-400'}`}>
                           {display}
                         </td>
                       )
@@ -222,7 +222,7 @@ export default function PricingPage() {
                     {(['free', 'pro', 'team', 'enterprise'] as const).map(plan => (
                       <td key={plan} className="px-4 py-3 text-center">
                         {feat[plan]
-                          ? <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+                          ? <Check className="w-4 h-4 text-emerald-400-400 mx-auto" />
                           : <X className="w-4 h-4 text-slate-600 mx-auto" />
                         }
                       </td>
@@ -235,7 +235,7 @@ export default function PricingPage() {
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 mb-12">
-          <h3 className="font-bold text-slate-100 mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber" />API Rate Limits</h3>
+          <h3 className="font-bold text-slate-100 mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber-400" />API Rate Limits</h3>
           <div className="grid sm:grid-cols-3 gap-4 text-sm text-slate-400">
             <div>
               <p className="font-semibold text-slate-100 mb-1">Pro</p>

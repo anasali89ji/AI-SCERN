@@ -79,7 +79,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
                   {p}
                 </li>
               ))}
@@ -98,7 +98,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             </div>
 
             <p className="text-center text-xs text-slate-600 flex items-center justify-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-emerald" />
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
               Free tier available · No credit card required
             </p>
           </div>

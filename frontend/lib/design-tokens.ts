@@ -10,7 +10,7 @@ export const tokens = {
     surface:         '#0f0f17',
     'surface-active':'#141420',
     border:          'rgba(255,255,255,0.08)',
-    'text-primary':  '#f1f5f9',
+    'text-blue-500':  '#f1f5f9',
     'text-secondary':'#94a3b8',
     'text-muted':    '#64748b',
     accent:          '#2563eb',

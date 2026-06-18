@@ -8,9 +8,9 @@ const config: Config = {
   ],
   safelist: [
     // Verdict color classes used dynamically in detection results
-    'text-rose-400', 'border-rose-500/30', 'bg-rose-500/10',
-    'text-emerald-400', 'border-emerald-500/30', 'bg-emerald-500/10',
-    'text-amber-400', 'border-amber-500/30', 'bg-amber-500/10',
+    'text-rose-400-400', 'border-rose-500/30', 'bg-rose-500-500/10',
+    'text-emerald-400-400', 'border-emerald-500/30', 'bg-emerald-500-500/10',
+    'text-amber-400-400', 'border-amber-500/30', 'bg-amber-500-500/10',
     'text-blue-400', 'border-blue-500/30', 'bg-blue-500/10',
     'text-cyan-400', 'border-cyan-500/30', 'bg-cyan-500/10',
   ],
@@ -33,7 +33,7 @@ const config: Config = {
         'surface-hover':  'rgba(255,255,255,0.04)',
         'surface-border': 'rgba(255,255,255,0.08)',
         border:           'rgba(255, 255, 255, 0.08)',
-        'text-primary':   '#f1f5f9',
+        'text-blue-500':   '#f1f5f9',
         'text-secondary': '#a0aec0',
         'text-muted':     '#94a3b8',
         'text-disabled':  '#64748b',

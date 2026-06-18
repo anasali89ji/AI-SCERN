@@ -88,9 +88,9 @@ const colorMap: Record<string, { bg: string; border: string; icon: string }> = {
   primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
   blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
   cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400'    },
-  emerald: { bg: 'bg-emerald-500/8', border: 'border-emerald-500/20', icon: 'text-emerald-400' },
-  amber:   { bg: 'bg-amber-500/8',   border: 'border-amber-500/20',   icon: 'text-amber-500'   },
-  rose:    { bg: 'bg-rose-500/8',    border: 'border-rose-500/20',    icon: 'text-rose-500'    },
+  emerald: { bg: 'bg-emerald-500-500/8', border: 'border-emerald-500/20', icon: 'text-emerald-400-400' },
+  amber:   { bg: 'bg-amber-500-500/8',   border: 'border-amber-500/20',   icon: 'text-amber-400-500'   },
+  rose:    { bg: 'bg-rose-500-500/8',    border: 'border-rose-500/20',    icon: 'text-rose-400-500'    },
 }
 
 export default function TransparencyPage() {
@@ -102,7 +102,7 @@ export default function TransparencyPage() {
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400-400 mb-6">
               <Shield className="w-3.5 h-3.5" />
               Full Transparency
             </div>
@@ -128,7 +128,7 @@ export default function TransparencyPage() {
                 const BIcon = badge.icon
                 return (
                   <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0f0f17] border border-white/[0.08] text-sm text-slate-400">
-                    <BIcon className="w-4 h-4 text-emerald" />
+                    <BIcon className="w-4 h-4 text-emerald-400" />
                     {badge.label}
                   </div>
                 )
@@ -154,7 +154,7 @@ export default function TransparencyPage() {
                   <ul className="space-y-3">
                     {section.items.map((item, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-slate-400 leading-relaxed">
-                        <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />
                         {item}
                       </li>
                     ))}

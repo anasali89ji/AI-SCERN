@@ -82,7 +82,7 @@ export default function TermsPage() {
           </Section>
 
           <Section title="6. Detection Results Disclaimer">
-            <p className="font-semibold text-amber-400">IMPORTANT:</p>
+            <p className="font-semibold text-amber-400-400">IMPORTANT:</p>
             <ul>
               <li>AI detection results are probabilistic estimates, not definitive facts</li>
               <li>Aiscern results should not be used as the sole basis for legal, academic, or professional decisions</li>
@@ -134,7 +134,7 @@ export default function TermsPage() {
               For questions about these Terms, contact:<br />
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
               Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:legal@aiscern.com" className="text-primary hover:underline">legal@aiscern.com</a>
+              Email: <a href="mailto:legal@aiscern.com" className="text-blue-500 hover:underline">legal@aiscern.com</a>
             </p>
           </Section>
         </div>

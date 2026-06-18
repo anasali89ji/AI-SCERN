@@ -315,16 +315,16 @@ export default function BatchPage() {
                 <div className="col-span-2 sm:col-span-4 text-xs text-slate-500 mb-1">
                   Hey <span className="text-slate-100 font-semibold">{displayName}</span> — batch scan complete.{' '}
                   {aiCount > 0
-                    ? <span className="text-rose font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
-                    : <span className="text-emerald font-medium">No AI-generated content detected</span>}
-                  {humanCount > 0 && aiCount > 0 && <>, <span className="text-emerald font-medium">{humanCount} authentic</span></>}.
+                    ? <span className="text-rose-400 font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
+                    : <span className="text-emerald-400 font-medium">No AI-generated content detected</span>}
+                  {humanCount > 0 && aiCount > 0 && <>, <span className="text-emerald-400 font-medium">{humanCount} authentic</span></>}.
                 </div>
               )}
               {[
                 { label: 'Completed', value: completed, color: 'text-slate-100' },
-                { label: 'AI Detected', value: aiCount, color: 'text-rose-500' },
-                { label: 'Human/Real', value: humanCount, color: 'text-emerald-400' },
-                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-500' : 'text-slate-500' },
+                { label: 'AI Detected', value: aiCount, color: 'text-rose-400-500' },
+                { label: 'Human/Real', value: humanCount, color: 'text-emerald-400-400' },
+                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400-500' : 'text-slate-500' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
                   <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
@@ -347,7 +347,7 @@ export default function BatchPage() {
               </button>
             ) : (
               <button onClick={togglePause}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'}`}>
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/30 hover:bg-amber-500-500/20'}`}>
                 {paused ? <><Play className="w-4 h-4" />Resume</> : <><Pause className="w-4 h-4" />Pause</>}
               </button>
             )}
@@ -376,10 +376,10 @@ export default function BatchPage() {
 
           {/* Cross-tool correlation alert */}
           {correlation && (
-            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/5 flex items-start gap-3 mb-2">
-              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500-500/5 flex items-start gap-3 mb-2">
+              <AlertTriangle className="w-5 h-5 text-rose-400-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-rose">Correlated AI Pattern Detected</p>
+                <p className="text-sm font-semibold text-rose-400">Correlated AI Pattern Detected</p>
                 <p className="text-sm text-slate-500 mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
               </div>
             </div>
@@ -395,7 +395,7 @@ export default function BatchPage() {
                 { key: 'error',     label: 'Errors',    count: errored },
               ] as const).filter(t => t.key === 'all' || t.count > 0).map(t => (
                 <button key={t.key} onClick={() => setFilter(t.key)}
-                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-primary text-white' : 'btn-ghost'}`}>
+                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-blue-600 text-white' : 'btn-ghost'}`}>
                   {t.label}
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-[#141420] text-slate-500'}`}>{t.count}</span>
                 </button>
@@ -411,20 +411,20 @@ export default function BatchPage() {
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
                   transition={{ delay: Math.min(i * 0.02, 0.2) }}
                   className={`card flex items-center gap-3 py-3 px-4 transition-all ${
-                    bf.status === 'processing' ? 'border-primary/40 bg-primary/3' :
+                    bf.status === 'processing' ? 'border-blue-500/40 bg-blue-600/3' :
                     bf.verdict === 'AI' ? 'border-rose-500/15' :
                     bf.verdict === 'HUMAN' ? 'border-emerald-500/15' :
-                    bf.status === 'error' ? 'border-amber-500/20 bg-amber-500/3' : ''
+                    bf.status === 'error' ? 'border-amber-500/20 bg-amber-500-500/3' : ''
                   }`}>
 
                   {/* Status icon */}
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
                     {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-white/[0.08]" />}
                     {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
-                    {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-rose" />}
-                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-emerald" />}
-                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-amber" />}
-                    {bf.status === 'error' && <X className="w-5 h-5 text-amber" />}
+                    {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-rose-400" />}
+                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-emerald-400" />}
+                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-amber-400" />}
+                    {bf.status === 'error' && <X className="w-5 h-5 text-amber-400" />}
                   </div>
 
                   {/* File info */}
@@ -434,7 +434,7 @@ export default function BatchPage() {
                       <span className="text-xs text-slate-500">{formatFileSize(bf.file.size)}</span>
                       <span className="text-xs text-slate-600 uppercase">{detectType(bf.file)}</span>
                       {bf.status === 'error' && bf.error && (
-                        <span className="text-xs text-amber-500 truncate">{bf.error}</span>
+                        <span className="text-xs text-amber-400-500 truncate">{bf.error}</span>
                       )}
                       {bf.processingTime && (
                         <span className="text-xs text-slate-600">{bf.processingTime}ms</span>
@@ -455,7 +455,7 @@ export default function BatchPage() {
                   {/* Remove */}
                   {bf.status === 'queued' && (
                     <button onClick={() => removeFile(bf.id)}
-                      className="text-slate-500 hover:text-rose p-1 rounded hover:bg-rose-500/10 transition-colors shrink-0">
+                      className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500-500/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   )}

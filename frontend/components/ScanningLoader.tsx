@@ -150,7 +150,7 @@ export default function ScanningLoader({
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="text-[11px] font-bold text-emerald-400 flex-shrink-0"
+                    className="text-[11px] font-bold text-emerald-400-400 flex-shrink-0"
                   >
                     ✓
                   </motion.span>

@@ -145,7 +145,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                     prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                      ${active ? 'bg-primary/15 text-blue-400 border-l-2 border-primary' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
+                      ${active ? 'bg-blue-600/15 text-blue-400 border-l-2 border-blue-500' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
                       ${collapsed ? 'justify-center' : ''}`}>
                     <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-400' : ''}`} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
@@ -199,7 +199,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                   prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                    ${active ? 'bg-primary/15 text-blue-400 border-l-2 border-primary' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
+                    ${active ? 'bg-blue-600/15 text-blue-400 border-l-2 border-blue-500' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-100'}
                     ${collapsed ? 'justify-center' : ''}`}>
                   <Icon className={`w-5 h-5 ${active ? 'text-blue-400' : ''}`} />
                   {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
@@ -219,16 +219,16 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
               <p className="text-xs font-medium text-slate-400 truncate">
                 {user?.displayName || user?.email?.split('@')[0] || 'User'}
               </p>
-              <p className="text-[10px] text-emerald-400 font-medium">&#x25CF; Online</p>
+              <p className="text-[10px] text-emerald-400-400 font-medium">&#x25CF; Online</p>
             </div>
             <button onClick={signOut} title="Sign out"
-              className="text-slate-500 hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose-500/10">
+              className="text-slate-500 hover:text-rose-400 transition-colors p-1 rounded-lg hover:bg-rose-500-500/10">
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
           <button onClick={signOut} title="Sign out"
-            className="w-full flex justify-center py-2 text-slate-500 hover:text-rose transition-colors rounded-xl hover:bg-rose-500/10">
+            className="w-full flex justify-center py-2 text-slate-500 hover:text-rose-400 transition-colors rounded-xl hover:bg-rose-500-500/10">
             <LogOut className="w-5 h-5" />
           </button>
         )}
@@ -265,8 +265,8 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="font-bold text-slate-100 truncate">{name}</p>
           <p className="text-xs text-slate-500 truncate">{email}</p>
-          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald-400-400 bg-emerald-500-500/10 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500-500" />
             Active
           </span>
         </div>
@@ -287,7 +287,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       </div>
       <div className="p-2 border-t border-white/[0.08]">
         <button onClick={() => { setOpen(false); signOut() }}
-          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500/10 transition-colors text-sm text-slate-500 hover:text-rose w-full">
+          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-500-500/10 transition-colors text-sm text-slate-500 hover:text-rose-400 w-full">
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span className="font-medium">Sign Out</span>
         </button>
@@ -434,7 +434,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="font-bold gradient-text text-sm">Aiscern</span>
               </Link>
               <div className="hidden lg:flex items-center gap-2 text-sm text-slate-500">
-                <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 All systems operational
               </div>
             </div>

@@ -141,8 +141,8 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
               ) : success ? (
                 <div className="text-center py-8">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-emerald" />
+                    className="w-16 h-16 rounded-full bg-emerald-500-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-emerald-400" />
                   </motion.div>
                   <h2 className="text-xl font-bold text-slate-100 mb-2">Review submitted!</h2>
                   <p className="text-sm text-slate-500">Thank you for helping the community.</p>
@@ -161,11 +161,11 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                           onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
                           onClick={() => setRating(n)}
                           className="transition-all touch-manipulation">
-                          <Star className={`w-9 h-9 sm:w-10 sm:h-10 transition-colors ${n <= (hover || rating) ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}`} />
+                          <Star className={`w-9 h-9 sm:w-10 sm:h-10 transition-colors ${n <= (hover || rating) ? 'text-amber-400-400 fill-amber-400' : 'text-zinc-600'}`} />
                         </button>
                       ))}
                       {(hover || rating) > 0 && (
-                        <span className="ml-1 text-sm font-bold text-amber-400">{STAR_LABELS[hover || rating]}</span>
+                        <span className="ml-1 text-sm font-bold text-amber-400-400">{STAR_LABELS[hover || rating]}</span>
                       )}
                     </div>
                   </div>
@@ -196,7 +196,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Review *</label>
-                      <span className={`text-xs ${body.length > 0 && body.length < 30 ? 'text-rose-500' : 'text-slate-600'}`}>
+                      <span className={`text-xs ${body.length > 0 && body.length < 30 ? 'text-rose-400-500' : 'text-slate-600'}`}>
                         {body.length}/1000
                       </span>
                     </div>
@@ -207,7 +207,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                       className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 resize-none focus:outline-none focus:border-blue-500/30 transition-colors"
                     />
                     {body.length > 0 && body.length < 30 && (
-                      <p className="text-xs text-rose-500 mt-1">{30 - body.length} more characters needed</p>
+                      <p className="text-xs text-rose-400-500 mt-1">{30 - body.length} more characters needed</p>
                     )}
                   </div>
 
@@ -216,11 +216,11 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                     <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2.5 block">Your Identity</label>
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <button type="button" onClick={() => setIsAnonymous(false)}
-                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all border ${!isAnonymous ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'bg-surface border-white/[0.08] text-slate-500'}`}>
+                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all border ${!isAnonymous ? 'bg-blue-500/10 border-blue-500/40 text-blue-400' : 'bg-surface border-white/[0.08] text-slate-500'}`}>
                         <User className="w-3.5 h-3.5" /> Show Name
                       </button>
                       <button type="button" onClick={() => setIsAnonymous(true)}
-                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all border ${isAnonymous ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'bg-surface border-white/[0.08] text-slate-500'}`}>
+                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all border ${isAnonymous ? 'bg-blue-500/10 border-blue-500/40 text-blue-400' : 'bg-surface border-white/[0.08] text-slate-500'}`}>
                         <EyeOff className="w-3.5 h-3.5" /> Anonymous
                       </button>
                     </div>
@@ -238,7 +238,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   </div>
 
                   {error && (
-                    <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm">
+                    <div className="px-4 py-3 rounded-xl bg-rose-500-500/10 border border-rose-500/20 text-rose-400-500 text-sm">
                       {error}
                     </div>
                   )}

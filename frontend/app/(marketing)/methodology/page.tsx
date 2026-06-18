@@ -12,8 +12,8 @@ export const metadata = {
 const ACCURACY = [
   { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-blue-600' },
   { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets',          color: 'bg-blue-500'   },
-  { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500' },
-  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-amber-500'  },
+  { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500-500' },
+  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-amber-500-500'  },
 ]
 
 const SIGNALS_TEXT = [
@@ -149,10 +149,10 @@ export default function MethodologyPage() {
           <div className="space-y-3">
             {[
               { range: '90–100%', label: 'Very High — AI',    color: 'border-red-500/40 bg-red-500/5',    desc: 'Strong ensemble agreement. Multiple independent signals all point to AI generation.' },
-              { range: '70–89%',  label: 'High — Likely AI', color: 'border-amber-500/40 bg-amber-500/5', desc: 'Most signals indicate AI. Some ambiguity — review flagged signals before acting.' },
+              { range: '70–89%',  label: 'High — Likely AI', color: 'border-amber-500/40 bg-amber-500-500/5', desc: 'Most signals indicate AI. Some ambiguity — review flagged signals before acting.' },
               { range: '45–69%',  label: 'Uncertain',         color: 'border-yellow-500/40 bg-yellow-500/5', desc: 'Signals are mixed. Do not use this result as evidence of AI use without additional review.' },
               { range: '20–44%',  label: 'Likely Human',      color: 'border-blue-500/40 bg-blue-500/5',  desc: 'Most signals point to human authorship. Low probability of AI generation.' },
-              { range: '0–19%',   label: 'Very High — Human', color: 'border-emerald-500/40 bg-emerald-500/5', desc: 'Strong ensemble agreement on human origin. Multiple signals confirm natural content.' },
+              { range: '0–19%',   label: 'Very High — Human', color: 'border-emerald-500/40 bg-emerald-500-500/5', desc: 'Strong ensemble agreement on human origin. Multiple signals confirm natural content.' },
             ].map(({ range, label, color, desc }) => (
               <div key={range} className={`rounded-xl border ${color} p-4 flex gap-4`}>
                 <div className="w-20 shrink-0">

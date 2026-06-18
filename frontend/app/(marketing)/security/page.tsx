@@ -79,9 +79,9 @@ export default function SecurityPage() {
         </div>
 
         {/* Summary card */}
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-12">
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500-500/5 p-6 mb-12">
           <h2 className="font-black text-lg mb-3 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-emerald-400" /> The short version
+            <CheckCircle className="w-5 h-5 text-emerald-400-400" /> The short version
           </h2>
           <ul className="space-y-2 text-sm text-slate-500">
             {[
@@ -92,7 +92,7 @@ export default function SecurityPage() {
               'API keys are stored as one-way hashes — we cannot recover the original key',
             ].map(item => (
               <li key={item} className="flex items-start gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400-400 mt-0.5 shrink-0" />
                 {item}
               </li>
             ))}
@@ -112,7 +112,7 @@ export default function SecurityPage() {
               <ul className="space-y-2">
                 {items.map(item => (
                   <li key={item} className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                    <span className="w-1 h-1 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+                    <span className="w-1 h-1 rounded-full bg-blue-600/60 mt-1.5 shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -154,15 +154,15 @@ export default function SecurityPage() {
             If you discover a security vulnerability in Aiscern, please report it responsibly before disclosing publicly. We investigate all credible reports promptly.
           </p>
           <p className="text-sm text-slate-500">
-            Contact: <a href="mailto:security@aiscern.com" className="text-primary hover:underline">security@aiscern.com</a>
+            Contact: <a href="mailto:security@aiscern.com" className="text-blue-500 hover:underline">security@aiscern.com</a>
           </p>
         </section>
 
         {/* Links */}
         <div className="flex flex-wrap gap-4 justify-center text-sm">
-          <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-          <Link href="/terms"   className="text-primary hover:underline">Terms of Service</Link>
-          <Link href="/contact" className="text-primary hover:underline">Contact Us</Link>
+          <Link href="/privacy" className="text-blue-500 hover:underline">Privacy Policy</Link>
+          <Link href="/terms"   className="text-blue-500 hover:underline">Terms of Service</Link>
+          <Link href="/contact" className="text-blue-500 hover:underline">Contact Us</Link>
         </div>
       </main>
 

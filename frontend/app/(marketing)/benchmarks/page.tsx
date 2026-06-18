@@ -69,7 +69,7 @@ function BenchTable({ rows }: { rows: typeof TEXT_RESULTS }) {
               <td className="px-4 py-3 text-center tabular-nums">{(row.precision*100).toFixed(1)}%</td>
               <td className="px-4 py-3 text-center tabular-nums">{(row.recall*100).toFixed(1)}%</td>
               <td className="px-4 py-3 text-center tabular-nums">{row.f1.toFixed(3)}</td>
-              <td className="px-4 py-3 text-center tabular-nums text-amber-600 dark:text-amber-400">{(row.fpr*100).toFixed(1)}%</td>
+              <td className="px-4 py-3 text-center tabular-nums text-amber-400-600 dark:text-amber-400-400">{(row.fpr*100).toFixed(1)}%</td>
             </tr>
           ))}
         </tbody>
@@ -86,8 +86,8 @@ export default function BenchmarksPage() {
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Accuracy Benchmarks</h1>
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">Per-modality evaluation results across our ensemble models. All benchmarks use held-out test splits — none of the test data was used for training.</p>
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2 max-w-xl mx-auto">
-            <Info className="h-4 w-4 text-amber-600 flex-shrink-0" />
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-amber-500-50 dark:bg-amber-500-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2 max-w-xl mx-auto">
+            <Info className="h-4 w-4 text-amber-400-600 flex-shrink-0" />
             <span>Real-world accuracy varies by generator novelty, content type, and obfuscation. Treat these as upper bounds on curated data.</span>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function BenchmarksPage() {
 
         <div className="rounded-xl border border-white/[0.08] bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground mb-3">Full results with confidence intervals and per-generator breakdowns available as CSV.</p>
-          <a href="/benchmarks/results.csv" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-blue-700 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
+          <a href="/benchmarks/results.csv" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-blue-500-foreground hover:bg-blue-700 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
           <p className="mt-3 text-xs text-muted-foreground"><Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link> · <Link href="/research" className="underline underline-offset-2 hover:text-foreground">Research Citations</Link></p>
         </div>
       </main>

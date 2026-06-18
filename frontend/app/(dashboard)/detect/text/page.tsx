@@ -67,7 +67,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = TEXT_MAX_CHARS
-  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-500' : charCount > 70_000 ? 'text-amber-500' : 'text-slate-500'
+  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : charCount > 70_000 ? 'text-amber-400-400-500' : 'text-slate-500'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -168,13 +168,13 @@ Analyzed: ${new Date().toLocaleString()}`
   }
 
   const verdictStyles: Record<Verdict, string> = {
-    AI: 'border-rose-500/30 bg-rose-500/5',
-    HUMAN: 'border-emerald-500/30 bg-emerald-500/5',
-    UNCERTAIN: 'border-amber-500/30 bg-amber-500/5',
+    AI: 'border-rose-500/30 bg-rose-500-500-500/5',
+    HUMAN: 'border-emerald-500/30 bg-emerald-500-500-500/5',
+    UNCERTAIN: 'border-amber-500/30 bg-amber-500-500-500/5',
   }
 
   const verdictColor: Record<Verdict, string> = {
-    AI: 'text-rose-500', HUMAN: 'text-emerald-400', UNCERTAIN: 'text-amber-500'
+    AI: 'text-rose-400-400-500', HUMAN: 'text-emerald-400-400-400', UNCERTAIN: 'text-amber-400-400-500'
   }
 
   const shareResult = async () => {
@@ -195,8 +195,8 @@ Analyzed: ${new Date().toLocaleString()}`
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-            <FileText className="w-6 h-6 text-amber" />
+          <div className="w-10 h-10 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center shrink-0">
+            <FileText className="w-6 h-6 text-amber-400-400" />
           </div>
           Text Detection
         </h1>
@@ -234,12 +234,12 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setPdfMode(false)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500-500-500/15 text-amber-400-400-500 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
                 onClick={() => setPdfMode(true)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-primary/15 text-blue-400 border border-blue-500/20' : 'text-slate-500 hover:text-slate-400'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-blue-500/[0.08] text-blue-400 border border-blue-500/20' : 'text-slate-500 hover:text-slate-400'}`}>
                 <BookOpen className="w-3.5 h-3.5" /> PDF Upload
               </button>
             </div>
@@ -258,7 +258,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     else if (f) setError('Please upload a PDF file.')
                   }}
                   className={`flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3
-                    ${pdfFile ? 'border-primary/40 bg-blue-500/5' : 'border-white/[0.08] hover:border-blue-500/50/40 hover:bg-blue-500/5'}`}>
+                    ${pdfFile ? 'border-blue-500/30 bg-blue-500/5' : 'border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/5'}`}>
                   {pdfLoading ? (
                     <div className="flex flex-col items-center gap-2 w-full px-6">
                       <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
@@ -286,7 +286,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = '' }} />
                 {pdfFile && !pdfLoading && !result && (
                   <button onClick={() => { setPdfFile(null); setResult(null) }}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose transition-colors mb-2">
+                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-400-400 transition-colors mb-2">
                     <X className="w-3.5 h-3.5" /> Clear PDF
                   </button>
                 )}
@@ -314,25 +314,25 @@ Analyzed: ${new Date().toLocaleString()}`
             {charCount > 70_000 && (
               <div className="mt-2">
                 <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${charCount > TEXT_WARN_CHARS ? 'bg-rose' : 'bg-amber'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
+                  <div className={`h-full rounded-full transition-all ${charCount > TEXT_WARN_CHARS ? 'bg-rose-500-500' : 'bg-amber-500-500'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
                 </div>
-                <p className={`text-xs mt-1 ${charCount > TEXT_WARN_CHARS ? 'text-rose-500' : 'text-amber-500'}`}>{(TEXT_MAX_CHARS - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
+                <p className={`text-xs mt-1 ${charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : 'text-amber-400-400-500'}`}>{(TEXT_MAX_CHARS - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
               </div>
             )}
             {/* Progress to minimum */}
             {charCount < 50 && charCount > 0 && (
               <div className="mt-2">
                 <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
+                  <div className="h-full bg-amber-500-500-500 rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
                 </div>
-                <p className="text-xs text-amber-500 mt-1">{50 - charCount} more characters needed</p>
+                <p className="text-xs text-amber-400-400-500 mt-1">{50 - charCount} more characters needed</p>
               </div>
             )}
 
             <div className="flex items-center justify-between mt-3">
               <div className="text-xs text-slate-500">
                 {wordCount > 0 && <span className="text-slate-600">{readingTime(text)}</span>}
-                {charCount >= 50 && <span className="ml-2 text-emerald/70">✓ Ready to analyze</span>}
+                {charCount >= 50 && <span className="ml-2 text-emerald-400-400/70">✓ Ready to analyze</span>}
               </div>
               <div className="flex gap-2">
                 <button onClick={() => { setText(''); setResult(null); setError(null) }}
@@ -353,8 +353,8 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500/5">
-              <div className="flex items-center gap-2 text-rose-500 text-sm">
+              className="card border-rose-500/30 bg-rose-500-500-500/5">
+              <div className="flex items-center gap-2 text-rose-400-400-500 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
               </div>
             </motion.div>
@@ -395,10 +395,10 @@ Analyzed: ${new Date().toLocaleString()}`
                   <div className="flex items-start gap-3 min-w-0">
                     <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
                       {result.verdict === 'AI'
-                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-rose" />
+                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-rose-400-400" />
                         : result.verdict === 'HUMAN'
-                        ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-emerald" />
-                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-amber" />}
+                        ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-400-400" />
+                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-amber-400-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
@@ -429,7 +429,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden relative">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber to-rose' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald/50 to-emerald' : 'bg-gradient-to-r from-amber/50 to-amber'}`}
+                        className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber-500-500 to-rose-500-500' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald-500-500/50 to-emerald-500-500' : 'bg-gradient-to-r from-amber-500-500/50 to-amber-500-500'}`}
                       />
                     </div>
                   </div>
@@ -447,16 +447,16 @@ Analyzed: ${new Date().toLocaleString()}`
                         transition={{ delay: i * 0.05, ease: 'easeOut' }}
                         className="p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                           <span className="text-sm text-slate-400 flex-1 font-medium">{signal.name}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>
                             {signal.weight}%
                           </span>
                         </div>
                         <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden ml-5">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${signal.weight}%` }}
                             transition={{ delay: i * 0.08 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${signal.flagged ? 'bg-rose' : 'bg-emerald'}`}
+                            className={`h-full rounded-full ${signal.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`}
                           />
                         </div>
                       </motion.div>
@@ -468,7 +468,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 {paragraphScores.length > 0 && (
                   <div className="card">
                     <h3 className="font-semibold text-slate-100 mb-1 flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-rose" />
+                      <span className="w-2 h-2 rounded-full bg-rose-500-500" />
                       Sentence Heatmap
                       <span className="text-xs font-normal text-slate-500 ml-1">— red = AI-likely, green = human-likely</span>
                     </h3>
@@ -476,10 +476,10 @@ Analyzed: ${new Date().toLocaleString()}`
                       {paragraphScores.map((s, i) => {
                         const pct = s.confidence
                         const bg =
-                          pct >= 80 ? 'bg-rose-500/30 text-rose-200' :
-                          pct >= 60 ? 'bg-amber-500/20 text-amber-200' :
+                          pct >= 80 ? 'bg-rose-500-500-500/30 text-rose-400-400-200' :
+                          pct >= 60 ? 'bg-amber-500-500-500/20 text-amber-400-400-200' :
                           pct >= 40 ? 'bg-yellow-900/20 text-slate-400' :
-                                      'bg-emerald-500/10 text-emerald-300'
+                                      'bg-emerald-500-500-500/10 text-emerald-400-400-300'
                         return (
                           <span key={i} title={`${pct}% AI probability`}
                             className={`${bg} rounded px-0.5 mr-0.5 cursor-help transition-colors`}>
@@ -490,7 +490,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </p>
                     {/* Legend */}
                     <div className="flex items-center gap-3 flex-wrap">
-                      {[['bg-emerald-500/10 text-emerald-300','< 40% AI'],['bg-yellow-900/20 text-slate-400','40–59%'],['bg-amber-500/20 text-amber-200','60–79%'],['bg-rose-500/30 text-rose-200','≥ 80%']].map(([cls, label]) => (
+                      {[['bg-emerald-500-500-500/10 text-emerald-400-400-300','< 40% AI'],['bg-yellow-900/20 text-slate-400','40–59%'],['bg-amber-500-500-500/20 text-amber-400-400-200','60–79%'],['bg-rose-500-500-500/30 text-rose-400-400-200','≥ 80%']].map(([cls, label]) => (
                         <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
                       ))}
                     </div>
@@ -522,8 +522,8 @@ Analyzed: ${new Date().toLocaleString()}`
             {!result && !loading && (
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="card flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-10 h-10 text-amber" />
+                <div className="w-20 h-20 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-10 h-10 text-amber-400-400" />
                 </div>
                 <h3 className="font-semibold text-slate-100 mb-2">Ready to Analyze</h3>
                 <p className="text-slate-500 text-sm max-w-xs">
@@ -532,7 +532,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500 w-full">
                   {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
                     <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />{f}
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 shrink-0" />{f}
                     </div>
                   ))}
                 </div>
@@ -606,7 +606,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

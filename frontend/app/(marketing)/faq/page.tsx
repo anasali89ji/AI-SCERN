@@ -161,7 +161,7 @@ export default function FAQPage() {
           </h1>
           <p className="text-slate-500 text-base">
             Everything you need to know about Aiscern. Can&apos;t find what you are looking for?{' '}
-            <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">
+            <a href="mailto:contact@aiscern.com" className="text-blue-500 hover:underline">
               Contact us at contact@aiscern.com
             </a>
           </p>

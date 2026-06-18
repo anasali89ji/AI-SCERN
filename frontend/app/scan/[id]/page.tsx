@@ -56,13 +56,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 function VerdictIcon({ verdict }: { verdict: string }) {
   if (verdict === 'AI')      return <AlertTriangle className="w-10 h-10 text-red-400" />
-  if (verdict === 'HUMAN')   return <CheckCircle   className="w-10 h-10 text-emerald-400" />
+  if (verdict === 'HUMAN')   return <CheckCircle   className="w-10 h-10 text-emerald-400-400" />
   return                            <HelpCircle    className="w-10 h-10 text-yellow-400" />
 }
 
 function verdictColor(verdict: string) {
   if (verdict === 'AI')    return 'text-red-400    border-red-400/30    bg-red-400/5'
-  if (verdict === 'HUMAN') return 'text-emerald-400 border-emerald-400/30 bg-emerald-400/5'
+  if (verdict === 'HUMAN') return 'text-emerald-400-400 border-emerald-400/30 bg-emerald-500-400/5'
   return                          'text-yellow-400  border-yellow-400/30  bg-yellow-400/5'
 }
 
@@ -74,7 +74,7 @@ function verdictLabel(verdict: string) {
 
 function ConfidenceBar({ score, verdict }: { score: number; verdict: string }) {
   const pct = Math.round(score * 100)
-  const barColor = verdict === 'AI' ? 'bg-red-500' : verdict === 'HUMAN' ? 'bg-emerald-500' : 'bg-yellow-500'
+  const barColor = verdict === 'AI' ? 'bg-red-500' : verdict === 'HUMAN' ? 'bg-emerald-500-500' : 'bg-yellow-500'
   return (
     <div>
       <div className="flex justify-between text-xs text-slate-500 mb-1.5">
@@ -154,7 +154,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
                   </div>
                   <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-primary/60"
+                      className="h-full rounded-full bg-blue-600/60"
                       style={{ width: `${Math.round((s.value ?? 0) * 100)}%` }}
                     />
                   </div>
@@ -170,7 +170,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
           <p className="text-xs text-slate-500 leading-relaxed">
             AI detection is probabilistic, not absolute. This result should be one input in a broader assessment.
             Accuracy is approximately 82–85% depending on content type. See our{' '}
-            <Link href="/methodology" className="text-primary underline">methodology</Link> for details.
+            <Link href="/methodology" className="text-blue-500 underline">methodology</Link> for details.
           </p>
         </div>
 

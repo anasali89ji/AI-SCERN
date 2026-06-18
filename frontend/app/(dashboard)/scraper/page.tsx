@@ -28,15 +28,15 @@ interface ScrapeResult {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const verdictColor = (v: string) =>
-  v === 'AI' ? 'text-rose-400' : v === 'HUMAN' ? 'text-emerald-400' : 'text-amber-400'
+  v === 'AI' ? 'text-rose-400-400' : v === 'HUMAN' ? 'text-emerald-400-400' : 'text-amber-400-400'
 
 const verdictBg = (v: string) =>
-  v === 'AI' ? 'bg-rose-500/15 border-rose-500/30' : v === 'HUMAN' ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-amber-500/15 border-amber-500/30'
+  v === 'AI' ? 'bg-rose-500-500/15 border-rose-500/30' : v === 'HUMAN' ? 'bg-emerald-500-500/15 border-emerald-500/30' : 'bg-amber-500-500/15 border-amber-500/30'
 
 function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
-  if (v === 'AI')    return <AlertTriangle className={`${cls} text-rose-400`} />
-  if (v === 'HUMAN') return <CheckCircle   className={`${cls} text-emerald-400`} />
-  return               <HelpCircle       className={`${cls} text-amber-400`} />
+  if (v === 'AI')    return <AlertTriangle className={`${cls} text-rose-400-400`} />
+  if (v === 'HUMAN') return <CheckCircle   className={`${cls} text-emerald-400-400`} />
+  return               <HelpCircle       className={`${cls} text-amber-400-400`} />
 }
 
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
@@ -124,11 +124,11 @@ export default function ScraperPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-blue-600/15 flex items-center justify-center">
               <Globe className="w-5 h-5 text-blue-400" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">Web Scanner</h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-blue-400 border border-primary/25">RAG</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600/15 text-blue-400 border border-blue-500/25">RAG</span>
           </div>
           <p className="text-sm text-slate-400 ml-12">
             Analyze any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal detection.
@@ -164,7 +164,7 @@ export default function ScraperPage() {
               <div className="flex gap-1">
                 {[1, 2].map(d => (
                   <button key={d} onClick={() => setDepth(d)}
-                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-primary text-white' : 'bg-[#141420] text-slate-400 hover:bg-blue-600/20'}`}>
+                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-blue-600 text-white' : 'bg-[#141420] text-slate-400 hover:bg-blue-600/20'}`}>
                     {d}
                   </button>
                 ))}
@@ -191,9 +191,9 @@ export default function ScraperPage() {
         <AnimatePresence>
           {error && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="mb-5 p-4 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-300">{error}</p>
+              className="mb-5 p-4 rounded-lg bg-rose-500-500/10 border border-rose-500/30 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 text-rose-400-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-rose-400-300">{error}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -233,7 +233,7 @@ export default function ScraperPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-600 py-1">
-              <Loader2 className="w-4 h-4 animate-spin text-primary/60" />
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500/60" />
               <span>Fetching page · extracting content · running Gemini RAG analysis…</span>
             </div>
           </div>
@@ -321,12 +321,12 @@ export default function ScraperPage() {
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          result.content_quality === 'high' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
-                          result.content_quality === 'low'  ? 'bg-rose-500/15 text-rose-400 border-rose-500/25' :
-                          'bg-amber-500/15 text-amber-400 border-amber-500/25'}`}>
+                          result.content_quality === 'high' ? 'bg-emerald-500-500/15 text-emerald-400-400 border-emerald-500/25' :
+                          result.content_quality === 'low'  ? 'bg-rose-500-500/15 text-rose-400-400 border-rose-500/25' :
+                          'bg-amber-500-500/15 text-amber-400-400 border-amber-500/25'}`}>
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-blue-400 border border-primary/25">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600/15 text-blue-400 border border-blue-500/25">
                           Aiscern RAG Engine
                         </span>
                       </div>
@@ -377,8 +377,8 @@ export default function ScraperPage() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {result.signals.map((sig, i) => (
-                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500/5 border-rose-500/15' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
-                        <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-rose-400' : 'bg-emerald-400'}`} />
+                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500-500/5 border-rose-500/15' : 'bg-emerald-500-500/5 border-emerald-500/10'}`}>
+                        <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-rose-500-400' : 'bg-emerald-500-400'}`} />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-slate-200">{sig.name}</p>
                           <p className="text-[10px] text-slate-500 leading-relaxed">{sig.description}</p>
@@ -403,7 +403,7 @@ export default function ScraperPage() {
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141420] border border-white/[0.08] hover:border-white/[0.12] transition-colors">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-500-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-500-400' : 'bg-amber-500-400'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-slate-300 truncate">{sp.title}</p>
                           <a href={sp.url} target="_blank" rel="noreferrer"
@@ -451,7 +451,7 @@ export default function ScraperPage() {
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-blue-600' : 'bg-blue-400'}`} />
                       <span className="text-slate-400 truncate flex-1">{link.text.slice(0, 55)}</span>
                       <a href={link.url} target="_blank" rel="noreferrer"
-                        className="text-primary hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
+                        className="text-blue-500 hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
                       <button onClick={() => handleScrape(link.url)} title="Scan this page"

@@ -67,7 +67,7 @@ export function MobileNav() {
                     return (
                       <Link key={href} href={href} onClick={() => setMoreOpen(false)}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all active:scale-95
-                          ${active ? 'bg-primary/15 text-blue-400' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-400'}`}>
+                          ${active ? 'bg-blue-600/15 text-blue-400' : 'text-slate-500 hover:bg-[#141420] hover:text-slate-400'}`}>
                         <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                         <span className="text-[9px] font-bold uppercase tracking-wider leading-none text-center">{label}</span>
                       </Link>

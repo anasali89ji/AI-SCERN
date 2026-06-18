@@ -189,7 +189,7 @@ Analyzed: ${new Date().toLocaleString()}`
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               <div className="space-y-3">
                 <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-blue-500/20 bg-blue-500/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
-                  <div className="w-16 h-16 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-xl bg-blue-500/[0.08] flex items-center justify-center">
                     <Upload className="w-8 h-8 text-blue-400" />
                   </div>
                   <div className="text-center">
@@ -207,7 +207,7 @@ Analyzed: ${new Date().toLocaleString()}`
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-primary bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
+                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
                 className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center">
@@ -253,7 +253,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Detect Another" className="text-slate-500 hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose-500/10 shrink-0">
+              title="Detect Another" className="text-slate-500 hover:text-rose-400-400 transition-colors p-2 rounded-lg hover:bg-rose-500-500-500/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -273,7 +273,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500/5 flex items-center gap-2 text-rose-500 text-sm py-3">
+              className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </motion.div>
           )}
@@ -281,7 +281,7 @@ Analyzed: ${new Date().toLocaleString()}`
           {/* Info card */}
           <div className="card py-3 px-4 border-white/[0.08]">
             <div className="flex items-start gap-2 text-xs text-slate-500">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary/60" />
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-500/60" />
               <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce detection accuracy.</span>
             </div>
           </div>
@@ -338,17 +338,17 @@ Analyzed: ${new Date().toLocaleString()}`
                     <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
                       className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                           <span className="text-sm text-slate-400 font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-400'}`}>{s.weight}%</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>{s.weight}%</span>
                         </div>
                         <p className="text-xs text-slate-500 truncate">{s.description}</p>
                         <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                            className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                         </div>
                       </div>
                     </motion.div>
@@ -405,7 +405,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500 w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />{f}
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -478,7 +478,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}

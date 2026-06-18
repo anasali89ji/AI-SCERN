@@ -64,7 +64,7 @@ export default function ApiUsage() {
               {errors.map(e=>(
                 <div key={e.code} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
                   <div>
-                    <span className="text-sm font-bold text-rose-500 mr-2">{e.code}</span>
+                    <span className="text-sm font-bold text-rose-400-500 mr-2">{e.code}</span>
                     <span className="text-xs text-slate-500">{e.label}</span>
                   </div>
                   <span className="text-sm font-black text-slate-100">{e.count}</span>

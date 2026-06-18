@@ -106,7 +106,7 @@ export function SignupGate() {
             <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
                   {p}
                 </li>
               ))}

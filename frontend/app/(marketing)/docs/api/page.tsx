@@ -50,7 +50,7 @@ export default function ApiDocsPage() {
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">Authentication</h2>
           <p className="text-slate-500 text-sm">Include your API key in every request using the <code className="bg-[#141420] px-1.5 py-0.5 rounded text-blue-400 text-xs">X-API-Key</code> header.</p>
-          <p className="text-slate-500 text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> — free for all users.</p>
+          <p className="text-slate-500 text-sm">Generate your API key in <Link href="/settings" className="text-blue-500 hover:underline">Settings → API Access</Link> — free for all users.</p>
         </section>
 
         <section className="card p-6 space-y-4">

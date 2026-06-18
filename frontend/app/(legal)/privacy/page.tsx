@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             <p>
               Welcome to Aiscern, a sole proprietorship operated by Anas Ali (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;). This Privacy Policy explains how we collect,
               use, disclose, and safeguard your information when you use our AI content detection platform at{' '}
-              <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>.
+              <a href="https://aiscern.com" className="text-blue-500 hover:underline">aiscern.com</a>.
             </p>
             <p>
               By using Aiscern, you agree to the collection and use of information as described in this policy. If you do not
@@ -92,18 +92,18 @@ export default function PrivacyPage() {
           <Section title="5. Data Sharing & Third Parties">
             <p>We use the following third-party sub-processors that may process your data. Each is bound by their own privacy policy and data processing terms:</p>
             <ul>
-              <li><strong>Clerk (clerk.com):</strong> User authentication, session management, and identity. Clerk never shares your data with third parties for advertising. <a href="https://clerk.com/privacy" className="text-primary hover:underline">Clerk Privacy Policy</a></li>
-              <li><strong>Supabase (supabase.com):</strong> Database storage and API. Data hosted on AWS infrastructure (EU/US). <a href="https://supabase.com/privacy" className="text-primary hover:underline">Supabase Privacy Policy</a></li>
-              <li><strong>Vercel (vercel.com):</strong> Application hosting, serverless functions, and edge delivery. <a href="https://vercel.com/legal/privacy-policy" className="text-primary hover:underline">Vercel Privacy Policy</a></li>
-              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio detection. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-primary hover:underline">Hugging Face Privacy Policy</a></li>
-              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image detection. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-primary hover:underline">Google AI Terms</a></li>
-              <li><strong>Cloudflare (cloudflare.com):</strong> CDN, edge workers, R2 file storage, and D1 database. <a href="https://www.cloudflare.com/privacypolicy/" className="text-primary hover:underline">Cloudflare Privacy Policy</a></li>
-              <li><strong>Upstash (upstash.com):</strong> Redis-based rate limiting. Only request counts and IP hashes are stored, not content. <a href="https://upstash.com/privacy" className="text-primary hover:underline">Upstash Privacy Policy</a></li>
+              <li><strong>Clerk (clerk.com):</strong> User authentication, session management, and identity. Clerk never shares your data with third parties for advertising. <a href="https://clerk.com/privacy" className="text-blue-500 hover:underline">Clerk Privacy Policy</a></li>
+              <li><strong>Supabase (supabase.com):</strong> Database storage and API. Data hosted on AWS infrastructure (EU/US). <a href="https://supabase.com/privacy" className="text-blue-500 hover:underline">Supabase Privacy Policy</a></li>
+              <li><strong>Vercel (vercel.com):</strong> Application hosting, serverless functions, and edge delivery. <a href="https://vercel.com/legal/privacy-policy" className="text-blue-500 hover:underline">Vercel Privacy Policy</a></li>
+              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio detection. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-blue-500 hover:underline">Hugging Face Privacy Policy</a></li>
+              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image detection. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-blue-500 hover:underline">Google AI Terms</a></li>
+              <li><strong>Cloudflare (cloudflare.com):</strong> CDN, edge workers, R2 file storage, and D1 database. <a href="https://www.cloudflare.com/privacypolicy/" className="text-blue-500 hover:underline">Cloudflare Privacy Policy</a></li>
+              <li><strong>Upstash (upstash.com):</strong> Redis-based rate limiting. Only request counts and IP hashes are stored, not content. <a href="https://upstash.com/privacy" className="text-blue-500 hover:underline">Upstash Privacy Policy</a></li>
             </ul>
             <p>
               We do not sell your personal data to third parties. We do not share your data with advertisers.
               A full Data Processing Agreement (DPA) listing all sub-processors is available at{' '}
-              <a href="/dpa" className="text-primary hover:underline">aiscern.com/dpa</a>.
+              <a href="/dpa" className="text-blue-500 hover:underline">aiscern.com/dpa</a>.
             </p>
           </Section>
 
@@ -172,7 +172,7 @@ export default function PrivacyPage() {
               <li><strong>Objection:</strong> Object to processing of your data</li>
             </ul>
             <p>
-              To exercise these rights, contact us at <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
+              To exercise these rights, contact us at <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -185,7 +185,7 @@ export default function PrivacyPage() {
               By creating an account you confirm you meet the minimum age requirement for your jurisdiction.
               If we discover that a child below the minimum age has provided personal data, we will delete it immediately.
               If you believe a child has registered, contact us at{' '}
-              <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
+              <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -202,7 +202,7 @@ export default function PrivacyPage() {
                 <li><strong>Right to withdraw consent</strong> — at any time, without affecting prior processing</li>
               </ul>
               <p>Legal basis for processing: contract performance (scan results), legitimate interest (fraud prevention), and consent (analytics cookies).</p>
-              <p>Data transfers to the US (Vercel, Supabase US regions) rely on Standard Contractual Clauses (SCCs). You may request a copy of the applicable SCCs at <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.</p>
+              <p>Data transfers to the US (Vercel, Supabase US regions) rely on Standard Contractual Clauses (SCCs). You may request a copy of the applicable SCCs at <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>.</p>
             </SubSection>
             <SubSection title="California Users (CCPA/CPRA)">
               <ul>
@@ -212,7 +212,7 @@ export default function PrivacyPage() {
                 <li><strong>Right to non-discrimination</strong> — exercising privacy rights will not affect service quality</li>
                 <li><strong>Right to correct</strong> — correct inaccurate personal information</li>
               </ul>
-              <p>To exercise any California rights, contact <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>. We will respond within 45 days.</p>
+              <p>To exercise any California rights, contact <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>. We will respond within 45 days.</p>
             </SubSection>
           </Section>
 
@@ -228,9 +228,9 @@ export default function PrivacyPage() {
               For privacy-related questions or requests, contact:<br />
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong> — Data Controller<br />
               Business address: Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
-              DPA requests: <a href="/dpa" className="text-primary hover:underline">aiscern.com/dpa</a><br />
-              Website: <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>
+              Email: <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a><br />
+              DPA requests: <a href="/dpa" className="text-blue-500 hover:underline">aiscern.com/dpa</a><br />
+              Website: <a href="https://aiscern.com" className="text-blue-500 hover:underline">aiscern.com</a>
             </p>
           </Section>
         </div>

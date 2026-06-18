@@ -43,7 +43,7 @@ function StarRow({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' |
   return (
     <div className="flex gap-0.5">
       {[1,2,3,4,5].map(i => (
-        <Star key={i} className={`${cls} ${i <= rating ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`} />
+        <Star key={i} className={`${cls} ${i <= rating ? 'text-amber-400-400 fill-amber-400' : 'text-zinc-700'}`} />
       ))}
     </div>
   )
@@ -184,9 +184,9 @@ export default function ReviewsPage() {
                     onClick={() => { setStarFilter(starFilter === b.n ? 0 : b.n); setPage(1) }}
                     className={`w-full flex items-center gap-2 rounded-lg px-1 py-0.5 transition-all ${starFilter === b.n ? 'bg-blue-500/10' : 'hover:bg-[#141420]'}`}>
                     <span className="text-xs text-slate-500 w-3">{b.n}</span>
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                    <Star className="w-3 h-3 text-amber-400-400 fill-amber-400 flex-shrink-0" />
                     <div className="flex-1 bg-white/[0.08] rounded-full h-1.5 overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full transition-all duration-700"
+                      <div className="h-full bg-amber-500-400 rounded-full transition-all duration-700"
                         style={{ width: `${b.pct}%` }} />
                     </div>
                     <span className="text-xs text-slate-600 w-6 text-right">{b.count}</span>
@@ -196,10 +196,10 @@ export default function ReviewsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
               {[
-                { label: 'Verified Users',  value: stats?.verified ?? '—', icon: CheckCircle, color: 'text-emerald-400' },
+                { label: 'Verified Users',  value: stats?.verified ?? '—', icon: CheckCircle, color: 'text-emerald-400-400' },
                 { label: 'Anonymous',       value: stats?.anonymous ?? '—', icon: EyeOff, color: 'text-slate-500' },
                 { label: 'Helpful votes',   value: stats?.helpfulVotes ?? '—', icon: ThumbsUp, color: 'text-blue-400' },
-                { label: '5-star reviews',  value: displayStats.breakdown.find(b => b.n === 5)?.count ?? 0, icon: Star, color: 'text-amber-400' },
+                { label: '5-star reviews',  value: displayStats.breakdown.find(b => b.n === 5)?.count ?? 0, icon: Star, color: 'text-amber-400-400' },
               ].map(s => (
                 <div key={s.label} className="bg-[#141420] rounded-xl p-3 flex items-center gap-2.5">
                   <s.icon className={`w-5 h-5 flex-shrink-0 ${s.color}`} />
@@ -227,7 +227,7 @@ export default function ReviewsPage() {
           <div className="w-px h-5 bg-white/[0.08] mx-1 hidden sm:block" />
           {STAR_FILTERS.map(f => (
             <button key={f.value} onClick={() => { setStarFilter(f.value); setPage(1) }}
-              className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-500 text-white' : 'bg-[#0f0f17] border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
+              className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${starFilter === f.value ? 'bg-amber-500-500 text-white' : 'bg-[#0f0f17] border border-white/[0.08] text-slate-500 hover:text-slate-100'}`}>
               {f.label}
             </button>
           ))}
@@ -236,7 +236,7 @@ export default function ReviewsPage() {
         {starFilter > 0 && (
           <p className="text-xs text-slate-500 mb-4">
             Showing {total} {starFilter}-star review{total !== 1 ? 's' : ''}.{' '}
-            <button onClick={() => { setStarFilter(0); setPage(1) }} className="text-primary hover:underline">Clear filter</button>
+            <button onClick={() => { setStarFilter(0); setPage(1) }} className="text-blue-500 hover:underline">Clear filter</button>
           </p>
         )}
 
@@ -280,7 +280,7 @@ export default function ReviewsPage() {
                           {r.display_name}
                         </span>
                         {r.verified && (
-                          <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                          <span className="flex items-center gap-1 text-[10px] text-emerald-400-400 bg-emerald-500-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
                             <CheckCircle className="w-2.5 h-2.5" /> Verified
                           </span>
                         )}
@@ -312,7 +312,7 @@ export default function ReviewsPage() {
                   <div className="flex items-center justify-between pt-2 border-t border-white/[0.08]">
                     <button onClick={() => toggleHelpful(r.id)}
                       disabled={helpfulSet.has(r.id)}
-                      className={`flex items-center gap-1.5 text-xs transition-all px-3 py-1.5 rounded-lg ${helpfulSet.has(r.id) ? 'text-primary bg-blue-500/10 border border-blue-500/20' : 'text-slate-500 hover:text-slate-100 hover:bg-[#141420] border border-transparent'}`}>
+                      className={`flex items-center gap-1.5 text-xs transition-all px-3 py-1.5 rounded-lg ${helpfulSet.has(r.id) ? 'text-blue-500 bg-blue-500/10 border border-blue-500/20' : 'text-slate-500 hover:text-slate-100 hover:bg-[#141420] border border-transparent'}`}>
                       <ThumbsUp className="w-3.5 h-3.5" />
                       {helpfulSet.has(r.id) ? 'Helpful!' : 'Helpful'}
                       {r.helpful_count > 0 && <span className="font-bold">({r.helpful_count})</span>}

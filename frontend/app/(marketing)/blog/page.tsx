@@ -13,7 +13,7 @@ export const metadata = {
 const CATEGORY_GRADIENT: Record<string, string> = {
   Guides:     'from-primary/30 to-secondary/30',
   Education:  'from-blue-900/60  to-cyan-900/60',
-  Comparison: 'from-emerald-900/60 to-teal-900/60',
+  Comparison: 'from-emerald-500-900/60 to-teal-900/60',
   Technical:  'from-orange-900/60 to-red-900/60',
 }
 const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-primary/25 to-secondary/25'

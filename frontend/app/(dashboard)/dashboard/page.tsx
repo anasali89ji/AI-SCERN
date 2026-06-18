@@ -11,26 +11,26 @@ import {
 import { useAuth } from '@/components/auth-provider'
 
 const TOOLS = [
-  { href:'/detect/text',  icon:FileText,   label:'Text',   iconColor:'text-amber-400',   accent:'#f59e0b', desc:'Detect AI writing'       },
+  { href:'/detect/text',  icon:FileText,   label:'Text',   iconColor:'text-amber-400-400',   accent:'#f59e0b', desc:'Detect AI writing'       },
   { href:'/detect/image', icon:ImageIcon,  label:'Image',  iconColor:'text-blue-400',    accent:'#3b82f6', desc:'Deepfake detection'       },
   { href:'/detect/audio', icon:Music,      label:'Audio',  iconColor:'text-violet-400',  accent:'#8b5cf6', desc:'Voice clone detection'    },
-  { href:'/detect/video', icon:Video,      label:'Video',  iconColor:'text-emerald-400', accent:'#10b981', desc:'Deepfake video analysis'  },
-  { href:'/batch',        icon:Layers,     label:'Batch',  iconColor:'text-rose-400',    accent:'#f43f5e', desc:'Scan 20 files at once'    },
+  { href:'/detect/video', icon:Video,      label:'Video',  iconColor:'text-emerald-400-400', accent:'#10b981', desc:'Deepfake video analysis'  },
+  { href:'/batch',        icon:Layers,     label:'Batch',  iconColor:'text-rose-400-400',    accent:'#f43f5e', desc:'Scan 20 files at once'    },
   { href:'/chat',         icon:Bot,        label:'ARIA',   iconColor:'text-sky-400',     accent:'#0ea5e9', desc:'AI detection assistant'   },
 ]
 
 function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')    return <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-  if (verdict === 'HUMAN') return <CheckCircle   className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-  return                          <HelpCircle    className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+  if (verdict === 'AI')    return <AlertTriangle className="w-3.5 h-3.5 text-rose-400-400 flex-shrink-0" />
+  if (verdict === 'HUMAN') return <CheckCircle   className="w-3.5 h-3.5 text-emerald-400-400 flex-shrink-0" />
+  return                          <HelpCircle    className="w-3.5 h-3.5 text-amber-400-400 flex-shrink-0" />
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
   const s = verdict === 'AI'
-    ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+    ? 'bg-rose-500-500/10 text-rose-400-400 border-rose-500/20'
     : verdict === 'HUMAN'
-    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    ? 'bg-emerald-500-500/10 text-emerald-400-400 border-emerald-500/20'
+    : 'bg-amber-500-500/10 text-amber-400-400 border-amber-500/20'
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${s}`}>
       {verdict}
@@ -134,9 +134,9 @@ export default function DashboardPage() {
 
   const STAT_CARDS = [
     { label:'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         accent: 'text-blue-400',    bg: 'bg-blue-500/[0.08]',    border: 'border-blue-500/15'    },
-    { label:'AI Detected',  value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, accent: 'text-rose-400',    bg: 'bg-rose-500/[0.08]',    border: 'border-rose-500/15'    },
-    { label:'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   accent: 'text-emerald-400', bg: 'bg-emerald-500/[0.08]', border: 'border-emerald-500/15' },
-    { label:'Avg Confidence',value: loading ? '—' : `${avgConf}%`,             icon: BarChart3,     accent: 'text-amber-400',   bg: 'bg-amber-500/[0.08]',   border: 'border-amber-500/15'   },
+    { label:'AI Detected',  value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, accent: 'text-rose-400-400',    bg: 'bg-rose-500-500/[0.08]',    border: 'border-rose-500/15'    },
+    { label:'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   accent: 'text-emerald-400-400', bg: 'bg-emerald-500-500/[0.08]', border: 'border-emerald-500/15' },
+    { label:'Avg Confidence',value: loading ? '—' : `${avgConf}%`,             icon: BarChart3,     accent: 'text-amber-400-400',   bg: 'bg-amber-500-500/[0.08]',   border: 'border-amber-500/15'   },
   ]
 
   return (
@@ -264,23 +264,23 @@ export default function DashboardPage() {
             <motion.div
               initial={{ width: 0 }} animate={{ width: `${aiPct}%` }}
               transition={{ duration: 0.9, ease: [0.22,1,0.36,1] }}
-              className="bg-rose-500 h-full"
+              className="bg-rose-500-500 h-full"
             />
             <motion.div
               initial={{ width: 0 }} animate={{ width: `${uncertPct}%` }}
               transition={{ duration: 0.9, ease: [0.22,1,0.36,1], delay: 0.1 }}
-              className="bg-amber-500/60 h-full"
+              className="bg-amber-500-500/60 h-full"
             />
             <motion.div
               initial={{ width: 0 }} animate={{ width: `${humanPct}%` }}
               transition={{ duration: 0.9, ease: [0.22,1,0.36,1], delay: 0.2 }}
-              className="bg-emerald-500 h-full"
+              className="bg-emerald-500-500 h-full"
             />
           </div>
           <div className="flex items-center gap-5 mt-3 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" />{aiPct}% AI</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500/60" />{uncertPct}% Uncertain</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />{humanPct}% Human</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500-500" />{aiPct}% AI</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500-500/60" />{uncertPct}% Uncertain</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500-500" />{humanPct}% Human</span>
           </div>
         </motion.div>
       )}
@@ -315,7 +315,7 @@ export default function DashboardPage() {
           </div>
         ) : fetchError ? (
           <div className="p-8 rounded-[14px] bg-[#0f0f17] border border-white/[0.08] text-center">
-            <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+            <AlertTriangle className="w-8 h-8 text-amber-400-400 mx-auto mb-3" />
             <p className="text-slate-400 text-sm font-medium mb-1">Couldn't load scan history</p>
             <p className="text-slate-600 text-xs mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}

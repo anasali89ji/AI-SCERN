@@ -61,12 +61,12 @@ export default function RoadmapPage() {
           {/* Current Status */}
           <section className="mb-14">
             <h2 className="text-xl font-black text-slate-100 mb-5 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald" /> Current Status
+              <CheckCircle className="w-5 h-5 text-emerald-400" /> Current Status
             </h2>
             <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 space-y-3">
               {CURRENT.map(item => (
                 <div key={item} className="flex items-start gap-3">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-slate-400">{item}</span>
                 </div>
               ))}
@@ -91,11 +91,11 @@ export default function RoadmapPage() {
           {/* Known Limitations */}
           <section className="mb-14">
             <h2 className="text-xl font-black text-slate-100 mb-5 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber" /> Known Limitations
+              <AlertTriangle className="w-5 h-5 text-amber-400" /> Known Limitations
             </h2>
             <div className="space-y-3">
               {LIMITATIONS.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-amber-500/20 bg-amber-500/4 p-4">
+                <div key={title} className="rounded-xl border border-amber-500/20 bg-amber-500-500/4 p-4">
                   <p className="text-sm font-bold text-slate-100 mb-1">{title}</p>
                   <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
                 </div>

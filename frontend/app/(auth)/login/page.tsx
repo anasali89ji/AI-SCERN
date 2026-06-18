@@ -59,8 +59,8 @@ function LoginContent() {
         {/* Custom header */}
         <div className="bg-[#0c0c20] border-2 border-[#2f2f58] border-b-0 rounded-t-2xl px-7 pt-7 pb-5">
           <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-blue-300 bg-blue-500/10 border border-primary/25 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-blue-300 bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500-400 animate-pulse" />
               Secure sign in
             </span>
           </div>
@@ -98,13 +98,13 @@ function LoginContent() {
               formFieldHintText: 'text-slate-400 text-[12px] mt-1.5',
               formFieldInput: 'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-blue-500/50 focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
               formFieldInputShowPasswordButton: 'text-slate-500 hover:text-slate-300 transition-colors pr-1',
-              formFieldAction: 'text-primary hover:text-blue-300 text-[12px] font-medium transition-colors',
-              formFieldErrorText: 'text-rose-400 text-[12.5px] mt-2 font-medium',
-              formFieldSuccessText: 'text-emerald-400 text-[12.5px] mt-2 font-medium',
-              formFieldWarningText: 'text-amber-400 text-[12.5px] mt-2 font-medium',
+              formFieldAction: 'text-blue-500 hover:text-blue-300 text-[12px] font-medium transition-colors',
+              formFieldErrorText: 'text-rose-400-400 text-[12.5px] mt-2 font-medium',
+              formFieldSuccessText: 'text-emerald-400-400 text-[12.5px] mt-2 font-medium',
+              formFieldWarningText: 'text-amber-400-400 text-[12.5px] mt-2 font-medium',
               otpCodeFieldInput: 'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[20px] font-bold rounded-[10px] text-center w-11 h-12 focus:outline-none focus:border-blue-500/50 focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
               formButtonPrimary: 'w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-              formButtonReset: 'text-primary hover:text-blue-300 text-[13px] font-medium transition-colors',
+              formButtonReset: 'text-blue-500 hover:text-blue-300 text-[13px] font-medium transition-colors',
               dividerRow: 'my-5',
               dividerLine: 'bg-[#2f2f58]',
               dividerText: 'text-slate-500 text-[11px] px-3 uppercase tracking-widest',
@@ -112,17 +112,17 @@ function LoginContent() {
               socialButtonsBlockButtonText: 'text-[13.5px] font-semibold',
               socialButtonsBlockButtonArrow: 'hidden',
               socialButtonsProviderIcon: 'w-4 h-4',
-              alert: 'border-2 rounded-[10px] px-4 py-3 my-4 bg-rose-500/8 border-rose-500/35',
-              alertText: 'text-rose-300 leading-relaxed text-[13px]',
-              alertTextDanger: 'text-rose-300 text-[13px]',
-              alertTextWarning: 'text-amber-300 text-[13px]',
+              alert: 'border-2 rounded-[10px] px-4 py-3 my-4 bg-rose-500-500/8 border-rose-500/35',
+              alertText: 'text-rose-400-300 leading-relaxed text-[13px]',
+              alertTextDanger: 'text-rose-400-300 text-[13px]',
+              alertTextWarning: 'text-amber-400-300 text-[13px]',
               footer: 'px-7 pt-3 pb-6',
               footerAction: 'text-center',
               footerActionText: 'text-slate-400 text-[13.5px]',
-              footerActionLink: 'text-primary hover:text-blue-300 font-semibold text-[13.5px] transition-colors ml-1 hover:underline underline-offset-2',
+              footerActionLink: 'text-blue-500 hover:text-blue-300 font-semibold text-[13.5px] transition-colors ml-1 hover:underline underline-offset-2',
               footerPages: '!hidden',
               identityPreviewText: 'text-slate-200 text-[14px]',
-              identityPreviewEditButton: 'text-primary hover:text-blue-300 text-[13px] transition-colors',
+              identityPreviewEditButton: 'text-blue-500 hover:text-blue-300 text-[13px] transition-colors',
               spinner: 'text-blue-400',
               alternativeMethodsBlockButton: 'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 text-[13px] font-medium',
             },

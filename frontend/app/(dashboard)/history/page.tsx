@@ -48,7 +48,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
           <button onClick={reset} className="px-3 bg-[#141420] text-slate-500 text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose-500 text-white font-bold flex items-center gap-1.5 text-sm">
+          <button onClick={onDelete} className="px-4 bg-rose-500-500 text-white font-bold flex items-center gap-1.5 text-sm">
             <Trash2 className="w-4 h-4" /> Delete
           </button>
         </div>
@@ -63,11 +63,11 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
 
 const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
 const mediaColors = {
-  image: 'text-primary bg-blue-500/10',
+  image: 'text-blue-500 bg-blue-500/10',
   video: 'text-slate-400 bg-slate-700/10',
   audio: 'text-blue-400 bg-blue-500/10',
-  text:  'text-amber bg-amber-500/10',
-  url:   'text-emerald bg-emerald-500/10',
+  text:  'text-amber-400 bg-amber-500-500/10',
+  url:   'text-emerald-400 bg-emerald-500-500/10',
 }
 
 function normalizeConf(c: number | null) {
@@ -277,7 +277,7 @@ export default function HistoryPage() {
               <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-blue-600 text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
                   {f}
                 </button>
               ))}
@@ -289,7 +289,7 @@ export default function HistoryPage() {
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-blue-600 text-white' : 'bg-surface border border-white/[0.08] text-slate-500 hover:border-blue-500/50'}`}>
                   {f}
                 </button>
               ))}
@@ -323,7 +323,7 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-slate-500 hover:text-rose hover:border-rose-500/30">
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-slate-500 hover:text-rose-400 hover:border-rose-500/30">
                 <Trash2 className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
@@ -398,7 +398,7 @@ export default function HistoryPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose hover:bg-rose-500/10 transition-colors disabled:opacity-50">
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500-500/10 transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

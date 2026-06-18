@@ -59,7 +59,7 @@ const TEAM = [
     photo:    null,
     location: 'Remote',
     skills:   'Product Management',
-    gradient: 'from-emerald-600/30 via-teal-600/20 to-cyan-600/30',
+    gradient: 'from-emerald-500-600/30 via-teal-600/20 to-cyan-600/30',
     ring:     'border-emerald-500/30',
   },
 ]

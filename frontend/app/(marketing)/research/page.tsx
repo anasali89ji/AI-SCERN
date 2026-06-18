@@ -98,7 +98,7 @@ export default function ResearchPage() {
 
         <div className="mt-12 rounded-xl border border-white/[0.08] bg-muted/30 p-6 text-sm text-muted-foreground">
           <p className="font-medium text-foreground mb-1">Missing a citation?</p>
-          <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-primary underline underline-offset-2">research@aiscern.com</a> and we will add it promptly.</p>
+          <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-blue-500 underline underline-offset-2">research@aiscern.com</a> and we will add it promptly.</p>
           <p className="mt-3">Also see: <Link href="/benchmarks" className="underline underline-offset-2 hover:text-foreground">Benchmarks</Link> · <Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link></p>
         </div>
       </main>

@@ -30,12 +30,12 @@ const SOLUTIONS = [
 ]
 
 const TOOLS = [
-  { href: '/detect/text',  label: 'Text Detector',     icon: FileText,    color: 'text-amber-400',   desc: 'ChatGPT, Claude & more' },
+  { href: '/detect/text',  label: 'Text Detector',     icon: FileText,    color: 'text-amber-400-400',   desc: 'ChatGPT, Claude & more' },
   { href: '/detect/image', label: 'Image Detector',    icon: ImageIcon,   color: 'text-blue-400',    desc: 'Deepfakes & AI images'  },
   { href: '/detect/audio', label: 'Audio Detector',    icon: Music,       color: 'text-violet-400',  desc: 'Voice cloning & TTS'    },
-  { href: '/detect/video', label: 'Video Detector',    icon: Video,       color: 'text-emerald-400', desc: 'Frame-level analysis'   },
+  { href: '/detect/video', label: 'Video Detector',    icon: Video,       color: 'text-emerald-400-400', desc: 'Frame-level analysis'   },
   { href: '/chat',         label: 'ARIA Assistant',    icon: MessageSquare, color: 'text-sky-400',   desc: 'AI detection chat'      },
-  { href: '/batch',        label: 'Batch Analyser',    icon: Database,    color: 'text-rose-400',    desc: 'Bulk content analysis'  },
+  { href: '/batch',        label: 'Batch Analyser',    icon: Database,    color: 'text-rose-400-400',    desc: 'Bulk content analysis'  },
 ]
 
 const NAV_LINKS = [

@@ -82,21 +82,21 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
     { label: 'Human text', text: "I spent all weekend trying to fix my leaky faucet and honestly I have no idea what I'm doing. Watched like 6 YouTube videos and still made it worse. Water is now shooting sideways. My neighbor thinks it's hilarious. Calling a plumber tomorrow. RIP my bank account." },
   ]
 
-  const verdictColor = result?.verdict === 'AI'    ? { text: 'text-rose-400',    border: 'border-rose-500/20',    bg: 'bg-rose-500/[0.06]',    bar: 'bg-rose-500'    }
-                     : result?.verdict === 'HUMAN'  ? { text: 'text-emerald-400', border: 'border-emerald-500/20', bg: 'bg-emerald-500/[0.06]', bar: 'bg-emerald-500' }
-                     :                               { text: 'text-amber-400',   border: 'border-amber-500/20',   bg: 'bg-amber-500/[0.06]',   bar: 'bg-amber-500'   }
+  const verdictColor = result?.verdict === 'AI'    ? { text: 'text-rose-400-400',    border: 'border-rose-500/20',    bg: 'bg-rose-500-500/[0.06]',    bar: 'bg-rose-500-500'    }
+                     : result?.verdict === 'HUMAN'  ? { text: 'text-emerald-400-400', border: 'border-emerald-500/20', bg: 'bg-emerald-500-500/[0.06]', bar: 'bg-emerald-500-500' }
+                     :                               { text: 'text-amber-400-400',   border: 'border-amber-500/20',   bg: 'bg-amber-500-500/[0.06]',   bar: 'bg-amber-500-500'   }
 
   return (
     <div className="rounded-[14px] border border-white/[0.10] bg-[#0f0f17] overflow-hidden">
       {/* Header bar */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.07] bg-[#08080d]/50">
         <div className="flex gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500-500/60" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500-500/60" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500-500/60" />
         </div>
         <span className="text-xs font-medium text-slate-500 ml-1">Live AI Detector</span>
-        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500-500/10 text-emerald-400-400 font-semibold border border-emerald-500/20">
           Free
         </span>
       </div>
@@ -150,10 +150,10 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {result.verdict === 'AI'
-                      ? <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                      ? <XCircle className="w-5 h-5 text-rose-400-400 shrink-0" />
                       : result.verdict === 'HUMAN'
-                      ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                      : <HelpCircle className="w-5 h-5 text-amber-400 shrink-0" />}
+                      ? <CheckCircle className="w-5 h-5 text-emerald-400-400 shrink-0" />
+                      : <HelpCircle className="w-5 h-5 text-amber-400-400 shrink-0" />}
                     <span className={`font-bold text-base ${verdictColor.text}`}>
                       {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
                     </span>
@@ -223,12 +223,12 @@ const staggerItem = {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           color: 'text-amber-400',   desc: 'ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
+  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           color: 'text-amber-400-400',   desc: 'ChatGPT, Claude, Gemini & more',           accuracy: '~85%', accent: '#f59e0b' },
   { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    color: 'text-blue-400',    desc: 'Midjourney, DALL-E, Stable Diffusion',     accuracy: '~82%', accent: '#3b82f6' },
   { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  color: 'text-violet-400',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~79%', accent: '#8b5cf6' },
-  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    color: 'text-emerald-400', desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%', accent: '#10b981' },
+  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    color: 'text-emerald-400-400', desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%', accent: '#10b981' },
   { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   color: 'text-sky-400',     desc: 'Ask anything about AI detection',           accuracy: 'New',  accent: '#0ea5e9' },
-  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     color: 'text-rose-400',    desc: 'Analyze 20 files simultaneously',           accuracy: '20×',  accent: '#f43f5e' },
+  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     color: 'text-rose-400-400',    desc: 'Analyze 20 files simultaneously',           accuracy: '20×',  accent: '#f43f5e' },
 ]
 
 const STATS = [
@@ -841,7 +841,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500">
                 {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
                   <div key={t} className="flex items-center gap-1.5">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500/70" />{t}
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400-500/70" />{t}
                   </div>
                 ))}
               </div>

@@ -42,7 +42,7 @@ const PLAN_COLOR: Record<string, string> = {
   free:       'bg-slate/10 text-slate-400 border-slate/20',
   pro:        'bg-blue-500/10 text-blue-400 border-blue-500/20',
   team:       'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  enterprise: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+  enterprise: 'bg-amber-500-500/10 text-amber-400-500 border-amber-500/30',
 }
 
 function PlanBadge({ plan, grantedBy }: { plan: string; grantedBy?: string | null }) {
@@ -56,15 +56,15 @@ function PlanBadge({ plan, grantedBy }: { plan: string; grantedBy?: string | nul
 }
 
 function StatusBadge({ user }: { user: User }) {
-  if (user.is_banned)         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">Banned</span>
-  if (!user.dashboard_access) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">Revoked</span>
-  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
+  if (user.is_banned)         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500-500/10 text-rose-400-500 border border-rose-500/20">Banned</span>
+  if (!user.dashboard_access) return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500-500/10 text-amber-400-500 border border-amber-500/20">Revoked</span>
+  return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20">Active</span>
 }
 
 function RequestStatusBadge({ status }: { status: string }) {
-  if (status === 'pending')  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20"><Clock className="w-2.5 h-2.5" />Pending</span>
-  if (status === 'approved') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="w-2.5 h-2.5" />Approved</span>
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20"><XCircle className="w-2.5 h-2.5" />Rejected</span>
+  if (status === 'pending')  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500-500/10 text-amber-400-500 border border-amber-500/20"><Clock className="w-2.5 h-2.5" />Pending</span>
+  if (status === 'approved') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20"><CheckCircle2 className="w-2.5 h-2.5" />Approved</span>
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500-500/10 text-rose-400-500 border border-rose-500/20"><XCircle className="w-2.5 h-2.5" />Rejected</span>
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ export default function UsersAdmin() {
             onClick={() => setTab('users')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
               tab === 'users'
-                ? 'bg-primary/15 text-blue-400 border border-blue-500/20'
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20'
                 : 'text-slate-500 hover:text-slate-100'
             }`}
           >
@@ -215,14 +215,14 @@ export default function UsersAdmin() {
             onClick={() => setTab('requests')}
             className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
               tab === 'requests'
-                ? 'bg-primary/15 text-blue-400 border border-blue-500/20'
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20'
                 : 'text-slate-500 hover:text-slate-100'
             }`}
           >
             <Inbox className="w-3.5 h-3.5" />
             Upgrade Requests
             {pendingCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-amber-500 text-black text-[9px] font-black rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-amber-500-500 text-black text-[9px] font-black rounded-full flex items-center justify-center">
                 {pendingCount > 99 ? '99+' : pendingCount}
               </span>
             )}
@@ -246,7 +246,7 @@ export default function UsersAdmin() {
               {['all', 'active', 'free', 'pro', 'banned', 'revoked'].map(f => (
                 <button key={f}
                   onClick={() => { setFilter(f); setPage(1) }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100 hover:border-white/[0.08]/80'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${filter === f ? 'bg-blue-500/10 border-blue-500/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100 hover:border-white/[0.08]/80'}`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
@@ -273,8 +273,8 @@ export default function UsersAdmin() {
                       <td className="px-4 py-3">
                         <div className="font-medium text-slate-100 truncate max-w-48">{u.email}</div>
                         {u.display_name && <div className="text-slate-500 text-[10px]">{u.display_name}</div>}
-                        {u.plan_granted_by && <div className="text-[9px] text-primary/60 mt-0.5">Pro granted by admin</div>}
-                        {u.plan_expires_at && <div className="text-[9px] text-amber/70">Expires {new Date(u.plan_expires_at).toLocaleDateString()}</div>}
+                        {u.plan_granted_by && <div className="text-[9px] text-blue-500/60 mt-0.5">Pro granted by admin</div>}
+                        {u.plan_expires_at && <div className="text-[9px] text-amber-400/70">Expires {new Date(u.plan_expires_at).toLocaleDateString()}</div>}
                       </td>
                       <td className="px-4 py-3"><PlanBadge plan={u.plan || 'free'} grantedBy={u.plan_granted_by} /></td>
                       <td className="px-4 py-3"><StatusBadge user={u} /></td>
@@ -299,7 +299,7 @@ export default function UsersAdmin() {
                               {u.plan_granted_by && (
                                 <button
                                   onClick={() => setModal({ userId: u.id, action: 'revoke_pro', email: u.email })}
-                                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500-500/10 text-rose-400-500 border border-rose-500/20 hover:bg-rose-500-500/20 transition-colors"
                                 >
                                   <UserX className="w-2.5 h-2.5" /> Revoke Pro
                                 </button>
@@ -321,14 +321,14 @@ export default function UsersAdmin() {
                           {!u.is_banned ? (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'ban', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-rose-500-500/10 text-rose-400-500 border border-rose-500/20 hover:bg-rose-500-500/20 transition-colors"
                             >
                               <Ban className="w-2.5 h-2.5" /> Ban
                             </button>
                           ) : (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'unban', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20 hover:bg-emerald-500-500/20 transition-colors"
                             >
                               <CheckCircle className="w-2.5 h-2.5" /> Unban
                             </button>
@@ -336,14 +336,14 @@ export default function UsersAdmin() {
                           {u.dashboard_access ? (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'revoke', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-amber-500-500/10 text-amber-400-500 border border-amber-500/20 hover:bg-amber-500-500/20 transition-colors"
                             >
                               <ShieldOff className="w-2.5 h-2.5" /> Revoke
                             </button>
                           ) : (
                             <button
                               onClick={() => setModal({ userId: u.id, action: 'restore', email: u.email })}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20 hover:bg-emerald-500-500/20 transition-colors"
                             >
                               <ShieldCheck className="w-2.5 h-2.5" /> Restore
                             </button>
@@ -383,10 +383,10 @@ export default function UsersAdmin() {
         ════════════════════════════════════════════════════════════════════ */}
         {tab === 'requests' && (
           <>
-            <div className="flex items-start gap-3 p-4 mb-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-              <ArrowUpCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-3 p-4 mb-4 rounded-xl bg-amber-500-500/5 border border-amber-500/20">
+              <ArrowUpCircle className="w-4 h-4 text-amber-400-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-amber">Manual Upgrade Approval Queue</p>
+                <p className="text-xs font-semibold text-amber-400">Manual Upgrade Approval Queue</p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Free users (10 credits/day) can request a Pro upgrade. Review and approve or reject each request.
                   Approved users are immediately upgraded to Pro with 100 scans/day across all 4 modalities.
@@ -398,7 +398,7 @@ export default function UsersAdmin() {
               {['pending', 'approved', 'rejected', 'all'].map(s => (
                 <button key={s}
                   onClick={() => { setReqFilter(s); setReqPage(1) }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-blue-500/10 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reqFilter === s ? 'bg-blue-500/10 border-blue-500/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
                 >
                   {s === 'pending'  && <Clock className="w-3 h-3" />}
                   {s === 'approved' && <CheckCircle2 className="w-3 h-3" />}
@@ -406,7 +406,7 @@ export default function UsersAdmin() {
                   {s === 'all'      && <Inbox className="w-3 h-3" />}
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                   {s === 'pending' && pendingCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[9px] font-black">{pendingCount}</span>
+                    <span className="ml-0.5 px-1.5 py-0.5 rounded bg-amber-500-500/20 text-amber-400-500 text-[9px] font-black">{pendingCount}</span>
                   )}
                 </button>
               ))}
@@ -461,7 +461,7 @@ export default function UsersAdmin() {
                           <span className="text-[10px] text-slate-500 italic">No message</span>
                         )}
                         {r.admin_note && (
-                          <p className="text-[9px] text-primary/70 mt-0.5 line-clamp-1" title={r.admin_note}>
+                          <p className="text-[9px] text-blue-500/70 mt-0.5 line-clamp-1" title={r.admin_note}>
                             Note: {r.admin_note}
                           </p>
                         )}
@@ -477,13 +477,13 @@ export default function UsersAdmin() {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => { setReviewModal({ request: r, action: 'approve' }); setReviewNote(''); setReviewExpiry('') }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20 hover:bg-emerald-500-500/20 transition-colors"
                             >
                               <CheckCircle2 className="w-3 h-3" /> Approve
                             </button>
                             <button
                               onClick={() => { setReviewModal({ request: r, action: 'reject' }); setReviewNote(''); setReviewExpiry('') }}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-rose-500-500/10 text-rose-400-500 border border-rose-500/20 hover:bg-rose-500-500/20 transition-colors"
                             >
                               <XCircle className="w-3 h-3" /> Reject
                             </button>
@@ -528,19 +528,19 @@ export default function UsersAdmin() {
           <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-sm ">
             <div className="flex items-start gap-3 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                modal.action === 'grant_pro'  ? 'bg-primary/15' :
-                modal.action === 'revoke_pro' ? 'bg-rose-500/10' :
-                modal.action === 'ban'        ? 'bg-rose-500/10' :
-                modal.action === 'reset_daily'? 'bg-slate/10' : 'bg-amber-500/10'
+                modal.action === 'grant_pro'  ? 'bg-blue-600/15' :
+                modal.action === 'revoke_pro' ? 'bg-rose-500-500/10' :
+                modal.action === 'ban'        ? 'bg-rose-500-500/10' :
+                modal.action === 'reset_daily'? 'bg-slate/10' : 'bg-amber-500-500/10'
               }`}>
                 {modal.action === 'grant_pro'   && <Crown      className="w-5 h-5 text-blue-400" />}
-                {modal.action === 'revoke_pro'  && <UserX      className="w-5 h-5 text-rose" />}
+                {modal.action === 'revoke_pro'  && <UserX      className="w-5 h-5 text-rose-400" />}
                 {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-blue-400" />}
                 {modal.action === 'reset_daily' && <RotateCcw  className="w-5 h-5 text-slate-400" />}
-                {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose" />}
-                {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald" />}
-                {modal.action === 'revoke'      && <ShieldOff  className="w-5 h-5 text-amber" />}
-                {modal.action === 'restore'     && <ShieldCheck className="w-5 h-5 text-emerald" />}
+                {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose-400" />}
+                {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald-400" />}
+                {modal.action === 'revoke'      && <ShieldOff  className="w-5 h-5 text-amber-400" />}
+                {modal.action === 'restore'     && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-100 capitalize">
@@ -558,7 +558,7 @@ export default function UsersAdmin() {
                     <div className="grid grid-cols-4 gap-1.5">
                       {['free', 'pro', 'team', 'enterprise'].map(p => (
                         <button key={p} onClick={() => setPlanChoice(p)}
-                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-primary/15 border-blue-500/30 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
+                          className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${planChoice === p ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-100'}`}
                         >
                           {p.toUpperCase()}
                         </button>
@@ -608,10 +608,10 @@ export default function UsersAdmin() {
               <button onClick={doAction} disabled={!!actionLoading}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
                   ['ban', 'revoke', 'revoke_pro'].includes(modal.action)
-                    ? 'bg-rose text-white hover:bg-rose-500/90'
+                    ? 'bg-rose-500 text-white hover:bg-rose-500-500/90'
                     : modal.action === 'grant_pro' || modal.action === 'set_plan'
-                    ? 'bg-primary text-white hover:bg-blue-700'
-                    : 'bg-emerald-500/90 text-white hover:bg-emerald'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-emerald-500-500/90 text-white hover:bg-emerald-500'
                 }`}>
                 {actionLoading ? 'Processing…' : 'Confirm'}
               </button>
@@ -627,10 +627,10 @@ export default function UsersAdmin() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="bg-surface border border-white/[0.08] rounded-xl p-6 w-full max-w-md ">
             <div className="flex items-start gap-3 mb-5">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-emerald-500-500/10' : 'bg-rose-500-500/10'}`}>
                 {reviewModal.action === 'approve'
-                  ? <CheckCircle2 className="w-5 h-5 text-emerald" />
-                  : <XCircle className="w-5 h-5 text-rose" />}
+                  ? <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  : <XCircle className="w-5 h-5 text-rose-400" />}
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-100">
@@ -700,8 +700,8 @@ export default function UsersAdmin() {
               <button onClick={doReview} disabled={reviewLoading}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
                   reviewModal.action === 'approve'
-                    ? 'bg-emerald-500/90 text-white hover:bg-emerald'
-                    : 'bg-rose text-white hover:bg-rose-500/90'
+                    ? 'bg-emerald-500-500/90 text-white hover:bg-emerald-500'
+                    : 'bg-rose-500 text-white hover:bg-rose-500-500/90'
                 }`}>
                 {reviewLoading ? 'Processing…' : reviewModal.action === 'approve' ? 'Approve & Upgrade' : 'Reject Request'}
               </button>

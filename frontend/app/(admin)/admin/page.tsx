@@ -86,8 +86,8 @@ export default function AdminOverview() {
             <button onClick={fetchStats} className="p-1.5 rounded-lg border border-white/[0.08] hover:bg-[#141420] transition-colors">
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
             </button>
-            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />LIVE
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500-500/10 border border-emerald-500/20 text-[10px] text-emerald-400-400 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />LIVE
             </span>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function AdminOverview() {
           <div className="lg:col-span-3 rounded-xl border border-white/[0.08] bg-surface/60 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Live User Activity
               </h3>
               <span className="text-[10px] text-slate-600">Last 50 events</span>

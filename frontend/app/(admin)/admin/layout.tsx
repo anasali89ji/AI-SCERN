@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium
-                ${active ? 'bg-primary/15 text-blue-400 border border-blue-500/20' : 'text-slate-500 hover:text-slate-100 hover:bg-[#141420]'}`}>
+                ${active ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20' : 'text-slate-500 hover:text-slate-100 hover:bg-[#141420]'}`}>
               <Icon className="w-4 h-4 shrink-0" />
               {!collapsed && <span>{label}</span>}
             </Link>
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium border border-blue-500/20">OWNER</span>
           </div>
         )}
-        <button onClick={() => signOut()} className="flex items-center gap-2 text-xs text-slate-500 hover:text-rose transition-colors">
+        <button onClick={() => signOut()} className="flex items-center gap-2 text-xs text-slate-500 hover:text-rose-400 transition-colors">
           <LogOut className="w-4 h-4 shrink-0" />
           {!collapsed && 'Sign out'}
         </button>

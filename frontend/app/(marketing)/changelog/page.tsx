@@ -82,9 +82,9 @@ const RELEASES: {
 ]
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
-  new:         { label: 'New',         style: 'bg-blue-500/10 text-blue-400 border border-primary/25' },
-  improvement: { label: 'Improved',    style: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' },
-  fix:         { label: 'Fix',         style: 'bg-amber-500/10 text-amber-500 border border-amber-500/25' },
+  new:         { label: 'New',         style: 'bg-blue-500/10 text-blue-400 border border-blue-500/25' },
+  improvement: { label: 'Improved',    style: 'bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25' },
+  fix:         { label: 'Fix',         style: 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/25' },
   infra:       { label: 'Infra',       style: 'bg-surface text-slate-500 border border-white/[0.08]' },
 }
 
@@ -121,7 +121,7 @@ export default function ChangelogPage() {
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>
                   {i === 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 uppercase tracking-wider">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25 uppercase tracking-wider">
                       Latest
                     </span>
                   )}
@@ -149,9 +149,9 @@ export default function ChangelogPage() {
         <div className="mt-12 pt-6 border-t border-white/[0.06] text-center">
           <p className="text-xs text-slate-500">
             Found a bug or want to suggest a feature?{' '}
-            <Link href="/contact" className="text-primary hover:underline">Contact us</Link>
+            <Link href="/contact" className="text-blue-500 hover:underline">Contact us</Link>
             {' '}or check the{' '}
-            <Link href="/roadmap" className="text-primary hover:underline">roadmap</Link>.
+            <Link href="/roadmap" className="text-blue-500 hover:underline">roadmap</Link>.
           </p>
         </div>
 

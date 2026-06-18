@@ -20,7 +20,7 @@ const FALLBACK_REVIEWS: Review[] = [
   { id:'f3', rating:5, body:'Fast and accurate. I run every audio clip through it before broadcasting. Has saved me from voice clone disinformation twice.',             display_name:'Priya L.',       tool_used:'AI Audio Detector'        },
 ]
 
-const AVATAR_BG = ['bg-blue-600','bg-emerald-600','bg-violet-600','bg-rose-600','bg-amber-600','bg-sky-600']
+const AVATAR_BG = ['bg-blue-600','bg-emerald-500-600','bg-violet-600','bg-rose-500-600','bg-amber-500-600','bg-sky-600']
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {
   const stars = r.rating ?? r.stars ?? 5
@@ -40,7 +40,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
       {/* Stars */}
       <div className="flex gap-0.5 mb-4" aria-label={`${stars} out of 5 stars`}>
         {Array.from({ length: stars }).map((_, j) => (
-          <Star key={j} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" aria-hidden />
+          <Star key={j} className="w-3.5 h-3.5 text-amber-400-400 fill-amber-400" aria-hidden />
         ))}
         {Array.from({ length: 5 - stars }).map((_, j) => (
           <Star key={`e-${j}`} className="w-3.5 h-3.5 text-slate-700" aria-hidden />

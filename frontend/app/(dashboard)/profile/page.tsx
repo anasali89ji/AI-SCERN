@@ -56,7 +56,7 @@ function UsageBar({
           {sublabel && <p className="text-[11px] text-slate-500">{sublabel}</p>}
         </div>
         <div className="text-right flex-shrink-0">
-          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-amber-400' : 'text-slate-100'}`}>
+          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-amber-400-400' : 'text-slate-100'}`}>
             {unlimited ? 'Unlimited' : `${left} left`}
           </p>
           {!unlimited && (
@@ -78,9 +78,9 @@ function UsageBar({
         </div>
       )}
       {warn && !unlimited && (
-        <p className="text-[11px] text-amber-400">
+        <p className="text-[11px] text-amber-400-400">
           {pct >= 100 ? '⚠ Limit reached' : `⚠ ${100 - pct}% remaining`}
-          {' '}— <a href="/pricing" className="underline hover:text-amber-300">Upgrade your plan</a>
+          {' '}— <a href="/pricing" className="underline hover:text-amber-400-300">Upgrade your plan</a>
         </p>
       )}
     </div>
@@ -332,7 +332,7 @@ export default function ProfilePage() {
                   <Camera className="w-5 h-5 text-white" />
                 </div>
               )}
-              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-surface" />
+              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500-400 border-2 border-surface" />
             </div>
 
             <div className="flex gap-2 sm:mb-2">
@@ -374,8 +374,8 @@ export default function ProfilePage() {
                       className="w-full bg-[#141420] border border-white/[0.08] rounded-xl pl-7 pr-9 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500/50"
                       placeholder="yourname" maxLength={30} />
                     {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-white/[0.08] border-t-primary animate-spin" />}
-                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400" />}
-                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400" />}
+                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400-400" />}
+                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400-400" />}
                   </div>
                   {uStatus === 'taken' && suggestions.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -388,7 +388,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   )}
-                  {uStatus === 'available' && username && <p className="text-[11px] text-emerald-400 mt-1">@{username} is available</p>}
+                  {uStatus === 'available' && username && <p className="text-[11px] text-emerald-400-400 mt-1">@{username} is available</p>}
                 </div>
                 <div>
                   <label className="text-[11px] text-slate-500 uppercase tracking-widest mb-1 block">Bio</label>
@@ -413,7 +413,7 @@ export default function ProfilePage() {
                   <span className="flex items-center gap-1.5 shrink-0">
                     <Calendar className="w-4 h-4" />Joined {joinedAt}
                   </span>
-                  <span className="flex items-center gap-1.5 text-emerald-400 shrink-0">
+                  <span className="flex items-center gap-1.5 text-emerald-400-400 shrink-0">
                     <Shield className="w-4 h-4" />Verified
                   </span>
                 </div>
@@ -457,12 +457,12 @@ export default function ProfilePage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-blue-500/10 text-blue-400" />
-              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500/10 text-rose-400" />
-              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald-500/10 text-emerald-400" />
-              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500/10 text-amber-400" />
+              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500-500/10 text-rose-400-400" />
+              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald-500-500/10 text-emerald-400-400" />
+              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500-500/10 text-amber-400-400" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
+              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500-500/10 text-amber-400-400" />
               <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
               <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
@@ -482,7 +482,7 @@ export default function ProfilePage() {
           ['Display name',   displayName || '—',                        ''],
           ['Joined',         joinedAt,                                  ''],
           ['Plan',           planLabel,                                 isPaid ? 'text-yellow-400' : 'text-blue-400'],
-          ['Status',         'Active',                                  'text-emerald-400'],
+          ['Status',         'Active',                                  'text-emerald-400-400'],
         ] as [string, string | undefined, string][]).map(([label, value, cls]) => (
           <div key={label} className="flex justify-between items-center gap-4 py-2.5 border-b border-white/[0.08] last:border-0 text-sm min-w-0">
             <span className="text-slate-500 shrink-0">{label}</span>

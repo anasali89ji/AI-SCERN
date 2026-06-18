@@ -40,7 +40,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-slate-100">{label}</span>
-            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 font-bold">{badge}</span>}
+            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500-500/15 text-amber-400-400 border border-amber-500/20 font-bold">{badge}</span>}
           </div>
           {description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{description}</p>}
         </div>
@@ -231,7 +231,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-primary/15 border-primary/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-400'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-400'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -288,7 +288,7 @@ export default function SettingsPage() {
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
               <button onClick={copyApiKey} className="text-slate-500 hover:text-slate-100 transition-colors">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           } />
@@ -308,15 +308,15 @@ export default function SettingsPage() {
               if (!user?.uid) return
               await (supabase as any).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
-            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-rose-500-500/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Clear
             </button>
           } />
       </Section>
 
       {/* Danger zone */}
-      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-xl p-4 sm:p-6">
-        <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
+      <motion.div className="bg-rose-500-950/20 border border-rose-500/20 rounded-xl p-4 sm:p-6">
+        <h2 className="font-bold text-rose-400-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
@@ -326,20 +326,20 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-500 mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>
             <button onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-rose-500-500/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-rose-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
+            <p className="text-sm text-rose-400-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)}
                 className="flex-1 py-2 rounded-xl border border-white/[0.08] text-xs text-slate-500 hover:text-slate-100">
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
-                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
+                className="flex-1 py-2 rounded-xl bg-rose-500-600 text-white text-xs font-bold hover:bg-rose-500-700 disabled:opacity-50">
                 {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>

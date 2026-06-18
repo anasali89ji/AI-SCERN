@@ -118,9 +118,9 @@ const colorMap: Record<string, { bg: string; border: string; text: string; icon:
   primary: { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
   blue:    { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
   cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-cyan-400',    icon: 'text-cyan-400'    },
-  amber:   { bg: 'bg-amber-500/10', border: 'border-amber-500/25',   text: 'text-amber-500',   icon: 'text-amber-500'   },
-  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400', icon: 'text-emerald-400' },
-  rose:    { bg: 'bg-rose-500/10',  border: 'border-rose-500/25',    text: 'text-rose-500',    icon: 'text-rose-500'    },
+  amber:   { bg: 'bg-amber-500-500/10', border: 'border-amber-500/25',   text: 'text-amber-400-500',   icon: 'text-amber-400-500'   },
+  emerald: { bg: 'bg-emerald-500-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400-400', icon: 'text-emerald-400-400' },
+  rose:    { bg: 'bg-rose-500-500/10',  border: 'border-rose-500/25',    text: 'text-rose-400-500',    icon: 'text-rose-400-500'    },
 }
 
 export default function SolutionsHub() {
