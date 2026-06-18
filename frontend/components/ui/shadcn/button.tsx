@@ -8,12 +8,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
-  default:     'bg-blue-600 text-white hover:bg-blue-700 transition-colors',
-  secondary:   'bg-surface border border-white/[0.08] hover:border-blue-500/50 text-slate-100',
-  outline:     'border border-white/[0.08] bg-transparent hover:border-blue-500/50/40 hover:bg-white/[0.03] text-slate-100',
+  default:     'bg-primary-500 text-white hover:bg-primary-600 transition-colors',
+  secondary:   'bg-surface border border-white/[0.08] hover:border-primary-500/50 hover:bg-surface-elevated text-slate-100',
+  outline:     'border border-white/[0.08] bg-transparent hover:border-primary-500/40 hover:bg-white/[0.03] text-slate-100',
   ghost:       'bg-transparent hover:bg-white/[0.05] text-slate-500 hover:text-slate-100',
-  destructive: 'bg-rose-500-600 text-white hover:bg-rose-500-500',
-  link:        'bg-transparent text-blue-400 underline-offset-4 hover:underline p-0 h-auto',
+  destructive: 'bg-rose-600 text-white hover:bg-rose-500',
+  link:        'bg-transparent text-primary-400 underline-offset-4 hover:underline p-0 h-auto',
 }
 
 const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -29,9 +29,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       className={cn(
         'inline-flex items-center justify-center gap-2 font-semibold',
-        'transition-all duration-200 active:scale-95 cursor-pointer',
+        'transition-all duration-200 active:scale-[0.98] cursor-pointer',
         'disabled:opacity-50 disabled:pointer-events-none',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
         variantClasses[variant],
         sizeClasses[size],
         className,
