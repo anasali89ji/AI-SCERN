@@ -1,12 +1,13 @@
 'use client'
-import { Suspense }              from 'react'
-import { useEffect, useState }   from 'react'
-import { SignUp, useAuth }       from '@clerk/nextjs'
-import { useRouter }             from 'next/navigation'
-import { Loader2 }               from 'lucide-react'
-import Link                      from 'next/link'
-import { AuthShell }             from '@/components/auth/AuthShell'
-import { clerkAppearance }       from '@/components/auth/clerkAppearance'
+
+import { Suspense }          from 'react'
+import { useEffect, useState } from 'react'
+import { SignUp, useAuth }   from '@clerk/nextjs'
+import { useRouter }         from 'next/navigation'
+import { Loader2 }           from 'lucide-react'
+import Link                  from 'next/link'
+import { AuthShell }         from '@/components/auth/AuthShell'
+import { clerkAppearance }   from '@/components/auth/clerkAppearance'
 
 function SignUpContent() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -14,31 +15,49 @@ function SignUpContent() {
   const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) { setRedirecting(true); router.replace('/dashboard') }
+    if (isLoaded && isSignedIn) {
+      setRedirecting(true)
+      router.replace('/dashboard')
+    }
   }, [isLoaded, isSignedIn, router])
 
-  if (redirecting) return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm text-slate-400">Setting up your account…</p>
+  if (redirecting) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-3"
+        style={{ background: '#04040f' }}
+      >
+        <Loader2 className="w-7 h-7 animate-spin" style={{ color: '#2563eb' }} />
+        <p style={{ color: '#3e3e6e', fontSize: '13px' }}>Setting up your workspace…</p>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Start detecting AI content for free — no card needed"
-      badge="Free · No credit card"
-      badgeDotColor="blue"
-      variant="signup"
+      mode="signup"
       extraFooter={
-        <p className="mt-4 text-[11px] text-slate-600 text-center max-w-[340px] mx-auto leading-relaxed">
-          By signing up you confirm you are 13+ years old (16 in EU/EEA) and agree to our{' '}
-          <Link href="/terms"   className="text-slate-500 hover:text-slate-400 underline underline-offset-2 transition-colors">Terms</Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="text-slate-500 hover:text-slate-400 underline underline-offset-2 transition-colors">Privacy Policy</Link>.
+        <p
+          className="text-center mt-4 leading-relaxed"
+          style={{ color: '#26264a', fontSize: '11.5px', maxWidth: '380px', margin: '16px auto 0' }}
+        >
+          By creating an account you agree to our{' '}
+          <Link
+            href="/terms"
+            className="underline underline-offset-2 transition-colors duration-150"
+            style={{ color: '#2e2e58' }}
+          >
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/privacy"
+            className="underline underline-offset-2 transition-colors duration-150"
+            style={{ color: '#2e2e58' }}
+          >
+            Privacy Policy
+          </Link>
+          . You must be 13 years old or older to use Aiscern.
         </p>
       }
     >
@@ -56,11 +75,16 @@ function SignUpContent() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#050510] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: '#04040f' }}
+        >
+          <Loader2 className="w-7 h-7 animate-spin" style={{ color: '#2563eb' }} />
+        </div>
+      }
+    >
       <SignUpContent />
     </Suspense>
   )
