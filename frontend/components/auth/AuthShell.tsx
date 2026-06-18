@@ -241,7 +241,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
           width:         '42%',
           minHeight:     '100vh',
           padding:       '40px 48px 36px',
-          borderRight:   '1px solid #0d0d22',
+          borderRight:   '1px solid rgba(255,255,255,0.04)',
         }}
       >
         {/* Logo */}
@@ -375,7 +375,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
             <div
               style={{
                 padding:       '28px 32px 24px',
-                borderBottom:  '1px solid #0d0d26',
+                borderBottom:  '1px solid rgba(255,255,255,0.05)',
               }}
             >
               {mode === 'signin' ? (
