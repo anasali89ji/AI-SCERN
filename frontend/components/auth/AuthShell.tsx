@@ -321,7 +321,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
         </div>
 
         {/* Footer */}
-        <p style={{ color: '#26264a', fontSize: '11px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px' }}>
           © 2026 Aiscern. All rights reserved.
         </p>
       </aside>
@@ -423,7 +423,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
               <span
                 key={label}
                 className="flex items-center gap-1.5"
-                style={{ color: '#26264a', fontSize: '11px' }}
+                style={{ color: 'rgba(255,255,255,0.38)', fontSize: '11px' }}
               >
                 <Icon size={11} />
                 {label}
@@ -436,7 +436,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
 
         <p
           className="lg:hidden mt-6"
-          style={{ color: '#1c1c3a', fontSize: '11px' }}
+          style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px' }}
         >
           © 2026 Aiscern
         </p>

@@ -60,15 +60,15 @@ export const clerkAppearance = {
     // Typing:   same as focus (border stays white while text is entered)
     formFieldInput: [
       'w-full h-11',
-      'bg-[#070718] text-[#dde4ff]',
+      'bg-[#070718] text-[#dde4ff] focus:text-[#0a0a18]',
       'border border-white/[0.11] rounded-[10px]',
       'text-[14px] font-normal px-4',
-      'placeholder:text-white/[0.18]',
+      'placeholder:text-white/[0.18] focus:placeholder:text-slate-400',
       'outline-none',
       'transition-[border-color,box-shadow,background-color] duration-150',
       'hover:border-white/[0.22]',
       'focus:border-white/[0.55]',
-      'focus:bg-[#08091e]',
+      'focus:bg-white',
       'focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)]',
     ].join(' '),
 
@@ -137,7 +137,7 @@ export const clerkAppearance = {
     /* ── Footer ──────────────────────────────────────────────── */
     footer:           'px-7 sm:px-8 pb-7 pt-3',
     footerAction:     'flex items-center justify-center',
-    footerActionText: 'text-white/25 text-[13px]',
+    footerActionText: 'text-white/55 text-[13px]',
     footerActionLink: [
       'text-[#4b82f7] hover:text-[#93b4fd]',
       'font-semibold text-[13px] ml-1',
