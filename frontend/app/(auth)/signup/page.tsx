@@ -39,13 +39,13 @@ function SignUpContent() {
       extraFooter={
         <p
           className="text-center mt-4 leading-relaxed"
-          style={{ color: '#26264a', fontSize: '11.5px', maxWidth: '380px', margin: '16px auto 0' }}
+          style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11.5px', maxWidth: '380px', margin: '16px auto 0' }}
         >
           By creating an account you agree to our{' '}
           <Link
             href="/terms"
             className="underline underline-offset-2 transition-colors duration-150"
-            style={{ color: '#2e2e58' }}
+            style={{ color: 'rgba(255,255,255,0.5)' }}
           >
             Terms of Service
           </Link>{' '}
@@ -53,7 +53,7 @@ function SignUpContent() {
           <Link
             href="/privacy"
             className="underline underline-offset-2 transition-colors duration-150"
-            style={{ color: '#2e2e58' }}
+            style={{ color: 'rgba(255,255,255,0.5)' }}
           >
             Privacy Policy
           </Link>
