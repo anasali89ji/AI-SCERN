@@ -517,12 +517,14 @@ ALTER TABLE webhooks                ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_deliveries      ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own verifications
-CREATE POLICY IF NOT EXISTS "verifications_owner_read"
+DROP POLICY IF EXISTS "verifications_owner_read" ON verifications;
+CREATE POLICY "verifications_owner_read"
   ON verifications FOR SELECT
   USING (user_id = (SELECT auth.uid()::text));
 
 -- Users can read trust_scores for their verifications
-CREATE POLICY IF NOT EXISTS "trust_scores_owner_read"
+DROP POLICY IF EXISTS "trust_scores_owner_read" ON trust_scores;
+CREATE POLICY "trust_scores_owner_read"
   ON trust_scores FOR SELECT
   USING (
     verification_id IN (
@@ -531,7 +533,8 @@ CREATE POLICY IF NOT EXISTS "trust_scores_owner_read"
   );
 
 -- Evidence items follow verification ownership
-CREATE POLICY IF NOT EXISTS "evidence_items_owner_read"
+DROP POLICY IF EXISTS "evidence_items_owner_read" ON evidence_items;
+CREATE POLICY "evidence_items_owner_read"
   ON evidence_items FOR SELECT
   USING (
     verification_id IN (
@@ -540,7 +543,8 @@ CREATE POLICY IF NOT EXISTS "evidence_items_owner_read"
   );
 
 -- Reports: owner read
-CREATE POLICY IF NOT EXISTS "reports_owner_read"
+DROP POLICY IF EXISTS "reports_owner_read" ON verification_reports;
+CREATE POLICY "reports_owner_read"
   ON verification_reports FOR SELECT
   USING (
     verification_id IN (
@@ -549,7 +553,8 @@ CREATE POLICY IF NOT EXISTS "reports_owner_read"
   );
 
 -- Webhooks: owner CRUD
-CREATE POLICY IF NOT EXISTS "webhooks_owner_all"
+DROP POLICY IF EXISTS "webhooks_owner_all" ON webhooks;
+CREATE POLICY "webhooks_owner_all"
   ON webhooks FOR ALL
   USING (user_id = (SELECT auth.uid()::text))
   WITH CHECK (user_id = (SELECT auth.uid()::text));

@@ -346,17 +346,20 @@ ALTER TABLE api_access_log   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE data_access_log  ENABLE ROW LEVEL SECURITY;
 
 -- Only the actor can read their own audit events
-CREATE POLICY IF NOT EXISTS "audit_log_actor_read"
+DROP POLICY IF EXISTS "audit_log_actor_read" ON audit_log;
+CREATE POLICY "audit_log_actor_read"
   ON audit_log FOR SELECT
   USING (actor_id = (SELECT auth.uid()::text));
 
 -- Users can read their own API access log
-CREATE POLICY IF NOT EXISTS "api_access_log_user_read"
+DROP POLICY IF EXISTS "api_access_log_user_read" ON api_access_log;
+CREATE POLICY "api_access_log_user_read"
   ON api_access_log FOR SELECT
   USING (user_id = (SELECT auth.uid()::text));
 
 -- Users can read their own data access log
-CREATE POLICY IF NOT EXISTS "data_access_log_owner_read"
+DROP POLICY IF EXISTS "data_access_log_owner_read" ON data_access_log;
+CREATE POLICY "data_access_log_owner_read"
   ON data_access_log FOR SELECT
   USING (accessor_id = (SELECT auth.uid()::text));
 
