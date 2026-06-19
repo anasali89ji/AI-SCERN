@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import {
-  LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe,
+  LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe, Globe2,
   Layers, Clock, User, Settings, ChevronLeft,
   ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap, Star
 } from 'lucide-react'
@@ -34,6 +34,12 @@ const navGroups = [
     ],
   },
   {
+    label: 'Verify',
+    items: [
+      { href: '/verify/web', icon: 'Globe2', label: 'Website Trust' },
+    ],
+  },
+  {
     label: 'Tools',
     items: [
       { href: '/chat',     icon: 'MessageSquare', label: 'AI Assistant'  },
@@ -53,7 +59,7 @@ const navGroups = [
 ]
 
 const iconMap: Record<string, any> = {
-  LayoutDashboard, ImageIcon, Video, Music, FileText, Globe,
+  LayoutDashboard, ImageIcon, Video, Music, FileText, Globe, Globe2,
   Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap, Star,
 }
 
