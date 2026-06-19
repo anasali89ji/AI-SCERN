@@ -64,6 +64,11 @@ export async function POST(req: NextRequest) {
       processing_time: Date.now() - start,
       model:           result.model_used,
       api_version:     'v1',
+    }, {
+      headers: {
+        'Deprecation': 'true',
+        'Link': '</api/v1/verify/image>; rel="successor-version"',
+      },
     })
   } catch (err: unknown) {
     console.error('[v1/detect/image]', err instanceof Error ? err.message : err)

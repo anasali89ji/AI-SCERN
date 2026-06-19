@@ -49,4 +49,13 @@ export type AiscernEvents = {
       item_count?: number
     }
   }
+  'verification/completed': {
+    data: {
+      verification_id: string
+      user_id:          string
+      module:           string
+      trust_overall:    number
+      risk_overall:     number
+    }
+  }
 }
