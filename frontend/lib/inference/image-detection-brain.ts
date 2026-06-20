@@ -181,7 +181,17 @@ export async function decodeImagePixels(buf: Buffer, _mimeType: string): Promise
       channels: info.channels,
       decoded:  true,
     }
-  } catch {
+  } catch (err) {
+    // This is NOT a silent fallback — sharp decode failure significantly
+    // degrades every signal that depends on real pixel data (texture, frequency,
+    // edge, gradient, contrast, symmetry, horizon all return weaker raw-byte
+    // heuristics or neutral 0.5 scores instead). Surface it loudly so it shows
+    // up in server logs rather than disappearing as an unexplained accuracy drop.
+    console.error(
+      '[image-detection-brain] sharp pixel decode FAILED — falling back to degraded raw-byte analysis. ' +
+      'This image will get a less accurate verdict. Reason:',
+      err instanceof Error ? err.message : err,
+    )
     return {
       pixels:   new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength),
       width:    0, height: 0, channels: 3, decoded: false,
@@ -499,15 +509,23 @@ function analyzeHueDistribution(samples: RGBPixel[]): { signal: ImageBrainSignal
   const top3   = sorted.slice(0, 3).reduce((a, b) => a + b, 0)
   let genBoost = 0
 
+  // NOTE: these per-generator hue-peak heuristics are weak and easily
+  // confounded by ordinary scene content — a clear blue sky or saturated
+  // foliage produces the same "single dominant hue band" signature as these
+  // generator "fingerprints". genBoost values are capped well below the 0.75
+  // "strong AI" threshold; real corroboration happens downstream in
+  // detectGeneratorFingerprints(), which requires multiple independent matches
+  // (this hue hint plus separate channel-statistic matches) before allowing
+  // high confidence.
   const geminiBlue = hF.slice(40, 45).reduce((a, b) => a + b, 0)
-  if (geminiBlue > 0.18) { hueHints.push('Gemini Imagen v3 (200–220° peak)'); genBoost = Math.max(genBoost, 0.82) }
+  if (geminiBlue > 0.18) { hueHints.push('Gemini Imagen v3 (200–220° peak)'); genBoost = Math.max(genBoost, 0.55) }
   const grokViolet = hF.slice(48, 55).reduce((a, b) => a + b, 0)
   const grokLime   = hF.slice(22, 27).reduce((a, b) => a + b, 0)
-  if (grokViolet > 0.20 && grokLime > 0.08) { hueHints.push('Grok Aurora (violet+lime double peak)'); genBoost = Math.max(genBoost, 0.85) }
+  if (grokViolet > 0.20 && grokLime > 0.08) { hueHints.push('Grok Aurora (violet+lime double peak)'); genBoost = Math.max(genBoost, 0.58) }
   const mjPurple   = hF.slice(50, 55).reduce((a, b) => a + b, 0)
-  if (mjPurple > 0.20 && top3 > 0.40) { hueHints.push('Midjourney (purple-blue dominant)'); genBoost = Math.max(genBoost, 0.80) }
+  if (mjPurple > 0.20 && top3 > 0.40) { hueHints.push('Midjourney (purple-blue dominant)'); genBoost = Math.max(genBoost, 0.55) }
   const sdWarm     = hF.slice(4, 9).reduce((a, b) => a + b, 0)
-  if (sdWarm > 0.22 && top3 > 0.38) { hueHints.push('Stable Diffusion (warm amber cast)'); genBoost = Math.max(genBoost, 0.75) }
+  if (sdWarm > 0.22 && top3 > 0.38) { hueHints.push('Stable Diffusion (warm amber cast)'); genBoost = Math.max(genBoost, 0.52) }
 
   return {
     signal: { name: 'Hue Ring Distribution', category: 'hue',
@@ -678,19 +696,28 @@ function analyzeBackgroundCoherence(img: DecodedImage): ImageBrainSignal {
 }
 
 // ── SIGNAL 17: BILATERAL SYMMETRY ─────────────────────────────────────────────
-// AI generators produce images with high left-right symmetry because they learn
-// from vast datasets of centred subjects. Real cameras capture natural asymmetry:
-// tilted framing, off-centre subjects, uneven lighting, camera shake.
-// Method: compare luma of each pixel (x, y) against its mirror (W-1-x, y).
-// AI: mean absolute difference (MAD) < 15 luma units (out of 255).
-// Real: MAD typically 25–60 because composition is naturally asymmetric.
+// AI generators can produce images with high left-right symmetry — but this
+// signal is INHERENTLY WEAK and easily confounded: a real photo of a naturally
+// symmetric subject (a face, a product on a plain backdrop, architecture,
+// flowers) is mirror-symmetric for reasons that have nothing to do with how it
+// was captured. Symmetry is a property of the SUBJECT, not the generation
+// process. Empirical testing showed this signal firing >0.9 ("AI") on ordinary
+// centred real-world photo compositions — a major false-positive source.
+//
+// Calibration fix: thresholds tightened to only register near-mathematically-
+// perfect mirror symmetry (which is rare even for AI images of real-world
+// scenes), score range compressed so this signal alone can never push a verdict
+// to AI, and weight reduced — it now functions only as a very weak corroborating
+// nudge, never a primary driver.
+// AI: mean absolute difference (MAD) < 4 luma units (out of 255) — near-perfect.
+// Real (and most "symmetric" real subjects too): MAD typically >8.
 
 function analyzeBilateralSymmetry(img: DecodedImage): ImageBrainSignal {
   const { pixels, width, height, channels, decoded } = img
   if (!decoded || width < 32 || height < 32) {
     return {
       name: 'Bilateral Symmetry', category: 'structure',
-      score: 0.5, weight: 0.07, rawValue: 0,
+      score: 0.5, weight: 0.03, rawValue: 0,
       evidence: 'requires decoded pixels ≥32px',
     }
   }
@@ -710,36 +737,47 @@ function analyzeBilateralSymmetry(img: DecodedImage): ImageBrainSignal {
   }
 
   if (!diffs.length) {
-    return { name: 'Bilateral Symmetry', category: 'structure', score: 0.5, weight: 0.07, rawValue: 0, evidence: 'no samples' }
+    return { name: 'Bilateral Symmetry', category: 'structure', score: 0.5, weight: 0.03, rawValue: 0, evidence: 'no samples' }
   }
 
   const mad     = meanArr(diffs)
   const diffSt  = stats(diffs)
-  const madSc   = mad < 8  ? 0.94 : mad < 14 ? 0.82 : mad < 22 ? 0.62 : mad < 35 ? 0.38 : 0.16
-  const varSc   = diffSt.std < 6  ? 0.90 : diffSt.std < 12 ? 0.74 : diffSt.std < 20 ? 0.50 : 0.20
-  const perfectR = diffs.filter(d => d < 5).length / diffs.length
-  const perfSc   = perfectR > 0.55 ? 0.92 : perfectR > 0.38 ? 0.74 : perfectR > 0.22 ? 0.50 : 0.20
+  // Tightened: ordinary real photos of symmetric subjects commonly land in the
+  // 8-20 MAD range — that band must NOT read as a confident AI signal.
+  const madSc   = mad < 4 ? 0.78 : mad < 8 ? 0.62 : mad < 16 ? 0.50 : mad < 30 ? 0.42 : 0.32
+  const varSc   = diffSt.std < 4  ? 0.70 : diffSt.std < 8 ? 0.58 : diffSt.std < 16 ? 0.48 : 0.36
+  const perfectR = diffs.filter(d => d < 3).length / diffs.length
+  const perfSc   = perfectR > 0.70 ? 0.74 : perfectR > 0.50 ? 0.58 : perfectR > 0.30 ? 0.48 : 0.36
 
   return {
     name: 'Bilateral Symmetry', category: 'structure',
-    score: clamp(madSc * 0.42 + varSc * 0.28 + perfSc * 0.30, 0, 1),
-    weight: 0.07, rawValue: mad,
-    evidence: `mirror MAD=${mad.toFixed(1)} (AI: <14, Real: >25) | std=${diffSt.std.toFixed(1)} | perfect=${(perfectR*100).toFixed(0)}% (AI: >38%)`,
+    // Hard-capped below the 0.75 "highAI" confidence-boost threshold — this
+    // signal alone must never count as a "strong AI" vote in the ensemble.
+    score: clamp(madSc * 0.42 + varSc * 0.28 + perfSc * 0.30, 0.20, 0.74),
+    weight: 0.03, rawValue: mad,
+    evidence: `mirror MAD=${mad.toFixed(1)} (weak/corroborating signal only — symmetric real subjects are common) | std=${diffSt.std.toFixed(1)} | perfect=${(perfectR*100).toFixed(0)}%`,
   }
 }
 
 // ── SIGNAL 18: HORIZON LINE CONSISTENCY ───────────────────────────────────────
-// AI images have a single level clean horizon because the model learned from
-// billions of levelled stock photos. Real cameras are tilted 0.5–3°, with
-// noisy edges and no single dominant horizontal energy row.
-// Method: per-row Sobel-Y energy → peak z-score + position + concentration.
+// This signal is INHERENTLY WEAK: a level horizon is a property of the PHYSICAL
+// WORLD (gravity), not of the generation process. Real landscape, seascape, and
+// architecture photography routinely produces a strong, clean, level horizontal
+// edge — tripods, image stabilization, and post-capture levelling are all
+// extremely common. Empirical testing showed this firing >0.85 ("AI") on a
+// basic simulated sky/ground landscape photo — a major false-positive source.
+//
+// Calibration fix: thresholds tightened to require a far more extreme,
+// statistically unusual peak before treating it as AI-indicative, score range
+// compressed so this signal alone can never push a verdict to AI, and weight
+// reduced to a weak corroborating nudge only.
 
 function analyzeHorizonConsistency(img: DecodedImage): ImageBrainSignal {
   const { pixels, width, height, channels, decoded } = img
   if (!decoded || width < 32 || height < 32) {
     return {
       name: 'Horizon Line Consistency', category: 'structure',
-      score: 0.5, weight: 0.06, rawValue: 0,
+      score: 0.5, weight: 0.03, rawValue: 0,
       evidence: 'requires decoded pixels ≥32px',
     }
   }
@@ -774,15 +812,21 @@ function analyzeHorizonConsistency(img: DecodedImage): ImageBrainSignal {
   const farEnergy = energyArr.filter((_, i) => Math.abs(i - peakIdx) > 20)
   const concentration = farEnergy.length > 0 ? (meanArr(nearPeak) / (meanArr(farEnergy) + 1e-6)) : 1
 
-  const zSc    = zScore > 5  ? 0.90 : zScore > 3  ? 0.76 : zScore > 2  ? 0.54 : 0.20
-  const midSc  = inMiddle ? 0.72 : 0.28
-  const concSc = concentration > 8 ? 0.90 : concentration > 4 ? 0.72 : concentration > 2 ? 0.48 : 0.20
+  // A single dominant horizontal edge (table, wall, shadow, railing, real
+  // horizon...) is common in ALL photography. Only an extreme, highly
+  // concentrated peak gets even a mild nudge — never a confident verdict.
+  const zSc    = zScore > 9  ? 0.68 : zScore > 6  ? 0.58 : zScore > 3 ? 0.50 : 0.40
+  const midSc  = inMiddle ? 0.56 : 0.42
+  const concSc = concentration > 20 ? 0.66 : concentration > 10 ? 0.56 : concentration > 4 ? 0.48 : 0.40
 
   return {
     name: 'Horizon Line Consistency', category: 'structure',
-    score: clamp(zSc * 0.45 + midSc * 0.25 + concSc * 0.30, 0, 1),
-    weight: 0.06, rawValue: zScore,
-    evidence: `horizon z=${zScore.toFixed(2)} (AI: >3) | at ${(peakFrac*100).toFixed(0)}% height | conc=${concentration.toFixed(1)} (AI: >4)`,
+    // Hard-capped below the 0.75 "highAI" confidence-boost threshold — a clean
+    // horizon/edge is extremely common in real photography and must never
+    // alone count as a "strong AI" vote.
+    score: clamp(zSc * 0.45 + midSc * 0.25 + concSc * 0.30, 0.20, 0.70),
+    weight: 0.03, rawValue: zScore,
+    evidence: `horizon/edge z=${zScore.toFixed(2)} (weak/corroborating signal only — real photos commonly have a clean horizon) | at ${(peakFrac*100).toFixed(0)}% height | conc=${concentration.toFixed(1)}`,
   }
 }
 
@@ -797,6 +841,22 @@ function detectGeneratorFingerprints(
   hueSig:   ImageBrainSignal,
   hueHints: string[],
 ): { signal: ImageBrainSignal; hints: string[] } {
+  // IMPORTANT CALIBRATION NOTE: every rule below is a coarse global color-
+  // statistic match (channel means, saturation mean/std, "blueShift" pixel
+  // fraction, etc). None of these are unique to AI generators — ordinary real
+  // photo content reproduces them constantly. A blue-dominant, low-saturation-
+  // variance image is also just... a photo with a clear sky in it. Empirical
+  // testing on a genuine real outdoor photo (blue sky + building) showed THIS
+  // EXACT pattern firing the "Gemini Imagen v3" and "Grok Aurora/Midjourney"
+  // rules with high confidence — a false positive driven entirely by the sky.
+  //
+  // Fix: rules no longer set confidence directly. Each match is logged as a
+  // weak, capped "candidate" (≤0.60 — below the 0.75 "strong AI" threshold).
+  // Only when MULTIPLE independent rules agree on the same image does
+  // confidence rise toward the levels needed to influence the verdict. A real
+  // AI image consistently exhibiting several synthetic statistical properties
+  // at once will still be caught with high confidence; a real photo that
+  // coincidentally matches exactly one rule (e.g. "has a blue sky") will not.
   const hints: string[] = [...hueHints]
   const rs  = samples.map(s => s.r / 255), gs = samples.map(s => s.g / 255), bs = samples.map(s => s.b / 255)
   const rS  = stats(rs), gS = stats(gs), bS = stats(bs)
@@ -805,70 +865,75 @@ function detectGeneratorFingerprints(
   const blueShift = samples.filter(({ r, b }) => b > r + 20).length / samples.length
   const chanDiff  = Math.abs(rS.mean - gS.mean) + Math.abs(gS.mean - bS.mean)
   const warmCast  = samples.filter(({ r, b }) => r > b + 18).length / samples.length
-  let fingerScore = 0.40
+
+  // Candidate confidence per rule capped at 0.60 (a single match nudges, never decides).
+  const CAP = 0.60
+  let newMatches = 0
 
   // Midjourney v5/v6/v7
   if (blueShift > 0.35 && satS.mean > 0.52 && valS.std < 0.22) {
-    if (!hints.some(h => h.includes('Midjourney'))) hints.push('Midjourney v5/v6/v7 (blue-purple dominant, high saturation)')
-    fingerScore = Math.max(fingerScore, 0.84)
+    if (!hints.some(h => h.includes('Midjourney'))) { hints.push('Midjourney v5/v6/v7 (blue-purple dominant, high saturation)'); newMatches++ }
   }
   // DALL-E 3
   if (chanDiff < 0.04 && satS.mean > 0.30 && satS.mean < 0.58 && texSig.score > 0.72) {
-    hints.push('DALL-E 3 (balanced channels, clean texture, moderate saturation)')
-    fingerScore = Math.max(fingerScore, 0.82)
+    hints.push('DALL-E 3 (balanced channels, clean texture, moderate saturation)'); newMatches++
   }
   // Stable Diffusion
   if (warmCast > 0.42 && satS.mean < 0.44 && satS.mean > 0.18) {
-    if (!hints.some(h => h.includes('Stable'))) hints.push('Stable Diffusion (warm cast, mild desaturation)')
-    fingerScore = Math.max(fingerScore, 0.76)
+    if (!hints.some(h => h.includes('Stable'))) { hints.push('Stable Diffusion (warm cast, mild desaturation)'); newMatches++ }
   }
   // Flux.1
   if (satS.std < 0.05 && satS.mean > 0.42 && texSig.score > 0.76 && valS.mean > 0.55) {
-    hints.push('Flux.1 / Flux.1 Dev (ultra-low saturation variance, crisp uniform)')
-    fingerScore = Math.max(fingerScore, 0.86)
+    hints.push('Flux.1 / Flux.1 Dev (ultra-low saturation variance, crisp uniform)'); newMatches++
   }
-  // Gemini Imagen v3
+  // Gemini Imagen v3 — NOTE: this exact pattern (B>G>R, low channel diff, cool
+  // tint) is also what a clear blue sky looks like. Kept as a weak candidate only.
   if (bS.mean > gS.mean && gS.mean > rS.mean && chanDiff < 0.06 && bS.mean > rS.mean + 0.03 && texSig.score > 0.72 && satS.std < 0.09) {
-    if (!hints.some(h => h.includes('Gemini'))) hints.push('Gemini Imagen v3 (B>G>R channel order, HDR-clean, cool-tinted)')
-    fingerScore = Math.max(fingerScore, 0.85)
+    if (!hints.some(h => h.includes('Gemini'))) { hints.push('Gemini Imagen v3 (B>G>R channel order, HDR-clean, cool-tinted)'); newMatches++ }
   }
-  // Grok Aurora
-  if (bS.mean > rS.mean + 0.06 && satS.mean > 0.58 && hints.some(h => h.includes('Grok'))) {
-    fingerScore = Math.max(fingerScore, 0.87)
-  } else if (bS.mean > rS.mean + 0.06 && satS.mean > 0.60) {
-    if (!hints.some(h => h.includes('Grok') || h.includes('Midjourney'))) {
-      hints.push('Grok Aurora / Midjourney (vivid blue-shifted, high saturation)')
-      fingerScore = Math.max(fingerScore, 0.82)
-    }
+  // Grok Aurora / Midjourney — same blue-sky caveat applies.
+  if (bS.mean > rS.mean + 0.06 && satS.mean > 0.58) {
+    if (!hints.some(h => h.includes('Grok') || h.includes('Midjourney'))) { hints.push('Grok Aurora / Midjourney (vivid blue-shifted, high saturation)'); newMatches++ }
   }
   // Adobe Firefly
   if (chanDiff < 0.05 && satS.mean > 0.32 && satS.mean < 0.52 && satS.std < 0.08 && texSig.score > 0.70 && hints.length === hueHints.length) {
-    hints.push('Adobe Firefly (professional-clean, low grain)')
-    fingerScore = Math.max(fingerScore, 0.74)
+    hints.push('Adobe Firefly (professional-clean, low grain)'); newMatches++
   }
   // Ideogram v2
   if (satS.mean > 0.45 && satS.std < 0.06 && valS.mean > 0.60 && hints.length === hueHints.length) {
-    hints.push('Ideogram v2 (uniform saturation, clean palette)')
-    fingerScore = Math.max(fingerScore, 0.78)
+    hints.push('Ideogram v2 (uniform saturation, clean palette)'); newMatches++
   }
   // Leonardo AI
   if (warmCast > 0.30 && satS.mean > 0.40 && satS.std < 0.08 && valS.mean > 0.58 && hints.length === hueHints.length) {
-    hints.push('Leonardo AI (warm, painterly, consistent saturation)')
-    fingerScore = Math.max(fingerScore, 0.76)
+    hints.push('Leonardo AI (warm, painterly, consistent saturation)'); newMatches++
   }
   // Canva AI
   if (chanDiff < 0.04 && satS.mean > 0.28 && satS.mean < 0.48 && texSig.score > 0.68 && satS.std < 0.07 && hints.length === hueHints.length) {
-    hints.push('Canva AI (clean poster aesthetic, balanced)')
-    fingerScore = Math.max(fingerScore, 0.72)
+    hints.push('Canva AI (clean poster aesthetic, balanced)'); newMatches++
   }
 
-  if (hints.length === hueHints.length && (satSig.score > 0.68 || texSig.score > 0.72)) fingerScore = Math.max(fingerScore, 0.62)
+  // Total independent corroboration = new color-stat matches in this function
+  // PLUS any hue-ring generator hints passed in (a genuinely separate signal).
+  const totalMatches = newMatches + hueHints.length
+
+  let fingerScore: number
+  if (totalMatches === 0) {
+    // No fingerprint match. Fall back to a mild nudge from the already-
+    // independently-computed saturation/texture signals, same as before.
+    fingerScore = (satSig.score > 0.68 || texSig.score > 0.72) ? 0.55 : 0.40
+  } else if (totalMatches === 1) {
+    fingerScore = CAP // single coincidental match — capped, cannot alone tip the verdict
+  } else if (totalMatches === 2) {
+    fingerScore = 0.74 // two independent agreements — meaningful but still cautious
+  } else {
+    fingerScore = 0.88 // three or more independent agreements — genuinely strong signal
+  }
 
   return {
     signal: { name: 'AI Generator Fingerprint', category: 'generator',
-      score: clamp(fingerScore, 0.18, 0.98), weight: 0.08, rawValue: blueShift,
+      score: clamp(fingerScore, 0.18, 0.95), weight: 0.08, rawValue: blueShift,
       evidence: hints.length > 0
-        ? `Detected: ${hints.join('; ')}`
+        ? `Detected (${totalMatches} corroborating match${totalMatches === 1 ? '' : 'es'}): ${hints.join('; ')}`
         : 'No specific generator matched — general AI statistics present' },
     hints,
   }
@@ -921,8 +986,12 @@ export async function analyzeImageWithBrain(
   const rawSc   = allSignals.reduce((s, sig) => s + sig.score * sig.weight, 0) / totalW
   const highAI  = allSignals.filter(s => s.score > 0.75).length
   const highHu  = allSignals.filter(s => s.score < 0.25).length
-  // Thresholds scaled to 18 signals (was 16): ≥9 strong AI = boost, ≥6 moderate
-  const boost   = highAI >= 10 ? 0.10 : highAI >= 6 ? 0.06 : highHu >= 10 ? -0.10 : highHu >= 6 ? -0.06 : 0
+  // Thresholds restored to the original 16-signal calibration. Bilateral
+  // Symmetry and Horizon Consistency are now hard-capped at 0.74 (see their
+  // definitions above) so they structurally cannot register as "strong AI"
+  // (>0.75) or "strong human" (<0.25) votes — the effective voting pool for
+  // this tally is still the original 16 well-calibrated signals.
+  const boost   = highAI >= 8 ? 0.10 : highAI >= 5 ? 0.06 : highHu >= 8 ? -0.10 : highHu >= 5 ? -0.06 : 0
 
   // ── Artistic / Fantasy AI Override ────────────────────────────────────────
   // Texture, frequency, and gradient signals are calibrated for photorealistic

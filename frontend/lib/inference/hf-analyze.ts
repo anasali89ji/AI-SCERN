@@ -438,6 +438,10 @@ interface PythonCVResult {
   composite_cv_score: number
   cv_signals:         Record<string, number>
   version:            string
+  // The worker computes a fuller fusion of its v2 layers (pixel integrity,
+  // noise stats, frequency domain, SynthID) with v3 forensics — this is
+  // strictly more complete than composite_cv_score alone (which is v3-only).
+  composite_score?: { v2_composite: number; v3_composite: number; fused_score: number }
 }
 
 async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promise<PythonCVResult | null> {
@@ -449,11 +453,23 @@ async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promis
       method: 'POST', body: form,
       signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
     })
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.error(`[hf-analyze] CV worker returned ${res.status} ${res.statusText} — falling back to Brain+ML+LLM only.`)
+      return null
+    }
     const data = await res.json() as PythonCVResult
-    if (typeof data.composite_cv_score !== 'number') return null
+    if (typeof data.composite_cv_score !== 'number') {
+      console.error('[hf-analyze] CV worker response missing composite_cv_score — falling back to Brain+ML+LLM only.', data)
+      return null
+    }
     return data
-  } catch { return null }
+  } catch (err) {
+    // NOT a silent fallback — log it. A failing CV worker silently dropping to
+    // null causes weight to redistribute to other layers with zero visibility
+    // into why, which makes accuracy regressions impossible to diagnose.
+    console.error('[hf-analyze] CV worker call failed — falling back to Brain+ML+LLM only. Reason:', err instanceof Error ? err.message : err)
+    return null
+  }
 }
 
 // ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
@@ -498,7 +514,10 @@ const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string}
           const p    = JSON.parse(m[0])
           const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
           return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
-        } catch { return null }
+        } catch (err) {
+          console.error('[hf-analyze] Grok vision call failed for image analysis — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
+          return null
+        }
       })()
     : Promise.resolve(null)
 
@@ -522,7 +541,9 @@ const [geminiResult, grokResult, hfResults, cvWorkerResult] = await Promise.all(
 try {
   const cal = await getCalibrationStats()
   if (cal?.ai_sample_count >= 10) imgSignals = applyCalibration(imgSignals, cal)
-} catch {}
+} catch (err) {
+  console.error('[hf-analyze] Image calibration failed — using uncalibrated pixel signals. Reason:', err instanceof Error ? err.message : err)
+}
 const imgSignalScore = aggregateImageSignals(imgSignals)
 
 const mlScores: { model: string; aiScore: number; weight: number }[] = []
@@ -533,7 +554,9 @@ const parseImg = (val: unknown, w: number, m: string) => {
     const aiE = raw.find(s => /ai|fake|sdxl|synthetic|label_1|deepfake|generated/i.test(s.label))
     const huE = raw.find(s => /real|human|authentic|label_0|photo/i.test(s.label))
     if (aiE || huE) mlScores.push({ model: m, aiScore: aiE?.score ?? (huE ? 1 - huE.score : 0.5), weight: w })
-  } catch {}
+  } catch (err) {
+    console.error(`[hf-analyze] Failed to parse HF result for model "${m}" — excluded from ensemble. Reason:`, err instanceof Error ? err.message : err)
+  }
 }
 parseImg(hfResults[0].status === 'fulfilled' ? hfResults[0].value : null, 0.40, MODELS.image_finetuned)
 parseImg(hfResults[1].status === 'fulfilled' ? hfResults[1].value : null, 0.22, MODELS.image_primary)
@@ -546,7 +569,11 @@ const mlTotalW    = mlScores.reduce((s, m) => s + m.weight, 0) || 1
 const mlScore     = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
 const geminiScore = geminiResult?.aiScore ?? null
 const grokScore   = grokResult?.aiScore   ?? null
-const cvScore     = cvWorkerResult?.composite_cv_score ?? null
+// Prefer the worker's fused_score (40% v2 pixel/noise/frequency/SynthID layers
+// + 60% v3 forensics) when present — composite_cv_score alone is v3-only and
+// silently discards the v2 layers' work. Falls back to composite_cv_score for
+// older worker versions that don't return composite_score.
+const cvScore     = cvWorkerResult?.composite_score?.fused_score ?? cvWorkerResult?.composite_cv_score ?? null
 
 // ── IMAGE ENSEMBLE v8.0 — Brain+CV-first, LLM as secondary tiebreaker ────────
 //
