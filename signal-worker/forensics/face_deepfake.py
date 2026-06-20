@@ -88,7 +88,14 @@ def analyze_eye_consistency(face_img: np.ndarray) -> float:
     eyes = eye_cascade.detectMultiScale(gray, 1.1, 4)
 
     if len(eyes) < 2:
-        return 0.8
+        # Haar cascade eye detection is old (Viola-Jones) and frequently fails
+        # on completely ordinary real photos: glasses, sunglasses, closed/
+        # squinting eyes, side-angle faces, low-resolution crops, makeup.
+        # Previously this returned 0.8 (strong AI-suspicion) — treating a
+        # detector failure as if it were positive evidence of synthesis. A
+        # failed detection means we have no data, not that something is wrong
+        # with the image. Returns neutral instead.
+        return 0.5
 
     eye1 = eyes[0]
     eye2 = eyes[1]

@@ -485,41 +485,57 @@ const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
 // — they no longer run always-in-parallel on every scan.
 // Total LLM weight is capped at 10% (down from 45–55% in v7).
 const geminiPromise = geminiAvailable()
-  ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch(() => null)
+  ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch((err) => {
+      // NOT a silent fallback. A failure here (expired API key, deprecated/
+      // renamed model string, rate limit, network error) previously vanished
+      // with zero log output — the entire LLM layer (10% weight + the
+      // generator-name recognition Gemini's vision is uniquely good at) could
+      // silently go dark in production with no way to notice.
+      console.error('[hf-analyze] Gemini image analysis failed — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
+      return null
+    })
   : Promise.resolve(null)
 
-// Grok — fallback only when Gemini is unavailable
+// Grok — genuine runtime fallback: fires whenever Gemini did not return a
+// usable result, for ANY reason (missing key, deprecated model, rate limit,
+// timeout) — not just when GEMINI_API_KEY is literally absent. Previously
+// this only checked key presence, so a working key pointed at a dead/
+// deprecated model would silently lose the entire LLM layer with no fallback
+// at all, even though Grok was configured and available.
 const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string} | null> =
-  (!geminiAvailable() && process.env.GROK_API_KEY)
-    ? (async () => {
-        try {
-          const b64  = inferenceBuffer.toString('base64')
-          const res  = await fetch('https://api.x.ai/v1/chat/completions', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
-              messages: [{ role: 'user', content: [
-                { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
-                { type: 'text', text: 'Is this image AI-generated? Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence"}' },
-              ]}],
-            }),
-            signal: AbortSignal.timeout(20_000),
-          })
-          if (!res.ok) return null
-          const data = await res.json()
-          const txt  = data.choices?.[0]?.message?.content ?? ''
-          const m    = txt.match(/\{[\s\S]*\}/)
-          if (!m) return null
-          const p    = JSON.parse(m[0])
-          const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
-          return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
-        } catch (err) {
-          console.error('[hf-analyze] Grok vision call failed for image analysis — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
-          return null
-        }
-      })()
-    : Promise.resolve(null)
+  geminiPromise.then(async (geminiRes) => {
+    if (geminiRes !== null) return null            // Gemini succeeded — no fallback needed
+    if (!process.env.GROK_API_KEY) return null      // no fallback configured
+    try {
+      const b64  = inferenceBuffer.toString('base64')
+      const res  = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
+          messages: [{ role: 'user', content: [
+            { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
+            { type: 'text', text: 'Is this image AI-generated? Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence"}' },
+          ]}],
+        }),
+        signal: AbortSignal.timeout(20_000),
+      })
+      if (!res.ok) {
+        console.error(`[hf-analyze] Grok vision fallback returned ${res.status} ${res.statusText} — LLM layer unavailable for this scan.`)
+        return null
+      }
+      const data = await res.json()
+      const txt  = data.choices?.[0]?.message?.content ?? ''
+      const m    = txt.match(/\{[\s\S]*\}/)
+      if (!m) return null
+      const p    = JSON.parse(m[0])
+      const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+      return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
+    } catch (err) {
+      console.error('[hf-analyze] Grok vision call failed for image analysis — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
+      return null
+    }
+  })
 
 const hfPromise = Promise.allSettled([
   // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.40)
