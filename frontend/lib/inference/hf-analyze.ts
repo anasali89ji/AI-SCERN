@@ -55,6 +55,8 @@ export interface DetectionResult {
   frame_scores?:    { frame: number; time_sec: number; ai_score: number; face_detected?: boolean }[]
   /** Per-model breakdown for accuracy monitoring — logged fire-and-forget after scan insert */
   model_breakdown?: import('@/lib/accuracy/log-predictions').ModelPrediction[]
+  /** Multi-source generator identification (Brain + Gemini + Grok voting) — image detection only */
+  generator_attribution?: { generator: string; corroborating_sources: string[]; confidence: 'high' | 'low' } | null
 }
 
 const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
@@ -363,7 +365,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
       latency_ms: 0,
     })),
     ...(geminiScore !== null ? [{
-      model_id:   'gemini-2.0-flash',
+      model_id:   'gemini-2.5-flash',
       raw_score:  geminiScore,
       verdict:    scoreToVerdict(geminiScore),
       latency_ms: 0,
@@ -478,64 +480,58 @@ const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length,
 // ── Python CV Worker (25% weight C.1 new scheme) — parallel ───────────────
 const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
 
-// ── LLM Vision Analysis — SECONDARY TIEBREAKER ONLY (C.1) ──────────────────
-// NEW in v8: LLM Vision is the last-resort tiebreaker, NOT the backbone.
-// Only Gemini runs by default (required by GEMINI_API_KEY in .env.example).
-// Grok/NIM/OpenRouter are opt-in fallbacks when Gemini fails or unavailable
-// — they no longer run always-in-parallel on every scan.
-// Total LLM weight is capped at 10% (down from 45–55% in v7).
+// ── LLM Vision Analysis — Gemini + Grok run in TRUE PARALLEL (restored) ────
+// Previous v8 design ran only Gemini, with Grok as a fallback when Gemini was
+// literally unavailable. Per explicit decision: prioritize stronger multi-
+// source generator identification over minimizing cost — restoring the
+// older multi-provider approach, but scoped to 2 providers (not the old v7's
+// 4) and at a more moderate combined weight (see ensemble weights below) so
+// it doesn't drown out the now-well-calibrated Brain/CV layers the way the
+// old 45-55% LLM weight apparently did. Both providers now also return a
+// `generator` guess, fed into the multi-source generator voting below —
+// agreement between independent vision models is much stronger evidence
+// than any single model's guess.
 const geminiPromise = geminiAvailable()
   ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch((err) => {
-      // NOT a silent fallback. A failure here (expired API key, deprecated/
-      // renamed model string, rate limit, network error) previously vanished
-      // with zero log output — the entire LLM layer (10% weight + the
-      // generator-name recognition Gemini's vision is uniquely good at) could
-      // silently go dark in production with no way to notice.
       console.error('[hf-analyze] Gemini image analysis failed — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
       return null
     })
   : Promise.resolve(null)
 
-// Grok — genuine runtime fallback: fires whenever Gemini did not return a
-// usable result, for ANY reason (missing key, deprecated model, rate limit,
-// timeout) — not just when GEMINI_API_KEY is literally absent. Previously
-// this only checked key presence, so a working key pointed at a dead/
-// deprecated model would silently lose the entire LLM layer with no fallback
-// at all, even though Grok was configured and available.
-const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string} | null> =
-  geminiPromise.then(async (geminiRes) => {
-    if (geminiRes !== null) return null            // Gemini succeeded — no fallback needed
-    if (!process.env.GROK_API_KEY) return null      // no fallback configured
-    try {
-      const b64  = inferenceBuffer.toString('base64')
-      const res  = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'grok-2-vision-latest', max_tokens: 100, temperature: 0.1,
-          messages: [{ role: 'user', content: [
-            { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
-            { type: 'text', text: 'Is this image AI-generated? Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "reasoning": "one sentence with specific evidence"}' },
-          ]}],
-        }),
-        signal: AbortSignal.timeout(20_000),
-      })
-      if (!res.ok) {
-        console.error(`[hf-analyze] Grok vision fallback returned ${res.status} ${res.statusText} — LLM layer unavailable for this scan.`)
-        return null
-      }
-      const data = await res.json()
-      const txt  = data.choices?.[0]?.message?.content ?? ''
-      const m    = txt.match(/\{[\s\S]*\}/)
-      if (!m) return null
-      const p    = JSON.parse(m[0])
-      const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
-      return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '' }
-    } catch (err) {
-      console.error('[hf-analyze] Grok vision call failed for image analysis — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
-      return null
-    }
-  })
+const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string; generator: string} | null> =
+  process.env.GROK_API_KEY
+    ? (async () => {
+        try {
+          const b64  = inferenceBuffer.toString('base64')
+          const res  = await fetch('https://api.x.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'grok-2-vision-latest', max_tokens: 150, temperature: 0.1,
+              messages: [{ role: 'user', content: [
+                { type: 'image_url', image_url: { url: `data:${inferenceMime};base64,${b64}`, detail: 'high' } },
+                { type: 'text', text: 'Give an objective, evidence-based assessment of whether this image is AI-generated. Do not assume either answer by default. If you believe it is AI-generated, name which generator it most resembles (Gemini/Imagen, DALLE3/GPT4o, Midjourney, Flux, StableDiffusion, Firefly, or Unknown if you cannot tell). Respond ONLY with JSON: {"ai_probability": 0.0-1.0, "generator": "name or Unknown", "reasoning": "one sentence with specific evidence"}' },
+              ]}],
+            }),
+            signal: AbortSignal.timeout(20_000),
+          })
+          if (!res.ok) {
+            console.error(`[hf-analyze] Grok vision returned ${res.status} ${res.statusText} — excluded from ensemble.`)
+            return null
+          }
+          const data = await res.json()
+          const txt  = data.choices?.[0]?.message?.content ?? ''
+          const m    = txt.match(/\{[\s\S]*\}/)
+          if (!m) return null
+          const p    = JSON.parse(m[0])
+          const aiScore = Math.max(0, Math.min(1, Number(p.ai_probability) || 0.5))
+          return { aiScore, verdict: aiScore > 0.55 ? 'AI' : 'HUMAN', reasoning: p.reasoning ?? '', generator: typeof p.generator === 'string' ? p.generator : 'Unknown' }
+        } catch (err) {
+          console.error('[hf-analyze] Grok vision call failed — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
+          return null
+        }
+      })()
+    : Promise.resolve(null)
 
 const hfPromise = Promise.allSettled([
   // Aiscern fine-tuned ViT-Large (PRIMARY — highest weight 0.40)
@@ -591,23 +587,26 @@ const grokScore   = grokResult?.aiScore   ?? null
 // older worker versions that don't return composite_score.
 const cvScore     = cvWorkerResult?.composite_score?.fused_score ?? cvWorkerResult?.composite_cv_score ?? null
 
-// ── IMAGE ENSEMBLE v8.0 — Brain+CV-first, LLM as secondary tiebreaker ────────
+// ── IMAGE ENSEMBLE v8.1 — Brain+CV-first, LLM weight restored (decision: ───
+// prioritize generator-ID strength over minimizing cost) ───────────────────
 //
-// WEIGHT RATIONALE (C.1 — sums to 1.0 per path):
-//   Image Brain (16-signal, TS, pixel-decoded): 35%  ← was 20%
-//   Python CV worker (6-layer, signal-worker):  25%  ← was 0% (unused!)
-//   HF ViT ensemble models:                     20%  ← unchanged
-//   Raw pixel signals (extractImageSignals):    10%  ← unchanged
-//   LLM Vision (Gemini only by default):        10%  ← was 45–55%
+// WEIGHT RATIONALE:
+//   v7 (old):  LLM 45-55% (4 providers)  — too dominant, displaced Brain/CV
+//   v8.0:      LLM 10% (1 provider)      — generator-ID got noticeably worse
+//   v8.1 (now): LLM 20% (2 providers)    — doubled weight, doubled provider
+//     count (Gemini+Grok back to running in parallel). Kept below v7's level
+//     so the substantial Brain/CV calibration fixes aren't diluted away, but
+//     restored enough that real multi-source generator agreement can matter.
+//   Image Brain:        31%  (was 35%)
+//   Python CV worker:   22%  (was 25%)
+//   HF ViT ensemble:    18%  (was 20%)
+//   Raw pixel signals:   9%  (was 10%)
+//   LLM Vision:         20%  (was 10%) — Gemini + Grok in parallel
 //
-// Fallback weight redistribution when a layer is unavailable:
-//   Missing CV worker → extra weight to Brain (+12%) and Pixel (+5%) first.
-//   Missing HF       → extra weight to Brain (+10%) and CV (+10%).
-//   Missing LLM      → weight absorbed by Brain (it was only 10% anyway).
-//   *** LLM is NEVER the primary fallback — only the last-resort tiebreaker ***
-//
-// LLM score: Gemini runs by default. Grok fires only when Gemini is unavailable.
-// NIM and OpenRouter are no longer part of the primary flow (C.1.4).
+// Fallback weight redistribution when a layer is unavailable: unchanged
+// principle — LLM is never the primary fallback, only a tiebreaker, EXCEPT
+// it now carries enough weight (20%) to be a genuinely meaningful tiebreaker
+// rather than a rounding error.
 const llmScores: number[] = []
 if (geminiScore !== null) llmScores.push(geminiScore)
 if (grokScore   !== null) llmScores.push(grokScore)
@@ -616,71 +615,139 @@ const llmScore = llmScores.length ? llmScores.reduce((a, b) => a + b, 0) / llmSc
 let aiScore:   number
 let modelUsed: string
 let engineDesc: string
+let llmWeightUsed = 0   // tracked per-branch so the override below isn't hardcoded
 
 const cvAvailable = cvScore !== null
 const hfAvailable = mlScore !== null
 const llmAvailable = llmScore !== null
 
 if (cvAvailable && hfAvailable && llmAvailable) {
-  // Full ensemble: Brain(35%) + CV(25%) + HF(20%) + Pixel(10%) + LLM(10%)
-  aiScore    = brainResult.score * 0.35 + cvScore * 0.25 + mlScore * 0.20 + imgSignalScore * 0.10 + llmScore * 0.10
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain35%+CV25%+HF20%+Pixel10%+LLM10%)`
-  engineDesc = `Brain (35%) + CV-Worker (25%) + ${mlScores.length} HF ViT (20%) + Pixel (10%) + LLM (10%)`
+  // Full ensemble: Brain(31%) + CV(22%) + HF(18%) + Pixel(9%) + LLM(20%)
+  llmWeightUsed = 0.20
+  aiScore    = brainResult.score * 0.31 + cvScore * 0.22 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain31%+CV22%+HF18%+Pixel9%+LLM20%)`
+  engineDesc = `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini+Grok (20%)`
 } else if (cvAvailable && hfAvailable) {
   // No LLM: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
   aiScore    = brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain37%+CV28%+HF20%+Pixel15%)`
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain37%+CV28%+HF20%+Pixel15%)`
   engineDesc = `Brain (37%) + CV-Worker (28%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM`
 } else if (cvAvailable && llmAvailable) {
-  // No HF: Brain(42%) + CV(33%) + Pixel(15%) + LLM(10%)
-  aiScore    = brainResult.score * 0.42 + cvScore * 0.33 + imgSignalScore * 0.15 + llmScore * 0.10
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain42%+CV33%+Pixel15%+LLM10%)`
-  engineDesc = `Brain (42%) + CV-Worker (33%) + Pixel (15%) + LLM (10%) — HF cold-starting`
+  // No HF: Brain(38%) + CV(29%) + Pixel(13%) + LLM(20%)
+  llmWeightUsed = 0.20
+  aiScore    = brainResult.score * 0.38 + cvScore * 0.29 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain38%+CV29%+Pixel13%+LLM20%)`
+  engineDesc = `Brain (38%) + CV-Worker (29%) + Pixel (13%) + LLM (20%) — HF cold-starting`
 } else if (cvAvailable) {
   // CV + Brain + Pixel only
   aiScore    = brainResult.score * 0.47 + cvScore * 0.38 + imgSignalScore * 0.15
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain47%+CV38%+Pixel15%)`
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain47%+CV38%+Pixel15%)`
   engineDesc = `Brain (47%) + CV-Worker (38%) + Pixel (15%) — no LLM or HF`
 } else if (hfAvailable && llmAvailable) {
-  // No CV: Brain(45%) + HF(25%) + Pixel(20%) + LLM(10%)
-  aiScore    = brainResult.score * 0.45 + mlScore * 0.25 + imgSignalScore * 0.20 + llmScore * 0.10
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain45%+HF25%+Pixel20%+LLM10%)`
-  engineDesc = `Brain (45%) + ${mlScores.length} HF ViT (25%) + Pixel (20%) + LLM (10%) — CV worker offline`
+  // No CV: Brain(40%) + HF(22%) + Pixel(18%) + LLM(20%)
+  llmWeightUsed = 0.20
+  aiScore    = brainResult.score * 0.40 + mlScore * 0.22 + imgSignalScore * 0.18 + llmScore * llmWeightUsed
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain40%+HF22%+Pixel18%+LLM20%)`
+  engineDesc = `Brain (40%) + ${mlScores.length} HF ViT (22%) + Pixel (18%) + LLM (20%) — CV worker offline`
 } else if (hfAvailable) {
   // No CV, no LLM: Brain(50%) + HF(30%) + Pixel(20%)
   aiScore    = brainResult.score * 0.50 + mlScore * 0.30 + imgSignalScore * 0.20
-  modelUsed  = `Aiscern-ImageEngine-v8(Brain50%+HF30%+Pixel20%)`
+  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain50%+HF30%+Pixel20%)`
   engineDesc = `Brain (50%) + ${mlScores.length} HF ViT (30%) + Pixel (20%) — no CV or LLM`
 } else {
   // Fallback — only Brain + pixels (still better than LLM-only!)
   aiScore    = brainResult.score * 0.65 + imgSignalScore * 0.35
-  modelUsed  = 'Aiscern-ImageEngine-v8(Brain65%+Pixel35%)'
+  modelUsed  = 'Aiscern-ImageEngine-v8.1(Brain65%+Pixel35%)'
   engineDesc = 'Image Brain (65%) + Pixel signals (35%) — configure PYTHON_WORKER_URL for best accuracy'
 }
 
-// ── LLM Consensus Override (C.1.3 — replaces High-Confidence Override Floor) ─
-// Old behavior (REMOVED): a single LLM call > 0.75 floored aiScore at 0.62.
-// New behavior: LLM can only ADD UP TO 0.08 to the final score when:
+// ── LLM Consensus Override (C.1.3) ──────────────────────────────────────────
+// LLM can ADD UP TO 0.08 to the final score when:
 //   (a) it strongly agrees with Brain+CV (both >0.55), AND
 //   (b) its own score is >0.80
 // This prevents a lone LLM vision call from flipping an otherwise-confident
-// HUMAN verdict to AI — it can only reinforce a borderline case.
+// HUMAN verdict to AI — it can only reinforce a borderline case. Uses the
+// actual per-branch llmWeightUsed (tracked above) rather than a hardcoded
+// 0.10 — that assumption broke once LLM weight became branch-dependent.
 if (llmScore !== null && llmScore > 0.80) {
-  const nonLlmScore = aiScore - (llmScore * 0.10)   // remove LLM contribution
+  const nonLlmScore = aiScore - (llmScore * llmWeightUsed)   // remove LLM contribution
   const brainCvAgree = (brainResult.score > 0.55) && (cvScore === null || cvScore > 0.55)
   if (brainCvAgree) {
     // Allow LLM to push a borderline case toward AI, capped at +0.08
     aiScore = Math.min(aiScore + 0.08, Math.max(aiScore, nonLlmScore + (llmScore - 0.50) * 0.10))
   }
-  // If Brain+CV don't agree, LLM high score changes nothing — it already has its 10%
+  // If Brain+CV don't agree, LLM high score changes nothing — it already has its weight
 }
 
-// ── Legacy Generator Override (kept from v6/v7, narrowed scope) ───────────
-// Only fires if Brain explicitly detects a known generator fingerprint AND
-// its own score is already above 0.52 (near-borderline) — never on a
-// confident-HUMAN verdict.
-if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0 && brainResult.score > 0.52) {
-  aiScore = Math.max(aiScore, brainResult.score * 0.88)
+// ── Multi-Source Generator Attribution Voting ───────────────────────────────
+// Restores (in spirit) the abandoned v3 cascade's attributeGenerator() idea
+// — but adapted to the LIVE ensemble instead of sitting unused in dead code.
+// Combines generator guesses from three INDEPENDENT sources: Brain's pixel-
+// statistic hints, Gemini's vision reasoning, and Grok's vision reasoning —
+// each weighted by that source's own confidence. Two or more independent
+// sources agreeing on the same generator is much stronger evidence than any
+// single source's guess, which is exactly the capability that got lost when
+// v8.0 cut LLM providers from 4 down to 1.
+function normalizeGeneratorName(raw: string): string {
+  // Brain's hints are verbose ("Gemini Imagen v3 (200-220 peak)") while the
+  // LLMs return short labels ("Gemini", "GPT4o", "SDXL"). Without normalizing
+  // both to the same canonical name first, the SAME generator identified by
+  // two different sources would be counted as two different votes — silently
+  // defeating the entire purpose of multi-source corroboration. Caught this
+  // via a standalone test before shipping (Brain's "Gemini Imagen v3" vs
+  // Gemini's own "Gemini" guess didn't match as strings).
+  const s = raw.toLowerCase()
+  if (/gemini|imagen/.test(s))               return 'Gemini / Imagen'
+  if (/dall-?e|gpt-?4o|gpt4o/.test(s))        return 'DALL-E / GPT-4o'
+  if (/midjourney/.test(s))                  return 'Midjourney'
+  if (/stable\s*diffusion|sdxl/.test(s))      return 'Stable Diffusion'
+  if (/flux/.test(s))                        return 'Flux'
+  if (/firefly/.test(s))                     return 'Adobe Firefly'
+  if (/grok|aurora/.test(s))                 return 'Grok Aurora'
+  if (/ideogram/.test(s))                    return 'Ideogram'
+  if (/leonardo/.test(s))                    return 'Leonardo AI'
+  if (/canva/.test(s))                       return 'Canva AI'
+  return raw.trim()
+}
+
+function voteGenerator(): { name: string | null; sources: string[] } {
+  const votes = new Map<string, { weight: number; sources: string[] }>()
+  const add = (name: string | null | undefined, weight: number, source: string) => {
+    if (!name || /^(unknown|none|n\/a)$/i.test(name.trim())) return
+    const key = normalizeGeneratorName(name.split('(')[0])
+    const cur = votes.get(key) ?? { weight: 0, sources: [] }
+    cur.weight += weight
+    cur.sources.push(source)
+    votes.set(key, cur)
+  }
+  // Brain's hint strings look like "Gemini Imagen v3 (200–220° peak)" — the
+  // normalizer strips the parenthetical and maps to a canonical name.
+  for (const hint of brainResult.generatorHints) {
+    add(hint, brainResult.score, 'Brain')
+  }
+  add(geminiResult?.generator, geminiScore ?? 0.5, 'Gemini')
+  add(grokResult?.generator,   grokScore   ?? 0.5, 'Grok')
+
+  if (votes.size === 0) return { name: null, sources: [] }
+  let best: [string, { weight: number; sources: string[] }] | null = null
+  for (const entry of votes) if (!best || entry[1].weight > best[1].weight) best = entry
+  return { name: best![0], sources: best![1].sources }
+}
+const generatorVote = voteGenerator()
+
+// ── Generator Override (kept from v6/v7, now strengthened by multi-source
+// voting) ────────────────────────────────────────────────────────────────
+// Two+ independent sources agreeing on the same named generator is strong
+// corroborated evidence — gets a bigger, more confident push than any one
+// source alone. A single source (just Brain, or just one LLM) keeps the
+// original, more conservative behavior to avoid one weak heuristic deciding
+// the verdict alone.
+if (generatorVote.name && aiScore > 0.45) {
+  if (generatorVote.sources.length >= 2) {
+    aiScore = Math.max(aiScore, 0.80)
+  } else if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0 && brainResult.score > 0.52) {
+    aiScore = Math.max(aiScore, brainResult.score * 0.88)
+  }
 }
 
 const calibratedImgScore = calibrateScore(aiScore)
@@ -720,13 +787,16 @@ return {
   verdict,
   confidence:    Math.round(calibratedImgScore * 1000) / 1000,
   model_used:    modelUsed,
-  model_version: '8.0.0',
+  model_version: '8.1.0',
+  generator_attribution: generatorVote.name
+    ? { generator: generatorVote.name, corroborating_sources: generatorVote.sources, confidence: generatorVote.sources.length >= 2 ? 'high' : 'low' }
+    : null,
   signals: [
     {
       name:        'Image Detection Brain',
       category:    'ML',
       description: `${engineDesc}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). ` +
-        (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '') +
+        (generatorVote.name ? `Generator: ${generatorVote.name} (${generatorVote.sources.join('+')} agree). ` : (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '')) +
         `Top: ${brainResult.findings[0] ?? 'pixel pattern analysis'}` +
         (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : ''),
       weight:  50,
@@ -747,20 +817,20 @@ return {
   model_breakdown: [
     { model_id: 'image-brain-v2',      raw_score: brainResult.score, verdict: scoreToVerdict(brainResult.score), latency_ms: 0 },
     ...(cvScore     !== null ? [{ model_id: 'python-cv-worker-v3',     raw_score: cvScore,     verdict: scoreToVerdict(cvScore),     latency_ms: 0 }] : []),
-    ...(geminiScore !== null ? [{ model_id: 'gemini-2.0-flash-vision', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
+    ...(geminiScore !== null ? [{ model_id: 'gemini-2.5-flash-vision', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
     ...(grokScore   !== null ? [{ model_id: 'grok-2-vision',           raw_score: grokScore,   verdict: scoreToVerdict(grokScore),   latency_ms: 0 }] : []),
     ...mlScores.map(m => ({ model_id: m.model, raw_score: m.aiScore, verdict: scoreToVerdict(m.aiScore), latency_ms: 0 })),
     { model_id: 'pixel-signals-v2', raw_score: imgSignalScore, verdict: scoreToVerdict(imgSignalScore), latency_ms: 0 },
   ],
   summary: verdict === 'AI'
     ? `AI-generated image detected with ${Math.round(calibratedImgScore * 100)}% confidence. ` +
-      (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '') +
+      (generatorVote.name ? `Likely generator: ${generatorVote.name}${generatorVote.sources.length >= 2 ? ` (confirmed by ${generatorVote.sources.join(' + ')})` : ''}. ` : (brainResult.generatorHints.length ? `Likely generator: ${brainResult.generatorHints[0]}. ` : '')) +
       `Key signals: ${brainResult.findings.slice(0, 2).join(' | ')}.`
     : verdict === 'HUMAN'
     ? `Image appears authentic — ${Math.round((1 - calibratedImgScore) * 100)}% confidence. ` +
       `Natural camera characteristics: ${topSignal?.name ?? 'organic noise floor detected'}.`
     : `Analysis inconclusive (${Math.round(calibratedImgScore * 100)}% AI probability). ` +
-      `${brainResult.generatorHints.length ? `Possible generator: ${brainResult.generatorHints[0]}.` : 'Try a higher-resolution original image for accuracy.'}`,
+      `${generatorVote.name ? `Possible generator: ${generatorVote.name}.` : (brainResult.generatorHints.length ? `Possible generator: ${brainResult.generatorHints[0]}.` : 'Try a higher-resolution original image for accuracy.')}`,
 }
 }
 
@@ -885,7 +955,7 @@ export async function analyzeAudio(
       : `Audio inconclusive (${Math.round(aiScore * 100)}% synthetic probability). WAV format gives best accuracy.`,
     segment_scores,
     model_breakdown: [
-      ...(geminiScore !== null ? [{ model_id: 'gemini-2.0-flash-audio', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
+      ...(geminiScore !== null ? [{ model_id: 'gemini-2.5-flash-audio', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
       ...mlScores.map((m, i) => ({
         model_id:   i === 0 ? MODELS.audio_finetuned : i === 1 ? MODELS.audio_primary : MODELS.audio_asvspoof,
         raw_score:  m.score,
