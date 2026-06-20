@@ -1,0 +1,43 @@
+# LOCAL DEV ONLY — not used by any production deploy. Vercel/Cloudflare/
+# Supabase/Convex remain the real targets (see ../../docs/MIGRATION_STATUS.md).
+#
+# Usage (from repo root): docker compose -f infra/docker/docker-compose.yml up
+#
+# Each service needs its own .env file present (frontend/.env.local,
+# admin/.env.local, signal-worker/.env) — these are gitignored and not
+# created by this file.
+
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../../frontend/.env.local
+    depends_on:
+      - worker
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.admin
+    ports:
+      - "3001:3000"
+    env_file:
+      - ../../admin/.env.local
+
+  worker:
+    build:
+      context: ../../signal-worker
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../../signal-worker/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3

@@ -1,0 +1,22 @@
+# Draft Dockerfile for admin/ — LOCAL DEV ONLY.
+# Production deploy is Vercel, via .github/workflows/deploy-admin.yml.
+# This file is not used by that pipeline.
+#
+# Build context must be the repo root:
+#   docker build -f infra/docker/Dockerfile.admin -t aiscern-admin .
+
+FROM node:20-slim AS base
+WORKDIR /app/admin
+COPY admin/package.json admin/package-lock.json ./
+RUN npm ci
+
+FROM base AS build
+COPY admin/ ./
+RUN npm run build
+
+FROM node:20-slim AS run
+WORKDIR /app/admin
+ENV NODE_ENV=production
+COPY --from=build /app/admin ./
+EXPOSE 3000
+CMD ["npm", "start"]

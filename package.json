@@ -1,11 +1,19 @@
 {
   "name": "ai-scern",
   "version": "1.0.0",
+  "private": true,
   "description": "Aiscern — AI Content Detection Platform",
   "main": "index.js",
+  "packageManager": "npm@10.9.7",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "convex:dev": "npx convex dev",
-    "convex:deploy": "npx convex deploy"
+    "convex:deploy": "npx convex deploy",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check"
   },
   "repository": {
     "type": "git",
@@ -16,5 +24,9 @@
   "license": "MIT",
   "dependencies": {
     "convex": "^1.40.0"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
   }
 }

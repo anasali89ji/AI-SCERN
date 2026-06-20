@@ -1,0 +1,13 @@
+{
+  "name": "@aiscern/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared ESLint, Tailwind, and TypeScript base configs for Aiscern apps",
+  "exports": {
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/next": "./eslint/next.js",
+    "./tailwind/preset": "./tailwind/preset.js",
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/nextjs.json": "./typescript/nextjs.json"
+  }
+}

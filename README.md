@@ -146,28 +146,47 @@ Full reference: [`.env.example`](frontend/.env.example)
 
 ```
 AI-SCERN/
-├── frontend/                  # Next.js 15 application
+├── frontend/                  # Next.js 15 application (Vercel + Cloudflare Pages static export)
 │   ├── app/
 │   │   ├── (auth)/            # Login, signup pages
 │   │   ├── (dashboard)/       # Detect, history, settings
+│   │   ├── (admin)/           # Admin-only routes served from this app
 │   │   ├── (marketing)/       # Landing, pricing, blog
 │   │   ├── (legal)/           # Privacy, terms, contact
 │   │   └── api/               # API routes
 │   ├── components/            # Shared UI components
 │   ├── lib/
-│   │   ├── auth/              # Auth utilities
+│   │   ├── auth/              # Auth utilities (Clerk)
 │   │   ├── inference/         # HF, Gemini, NVIDIA inference
-│   │   ├── rag/               # RAG pipeline (pgvector)
-│   │   ├── security/          # File validation, CSRF
-│   │   ├── storage/           # Cloudflare R2
-│   │   └── supabase/          # DB client
-│   └── next.config.ts
-├── admin/                     # Separate admin Next.js app
-├── signal-worker/             # Python image analysis worker
-├── supabase/migrations/       # Database migrations
-├── .github/workflows/         # CI/CD pipelines
-└── cf-pipeline/               # Cloudflare Worker pipeline
+│   │   ├── rag/                # RAG pipeline (pgvector)
+│   │   ├── security/           # File validation, CSRF
+│   │   ├── storage/             # Cloudflare R2
+│   │   ├── trust/               # Trust Platform (trust-score engine, audit chain)
+│   │   └── supabase/            # DB client
+│   ├── next.config.js          # Vercel build (API routes live)
+│   └── next.config.cf.mjs      # Cloudflare Pages build (static export, API proxied via cf-workers)
+├── admin/                      # Separate admin Next.js app (own Vercel project)
+├── signal-worker/              # Python image/audio analysis worker (DigitalOcean App Platform)
+├── cf-pipeline/                # Cloudflare Worker scraping pipeline (14 wrangler configs)
+├── cf-workers/                 # Load balancer + proxy worker (routes frontend's static-export /api/* to Vercel)
+├── convex/                     # Real-time backend (users, notifications, health)
+├── supabase/migrations/        # Database migrations
+├── aws-training/, finetune/, training/   # ML training scripts/notebooks (SageMaker, Kaggle) — not deployed apps
+├── .github/workflows/          # 14 CI/CD pipelines (one per deploy target above)
+│
+├── packages/                   # 🆕 Shared code scaffolding — see packages/README.md
+├── docs/                       # 🆕 Documentation scaffolding — see docs/README.md
+├── infra/                      # 🆕 Local-dev Docker + infra notes — see infra/README.md
+└── turbo.json, .nvmrc          # 🆕 Root monorepo tooling (packages/* only for now)
 ```
+
+`packages/`, `docs/`, `infra/`, and the root tooling were added as **Phase 1** of a
+monorepo restructure (additive scaffolding only — nothing above the line was
+moved or had its imports changed). See
+[`docs/MIGRATION_STATUS.md`](docs/MIGRATION_STATUS.md) for what's done, what's
+deliberately deferred, and the real risks (Vercel root-directory coupling,
+14 hardcoded-path workflows, 4 independent lockfiles) found before moving any
+of `frontend/`, `admin/`, `signal-worker/`, or `cf-pipeline/` into `apps/`.
 
 ---
 

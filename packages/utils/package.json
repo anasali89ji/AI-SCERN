@@ -1,0 +1,15 @@
+{
+  "name": "@aiscern/utils",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Small framework-agnostic helpers shared across Aiscern apps",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  }
+}

@@ -1,0 +1,25 @@
+# Draft Dockerfile for frontend/ — LOCAL DEV ONLY.
+# Production deploys go through Vercel (frontend/.vercel) and a separate
+# static export to Cloudflare Pages (frontend/next.config.cf.mjs) — this
+# file is not used by either pipeline.
+#
+# next.config.js does not set `output: 'standalone'`, so this uses a plain
+# full-node_modules build rather than the leaner standalone pattern. Build
+# context must be the repo root so this can reach `frontend/`:
+#   docker build -f infra/docker/Dockerfile.web -t aiscern-web .
+
+FROM node:20-slim AS base
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+FROM base AS build
+COPY frontend/ ./
+RUN npm run build
+
+FROM node:20-slim AS run
+WORKDIR /app/frontend
+ENV NODE_ENV=production
+COPY --from=build /app/frontend ./
+EXPOSE 3000
+CMD ["npm", "start"]
