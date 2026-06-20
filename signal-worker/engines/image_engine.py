@@ -196,19 +196,33 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
 
 # ── Unified composite scoring ─────────────────────────────────────────────────
 
-def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any]) -> Dict[str, Any]:
-    """Weighted fusion of v2 layer scores and v3 composite CV score."""
+def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Weighted fusion of v2 layer scores, SynthID, and v3 composite CV score.
 
-    v2_scores = [
-        l.get("layerSuspicionScore", 0.5)
+    NOTE: SynthID was previously computed (_run_synthid) and returned in the
+    API response under a top-level "synthid" key, but was NEVER included in
+    this fusion — its signal was silently discarded. This is specifically
+    useful for catching Google/Imagen/Gemini-generated images (SynthID is
+    Google's image watermarking scheme), so dropping it directly hurt
+    detection of exactly that generator family. It's a weaker, heuristic-only
+    proxy without the real verification key, so it's included at reduced
+    weight (0.4x a full layer) rather than as an equal vote.
+    """
+    weighted = [
+        (l.get("layerSuspicionScore", 0.5), 1.0)
         for l in v2_layers
         if l.get("status") != "failure"
     ]
-    v2_composite = sum(v2_scores) / len(v2_scores) if v2_scores else 0.5
+    if synthid is not None and "confidence" in synthid:
+        # confidence is already calibrated as "how AI/SynthID-like" — use directly.
+        weighted.append((float(synthid.get("confidence", 0.5)), 0.4))
+
+    total_w = sum(w for _, w in weighted)
+    v2_composite = sum(s * w for s, w in weighted) / total_w if total_w > 0 else 0.5
 
     v3_cv = v3_forensics.get("composite_cv_score", 0.5)
 
-    # v2 is 40%, v3 forensics is 60%
+    # v2 (now incl. SynthID) is 40%, v3 forensics is 60%
     fused = v2_composite * 0.40 + v3_cv * 0.60
 
     return {
@@ -268,7 +282,7 @@ async def analyze_image_from_url(
         l5 = _run_l5_inversion(image_url) if include_gpu_layers else {"available": False, "reason": "not_requested"}
         l5b = _run_l5b_snapback(image_url) if include_gpu_layers else {"available": False, "reason": "not_requested"}
 
-        fused = _fuse_scores(layers, v3)
+        fused = _fuse_scores(layers, v3, synthid)
         elapsed = int((time.time() - start) * 1000)
 
         return {
@@ -343,7 +357,7 @@ def analyze_image_from_bytes(
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
-        fused   = _fuse_scores(layers, v3)
+        fused   = _fuse_scores(layers, v3, synthid)
         elapsed = int((time.time() - start) * 1000)
         logger.info("[ImageEngine] bytes analysis done in %dms", elapsed)
 

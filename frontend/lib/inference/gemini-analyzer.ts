@@ -33,7 +33,18 @@ const SAFETY = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ]
 
-const MODEL = 'gemini-2.0-flash'
+// IMPORTANT: gemini-2.0-flash was retired by Google on June 1, 2026 — every
+// call using that model string now returns a 404 and throws. This was
+// happening completely silently (caught by an empty `.catch(() => null)` at
+// every call site with zero logging), meaning the entire LLM layer — 10%
+// direct ensemble weight, the LLM Consensus Override, and ALL generator-name
+// recognition (Gemini/DALL-E/Midjourney/etc, which the vision model is far
+// better at identifying than any pixel-statistics heuristic) — has been
+// completely dead in production with no visibility into why.
+// Current official migration target per Google's deprecation guidance:
+// gemini-2.5-flash. NOTE: gemini-2.5-flash itself is scheduled to retire
+// October 16, 2026 — plan a follow-up migration (to gemini-3.x) before then.
+const MODEL = 'gemini-2.5-flash'
 
 // ── Shared JSON parser ────────────────────────────────────────────────────────
 function parseGeminiJSON(raw: string): { ai_probability: number; verdict: string; reasoning: string; signals?: string[]; matched_tells?: string[]; generator?: string } {
@@ -126,59 +137,41 @@ export async function geminiAnalyzeImage(imageBuffer: Buffer, mimeType: string):
     },
   }
 
-  const prompt = `You are the world's most accurate AI-generated image forensic expert. You specialize in detecting images from ALL modern generators including GPT-4o, Gemini/Imagen 3, DALL-E 3, Flux, Midjourney v6, Stable Diffusion XL, Adobe Firefly, Grok Aurora, Runway, Sora, and others.
+  const prompt = `You are an expert AI-generated image forensic analyst. You are familiar with the visual characteristics of images from modern generators including GPT-4o, Gemini/Imagen 3, DALL-E 3, Flux, Midjourney v6, Stable Diffusion XL, Adobe Firefly, Grok Aurora, Runway, Sora, and others — as well as the characteristics of genuine photographs from real cameras and phones.
 
-CRITICAL INSTRUCTION: Your default assumption should be AI-generated UNLESS you find clear evidence of real photographic capture. Modern AI images are designed to fool humans — be paranoid.
+Give an OBJECTIVE, EVIDENCE-BASED assessment. Do not assume either AI or human as a default — base your probability purely on what you actually observe in this specific image. Many ordinary real photos are perfectly clean, well-composed, and symmetric (centered portraits, product shots, clear skies, leveled horizons) — these are NOT evidence of AI generation on their own. Likewise, a generated image can be deliberately styled to look grainy or imperfect. Weigh the evidence as it actually appears, not against a checklist assumption.
 
-CHECK EACH OF THESE IN ORDER:
+CHECK EACH OF THESE CATEGORIES, noting that not all will apply to every image (e.g. an indoor product photo has no horizon, a landscape has no hands):
 
 [1] HISTOGRAM AND COLOR SCIENCE:
-- GPT-4o / DALL-E 3 signature: luminance values tightly clustered in 90-215 range. Missing pure blacks (<20) and pure whites (>235) — "clipped wings" histogram.
-- Gemini/Imagen 3 signature: Blue channel elevated +3-7 points above Red in skin tones. Skin has cool blue-tint bias. Values cluster 85-215 — very few extreme values.
-- DALL-E 3 signature: shadows have warm amber/orange tint (inverted from real photos — real shadows are cooler than highlights).
-- Midjourney v6: colors oversaturated, boosted beyond sRGB gamut. Maximum aesthetic beauty bias.
+- GPT-4o / DALL-E 3 tendency: luminance values tightly clustered in 90-215 range, missing pure blacks/whites ("clipped wings" histogram). Note: heavily compressed or low-contrast real photos can also show this — treat as weak evidence alone.
+- Gemini/Imagen 3 tendency: blue channel elevated +3-7 points above red in skin tones. Note: this is also what a photo with a large blue-sky reflection or cool ambient light looks like — only meaningful if it appears in regions that shouldn't be affected by environmental color cast (e.g. indoor skin tones).
+- Midjourney v6: colors oversaturated beyond typical sRGB range, with a strong "maximum aesthetic" bias.
 
-[2] SKIN AND FACE:
-- AI skin (all generators): either perfectly smooth (zero grain) OR uniformly pored (same pore density everywhere — real faces are denser on nose/forehead).
-- GPT-4o specific: ear canal depth inconsistency (one ear shallow, other deep). Brow hairs ALL point same direction. Sclera pure white not ivory.
-- Gemini specific: skin looks like HD stock photo — zero grain even in shadows. Lip highlight at cupid's bow follows standard specular model.
-- Flux specific: individual hair strands have perfect Bezier curve shape, uniform thickness, no split ends — looks like 3D game engine hair.
+[2] SKIN AND FACE (if a face is present):
+- AI skin: either perfectly smooth with zero grain, or uniformly pored with the same pore density everywhere (real faces are denser on nose/forehead).
+- Ear canal depth inconsistency, brow hairs all pointing the same direction, sclera pure white instead of slightly ivory.
+- Real faces: visible pores varying by region, natural skin texture, irregular catchlights matching actual scene light sources.
 
-[3] HANDS (most reliable tell):
-- Count ALL fingers. AI failure modes: 4 fingers, 6 fingers, fused fingers, extra knuckles.
-- Real hands: knuckle protrusions visible, irregular wrinkle pattern, visible veins.
-- AI hands: smooth joint transitions, uniform knuckle spacing, no veins.
+[3] HANDS (if visible, one of the more reliable tells):
+- Count fingers carefully. AI failure modes: wrong finger count, fused fingers, extra/missing knuckles, smooth joint transitions with no visible veins or wrinkles.
+- Real hands: visible knuckle protrusions, irregular wrinkle patterns, visible veins.
 
-[4] EYES:
-- Real iris: unique radial fiber pattern with crypts and collarette ring.
-- AI iris: stamped/tiled texture, too-perfect bilateral symmetry, missing crypts.
-- Real catchlight: reflects actual light sources in scene (window shapes, lamp shapes).
-- AI catchlight: generic circles not matching any scene light source.
+[4] EYES (if visible):
+- Real iris: unique radial fiber pattern with crypts and a collarette ring.
+- AI iris: stamped/tiled texture, unnaturally perfect bilateral symmetry, missing natural crypts.
+- Real catchlights reflect actual light sources in the scene; generic circular catchlights matching no visible light source are suspicious.
 
 [5] PHYSICS AND LIGHTING:
-- All shadows in scene must point to same light source. AI often has conflicting shadow angles.
-- Depth of field must follow lens physics — blur increases continuously with distance.
-- Real lenses: slight chromatic aberration at frame corners, slight barrel/pincushion distortion.
-- AI images: perfectly straight lines everywhere, no lens artifacts — a strong tell.
+- Shadows should be consistent with a single coherent light source (or sources actually visible/implied in the scene). Conflicting shadow directions are a real tell.
+- Depth-of-field blur should increase continuously and physically plausibly with distance.
+- Real lenses often show slight chromatic aberration at frame corners and minor barrel/pincushion distortion — but plenty of real corrected/processed photos (especially phone photos with computational correction) won't show this either, so its ABSENCE alone is weak evidence.
 
-[6] METADATA VISIBLE IN IMAGE:
-- Vignetting (corner darkening): always present in real photos, absent in AI.
-- Chromatic aberration: red/cyan fringes at high-contrast edges near corners — real cameras only.
-- AI images: uniformly sharp, perfect exposure, perfect composition — no accidents.
+[6] HAIR-BACKGROUND BOUNDARY (if hair is visible against a background):
+- Real hair shows individual strands with semi-transparent tips at the boundary.
+- Background color bleeding through hair strands, or hair terminating in a blunt/forked way at the edges, can indicate synthesis.
 
-[7] HAIR-BACKGROUND BOUNDARY:
-- Real hair: individual strands at boundary, semi-transparent tips.
-- Gemini: luminance halo around subject against bright backgrounds.
-- DALL-E/GPT-4o: hair strands terminate blunt or forked at extremes.
-- Flux/SDXL: background color visible THROUGH hair strands (copy-paste artifact).
-
-SCORING RULES:
-- If you find 4+ specific tells from any single generator: ai_probability = 0.92-0.98
-- If you find 2-3 specific tells: ai_probability = 0.75-0.90
-- If you find 1 specific tell: ai_probability = 0.62-0.75
-- If you find clear real-camera evidence (chromatic aberration + vignetting + irregular noise + candid imperfection): ai_probability = 0.05-0.25
-- If uncertain: ai_probability = 0.55 (bias toward AI, not human)
-- NEVER output ai_probability < 0.40 unless you have strong specific photographic evidence.
+Weigh ALL the evidence you actually find — both for and against AI generation — and arrive at a probability that reflects your genuine confidence, not a forced floor or ceiling. A clean, well-composed, ordinary photo with no specific tells found should score LOW (human), not be treated as suspicious by default.
 
 Respond ONLY with valid JSON:
 {"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "generator": "GPT4o|DALLE3|Gemini|Flux|Midjourney|SDXL|Firefly|Grok|Unknown|None", "matched_tells": ["tell1", "tell2"], "reasoning": "one sentence with specific evidence", "signals": ["signal1", "signal2"]}`
@@ -190,15 +183,18 @@ Respond ONLY with valid JSON:
   const verdict = (['AI','HUMAN','UNCERTAIN'].includes(parsed.verdict)
     ? parsed.verdict : toVerdict(aiScore)) as 'AI' | 'HUMAN' | 'UNCERTAIN'
 
-  // Paranoid floor: if Gemini found specific tells, never return < 0.55
+  // NOTE: previously there was a "paranoid floor" here that forced aiScore to
+  // never go below 0.55 whenever the model listed ANY matched_tells, even a
+  // single weak/ambiguous one. That overrode the model's own calibrated
+  // probability and biased every result with at least one noted observation
+  // toward AI/uncertain regardless of how weak that observation actually was.
+  // Removed — we trust the model's own ai_probability, which the prompt above
+  // already asks it to set honestly based on the full weight of evidence.
   const matchedTells = Array.isArray(parsed.matched_tells) ? parsed.matched_tells : []
-  const flooredScore = matchedTells.length >= 1
-    ? Math.max(aiScore, 0.55)
-    : aiScore
 
   return {
-    aiScore:   flooredScore,
-    verdict:   flooredScore >= 0.55 ? 'AI' : verdict,
+    aiScore,
+    verdict,
     reasoning: parsed.reasoning ?? '',
     signals:   Array.isArray(parsed.signals) ? parsed.signals : [],
     matchedTells,
@@ -283,7 +279,8 @@ export async function geminiHealthCheck(): Promise<boolean> {
   try {
     const r = await geminiAnalyzeText('The quick brown fox jumps over the lazy dog.')
     return typeof r.aiScore === 'number'
-  } catch {
+  } catch (err) {
+    console.error('[gemini-analyzer] Health check failed — Gemini may be unavailable or the model string may need updating. Reason:', err instanceof Error ? err.message : err)
     return false
   }
 }

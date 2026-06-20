@@ -5,7 +5,7 @@ Analyzes EXIF data, PNG text chunks, JPEG structure for AI generator fingerprint
 import struct
 from PIL import Image
 from PIL.ExifTags import TAGS
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 def analyze_metadata(image_path: str) -> Dict[str, Any]:
@@ -55,7 +55,15 @@ def analyze_metadata(image_path: str) -> Dict[str, Any]:
                     result["gps_present"] = True
         else:
             result["tamper_flags"].append("missing_exif")
-            result["score"] = 0.65
+            # NOTE: previously defaulted to 0.65 (AI-leaning) here. Missing EXIF
+            # is extremely common in genuinely real photos — WhatsApp, Instagram,
+            # X/Twitter, Facebook, Telegram, and most web upload pipelines strip
+            # EXIF entirely, and screenshots never had any to begin with. With
+            # metadata carrying the single highest weight (20%) of all v3
+            # forensic sub-signals, this default was systematically biasing an
+            # enormous share of ordinary real images toward "AI" before any
+            # actual evidence was found. Missing EXIF alone is uninformative —
+            # left neutral (the initial default of 0.5) instead.
 
         if img.format == "JPEG":
             result["jpeg_structure"] = analyze_jpeg_structure(image_path)
@@ -101,13 +109,22 @@ def extract_quantization_tables(data: bytes) -> list:
     return tables
 
 
-def is_standard_quantization(tables: list) -> bool:
-    return False
+def is_standard_quantization(tables: list) -> Optional[bool]:
+    # NOT IMPLEMENTED: a real check requires comparing against the IJG
+    # reference quantization tables for each standard quality level. This
+    # previously hardcoded `return False` for every single image — which
+    # displayed as a real forensic finding ("non-standard quantization
+    # tables!") in the UI even though no actual comparison was performed.
+    # Returning None makes clear this field carries no evidence either way,
+    # rather than silently fabricating a "suspicious" result for every image.
+    return None
 
 
-def detect_double_compression(data: bytes) -> bool:
-    return False
+def detect_double_compression(data: bytes) -> Optional[bool]:
+    # NOT IMPLEMENTED — see note above. Was hardcoded `return False`.
+    return None
 
 
 def detect_subsampling(data: bytes) -> str:
-    return "unknown"
+    # NOT IMPLEMENTED — see note above. Genuinely unknown, not a finding.
+    return "not_implemented"

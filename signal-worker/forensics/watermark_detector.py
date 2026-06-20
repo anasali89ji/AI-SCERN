@@ -62,11 +62,23 @@ def detect_synthid(img_array: np.ndarray) -> Dict[str, Any]:
         total = h_energy + v_energy + d_energy + 1e-8
 
         energy_ratio = (h_energy + v_energy) / total
-        is_detected = bool(energy_ratio > 0.6)
+
+        # CALIBRATION FIX: grouping 2 sub-bands (H+V) against 1 (D) means that
+        # with NO real signal at all — energy spread evenly across the 3
+        # sub-bands, as typical natural image content roughly approximates —
+        # the baseline expected ratio is 2/3 ≈ 0.667, not 0. The old threshold
+        # of 0.6 sat BELOW that neutral baseline, so ~95% of ordinary images
+        # crossed the "detected" threshold from pure arithmetic, independent
+        # of whether any watermark was actually present. Confidence is now
+        # rescaled relative to that 0.667 baseline, and the detection
+        # threshold raised well above it.
+        baseline = 2.0 / 3.0
+        confidence = max(0.0, (energy_ratio - baseline) / (1.0 - baseline))
+        is_detected = bool(confidence > 0.5)  # energy_ratio > ~0.833
 
         return {
             "detected": is_detected,
-            "confidence": float(energy_ratio),
+            "confidence": float(confidence),
             "energy_ratio": float(energy_ratio)
         }
     except ImportError:

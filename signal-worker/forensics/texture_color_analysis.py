@@ -39,7 +39,13 @@ def texture_analysis(image_path: str) -> Dict[str, Any]:
         "glcm_homogeneity": float(homogeneity),
         "glcm_energy": float(energy),
         "glcm_correlation": float(correlation),
-        "texture_smoothness_score": float(homogeneity / (contrast + 1e-8))
+        # homogeneity/contrast is an unbounded ratio — confirmed empirically to
+        # exceed 1.0 (up to ~1.5x and theoretically unbounded for a literal
+        # flat-color region) for very smooth/low-contrast content. It's
+        # consumed downstream as a [0,1]-scaled suspicion score with no other
+        # clamping in the pipeline, so left unclamped it could contribute more
+        # than its intended 10% weight share to the composite. Clamped here.
+        "texture_smoothness_score": float(min(homogeneity / (contrast + 1e-8), 1.0))
     }
 
 

@@ -10,8 +10,11 @@ during image generation. We detect this by looking for:
 2. Correlation with known SynthID-characteristic patterns
 """
 
+import logging
 import numpy as np
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 def check_synthid(img_array: np.ndarray) -> dict:
@@ -71,5 +74,6 @@ def check_synthid(img_array: np.ndarray) -> dict:
 
         return {"detected": bool(detected), "confidence": round(confidence, 4)}
 
-    except Exception:
+    except Exception as e:
+        logger.warning("[SynthID] detection failed: %s", e)
         return {"detected": False, "confidence": 0.0}
