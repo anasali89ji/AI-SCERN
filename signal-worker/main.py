@@ -24,6 +24,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from version import VERSION
 
 # Structured logging — DO captures stdout/stderr
 logging.basicConfig(
@@ -140,7 +141,7 @@ async def health() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "aiscern-detection-worker",
-        "version": "4.0.0",
+        "version": VERSION,
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
         "engines": {
             "image_v2": "available",

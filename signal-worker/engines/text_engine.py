@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from utils.model_cache import get_model, get_memory_usage
 from utils.text_preprocessor import preprocess, split_sentences, tokenise_words
+from version import VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -329,7 +330,7 @@ def analyze_text(
             "processingTimeMs": 0,
             "composite_score": 0.5,
             "confidence": 0.0,
-            "version": "4.0.0",
+            "version": VERSION,
         }
 
     clean = preprocessed["text"]
@@ -410,5 +411,5 @@ def analyze_text(
             "original_length": preprocessed["original_length"],
         },
         "memory": get_memory_usage(),
-        "version": "4.0.0",
+        "version": VERSION,
     }
