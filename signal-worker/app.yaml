@@ -15,8 +15,10 @@ services:
 
     dockerfile_path: signal-worker/Dockerfile
 
-    # Run the unified v4 entry point
-    run_command: python main.py
+    # run_command intentionally omitted: when set, DO App Platform uses it
+    # INSTEAD OF the Dockerfile's CMD, which would silently bypass the
+    # gunicorn + uvicorn-worker setup (graceful shutdown, worker recycling,
+    # max-requests rotation) and fall back to a bare `python main.py`.
 
     environment_slug: python
 

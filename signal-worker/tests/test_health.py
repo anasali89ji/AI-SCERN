@@ -1,6 +1,7 @@
 """
 Aiscern Detection Worker — /health endpoint tests
 """
+from version import VERSION
 
 
 def test_health_returns_200(client):
@@ -11,7 +12,7 @@ def test_health_returns_200(client):
 def test_health_schema(client):
     data = client.get("/health").json()
     assert data["status"] == "healthy"
-    assert data["version"] == "4.0.0"
+    assert data["version"] == VERSION
     assert "engines" in data
     assert "gpu" in data
     assert "timestamp" in data
