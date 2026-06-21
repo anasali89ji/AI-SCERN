@@ -5,6 +5,7 @@ Returns a standardised "not_implemented" response.
 """
 
 from typing import Any, Dict
+from version import VERSION
 
 
 def analyze_video(_video_bytes: bytes, _content_type: str = "", _job_id: str = "") -> Dict[str, Any]:
@@ -13,5 +14,5 @@ def analyze_video(_video_bytes: bytes, _content_type: str = "", _job_id: str = "
         "status": "not_implemented",
         "message": "Video detection is coming soon.",
         "composite_score": None,
-        "version": "4.0.0",
+        "version": VERSION,
     }

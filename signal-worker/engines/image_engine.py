@@ -12,6 +12,7 @@ import time
 import logging
 import tempfile
 from typing import Any, Dict, Optional
+from version import VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +300,7 @@ async def analyze_image_from_url(
             "diffusion_snapback": l5b,
             # Unified scoring
             "composite_score": fused,
-            "version": "4.0.0",
+            "version": VERSION,
         }
 
     finally:
@@ -381,7 +382,7 @@ def analyze_image_from_bytes(
             "diffusion_inversion": {"available": False, "reason": "bytes_upload_no_url"},
             "diffusion_snapback":  {"available": False, "reason": "bytes_upload_no_url"},
             "composite_score": fused,
-            "version": "4.1.0",
+            "version": VERSION,
         }
 
     except Exception as e:
