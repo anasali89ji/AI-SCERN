@@ -2,6 +2,7 @@
 Aiscern Detection Worker — /analyze/text endpoint tests
 """
 import pytest
+from version import VERSION
 
 SAMPLE_AI_TEXT = (
     "Artificial intelligence has fundamentally transformed numerous industries. "
@@ -34,7 +35,7 @@ def test_text_response_schema(client):
     assert "confidence" in data
     assert "engines" in data
     assert "text_stats" in data
-    assert data["version"] == "4.0.0"
+    assert data["version"] == VERSION
 
 
 def test_text_too_short_returns_error(client):

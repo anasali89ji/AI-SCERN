@@ -1,29 +1,90 @@
 """
 Aiscern Image v3 — Layer 5: Face-Specific Deepfake Pipeline
 Face detection, boundary/eye/mouth/skin/ear anomaly analysis.
+
+DOCK-2: face detection previously used the `face_recognition` package,
+which depends on dlib and requires a 2-3 minute C++ compile (cmake,
+build-essential, libopenblas-dev, liblapack-dev, libx11-dev) during the
+Docker build, plus a 100MB+ shape-predictor model loaded on first use.
+Replaced with OpenCV's bundled DNN face detector (Caffe SSD/ResNet10,
+~5MB total, no compilation) — only the bounding boxes were ever used
+downstream, never face_recognition's 128-d encodings or landmarks, so
+this is a drop-in swap for everything this module actually needs.
 """
+import os
 import cv2
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 
-try:
-    import face_recognition
-    FACE_RECOGNITION_AVAILABLE = True
-except ImportError:
-    FACE_RECOGNITION_AVAILABLE = False
+from utils.model_cache import get_model
+
+_MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
+_PROTOTXT = os.path.join(_MODELS_DIR, "deploy.prototxt")
+_CAFFEMODEL = os.path.join(_MODELS_DIR, "res10_300x300_ssd_iter_140000_fp16.caffemodel")
+
+DETECTION_CONFIDENCE_THRESHOLD = 0.5
+
+
+def _load_face_net():
+    if not (os.path.exists(_PROTOTXT) and os.path.exists(_CAFFEMODEL)):
+        raise FileNotFoundError(
+            f"Face detector model files missing: {_PROTOTXT}, {_CAFFEMODEL}"
+        )
+    return cv2.dnn.readNetFromCaffe(_PROTOTXT, _CAFFEMODEL)
+
+
+def _detect_faces(img_rgb: np.ndarray) -> List[Tuple[int, int, int, int]]:
+    """
+    Run the OpenCV DNN face detector.
+    Returns a list of (top, right, bottom, left) tuples — same format
+    face_recognition.face_locations() used, so downstream code is unchanged.
+    """
+    try:
+        net = get_model("face_detector_dnn", _load_face_net)
+    except Exception:
+        return []
+
+    h, w = img_rgb.shape[:2]
+    # The model expects BGR (it was trained via Caffe on BGR images)
+    img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
+    blob = cv2.dnn.blobFromImage(
+        cv2.resize(img_bgr, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0)
+    )
+    net.setInput(blob)
+    detections = net.forward()
+
+    boxes = []
+    for i in range(detections.shape[2]):
+        confidence = float(detections[0, 0, i, 2])
+        if confidence < DETECTION_CONFIDENCE_THRESHOLD:
+            continue
+        x1 = int(detections[0, 0, i, 3] * w)
+        y1 = int(detections[0, 0, i, 4] * h)
+        x2 = int(detections[0, 0, i, 5] * w)
+        y2 = int(detections[0, 0, i, 6] * h)
+        # Clamp to image bounds — the model can predict slightly outside the frame
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(w, x2), min(h, y2)
+        if x2 <= x1 or y2 <= y1:
+            continue
+        # (top, right, bottom, left) — matches face_recognition's convention
+        boxes.append((y1, x2, y2, x1))
+
+    return boxes
 
 
 def face_specific_analysis(image_path: str) -> Dict[str, Any]:
-    if not FACE_RECOGNITION_AVAILABLE:
+    img_bgr = cv2.imread(image_path)
+    if img_bgr is None:
         return {
             "faces_detected": False,
             "deepfake_score": 0.5,
             "face_details": [],
-            "note": "face_recognition library not available"
+            "note": "could not read image",
         }
+    img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
-    img = face_recognition.load_image_file(image_path)
-    face_locations = face_recognition.face_locations(img)
+    face_locations = _detect_faces(img)
 
     if len(face_locations) == 0:
         return {
@@ -37,6 +98,8 @@ def face_specific_analysis(image_path: str) -> Dict[str, Any]:
 
     for i, (top, right, bottom, left) in enumerate(face_locations):
         face_img = img[top:bottom, left:right]
+        if face_img.size == 0:
+            continue
 
         boundary_score = analyze_face_boundary(img, (top, right, bottom, left))
         eye_score = analyze_eye_consistency(face_img)
@@ -58,11 +121,18 @@ def face_specific_analysis(image_path: str) -> Dict[str, Any]:
             "composite_score": face_score
         })
 
-    overall_score = float(np.mean(deepfake_indicators)) if deepfake_indicators else 0.5
+    if not deepfake_indicators:
+        return {
+            "faces_detected": False,
+            "deepfake_score": 0.5,
+            "face_details": []
+        }
+
+    overall_score = float(np.mean(deepfake_indicators))
 
     return {
         "faces_detected": True,
-        "face_count": len(face_locations),
+        "face_count": len(deepfake_indicators),
         "deepfake_score": overall_score,
         "face_details": face_details,
         "high_risk_faces": sum(1 for s in deepfake_indicators if s > 0.7)
