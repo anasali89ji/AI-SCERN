@@ -2,17 +2,102 @@
 Aiscern Signal Worker — Image Loader
 Downloads an image from a URL, validates it, and returns both
 a numpy array (for signal analysis) and a PIL Image (for EXIF, metadata).
+
+SSRF protection (BUG-3):
+  A bare scheme check (http/https only) is NOT sufficient — an attacker can
+  still point imageUrl at http://169.254.169.254/ (cloud instance metadata),
+  http://localhost:6379/ (internal services), or an RFC1918 address to probe
+  the internal network. We additionally:
+    1. Resolve the hostname ourselves and reject any resolved IP that is
+       private, loopback, link-local, reserved, or multicast.
+    2. Disable httpx's automatic redirect-following and instead follow
+       redirects manually (capped), re-validating the target host on every
+       hop — a 200-OK initial host with a 302 to an internal IP would
+       otherwise bypass the check entirely.
 """
 
 import io
+import socket
+import ipaddress
+import asyncio
 import httpx
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from typing import Tuple
+from urllib.parse import urlsplit
 
 MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF", "BMP"}
 TIMEOUT_SECONDS = 15.0
+MAX_REDIRECTS = 5
+ALLOWED_SCHEMES = {"http", "https"}
+
+
+def _is_blocked_ip(ip_str: str) -> bool:
+    """True if the IP must never be reachable from the signal worker."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return True  # unparsable → fail closed
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local      # covers 169.254.0.0/16 — cloud metadata (AWS/GCP/Azure/DO all use 169.254.169.254)
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _resolve_host_blocking(hostname: str) -> list:
+    """Blocking DNS resolution — call via asyncio.to_thread."""
+    infos = socket.getaddrinfo(hostname, None)
+    return [info[4][0] for info in infos]
+
+
+async def _validate_url(url: str) -> str:
+    """
+    Validate scheme + resolve host, rejecting any URL whose hostname
+    resolves (even partially) to a blocked IP range.
+    Returns the hostname for logging/debugging purposes.
+    """
+    parts = urlsplit(url)
+
+    if parts.scheme not in ALLOWED_SCHEMES:
+        raise ValueError(f"Invalid URL scheme: {parts.scheme!r}")
+
+    if not parts.hostname:
+        raise ValueError("URL has no hostname")
+
+    if parts.username or parts.password:
+        raise ValueError("URLs with embedded credentials are not allowed")
+
+    hostname = parts.hostname
+
+    # A bare IP literal in the URL — validate directly, no DNS needed.
+    try:
+        ipaddress.ip_address(hostname)
+        if _is_blocked_ip(hostname):
+            raise ValueError(f"Blocked IP address: {hostname}")
+        return hostname
+    except ValueError as e:
+        if "Blocked IP" in str(e):
+            raise
+        # Not a literal IP — fall through to DNS resolution below.
+
+    try:
+        resolved_ips = await asyncio.to_thread(_resolve_host_blocking, hostname)
+    except socket.gaierror as e:
+        raise ValueError(f"DNS resolution failed for {hostname}: {e}")
+
+    if not resolved_ips:
+        raise ValueError(f"No addresses resolved for {hostname}")
+
+    for ip in resolved_ips:
+        if _is_blocked_ip(ip):
+            raise ValueError(f"Hostname {hostname} resolves to a blocked address ({ip})")
+
+    return hostname
 
 
 async def load_image_from_url(url: str) -> Tuple[np.ndarray, Image.Image]:
@@ -21,11 +106,26 @@ async def load_image_from_url(url: str) -> Tuple[np.ndarray, Image.Image]:
     numpy_array is RGB uint8 [H, W, 3].
     Raises ValueError or RuntimeError on failure.
     """
-    if not url.startswith(("http://", "https://")):
-        raise ValueError(f"Invalid URL scheme: {url[:20]}")
+    await _validate_url(url)
 
-    async with httpx.AsyncClient(follow_redirects=True, timeout=TIMEOUT_SECONDS) as client:
-        response = await client.get(url, headers={"User-Agent": "Aiscern-SignalWorker/1.0"})
+    async with httpx.AsyncClient(follow_redirects=False, timeout=TIMEOUT_SECONDS) as client:
+        current_url = url
+        response = None
+        for _ in range(MAX_REDIRECTS + 1):
+            response = await client.get(current_url, headers={"User-Agent": "Aiscern-SignalWorker/1.0"})
+            if response.is_redirect:
+                next_url = response.headers.get("location")
+                if not next_url:
+                    raise ValueError("Redirect response missing Location header")
+                # Resolve relative redirects against the current URL, then re-validate the new host
+                next_url = str(httpx.URL(current_url).join(next_url))
+                await _validate_url(next_url)
+                current_url = next_url
+                continue
+            break
+        else:
+            raise ValueError(f"Too many redirects (max {MAX_REDIRECTS})")
+
         response.raise_for_status()
 
     content = response.content
