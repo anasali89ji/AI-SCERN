@@ -1,28 +1,64 @@
 /**
- * Aiscern — Gemini 2.0 Flash Detection Engine
+ * Aiscern — Gemini 2.5 Flash Detection Engine
  *
  * Primary ML detection engine for text, image, and audio.
- * Gemini 2.0 Flash: fast, no cold-start, 1500 free req/day.
  * Native vision + audio support via inline base64 data.
  *
- * Required env var (set in Vercel dashboard):
- *   GEMINI_API_KEY  — from Google AI Studio (aistudio.google.com)
+ * Env vars (set in Vercel dashboard):
+ *   GEMINI_API_KEY    — primary key, from Google AI Studio (aistudio.google.com)
+ *   GEMINI_API_KEY_2  — optional secondary key, used as automatic fallback
+ *                        when the primary key fails for any reason (quota
+ *                        exhausted, revoked, transient error). Two free-tier
+ *                        AI Studio keys effectively double the daily quota
+ *                        and add reliability without paying for a second
+ *                        provider (e.g. Grok).
  *
- * Renamed from bedrock-fallback.ts — all functions use Gemini 2.0 Flash.
+ * Renamed from bedrock-fallback.ts — all functions use Gemini 2.5 Flash.
  * Internal name: Gemini Detection Engine.
  */
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
 
-// ── Client (lazy singleton) ───────────────────────────────────────────────────
-let _genAI: GoogleGenerativeAI | null = null
+// ── Clients (lazy singletons, one per key) ──────────────────────────────────
+let _genAIPrimary:   GoogleGenerativeAI | null = null
+let _genAISecondary: GoogleGenerativeAI | null = null
 
-function getClient(): GoogleGenerativeAI {
-  if (_genAI) return _genAI
+function getClient(which: 'primary' | 'secondary'): GoogleGenerativeAI {
+  if (which === 'secondary') {
+    if (_genAISecondary) return _genAISecondary
+    const key = process.env.GEMINI_API_KEY_2
+    if (!key) throw new Error('GEMINI_API_KEY_2 not set in environment variables')
+    _genAISecondary = new GoogleGenerativeAI(key)
+    return _genAISecondary
+  }
+  if (_genAIPrimary) return _genAIPrimary
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY not set in environment variables')
-  _genAI = new GoogleGenerativeAI(key)
-  return _genAI
+  _genAIPrimary = new GoogleGenerativeAI(key)
+  return _genAIPrimary
+}
+
+// Runs `run(model)` against GEMINI_API_KEY first. If that throws for ANY
+// reason (quota exceeded, revoked key, transient network error, etc.),
+// automatically retries the exact same request against GEMINI_API_KEY_2 if
+// it's configured. This is a genuine fallback, not a silent one — logs which
+// key path actually failed so quota exhaustion is visible instead of
+// disappearing into "Gemini is just slow today."
+async function withGeminiFallback<T>(
+  run: (model: ReturnType<GoogleGenerativeAI['getGenerativeModel']>) => Promise<T>,
+): Promise<T> {
+  try {
+    const model = getClient('primary').getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
+    return await run(model)
+  } catch (primaryErr) {
+    if (!process.env.GEMINI_API_KEY_2) throw primaryErr
+    console.error(
+      '[gemini-analyzer] Primary GEMINI_API_KEY failed, retrying with GEMINI_API_KEY_2. Reason:',
+      primaryErr instanceof Error ? primaryErr.message : primaryErr,
+    )
+    const model = getClient('secondary').getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
+    return await run(model)
+  }
 }
 
 // Safety settings — disable blocks so detection prompts aren't refused
@@ -79,8 +115,6 @@ export interface BedrockTextResult {
 }
 
 export async function geminiAnalyzeText(text: string): Promise<BedrockTextResult> {
-  const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
-
   const prompt = `You are an expert AI-generated text detection system.
 
 Analyze the following text and determine if it was written by an AI (ChatGPT, Claude, Gemini, GPT-4 etc.) or by a human.
@@ -102,7 +136,7 @@ ${text.substring(0, 2500)}
 Respond ONLY with valid JSON — no preamble, no text outside the JSON:
 {"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "reasoning": "one sentence max"}`
 
-  const result  = await model.generateContent(prompt)
+  const result  = await withGeminiFallback(model => model.generateContent(prompt))
   const raw     = result.response.text()
   const parsed  = parseGeminiJSON(raw)
   const aiScore = Math.max(0, Math.min(1, parsed.ai_probability ?? 0.5))
@@ -125,8 +159,6 @@ export interface BedrockImageResult {
 }
 
 export async function geminiAnalyzeImage(imageBuffer: Buffer, mimeType: string): Promise<BedrockImageResult> {
-  const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
-
   const validMime = (['image/jpeg','image/png','image/webp','image/gif'] as const)
     .find(t => t === mimeType) ?? 'image/jpeg'
 
@@ -176,7 +208,7 @@ Weigh ALL the evidence you actually find — both for and against AI generation 
 Respond ONLY with valid JSON:
 {"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "generator": "GPT4o|DALLE3|Gemini|Flux|Midjourney|SDXL|Firefly|Grok|Unknown|None", "matched_tells": ["tell1", "tell2"], "reasoning": "one sentence with specific evidence", "signals": ["signal1", "signal2"]}`
 
-  const result  = await model.generateContent([prompt, imagePart])
+  const result  = await withGeminiFallback(model => model.generateContent([prompt, imagePart]))
   const raw     = result.response.text()
   const parsed  = parseGeminiJSON(raw)
   const aiScore = Math.max(0, Math.min(1, parsed.ai_probability ?? 0.5))
@@ -226,8 +258,6 @@ export async function geminiAnalyzeAudio(
   format: string,
   _fileName: string,
 ): Promise<BedrockAudioResult> {
-  const model = getClient().getGenerativeModel({ model: MODEL, safetySettings: SAFETY })
-
   const mimeType = AUDIO_MIME_MAP[format.toLowerCase()] ?? 'audio/mpeg'
 
   // Cap at 10MB for inline data — Gemini 2.0 Flash audio limit
@@ -260,7 +290,7 @@ Detection signals to check:
 Respond ONLY with valid JSON — no text outside the object:
 {"ai_probability": 0.0-1.0, "verdict": "AI"|"HUMAN"|"UNCERTAIN", "reasoning": "one sentence max"}`
 
-  const result  = await model.generateContent([prompt, audioPart])
+  const result  = await withGeminiFallback(model => model.generateContent([prompt, audioPart]))
   const raw     = result.response.text()
   const parsed  = parseGeminiJSON(raw)
   const aiScore = Math.max(0, Math.min(1, parsed.ai_probability ?? 0.5))
@@ -272,7 +302,7 @@ Respond ONLY with valid JSON — no text outside the object:
 
 // ── Availability + health ─────────────────────────────────────────────────────
 export function geminiAvailable(): boolean {
-  return !!process.env.GEMINI_API_KEY
+  return !!(process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2)
 }
 
 export async function geminiHealthCheck(): Promise<boolean> {
