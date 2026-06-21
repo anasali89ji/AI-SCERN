@@ -55,7 +55,7 @@ export interface DetectionResult {
   frame_scores?:    { frame: number; time_sec: number; ai_score: number; face_detected?: boolean }[]
   /** Per-model breakdown for accuracy monitoring — logged fire-and-forget after scan insert */
   model_breakdown?: import('@/lib/accuracy/log-predictions').ModelPrediction[]
-  /** Multi-source generator identification (Brain + Gemini + Grok voting) — image detection only */
+  /** Multi-source generator identification (Brain + Gemini voting; Grok disabled — see GROK_ENABLED in hf-analyze.ts) — image detection only */
   generator_attribution?: { generator: string; corroborating_sources: string[]; confidence: 'high' | 'low' } | null
 }
 
@@ -480,26 +480,24 @@ const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length,
 // ── Python CV Worker (25% weight C.1 new scheme) — parallel ───────────────
 const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
 
-// ── LLM Vision Analysis — Gemini + Grok run in TRUE PARALLEL (restored) ────
-// Previous v8 design ran only Gemini, with Grok as a fallback when Gemini was
-// literally unavailable. Per explicit decision: prioritize stronger multi-
-// source generator identification over minimizing cost — restoring the
-// older multi-provider approach, but scoped to 2 providers (not the old v7's
-// 4) and at a more moderate combined weight (see ensemble weights below) so
-// it doesn't drown out the now-well-calibrated Brain/CV layers the way the
-// old 45-55% LLM weight apparently did. Both providers now also return a
-// `generator` guess, fed into the multi-source generator voting below —
-// agreement between independent vision models is much stronger evidence
-// than any single model's guess.
+// ── LLM Vision Analysis — Gemini only (dual-key fallback), Grok disabled ───
+// DECISION: Grok is intentionally disabled — makes zero API calls, regardless
+// of whether GROK_API_KEY is set in the environment. Reliability/redundancy
+// is now handled via a second free Gemini key (GEMINI_API_KEY_2, see
+// gemini-analyzer.ts withGeminiFallback()) instead of paying for a second
+// provider. The integration code below is left in place (not deleted) in
+// case Grok is wanted again later — flip GROK_ENABLED to re-activate it.
+const GROK_ENABLED = false
+
 const geminiPromise = geminiAvailable()
   ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch((err) => {
-      console.error('[hf-analyze] Gemini image analysis failed — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
+      console.error('[hf-analyze] Gemini image analysis failed (both keys, if configured) — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
       return null
     })
   : Promise.resolve(null)
 
 const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string; generator: string} | null> =
-  process.env.GROK_API_KEY
+  (GROK_ENABLED && process.env.GROK_API_KEY)
     ? (async () => {
         try {
           const b64  = inferenceBuffer.toString('base64')
@@ -587,21 +585,28 @@ const grokScore   = grokResult?.aiScore   ?? null
 // older worker versions that don't return composite_score.
 const cvScore     = cvWorkerResult?.composite_score?.fused_score ?? cvWorkerResult?.composite_cv_score ?? null
 
-// ── IMAGE ENSEMBLE v8.1 — Brain+CV-first, LLM weight restored (decision: ───
-// prioritize generator-ID strength over minimizing cost) ───────────────────
+// ── IMAGE ENSEMBLE v8.2 — Brain+CV-first, LLM weight restored, Gemini-only ──
+// (decision: prioritize generator-ID strength; use dual Gemini keys for
+// redundancy instead of paying for Grok as a second provider) ─────────────
 //
 // WEIGHT RATIONALE:
 //   v7 (old):  LLM 45-55% (4 providers)  — too dominant, displaced Brain/CV
 //   v8.0:      LLM 10% (1 provider)      — generator-ID got noticeably worse
-//   v8.1 (now): LLM 20% (2 providers)    — doubled weight, doubled provider
-//     count (Gemini+Grok back to running in parallel). Kept below v7's level
-//     so the substantial Brain/CV calibration fixes aren't diluted away, but
-//     restored enough that real multi-source generator agreement can matter.
-//   Image Brain:        31%  (was 35%)
-//   Python CV worker:   22%  (was 25%)
-//   HF ViT ensemble:    18%  (was 20%)
-//   Raw pixel signals:   9%  (was 10%)
-//   LLM Vision:         20%  (was 10%) — Gemini + Grok in parallel
+//   v8.1:      LLM 20% (2 providers: Gemini+Grok) — doubled weight to match
+//     doubled provider count.
+//   v8.2 (now): LLM 20% (1 provider: Gemini, with GEMINI_API_KEY_2 fallback)
+//     — Grok disabled per decision (GROK_ENABLED = false above; makes no API
+//     calls). Weight kept at 20% rather than reverting to 10%, since the
+//     priority (stronger generator-ID) hasn't changed — just how reliability
+//     is achieved (free dual-key Gemini rotation instead of a paid second
+//     provider). Generator voting below now has at most 2 possible sources
+//     (Brain + Gemini) instead of 3 — corroboration is weaker than the
+//     Gemini+Grok setup, but still meaningfully better than Gemini alone.
+//   Image Brain:        31%  (was 35% in v8.0)
+//   Python CV worker:   22%  (was 25% in v8.0)
+//   HF ViT ensemble:    18%  (was 20% in v8.0)
+//   Raw pixel signals:   9%  (was 10% in v8.0)
+//   LLM Vision:         20%  (was 10% in v8.0) — Gemini only (dual-key)
 //
 // Fallback weight redistribution when a layer is unavailable: unchanged
 // principle — LLM is never the primary fallback, only a tiebreaker, EXCEPT
@@ -609,7 +614,7 @@ const cvScore     = cvWorkerResult?.composite_score?.fused_score ?? cvWorkerResu
 // rather than a rounding error.
 const llmScores: number[] = []
 if (geminiScore !== null) llmScores.push(geminiScore)
-if (grokScore   !== null) llmScores.push(grokScore)
+if (grokScore   !== null) llmScores.push(grokScore)  // always null while GROK_ENABLED = false
 const llmScore = llmScores.length ? llmScores.reduce((a, b) => a + b, 0) / llmScores.length : null
 
 let aiScore:   number
@@ -626,7 +631,7 @@ if (cvAvailable && hfAvailable && llmAvailable) {
   llmWeightUsed = 0.20
   aiScore    = brainResult.score * 0.31 + cvScore * 0.22 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
   modelUsed  = `Aiscern-ImageEngine-v8.1(Brain31%+CV22%+HF18%+Pixel9%+LLM20%)`
-  engineDesc = `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini+Grok (20%)`
+  engineDesc = `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%)`
 } else if (cvAvailable && hfAvailable) {
   // No LLM: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
   aiScore    = brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
