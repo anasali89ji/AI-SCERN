@@ -23,7 +23,7 @@ import asyncio
 import httpx
 import numpy as np
 from PIL import Image, UnidentifiedImageError
-from typing import Tuple
+from typing import Tuple, Optional
 from urllib.parse import urlsplit
 
 MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
@@ -31,6 +31,44 @@ ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF", "BMP"}
 TIMEOUT_SECONDS = 15.0
 MAX_REDIRECTS = 5
 ALLOWED_SCHEMES = {"http", "https"}
+
+
+# ── Shared httpx client (P2: connection pool reuse) ─────────────────────────
+# A fresh httpx.AsyncClient() per request means a new TCP connection (+ TLS
+# handshake for https) on every single image download — pure overhead when
+# the same source domains (e.g. the platform's own CDN/storage bucket) are
+# hit repeatedly. A single shared client with a bounded connection pool
+# reuses keep-alive connections across requests instead.
+_client: Optional[httpx.AsyncClient] = None
+_client_lock = asyncio.Lock()
+
+
+async def _get_client() -> httpx.AsyncClient:
+    global _client
+    if _client is not None and not _client.is_closed:
+        return _client
+    async with _client_lock:
+        # Re-check after acquiring the lock — another coroutine may have
+        # already created it while we were waiting.
+        if _client is None or _client.is_closed:
+            _client = httpx.AsyncClient(
+                follow_redirects=False,  # SSRF: redirects are followed manually below, with re-validation
+                timeout=TIMEOUT_SECONDS,
+                limits=httpx.Limits(
+                    max_connections=50,
+                    max_keepalive_connections=20,
+                    keepalive_expiry=30.0,
+                ),
+            )
+        return _client
+
+
+async def close_client() -> None:
+    """Call on app shutdown to release pooled connections cleanly."""
+    global _client
+    if _client is not None and not _client.is_closed:
+        await _client.aclose()
+    _client = None
 
 
 def _is_blocked_ip(ip_str: str) -> bool:
@@ -108,25 +146,25 @@ async def load_image_from_url(url: str) -> Tuple[np.ndarray, Image.Image]:
     """
     await _validate_url(url)
 
-    async with httpx.AsyncClient(follow_redirects=False, timeout=TIMEOUT_SECONDS) as client:
-        current_url = url
-        response = None
-        for _ in range(MAX_REDIRECTS + 1):
-            response = await client.get(current_url, headers={"User-Agent": "Aiscern-SignalWorker/1.0"})
-            if response.is_redirect:
-                next_url = response.headers.get("location")
-                if not next_url:
-                    raise ValueError("Redirect response missing Location header")
-                # Resolve relative redirects against the current URL, then re-validate the new host
-                next_url = str(httpx.URL(current_url).join(next_url))
-                await _validate_url(next_url)
-                current_url = next_url
-                continue
-            break
-        else:
-            raise ValueError(f"Too many redirects (max {MAX_REDIRECTS})")
+    client = await _get_client()
+    current_url = url
+    response = None
+    for _ in range(MAX_REDIRECTS + 1):
+        response = await client.get(current_url, headers={"User-Agent": "Aiscern-SignalWorker/1.0"})
+        if response.is_redirect:
+            next_url = response.headers.get("location")
+            if not next_url:
+                raise ValueError("Redirect response missing Location header")
+            # Resolve relative redirects against the current URL, then re-validate the new host
+            next_url = str(httpx.URL(current_url).join(next_url))
+            await _validate_url(next_url)
+            current_url = next_url
+            continue
+        break
+    else:
+        raise ValueError(f"Too many redirects (max {MAX_REDIRECTS})")
 
-        response.raise_for_status()
+    response.raise_for_status()
 
     content = response.content
     if len(content) > MAX_SIZE_BYTES:
