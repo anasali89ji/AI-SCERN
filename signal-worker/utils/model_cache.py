@@ -6,45 +6,54 @@ DO instances have limited RAM (512MB–2GB) — never load models at import time
 
 import gc
 import sys
+import threading
 import logging
 from typing import Any, Callable, Dict
 
 logger = logging.getLogger(__name__)
 
 _model_cache: Dict[str, Any] = {}
+# BUG-6: concurrent requests hitting get_model() for the same uncached key
+# could each pass the "if key in _model_cache" check before either had
+# finished loading, triggering a double-load (e.g. two copies of a torch
+# model in memory at once) and risking OOM on 1-2GB instances.
+_cache_lock = threading.RLock()
 
 
 def get_model(key: str, loader_fn: Callable, *args: Any, **kwargs: Any) -> Any:
-    """Get a cached model, or load and cache it on first call."""
-    if key in _model_cache:
-        logger.debug("[ModelCache] Cache hit: %s", key)
-        return _model_cache[key]
+    """Get a cached model, or load and cache it on first call. Thread-safe."""
+    with _cache_lock:
+        if key in _model_cache:
+            logger.debug("[ModelCache] Cache hit: %s", key)
+            return _model_cache[key]
 
-    logger.info("[ModelCache] Loading model: %s", key)
-    try:
-        model = loader_fn(*args, **kwargs)
-        _model_cache[key] = model
-        usage = get_memory_usage()
-        logger.info("[ModelCache] Loaded %s | RSS: %.1fMB", key, usage["rss_mb"])
-        return model
-    except Exception as e:
-        logger.error("[ModelCache] Failed to load %s: %s", key, e)
-        raise
+        logger.info("[ModelCache] Loading model: %s", key)
+        try:
+            model = loader_fn(*args, **kwargs)
+            _model_cache[key] = model
+            usage = get_memory_usage()
+            logger.info("[ModelCache] Loaded %s | RSS: %.1fMB", key, usage["rss_mb"])
+            return model
+        except Exception as e:
+            logger.error("[ModelCache] Failed to load %s: %s", key, e)
+            raise
 
 
 def clear_model(key: str) -> None:
     """Remove a specific model from cache and free memory."""
-    if key in _model_cache:
-        del _model_cache[key]
-        gc.collect()
-        logger.info("[ModelCache] Cleared: %s", key)
+    with _cache_lock:
+        if key in _model_cache:
+            del _model_cache[key]
+            gc.collect()
+            logger.info("[ModelCache] Cleared: %s", key)
 
 
 def clear_all_models() -> None:
     """Clear all cached models. Call on shutdown or memory pressure."""
     global _model_cache
-    count = len(_model_cache)
-    _model_cache.clear()
+    with _cache_lock:
+        count = len(_model_cache)
+        _model_cache.clear()
     gc.collect()
     if "torch" in sys.modules:
         try:
