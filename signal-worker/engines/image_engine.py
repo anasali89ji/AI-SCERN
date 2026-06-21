@@ -53,6 +53,16 @@ def _run_l1(img_array, img_pil, target_regions) -> Dict[str, Any]:
         return build_layer_report(1, "Pixel Integrity", [], "failure", 0, score=0.5)
 
 
+def _run_l2(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.dct_compression import analyze_dct_compression
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_dct_compression(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L2] failed: %s", e)
+        return build_layer_report(2, "Compression Artifacts (DCT)", [], "failure", 0, score=0.5)
+
+
 def _run_l3(img_array, img_pil) -> Dict[str, Any]:
     from analyzers.noise_stats import analyze_noise_stats
     from utils.evidence_builder import build_layer_report
@@ -271,6 +281,7 @@ async def analyze_image_from_url(
         # v2 layers
         layers = [
             _run_l1(img_array, img_pil, target_regions),
+            _run_l2(img_array, img_pil),
             _run_l3(img_array, img_pil),
             _run_l4(img_array, img_pil, target_regions),
         ]
@@ -336,7 +347,13 @@ def analyze_image_from_bytes(
         temp_path = tmp.name
 
     try:
-        pil_img   = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        # Keep a reference to the ORIGINAL decode before .convert("RGB") — PIL
+        # drops the .quantization attribute (the embedded JPEG quant table)
+        # on conversion, which would otherwise silently break the L2
+        # quantization-table check on every upload (verified: a JPEG-loaded
+        # Image has .quantization populated; after .convert("RGB") it's gone).
+        pil_img_original = Image.open(io.BytesIO(image_bytes))
+        pil_img   = pil_img_original.convert("RGB")
         # Resize to max 1024px for analysis — huge images slow everything down
         max_dim   = max(pil_img.width, pil_img.height)
         if max_dim > 1024:
@@ -347,14 +364,15 @@ def analyze_image_from_bytes(
         img_array = np.array(pil_img, dtype=np.uint8)
 
         # Run v2 layers + v3 forensics + synthid ALL in parallel
-        with ThreadPoolExecutor(max_workers=6) as pool:
+        with ThreadPoolExecutor(max_workers=7) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
+            f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
             f_l4      = pool.submit(_run_l4,      img_array, pil_img, [])
             f_synthid = pool.submit(_run_synthid, img_array)
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
 
-            layers  = [f_l1.result(), f_l3.result(), f_l4.result()]
+            layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result()]
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
