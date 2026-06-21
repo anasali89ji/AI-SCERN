@@ -1,5 +1,5 @@
 """
-Aiscern Detection Worker — Image Engine v4.0.0
+Aiscern Detection Worker — Image Engine v4.2.0
 Merges v2 signal analysis (Layers 1, 3, 4, SynthID) and v3 forensic cascade
 (metadata, frequency, noise, texture, face, watermark, text artifacts)
 into a single unified module.

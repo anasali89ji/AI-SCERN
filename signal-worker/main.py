@@ -1,5 +1,5 @@
 """
-Aiscern Detection Worker v4.0.0 — Unified Entry Point
+Aiscern Detection Worker v4.2.0 — Unified Entry Point
 DigitalOcean App Platform deployment.
 
 Routes:
@@ -57,7 +57,7 @@ def _gpu_status() -> Dict[str, Any]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Aiscern detection worker v4.0.0 starting")
+    logger.info("Aiscern detection worker v%s starting", VERSION)
     logger.info("GPU_ENABLED=%s", os.getenv("GPU_ENABLED", "false"))
 
     # Graceful shutdown on SIGTERM (DO sends this before killing the container)
@@ -71,7 +71,9 @@ async def lifespan(app: FastAPI):
     yield
 
     from utils.model_cache import clear_all_models
+    from utils.image_loader import close_client
     clear_all_models()
+    await close_client()
     logger.info("Worker shutdown complete")
 
 
@@ -80,7 +82,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Aiscern Detection Worker",
     description="Unified AI-content detection: image forensics + text analysis",
-    version="4.0.0",
+    version=VERSION,
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url=None,

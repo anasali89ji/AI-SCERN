@@ -1,5 +1,5 @@
 """
-Aiscern Detection Worker — Text Engine v4.0.0
+Aiscern Detection Worker — Text Engine v4.2.0
 CPU-only text AI-detection using perplexity, burstiness,
 stylometry, and repetition analysis.
 
