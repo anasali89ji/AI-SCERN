@@ -19,7 +19,7 @@ def test_analyze_image_rejects_non_image(client):
         "/analyze/image",
         files={"file": ("test.txt", b"not an image", "text/plain")},
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 415
 
 
 def test_analyze_image_smoke(client):

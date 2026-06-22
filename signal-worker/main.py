@@ -12,6 +12,7 @@ Routes:
   POST /diffusion-snapback      v2 Layer 5b: snap-back reconstruction (GPU required)
 """
 
+import asyncio
 import os
 import signal
 import logging
@@ -132,6 +133,33 @@ app.add_middleware(
     allow_credentials=False,
 )
 
+# ── Metrics state (P3: Prometheus-style /metrics endpoint) ───────────────────
+import threading as _threading
+_metrics_lock = _threading.Lock()
+_metrics: Dict[str, Any] = {
+    "requests_total": 0,
+    "requests_image": 0,
+    "requests_text": 0,
+    "requests_batch": 0,
+    "errors_total": 0,
+    "latency_sum_ms": 0.0,
+    "latency_count": 0,
+    "oom_evictions": 0,
+}
+
+def _inc(key: str, by: float = 1) -> None:
+    with _metrics_lock:
+        _metrics[key] = _metrics.get(key, 0) + by
+
+# ── MIME allowlist (P3: reject invalid Content-Type before any processing) ────
+ALLOWED_IMAGE_MIMES = {
+    "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
+}
+
+# ── Memory pressure threshold ─────────────────────────────────────────────────
+OOM_RSS_THRESHOLD_MB = int(os.getenv("OOM_RSS_THRESHOLD_MB", 850))
+
+
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
 class TargetRegion(BaseModel):
@@ -155,8 +183,37 @@ class AnalyzeTextRequest(BaseModel):
     options: Optional[Dict[str, bool]] = None
 
 
+class BatchImageRequest(BaseModel):
+    urls: List[str]
+    jobId: str = ""
+    maxConcurrent: int = 5
+
+
 class DiffusionRequest(BaseModel):
     imageUrl: str
+
+
+# ── Memory-pressure middleware (P3: OOM prevention) ───────────────────────────
+
+@app.middleware("http")
+async def memory_pressure_middleware(request: Request, call_next):
+    """
+    Check RSS before each request. If over threshold (default 850MB),
+    evict idle models before processing — a cheap operation when nothing
+    is idle, but potentially saving 2-4GB on a loaded GPU instance.
+    Logs a warning so you can tune OOM_RSS_THRESHOLD_MB if needed.
+    """
+    from utils.model_cache import get_memory_usage, evict_idle_models
+    mem = get_memory_usage()
+    if mem["rss_mb"] > OOM_RSS_THRESHOLD_MB:
+        evicted = evict_idle_models(ttl_seconds=0)   # force-evict ALL idle models under pressure
+        if evicted:
+            logger.warning(
+                "[OOM] RSS %.1fMB > threshold %dMB — force-evicted %d model(s): %s",
+                mem["rss_mb"], OOM_RSS_THRESHOLD_MB, len(evicted), evicted,
+            )
+            _inc("oom_evictions", len(evicted))
+    return await call_next(request)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -195,31 +252,35 @@ async def health() -> Dict[str, Any]:
 async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Full image analysis via file upload (multipart/form-data).
-    Runs v2 layers (L1, L3, L4, SynthID) + v3 forensic cascade (6 layers)
-    all in parallel via ThreadPoolExecutor.
+    Runs v2 layers (L1–L4, SynthID) + v3 forensic cascade all in parallel.
     """
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image (image/*)")
+    # MIME allowlist (P3): reject obvious non-images early, before reading bytes
+    if not file.content_type or file.content_type.lower() not in ALLOWED_IMAGE_MIMES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported image type '{file.content_type}'. "
+                   f"Allowed: {', '.join(sorted(ALLOWED_IMAGE_MIMES))}",
+        )
 
     contents = await file.read()
     max_mb = int(os.getenv("MAX_IMAGE_SIZE_MB", 10))
     if len(contents) > max_mb * 1024 * 1024:
-        raise HTTPException(status_code=400, detail=f"Image must be under {max_mb}MB")
+        raise HTTPException(status_code=413, detail=f"Image must be under {max_mb}MB")
 
     import asyncio
     from engines.image_engine import analyze_image_from_bytes
 
-    # Run CPU-heavy analysis in thread pool — never block the event loop
+    t0 = time.time()
+    _inc("requests_total"); _inc("requests_image")
     loop   = asyncio.get_event_loop()
     result = await loop.run_in_executor(
-        None,
-        analyze_image_from_bytes,
-        contents,
-        file.content_type,
+        None, analyze_image_from_bytes, contents, file.content_type,
         f"upload_{int(time.time())}",
     )
+    _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
 
     if result.get("status") == "error":
+        _inc("errors_total")
         raise HTTPException(status_code=500, detail=result.get("error", "Analysis failed"))
 
     return result
@@ -390,6 +451,111 @@ async def diffusion_snapback_endpoint(req: DiffusionRequest) -> Dict[str, Any]:
             status_code=500,
             content={"error": str(e), "snapBackScore": 0.5, "confidence": 0.0},
         )
+
+
+@app.get("/metrics")
+async def metrics_endpoint() -> Any:
+    """
+    P3: Prometheus-compatible metrics endpoint.
+    Returns plain text in the standard exposition format so it can be scraped
+    by a Prometheus instance or a DO-managed monitoring agent without any
+    additional library (no prometheus_client dependency needed for this format).
+    """
+    from fastapi.responses import PlainTextResponse
+    from utils.model_cache import cache_info
+
+    with _metrics_lock:
+        snap = dict(_metrics)
+
+    cache = cache_info()
+    mem   = cache["memory"]
+    avg_latency = (snap["latency_sum_ms"] / snap["latency_count"]) if snap["latency_count"] else 0.0
+
+    lines = [
+        "# HELP aiscern_requests_total Total requests received",
+        "# TYPE aiscern_requests_total counter",
+        f'aiscern_requests_total {snap["requests_total"]}',
+        "",
+        "# HELP aiscern_requests_by_type Requests broken down by modality",
+        "# TYPE aiscern_requests_by_type counter",
+        f'aiscern_requests_by_type{{type="image"}} {snap["requests_image"]}',
+        f'aiscern_requests_by_type{{type="text"}} {snap["requests_text"]}',
+        f'aiscern_requests_by_type{{type="batch"}} {snap["requests_batch"]}',
+        "",
+        "# HELP aiscern_errors_total Total error responses (5xx)",
+        "# TYPE aiscern_errors_total counter",
+        f'aiscern_errors_total {snap["errors_total"]}',
+        "",
+        "# HELP aiscern_avg_latency_ms Rolling average request latency in ms",
+        "# TYPE aiscern_avg_latency_ms gauge",
+        f"aiscern_avg_latency_ms {avg_latency:.2f}",
+        "",
+        "# HELP aiscern_cached_models Number of models currently in the cache",
+        "# TYPE aiscern_cached_models gauge",
+        f'aiscern_cached_models {cache["model_count"]}',
+        "",
+        "# HELP aiscern_memory_rss_mb Resident set size in MB",
+        "# TYPE aiscern_memory_rss_mb gauge",
+        f'aiscern_memory_rss_mb {mem["rss_mb"]}',
+        "",
+        "# HELP aiscern_memory_percent Process memory as % of system total",
+        "# TYPE aiscern_memory_percent gauge",
+        f'aiscern_memory_percent {mem["percent"]}',
+        "",
+        "# HELP aiscern_oom_evictions_total Models force-evicted under memory pressure",
+        "# TYPE aiscern_oom_evictions_total counter",
+        f'aiscern_oom_evictions_total {snap["oom_evictions"]}',
+        "",
+    ]
+    return PlainTextResponse("\n".join(lines), media_type="text/plain; version=0.0.4")
+
+
+@app.post("/analyze/batch")
+async def analyze_batch(req: BatchImageRequest) -> Dict[str, Any]:
+    """
+    BUG-8: Batch image analysis. Accepts up to 20 image URLs and runs
+    all of them concurrently (capped at maxConcurrent, default 5) via
+    asyncio.gather, returning one result per URL in the same order.
+    Errors per URL are returned as result objects, never 500 the whole batch.
+    """
+    MAX_BATCH = 20
+    if not req.urls:
+        raise HTTPException(status_code=400, detail="'urls' must be a non-empty list")
+    if len(req.urls) > MAX_BATCH:
+        raise HTTPException(status_code=400, detail=f"Batch size capped at {MAX_BATCH} URLs")
+
+    max_concurrent = max(1, min(req.maxConcurrent, 10))
+    sem = asyncio.Semaphore(max_concurrent)
+    t0  = time.time()
+    _inc("requests_total"); _inc("requests_batch")
+
+    from engines.image_engine import analyze_image_from_url
+
+    async def _analyze_one(url: str, idx: int) -> Dict[str, Any]:
+        async with sem:
+            try:
+                return await analyze_image_from_url(
+                    image_url=url,
+                    job_id=f"{req.jobId}_item{idx}" if req.jobId else f"batch_{idx}",
+                    target_regions=[],
+                    include_gpu_layers=False,
+                )
+            except Exception as e:
+                _inc("errors_total")
+                logger.warning("[Batch] URL %d failed: %s", idx, e)
+                return {"status": "error", "url": url, "error": str(e), "index": idx}
+
+    results = await asyncio.gather(*[_analyze_one(u, i) for i, u in enumerate(req.urls)])
+    elapsed = int((time.time() - t0) * 1000)
+    _inc("latency_sum_ms", elapsed); _inc("latency_count")
+
+    return {
+        "status": "success",
+        "jobId": req.jobId,
+        "total": len(req.urls),
+        "processingTimeMs": elapsed,
+        "results": list(results),
+    }
 
 
 # ── Entry ─────────────────────────────────────────────────────────────────────
