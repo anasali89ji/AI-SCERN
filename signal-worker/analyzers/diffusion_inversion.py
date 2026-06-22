@@ -44,18 +44,17 @@ MODEL_CONFIGS = {
     },
 }
 
-# ── Model cache (loaded once per worker process) ──────────────────────────────
-_cached_model = None
-_cached_model_id = None
 
-
-def _load_model(model_key: str = 'sd15'):
-    """Load and cache the diffusion model components needed for inversion."""
-    global _cached_model, _cached_model_id
-
-    if _cached_model is not None and _cached_model_id == model_key:
-        return _cached_model
-
+def _build_model(model_key: str):
+    """
+    Actually build (not cache) the diffusion model components for inversion.
+    Called by utils.model_cache.get_model() on a cache miss — caching,
+    thread-safety, and TTL-based eviction (BUG-5) all live there now instead
+    of in a separate, never-evicted module-level global. Two GPU layers
+    (this + diffusion_snapback.py) used to each keep their own ad-hoc cache
+    with no lock and no way to free VRAM under memory pressure on shared
+    GPU instances.
+    """
     try:
         import torch
         from diffusers import DDIMScheduler, AutoencoderKL, UNet2DConditionModel
@@ -89,10 +88,14 @@ def _load_model(model_key: str = 'sd15'):
 
     logger.info(f"[L5] Model loaded in {time.time()-t0:.1f}s")
 
-    _cached_model    = {'vae': vae, 'unet': unet, 'scheduler': sched,
-                        'device': device, 'config': config}
-    _cached_model_id = model_key
-    return _cached_model
+    return {'vae': vae, 'unet': unet, 'scheduler': sched,
+            'device': device, 'config': config}
+
+
+def _load_model(model_key: str = 'sd15'):
+    """Get (loading + caching if needed) the diffusion model for `model_key`."""
+    from utils.model_cache import get_model
+    return get_model(f"diffusion_inversion:{model_key}", _build_model, model_key)
 
 
 # ── Core analysis ─────────────────────────────────────────────────────────────
