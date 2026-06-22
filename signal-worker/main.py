@@ -55,6 +55,30 @@ def _gpu_status() -> Dict[str, Any]:
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+MODEL_IDLE_TTL_SECONDS  = int(os.getenv("MODEL_IDLE_TTL_SECONDS", 300))   # 5 min
+MODEL_EVICTION_INTERVAL = int(os.getenv("MODEL_EVICTION_INTERVAL", 60))  # check every 1 min
+
+
+async def _idle_model_eviction_loop():
+    """
+    BUG-5: GPU layer models (diffusion_inversion, diffusion_snapback) sit in
+    VRAM indefinitely once loaded, with no way to free that memory between
+    requests on a shared/VRAM-constrained GPU instance. Periodically evict
+    anything that's gone unused past MODEL_IDLE_TTL_SECONDS.
+    Cheap no-op when nothing is cached (the common case on CPU-only
+    instances, since GPU_ENABLED=false means these models never load).
+    """
+    from utils.model_cache import evict_idle_models
+    while True:
+        try:
+            await asyncio.sleep(MODEL_EVICTION_INTERVAL)
+            evict_idle_models(ttl_seconds=MODEL_IDLE_TTL_SECONDS)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.warning("[ModelCache] Idle-eviction loop error: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Aiscern detection worker v%s starting", VERSION)
@@ -68,7 +92,15 @@ async def lifespan(app: FastAPI):
 
     signal.signal(signal.SIGTERM, _shutdown)
 
+    eviction_task = asyncio.create_task(_idle_model_eviction_loop())
+
     yield
+
+    eviction_task.cancel()
+    try:
+        await eviction_task
+    except asyncio.CancelledError:
+        pass
 
     from utils.model_cache import clear_all_models
     from utils.image_loader import close_client
@@ -144,7 +176,7 @@ async def health() -> Dict[str, Any]:
         "status": "healthy",
         "service": "aiscern-detection-worker",
         "version": VERSION,
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
         "engines": {
             "image_v2": "available",
             "image_v3_forensics": "available",
