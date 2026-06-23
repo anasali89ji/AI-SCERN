@@ -124,6 +124,35 @@ def _run_l5b_snapback(image_url: str) -> Dict[str, Any]:
         return {"available": True, "snapBackScore": 0.5, "confidence": 0.0, "error": str(e)}
 
 
+def _run_l6(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.zed_detector import analyze_zed
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_zed(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L6] failed: %s", e)
+        return build_layer_report(6, "Zero-Shot Entropy Detector", [], "failure", 0, score=0.5)
+
+
+def _run_l7(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.dire_detector import analyze_dire
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_dire(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L7] failed: %s", e)
+        return build_layer_report(7, "DIRE Approximation", [], "failure", 0, score=0.5)
+
+
+def _run_l8(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.nlm_entropy import analyze_nlm_entropy
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_nlm_entropy(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L8] failed: %s", e)
+        return build_layer_report(8, "NLM Noise Entropy Tensor", [], "failure", 0, score=0.5)
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
@@ -278,12 +307,15 @@ async def analyze_image_from_url(
         temp_path = tmp.name
 
     try:
-        # v2 layers
+        # v2 + P4 CPU layers (L1-L4, L6-L8)
         layers = [
             _run_l1(img_array, img_pil, target_regions),
             _run_l2(img_array, img_pil),
             _run_l3(img_array, img_pil),
             _run_l4(img_array, img_pil, target_regions),
+            _run_l6(img_array, img_pil),
+            _run_l7(img_array, img_pil),
+            _run_l8(img_array, img_pil),
         ]
         synthid = _run_synthid(img_array)
 
@@ -363,16 +395,21 @@ def analyze_image_from_bytes(
             pil_img = pil_img.resize((new_w, new_h), Image.LANCZOS)
         img_array = np.array(pil_img, dtype=np.uint8)
 
-        # Run v2 layers + v3 forensics + synthid ALL in parallel
-        with ThreadPoolExecutor(max_workers=7) as pool:
+        # Run v2+P4 layers + v3 forensics + synthid ALL in parallel (10 workers)
+        # L1-L4 (v2), L6-L8 (P4 CPU-only), SynthID, v3 forensics
+        with ThreadPoolExecutor(max_workers=10) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
             f_l4      = pool.submit(_run_l4,      img_array, pil_img, [])
+            f_l6      = pool.submit(_run_l6,      img_array, pil_img)
+            f_l7      = pool.submit(_run_l7,      img_array, pil_img)
+            f_l8      = pool.submit(_run_l8,      img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array)
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
 
-            layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result()]
+            layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
+                       f_l6.result(), f_l7.result(), f_l8.result()]
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
