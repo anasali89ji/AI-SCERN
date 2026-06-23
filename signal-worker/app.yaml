@@ -82,3 +82,24 @@ services:
       - key: OPENAI_API_KEY
         type: SECRET
         value: ${OPENAI_API_KEY}
+
+      # ── P5 additions ────────────────────────────────────────────────────────
+
+      # Rate limiting — sliding window per client IP
+      # 60 req/60s is generous for prod; tighten to 20/60 if abuse observed
+      - key: RATE_LIMIT_REQUESTS
+        value: "60"
+      - key: RATE_LIMIT_WINDOW_S
+        value: "60"
+
+      # Admin endpoints — set a strong random secret in DO dashboard
+      # Empty string = unauthenticated (DO App-level network auth assumed)
+      - key: ADMIN_API_KEY
+        type: SECRET
+        value: ${ADMIN_API_KEY}
+
+      # Model eviction (P3)
+      - key: MODEL_IDLE_TTL_SECONDS
+        value: "300"
+      - key: MODEL_EVICTION_INTERVAL
+        value: "60"
