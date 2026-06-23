@@ -156,6 +156,16 @@ def _run_l8(img_array, img_pil) -> Dict[str, Any]:
         logger.warning("[ImageEngine][L8] failed: %s", e)
         return build_layer_report(8, "NLM Noise Entropy Tensor", [], "failure", 0, score=0.5)
 
+def _run_l9(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.ai_fingerprint import analyze_ai_fingerprint
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_ai_fingerprint(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L9] failed: %s", e)
+        return build_layer_report(9, "Modern AI Fingerprint", [], "failure", 0, score=0.5)
+
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
@@ -205,21 +215,62 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
     watermarks   = results["watermarks"]
     text_art     = results["text_art"]
 
+    import math as _math
+
+    # ── Fixed signal computation (v4.3) ─────────────────────────────────────
+    # Bug 1 — noise_uniformity_score is a CV (std/mean of tile noise variances).
+    #          It is unbounded and routinely exceeds 1.0 for complex images.
+    #          Old code: 1-min(x,1) → clamped to 0.0, giving zero suspicion.
+    #          Fix: use tanh so unbounded values collapse smoothly toward 1.
+    raw_nu = float(noise.get("noise_uniformity_score", 0.5))
+    # Low CV → AI (uniform noise): 1 - tanh(low) ≈ high; High CV → 1 - tanh(high) ≈ low
+    noise_uniformity_ai = float(1.0 - min(_math.tanh(raw_nu), 1.0))
+
+    # Bug 2 — "high_freq_suppression" = HF/LF energy ratio (NOT a suppression score).
+    #          High values meant MORE HF, not less. And it was multiplied by 2 then clamped.
+    #          Fix: use diffusion_noise_score (kurtosis-based, correctly directional)
+    #          and grid_artifact_score (DALL-E 64px block grid) instead.
+    diffusion_noise = float(min(max(frequency.get("diffusion_noise_score", 0.0), 0), 1))
+    grid_artifact   = float(min(max(frequency.get("grid_artifact_score", 0.0), 0), 1))
+    frequency_ai    = float(min(max(diffusion_noise * 0.65 + grid_artifact * 0.35, 0), 1))
+
+    # Bug 3 — texture_smoothness_score = homogeneity/contrast.
+    #          For hyperrealistic AI images (high contrast/detail) this is near 0 → zero signal.
+    #          Fix: use GLCM energy (higher = more patterned/regular = AI).
+    glcm_energy_ai = float(min(texture.get("glcm_energy", 0.05) * 10.0, 1.0))
+
+    # Bug 4 — illumination_uniform used variance/1000 but dramatic split-tone AI images
+    #          have HUGE variance (e.g. 513), giving: 1-0.51=0.49 (nearly neutral).
+    #          Fix: detect bimodal / split-lighting (AI aesthetic) via region range.
+    region_means = illumination.get("region_means", [128.0] * 9)
+    if region_means and len(region_means) >= 2:
+        ill_range = float(max(region_means) - min(region_means))
+        # Very high range (>180) = extreme split-tone = AI aesthetic indicator
+        # Very low range (<30) = flat lighting = also AI-like (studio perfect)
+        if ill_range > 180:
+            illumination_ai = float(min(0.50 + (ill_range - 180) / 200.0, 0.85))
+        elif ill_range < 30:
+            illumination_ai = float(min(0.65 + (30 - ill_range) / 100.0, 0.80))
+        else:
+            illumination_ai = float(0.30 + ill_range / 600.0)  # natural range → lower suspicion
+    else:
+        illumination_ai = 0.50
+
     cv_signals = {
-        "metadata":              metadata.get("score", 0.5),
-        "frequency":             min(frequency.get("high_freq_suppression", 0.5) * 2, 1.0),
-        "noise_uniformity":      1.0 - min(noise.get("noise_uniformity_score", 0.5), 1.0),
-        "texture_smoothness":    texture.get("texture_smoothness_score", 0.5),
-        "illumination_uniform":  1.0 - min(illumination.get("illumination_variance", 500) / 1000, 1.0),
-        "face_deepfake":         face.get("deepfake_score", 0.5) if face.get("faces_detected") else 0.5,
-        "watermark":             watermarks.get("overall_watermark_score", 0.0),
-        "text_artifact":         text_art.get("artifact_score", 0.0),
+        "metadata":          metadata.get("score", 0.5),
+        "frequency":         frequency_ai,
+        "noise_uniformity":  noise_uniformity_ai,
+        "texture_glcm":      glcm_energy_ai,
+        "illumination_ai":   illumination_ai,
+        "face_deepfake":     face.get("deepfake_score", 0.5) if face.get("faces_detected") else 0.5,
+        "watermark":         watermarks.get("overall_watermark_score", 0.0),
+        "text_artifact":     text_art.get("artifact_score", 0.0),
     }
 
     v3_weights = {
-        "metadata": 0.20, "frequency": 0.15, "noise_uniformity": 0.15,
-        "texture_smoothness": 0.10, "illumination_uniform": 0.10,
-        "face_deepfake": 0.15, "watermark": 0.10, "text_artifact": 0.05,
+        "metadata": 0.15, "frequency": 0.22, "noise_uniformity": 0.18,
+        "texture_glcm": 0.08, "illumination_ai": 0.10,
+        "face_deepfake": 0.12, "watermark": 0.10, "text_artifact": 0.05,
     }
 
     composite = sum(cv_signals[k] * v3_weights[k] for k in v3_weights)
@@ -240,38 +291,139 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
 # ── Unified composite scoring ─────────────────────────────────────────────────
 
 def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Weighted fusion of v2 layer scores, SynthID, and v3 composite CV score.
-
-    NOTE: SynthID was previously computed (_run_synthid) and returned in the
-    API response under a top-level "synthid" key, but was NEVER included in
-    this fusion — its signal was silently discarded. This is specifically
-    useful for catching Google/Imagen/Gemini-generated images (SynthID is
-    Google's image watermarking scheme), so dropping it directly hurt
-    detection of exactly that generator family. It's a weaker, heuristic-only
-    proxy without the real verification key, so it's included at reduced
-    weight (0.4x a full layer) rather than as an equal vote.
     """
-    weighted = [
-        (l.get("layerSuspicionScore", 0.5), 1.0)
-        for l in v2_layers
-        if l.get("status") != "failure"
-    ]
-    if synthid is not None and "confidence" in synthid:
-        # confidence is already calibrated as "how AI/SynthID-like" — use directly.
-        weighted.append((float(synthid.get("confidence", 0.5)), 0.4))
+    Unified score fusion v4.3 — rebuilt to fix systematic under-scoring of
+    hyperrealistic AI images (DALL-E 3, ChatGPT Image, Midjourney V6, Gemini).
 
-    total_w = sum(w for _, w in weighted)
-    v2_composite = sum(s * w for s, w in weighted) / total_w if total_w > 0 else 0.5
+    Strategy:
+    ──────────
+    1. Layer scores are individually weighted by signal reliability:
+       - L1 ELA has high reliability; LBP/CA are unreliable on complex images.
+         Instead of averaging across ALL evidence nodes inside each layer,
+         we take the MAX within multi-signal layers to surface the strongest hit.
+       - L9 (AI Fingerprint) is the most targeted signal — gets full weight.
+       - SynthID generator detection included at full weight (was 0.4× before).
 
-    v3_cv = v3_forensics.get("composite_cv_score", 0.5)
+    2. v3 forensics composite uses fixed signals (see _run_v3_forensics).
+       Previously weighted at 60% of the final score; reduced to 40% because
+       several signals were actively wrong (dragging scores toward "real").
 
-    # v2 (now incl. SynthID) is 40%, v3 forensics is 60%
-    fused = v2_composite * 0.40 + v3_cv * 0.60
+    3. Override rules — these short-circuit soft fusion:
+       - If ANY layer ≥ 0.92 → hard floor of 0.82 on final score.
+       - If SynthID/generator detected (confidence > 0.65) → floor of 0.85.
+       - If ≥ 3 layers ≥ 0.70 → floor of 0.75 (three-signal consensus).
+       - If metadata score = 0.95+ (literal AI software tag in EXIF) → floor 0.97.
+
+    4. Sigmoid stretch in the ambiguous zone [0.35, 0.65]:
+       Signals that agree → pulled toward the consensus; borderline stays near 0.5.
+       Avoids the "every image scores ~0.5" failure mode.
+    """
+    import math as _math
+    import numpy as _np_fuse
+
+    # ── Per-layer scoring (with MAX evidence selection for noisy layers) ─────
+    layer_scores: list[tuple[float, float]] = []  # (score, weight)
+
+    LAYER_WEIGHTS = {
+        1: 1.1,   # L1 Pixel Integrity — reliable ELA signal
+        2: 1.0,   # L2 DCT Compression
+        3: 0.9,   # L3 Noise — less reliable on complex scenes
+        4: 0.9,   # L4 Frequency Domain
+        6: 1.0,   # L6 ZED — entropy
+        7: 1.0,   # L7 DIRE approximation
+        8: 0.9,   # L8 NLM noise tensor
+        9: 1.3,   # L9 Modern AI Fingerprint — highest reliability
+    }
+
+    for layer in v2_layers:
+        if layer.get("status") == "failure":
+            continue
+        layer_num = layer.get("layer", 0)
+        base_score = float(layer.get("layerSuspicionScore", 0.5))
+
+        # For layers with multiple evidence nodes: surface the MAX anomalous
+        # evidence node score rather than averaging (prevents dilution by
+        # unreliable sub-signals within the same layer).
+        evidence = layer.get("evidence", [])
+        if evidence:
+            anomalous_confs = [
+                float(e.get("confidence", 0.5))
+                for e in evidence
+                if isinstance(e, dict)
+                and e.get("status") == "anomalous"
+                and float(e.get("confidence", 0)) >= 0.70
+            ]
+            if anomalous_confs:
+                # Blend: 70% max-evidence, 30% average — surfaces strong hits
+                # without ignoring the broader picture
+                boosted = max(anomalous_confs) * 0.70 + base_score * 0.30
+                base_score = float(min(boosted, 1.0))
+
+        w = LAYER_WEIGHTS.get(layer_num, 1.0)
+        layer_scores.append((base_score, w))
+
+    # SynthID / generator detection — now a full voting member
+    synthid_conf = 0.0
+    synthid_detected = False
+    if synthid is not None:
+        synthid_conf = float(synthid.get("confidence", 0.0))
+        synthid_detected = bool(synthid.get("detected", False))
+        if synthid_conf > 0.0:
+            layer_scores.append((synthid_conf, 1.2))  # slightly upweighted
+
+    total_w = sum(w for _, w in layer_scores)
+    v2_composite = (sum(s * w for s, w in layer_scores) / total_w) if total_w > 0 else 0.5
+
+    # ── v3 forensics ──────────────────────────────────────────────────────────
+    v3_cv = float(v3_forensics.get("composite_cv_score", 0.5))
+
+    # ── Raw fusion: 60% layers + 40% v3 ──────────────────────────────────────
+    fused_raw = v2_composite * 0.60 + v3_cv * 0.40
+
+    # ── Sigmoid stretch in ambiguous zone ─────────────────────────────────────
+    # Maps [0, 1] through a steepened sigmoid centred at 0.5.
+    # Values already near 0 or 1 are barely moved; 0.4-0.6 gets stretched.
+    def _sigmoid_stretch(x: float, steepness: float = 4.0) -> float:
+        # Logistic: f(x) = 1/(1+exp(-k*(x-0.5))); normalise so f(0)→0, f(1)→1
+        mid = 1.0 / (1.0 + _math.exp(-steepness * (x - 0.5)))
+        lo  = 1.0 / (1.0 + _math.exp(-steepness * (0.0 - 0.5)))
+        hi  = 1.0 / (1.0 + _math.exp(-steepness * (1.0 - 0.5)))
+        return (mid - lo) / (hi - lo + 1e-9)
+
+    fused = _sigmoid_stretch(fused_raw)
+
+    # ── Override rules ────────────────────────────────────────────────────────
+    all_scores = [s for s, _ in layer_scores]
+    high_count = sum(1 for s in all_scores if s >= 0.70)
+    any_very_high = any(s >= 0.92 for s in all_scores)
+    metadata_score = float(v3_forensics.get("metadata", {}).get("score", 0.5))
+
+    floor = 0.0
+    override_reason = None
+    if metadata_score >= 0.95:
+        floor = 0.97
+        override_reason = "ai_software_tag_in_exif"
+    elif synthid_detected and synthid_conf >= 0.65:
+        floor = 0.87
+        override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
+    elif any_very_high:
+        floor = 0.82
+        override_reason = "single_layer_very_high_confidence"
+    elif high_count >= 3:
+        floor = 0.75
+        override_reason = "three_layer_consensus"
+
+    fused = float(max(fused, floor))
+    fused = float(min(max(fused, 0.0), 1.0))
 
     return {
-        "v2_composite": round(v2_composite, 4),
-        "v3_composite": round(v3_cv, 4),
-        "fused_score": round(fused, 4),
+        "v2_composite":    round(v2_composite, 4),
+        "v3_composite":    round(v3_cv, 4),
+        "fused_raw":       round(fused_raw, 4),
+        "fused_score":     round(fused, 4),
+        "override_floor":  round(floor, 4),
+        "override_reason": override_reason,
+        "high_signal_count": high_count,
     }
 
 
@@ -310,7 +462,7 @@ async def analyze_image_from_url(
         temp_path = tmp.name
 
     try:
-        # v2 + P4 CPU layers (L1-L4, L6-L8)
+        # v2 + P4 CPU layers + L9 AI Fingerprint (L1-L4, L6-L9)
         layers = [
             _run_l1(img_array, img_pil, target_regions),
             _run_l2(img_array, img_pil),
@@ -319,6 +471,7 @@ async def analyze_image_from_url(
             _run_l6(img_array, img_pil),
             _run_l7(img_array, img_pil),
             _run_l8(img_array, img_pil),
+            _run_l9(img_array, img_pil),
         ]
         synthid = _run_synthid(img_array)
 
@@ -410,11 +563,12 @@ def analyze_image_from_bytes(
             f_l6      = pool.submit(_run_l6,      img_array, pil_img)
             f_l7      = pool.submit(_run_l7,      img_array, pil_img)
             f_l8      = pool.submit(_run_l8,      img_array, pil_img)
+            f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
             f_synthid = pool.submit(_run_synthid, img_array)
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
 
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
-                       f_l6.result(), f_l7.result(), f_l8.result()]
+                       f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result()]
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines

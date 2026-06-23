@@ -156,7 +156,7 @@ class TestP4Integration:
         assert result["status"] == "success", f"Engine returned error: {result.get('error')}"
 
         layers = result.get("layers", [])
-        assert len(layers) == 7, f"Expected 7 layers, got {len(layers)}"
+        assert len(layers) == 8, f"Expected 8 layers (L1-L4,L6-L9), got {len(layers)}"
 
         layer_nums = [l.get("layer") for l in layers]
         assert 1 in layer_nums, "Layer 1 missing"
@@ -166,6 +166,7 @@ class TestP4Integration:
         assert 6 in layer_nums, "Layer 6 (ZED) missing"
         assert 7 in layer_nums, "Layer 7 (DIRE) missing"
         assert 8 in layer_nums, "Layer 8 (NLM) missing"
+        assert 9 in layer_nums, "Layer 9 (AI Fingerprint) missing"
 
         for layer in layers:
             assert layer.get("status") == "success", (
