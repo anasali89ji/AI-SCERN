@@ -91,7 +91,10 @@ async def lifespan(app: FastAPI):
         logger.info("SIGTERM received — clearing model cache")
         clear_all_models()
 
-    signal.signal(signal.SIGTERM, _shutdown)
+    try:
+        signal.signal(signal.SIGTERM, _shutdown)
+    except ValueError:
+        pass  # Not the main thread (e.g. pytest) — skip SIGTERM registration
 
     eviction_task = asyncio.create_task(_idle_model_eviction_loop())
 
@@ -555,6 +558,109 @@ async def analyze_batch(req: BatchImageRequest) -> Dict[str, Any]:
         "total": len(req.urls),
         "processingTimeMs": elapsed,
         "results": list(results),
+    }
+
+
+
+# ── P5: Rate-limiting middleware ──────────────────────────────────────────────
+# Simple in-memory sliding window per client IP.
+# Configurable via env:  RATE_LIMIT_REQUESTS (default 60), RATE_LIMIT_WINDOW_S (default 60).
+
+import collections
+
+_RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", 60))
+_RATE_LIMIT_WINDOW_S = int(os.getenv("RATE_LIMIT_WINDOW_S", 60))
+_rate_buckets: Dict[str, collections.deque] = {}
+_rate_lock = __import__("threading").Lock()
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """
+    P5: Sliding-window rate limiter.
+    Returns HTTP 429 if a client IP exceeds RATE_LIMIT_REQUESTS requests
+    within RATE_LIMIT_WINDOW_S seconds.
+    Exempts /health and /metrics (scrape-safe).
+    """
+    exempt_paths = {"/health", "/metrics"}
+    if request.url.path not in exempt_paths:
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        with _rate_lock:
+            if client_ip not in _rate_buckets:
+                _rate_buckets[client_ip] = collections.deque()
+            bucket = _rate_buckets[client_ip]
+            # Drop timestamps outside the window
+            while bucket and now - bucket[0] > _RATE_LIMIT_WINDOW_S:
+                bucket.popleft()
+            if len(bucket) >= _RATE_LIMIT_REQUESTS:
+                from utils.structured_log import slog
+                slog.rate_limited(client_ip=client_ip, path=request.url.path)
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "rate_limit_exceeded",
+                        "detail": (
+                            f"Max {_RATE_LIMIT_REQUESTS} requests per "
+                            f"{_RATE_LIMIT_WINDOW_S}s window"
+                        ),
+                    },
+                )
+            bucket.append(now)
+    return await call_next(request)
+
+
+# ── P5: /admin/cache endpoints ────────────────────────────────────────────────
+
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")  # Empty → open (DO App-level auth assumed)
+
+
+def _check_admin(request: Request) -> None:
+    """Validate the X-Admin-Key header if ADMIN_API_KEY is configured."""
+    if ADMIN_API_KEY:
+        key = request.headers.get("X-Admin-Key", "")
+        if key != ADMIN_API_KEY:
+            raise HTTPException(status_code=403, detail="Invalid admin key")
+
+
+@app.get("/admin/cache")
+async def admin_cache_info(request: Request) -> Dict[str, Any]:
+    """
+    P5: Inspect the current model cache state.
+    Returns the list of cached model keys, per-key idle seconds, and memory usage.
+    Protected by X-Admin-Key header if ADMIN_API_KEY env var is set.
+    """
+    _check_admin(request)
+    from utils.model_cache import cache_info
+    return {
+        "status": "ok",
+        "cache": cache_info(),
+        "rate_limit": {
+            "requests_per_window": _RATE_LIMIT_REQUESTS,
+            "window_seconds": _RATE_LIMIT_WINDOW_S,
+            "tracked_ips": len(_rate_buckets),
+        },
+    }
+
+
+@app.delete("/admin/cache")
+async def admin_cache_clear(request: Request) -> Dict[str, Any]:
+    """
+    P5: Force-clear the entire model cache (all keys).
+    Useful after a hot-deploy or when VRAM pressure is critical.
+    Protected by X-Admin-Key header if ADMIN_API_KEY env var is set.
+    """
+    _check_admin(request)
+    from utils.model_cache import cache_info, clear_cache
+    before = cache_info()
+    cleared = clear_cache()
+    from utils.structured_log import slog
+    slog.cache_evict(keys=cleared, reason="admin_manual_clear")
+    return {
+        "status": "ok",
+        "cleared_keys": cleared,
+        "models_before": before["model_count"],
+        "models_after": 0,
     }
 
 

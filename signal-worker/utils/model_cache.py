@@ -135,3 +135,24 @@ def cache_info() -> Dict[str, Any]:
             "idle_seconds": {k: round(now - t, 1) for k, t in _last_access.items()},
             "memory": get_memory_usage(),
         }
+
+
+def clear_cache() -> List[str]:
+    """
+    P5: Clear all cached models and return the list of cleared keys.
+    Alias for admin endpoint that needs the key list.
+    """
+    with _cache_lock:
+        cleared = list(_model_cache.keys())
+        _model_cache.clear()
+        _last_access.clear()
+    gc.collect()
+    if "torch" in sys.modules:
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            pass
+    logger.info("[ModelCache] Admin clear: removed %d model(s): %s", len(cleared), cleared)
+    return cleared

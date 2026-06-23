@@ -41,6 +41,9 @@ def _gpu_vram_gb() -> float:
     return 0.0
 
 
+from utils.structured_log import slog
+
+
 # ── v2 Layer runners ─────────────────────────────────────────────────────────
 
 def _run_l1(img_array, img_pil, target_regions) -> Dict[str, Any]:
@@ -396,6 +399,8 @@ def analyze_image_from_bytes(
         img_array = np.array(pil_img, dtype=np.uint8)
 
         # Run v2+P4 layers + v3 forensics + synthid ALL in parallel (10 workers)
+        slog.engine_start(job_id=job_id, engine="image")
+        _t0 = time.monotonic()
         # L1-L4 (v2), L6-L8 (P4 CPU-only), SynthID, v3 forensics
         with ThreadPoolExecutor(max_workers=10) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
@@ -412,6 +417,15 @@ def analyze_image_from_bytes(
                        f_l6.result(), f_l7.result(), f_l8.result()]
             synthid = f_synthid.result()
             v3      = f_v3.result()
+        # P5: emit per-layer structured log lines
+        for _lr in layers:
+            slog.layer_complete(
+                job_id=job_id, engine="image",
+                layer=_lr.get("layer", 0),
+                latency_ms=_lr.get("elapsed_ms", 0),
+                score=_lr.get("layerSuspicionScore"),
+                status=_lr.get("status", "unknown"),
+            )
 
         fused   = _fuse_scores(layers, v3, synthid)
         elapsed = int((time.time() - start) * 1000)
