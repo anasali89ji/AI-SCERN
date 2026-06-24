@@ -289,12 +289,19 @@ def analyze_ai_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any
         elif strong >= 2:
             score = float(np.clip(score * 1.10, 0, 1))
 
+        def _ev(sig, name, atype):
+            status = "anomalous" if sig >= 0.65 else "normal" if sig < 0.30 else "inconclusive"
+            return {
+                "layer": 9, "category": "ai_fingerprint", "artifactType": atype,
+                "status": status, "confidence": round(sig, 4), "detail": name,
+                "rawValue": round(sig, 6),
+            }
         evidence = [
-            f"saturation_overreach={sig_sat:.3f} — AI generators over-saturate",
-            f"freq_kurtosis_divergence={sig_freq:.3f} — diffusion spectral fingerprint",
-            f"palette_quantisation={sig_pal:.3f} — AI colour clustering",
-            f"edge_perfection={sig_edge:.3f} — knife-sharp AI edges",
-            f"format_prior={sig_fmt:.3f} — PNG/WEBP+no-EXIF={sig_fmt:.2f}",
+            _ev(sig_sat,  f"Saturation overreach={sig_sat:.3f}", "colour_overreach"),
+            _ev(sig_freq, f"Freq kurtosis divergence={sig_freq:.3f}", "spectral_fingerprint"),
+            _ev(sig_pal,  f"Palette quantisation={sig_pal:.3f}", "palette_clustering"),
+            _ev(sig_edge, f"Edge perfection score={sig_edge:.3f}", "edge_perfection"),
+            _ev(sig_fmt,  f"Format prior={sig_fmt:.3f} (PNG/WEBP+no-EXIF)", "format_prior"),
         ]
 
         return build_layer_report(9, "Modern AI Fingerprint", evidence, "success", 0,

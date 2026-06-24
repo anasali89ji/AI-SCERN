@@ -401,15 +401,21 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     floor = 0.0
     override_reason = None
     if metadata_score >= 0.95:
+        # Literal AI software tag in EXIF — very high certainty regardless of raw score
         floor = 0.97
         override_reason = "ai_software_tag_in_exif"
     elif synthid_detected and synthid_conf >= 0.65:
-        floor = 0.87
-        override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
-    elif any_very_high:
+        # Generator fingerprint detected — strong signal, gate on minimal raw agreement
+        if fused_raw >= 0.45:
+            floor = 0.87
+            override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
+    elif any_very_high and fused_raw >= 0.55:
+        # Single layer extremely high AND the raw fusion agrees it's suspicious
+        # fused_raw gate prevents one noisy layer on a tiny/synthetic image forcing 0.82
         floor = 0.82
         override_reason = "single_layer_very_high_confidence"
-    elif high_count >= 3:
+    elif high_count >= 3 and fused_raw >= 0.52:
+        # Three-signal consensus — require minimal raw agreement too
         floor = 0.75
         override_reason = "three_layer_consensus"
 
