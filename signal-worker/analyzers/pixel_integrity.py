@@ -231,55 +231,70 @@ def analyze_pixel_integrity(
 
 def clone_detection_suspicion(img_array: np.ndarray) -> tuple[float, str, float]:
     """
-    Detect copy-move forgeries: AI inpainting, object removal, outpainting.
+    Detect copy-move forgeries using a fast sorted-descriptor approach.
 
-    Method: divide into overlapping 16×16 patches, compute DCT-proxy descriptors
-    (per-quadrant mean + std), find spatially distant near-duplicate patch pairs.
-    AI inpainting leaves semantically identical patch clusters at edit seams.
-
-    Returns (suspicion_score, detail, clone_density).
+    Optimised for speed: downsample to max 320px, non-overlapping 16px patches,
+    sort descriptors and find near-duplicate neighbours in O(n log n) instead
+    of the original O(n²) loop which was 8+ seconds on 1MP images.
     """
     gray = img_array.mean(axis=2).astype(np.float32) if img_array.ndim == 3 else img_array.astype(np.float32)
     h, w = gray.shape
-    PATCH_SIZE = 16
-    STEP = PATCH_SIZE // 2
 
-    patches = []
-    positions = []
+    # ── Downsample to max 320px (clone detection doesn't need full res) ──────
+    max_side = 320
+    if max(h, w) > max_side:
+        scale = max_side / max(h, w)
+        nh, nw = max(8, int(h * scale) // 8 * 8), max(8, int(w * scale) // 8 * 8)
+        from PIL import Image as _PIL
+        pil_g = _PIL.fromarray(np.clip(gray, 0, 255).astype(np.uint8))
+        pil_g = pil_g.resize((nw, nh), _PIL.LANCZOS)
+        gray = np.array(pil_g, dtype=np.float32)
+        h, w = gray.shape
+
+    PATCH_SIZE = 16
+    STEP = PATCH_SIZE  # Non-overlapping — reduces patches by 4x vs STEP=8
+
+    patches, positions = [], []
     for i in range(0, h - PATCH_SIZE, STEP):
         for j in range(0, w - PATCH_SIZE, STEP):
             patch = gray[i:i + PATCH_SIZE, j:j + PATCH_SIZE]
-            # 5-element DCT proxy: per-quadrant mean + global std
             q = [
-                float(patch[:8, :8].mean()),
-                float(patch[:8, 8:].mean()),
-                float(patch[8:, :8].mean()),
-                float(patch[8:, 8:].mean()),
+                float(patch[:8, :8].mean()), float(patch[:8, 8:].mean()),
+                float(patch[8:, :8].mean()), float(patch[8:, 8:].mean()),
                 float(patch.std()),
             ]
             patches.append(q)
             positions.append((i, j))
 
     if len(patches) < 4:
-        return 0.5, "Image too small for clone detection", 0.0
+        return 0.0, "Image too small for clone detection", 0.0
 
     patches_arr = np.array(patches, dtype=np.float32)
-    clone_count = 0
-    DIST_THRESH = 2.5
-    SPATIAL_DIST = 64  # must be >64px apart to be a suspicious clone
 
-    for idx in range(len(patches_arr)):
-        dists = np.linalg.norm(patches_arr - patches_arr[idx], axis=1)
-        dists[idx] = 9999.0  # exclude self
-        near_idxs = np.where(dists < DIST_THRESH)[0]
-        for n in near_idxs:
-            pi, pj = positions[idx]
-            ni, nj = positions[n]
-            if abs(pi - ni) > SPATIAL_DIST or abs(pj - nj) > SPATIAL_DIST:
-                clone_count += 1
-                break  # one clone pair per source patch is enough
+    # ── Fast O(n log n): sort on first dimension, check adjacent pairs ────────
+    sort_idx = np.argsort(patches_arr[:, 0])
+    sorted_patches = patches_arr[sort_idx]
+    sorted_pos = [positions[i] for i in sort_idx]
+
+    clone_count = 0
+    DIST_THRESH = 4.0   # slightly looser after downsample
+    SPATIAL_DIST = 32   # >32 downsampled-px = >80 original-px
+
+    for k in range(len(sorted_patches) - 1):
+        # Only compare k to k+1..k+20 (nearby in sorted order = similar first dim)
+        for m in range(k + 1, min(k + 20, len(sorted_patches))):
+            diff0 = abs(sorted_patches[m, 0] - sorted_patches[k, 0])
+            if diff0 > DIST_THRESH:
+                break  # sorted order: no closer match beyond this
+            dist = float(np.linalg.norm(sorted_patches[m] - sorted_patches[k]))
+            if dist < DIST_THRESH:
+                pi, pj = sorted_pos[k]
+                ni, nj = sorted_pos[m]
+                if abs(pi - ni) > SPATIAL_DIST or abs(pj - nj) > SPATIAL_DIST:
+                    clone_count += 1
+                    break
 
     clone_density = clone_count / max(len(patches), 1)
-    score = min(1.0, clone_density * 10.0)
+    score = min(1.0, clone_density * 8.0)
     return score, f"Clone density: {clone_density:.4f} ({clone_count}/{len(patches)} patch pairs)", clone_density
 

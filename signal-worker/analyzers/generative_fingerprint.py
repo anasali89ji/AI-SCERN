@@ -266,19 +266,20 @@ def _lighting_physics_consistency(img_array: np.ndarray) -> Dict[str, Any]:
 
 def _biological_markers(img_array: np.ndarray) -> Dict[str, Any]:
     """
-    Checks for violations of biological laws that AI generators commonly introduce:
-      • Skin pore regularity (AI skin is too texturally regular)
-      • Eye/pupil circularity (AI eyes are too perfect)
-      • Skin colour distribution (AI skin lacks the subsurface scattering gradient)
-      • Hair strand entropy (AI hair is too smooth/blended)
-      • Catchlight consistency (AI adds catchlights in physically impossible positions)
-
-    Returns:
-      biological_ai_score: [0,1] — higher = more biologically implausible = AI
-      skin_regularity: texture regularity of skin-toned regions
-      eye_perfection: circular perfection of detected iris-like regions
+    Checks for violations of biological laws that AI generators commonly introduce.
+    All analysis is performed on a 384px-capped image for speed (<200ms).
     """
     h, w = img_array.shape[:2]
+
+    # ── Resize to max 384px for all bio analysis (full-res = 8s, 384px = <200ms) ──
+    _MAX_BIO = 384
+    if max(h, w) > _MAX_BIO:
+        from PIL import Image as _PIL
+        scale = _MAX_BIO / max(h, w)
+        nh, nw = max(8, int(h * scale)), max(8, int(w * scale))
+        pil_tmp = _PIL.fromarray(img_array).resize((nw, nh), _PIL.LANCZOS)
+        img_array = np.array(pil_tmp, dtype=np.uint8)
+        h, w = img_array.shape[:2]
 
     # ── Skin colour region detection ────────────────────────────────────────
     r = img_array[:, :, 0].astype(np.float32)

@@ -153,6 +153,14 @@ def analyze_frequency_domain(
     target_regions: list,
 ) -> dict:
     start = time.time()
+    # Resize to max 512px for speed
+    _h, _w = img_array.shape[:2]
+    if max(_h, _w) > 512:
+        from PIL import Image as _PILf
+        _s = 512 / max(_h, _w)
+        _nh, _nw = max(8, int(_h * _s)), max(8, int(_w * _s))
+        _pil_t = _PILf.fromarray(img_array).resize((_nw, _nh), _PILf.LANCZOS)
+        img_array = np.array(_pil_t, dtype=np.uint8)
     evidence = []
 
     # FFT spectral peaks
@@ -276,4 +284,3 @@ def spectral_flatness_test(img_array: np.ndarray) -> tuple[float, str, float]:
     # Normalize residual: >2.5 is anomalous for natural images
     score = min(1.0, residual / 2.5)
     return score, f"1/f residual={residual:.3f} (slope={coeffs[0]:.2f})", residual
-
