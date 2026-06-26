@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#141414" />
 
         {/* ── Critical font preloads — must come before CSS to prevent FOIT ── */}
         <link
@@ -123,12 +123,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })}}
         />
       </head>
-      <body className="bg-background text-slate-100 antialiased">
+      <body className="bg-[#141414] text-[#E5E5E5] antialiased">
         {/* Skip to main content — keyboard accessibility */}
         <a
           href="#main-content"
           aria-label="Skip to main content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+          className="skip-link"
         >
           Skip to main content
         </a>

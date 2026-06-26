@@ -1,87 +1,47 @@
 import * as React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/cn'
 
-const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-full border text-xs font-semibold',
-  {
-    variants: {
-      variant: {
-        neutral:  'bg-surface-elevated   border-surface-border  text-foreground-secondary',
-        primary:  'bg-primary-500/10     border-primary-500/20  text-primary-400',
-        success:  'bg-emerald-500/10     border-emerald-500/30  text-emerald-400',
-        warning:  'bg-amber-500/10       border-amber-500/30    text-amber-400',
-        danger:   'bg-rose-500/10        border-rose-500/30     text-rose-400',
-        info:     'bg-cyan-500/10        border-cyan-500/30     text-cyan-400',
-      },
-      // Named 'appearance' to avoid collision with HTMLAttributes 'style' (CSSProperties)
-      appearance: {
-        solid:   '',
-        outline: 'bg-transparent',
-        soft:    '',
-      },
-      size: {
-        sm: 'px-2   py-0.5 text-[10px]',
-        md: 'px-2.5 py-0.5 text-xs',
-        lg: 'px-3   py-1   text-sm',
-      },
-      pulse: {
-        true:  'animate-pulse',
-        false: '',
-      },
-    },
-    compoundVariants: [
-      // Outline appearance overrides background
-      { appearance: 'outline', variant: 'neutral', className: 'bg-transparent' },
-      { appearance: 'outline', variant: 'primary', className: 'bg-transparent' },
-      { appearance: 'outline', variant: 'success', className: 'bg-transparent' },
-      { appearance: 'outline', variant: 'warning', className: 'bg-transparent' },
-      { appearance: 'outline', variant: 'danger',  className: 'bg-transparent' },
-      { appearance: 'outline', variant: 'info',    className: 'bg-transparent' },
-    ],
-    defaultVariants: {
-      variant:    'neutral',
-      appearance: 'solid',
-      size:       'md',
-      pulse:      false,
-    },
-  },
-)
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info'
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {
-  /** Prepend a small colored status dot */
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: BadgeVariant
   dot?: boolean
 }
 
-const dotColors: Record<string, string> = {
-  neutral: 'bg-foreground-muted',
-  primary: 'bg-primary-400',
-  success: 'bg-emerald-400',
-  warning: 'bg-amber-400',
-  danger:  'bg-rose-400',
-  info:    'bg-cyan-400',
+const variantClasses: Record<BadgeVariant, string> = {
+  default: 'bg-[#1A1A1A] text-[#A3A3A3] border-[#2A2A2A]',
+  success: 'bg-[#2BEE34]/10 text-[#2BEE34] border-[#2BEE34]/20',
+  warning: 'bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20',
+  error:   'bg-[#FF4444]/10 text-[#FF4444] border-[#FF4444]/20',
+  info:    'bg-[#1A1A1A] text-[#E5E5E5] border-[#2A2A2A]',
 }
 
-function Badge({ className, variant, appearance, size, pulse, dot, children, ...props }: BadgeProps) {
-  return (
+const dotColors: Record<BadgeVariant, string> = {
+  default: 'bg-[#A3A3A3]',
+  success: 'bg-[#2BEE34]',
+  warning: 'bg-[#FFB800]',
+  error:   'bg-[#FF4444]',
+  info:    'bg-[#E5E5E5]',
+}
+
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant = 'default', dot = false, children, ...props }, ref) => (
     <span
-      className={cn(badgeVariants({ variant, appearance, size, pulse }), className)}
+      ref={ref}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border',
+        variantClasses[variant],
+        className,
+      )}
       {...props}
     >
       {dot && (
-        <span
-          className={cn(
-            'inline-block size-1.5 rounded-full shrink-0',
-            dotColors[variant ?? 'neutral'],
-          )}
-          aria-hidden
-        />
+        <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', dotColors[variant])} />
       )}
       {children}
     </span>
-  )
-}
+  ),
+)
+Badge.displayName = 'Badge'
 
-export { Badge, badgeVariants }
+export { Badge }
