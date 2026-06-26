@@ -12,6 +12,7 @@ import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
+import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -381,19 +382,11 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </motion.div>
           ) : loading && !result ? (
-            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="card flex flex-col items-center justify-center py-16 gap-4">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full border-2 border-primary/20 flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-primary" />
-                </div>
-                <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="font-semibold text-text-primary">Analyzing image…</p>
-                <p className="text-sm text-text-muted">GAN fingerprints · Pixel forensics · Neural ensemble</p>
-                <p className="text-xs text-text-disabled animate-pulse">Running 3-model ensemble + 6 pixel signals…</p>
-              </div>
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <DetectionSequenceLoader
+                loading={loading}
+                uploadProgress={uploadProgress}
+              />
             </motion.div>
           ) : (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
