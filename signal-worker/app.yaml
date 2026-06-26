@@ -27,7 +27,7 @@ services:
     #  basic-xs  = $12/mo, 1GB RAM   — recommended for CPU text + image
     #  basic-s   = $24/mo, 2GB RAM   — if loading distilgpt2 + opencv in same request
     instance_count: 1
-    instance_size_slug: basic-xs
+    instance_size_slug: professional-s  # $50/mo: 4GB RAM | 2 vCPUs (user's current plan)
 
     http_port: 8080
     routes:
