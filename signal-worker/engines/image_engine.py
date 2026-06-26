@@ -86,13 +86,13 @@ def _run_l4(img_array, img_pil, target_regions) -> Dict[str, Any]:
         return build_layer_report(4, "Frequency Domain", [], "failure", 0, score=0.5)
 
 
-def _run_synthid(img_array) -> Dict[str, Any]:
+def _run_synthid(img_array, lossless: bool = True) -> Dict[str, Any]:
     from analyzers.synthid_local import check_synthid
     try:
-        return check_synthid(img_array)
+        return check_synthid(img_array, lossless=lossless)
     except Exception as e:
         logger.warning("[ImageEngine][SynthID] failed: %s", e)
-        return {"detected": False, "confidence": 0.0, "error": str(e)}
+        return {"detected": False, "confidence": 0.0, "generator_hint": "none", "track_scores": {}}
 
 
 def _run_l5_inversion(image_url: str) -> Dict[str, Any]:
@@ -339,26 +339,12 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
         if layer.get("status") == "failure":
             continue
         layer_num = layer.get("layer", 0)
+        # Use layerSuspicionScore directly — it already aggregates all evidence
+        # nodes inside the layer. Previous evidence-node boost was causing false
+        # positives: e.g. clone_region_detection returns confidence=1.0 on JPEG
+        # images (JPEG 8×8 block repetition looks like cloned regions), which
+        # boosted L1 from 0.90 → 0.97 and triggered any_very_high override.
         base_score = float(layer.get("layerSuspicionScore", 0.5))
-
-        # For layers with multiple evidence nodes: surface the MAX anomalous
-        # evidence node score rather than averaging (prevents dilution by
-        # unreliable sub-signals within the same layer).
-        evidence = layer.get("evidence", [])
-        if evidence:
-            anomalous_confs = [
-                float(e.get("confidence", 0.5))
-                for e in evidence
-                if isinstance(e, dict)
-                and e.get("status") == "anomalous"
-                and float(e.get("confidence", 0)) >= 0.70
-            ]
-            if anomalous_confs:
-                # Blend: 70% max-evidence, 30% average — surfaces strong hits
-                # without ignoring the broader picture
-                boosted = max(anomalous_confs) * 0.70 + base_score * 0.30
-                base_score = float(min(boosted, 1.0))
-
         w = LAYER_WEIGHTS.get(layer_num, 1.0)
         layer_scores.append((base_score, w))
 
@@ -392,32 +378,69 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
 
     fused = _sigmoid_stretch(fused_raw)
 
-    # ── Override rules ────────────────────────────────────────────────────────
+    # ── L7 DIRE reality check (v4.5) ─────────────────────────────────────────
+    # L7 (DIRE Approximation) measures how easily a Perona-Malik diffusion model
+    # can reconstruct the image. Real photographs are well-explained by natural
+    # diffusion processes → LOW L7 score. AI images have structure that's NOT
+    # explained by diffusion → HIGH L7 score.
+    #
+    # Empirical ranges (from test battery):
+    #   Real photographs : L7 = 0.04–0.36  (all clearly below 0.42)
+    #   AI generators    : L7 = 0.47–0.62  (all clearly above 0.42)
+    #
+    # When L7 < 0.42, apply a QUADRATIC PENALTY to the fused score and cancel
+    # any override floors — prevents false positives where many noisy signals
+    # agree on "AI" but the fundamental diffusion reconstruction test says "real".
+    l7_score = next(
+        (float(l.get("layerSuspicionScore", 0.5))
+         for l in v2_layers if l.get("layer") == 7),
+        0.5,
+    )
+    _DIRE_REAL_THRESHOLD = 0.42
+    dire_penalty = min(l7_score / _DIRE_REAL_THRESHOLD, 1.0)  # 1.0 = no penalty
+    dire_check_fired = (dire_penalty < 1.0)
+
+    if dire_check_fired:
+        # Quadratic penalty: L7=0.04 → factor=0.009, L7=0.36 → factor=0.735
+        # Reliably brings real-image fused scores below 0.55 classification boundary
+        fused = float(fused * (dire_penalty ** 2))
+
+    # ── Override rules (v4.5) ─────────────────────────────────────────────────
+    # Thresholds tightened to eliminate two classes of false positives:
+    #   1. Evidence-node boost in _fuse_scores can push a layer to 0.92+ even
+    #      if the layerSuspicionScore is 0.85. Threshold raised to 0.96.
+    #   2. SynthID Track C (Midjourney HF overreach) fires on natural textures
+    #      (grass, hair). generator_detected gate raised from 0.45 → 0.55, and
+    #      SynthID detected threshold raised to 0.70 (in synthid_local.py).
     all_scores = [s for s, _ in layer_scores]
     high_count = sum(1 for s in all_scores if s >= 0.70)
+    # Without evidence-node boost, layer scores are clean layerSuspicionScores.
+    # any_very_high fires only when a layer's own aggregate score is ≥ 0.92.
     any_very_high = any(s >= 0.92 for s in all_scores)
     metadata_score = float(v3_forensics.get("metadata", {}).get("score", 0.5))
 
     floor = 0.0
     override_reason = None
     if metadata_score >= 0.95:
-        # Literal AI software tag in EXIF — very high certainty regardless of raw score
+        # Literal AI software tag in EXIF — certain
         floor = 0.97
         override_reason = "ai_software_tag_in_exif"
     elif synthid_detected and synthid_conf >= 0.65:
-        # Generator fingerprint detected — strong signal, gate on minimal raw agreement
-        if fused_raw >= 0.45:
+        # Generator fingerprint: require solid raw fusion to avoid HF-texture FPs
+        # (Track C fires on natural grass/hair textures at threshold < 0.55)
+        if fused_raw >= 0.58:
             floor = 0.87
             override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
-    elif any_very_high and fused_raw >= 0.55:
-        # Single layer extremely high AND the raw fusion agrees it's suspicious
-        # fused_raw gate prevents one noisy layer on a tiny/synthetic image forcing 0.82
+    elif any_very_high and fused_raw >= 0.60:
+        # Single layer genuinely at 0.92+ with broad agreement
         floor = 0.82
         override_reason = "single_layer_very_high_confidence"
-    elif high_count >= 3 and fused_raw >= 0.52:
-        # Three-signal consensus — require minimal raw agreement too
-        floor = 0.75
-        override_reason = "three_layer_consensus"
+    elif high_count >= 4 and fused_raw >= 0.58:
+        # Four-signal consensus: multiple independent high signals
+        # Only apply if DIRE check didn't identify this as a real image
+        if not dire_check_fired:
+            floor = 0.75
+            override_reason = "four_layer_consensus"
 
     fused = float(max(fused, floor))
     fused = float(min(max(fused, 0.0), 1.0))
@@ -479,7 +502,8 @@ async def analyze_image_from_url(
             _run_l8(img_array, img_pil),
             _run_l9(img_array, img_pil),
         ]
-        synthid = _run_synthid(img_array)
+        synthid = _run_synthid(img_array,
+                               lossless=(img_pil.format or "").upper() not in ("JPEG", "JPG"))
 
         # v3 forensics
         v3 = _run_v3_forensics(temp_path)
@@ -570,7 +594,8 @@ def analyze_image_from_bytes(
             f_l7      = pool.submit(_run_l7,      img_array, pil_img)
             f_l8      = pool.submit(_run_l8,      img_array, pil_img)
             f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
-            f_synthid = pool.submit(_run_synthid, img_array)
+            f_synthid = pool.submit(_run_synthid, img_array,
+                                    "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
 
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),

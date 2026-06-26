@@ -186,7 +186,7 @@ def _midjourney_hf_overreach(gray256: np.ndarray) -> float:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def check_synthid(img_array: np.ndarray) -> dict:
+def check_synthid(img_array: np.ndarray, lossless: bool = True) -> dict:
     """
     Multi-track AI generator watermark and fingerprint detection.
     Returns:
@@ -209,17 +209,24 @@ def check_synthid(img_array: np.ndarray) -> dict:
 
         # Track B — DALL-E 3 / ChatGPT
         score_b1 = _dalle3_latent_grid_probe(gray256)
-        score_b2 = _dalle3_inter_channel_corr(img_array)
+        # B2: inter-channel HF correlation.
+        # JPEG 4:2:0 chroma subsampling couples R/G/B through YCbCr decode,
+        # making ANY JPEG image score ~0.88 on this probe regardless of origin.
+        # Only use B2 for lossless inputs (PNG, WEBP) where it is meaningful.
+        if lossless:
+            score_b2 = _dalle3_inter_channel_corr(img_array)
+        else:
+            score_b2 = 0.0  # JPEG: indeterminate — skip
         score_b  = max(score_b1, score_b2 * 0.9)  # take strongest B signal
 
         # Track C — Midjourney
         score_c = _midjourney_hf_overreach(gray256)
 
         track_scores = {
-            "synthid_gemini": round(score_a, 4),
+            "synthid_gemini":      round(score_a, 4),
             "dalle3_chatgpt_grid": round(score_b1, 4),
-            "dalle3_chatgpt_corr": round(score_b2, 4),
-            "midjourney_hf": round(score_c, 4),
+            "dalle3_chatgpt_corr": round(score_b2, 4) if lossless else None,
+            "midjourney_hf":       round(score_c, 4),
         }
 
         # Best-match generator
@@ -235,13 +242,14 @@ def check_synthid(img_array: np.ndarray) -> dict:
         noisy_or = 1.0 - (1 - score_a) * (1 - score_b) * (1 - score_c)
         confidence = float(np.clip(noisy_or, 0, 1))
 
-        detected = confidence > 0.55 or top_score > 0.65
+        detected = confidence > 0.70 or top_score > 0.72
 
         return {
-            "detected":       bool(detected),
-            "confidence":     round(confidence, 4),
-            "generator_hint": top_gen if top_score > 0.40 else "unknown_ai" if detected else "none",
-            "track_scores":   track_scores,
+            "detected":        bool(detected),
+            "confidence":      round(confidence, 4),
+            "generator_hint":  top_gen if top_score > 0.40 else "unknown_ai" if detected else "none",
+            "track_scores":    track_scores,
+            "lossless_input":  lossless,
         }
 
     except Exception as e:
