@@ -250,17 +250,18 @@ class TestFusionLogic:
         assert result["override_reason"] == "single_layer_very_high_confidence"
 
     def test_three_high_layers_trigger_floor_075(self):
+        """four_layer_consensus now requires ≥4 high signals (tightened in v4.5)."""
         from engines.image_engine import _fuse_scores
         layers = [
             self._dummy_layer(1, 0.75),
             self._dummy_layer(2, 0.72),
             self._dummy_layer(3, 0.70),
-            self._dummy_layer(4, 0.50),
+            self._dummy_layer(4, 0.71),   # 4th high layer
+            self._dummy_layer(6, 0.50),   # L7 absent → default 0.5 → no DIRE penalty
         ]
-        # v3 needs to be high enough for fused_raw ≥ 0.52 gate
-        result = _fuse_scores(layers, {"composite_cv_score": 0.60}, None)
+        result = _fuse_scores(layers, {"composite_cv_score": 0.65}, None)
         assert result["fused_score"] >= 0.75, f"Expected floor 0.75, got {result['fused_score']}"
-        assert result["override_reason"] == "three_layer_consensus"
+        assert result["override_reason"] == "four_layer_consensus"
 
     def test_detected_synthid_triggers_floor_087(self):
         from engines.image_engine import _fuse_scores
