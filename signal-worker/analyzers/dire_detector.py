@@ -130,7 +130,18 @@ def analyze_dire(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any]:
     from utils.evidence_builder import build_layer_report
 
     try:
-        gray = np.mean(img_array, axis=2).astype(np.float32)
+        # ── Resize to max 512px (DIRE signal is scale-invariant) ─────────────
+        gray_full = np.mean(img_array, axis=2).astype(np.float32)
+        h, w = gray_full.shape
+        if max(h, w) > 512:
+            from PIL import Image as _PIL
+            scale = 512 / max(h, w)
+            nh, nw = max(8, int(h * scale)), max(8, int(w * scale))
+            pil_g = _PIL.fromarray(np.clip(gray_full, 0, 255).astype(np.uint8))
+            pil_g = pil_g.resize((nw, nh), _PIL.LANCZOS)
+            gray = np.array(pil_g, dtype=np.float32)
+        else:
+            gray = gray_full
 
         # Signal 1 — PM-NRMSE (low → AI-like easy reconstruction → high suspicion)
         nrmse = _pm_nrmse(gray)

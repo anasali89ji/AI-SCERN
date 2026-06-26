@@ -11,6 +11,7 @@ import os
 import time
 import logging
 import tempfile
+import hashlib
 from typing import Any, Dict, Optional
 from version import VERSION
 
@@ -42,6 +43,23 @@ def _gpu_vram_gb() -> float:
 
 
 from utils.structured_log import slog
+# ── In-process result cache (prevents re-analysis of same image) ──────────────
+_RESULT_CACHE: dict = {}
+_RESULT_CACHE_MAX = 50
+
+def _cache_key(image_bytes: bytes) -> str:
+    return hashlib.sha256(image_bytes[:65536]).hexdigest()  # hash first 64KB
+
+def _cache_get(key: str):
+    return _RESULT_CACHE.get(key)
+
+def _cache_set(key: str, result: dict):
+    if len(_RESULT_CACHE) >= _RESULT_CACHE_MAX:
+        oldest = next(iter(_RESULT_CACHE))
+        del _RESULT_CACHE[oldest]
+    _RESULT_CACHE[key] = result
+
+
 
 
 # ── v2 Layer runners ─────────────────────────────────────────────────────────
@@ -480,6 +498,8 @@ async def analyze_image_from_url(
     Used by /analyze-signals (v2 compat) and /analyze (auto-detect).
     Downloads image, runs v2 layers + v3 forensics + optional GPU layers.
     """
+    import numpy as np
+    from PIL import Image
     from utils.image_loader import load_image_from_url
 
     start = time.time()
@@ -502,6 +522,15 @@ async def analyze_image_from_url(
         temp_path = tmp.name
 
     try:
+        # Resize to max 768px for consistent fast analysis (URL path had no cap)
+        _max_url = 768
+        if max(img_pil.width, img_pil.height) > _max_url:
+            _scale = _max_url / max(img_pil.width, img_pil.height)
+            _nw = int(img_pil.width * _scale)
+            _nh = int(img_pil.height * _scale)
+            img_pil = img_pil.resize((_nw, _nh), Image.LANCZOS)
+            img_array = np.array(img_pil, dtype=np.uint8)
+
         # v2 + P4 + L9 + L10 GFE (L1-L4, L6-L10)
         layers = [
             _run_l1(img_array, img_pil, target_regions),
@@ -580,6 +609,13 @@ def analyze_image_from_bytes(
 
     start = time.time()
 
+    # Check in-process cache first
+    _ck = _cache_key(image_bytes)
+    _cached = _cache_get(_ck)
+    if _cached is not None:
+        logger.info("[ImageEngine] cache hit, returning cached result")
+        return {**_cached, "jobId": job_id, "cache_hit": True}
+
     suffix = ".jpg" if "jpeg" in content_type else f".{content_type.split('/')[-1]}"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, dir="/tmp") as tmp:
         tmp.write(image_bytes)
@@ -595,8 +631,8 @@ def analyze_image_from_bytes(
         pil_img   = pil_img_original.convert("RGB")
         # Resize to max 1024px for analysis — huge images slow everything down
         max_dim   = max(pil_img.width, pil_img.height)
-        if max_dim > 1024:
-            scale   = 1024 / max_dim
+        if max_dim > 768:
+            scale   = 768 / max_dim
             new_w   = int(pil_img.width  * scale)
             new_h   = int(pil_img.height * scale)
             pil_img = pil_img.resize((new_w, new_h), Image.LANCZOS)
@@ -648,7 +684,7 @@ def analyze_image_from_bytes(
         elapsed = int((time.time() - start) * 1000)
         logger.info("[ImageEngine] bytes analysis done in %dms", elapsed)
 
-        return {
+        result = {
             "jobId":   job_id,
             "status":  "success",
             "processingTimeMs": elapsed,
@@ -674,6 +710,8 @@ def analyze_image_from_bytes(
                 (l.get("generative_attribution", {}) for l in layers if l.get("layer") == 10), {}
             ),
         }
+        _cache_set(_ck, result)
+        return result
 
     except Exception as e:
         logger.error("[ImageEngine] analyze_image_from_bytes failed: %s", e, exc_info=True)

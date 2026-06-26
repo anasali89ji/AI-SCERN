@@ -148,6 +148,15 @@ def analyze_nlm_entropy(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any]:
     from utils.evidence_builder import build_layer_report
 
     try:
+        # ── Resize to max 512px for speed ────────────────────────────────────
+        _h, _w = img_array.shape[:2]
+        if max(_h, _w) > 512:
+            from PIL import Image as _PIL
+            _s = 512 / max(_h, _w)
+            _nh, _nw = max(8, int(_h * _s)), max(8, int(_w * _s))
+            _pil_tmp = _PIL.fromarray(img_array).resize((_nw, _nh), _PIL.LANCZOS)
+            img_array = np.array(_pil_tmp, dtype=np.uint8)
+        _MAX_NLM = True
         # Compute noise residuals for all 3 channels
         residuals = [_noise_residual(img_array[:, :, ch]) for ch in range(3)]
 
