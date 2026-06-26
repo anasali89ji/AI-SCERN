@@ -166,6 +166,16 @@ def _run_l9(img_array, img_pil) -> Dict[str, Any]:
         return build_layer_report(9, "Modern AI Fingerprint", [], "failure", 0, score=0.5)
 
 
+def _run_l10(img_array, img_pil) -> Dict[str, Any]:
+    from analyzers.generative_fingerprint import analyze_generative_fingerprint
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_generative_fingerprint(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L10] failed: %s", e)
+        return build_layer_report(10, "Generative Fingerprinting Engine", [], "failure", 0, score=0.5)
+
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
@@ -325,14 +335,15 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     layer_scores: list[tuple[float, float]] = []  # (score, weight)
 
     LAYER_WEIGHTS = {
-        1: 1.1,   # L1 Pixel Integrity — reliable ELA signal
-        2: 1.0,   # L2 DCT Compression
-        3: 0.9,   # L3 Noise — less reliable on complex scenes
-        4: 0.9,   # L4 Frequency Domain
-        6: 1.0,   # L6 ZED — entropy
-        7: 1.0,   # L7 DIRE approximation
-        8: 0.9,   # L8 NLM noise tensor
-        9: 1.3,   # L9 Modern AI Fingerprint — highest reliability
+        1:  1.1,   # L1 Pixel Integrity — reliable ELA signal
+        2:  1.0,   # L2 DCT Compression
+        3:  0.9,   # L3 Noise — less reliable on complex scenes
+        4:  0.9,   # L4 Frequency Domain
+        6:  1.0,   # L6 ZED — entropy
+        7:  1.0,   # L7 DIRE approximation
+        8:  0.9,   # L8 NLM noise tensor
+        9:  1.3,   # L9 Modern AI Fingerprint
+        10: 1.2,   # L10 Generative Fingerprinting Engine — attribution
     }
 
     for layer in v2_layers:
@@ -491,7 +502,7 @@ async def analyze_image_from_url(
         temp_path = tmp.name
 
     try:
-        # v2 + P4 CPU layers + L9 AI Fingerprint (L1-L4, L6-L9)
+        # v2 + P4 + L9 + L10 GFE (L1-L4, L6-L10)
         layers = [
             _run_l1(img_array, img_pil, target_regions),
             _run_l2(img_array, img_pil),
@@ -501,6 +512,7 @@ async def analyze_image_from_url(
             _run_l7(img_array, img_pil),
             _run_l8(img_array, img_pil),
             _run_l9(img_array, img_pil),
+            _run_l10(img_array, img_pil),
         ]
         synthid = _run_synthid(img_array,
                                lossless=(img_pil.format or "").upper() not in ("JPEG", "JPG"))
@@ -513,22 +525,31 @@ async def analyze_image_from_url(
         l5b = _run_l5b_snapback(image_url) if include_gpu_layers else {"available": False, "reason": "not_requested"}
 
         fused = _fuse_scores(layers, v3, synthid)
+        # GFE layer: enrich fused override_reason with best-guess generator attribution
+        gfe_layer = next((l for l in layers if l.get("layer") == 10), {})
+        gfe_attr  = gfe_layer.get("generative_attribution", {})
+        if gfe_attr.get("structural_match_pct", 0) >= 35 and fused.get("override_reason"):
+            gfe_gen = gfe_attr.get("top_generator", "")
+            sid_gen = (synthid or {}).get("generator_hint", "")
+            # Use GFE generator name when it's more specific than SynthID
+            if gfe_gen and gfe_gen != "unknown_diffusion":
+                fused["generator_display"]  = gfe_attr.get("top_generator_display", "")
+                fused["generator_version"]  = gfe_attr.get("top_generator_version", "")
+                fused["structural_match_pct"] = gfe_attr.get("structural_match_pct", 0)
+                fused["override_reason"]    = f"generator_detected:{gfe_gen}"
         elapsed = int((time.time() - start) * 1000)
 
         return {
             "jobId": job_id,
             "status": "success",
             "processingTimeMs": elapsed,
-            # v2 compat fields
             "layers": layers,
             "synthid": synthid,
-            # v3 forensics
             "forensics": v3,
-            # GPU
             "diffusion_inversion": l5,
             "diffusion_snapback": l5b,
-            # Unified scoring
             "composite_score": fused,
+            "generative_attribution": gfe_attr,
             "version": VERSION,
         }
 
@@ -585,7 +606,7 @@ def analyze_image_from_bytes(
         slog.engine_start(job_id=job_id, engine="image")
         _t0 = time.monotonic()
         # L1-L4 (v2), L6-L8 (P4 CPU-only), SynthID, v3 forensics
-        with ThreadPoolExecutor(max_workers=10) as pool:
+        with ThreadPoolExecutor(max_workers=12) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -594,12 +615,14 @@ def analyze_image_from_bytes(
             f_l7      = pool.submit(_run_l7,      img_array, pil_img)
             f_l8      = pool.submit(_run_l8,      img_array, pil_img)
             f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
+            f_l10     = pool.submit(_run_l10,     img_array, pil_img_original)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
 
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
-                       f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result()]
+                       f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
+                       f_l10.result()]
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
@@ -613,6 +636,15 @@ def analyze_image_from_bytes(
             )
 
         fused   = _fuse_scores(layers, v3, synthid)
+        gfe_layer = next((l for l in layers if l.get("layer") == 10), {})
+        gfe_attr  = gfe_layer.get("generative_attribution", {})
+        if gfe_attr.get("structural_match_pct", 0) >= 35 and fused.get("override_reason"):
+            gfe_gen = gfe_attr.get("top_generator", "")
+            if gfe_gen and gfe_gen != "unknown_diffusion":
+                fused["generator_display"]    = gfe_attr.get("top_generator_display", "")
+                fused["generator_version"]    = gfe_attr.get("top_generator_version", "")
+                fused["structural_match_pct"] = gfe_attr.get("structural_match_pct", 0)
+                fused["override_reason"]      = f"generator_detected:{gfe_gen}"
         elapsed = int((time.time() - start) * 1000)
         logger.info("[ImageEngine] bytes analysis done in %dms", elapsed)
 
@@ -637,6 +669,10 @@ def analyze_image_from_bytes(
             "diffusion_snapback":  {"available": False, "reason": "bytes_upload_no_url"},
             "composite_score": fused,
             "version": VERSION,
+            # GFE: expose generator attribution at top level
+            "generative_attribution": next(
+                (l.get("generative_attribution", {}) for l in layers if l.get("layer") == 10), {}
+            ),
         }
 
     except Exception as e:

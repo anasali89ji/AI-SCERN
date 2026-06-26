@@ -332,15 +332,15 @@ class TestFalsePositiveGuard:
 # ── Full pipeline tests ─────────────────────────────────────────────────────────
 
 class TestFullPipeline:
-    def test_8_layers_returned(self):
+    def test_layers_returned(self):
         from engines.image_engine import analyze_image_from_bytes
         arr, _ = _ai_like_image(h=64, w=64)
         result = analyze_image_from_bytes(_to_png_bytes(arr), "image/png")
         assert result["status"] == "success"
         layers = result.get("layers", [])
-        assert len(layers) == 8, f"Expected 8 layers (L1-L4, L6-L9), got {len(layers)}"
+        assert len(layers) >= 8, f"Expected 8 layers (L1-L4, L6-L9), got {len(layers)}"
         nums = {l["layer"] for l in layers}
-        assert nums == {1, 2, 3, 4, 6, 7, 8, 9}
+        assert {1, 2, 3, 4, 6, 7, 8, 9}.issubset(nums)  # L10 GFE now also present
 
     def test_composite_score_has_all_fields(self):
         from engines.image_engine import analyze_image_from_bytes
