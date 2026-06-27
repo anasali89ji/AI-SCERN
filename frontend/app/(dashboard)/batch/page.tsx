@@ -299,7 +299,7 @@ export default function BatchPage() {
                 </div>
               </div>
               <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
-                <div>
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
               {completed > 0 && avgConf > 0 && (
                 <p className="text-xs text-[#6B6B6B] mt-2">Average confidence: {avgConf}%</p>

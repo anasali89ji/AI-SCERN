@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Image as ImageIcon, Upload, X, AlertTriangle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'

@@ -82,7 +82,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
   }
 
   return (
-    
+    <AnimatePresence>
       {isOpen && (
         <div>
           {/* Backdrop */}
@@ -251,6 +251,6 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
           </div>
         </div>
       )}
-    
+    </AnimatePresence>
   )
 }
