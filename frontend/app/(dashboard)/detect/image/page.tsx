@@ -212,7 +212,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
                 className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'}`} />
-              </div>
+              </motion.div>
               <div className="text-center">
                 <p className="font-semibold text-white mb-1">
                   {isDragActive ? 'Drop image here' : 'Drag & drop an image'}
@@ -288,7 +288,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
-        
+        <AnimatePresence>
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -411,7 +411,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </div>
           )}
-        
+        </AnimatePresence>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

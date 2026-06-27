@@ -12,7 +12,7 @@
  */
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface MobileResultSheetProps {
   isOpen:   boolean

@@ -5,7 +5,7 @@
  * Shows real detection pipeline stages with animated progress.
  * Replace generic Loader2 spinners on detect pages with this component.
  */
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, Brain, Cpu, CheckCircle, type LucideIcon } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 

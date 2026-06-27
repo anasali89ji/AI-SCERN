@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { motion } 
+import { motion } from 'framer-motion'
 import {
   Newspaper, GraduationCap, Users, Scale, ShieldCheck,
   HeartPulse, Megaphone, Microscope, Pen, ChevronRight,

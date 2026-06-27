@@ -4,7 +4,7 @@ import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Video, Upload, X, AlertTriangle,
   Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
@@ -459,7 +459,7 @@ function VideoDetectionPage() {
         </div>
 
         {/* Right: Results */}
-        
+        <AnimatePresence>
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -596,7 +596,7 @@ function VideoDetectionPage() {
               </div>
             </div>
           )}
-        
+        </AnimatePresence>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

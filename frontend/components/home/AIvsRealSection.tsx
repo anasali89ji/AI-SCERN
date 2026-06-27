@@ -1,6 +1,6 @@
 'use client'
 import { memo } from 'react'
-import { motion } 
+import { motion } from 'framer-motion'
 import { Scan, AlertTriangle, CheckCircle, Brain } from 'lucide-react'
 import Image from 'next/image'
 

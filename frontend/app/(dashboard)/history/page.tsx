@@ -1,7 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'

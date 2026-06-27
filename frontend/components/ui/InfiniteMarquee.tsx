@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { motion } 
+import { motion } from 'framer-motion'
 
 interface MarqueeProps {
   children: React.ReactNode[]

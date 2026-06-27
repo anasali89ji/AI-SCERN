@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import {
   LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe,
@@ -388,10 +388,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </motion.aside>
 
         {/* Mobile sidebar drawer */}
-        
+        <AnimatePresence>
           {mobileOpen && (
             <>
-              <div> setMobileOpen(false)} />
+              <div onClick={() => setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
                 className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-[#0f0f17] border-r border-white/[0.08] z-50 flex flex-col">
@@ -405,7 +405,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </motion.aside>
             </>
           )}
-        
+        </AnimatePresence>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-14 sm:h-16 2xl:h-18 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-[#0f0f17] flex-shrink-0 sticky top-0 z-30">

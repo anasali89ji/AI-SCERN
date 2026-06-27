@@ -1,7 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback } from 'react'
-import { motion } 
+import { motion } from 'framer-motion'
 import {
   Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
   Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
