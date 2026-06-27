@@ -351,7 +351,7 @@ Analyzed: ${new Date().toLocaleString()}`
                             className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>

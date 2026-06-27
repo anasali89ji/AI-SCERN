@@ -391,7 +391,7 @@ function AudioDetectionPage() {
                   <Download className="w-3.5 h-3.5" /> Export Report
                 </button>
               </div>
-            </div>
+            </motion.div>
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">

@@ -378,7 +378,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   <p className="text-sm text-[#6B6B6B]">Perplexity · Burstiness · Style signals</p>
                   <p className="text-xs text-[#6B6B6B]">Running 3-model ensemble…</p>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {result && !loading && (

@@ -348,7 +348,7 @@ export default function HistoryPage() {
         ) : (
           <>
             <div className="space-y-2">
-              
+              <AnimatePresence>
                 {paginated.map((scan, i) => {
                   const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileText
                   const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-[#6B6B6B] bg-[#141414]'
@@ -403,11 +403,11 @@ export default function HistoryPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                     </SwipeToDeleteRow>
                   )
                 })}
-              
+              </AnimatePresence>
             </div>
 
             {hasMore && (
