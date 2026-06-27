@@ -13,18 +13,16 @@ export type { ButtonProps }                from './button'
 
 export {
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
-  cardVariants,
 }                                          from './card'
 export type { CardProps }                  from './card'
 
-export { Input, inputVariants }            from './input'
+export { Input }                           from './input'
 export type { InputProps }                 from './input'
 
-export { Badge, badgeVariants }            from './badge'
+export { Badge }                           from './badge'
 export type { BadgeProps }                 from './badge'
 
-export { Skeleton, SkeletonGroup, skeletonVariants } from './skeleton'
-export type { SkeletonProps }              from './skeleton'
+export { Skeleton, SkeletonText, SkeletonCard } from './skeleton'
 
 export { Separator }                       from './separator'
 
