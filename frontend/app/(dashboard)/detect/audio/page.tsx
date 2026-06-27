@@ -347,7 +347,7 @@ function AudioDetectionPage() {
                             className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-blue-500'}`} />
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>

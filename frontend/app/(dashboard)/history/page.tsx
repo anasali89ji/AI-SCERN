@@ -137,7 +137,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
             <span className="text-[#A3A3A3]">{new Date(scan.created_at).toLocaleString()}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

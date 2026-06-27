@@ -357,13 +357,13 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="flex items-center gap-2 text-rose-400-400-500 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
         {/* Results Panel */}
         <div>
-          
+          <AnimatePresence>
             {loading && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="card flex flex-col items-center justify-center py-16 gap-4">
@@ -538,7 +538,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </div>
               </div>
             )}
-          
+          </AnimatePresence>
         </div>
       </div>
     </div>

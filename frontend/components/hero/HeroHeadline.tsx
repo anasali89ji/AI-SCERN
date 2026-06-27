@@ -65,11 +65,11 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           aria-live="polite"
           aria-atomic="true"
         >
-          
+          <AnimatePresence>
             <div>
               {word}
             </div>
-          
+          </AnimatePresence>
         </div>
 
         <span

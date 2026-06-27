@@ -354,7 +354,7 @@ function VideoDetectionPage() {
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
                 className="w-20 h-20 rounded-xl bg-slate-700/10 flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
-              </div>
+              </motion.div>
               <div className="text-center">
                 <p className="font-semibold text-white mb-1">{isDragActive ? 'Drop video here' : 'Drag & drop a video'}</p>
                 <p className="text-sm text-[#6B6B6B]">or click to browse</p>

@@ -275,7 +275,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
-            </div>
+            </motion.div>
           )}
 
           {/* Info card */}
