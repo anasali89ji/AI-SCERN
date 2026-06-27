@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
-  "nodeVersion": "24.x",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm ci --legacy-peer-deps",
