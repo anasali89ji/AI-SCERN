@@ -5,7 +5,7 @@
  * Shows real detection pipeline stages with animated progress.
  * Replace generic Loader2 spinners on detect pages with this component.
  */
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { Upload, Brain, Cpu, CheckCircle, type LucideIcon } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
@@ -42,15 +42,8 @@ export default function ScanningLoader({
   const currentIdx = STAGES.findIndex(s => s.id === stage)
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={`scanning-loader-${stage}`}
-        initial={{ opacity: 0, y: reduced ? 0 : 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: reduced ? 0 : -8 }}
-        transition={{ duration: reduced ? 0 : 0.2 }}
-        className={`rounded-xl border border-white/[0.05] bg-[#0f0f17] p-5 space-y-4 ${className}`}
-      >
+    
+      <div>
         {/* Header */}
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
           {mediaType ? `Scanning ${mediaType}` : 'Scanning'}…
@@ -87,11 +80,7 @@ export default function ScanningLoader({
                 >
                   {/* Spinning ring for active stage */}
                   {isCurrent && !reduced && (
-                    <motion.div
-                      className="absolute inset-[-3px] rounded-full border-2 border-transparent border-t-primary"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                    />
+                    <div>
                   )}
                   <Icon
                     className="w-3.5 h-3.5"
@@ -119,13 +108,7 @@ export default function ScanningLoader({
                   {/* Upload progress bar */}
                   {isCurrent && s.id === 'uploading' && uploadProgress > 0 && (
                     <div className="mt-1.5 h-1 bg-white/8 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: s.color }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${uploadProgress}%` }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                      />
+                      <div>
                     </div>
                   )}
 
@@ -133,13 +116,7 @@ export default function ScanningLoader({
                   {isCurrent && s.id !== 'uploading' && (
                     <div className="mt-1.5 flex gap-1">
                       {[0, 1, 2].map(d => (
-                        <motion.div
-                          key={d}
-                          className="w-1 h-1 rounded-full"
-                          style={{ background: s.color }}
-                          animate={reduced ? { opacity: 1 } : { opacity: [0.3, 1, 0.3] }}
-                          transition={reduced ? {} : { duration: 1.2, repeat: Infinity, delay: d * 0.25 }}
-                        />
+                        <div>
                       ))}
                     </div>
                   )}
@@ -147,19 +124,15 @@ export default function ScanningLoader({
 
                 {/* Done checkmark */}
                 {isDone && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="text-[11px] font-bold text-emerald-400-400 flex-shrink-0"
-                  >
+                  <div>
                     ✓
-                  </motion.span>
+                  </div>
                 )}
               </div>
             )
           })}
         </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    
   )
 }

@@ -3,7 +3,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useRef } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
@@ -67,7 +67,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = TEXT_MAX_CHARS
-  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : charCount > 70_000 ? 'text-amber-400-400-500' : 'text-slate-500'
+  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : charCount > 70_000 ? 'text-amber-400-400-500' : 'text-[#6B6B6B]'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -194,13 +194,13 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-amber-400-400" />
           </div>
           Text Detection
         </h1>
-        <p className="text-slate-500 ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
+        <p className="text-[#6B6B6B] ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -208,7 +208,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4">
           <div className="card">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-slate-100 text-sm">Input Text</h2>
+              <h2 className="font-semibold text-white text-sm">Input Text</h2>
               <div className="flex gap-1.5">
                 <button onClick={handlePaste} disabled={pasteLoading}
                   className="text-xs btn-ghost py-1.5 px-2.5 flex items-center gap-1.5 disabled:opacity-50">
@@ -228,18 +228,18 @@ Analyzed: ${new Date().toLocaleString()}`
               placeholder="Paste or type any text here to analyze for AI generation patterns…"
               className="input-field min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-sm"
             />
-            <p className="text-[11px] text-slate-600 mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
+            <p className="text-[11px] text-[#6B6B6B] mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
 
             {/* PDF Upload Zone */}
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setPdfMode(false)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500-500-500/15 text-amber-400-400-500 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500-500-500/15 text-amber-400-400-500 border border-amber-500/30' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
                 onClick={() => setPdfMode(true)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-blue-500/[0.08] text-blue-400 border border-blue-500/20' : 'text-slate-500 hover:text-slate-400'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${pdfMode ? 'bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                 <BookOpen className="w-3.5 h-3.5" /> PDF Upload
               </button>
             </div>
@@ -248,37 +248,37 @@ Analyzed: ${new Date().toLocaleString()}`
               <div>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-blue-500/30','bg-blue-500/10') }}
-                  onDragLeave={e => { e.currentTarget.classList.remove('border-blue-500/30','bg-blue-500/10') }}
+                  onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-[#2BEE34]/30','bg-[#2BEE34]/10') }}
+                  onDragLeave={e => { e.currentTarget.classList.remove('border-[#2BEE34]/30','bg-[#2BEE34]/10') }}
                   onDrop={e => {
                     e.preventDefault()
-                    e.currentTarget.classList.remove('border-blue-500/30','bg-blue-500/10')
+                    e.currentTarget.classList.remove('border-[#2BEE34]/30','bg-[#2BEE34]/10')
                     const f = e.dataTransfer.files?.[0]
                     if (f && (f.type === 'application/pdf' || f.name.endsWith('.pdf'))) handlePdfUpload(f)
                     else if (f) setError('Please upload a PDF file.')
                   }}
                   className={`flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3
-                    ${pdfFile ? 'border-blue-500/30 bg-blue-500/5' : 'border-white/[0.08] hover:border-blue-500/30 hover:bg-blue-500/5'}`}>
+                    ${pdfFile ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#1E1E1E] hover:border-[#2BEE34]/30 hover:bg-[#1A8F1F]/5'}`}>
                   {pdfLoading ? (
                     <div className="flex flex-col items-center gap-2 w-full px-6">
-                      <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-                      <p className="text-sm font-medium text-slate-100">Extracting text from PDF…</p>
-                      <p className="text-xs text-slate-500">Running {pdfFile && pdfFile.size > 1024*1024*5 ? 'multi-page' : ''} analysis — this takes 10–30 seconds</p>
-                      <div className="w-full max-w-xs bg-[#141420] rounded-full h-1.5 mt-1 overflow-hidden">
-                        <div className="h-full bg-blue-600 rounded-full" style={{width:'45%'}} />
+                      <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
+                      <p className="text-sm font-medium text-white">Extracting text from PDF…</p>
+                      <p className="text-xs text-[#6B6B6B]">Running {pdfFile && pdfFile.size > 1024*1024*5 ? 'multi-page' : ''} analysis — this takes 10–30 seconds</p>
+                      <div className="w-full max-w-xs bg-[#141414] rounded-full h-1.5 mt-1 overflow-hidden">
+                        <div className="h-full bg-[#2BEE34] rounded-full" style={{width:'45%'}} />
                       </div>
                     </div>
                   ) : pdfFile ? (
                     <div className="flex flex-col items-center gap-1">
-                      <BookOpen className="w-8 h-8 text-blue-400 mb-1" />
-                      <p className="text-sm font-semibold text-slate-100">{pdfFile.name}</p>
-                      <p className="text-xs text-slate-500">{(pdfFile.size/1024/1024).toFixed(2)} MB · Click to change</p>
+                      <BookOpen className="w-8 h-8 text-[#2BEE34] mb-1" />
+                      <p className="text-sm font-semibold text-white">{pdfFile.name}</p>
+                      <p className="text-xs text-[#6B6B6B]">{(pdfFile.size/1024/1024).toFixed(2)} MB · Click to change</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-1">
-                      <Upload className="w-8 h-8 text-slate-500 mb-1" />
-                      <p className="text-sm font-semibold text-slate-100">Drop PDF here or click to browse</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Academic papers, essays, reports · Up to 20MB · Multi-page supported</p>
+                      <Upload className="w-8 h-8 text-[#6B6B6B] mb-1" />
+                      <p className="text-sm font-semibold text-white">Drop PDF here or click to browse</p>
+                      <p className="text-xs text-[#6B6B6B] mt-0.5">Academic papers, essays, reports · Up to 20MB · Multi-page supported</p>
                     </div>
                   )}
                 </div>
@@ -286,7 +286,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   onChange={e => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); e.target.value = '' }} />
                 {pdfFile && !pdfLoading && !result && (
                   <button onClick={() => { setPdfFile(null); setResult(null) }}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-400-400 transition-colors mb-2">
+                    className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-rose-400-400 transition-colors mb-2">
                     <X className="w-3.5 h-3.5" /> Clear PDF
                   </button>
                 )}
@@ -303,9 +303,9 @@ Analyzed: ${new Date().toLocaleString()}`
                 { label: 'Sentences', value: sentenceCount },
                 { label: 'Avg words/sent', value: avgSentLen || '—' },
               ].map(({ label, value }) => (
-                <div key={label} className="text-center px-2 py-1.5 rounded-lg bg-[#141420]/50 border border-white/[0.08]">
-                  <div className="text-sm font-bold text-slate-100">{value}</div>
-                  <div className="text-[10px] text-slate-500 leading-tight">{label}</div>
+                <div key={label} className="text-center px-2 py-1.5 rounded-lg bg-[#141414]/50 border border-[#1E1E1E]">
+                  <div className="text-sm font-bold text-white">{value}</div>
+                  <div className="text-[10px] text-[#6B6B6B] leading-tight">{label}</div>
                 </div>
               ))}
             </div>
@@ -330,8 +330,8 @@ Analyzed: ${new Date().toLocaleString()}`
             )}
 
             <div className="flex items-center justify-between mt-3">
-              <div className="text-xs text-slate-500">
-                {wordCount > 0 && <span className="text-slate-600">{readingTime(text)}</span>}
+              <div className="text-xs text-[#6B6B6B]">
+                {wordCount > 0 && <span className="text-[#6B6B6B]">{readingTime(text)}</span>}
                 {charCount >= 50 && <span className="ml-2 text-emerald-400-400/70">✓ Ready to analyze</span>}
               </div>
               <div className="flex gap-2">
@@ -346,7 +346,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </button>
               </div>
             </div>
-            <p className="text-xs text-slate-600 mt-2">Ctrl+Enter to analyze</p>
+            <p className="text-xs text-[#6B6B6B] mt-2">Ctrl+Enter to analyze</p>
             </>
             )}
           </div>
@@ -357,28 +357,28 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="flex items-center gap-2 text-rose-400-400-500 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 
         {/* Results Panel */}
         <div>
-          <AnimatePresence mode="wait">
+          
             {loading && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="card flex flex-col items-center justify-center py-16 gap-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full border-2 border-blue-500/20 flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-blue-400" />
+                  <div className="w-20 h-20 rounded-full border-2 border-[#2BEE34]/20 flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-[#2BEE34]" />
                   </div>
                   
                 </div>
                 <div className="text-center space-y-1">
-                  <p className="font-semibold text-slate-100">Analyzing text patterns…</p>
-                  <p className="text-sm text-slate-500">Perplexity · Burstiness · Style signals</p>
-                  <p className="text-xs text-slate-500">Running 3-model ensemble…</p>
+                  <p className="font-semibold text-white">Analyzing text patterns…</p>
+                  <p className="text-sm text-[#6B6B6B]">Perplexity · Burstiness · Style signals</p>
+                  <p className="text-xs text-[#6B6B6B]">Running 3-model ensemble…</p>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {result && !loading && (
@@ -387,9 +387,9 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className={`card border ${verdictStyles[result.verdict]}`}>
                   {/* Personalized greeting */}
                   {displayName && (
-                    <div className="mb-3 text-xs font-medium text-slate-500">
-                      Hey <span className="text-slate-100 font-semibold">{displayName}</span>, here's what we found
-                      {pdfFile ? <> for <span className="text-slate-100 font-medium">"{pdfFile.name}"</span></> : text.trim() ? <> for your submitted text</> : null}:
+                    <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
+                      Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
+                      {pdfFile ? <> for <span className="text-white font-medium">"{pdfFile.name}"</span></> : text.trim() ? <> for your submitted text</> : null}:
                     </div>
                   )}
                   <div className="flex items-start gap-3 min-w-0">
@@ -412,17 +412,17 @@ Analyzed: ${new Date().toLocaleString()}`
                             : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
                         </h3>
                         <div className="text-right shrink-0">
-                          <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
-                          <div className="text-[10px] sm:text-xs text-slate-500">confidence</div>
+                          <div className="text-2xl sm:text-4xl font-black text-[#2BEE34] tabular-nums">{formatConfidence(result.confidence)}</div>
+                          <div className="text-[10px] sm:text-xs text-[#6B6B6B]">confidence</div>
                         </div>
                       </div>
-                      <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{result.summary}</p>
+                      <p className="text-[#6B6B6B] text-xs sm:text-sm leading-relaxed">{result.summary}</p>
                     </div>
                   </div>
 
                   {/* Confidence bar */}
                   <div className="mt-4">
-                    <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <div className="flex justify-between text-xs text-[#6B6B6B] mb-1.5">
                       <span>Human ←</span>
                       <span>→ AI</span>
                     </div>
@@ -437,18 +437,18 @@ Analyzed: ${new Date().toLocaleString()}`
 
                 {/* Signals */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
                     Detection Signals ({result.signals.length})
                   </h3>
                   <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                     {result.signals.map((signal, i) => (
                       <motion.div key={signal.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                        className="p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
+                        className="p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
-                          <span className="text-sm text-slate-400 flex-1 font-medium">{signal.name}</span>
+                          <span className="text-sm text-[#A3A3A3] flex-1 font-medium">{signal.name}</span>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>
                             {signal.weight}%
                           </span>
@@ -459,7 +459,7 @@ Analyzed: ${new Date().toLocaleString()}`
                             className={`h-full rounded-full ${signal.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`}
                           />
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -467,18 +467,18 @@ Analyzed: ${new Date().toLocaleString()}`
                 {/* FIX B.6: Sentence-level AI probability heatmap */}
                 {paragraphScores.length > 0 && (
                   <div className="card">
-                    <h3 className="font-semibold text-slate-100 mb-1 flex items-center gap-2 text-sm">
+                    <h3 className="font-semibold text-white mb-1 flex items-center gap-2 text-sm">
                       <span className="w-2 h-2 rounded-full bg-rose-500-500" />
                       Sentence Heatmap
-                      <span className="text-xs font-normal text-slate-500 ml-1">— red = AI-likely, green = human-likely</span>
+                      <span className="text-xs font-normal text-[#6B6B6B] ml-1">— red = AI-likely, green = human-likely</span>
                     </h3>
-                    <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                    <p className="text-xs text-[#6B6B6B] mb-3 leading-relaxed">
                       {paragraphScores.map((s, i) => {
                         const pct = s.confidence
                         const bg =
                           pct >= 80 ? 'bg-rose-500-500-500/30 text-rose-400-400-200' :
                           pct >= 60 ? 'bg-amber-500-500-500/20 text-amber-400-400-200' :
-                          pct >= 40 ? 'bg-yellow-900/20 text-slate-400' :
+                          pct >= 40 ? 'bg-yellow-900/20 text-[#A3A3A3]' :
                                       'bg-emerald-500-500-500/10 text-emerald-400-400-300'
                         return (
                           <span key={i} title={`${pct}% AI probability`}
@@ -490,7 +490,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </p>
                     {/* Legend */}
                     <div className="flex items-center gap-3 flex-wrap">
-                      {[['bg-emerald-500-500-500/10 text-emerald-400-400-300','< 40% AI'],['bg-yellow-900/20 text-slate-400','40–59%'],['bg-amber-500-500-500/20 text-amber-400-400-200','60–79%'],['bg-rose-500-500-500/30 text-rose-400-400-200','≥ 80%']].map(([cls, label]) => (
+                      {[['bg-emerald-500-500-500/10 text-emerald-400-400-300','< 40% AI'],['bg-yellow-900/20 text-[#A3A3A3]','40–59%'],['bg-amber-500-500-500/20 text-amber-400-400-200','60–79%'],['bg-rose-500-500-500/30 text-rose-400-400-200','≥ 80%']].map(([cls, label]) => (
                         <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
                       ))}
                     </div>
@@ -498,7 +498,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 )}
                 {/* Actions footer */}
                 <div className="card py-3 px-4 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
-                  <span className="text-xs text-slate-500 font-mono">{result.processing_time}ms</span>
+                  <span className="text-xs text-[#6B6B6B] font-mono">{result.processing_time}ms</span>
                   <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
                     <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
                       className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
@@ -516,7 +516,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </button>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {!result && !loading && (
@@ -525,20 +525,20 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="w-20 h-20 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-10 h-10 text-amber-400-400" />
                 </div>
-                <h3 className="font-semibold text-slate-100 mb-2">Ready to Analyze</h3>
-                <p className="text-slate-500 text-sm max-w-xs">
+                <h3 className="font-semibold text-white mb-2">Ready to Analyze</h3>
+                <p className="text-[#6B6B6B] text-sm max-w-xs">
                   Enter text on the left and click Detect. Minimum 50 characters for accurate results.
                 </p>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500 w-full">
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
                   {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
-                    <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
+                    <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 shrink-0" />{f}
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </div>
       </div>
     </div>
@@ -548,17 +548,17 @@ Analyzed: ${new Date().toLocaleString()}`
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="mx-4 mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden"
+          className="mx-4 mb-4 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 overflow-hidden"
         >
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-blue-500/5">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-[#2BEE34]/5">
             <span className="w-2 h-2 rounded-full bg-blue-500" />
-            <span className="text-xs font-bold text-blue-400 tracking-wide uppercase">Web Verification</span>
-            <span className="ml-auto text-[10px] text-slate-500">Real-time Graph RAG</span>
+            <span className="text-xs font-bold text-[#2BEE34] tracking-wide uppercase">Web Verification</span>
+            <span className="ml-auto text-[10px] text-[#6B6B6B]">Real-time Graph RAG</span>
           </div>
-          <pre className="px-4 py-3 text-[11px] text-slate-400 leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+          <pre className="px-4 py-3 text-[11px] text-[#A3A3A3] leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
             {graphContext}
           </pre>
-        </motion.div>
+        </div>
       )}
 
       <LazyReviewSuggestion toolName="AI Text Detector" />
@@ -567,7 +567,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
+              className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-white transition-colors border border-[#1E1E1E] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -575,12 +575,12 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
       {result && (
         <details className="card mt-4 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-blue-400" />
+          <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
+            <Info className="w-4 h-4 text-[#2BEE34]" />
             Detection Models &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-slate-500">
-            <p><span className="text-slate-400 font-medium">Engine</span> Aiscern Detection Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
@@ -589,10 +589,10 @@ Analyzed: ${new Date().toLocaleString()}`
                 { name: 'RAID Benchmark', desc: 'Robust AI text detection benchmark', url: 'https://huggingface.co/datasets/liamdugan/raid' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141420] transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-slate-400 font-medium group-hover:text-white transition-colors">{d.name}</p>
+                    <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -608,8 +608,8 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
-            <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}
+            <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
           </div>
         </div>
       )}

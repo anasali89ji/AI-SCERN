@@ -5,7 +5,7 @@
  * Tracks usage in localStorage per tool type.
  */
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, ArrowRight } from 'lucide-react'
@@ -70,17 +70,12 @@ export function SignupGate() {
   if (!show) return null
 
   return (
-    <AnimatePresence>
+    
       <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
         {/* Non-dismissible backdrop */}
         <div className="absolute inset-0 bg-black/85" />
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', damping: 20 }}
-          className="relative w-full max-w-md bg-[#0f0f17] border border-blue-500/20 rounded-xl  overflow-hidden"
-        >
+        <div>
           {/* Top gradient bar */}
           <div className="h-1 w-full bg-blue-600" />
 
@@ -129,8 +124,8 @@ export function SignupGate() {
               Free tier available · No credit card · No spam
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
+    
   )
 }

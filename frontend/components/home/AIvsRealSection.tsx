@@ -1,6 +1,6 @@
 'use client'
 import { memo } from 'react'
-import { motion } from 'framer-motion'
+import { motion } 
 import { Scan, AlertTriangle, CheckCircle, Brain } from 'lucide-react'
 import Image from 'next/image'
 
@@ -31,15 +31,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
   const isAI = card.verdict === 'AI'
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ delay: idx * 0.045, duration: 0.45, ease: [0.22,1,0.36,1] }}
-      className={`rounded-[12px] border overflow-hidden bg-[#0f0f17]
-        ${isAI ? 'border-rose-500/20' : 'border-emerald-500/20'}
-        hover:border-white/[0.14] transition-colors duration-200`}
-    >
+    <div>
       {/* Preview area */}
       {card.type === 'image' && card.img ? (
         <div className="relative h-32 sm:h-36 bg-[#141420] overflow-hidden">
@@ -85,14 +77,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
         {/* Confidence bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 rounded-full bg-[#1e1e2e] overflow-hidden">
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.04 + 0.3, duration: 0.8, ease: [0.22,1,0.36,1] }}
-              style={{ originX: 0, width: `${card.confidence}%` }}
-              className={`h-full rounded-full ${isAI ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`}
-            />
+            <div>
           </div>
           <span className={`text-[10px] font-bold tabular-nums shrink-0
             ${isAI ? 'text-rose-400-400' : 'text-emerald-400-400'}`}>
@@ -100,7 +85,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
           </span>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 })
 
@@ -108,13 +93,7 @@ export default function AIvsRealSection() {
   return (
     <section className="py-16 sm:py-24 border-t border-white/[0.06] overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-10 sm:mb-14"
-        >
+        <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
                           border border-rose-500/25 bg-rose-500-500/[0.06] text-rose-400-400
                           text-xs font-semibold mb-5">
@@ -127,7 +106,7 @@ export default function AIvsRealSection() {
           <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
             How Aiscern distinguishes synthetic content from human originals — across text and images.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {CARDS.map((card, i) => (

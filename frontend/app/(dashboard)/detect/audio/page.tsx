@@ -5,7 +5,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { Mic, Upload, X, AlertTriangle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
@@ -190,13 +190,13 @@ function AudioDetectionPage() {
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <audio ref={audioRef} className="hidden" />
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-            <Mic className="w-6 h-6 text-blue-400" />
+        <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
+            <Mic className="w-6 h-6 text-[#2BEE34]" />
           </div>
           Audio Detection
         </h1>
-        <p className="text-slate-500 ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
+        <p className="text-[#6B6B6B] ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -204,61 +204,61 @@ function AudioDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-blue-500/30 bg-blue-500/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-[#2BEE34]/30 bg-[#2BEE34]/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
                 <div className="w-16 h-16 rounded-xl bg-blue-500/15 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-blue-400" />
+                  <Upload className="w-8 h-8 text-[#2BEE34]" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-blue-400 text-base">Tap to Choose Audio File</p>
-                  <p className="text-xs text-slate-500 mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
+                  <p className="font-bold text-[#2BEE34] text-base">Tap to Choose Audio File</p>
+                  <p className="text-xs text-[#6B6B6B] mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
                 </div>
                 <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
               </label>
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-blue-500 bg-blue-500/5 ' : 'border-white/[0.08] hover:border-blue-500/50 hover:bg-[#141420]/30'}`}>
+                ${isDragActive ? 'border-blue-500 bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-blue-500/50 hover:bg-[#141414]/30'}`}>
               <input {...getInputProps()} />
               <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-blue-400' : 'text-slate-500'}`} />
-              </motion.div>
+                className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'}`} />
+              </div>
               <div className="text-center">
-                <p className="font-semibold text-slate-100 mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
-                <p className="text-sm text-slate-500">or click to browse</p>
-                <p className="text-xs text-slate-600 mt-2">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
+                <p className="font-semibold text-white mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
+                <p className="text-sm text-[#6B6B6B]">or click to browse</p>
+                <p className="text-xs text-[#6B6B6B] mt-2">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
               </div>
               <WaveformVisualizer playing={false} />
             </div>
             )
           ) : (
             <div className="card space-y-4">
-              <div className="p-4 rounded-xl bg-[#141420] border border-white/[0.08]">
+              <div className="p-4 rounded-xl bg-[#141414] border border-[#1E1E1E]">
                 <WaveformVisualizer playing={playing} progress={progress} />
 
                 {/* Seek bar */}
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
+                  <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
                   <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
                     <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
                   </div>
-                  <span className="text-xs text-slate-500 w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
+                  <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
                 </div>
 
                 <div className="flex items-center gap-3 mt-3">
                   <button onClick={togglePlay}
-                    className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-colors shrink-0">
+                    className="w-10 h-10 rounded-full bg-[#2BEE34] hover:bg-[#1A8F1F] flex items-center justify-center transition-colors shrink-0">
                     {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-400 font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm text-[#A3A3A3] font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-[#6B6B6B]">
                       {formatFileSize(file.size)}
                       {duration > 0 && ` · ${formatDuration(duration)}`}
                     </p>
                   </div>
                   <button onClick={reset}
-              title="Detect Another" className="text-slate-500 hover:text-rose-400-400 p-2 rounded-lg hover:bg-rose-500-500-500/10 transition-colors shrink-0">
+              title="Detect Another" className="text-[#6B6B6B] hover:text-rose-400-400 p-2 rounded-lg hover:bg-rose-500-500-500/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -280,20 +280,20 @@ function AudioDetectionPage() {
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
-            </motion.div>
+            </div>
           )}
         </div>
 
-        <AnimatePresence mode="wait">
+        
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
-                  <div className="mb-3 text-xs font-medium text-slate-500">
-                    Hey <span className="text-slate-100 font-semibold">{displayName}</span>, here's what we found
-                    {file ? <> for <span className="text-slate-100 font-medium">"{file.name}"</span></> : null}:
+                  <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
+                    Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
+                    {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
                   </div>
                 )}
                 <div className="flex items-start gap-3 sm:gap-4 min-w-0">
@@ -308,11 +308,11 @@ function AudioDetectionPage() {
                           : `${displayName}, this audio is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-[#6B6B6B] text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
                 <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-2 gap-2">
+                  <div className="flex items-center justify-between text-xs text-[#6B6B6B] mb-2 gap-2">
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
@@ -325,7 +325,7 @@ function AudioDetectionPage() {
               </div>
 
               <div className="card">
-                <h3 className="font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Audio Signals ({result.signals.length})
                 </h3>
@@ -333,21 +333,21 @@ function AudioDetectionPage() {
                   {result.signals.map((s, i) => (
                     <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141420]/50 border border-white/[0.08] min-w-0">
+                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
-                          <span className="text-xs sm:text-sm text-slate-400 font-medium truncate">{s.name}</span>
+                          <span className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>{s.weight}%</span>
                         </div>
-                        <p className="text-xs text-slate-500 truncate">{s.description}</p>
+                        <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
                         <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
                             transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
                             className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-blue-500'}`} />
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -355,14 +355,14 @@ function AudioDetectionPage() {
               {/* Segment timeline */}
               {result.segment_scores && result.segment_scores.length > 0 && (
                 <div className="card">
-                  <h3 className="font-semibold text-slate-100 mb-3 flex items-center gap-2 text-sm">
+                  <h3 className="font-semibold text-white mb-3 flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     Audio Segment Analysis
                   </h3>
                   <div className="space-y-1.5">
                     {result.segment_scores.map((seg: any, i: number) => (
                       <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500 w-16 shrink-0 font-mono">
+                        <span className="text-xs text-[#6B6B6B] w-16 shrink-0 font-mono">
                           {seg.start_sec}s – {seg.end_sec}s
                         </span>
                         <div className="flex-1 h-2 bg-white/[0.08] rounded-full overflow-hidden">
@@ -377,7 +377,7 @@ function AudioDetectionPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-[#6B6B6B]">
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500-500" />AI-synthetic</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500-500" />Uncertain</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500-500" />Authentic</span>
@@ -386,30 +386,30 @@ function AudioDetectionPage() {
               )}
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-slate-500 font-mono truncate">{result.processing_time}ms</span>
+                <span className="text-xs text-[#6B6B6B] font-mono truncate">{result.processing_time}ms</span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
                   <Download className="w-3.5 h-3.5" /> Export Report
                 </button>
               </div>
-            </motion.div>
+            </div>
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4 ">
-                <Mic className="w-10 h-10 text-blue-400" />
+              <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mx-auto mb-4 ">
+                <Mic className="w-10 h-10 text-[#2BEE34]" />
               </div>
-              <h3 className="font-semibold text-slate-100 mb-2">Upload Audio</h3>
-              <p className="text-slate-500 text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 w-full max-w-xs">
+              <h3 className="font-semibold text-white mb-2">Upload Audio</h3>
+              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
+                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
@@ -420,7 +420,7 @@ function AudioDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors border border-white/[0.08] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
+              className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-white transition-colors border border-[#1E1E1E] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -428,12 +428,12 @@ function AudioDetectionPage() {
       )}
       {result && (
         <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-400 flex items-center gap-2">
-            <Info className="w-4 h-4 text-blue-400" />
+          <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
+            <Info className="w-4 h-4 text-[#2BEE34]" />
             Detection Models &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-slate-500">
-            <p><span className="text-slate-400 font-medium">Engine</span> Aiscern Detection Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
@@ -441,10 +441,10 @@ function AudioDetectionPage() {
                 { name: 'MelodyMachine V2', desc: 'Deepfake audio detection dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141420] transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-slate-400 font-medium group-hover:text-white transition-colors">{d.name}</p>
+                    <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -460,8 +460,8 @@ function AudioDetectionPage() {
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-slate-500 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-slate-400">{result.summary}</p>}
+            <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
           </div>
         </div>
       )}

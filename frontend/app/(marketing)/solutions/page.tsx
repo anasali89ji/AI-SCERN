@@ -115,9 +115,9 @@ const SOLUTIONS: Solution[] = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  primary: { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
-  blue:    { bg: 'bg-blue-500/10',  border: 'border-blue-500/20',    text: 'text-blue-400',    icon: 'text-blue-400'    },
-  cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-cyan-400',    icon: 'text-cyan-400'    },
+  primary: { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
+  blue:    { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
+  cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
   amber:   { bg: 'bg-amber-500-500/10', border: 'border-amber-500/25',   text: 'text-amber-400-500',   icon: 'text-amber-400-500'   },
   emerald: { bg: 'bg-emerald-500-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400-400', icon: 'text-emerald-400-400' },
   rose:    { bg: 'bg-rose-500-500/10',  border: 'border-rose-500/25',    text: 'text-rose-400-500',    icon: 'text-rose-400-500'    },
@@ -134,15 +134,15 @@ export default function SolutionsHub() {
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)]" />
           </div>
           <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <Zap className="w-3.5 h-3.5" />
               Industry Solutions
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-100 mb-5 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
               AI Detection Built<br />
-              <span className="gradient-text">for Your Industry</span>
+              <span className="text-[#2BEE34]">for Your Industry</span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
               Every industry faces unique AI content challenges. Aiscern delivers tailored detection workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
@@ -166,14 +166,14 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group card card-hover flex flex-col gap-4 p-6 rounded-xl border border-white/[0.08] hover:border-white/[0.12] transition-all duration-200">
+                    className="group card card-hover flex flex-col gap-4 p-6 rounded-xl border border-[#1E1E1E] hover:border-white/[0.12] transition-all duration-200">
                     <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <Icon className={`w-5 h-5 ${c.icon}`} />
                     </div>
                     <div className="flex-1">
                       <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>
-                      <h2 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-white transition-colors">{sol.title}</h2>
-                      <p className="text-sm text-slate-500 leading-relaxed">{sol.desc}</p>
+                      <h2 className="text-lg font-bold text-white mb-2 group-hover:text-white transition-colors">{sol.title}</h2>
+                      <p className="text-sm text-[#6B6B6B] leading-relaxed">{sol.desc}</p>
                     </div>
                     <div className={`text-xs font-semibold ${c.text} flex items-center gap-1 group-hover:gap-2 transition-all`}>
                       {sol.cta} <ArrowRight className="w-3.5 h-3.5" />
@@ -188,10 +188,10 @@ export default function SolutionsHub() {
         {/* Bottom CTA */}
         <section className="py-16 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-100 mb-4">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-4">
               Don&apos;t see your industry?
             </h2>
-            <p className="text-slate-400 mb-6">
+            <p className="text-[#A3A3A3] mb-6">
               Aiscern works for any workflow that requires AI content verification. Contact us for a custom solution.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">

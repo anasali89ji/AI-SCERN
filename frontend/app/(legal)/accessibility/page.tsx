@@ -13,13 +13,13 @@ const LAST_REVIEWED = 'May 17, 2026'
 export default function AccessibilityPage() {
   return (
     <div className="min-h-screen bg-[#08080d] flex flex-col">
-      <header className="border-b border-white/[0.08] bg-[#0f0f17] sticky top-0 z-10">
+      <header className="border-b border-[#1E1E1E] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
-            <span className="font-black gradient-text">Aiscern</span>
+            <span className="font-black text-[#2BEE34]">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-100 transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -27,8 +27,8 @@ export default function AccessibilityPage() {
 
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-slate-100 mb-3">Accessibility Statement</h1>
-          <p className="text-slate-500">Last reviewed: {LAST_REVIEWED}</p>
+          <h1 className="text-4xl font-black text-white mb-3">Accessibility Statement</h1>
+          <p className="text-[#6B6B6B]">Last reviewed: {LAST_REVIEWED}</p>
         </div>
 
         {/* Status badge */}
@@ -106,7 +106,7 @@ export default function AccessibilityPage() {
               We welcome your feedback on the accessibility of Aiscern. Please let us know if you encounter accessibility barriers:
             </p>
             <ul>
-              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-blue-500 hover:underline">accessibility@aiscern.com</a></li>
+              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-[#2BEE34] hover:underline">accessibility@aiscern.com</a></li>
               <li><strong>Response time:</strong> We aim to respond within 2 business days</li>
             </ul>
             <p>
@@ -119,7 +119,7 @@ export default function AccessibilityPage() {
             <p>
               If you are located in the EU and are not satisfied with our response to your accessibility feedback,
               you have the right to contact your national accessibility enforcement authority.
-              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Equality and Human Rights Commission</a>.
+              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-[#2BEE34] hover:underline">Equality and Human Rights Commission</a>.
             </p>
           </Section>
 
@@ -149,21 +149,21 @@ export default function AccessibilityPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-slate-100 mb-4 pb-2 border-b border-white/[0.08]">{title}</h2>
-      <div className="space-y-3 text-slate-400 text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#1E1E1E]">{title}</h2>
+      <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
 
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border border-white/[0.08] bg-[#0f0f17]/50">
+    <div className="flex items-start gap-3 p-3 rounded-lg border border-[#1E1E1E] bg-[#141414]/50">
       {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />}
       {icon === 'warn' && <Clock className="w-4 h-4 text-amber-400-500 flex-shrink-0 mt-0.5" />}
       {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-400-500 flex-shrink-0 mt-0.5" />}
       <div>
-        <p className="font-semibold text-slate-100 text-sm">{label}</p>
-        <p className="text-slate-500 text-xs mt-0.5">{detail}</p>
+        <p className="font-semibold text-white text-sm">{label}</p>
+        <p className="text-[#6B6B6B] text-xs mt-0.5">{detail}</p>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { useAuth } from '@/components/auth-provider'
 import {
   Zap, ArrowRight, MessageSquare, FileText,
@@ -114,27 +114,20 @@ export default function NavClient() {
             aria-expanded={mobileNavOpen}
             aria-controls="mobile-nav-panel"
           >
-            <AnimatePresence mode="wait" initial={false}>
+            
               {mobileNavOpen
-                ? <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><X className="w-5 h-5" /></motion.div>
-                : <motion.div key="m" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}><Menu className="w-5 h-5" /></motion.div>
+                ? <div><X className="w-5 h-5" /></div>
+                : <div><Menu className="w-5 h-5" /></div>
               }
-            </AnimatePresence>
+            
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
-      <AnimatePresence>
+      
         {mobileNavOpen && (
-          <motion.div
-            id="mobile-nav-panel"
-            role="dialog"
-            aria-label="Navigation menu"
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="md:hidden border-t border-white/[0.08] bg-[#08080d] overflow-hidden"
-            onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setMobileNavOpen(false)}
+          <div> e.key === 'Escape' && setMobileNavOpen(false)}
           >
             <div className="px-4 py-4 flex flex-col gap-1">
               {[
@@ -145,27 +138,27 @@ export default function NavClient() {
                 { href: '/blog', label: 'Blog', Icon: FileText },
                 { href: '/pricing', label: 'Pricing', Icon: Zap },
               ].map((link, i) => (
-                <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                <div>
                   <Link href={link.href} onClick={() => setMobileNavOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-slate-500 hover:text-slate-100 transition-colors text-sm font-medium">
                     <link.Icon className="w-4 h-4" />{link.label}
                   </Link>
-                </motion.div>
+                </div>
               ))}
               {!loading && !user && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/[0.06]">
+                <div>
                   <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-slate-500 hover:text-slate-100 transition-colors text-sm font-medium">
                     <Lock className="w-4 h-4" />Sign In
                   </Link>
                   <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                     <Zap className="w-4 h-4" />Get Started Free
                   </Link>
-                </motion.div>
+                </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      
     </nav>
   )
 }

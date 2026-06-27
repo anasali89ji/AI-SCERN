@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, memo } from 'react'
-import { motion } from 'framer-motion'
+import { motion } 
 import { Star } from 'lucide-react'
 
 interface Review {
@@ -29,14 +29,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
   const initial = r.is_anonymous ? '?' : name.charAt(0).toUpperCase()
 
   return (
-    <motion.div
-      initial={{ opacity:0, y:20 }}
-      whileInView={{ opacity:1, y:0 }}
-      viewport={{ once:true, amount:0.15 }}
-      transition={{ delay: i * 0.08, duration: 0.45, ease:[0.22,1,0.36,1] }}
-      className="flex flex-col p-5 rounded-[14px] border border-white/[0.08] bg-[#0f0f17]
-                 hover:border-white/[0.13] hover:-translate-y-px transition-all duration-200"
-    >
+    <div>
       {/* Stars */}
       <div className="flex gap-0.5 mb-4" aria-label={`${stars} out of 5 stars`}>
         {Array.from({ length: stars }).map((_, j) => (
@@ -67,7 +60,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 })
 

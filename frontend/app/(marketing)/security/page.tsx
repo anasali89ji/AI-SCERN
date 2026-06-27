@@ -61,19 +61,19 @@ const RETENTION = [
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] text-slate-100">
+    <div className="min-h-screen bg-[#08080d] text-white">
       <SiteNav />
 
       <main className="pt-24 pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 2xl:px-8">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34] text-xs font-semibold mb-4">
             <Shield className="w-3 h-3" /> Security
           </div>
           <h1 className="text-3xl sm:text-5xl font-black mb-4">
-            How we protect <span className="gradient-text">your data</span>
+            How we protect <span className="text-[#2BEE34]">your data</span>
           </h1>
-          <p className="text-slate-500 text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="text-[#6B6B6B] text-base sm:text-lg max-w-2xl mx-auto">
             A plain-English explanation of what data we collect, how it's secured, and how long we keep it.
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function SecurityPage() {
           <h2 className="font-black text-lg mb-3 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-400-400" /> The short version
           </h2>
-          <ul className="space-y-2 text-sm text-slate-500">
+          <ul className="space-y-2 text-sm text-[#6B6B6B]">
             {[
               'Uploaded files are deleted within 24 hours — we do not keep your images, audio, or video',
               'Text content previews (first 500 chars) are stored for your History — delete anytime',
@@ -102,17 +102,17 @@ export default function SecurityPage() {
         {/* Security practices */}
         <div className="grid sm:grid-cols-2 gap-5 mb-14">
           {PRACTICES.map(({ icon: Icon, title, items }) => (
-            <div key={title} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
+            <div key={title} className="rounded-xl border border-[#1E1E1E] bg-[#141414] p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Icon className="w-3.5 h-3.5 text-blue-400" />
+                <div className="w-7 h-7 rounded-lg bg-[#2BEE34]/10 flex items-center justify-center">
+                  <Icon className="w-3.5 h-3.5 text-[#2BEE34]" />
                 </div>
                 <h3 className="font-bold text-sm">{title}</h3>
               </div>
               <ul className="space-y-2">
                 {items.map(item => (
-                  <li key={item} className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                    <span className="w-1 h-1 rounded-full bg-blue-600/60 mt-1.5 shrink-0" />
+                  <li key={item} className="flex items-start gap-2 text-xs text-[#6B6B6B] leading-relaxed">
+                    <span className="w-1 h-1 rounded-full bg-[#2BEE34]/60 mt-1.5 shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -124,19 +124,19 @@ export default function SecurityPage() {
         {/* Data retention table */}
         <section className="mb-14">
           <h2 className="text-xl font-black mb-5">Data retention</h2>
-          <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+          <div className="rounded-xl border border-[#1E1E1E] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.08] bg-[#0f0f17]">
-                  <th className="text-left px-4 py-3 font-semibold text-slate-100 w-1/2">Data</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-100">Retention</th>
+                <tr className="border-b border-[#1E1E1E] bg-[#141414]">
+                  <th className="text-left px-4 py-3 font-semibold text-white w-1/2">Data</th>
+                  <th className="text-left px-4 py-3 font-semibold text-white">Retention</th>
                 </tr>
               </thead>
               <tbody>
                 {RETENTION.map(({ item, retention }, i) => (
-                  <tr key={item} className={i % 2 === 0 ? 'bg-background' : 'bg-[#0f0f17]'}>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{item}</td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{retention}</td>
+                  <tr key={item} className={i % 2 === 0 ? 'bg-background' : 'bg-[#141414]'}>
+                    <td className="px-4 py-3 text-[#6B6B6B] text-xs">{item}</td>
+                    <td className="px-4 py-3 text-[#6B6B6B] text-xs">{retention}</td>
                   </tr>
                 ))}
               </tbody>
@@ -150,19 +150,19 @@ export default function SecurityPage() {
             <AlertTriangle className="w-5 h-5 text-yellow-400" />
             <h2 className="font-black text-lg">Responsible disclosure</h2>
           </div>
-          <p className="text-sm text-slate-500 leading-relaxed mb-3">
+          <p className="text-sm text-[#6B6B6B] leading-relaxed mb-3">
             If you discover a security vulnerability in Aiscern, please report it responsibly before disclosing publicly. We investigate all credible reports promptly.
           </p>
-          <p className="text-sm text-slate-500">
-            Contact: <a href="mailto:security@aiscern.com" className="text-blue-500 hover:underline">security@aiscern.com</a>
+          <p className="text-sm text-[#6B6B6B]">
+            Contact: <a href="mailto:security@aiscern.com" className="text-[#2BEE34] hover:underline">security@aiscern.com</a>
           </p>
         </section>
 
         {/* Links */}
         <div className="flex flex-wrap gap-4 justify-center text-sm">
-          <Link href="/privacy" className="text-blue-500 hover:underline">Privacy Policy</Link>
-          <Link href="/terms"   className="text-blue-500 hover:underline">Terms of Service</Link>
-          <Link href="/contact" className="text-blue-500 hover:underline">Contact Us</Link>
+          <Link href="/privacy" className="text-[#2BEE34] hover:underline">Privacy Policy</Link>
+          <Link href="/terms"   className="text-[#2BEE34] hover:underline">Terms of Service</Link>
+          <Link href="/contact" className="text-[#2BEE34] hover:underline">Contact Us</Link>
         </div>
       </main>
 

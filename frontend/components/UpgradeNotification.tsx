@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { Crown, X, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
@@ -21,26 +21,14 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
   const expires = notif.data?.expires_at
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/85 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
-    >
-      <motion.div
-        initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
-        transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-        className="relative w-full max-w-md bg-[#0f0f17] border border-blue-500/20 rounded-xl p-8 overflow-hidden"
-      >
+    <div>
+      <div>
         {/* Glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-secondary/5 pointer-events-none" />
 
         {/* Confetti dots */}
         {[...Array(12)].map((_,i) => (
-          <motion.div key={i}
-            className="absolute w-1.5 h-1.5 rounded-full"
-            style={{ background: ['#60a5fa','#60a5fa','#f59e0b','#34d399'][i%4], left:`${10+i*7}%`, top:`${5+i*3}%` }}
-            animate={{ y:[0,-20,0], opacity:[0,1,0] }}
-            transition={{ duration:1.5+i*0.1, repeat:Infinity, delay:i*0.12 }}
-          />
+          <div>
         ))}
 
         <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/[0.05] transition-colors">
@@ -49,13 +37,9 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
 
         {/* Badge */}
         <div className="flex justify-center mb-6">
-          <motion.div
-            animate={{ scale:[1,1.08,1], boxShadow:['0 0 0px #2563eb60','0 0 30px #2563eb60','0 0 0px #2563eb60'] }}
-            transition={{ duration:2, repeat:Infinity }}
-            className="w-20 h-20 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]"
-          >
+          <div>
             <Crown className="w-10 h-10 text-white" />
-          </motion.div>
+          </div>
         </div>
 
         <h2 className="text-2xl font-black text-white text-center mb-2">{notif.title}</h2>
@@ -93,8 +77,8 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
             Not now
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
 
@@ -129,8 +113,8 @@ export function UpgradeNotificationProvider() {
   }
 
   return (
-    <AnimatePresence>
+    
       {current && <UpgradeModal notif={current} onDismiss={dismiss} />}
-    </AnimatePresence>
+    
   )
 }

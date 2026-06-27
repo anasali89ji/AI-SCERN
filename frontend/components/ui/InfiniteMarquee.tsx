@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion } 
 
 interface MarqueeProps {
   children: React.ReactNode[]
@@ -32,22 +32,13 @@ export function InfiniteMarquee({
       onMouseEnter={() => pauseOnHover && setPaused(true)}
       onMouseLeave={() => pauseOnHover && setPaused(false)}
     >
-      <motion.div
-        className="flex"
-        style={{ gap }}
-        animate={{ x: paused ? undefined : [xFrom, xTo] }}
-        transition={{
-          duration,
-          ease: 'linear',
-          repeat: Infinity,
-        }}
-      >
+      <div>
         {[...children, ...children].map((child, i) => (
           <div key={i} className="flex-shrink-0">
             {child}
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   )
 }

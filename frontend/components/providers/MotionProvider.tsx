@@ -1,5 +1,5 @@
 'use client'
-import { LazyMotion, domAnimation, MotionConfig } from 'framer-motion'
+import { LazyMotion, domAnimation, MotionConfig } 
 import { type ReactNode } from 'react'
 
 /**

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
@@ -254,28 +254,28 @@ export default function BatchPage() {
     <>
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-100 mb-1 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-slate-700/10 flex items-center justify-center shrink-0">
-            <Layers className="w-6 h-6 text-slate-400" />
+            <Layers className="w-6 h-6 text-[#A3A3A3]" />
           </div>
           Batch Processing
         </h1>
-        <p className="text-slate-500 ml-14 text-sm">
+        <p className="text-[#6B6B6B] ml-14 text-sm">
           Analyze up to {MAX_FILES} files · PDF, images, audio, video, text · {CONCURRENCY} concurrent workers · Correlation detection · PDF export
         </p>
       </div>
 
       {/* Drop Zone */}
       <div {...getRootProps()} className={`card border-2 border-dashed cursor-pointer transition-all mb-5 py-8 flex flex-col items-center gap-3
-        ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.01]' : 'border-white/[0.08] hover:border-secondary/50'}`}>
+        ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.01]' : 'border-[#1E1E1E] hover:border-secondary/50'}`}>
         <input {...getInputProps()} />
         <div className="w-14 h-14 rounded-xl bg-slate-700/10 flex items-center justify-center">
-          <Upload className={`w-7 h-7 ${isDragActive ? 'text-slate-400' : 'text-slate-500'}`} />
+          <Upload className={`w-7 h-7 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
         </div>
         <div className="text-center">
-          <p className="font-semibold text-slate-100">{isDragActive ? 'Drop files here' : `Drop up to ${MAX_FILES} files`}</p>
-          <p className="text-sm text-slate-500 mt-1">Images · Audio · Video · Text (.txt)</p>
-          {files.length > 0 && <p className="text-xs text-slate-600 mt-1">{files.length}/{MAX_FILES} files added</p>}
+          <p className="font-semibold text-white">{isDragActive ? 'Drop files here' : `Drop up to ${MAX_FILES} files`}</p>
+          <p className="text-sm text-[#6B6B6B] mt-1">Images · Audio · Video · Text (.txt)</p>
+          {files.length > 0 && <p className="text-xs text-[#6B6B6B] mt-1">{files.length}/{MAX_FILES} files added</p>}
         </div>
       </div>
 
@@ -286,24 +286,23 @@ export default function BatchPage() {
             <div className="card mb-4">
               <div className="flex items-center justify-between text-sm mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-medium">
+                  <span className="text-[#A3A3A3] font-medium">
                     {running ? (paused ? 'Paused' : 'Processing…') : 'Complete'}
                   </span>
-                  <span className="text-slate-500">{completed + errored}/{files.length} files</span>
+                  <span className="text-[#6B6B6B]">{completed + errored}/{files.length} files</span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500">
+                <div className="flex items-center gap-3 text-xs text-[#6B6B6B]">
                   {(running || elapsed > 0) && (
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatElapsed(elapsed)}</span>
                   )}
-                  <span className="font-bold text-slate-100">{progress}%</span>
+                  <span className="font-bold text-white">{progress}%</span>
                 </div>
               </div>
               <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
-                <motion.div className="h-full bg-blue-500 rounded-full"
-                  animate={{ width: `${progress}%` }} transition={{ ease: 'easeOut' }} />
+                <div>
               </div>
               {completed > 0 && avgConf > 0 && (
-                <p className="text-xs text-slate-500 mt-2">Average confidence: {avgConf}%</p>
+                <p className="text-xs text-[#6B6B6B] mt-2">Average confidence: {avgConf}%</p>
               )}
             </div>
           )}
@@ -312,8 +311,8 @@ export default function BatchPage() {
           {(completed + errored) > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {displayName && completed > 0 && !running && (
-                <div className="col-span-2 sm:col-span-4 text-xs text-slate-500 mb-1">
-                  Hey <span className="text-slate-100 font-semibold">{displayName}</span> — batch scan complete.{' '}
+                <div className="col-span-2 sm:col-span-4 text-xs text-[#6B6B6B] mb-1">
+                  Hey <span className="text-white font-semibold">{displayName}</span> — batch scan complete.{' '}
                   {aiCount > 0
                     ? <span className="text-rose-400 font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
                     : <span className="text-emerald-400 font-medium">No AI-generated content detected</span>}
@@ -321,14 +320,14 @@ export default function BatchPage() {
                 </div>
               )}
               {[
-                { label: 'Completed', value: completed, color: 'text-slate-100' },
+                { label: 'Completed', value: completed, color: 'text-white' },
                 { label: 'AI Detected', value: aiCount, color: 'text-rose-400-500' },
                 { label: 'Human/Real', value: humanCount, color: 'text-emerald-400-400' },
-                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400-500' : 'text-slate-500' },
+                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400-500' : 'text-[#6B6B6B]' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
                   <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+                  <div className="text-xs text-[#6B6B6B] mt-0.5">{label}</div>
                 </div>
               ))}
             </div>
@@ -380,7 +379,7 @@ export default function BatchPage() {
               <AlertTriangle className="w-5 h-5 text-rose-400-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-rose-400">Correlated AI Pattern Detected</p>
-                <p className="text-sm text-slate-500 mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
+                <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
               </div>
             </div>
           )}
@@ -395,9 +394,9 @@ export default function BatchPage() {
                 { key: 'error',     label: 'Errors',    count: errored },
               ] as const).filter(t => t.key === 'all' || t.count > 0).map(t => (
                 <button key={t.key} onClick={() => setFilter(t.key)}
-                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-blue-600 text-white' : 'btn-ghost'}`}>
+                  className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-[#2BEE34] text-white' : 'btn-ghost'}`}>
                   {t.label}
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-[#141420] text-slate-500'}`}>{t.count}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-[#141420] text-[#6B6B6B]'}`}>{t.count}</span>
                 </button>
               ))}
             </div>
@@ -405,22 +404,14 @@ export default function BatchPage() {
 
           {/* File list */}
           <div className="space-y-2">
-            <AnimatePresence initial={false}>
+            
               {filteredFiles.map((bf, i) => (
-                <motion.div key={bf.id}
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                  transition={{ delay: Math.min(i * 0.02, 0.2) }}
-                  className={`card flex items-center gap-3 py-3 px-4 transition-all ${
-                    bf.status === 'processing' ? 'border-blue-500/40 bg-blue-600/3' :
-                    bf.verdict === 'AI' ? 'border-rose-500/15' :
-                    bf.verdict === 'HUMAN' ? 'border-emerald-500/15' :
-                    bf.status === 'error' ? 'border-amber-500/20 bg-amber-500-500/3' : ''
-                  }`}>
+                <div>
 
                   {/* Status icon */}
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-white/[0.08]" />}
-                    {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
+                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-[#1E1E1E]" />}
+                    {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-[#2BEE34] animate-spin" />}
                     {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-rose-400" />}
                     {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-emerald-400" />}
                     {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-amber-400" />}
@@ -429,15 +420,15 @@ export default function BatchPage() {
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-100 truncate font-medium min-w-0">{bf.file.name}</p>
+                    <p className="text-sm text-white truncate font-medium min-w-0">{bf.file.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-slate-500">{formatFileSize(bf.file.size)}</span>
-                      <span className="text-xs text-slate-600 uppercase">{detectType(bf.file)}</span>
+                      <span className="text-xs text-[#6B6B6B]">{formatFileSize(bf.file.size)}</span>
+                      <span className="text-xs text-[#6B6B6B] uppercase">{detectType(bf.file)}</span>
                       {bf.status === 'error' && bf.error && (
                         <span className="text-xs text-amber-400-500 truncate">{bf.error}</span>
                       )}
                       {bf.processingTime && (
-                        <span className="text-xs text-slate-600">{bf.processingTime}ms</span>
+                        <span className="text-xs text-[#6B6B6B]">{bf.processingTime}ms</span>
                       )}
                     </div>
                   </div>
@@ -448,30 +439,30 @@ export default function BatchPage() {
                       <span className={bf.verdict === 'AI' ? 'badge-ai' : bf.verdict === 'HUMAN' ? 'badge-human' : 'badge-uncertain'}>
                         {bf.verdict}
                       </span>
-                      <span className="text-sm font-bold text-slate-500 w-10 text-right tabular-nums">{normalizeConf(bf.confidence)}%</span>
+                      <span className="text-sm font-bold text-[#6B6B6B] w-10 text-right tabular-nums">{normalizeConf(bf.confidence)}%</span>
                     </div>
                   )}
 
                   {/* Remove */}
                   {bf.status === 'queued' && (
                     <button onClick={() => removeFile(bf.id)}
-                      className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500-500/10 transition-colors shrink-0">
+                      className="text-[#6B6B6B] hover:text-rose-400 p-1 rounded hover:bg-rose-500-500/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   )}
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
+            
           </div>
         </>
       )}
 
       {files.length === 0 && (
         <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <BarChart3 className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-          <h3 className="font-semibold text-slate-100 mb-2">No files added yet</h3>
-          <p className="text-slate-500 text-sm max-w-xs">Drop images, audio, video, or text files above to start batch analysis</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500 w-full max-w-xs">
+          <BarChart3 className="w-12 h-12 text-[#6B6B6B] mx-auto mb-4" />
+          <h3 className="font-semibold text-white mb-2">No files added yet</h3>
+          <p className="text-[#6B6B6B] text-sm max-w-xs">Drop images, audio, video, or text files above to start batch analysis</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full max-w-xs">
             {['Up to 20 files', '5 concurrent workers', 'Auto-saves to history', 'CSV + PDF export'].map(f => (
               <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 shrink-0" />{f}

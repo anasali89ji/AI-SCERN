@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion } 
 import {
   Newspaper, GraduationCap, Users, Scale, ShieldCheck,
   HeartPulse, Megaphone, Microscope, Pen, ChevronRight,
@@ -121,13 +121,7 @@ export default function WhoNeedsSection() {
   return (
     <section className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 border-t border-white/[0.06]">
       <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-14 sm:mb-18"
-        >
+        <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
             Built For
           </p>
@@ -137,17 +131,11 @@ export default function WhoNeedsSection() {
           <p className="text-slate-400 text-base max-w-xl mx-auto leading-relaxed">
             Nine professional verticals. One detection platform.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.05 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
+        <div>
           {WHO_NEEDS.map((card) => (
-            <motion.div key={card.role} variants={item}>
+            <div>
               <Link href={card.href}
                 className="block h-full p-6 rounded-[14px] border border-white/[0.08]
                            bg-[#0f0f17] hover:border-white/[0.13] hover:-translate-y-px
@@ -183,9 +171,9 @@ export default function WhoNeedsSection() {
                   </span>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

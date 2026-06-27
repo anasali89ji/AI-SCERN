@@ -82,42 +82,42 @@ const RELEASES: {
 ]
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
-  new:         { label: 'New',         style: 'bg-blue-500/10 text-blue-400 border border-blue-500/25' },
+  new:         { label: 'New',         style: 'bg-[#2BEE34]/10 text-[#2BEE34] border border-blue-500/25' },
   improvement: { label: 'Improved',    style: 'bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25' },
   fix:         { label: 'Fix',         style: 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/25' },
-  infra:       { label: 'Infra',       style: 'bg-surface text-slate-500 border border-white/[0.08]' },
+  infra:       { label: 'Infra',       style: 'bg-surface text-[#6B6B6B] border border-[#1E1E1E]' },
 }
 
 export default function ChangelogPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] text-slate-100">
+    <div className="min-h-screen bg-[#08080d] text-white">
       <SiteNav />
 
       <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
 
         <div className="mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-semibold mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/10 text-[#2BEE34] text-xs font-semibold mb-5">
             <Tag className="w-3.5 h-3.5" />
             Version History
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4">
-            <span className="gradient-text">Changelog</span>
+            <span className="text-[#2BEE34]">Changelog</span>
           </h1>
-          <p className="text-slate-500 text-base">
+          <p className="text-[#6B6B6B] text-base">
             A chronological record of what has shipped. Aiscern is actively maintained — this page updates with every release.
           </p>
         </div>
 
         <div className="space-y-10">
           {RELEASES.map((release, i) => (
-            <div key={release.version} className="relative pl-6 border-l-2 border-white/[0.08]">
+            <div key={release.version} className="relative pl-6 border-l-2 border-[#1E1E1E]">
               {/* Version dot */}
-              <div className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-blue-600" />
+              <div className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-[#2BEE34]" />
 
               <div className="mb-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-lg font-black text-slate-100">{release.version}</span>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <span className="text-lg font-black text-white">{release.version}</span>
+                  <div className="flex items-center gap-1 text-xs text-[#6B6B6B]">
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>
                   {i === 0 && (
@@ -126,7 +126,7 @@ export default function ChangelogPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-500 mt-1">{release.summary}</p>
+                <p className="text-sm text-[#6B6B6B] mt-1">{release.summary}</p>
               </div>
 
               <ul className="space-y-2">
@@ -137,7 +137,7 @@ export default function ChangelogPage() {
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${cfg.style}`}>
                         {cfg.label}
                       </span>
-                      <span className="text-sm text-slate-400 leading-relaxed">{c.text}</span>
+                      <span className="text-sm text-[#A3A3A3] leading-relaxed">{c.text}</span>
                     </li>
                   )
                 })}
@@ -147,11 +147,11 @@ export default function ChangelogPage() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/[0.06] text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B6B6B]">
             Found a bug or want to suggest a feature?{' '}
-            <Link href="/contact" className="text-blue-500 hover:underline">Contact us</Link>
+            <Link href="/contact" className="text-[#2BEE34] hover:underline">Contact us</Link>
             {' '}or check the{' '}
-            <Link href="/roadmap" className="text-blue-500 hover:underline">roadmap</Link>.
+            <Link href="/roadmap" className="text-[#2BEE34] hover:underline">roadmap</Link>.
           </p>
         </div>
 

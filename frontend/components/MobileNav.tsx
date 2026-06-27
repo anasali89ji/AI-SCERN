@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } 
 import {
   LayoutDashboard, Image as ImageIcon, FileText, Clock,
   MoreHorizontal, Video, Music, Layers, MessageSquare,
@@ -36,21 +36,12 @@ export function MobileNav() {
 
   return (
     <>
-      <AnimatePresence>
+      
         {moreOpen && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="lg:hidden fixed inset-0 bg-black/70 z-[55]"
-              onClick={() => setMoreOpen(false)}
+            <div> setMoreOpen(false)}
             />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-[#0a0a12] border-t border-white/[0.08] rounded-t-3xl"
-              style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
-            >
+            <div>
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
@@ -75,10 +66,10 @@ export function MobileNav() {
                   })}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
+      
 
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-white/[0.06]"

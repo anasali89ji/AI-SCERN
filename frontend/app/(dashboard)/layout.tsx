@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import dynamic from 'next/dynamic'
 import {
   LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe,
@@ -308,34 +308,20 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       </button>
 
       {/* Desktop dropdown */}
-      <AnimatePresence>
+      
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ type: 'tween', duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
-            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-[#0f0f17] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
-          >
+          <div>
             {menuContent}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      
 
       {/* Mobile full-screen bottom sheet */}
-      <AnimatePresence>
+      
         {open && (
           <div className="sm:hidden fixed inset-0 z-[200]" onClick={() => setOpen(false)}>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/70"
-            />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute bottom-0 left-0 right-0 bg-[#0f0f17] rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            <div>
+            <div> e.stopPropagation()}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
@@ -350,10 +336,10 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
               </div>
               {/* Space above MobileNav: 4rem (nav) + safe area */}
               <div style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }} />
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      
     </div>
   )
 }
@@ -402,12 +388,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </motion.aside>
 
         {/* Mobile sidebar drawer */}
-        <AnimatePresence>
+        
           {mobileOpen && (
             <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
+              <div> setMobileOpen(false)} />
               <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
                 className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-[#0f0f17] border-r border-white/[0.08] z-50 flex flex-col">
@@ -421,7 +405,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </motion.aside>
             </>
           )}
-        </AnimatePresence>
+        
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-14 sm:h-16 2xl:h-18 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-[#0f0f17] flex-shrink-0 sticky top-0 z-30">

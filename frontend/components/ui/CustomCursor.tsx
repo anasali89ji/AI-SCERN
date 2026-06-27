@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { motion, useMotionValue, useSpring } 
 
 export function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false)
@@ -49,46 +49,13 @@ export function CustomCursor() {
   return (
     <>
       {/* Outer ring */}
-      <motion.div
-        className="fixed pointer-events-none z-[9999] hidden lg:block"
-        style={{
-          x: springX,
-          y: springY,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-      >
-        <motion.div
-          className="rounded-full border border-blue-500/40"
-          animate={{
-            width: isHovering ? 40 : 24,
-            height: isHovering ? 40 : 24,
-            opacity: isHovering ? 0.6 : 0.3,
-          }}
-          transition={{ duration: 0.2 }}
-          style={{ mixBlendMode: 'difference' }}
-        />
-      </motion.div>
+      <div>
+        <div>
+      </div>
       {/* Inner dot */}
-      <motion.div
-        className="fixed pointer-events-none z-[9999] hidden lg:block"
-        style={{
-          x: cursorX,
-          y: cursorY,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-      >
-        <motion.div
-          className="rounded-full bg-blue-600"
-          animate={{
-            width: isHovering ? 6 : 6,
-            height: isHovering ? 6 : 6,
-            opacity: isHovering ? 0.9 : 0.7,
-          }}
-          transition={{ duration: 0.1 }}
-        />
-      </motion.div>
+      <div>
+        <div>
+      </div>
     </>
   )
 }

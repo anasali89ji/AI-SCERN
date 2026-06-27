@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { X, Star, CheckCircle, EyeOff, User } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import Link from 'next/link'
@@ -82,24 +82,14 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
   }
 
   return (
-    <AnimatePresence>
+    
       {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        >
+        <div>
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
           {/* Modal — slides up on mobile, scales in on desktop */}
-          <motion.div
-            className="relative z-10 w-full sm:max-w-lg sm:rounded-xl rounded-t-xl border border-white/[0.08] bg-[#0f0f17]  flex flex-col"
-            style={{ maxHeight: '92dvh' }}
-            initial={{ y: '100%', scale: 0.98 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: '100%', scale: 0.98 }}
-            transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-          >
+          <div>
             {/* Top accent */}
             <div className="h-1 w-full bg-blue-600 rounded-t-xl flex-shrink-0" />
 
@@ -140,10 +130,9 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 </div>
               ) : success ? (
                 <div className="text-center py-8">
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="w-16 h-16 rounded-full bg-emerald-500-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                  <div>
                     <CheckCircle className="w-8 h-8 text-emerald-400" />
-                  </motion.div>
+                  </div>
                   <h2 className="text-xl font-bold text-slate-100 mb-2">Review submitted!</h2>
                   <p className="text-sm text-slate-500">Thank you for helping the community.</p>
                 </div>
@@ -259,9 +248,9 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 </div>
               )}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    
   )
 }

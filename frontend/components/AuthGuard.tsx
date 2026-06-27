@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import {  } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, Lock, ArrowRight } from 'lucide-react'
@@ -53,13 +53,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       <div className="absolute inset-0 bg-[#08080d]" />
       
 
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-          className="relative w-full max-w-md z-10"
-        >
+      
+        <div>
           <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
           <div className="bg-surface border border-white/10 rounded-b-xl  p-8 space-y-6">
 
@@ -102,8 +97,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               Free tier available · No credit card required
             </p>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      
     </div>
   )
 }

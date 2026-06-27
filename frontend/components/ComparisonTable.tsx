@@ -1,6 +1,6 @@
 'use client'
 import { Check, X, Minus } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion } 
 
 const FEATURES = [
   { name: 'Text AI Detection',           aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },
@@ -38,8 +38,7 @@ export default function ComparisonTable() {
   return (
     <section className="py-20 px-4 sm:px-6 2xl:px-10">
       <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto space-y-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="text-center space-y-3">
+        <div>
           <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-widest">
             Competitive Edge
           </div>
@@ -49,10 +48,9 @@ export default function ComparisonTable() {
           <p className="text-slate-500 max-w-xl mx-auto">
             While others focus on text alone, Aiscern covers text, images, audio, and video — all in one platform.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="overflow-x-auto rounded-xl border border-white/[0.08]">
+        <div>
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.08]">
@@ -82,7 +80,7 @@ export default function ComparisonTable() {
               ))}
             </tbody>
           </table>
-        </motion.div>
+        </div>
 
         <p className="text-center text-xs text-slate-500">
           * Comparison based on publicly available pricing and features as of 2026. Partial = limited functionality.

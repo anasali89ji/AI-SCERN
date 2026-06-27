@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
@@ -37,11 +37,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
     <div className="select-none" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
 
       {/* "Detect" — static with gradient */}
-      <motion.div
-        initial={{ opacity: 0, y: reduced ? 0 : 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.55, ease: [0.22,1,0.36,1] }}
-      >
+      <div>
         <h1
           className="font-black leading-none tracking-tight
                      text-[3rem] xs:text-[3.5rem] sm:text-[4.5rem] md:text-[5.5rem] lg:text-[6.5rem]"
@@ -54,15 +50,10 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         >
           Detect
         </h1>
-      </motion.div>
+      </div>
 
       {/* Rotating word row */}
-      <motion.div
-        className="mt-1 sm:mt-2 flex items-baseline justify-center gap-x-2 sm:gap-x-3"
-        initial={{ opacity: 0, y: reduced ? 0 : 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.55, delay: 0.12, ease: [0.22,1,0.36,1] }}
-      >
+      <div>
         {/* Animated word slot — sized for longest word at each breakpoint */}
         <div
           className="relative overflow-hidden
@@ -74,33 +65,11 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           aria-live="polite"
           aria-atomic="true"
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={idx}
-              initial={reduced ? {} : {
-                opacity: 0,
-                y: 18,
-                filter: 'blur(4px)',
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                filter: 'blur(0px)',
-              }}
-              exit={reduced ? {} : {
-                opacity: 0,
-                y: -14,
-                filter: 'blur(3px)',
-              }}
-              transition={reduced ? { duration: 0 } : { ...spring, duration: dur }}
-              className="absolute inset-0 flex items-center justify-center
-                         font-black leading-none tracking-tight
-                         text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
-              style={{ color: style.color }}
-            >
+          
+            <div>
               {word}
-            </motion.span>
-          </AnimatePresence>
+            </div>
+          
         </div>
 
         <span
@@ -109,17 +78,10 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         >
           with AI
         </span>
-      </motion.div>
+      </div>
 
       {/* Tab dots */}
-      <motion.div
-        className="mt-4 sm:mt-5 flex items-center justify-center gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: reduced ? 0 : 0.4, delay: 0.28 }}
-        role="tablist"
-        aria-label="Select detection type"
-      >
+      <div>
         {ROTATING_WORDS.map((w, i) => {
           const active = i === idx
           const ws = WORD_STYLES[w]
@@ -135,20 +97,11 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
                          min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-full"
             >
-              <motion.span
-                className="block rounded-full"
-                animate={{
-                  width:   active ? 20 : 6,
-                  height:  active ? 4  : 4,
-                  opacity: active ? 1  : 0.35,
-                  backgroundColor: active ? ws.color : '#64748b',
-                }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              />
+              <div>
             </button>
           )
         })}
-      </motion.div>
+      </div>
     </div>
   )
 }

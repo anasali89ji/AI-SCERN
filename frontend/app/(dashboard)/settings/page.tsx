@@ -1,7 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion } 
 import {
   Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
   Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
@@ -20,9 +20,8 @@ import { useClerk } from '@clerk/nextjs'
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button onClick={onChange} disabled={disabled}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-blue-600' : 'bg-border'}`}>
-      <motion.div animate={{ x: checked ? 22 : 2 }} transition={{ type:'spring', stiffness:500, damping:30 }}
-        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm" />
+      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-[#2BEE34]' : 'bg-border'}`}>
+      <div>
     </button>
   )
 }
@@ -34,15 +33,15 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
   return (
     <div className="flex items-center justify-between py-4 border-b border-white/[0.06] last:border-0 gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon className="w-4 h-4 text-blue-400" />
+        <div className="w-8 h-8 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon className="w-4 h-4 text-[#2BEE34]" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-slate-100">{label}</span>
+            <span className="text-sm font-semibold text-white">{label}</span>
             {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500-500/15 text-amber-400-400 border border-amber-500/20 font-bold">{badge}</span>}
           </div>
-          {description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{description}</p>}
+          {description && <p className="text-xs text-[#6B6B6B] mt-0.5 leading-relaxed">{description}</p>}
         </div>
       </div>
       <div className="flex-shrink-0">{action}</div>
@@ -53,13 +52,12 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 // ── Section ───────────────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
-    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="bg-surface border border-white/[0.08] rounded-xl p-4 sm:p-6">
-      <h2 className="font-bold text-slate-100 flex items-center gap-2 mb-1 pb-3 border-b border-white/[0.06]">
-        <Icon className="w-4 h-4 text-blue-400" /> {title}
+    <div>
+      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-white/[0.06]">
+        <Icon className="w-4 h-4 text-[#2BEE34]" /> {title}
       </h2>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
@@ -180,7 +178,7 @@ export default function SettingsPage() {
 
   if (loading) return (
     <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+      <Loader2 className="w-6 h-6 animate-spin text-[#2BEE34]" />
     </div>
   )
 
@@ -188,8 +186,8 @@ export default function SettingsPage() {
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-2xl 2xl:max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-slate-100">Settings</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Customize your Aiscern experience</p>
+          <h1 className="text-xl font-black text-white">Settings</h1>
+          <p className="text-sm text-[#6B6B6B] mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all"
@@ -218,7 +216,7 @@ export default function SettingsPage() {
         <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
               {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
@@ -231,7 +229,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-white/[0.08] text-slate-500 hover:text-slate-400'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-blue-500/40 text-[#2BEE34]' : 'border-[#1E1E1E] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -241,7 +239,7 @@ export default function SettingsPage() {
         <SettingRow icon={Languages} label="Language" description="Interface display language"
           action={
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
               <option value="en">English</option>
               <option value="ur">اردو (Urdu)</option>
               <option value="ar">العربية (Arabic)</option>
@@ -261,7 +259,7 @@ export default function SettingsPage() {
         <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-[#141420] border border-white/[0.08] rounded-lg px-2 py-1.5 text-slate-100 focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>
@@ -274,20 +272,20 @@ export default function SettingsPage() {
       <Section title="Security & API" icon={Lock}>
         <SettingRow icon={Smartphone} label="Manage 2FA & password"  description="Update security settings via Clerk"
           action={
-            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-blue-400 font-semibold hover:underline">
+            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-[#2BEE34] font-semibold hover:underline">
               Manage <ChevronRight className="w-3 h-3" />
             </button>
           } />
         <SettingRow icon={Key} label="API key (beta)" description="For programmatic access — Team/Enterprise only"
           action={
             <div className="flex items-center gap-2">
-              <code className="text-[10px] text-slate-500 font-mono">
+              <code className="text-[10px] text-[#6B6B6B] font-mono">
                 {showKey ? `aiscern_${user?.uid?.slice(0,16)}...` : '••••••••••••••••'}
               </code>
-              <button onClick={() => setShowKey(v => !v)} className="text-slate-500 hover:text-slate-100 transition-colors">
+              <button onClick={() => setShowKey(v => !v)} className="text-[#6B6B6B] hover:text-white transition-colors">
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
-              <button onClick={copyApiKey} className="text-slate-500 hover:text-slate-100 transition-colors">
+              <button onClick={copyApiKey} className="text-[#6B6B6B] hover:text-white transition-colors">
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
@@ -298,7 +296,7 @@ export default function SettingsPage() {
       <Section title="Data & Storage" icon={Database}>
         <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
           action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/[0.08] text-slate-400 hover:bg-[#141420] hover:text-slate-100 transition-colors">
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#1E1E1E] text-[#A3A3A3] hover:bg-[#141420] hover:text-white transition-colors">
               <Download className="w-3 h-3" /> Export
             </button>
           } />
@@ -315,15 +313,15 @@ export default function SettingsPage() {
       </Section>
 
       {/* Danger zone */}
-      <motion.div className="bg-rose-500-950/20 border border-rose-500/20 rounded-xl p-4 sm:p-6">
+      <div>
         <h2 className="font-bold text-rose-400-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-100">Delete account</p>
-              <p className="text-xs text-slate-500 mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
+              <p className="text-sm font-semibold text-white">Delete account</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>
             <button onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-rose-500-500/10 transition-colors">
@@ -335,7 +333,7 @@ export default function SettingsPage() {
             <p className="text-sm text-rose-400-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-xl border border-white/[0.08] text-xs text-slate-500 hover:text-slate-100">
+                className="flex-1 py-2 rounded-xl border border-[#1E1E1E] text-xs text-[#6B6B6B] hover:text-white">
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
@@ -345,7 +343,7 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
 
       <ScrollToTop />
     </div>

@@ -85,9 +85,9 @@ const SECTIONS = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string }> = {
-  primary: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
-  blue:    { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
-  cyan:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400'    },
+  primary: { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]' },
+  blue:    { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]' },
+  cyan:    { bg: 'bg-[#2BEE34]/10',    border: 'border-[#2BEE34]/20',    icon: 'text-[#2BEE34]'    },
   emerald: { bg: 'bg-emerald-500-500/8', border: 'border-emerald-500/20', icon: 'text-emerald-400-400' },
   amber:   { bg: 'bg-amber-500-500/8',   border: 'border-amber-500/20',   icon: 'text-amber-400-500'   },
   rose:    { bg: 'bg-rose-500-500/8',    border: 'border-rose-500/20',    icon: 'text-rose-400-500'    },
@@ -106,10 +106,10 @@ export default function TransparencyPage() {
               <Shield className="w-3.5 h-3.5" />
               Full Transparency
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-100 mb-4 leading-tight">
-              How We Handle<br /><span className="gradient-text">Your Data</span>
+            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+              How We Handle<br /><span className="text-[#2BEE34]">Your Data</span>
             </h1>
-            <p className="text-lg text-slate-400 leading-relaxed">
+            <p className="text-lg text-[#A3A3A3] leading-relaxed">
               We believe users deserve to know exactly how their content is processed. No vague policies — just a clear, direct explanation of what happens to your data.
             </p>
           </div>
@@ -127,7 +127,7 @@ export default function TransparencyPage() {
               ].map((badge, i) => {
                 const BIcon = badge.icon
                 return (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0f0f17] border border-white/[0.08] text-sm text-slate-400">
+                  <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#141414] border border-[#1E1E1E] text-sm text-[#A3A3A3]">
                     <BIcon className="w-4 h-4 text-emerald-400" />
                     {badge.label}
                   </div>
@@ -144,16 +144,16 @@ export default function TransparencyPage() {
               const SIcon = section.icon
               const c = colorMap[section.color]
               return (
-                <div key={section.title} className="card border border-white/[0.08] rounded-xl p-6">
+                <div key={section.title} className="card border border-[#1E1E1E] rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <SIcon className={`w-5 h-5 ${c.icon}`} />
                     </div>
-                    <h2 className="text-lg font-bold text-slate-100">{section.title}</h2>
+                    <h2 className="text-lg font-bold text-white">{section.title}</h2>
                   </div>
                   <ul className="space-y-3">
                     {section.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-slate-400 leading-relaxed">
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-[#A3A3A3] leading-relaxed">
                         <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />
                         {item}
                       </li>
@@ -164,9 +164,9 @@ export default function TransparencyPage() {
             })}
 
             {/* Contact */}
-            <div className="text-center p-6 rounded-xl border border-blue-500/20 bg-blue-500/5">
-              <h2 className="text-lg font-bold text-slate-100 mb-2">Questions about your data?</h2>
-              <p className="text-sm text-slate-500 mb-4">Contact our privacy team or submit a GDPR data request.</p>
+            <div className="text-center p-6 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5">
+              <h2 className="text-lg font-bold text-white mb-2">Questions about your data?</h2>
+              <p className="text-sm text-[#6B6B6B] mb-4">Contact our privacy team or submit a GDPR data request.</p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/contact" className="btn-primary text-sm">Contact Privacy Team</Link>
                 <Link href="/privacy" className="btn-secondary text-sm">Full Privacy Policy</Link>

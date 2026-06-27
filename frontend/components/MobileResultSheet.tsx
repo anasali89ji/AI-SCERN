@@ -12,7 +12,7 @@
  */
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 
 interface MobileResultSheetProps {
   isOpen:   boolean
@@ -33,31 +33,14 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
   }, [isOpen])
 
   return (
-    <AnimatePresence>
+    
       {isOpen && (
         <>
           {/* Backdrop — mobile only */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 bg-black/70 z-[70]"
-            onClick={onClose}
-          />
+          <div>
 
           {/* Sheet */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="lg:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-white/[0.08] overflow-hidden"
-            style={{
-              maxHeight: '90dvh',
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            }}
-          >
+          <div>
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-white/20" />
@@ -79,9 +62,9 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             <div className="overflow-y-auto p-4" style={{ maxHeight: 'calc(90dvh - 80px)' }}>
               {children}
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    
   )
 }

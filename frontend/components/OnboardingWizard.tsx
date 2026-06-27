@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import { useAuth } from '@/components/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -73,17 +73,9 @@ export function OnboardingWizard() {
   const stepIdx = STEPS.indexOf(step)
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-        className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4"
-      >
-        <motion.div
-          key={step}
-          initial={{ opacity:0, y:16, scale:0.97 }} animate={{ opacity:1, y:0, scale:1 }}
-          exit={{ opacity:0, y:-12 }} transition={{ duration:0.25 }}
-          className="w-full max-w-lg bg-[#07070d] border border-[#1e1e35] rounded-xl p-8  relative overflow-hidden"
-        >
+    
+      <div>
+        <div>
           {/* Top gradient */}
           <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#2563eb)` }} />
 
@@ -205,13 +197,9 @@ export function OnboardingWizard() {
           {/* STEP: ready */}
           {step === 'ready' && (
             <div className="text-center space-y-5">
-              <motion.div
-                animate={{ scale:[1,1.05,1] }} transition={{ duration:1.5, repeat:Infinity }}
-                className="w-16 h-16 rounded-xl mx-auto flex items-center justify-center"
-                style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}
-              >
+              <div>
                 <Zap className="w-8 h-8 text-white" />
-              </motion.div>
+              </div>
               <h2 className="text-2xl font-black text-white">You're all set!</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 Your account is ready. Start with a free scan — no upload required for text detection.
@@ -238,8 +226,8 @@ export function OnboardingWizard() {
               </button>
             </div>
           )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        </div>
+      </div>
+    
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } 
 import {
   Globe, Search, AlertTriangle, CheckCircle, HelpCircle,
   Loader2, ExternalLink, Link2, ChevronDown, Database, Info,
@@ -188,15 +188,14 @@ export default function ScraperPage() {
         </div>
 
         {/* Error */}
-        <AnimatePresence>
+        
           {error && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="mb-5 p-4 rounded-lg bg-rose-500-500/10 border border-rose-500/30 flex items-start gap-3">
+            <div>
               <AlertTriangle className="w-4 h-4 text-rose-400-400 shrink-0 mt-0.5" />
               <p className="text-sm text-rose-400-300">{error}</p>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
 
         {/* Loading skeleton — mirrors result layout */}
         {loading && (
@@ -240,9 +239,9 @@ export default function ScraperPage() {
         )}
 
         {/* Results */}
-        <AnimatePresence>
+        
           {result && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div>
 
               {/* Screenshot + Score row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -488,9 +487,9 @@ export default function ScraperPage() {
                 </div>
               </details>
 
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
 
         {/* Empty state */}
         {!result && !loading && !error && (

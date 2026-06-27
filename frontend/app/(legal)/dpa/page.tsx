@@ -14,13 +14,13 @@ const VERSION = '1.0'
 export default function DpaPage() {
   return (
     <div className="min-h-screen bg-[#08080d] flex flex-col">
-      <header className="border-b border-white/[0.08] bg-[#0f0f17] sticky top-0 z-10">
+      <header className="border-b border-[#1E1E1E] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
-            <span className="font-black gradient-text">Aiscern</span>
+            <span className="font-black text-[#2BEE34]">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-100 transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -30,12 +30,12 @@ export default function DpaPage() {
         <div className="mb-10">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl font-black text-slate-100 mb-3">Data Processing Agreement</h1>
-              <p className="text-slate-500">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
+              <h1 className="text-4xl font-black text-white mb-3">Data Processing Agreement</h1>
+              <p className="text-[#6B6B6B]">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
             </div>
             <a
               href="mailto:privacy@aiscern.com?subject=DPA Request&body=Please send me the signed DPA for Aiscern."
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#2BEE34] px-4 py-2 text-sm font-medium text-white hover:bg-[#1A8F1F] transition-colors"
             >
               <Download className="h-4 w-4" />
               Request Signed DPA
@@ -55,7 +55,7 @@ export default function DpaPage() {
               and the customer organisation using Aiscern services (&quot;Data Controller&quot; or &quot;you&quot;).
             </p>
             <p>
-              This DPA supplements the <Link href="/terms" className="text-blue-500 hover:underline">Terms of Service</Link> and
+              This DPA supplements the <Link href="/terms" className="text-[#2BEE34] hover:underline">Terms of Service</Link> and
               governs the processing of personal data that the Data Controller submits to Aiscern for AI content detection.
             </p>
             <p>This DPA applies where the processing of personal data is subject to:</p>
@@ -116,17 +116,17 @@ export default function DpaPage() {
 
           <Section title="5. Sub-processors (Annex A)">
             <p>Aiscern engages the following sub-processors. By accepting this DPA you authorise their use:</p>
-            <div className="overflow-x-auto rounded-xl border border-white/[0.08] mt-3">
+            <div className="overflow-x-auto rounded-xl border border-[#1E1E1E] mt-3">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.08] bg-muted/40 text-xs text-slate-500 uppercase tracking-wide">
+                  <tr className="border-b border-[#1E1E1E] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
                     <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
                     <th className="px-4 py-3 text-left font-medium">Purpose</th>
                     <th className="px-4 py-3 text-left font-medium">Data Location</th>
                     <th className="px-4 py-3 text-left font-medium">Transfer Mechanism</th>
                   </tr>
                 </thead>
-                <tbody className="text-slate-400">
+                <tbody className="text-[#A3A3A3]">
                   {[
                     ['Clerk (clerk.com)',           'Authentication & identity',              'US (AWS)',         'SCC'],
                     ['Supabase (supabase.com)',      'Database & API',                        'EU / US (AWS)',    'SCC'],
@@ -136,8 +136,8 @@ export default function DpaPage() {
                     ['Hugging Face (huggingface.co)','AI model inference (text/audio)',       'US (AWS)',         'SCC'],
                     ['Upstash (upstash.com)',        'Rate limiting (hashed IPs only)',       'US / EU',          'SCC'],
                   ].map(([name, purpose, location, mechanism]) => (
-                    <tr key={name} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium text-slate-100">{name}</td>
+                    <tr key={name} className="border-b border-[#1E1E1E] last:border-0 hover:bg-muted/20">
+                      <td className="px-4 py-3 font-medium text-white">{name}</td>
                       <td className="px-4 py-3">{purpose}</td>
                       <td className="px-4 py-3">{location}</td>
                       <td className="px-4 py-3">{mechanism}</td>
@@ -146,7 +146,7 @@ export default function DpaPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs text-[#6B6B6B]">
               SCC = Standard Contractual Clauses (EU Commission Decision 2021/914). Copies available on request.
               We will notify you 30 days before adding new sub-processors.
             </p>
@@ -181,7 +181,7 @@ export default function DpaPage() {
               <ul>
                 <li>Security incidents logged and triaged within 24 hours</li>
                 <li>Data breaches reported to affected customers within 72 hours (GDPR Article 33)</li>
-                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-blue-500 hover:underline">security.txt</a></li>
+                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-[#2BEE34] hover:underline">security.txt</a></li>
               </ul>
             </SubSection>
           </Section>
@@ -194,7 +194,7 @@ export default function DpaPage() {
             </p>
             <p>
               Copies of applicable SCCs are available upon written request to{' '}
-              <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>.
+              <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -204,7 +204,7 @@ export default function DpaPage() {
               a written request. This includes access, rectification, erasure, portability, restriction, and objection requests.
             </p>
             <p>
-              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a>
+              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>
             </p>
           </Section>
 
@@ -233,7 +233,7 @@ export default function DpaPage() {
             <p>
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
               Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:privacy@aiscern.com" className="text-blue-500 hover:underline">privacy@aiscern.com</a><br />
+              Email: <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a><br />
               Subject: &quot;DPA Request — [Your Organisation Name]&quot;
             </p>
           </Section>
@@ -248,8 +248,8 @@ export default function DpaPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-slate-100 mb-4 pb-2 border-b border-white/[0.08]">{title}</h2>
-      <div className="space-y-3 text-slate-400 text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#1E1E1E]">{title}</h2>
+      <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
@@ -257,8 +257,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <h3 className="text-base font-semibold text-slate-100 mb-2">{title}</h3>
-      <div className="text-slate-400 text-sm leading-relaxed">{children}</div>
+      <h3 className="text-base font-semibold text-white mb-2">{title}</h3>
+      <div className="text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </div>
   )
 }

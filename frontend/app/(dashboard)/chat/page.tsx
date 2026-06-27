@@ -67,7 +67,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
     )
   }
   return (
-    <div className={`${cls} bg-blue-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
+    <div className={`${cls} bg-[#2BEE34] flex items-center justify-center shrink-0 mt-0.5 font-bold text-white`}>
       {initials}
     </div>
   )
@@ -134,7 +134,7 @@ function Markdown({ content }: { content: string }) {
       if (!inCode) { inCode = true; codeLines = [] }
       else {
         const escaped = codeLines.join('\n').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        html += `<pre class="bg-black/40 border border-white/[0.07] rounded-xl p-3 my-3 overflow-x-auto text-xs font-mono text-blue-300 leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
+        html += `<pre class="bg-black/40 border border-white/[0.07] rounded-xl p-3 my-3 overflow-x-auto text-xs font-mono text-[#4FFF58] leading-relaxed whitespace-pre"><code>${escaped}</code></pre>`
         inCode = false; codeLines = []
       }
       continue
@@ -144,13 +144,13 @@ function Markdown({ content }: { content: string }) {
     let l = line
     // inline code
     l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
-      `<code class="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-300 text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+      `<code class="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-[#4FFF58] text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
     // bold / italic
     l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
     // links
     l = l.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline underline-offset-2 hover:text-blue-300">$1</a>')
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-[#2BEE34] underline underline-offset-2 hover:text-[#4FFF58]">$1</a>')
 
     if (l.startsWith('### ')) { closeList(); html += `<h3 class="text-sm font-bold text-white mt-4 mb-1.5 leading-snug">${l.slice(4)}</h3>`; continue }
     if (l.startsWith('## '))  { closeList(); html += `<h2 class="text-base font-bold text-white mt-5 mb-2 leading-snug">${l.slice(3)}</h2>`; continue }
@@ -167,7 +167,7 @@ function Markdown({ content }: { content: string }) {
     const numMatch = l.match(/^(\d+)[.):]\s+(.+)/)
     if (numMatch) {
       if (!inList) { html += '<ol class="my-1.5 space-y-1 list-none">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="text-blue-400/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
+      html += `<li class="flex gap-2 items-start"><span class="text-[#2BEE34]/80 text-xs font-mono mt-0.5 w-5 shrink-0 flex-none">${numMatch[1]}.</span><span class="leading-relaxed">${numMatch[2]}</span></li>`
       continue
     }
 
@@ -280,7 +280,7 @@ function MessageBubble({
         {/* FIX B.2: Thinking indicator — shown during NVIDIA NIM cold start (no tokens yet) */}
         {!isUser && msg.isThinking && !msg.content && (
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl rounded-bl-sm bg-[#0d1117] border border-white/[0.05] text-xs text-gray-500">
-            <svg className="w-3 h-3 animate-spin text-blue-400/60 shrink-0" fill="none" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 animate-spin text-[#2BEE34]/60 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
@@ -299,7 +299,7 @@ function MessageBubble({
         {(msg.content || (msg.isStreaming && msg.content)) && (
           <div className={`rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm ${
             isUser
-              ? 'bg-blue-600 text-white rounded-br-sm'
+              ? 'bg-[#2BEE34] text-white rounded-br-sm'
               : 'bg-[#0d1117] border border-white/[0.05] rounded-bl-sm'
           }`}>
             {isUser
@@ -310,7 +310,7 @@ function MessageBubble({
             }
             {/* Blinking cursor while streaming */}
             {msg.isStreaming && msg.content && (
-              <span className="inline-block w-0.5 h-[14px] bg-blue-500/100 animate-[blink_1s_ease-in-out_infinite] ml-0.5 align-middle rounded-full" />
+              <span className="inline-block w-0.5 h-[14px] bg-[#2BEE34]/100 animate-[blink_1s_ease-in-out_infinite] ml-0.5 align-middle rounded-full" />
             )}
           </div>
         )}
@@ -338,7 +338,7 @@ function MessageBubble({
               'Scan another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
-                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 hover:border-blue-500/50/40 hover:text-white hover:bg-blue-500/5 transition-all">
+                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-blue-500/50/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
                 {chip}
               </button>
             ))}
@@ -632,7 +632,7 @@ export default function ChatPage() {
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
-          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+          <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium transition-colors">
             <Ico.Plus /><span>New conversation</span>
           </button>
           <button onClick={()=>setShowSearch(s=>!s)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] text-xs transition-all">
@@ -762,7 +762,7 @@ export default function ChatPage() {
                   <button key={text} onClick={()=>send(text)}
                     className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.12] text-left transition-all group cursor-pointer"
                   >
-                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400/70 flex items-center justify-center shrink-0 group-hover:bg-blue-600/20 transition-colors mt-0.5">
+                    <div className="w-6 h-6 rounded-lg bg-[#2BEE34]/10 text-[#2BEE34]/70 flex items-center justify-center shrink-0 group-hover:bg-[#2BEE34]/20 transition-colors mt-0.5">
                       <I />
                     </div>
                     <div className="min-w-0">
@@ -805,7 +805,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="flex items-end gap-2 px-3 py-3 rounded-xl border border-white/[0.09] bg-[#0d1117] focus-within:border-blue-500/30  transition-all duration-200">
+            <div className="flex items-end gap-2 px-3 py-3 rounded-xl border border-white/[0.09] bg-[#0d1117] focus-within:border-[#2BEE34]/30  transition-all duration-200">
               <button onClick={()=>fileRef.current?.click()}
                 className="p-2.5 rounded-xl text-gray-600 hover:text-gray-400 hover:bg-white/8 transition-colors shrink-0"
                 title="Attach image, audio or video">
@@ -830,7 +830,7 @@ export default function ChatPage() {
                 : <button
                     onClick={()=>send()}
                     disabled={!input.trim()&&!attachments.length}
-                    className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-25 transition-colors shrink-0"
+                    className="p-2.5 rounded-xl bg-[#2BEE34] hover:bg-[#1A8F1F] text-white disabled:opacity-25 transition-colors shrink-0"
                   >
                     <Ico.Send />
                   </button>

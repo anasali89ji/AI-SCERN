@@ -1,21 +1,19 @@
 'use client'
-import { Suspense } from 'react'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Suspense, useEffect, useState } from 'react'
 import { SignUp, useAuth } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
+import Link from 'next/link'
 import { Loader2, ShieldCheck, Zap, Lock } from 'lucide-react'
 
 const TRUST_PILLS = [
-  { icon: ShieldCheck, label: 'Free forever' },
+  { icon: ShieldCheck, label: 'Free forever'    },
   { icon: Zap,         label: 'Instant results' },
-  { icon: Lock,        label: 'No data stored' },
+  { icon: Lock,        label: 'No data stored'  },
 ]
 
 function SignUpContent() {
   const { isSignedIn, isLoaded } = useAuth()
-  const router = useRouter()
+  const router       = useRouter()
   const searchParams = useSearchParams()
   const [redirecting, setRedirecting] = useState(false)
   const redirectUrl = searchParams.get('redirect_url') || '/dashboard'
@@ -25,50 +23,40 @@ function SignUpContent() {
   }, [isLoaded, isSignedIn, router, redirectUrl])
 
   if (redirecting) return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center">
+    <div className="min-h-screen bg-[#141414] flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-        <p className="text-sm text-slate-400">Setting up your account…</p>
+        <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
+        <p className="text-sm text-[#6B6B6B]">Setting up your account…</p>
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-[#050510] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-
-      {/* Ambient bg */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(ellipse, rgba(109,40,217,0.18) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[400px] rounded-full"
-          style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
-        <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: 'linear-gradient(#60a5fa 1px, transparent 1px), linear-gradient(90deg, #60a5fa 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-      </div>
+    <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4">
 
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2.5 mb-7 relative z-10 group">
-        <Image src="/logo.png" alt="Aiscern logo" width={36} height={24}
-          className="object-contain object-contain" priority />
-        <span className="text-xl font-black gradient-text tracking-tight">Aiscern</span>
+      <Link href="/" className="flex items-center gap-2 mb-8 group" aria-label="Aiscern home">
+        <span className="text-xl font-black text-white tracking-tight group-hover:text-[#2BEE34] transition-colors">
+          Aiscern
+        </span>
       </Link>
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-[420px]">
-
+      <div className="w-full max-w-[420px]">
         {/* Custom header */}
-        <div className="bg-[#0c0c20] border-2 border-[#2f2f58] border-b-0 rounded-t-2xl px-7 pt-7 pb-5">
+        <div className="bg-[#0A0A0A] border border-[#2A2A2A] border-b-0 rounded-t-xl px-7 pt-7 pb-5">
           <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-blue-300 bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase
+                             text-[#2BEE34] bg-[#2BEE34]/10 border border-[#2BEE34]/20 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]" />
               Free access
             </span>
           </div>
-          <h1 className="text-white font-bold text-2xl tracking-tight leading-tight">Create your account</h1>
-          <p className="text-slate-400 text-[13.5px] mt-1.5 leading-relaxed">Join Aiscern — AI detection, completely free</p>
+          <h1 className="text-white font-bold text-2xl tracking-tight">Create your account</h1>
+          <p className="text-[#6B6B6B] text-sm mt-1.5">Join Aiscern — AI detection, completely free</p>
         </div>
 
-        {/* Clerk body */}
+        {/* Clerk widget */}
         <SignUp
           routing="path"
           path="/signup"
@@ -76,78 +64,68 @@ function SignUpContent() {
           fallbackRedirectUrl="/dashboard"
           signInUrl="/login"
           appearance={{
-            layout: { socialButtonsPlacement: 'bottom', socialButtonsVariant: 'blockButton', showOptionalFields: false },
+            layout: {
+              socialButtonsPlacement: 'bottom',
+              socialButtonsVariant: 'blockButton',
+              showOptionalFields: false,
+            },
             variables: {
-              colorPrimary: '#2563eb', colorBackground: '#0c0c20',
-              colorInputBackground: '#080818', colorInputText: '#f1f5ff',
-              colorText: '#e8edff', colorTextSecondary: '#94a3c4',
-              colorTextOnPrimaryBackground: '#ffffff', colorNeutral: '#3a3a62',
-              colorDanger: '#f87171', colorSuccess: '#34d399', colorWarning: '#fbbf24',
-              borderRadius: '10px', fontFamily: 'inherit', fontSize: '14px', spacingUnit: '16px',
+              colorPrimary:                  '#2BEE34',
+              colorBackground:               '#0A0A0A',
+              colorInputBackground:          '#141414',
+              colorInputText:                '#E5E5E5',
+              colorText:                     '#E5E5E5',
+              colorTextSecondary:            '#A3A3A3',
+              colorTextOnPrimaryBackground:  '#0A0A0A',
+              colorNeutral:                  '#2A2A2A',
+              colorDanger:                   '#FF4444',
+              colorSuccess:                  '#2BEE34',
+              colorWarning:                  '#FFB800',
+              borderRadius:                  '8px',
+              fontFamily:                    'inherit',
+              fontSize:                      '14px',
+              spacingUnit:                   '16px',
               fontWeight: { normal: 400, medium: 500, bold: 700 },
             },
             elements: {
-              rootBox: 'w-full',
-              card: 'bg-[#0c0c20] border-2 border-[#2f2f58] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-xl overflow-hidden p-0',
-              cardBox: 'rounded-b-xl',
-              header: '!hidden',
-              main: 'px-7 pb-2 pt-6',
-              formFieldRow: 'mb-4',
-              formFieldLabelRow: 'flex items-center justify-between mb-2',
-              formFieldLabel: 'text-[12px] font-semibold tracking-[0.07em] uppercase text-slate-300',
-              formFieldHintText: 'text-slate-400 text-[12px] mt-1.5',
-              formFieldInput: 'w-full bg-[#080818] border-2 border-[#2f2f58] text-[#f1f5ff] placeholder:text-slate-600 rounded-[10px] text-[14px] px-3.5 py-2.5 transition-all duration-150 focus:outline-none focus:border-blue-500/50 focus:bg-[#0a0a22] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] hover:border-[#3d3d6e]',
-              formFieldInputShowPasswordButton: 'text-slate-500 hover:text-slate-300 transition-colors pr-1',
-              formFieldAction: 'text-blue-500 hover:text-blue-300 text-[12px] font-medium transition-colors',
-              formFieldErrorText: 'text-rose-400-400 text-[12.5px] mt-2 font-medium',
-              formFieldSuccessText: 'text-emerald-400-400 text-[12.5px] mt-2 font-medium',
-              formFieldWarningText: 'text-amber-400-400 text-[12.5px] mt-2 font-medium',
-              otpCodeFieldInput: 'bg-[#080818] border-2 border-[#2f2f58] text-white font-mono text-[20px] font-bold rounded-[10px] text-center w-11 h-12 focus:outline-none focus:border-blue-500/50 focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] transition-all duration-150',
-              formButtonPrimary: 'w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-[14px] rounded-[10px] py-[11px] border-0 shadow-[0_4px_24px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_32px_rgba(37,99,235,0.55)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-              formButtonReset: 'text-blue-500 hover:text-blue-300 text-[13px] font-medium transition-colors',
-              dividerRow: 'my-5',
-              dividerLine: 'bg-[#2f2f58]',
-              dividerText: 'text-slate-500 text-[11px] px-3 uppercase tracking-widest',
-              socialButtonsBlockButton: 'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 shadow-sm',
-              socialButtonsBlockButtonText: 'text-[13.5px] font-semibold',
-              socialButtonsBlockButtonArrow: 'hidden',
-              socialButtonsProviderIcon: 'w-4 h-4',
-              alert: 'border-2 rounded-[10px] px-4 py-3 my-4 bg-rose-500-500/8 border-rose-500/35',
-              alertText: 'text-rose-400-300 leading-relaxed text-[13px]',
-              alertTextDanger: 'text-rose-400-300 text-[13px]',
-              alertTextWarning: 'text-amber-400-300 text-[13px]',
-              footer: 'px-7 pt-3 pb-6',
-              footerAction: 'text-center',
-              footerActionText: 'text-slate-400 text-[13.5px]',
-              footerActionLink: 'text-blue-500 hover:text-blue-300 font-semibold text-[13.5px] transition-colors ml-1 hover:underline underline-offset-2',
-              footerPages: '!hidden',
-              identityPreviewText: 'text-slate-200 text-[14px]',
-              identityPreviewEditButton: 'text-blue-500 hover:text-blue-300 text-[13px] transition-colors',
-              spinner: 'text-blue-400',
-              alternativeMethodsBlockButton: 'w-full bg-[#0e0e26] border-2 border-[#2f2f58] text-slate-200 rounded-[10px] hover:bg-[#131336] hover:border-[#3d3d70] hover:text-white transition-all duration-200 py-2.5 text-[13px] font-medium',
-              formFieldCheckboxInput: 'accent-blue-600 w-4 h-4 rounded border-2 border-[#2f2f58]',
-              formFieldCheckboxLabel: 'text-slate-300 text-[12.5px]',
+              rootBox:                   'w-full',
+              card:                      'bg-[#0A0A0A] border border-[#2A2A2A] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-xl overflow-hidden p-0',
+              header:                    '!hidden',
+              main:                      'px-7 pb-2 pt-6',
+              formFieldLabel:            'text-[12px] font-semibold tracking-[0.07em] uppercase text-[#A3A3A3]',
+              formFieldInput:            'w-full bg-[#141414] border border-[#2A2A2A] text-[#E5E5E5] placeholder:text-[#6B6B6B] rounded-lg text-sm px-3.5 py-2.5 transition-all focus:outline-none focus:border-[#2BEE34] focus:shadow-[0_0_0_3px_rgba(43,238,52,0.15)]',
+              formFieldAction:           'text-[#2BEE34] hover:text-[#4FFF58] text-xs font-medium transition-colors',
+              formFieldErrorText:        'text-[#FF4444] text-xs mt-1.5',
+              formButtonPrimary:         'w-full bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm rounded-lg py-2.5 border-0 transition-colors disabled:opacity-50',
+              dividerLine:               'bg-[#2A2A2A]',
+              dividerText:               'text-[#6B6B6B] text-[11px] uppercase tracking-widest',
+              socialButtonsBlockButton:  'w-full bg-[#141414] border border-[#2A2A2A] text-[#E5E5E5] rounded-lg hover:border-[#3A3A3A] hover:text-white transition-all py-2.5',
+              socialButtonsBlockButtonText: 'text-sm font-semibold',
+              alert:                     'border rounded-lg px-4 py-3 my-4 bg-[#FF4444]/5 border-[#FF4444]/20',
+              alertText:                 'text-[#FF4444] text-xs leading-relaxed',
+              footer:                    'px-7 pt-3 pb-6',
+              footerActionText:          'text-[#6B6B6B] text-sm',
+              footerActionLink:          'text-[#2BEE34] hover:text-[#4FFF58] font-semibold text-sm transition-colors ml-1',
+              footerPages:               '!hidden',
+              spinner:                   'text-[#2BEE34]',
             },
           }}
         />
       </div>
 
       {/* Trust pills */}
-      <div className="relative z-10 flex items-center gap-3 mt-6 flex-wrap justify-center">
+      <div className="flex items-center gap-3 mt-6 flex-wrap justify-center">
         {TRUST_PILLS.map(({ icon: Icon, label }) => (
-          <span key={label} className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-slate-400 bg-white/[0.04] border border-white/[0.08] px-3 py-1.5 rounded-full">
-            <Icon className="w-3.5 h-3.5 text-blue-400" />
+          <span key={label}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6B6B6B]
+                       bg-[#1A1A1A] border border-[#2A2A2A] px-3 py-1.5 rounded-full">
+            <Icon className="w-3.5 h-3.5 text-[#2BEE34]" />
             {label}
           </span>
         ))}
       </div>
 
-      <p className="mt-5 text-[11.5px] text-slate-600 relative z-10">
-        By signing up you confirm you are 13 years of age or older (16 in the EU/EEA) and agree to our{' '}
-        <Link href="/terms" className="underline underline-offset-2 hover:text-slate-400 transition-colors">Terms</Link> and{' '}
-        <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-400 transition-colors">Privacy Policy</Link>.
-      </p>
-      <p className="mt-2 text-[11px] text-slate-700 relative z-10">© 2026 Aiscern · Secured by Clerk</p>
+      <p className="mt-5 text-xs text-[#3A3A3A]">© 2026 Aiscern · Secured by Clerk</p>
     </div>
   )
 }
@@ -155,8 +133,8 @@ function SignUpContent() {
 export default function SignUpPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#050510] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      <div className="min-h-screen bg-[#141414] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
       </div>
     }>
       <SignUpContent />
