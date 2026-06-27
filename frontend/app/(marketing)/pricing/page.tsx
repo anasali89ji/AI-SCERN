@@ -13,11 +13,9 @@ const TIERS = [
     yearlyPrice: 0,
     label: null,
     description: 'Get started instantly — no credit card required.',
-    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Start Free',
     ctaHref: '/signup',
-    ctaStyle: 'border border-white/[0.08] hover:border-white/[0.12] text-slate-300 hover:text-white',
     limits: {
       scansPerDay: 10,
       fileSizeMB: 10,
@@ -34,11 +32,9 @@ const TIERS = [
     yearlyPrice: 8,
     label: 'Most Popular',
     description: 'For individuals who need full detection power.',
-    color: 'border-blue-500/30',
     highlight: true,
     cta: 'Upgrade to Pro',
     ctaHref: '/signup?plan=pro',
-    ctaStyle: 'bg-blue-600 hover:bg-blue-700 text-white',
     limits: {
       scansPerDay: 100,
       fileSizeMB: 50,
@@ -55,11 +51,9 @@ const TIERS = [
     yearlyPrice: 35,
     label: null,
     description: 'Shared workspace for teams. API included.',
-    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Start Team Trial',
     ctaHref: '/signup?plan=team',
-    ctaStyle: 'border border-white/[0.08] hover:border-white/[0.12] text-slate-300 hover:text-white',
     limits: {
       scansPerDay: 500,
       fileSizeMB: 100,
@@ -76,11 +70,9 @@ const TIERS = [
     yearlyPrice: null,
     label: null,
     description: 'Custom limits, SLA, DPA, and dedicated support.',
-    color: 'border-white/[0.08]',
     highlight: false,
     cta: 'Contact Sales',
     ctaHref: 'mailto:sales@aiscern.com',
-    ctaStyle: 'border border-white/[0.08] hover:border-white/[0.12] text-slate-300 hover:text-white',
     limits: {
       scansPerDay: 'Unlimited',
       fileSizeMB: 500,
@@ -94,204 +86,235 @@ const TIERS = [
 ]
 
 const FEATURE_ROWS = [
-  { label: 'Scans per day',             key: 'scansPerDay',  tooltip: 'Resets at midnight UTC' },
-  { label: 'Max file size',             key: 'fileSizeMB',   format: (v: number | string) => typeof v === 'number' ? `${v} MB` : String(v) },
-  { label: 'Scan history',              key: 'historyDays',  format: (v: number | string) => typeof v === 'number' ? `${v} days` : String(v) },
-  { label: 'API calls / month',         key: 'apiCalls',     format: (v: number | string) => v === 0 ? '—' : String(v) },
-  { label: 'Batch scan size',           key: 'batchSize',    format: (v: number | string | null) => !v ? '—' : `${v} files` },
-  { label: 'Support',                   key: 'support' },
+  { label: 'Scans per day',     key: 'scansPerDay',  tooltip: 'Resets at midnight UTC' },
+  { label: 'Max file size',     key: 'fileSizeMB',   format: (v: any) => typeof v === 'number' ? `${v} MB` : String(v) },
+  { label: 'Scan history',      key: 'historyDays',  format: (v: any) => typeof v === 'number' ? `${v} days` : String(v) },
+  { label: 'API calls / month', key: 'apiCalls',     format: (v: any) => v === 0 ? '—' : String(v) },
+  { label: 'Modalities',        key: 'modalities',   format: (v: any) => Array.isArray(v) ? v.join(', ') : String(v) },
+  { label: 'Batch size',        key: 'batchSize',    format: (v: any) => v == null ? '—' : `${v} files` },
+  { label: 'Support',           key: 'support' },
 ]
 
-const BINARY_FEATURES = [
-  { label: 'Text detection',                      free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'Image detection',                     free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'Audio detection',                     free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Video / deepfake detection',          free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Web scraper / URL scanner',           free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'ARIA AI chat assistant',              free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'PDF report export',                   free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'API access',                          free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Shared team workspace',               free: false, pro: false, team: true,  enterprise: true  },
-  { label: 'SSO / SAML',                         free: false, pro: false, team: false, enterprise: true  },
-  { label: 'Custom retention policy',             free: false, pro: false, team: false, enterprise: true  },
-  { label: 'DPA / GDPR documentation',           free: false, pro: false, team: true,  enterprise: true  },
-  { label: 'SLA (99.9% uptime guarantee)',        free: false, pro: false, team: false, enterprise: true  },
-  { label: 'Dedicated onboarding',               free: false, pro: false, team: false, enterprise: true  },
+const FAQ = [
+  { q: 'Is the free tier permanent?',      a: 'Yes. We believe access to basic AI detection should not require a subscription. The free tier is permanent.' },
+  { q: 'Do you store my content?',         a: 'Files are processed and immediately deleted. We do not store your text or media files for analysis purposes. Scan metadata is retained per your plan\'s history limit.' },
+  { q: 'Can I cancel anytime?',            a: 'Yes. Monthly plans cancel anytime. You keep Pro access until the end of your billing period with no hidden fees.' },
+  { q: 'What payment methods do you accept?', a: 'We accept all major credit and debit cards. Invoiced billing available on Team and Enterprise plans.' },
+  { q: 'Is there a student or educator discount?', a: 'Yes. Contact us at edu@aiscern.com with your institutional email and intended use for 50% off any plan.' },
 ]
+
+export const metadata = undefined // must be client
 
 export default function PricingPage() {
-  const { user } = useAuth()
+  const { user }  = useAuth()
   const [yearly, setYearly] = useState(false)
 
   return (
-    <>
+    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
       <SiteNav />
-      <main className="mx-auto max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
+      <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
 
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-100 mb-3">Simple, transparent pricing</h1>
-          <p className="text-slate-500 max-w-xl mx-auto mb-6">Start free — no credit card required. Upgrade when you need more scans, modalities, or API access.</p>
+          {/* Header */}
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+              Transparent Pricing
+            </p>
+            <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
+              Simple, honest pricing
+            </h1>
+            <p className="text-[#A3A3A3] text-lg max-w-xl mx-auto">
+              Start free, upgrade when you need more. No hidden fees, no vendor lock-in.
+            </p>
 
-          <div className="inline-flex items-center gap-3 bg-[#0f0f17] border border-white/[0.08] rounded-xl px-4 py-2">
-            <button onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-slate-100' : 'text-slate-500'}`}>Monthly</button>
-            <button
-              onClick={() => setYearly(v => !v)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${yearly ? 'bg-blue-600' : 'bg-border'}`}
-              aria-label="Toggle yearly billing"
-            >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${yearly ? 'translate-x-5' : ''}`} />
-            </button>
-            <button onClick={() => setYearly(true)} className={`text-sm font-semibold transition-colors ${yearly ? 'text-slate-100' : 'text-slate-500'}`}>
-              Yearly <span className="text-emerald-400 text-xs ml-1">Save 33%</span>
-            </button>
+            {/* Toggle */}
+            <div className="inline-flex items-center gap-3 mt-8 p-1 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A]">
+              <button
+                onClick={() => setYearly(false)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                  !yearly ? 'bg-[#2BEE34] text-[#0A0A0A]' : 'text-[#A3A3A3] hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setYearly(true)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 flex items-center gap-2 ${
+                  yearly ? 'bg-[#2BEE34] text-[#0A0A0A]' : 'text-[#A3A3A3] hover:text-white'
+                }`}
+              >
+                Yearly
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2BEE34]/20 text-[#2BEE34]">
+                  -33%
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
-          {TIERS.map(tier => (
-            <div key={tier.name} className={`relative rounded-xl border ${tier.color} ${tier.highlight ? 'bg-[#0f0f17]' : 'bg-[#0f0f17]'} p-6 flex flex-col`}>
-              {tier.label && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold whitespace-nowrap">{tier.label}</div>
-              )}
-              <div className="mb-4">
-                <h2 className="font-black text-slate-100 text-lg">{tier.name}</h2>
-                <p className="text-slate-500 text-xs mt-1">{tier.description}</p>
-              </div>
-              <div className="mb-6">
-                {tier.monthlyPrice === null ? (
-                  <p className="text-2xl font-black text-slate-100">Custom</p>
-                ) : (
-                  <div className="flex items-end gap-1">
-                    <span className="text-3xl font-black text-slate-100">${yearly ? tier.yearlyPrice : tier.monthlyPrice}</span>
-                    <span className="text-slate-500 text-sm mb-1">/mo</span>
+          {/* Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+            {TIERS.map(tier => (
+              <div
+                key={tier.name}
+                className={`relative rounded-xl border p-6 flex flex-col transition-all duration-200 ${
+                  tier.highlight
+                    ? 'border-[#2BEE34] bg-[#2BEE34]/[0.04] shadow-[0_0_30px_rgba(43,238,52,0.12)]'
+                    : 'border-[#1E1E1E] bg-[#141414] hover:border-[#2A2A2A]'
+                }`}
+              >
+                {tier.label && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2
+                                  px-3 py-1 rounded-full bg-[#2BEE34] text-[#0A0A0A]
+                                  text-xs font-bold whitespace-nowrap">
+                    {tier.label}
                   </div>
                 )}
-                {yearly && tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
-                  <p className="text-xs text-emerald-400-400 mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
-                )}
-              </div>
-              <div className="space-y-2 mb-6 flex-1">
-                <LimitRow label="Scans/day" value={String(tier.limits.scansPerDay)} />
-                <LimitRow label="File size" value={typeof tier.limits.fileSizeMB === 'number' ? `${tier.limits.fileSizeMB} MB` : String(tier.limits.fileSizeMB)} />
-                <LimitRow label="History" value={typeof tier.limits.historyDays === 'number' ? `${tier.limits.historyDays} days` : String(tier.limits.historyDays)} />
-                <LimitRow label="API calls/mo" value={tier.limits.apiCalls === 0 ? '—' : String(tier.limits.apiCalls)} />
-                <LimitRow label="Modalities" value={tier.limits.modalities.length === 2 ? 'Text + Image' : 'All 4'} />
-              </div>
 
-              <Link href={user && tier.name === 'Free' ? '/dashboard' : tier.ctaHref}
-                className={`block text-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${tier.ctaStyle}`}>
-                {user && tier.name === 'Free' ? 'Go to Dashboard' : tier.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold text-white mb-1">{tier.name}</h2>
+                  <p className="text-sm text-[#6B6B6B] leading-relaxed">{tier.description}</p>
+                </div>
 
-        <div className="mb-16">
-          <h2 className="text-xl font-bold text-slate-100 mb-6 text-center">Full Feature Comparison</h2>
-          <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr className="border-b border-white/[0.08] bg-muted/40">
-                  <th className="px-4 py-3 text-left text-slate-500 font-semibold text-xs uppercase tracking-wide w-48">Feature</th>
-                  {TIERS.map(t => (
-                    <th key={t.name} className={`px-4 py-3 text-center font-bold text-xs uppercase tracking-wide ${t.highlight ? 'text-blue-400' : 'text-slate-500'}`}>{t.name}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {FEATURE_ROWS.map(row => (
-                  <tr key={row.key} className="border-b border-white/[0.08] hover:bg-muted/20">
-                    <td className="px-4 py-3 text-slate-400 flex items-center gap-1.5">
-                      {row.label}
-                      {row.tooltip && <span title={row.tooltip} className="text-slate-500 cursor-help"><Info className="w-3 h-3" /></span>}
-                    </td>
-                    {TIERS.map(tier => {
-                      const raw = tier.limits[row.key as keyof typeof tier.limits]
-                      const display = row.format ? row.format(raw as never) : String(raw)
-                      return (
-                        <td key={tier.name} className={`px-4 py-3 text-center tabular-nums ${tier.highlight ? 'text-blue-500 font-semibold' : 'text-slate-400'}`}>
-                          {display}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-                {BINARY_FEATURES.map(feat => (
-                  <tr key={feat.label} className="border-b border-white/[0.08] last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-3 text-slate-400">{feat.label}</td>
-                    {(['free', 'pro', 'team', 'enterprise'] as const).map(plan => (
-                      <td key={plan} className="px-4 py-3 text-center">
-                        {feat[plan]
-                          ? <Check className="w-4 h-4 text-emerald-400-400 mx-auto" />
-                          : <X className="w-4 h-4 text-slate-600 mx-auto" />
-                        }
-                      </td>
+                <div className="mb-6">
+                  {tier.monthlyPrice === null ? (
+                    <div className="text-3xl font-black text-white">Custom</div>
+                  ) : (
+                    <div className="flex items-end gap-1">
+                      <span className="text-3xl font-black text-white">
+                        ${yearly ? tier.yearlyPrice : tier.monthlyPrice}
+                      </span>
+                      {tier.monthlyPrice > 0 && (
+                        <span className="text-[#6B6B6B] text-sm mb-1">/ mo</span>
+                      )}
+                    </div>
+                  )}
+                  {tier.monthlyPrice !== null && tier.monthlyPrice > 0 && yearly && (
+                    <p className="text-xs text-[#2BEE34] mt-1">Billed annually</p>
+                  )}
+                </div>
+
+                <Link
+                  href={tier.ctaHref}
+                  className={`block text-center px-4 py-2.5 rounded-lg text-sm font-semibold
+                              transition-all duration-150 mb-6 ${
+                    tier.highlight
+                      ? 'bg-[#2BEE34] text-[#0A0A0A] hover:bg-[#1A8F1F]'
+                      : 'bg-[#1A1A1A] border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]'
+                  }`}
+                >
+                  {tier.cta}
+                </Link>
+
+                <ul className="space-y-2.5 flex-1">
+                  {FEATURE_ROWS.map(row => {
+                    const val = (tier.limits as any)[row.key]
+                    const display = row.format ? row.format(val) : String(val)
+                    return (
+                      <li key={row.key} className="flex items-start gap-2 text-sm">
+                        <Check className="w-4 h-4 text-[#2BEE34] shrink-0 mt-0.5" strokeWidth={2.5} />
+                        <span className="text-[#A3A3A3]">
+                          <span className="text-white font-medium">{display}</span>{' '}
+                          {row.label.toLowerCase()}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Comparison table */}
+          <div className="mb-16">
+            <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#2BEE34]" />
+              Full Feature Comparison
+            </h2>
+            <div className="overflow-x-auto rounded-xl border border-[#1E1E1E]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#6B6B6B]">
+                      Feature
+                    </th>
+                    {TIERS.map(t => (
+                      <th key={t.name} className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${
+                        t.highlight ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'
+                      }`}>
+                        {t.name}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 mb-12">
-          <h3 className="font-bold text-slate-100 mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber-400" />API Rate Limits</h3>
-          <div className="grid sm:grid-cols-3 gap-4 text-sm text-slate-400">
-            <div>
-              <p className="font-semibold text-slate-100 mb-1">Pro</p>
-              <ul className="space-y-1">
-                <li>10 requests / minute</li>
-                <li>500 requests / month</li>
-                <li>Max payload: 50 MB</li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-100 mb-1">Team</p>
-              <ul className="space-y-1">
-                <li>60 requests / minute</li>
-                <li>5,000 requests / month</li>
-                <li>Max payload: 100 MB</li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-100 mb-1">Enterprise</p>
-              <ul className="space-y-1">
-                <li>Custom rate limits</li>
-                <li>Unlimited requests</li>
-                <li>Max payload: 500 MB</li>
-              </ul>
+                </thead>
+                <tbody>
+                  {FEATURE_ROWS.map((row, ri) => (
+                    <tr key={row.key}
+                      className={`border-b border-[#1E1E1E] last:border-0 ${ri % 2 === 0 ? 'bg-[#141414]' : 'bg-[#0A0A0A]'}`}
+                    >
+                      <td className="px-4 py-3 text-[#A3A3A3]">{row.label}</td>
+                      {TIERS.map(t => {
+                        const val = (t.limits as any)[row.key]
+                        const display = row.format ? row.format(val) : String(val)
+                        return (
+                          <td key={t.name} className={`px-4 py-3 text-center tabular-nums ${
+                            t.highlight ? 'text-[#2BEE34] font-medium' : 'text-[#E5E5E5]'
+                          }`}>
+                            {display}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
 
-        <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-8 text-center">
-          <Building2 className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-          <h3 className="text-xl font-bold text-slate-100 mb-2">Need Enterprise?</h3>
-          <p className="text-slate-500 text-sm mb-4 max-w-md mx-auto">
-            Custom scan limits, SSO/SAML, dedicated onboarding, SLA, GDPR DPA, and volume pricing.
-            For HR, legal, journalism, and government organisations.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a href="mailto:sales@aiscern.com" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors">
-              <Users className="w-4 h-4" /> Contact Sales
+          {/* Enterprise */}
+          <div className="mb-16 p-8 rounded-xl border border-[#1E1E1E] bg-[#0A0A0A] flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#1A1A1A] border border-[#2A2A2A]">
+                <Building2 className="w-6 h-6 text-[#2BEE34]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-1">Enterprise</h2>
+                <p className="text-sm text-[#A3A3A3]">
+                  Custom limits, dedicated SLA, DPA, and a named account manager.
+                </p>
+              </div>
+            </div>
+            <a
+              href="mailto:sales@aiscern.com"
+              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg
+                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
+                         text-sm transition-colors duration-150"
+            >
+              Contact Sales
             </a>
-            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-100 hover:border-blue-500/50/40 transition-colors">
-              View DPA
-            </Link>
           </div>
-        </div>
 
+          {/* FAQ */}
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-6">Frequently Asked Questions</h2>
+            <div className="space-y-3">
+              {FAQ.map((item, i) => (
+                <div key={i} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5">
+                  <p className="font-medium text-white mb-2">{item.q}</p>
+                  <p className="text-sm text-[#A3A3A3] leading-relaxed">{item.a}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 text-sm text-[#6B6B6B]">
+              More questions?{' '}
+              <Link href="/faq" className="text-[#2BEE34] hover:underline">Visit the full FAQ</Link>
+              {' '}or{' '}
+              <a href="mailto:hello@aiscern.com" className="text-[#2BEE34] hover:underline">email us</a>.
+            </p>
+          </div>
+
+        </div>
       </main>
       <SiteFooter />
-    </>
-  )
-}
-
-function LimitRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-semibold text-slate-100">{value}</span>
     </div>
   )
 }

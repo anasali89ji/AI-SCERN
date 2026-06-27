@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { SiteFooter } from '@/components/site-footer'
-import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical, ArrowRight } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
@@ -10,32 +10,32 @@ export const metadata = {
 }
 
 const ACCURACY = [
-  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-blue-600' },
-  { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets',          color: 'bg-blue-500'   },
-  { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500-500' },
-  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-amber-500-500'  },
+  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble' },
+  { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets'          },
+  { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier'                           },
+  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis'         },
 ]
 
 const SIGNALS_TEXT = [
-  { name: 'Perplexity score',    desc: 'Measures how statistically predictable each word choice is. AI text scores low; human writing scores high.' },
-  { name: 'Burstiness',          desc: 'Variation in sentence length and complexity. Human writing has high burstiness; AI tends toward uniformity.' },
-  { name: 'Vocabulary diversity',desc: 'Ratio of unique words to total words. AI frequently reuses high-frequency vocabulary.' },
-  { name: 'Structural patterns', desc: 'AI text tends toward balanced paragraph lengths and consistent heading hierarchies uncommon in natural writing.' },
-  { name: 'Model fingerprint',   desc: 'Specific token-choice patterns associated with known LLMs, detected via trained classifier.' },
+  { name: 'Perplexity score',     desc: 'Measures how statistically predictable each word choice is. AI text scores low; human writing scores high.' },
+  { name: 'Burstiness',           desc: 'Variation in sentence length and complexity. Human writing has high burstiness; AI tends toward uniformity.' },
+  { name: 'Vocabulary diversity', desc: 'Ratio of unique words to total words. AI frequently reuses high-frequency vocabulary.' },
+  { name: 'Structural patterns',  desc: 'AI text tends toward balanced paragraph lengths and consistent heading hierarchies uncommon in natural writing.' },
+  { name: 'Model fingerprint',    desc: 'Specific token-choice patterns associated with known LLMs, detected via trained classifier.' },
 ]
 
 const SIGNALS_IMAGE = [
-  { name: 'Frequency artifacts',     desc: 'Fourier-domain analysis reveals the periodic artifacts left by diffusion model upsampling steps.' },
-  { name: 'Facial geometry',         desc: 'Geometric consistency of landmarks — eye spacing, ear symmetry, catchlight positions.' },
-  { name: 'Background coherence',    desc: 'Shadows, reflections, and perspective consistency between foreground subjects and background.' },
-  { name: 'EXIF metadata',           desc: 'AI images lack camera EXIF data. Absence of shutter speed, ISO, and GPS is a strong signal.' },
-  { name: 'Compression signature',   desc: 'JPEG blocking artifacts appear in atypical locations in AI images vs. real photography.' },
+  { name: 'Frequency artifacts',   desc: 'Fourier-domain analysis reveals the periodic artifacts left by diffusion model upsampling steps.' },
+  { name: 'Facial geometry',       desc: 'Geometric consistency of landmarks — eye spacing, ear symmetry, catchlight positions.' },
+  { name: 'Background coherence',  desc: 'Shadows, reflections, and perspective consistency between foreground subjects and background.' },
+  { name: 'EXIF metadata',         desc: 'AI images lack camera EXIF data. Absence of shutter speed, ISO, and GPS is a strong signal.' },
+  { name: 'Compression signature', desc: 'JPEG blocking artifacts appear in atypical locations in AI images vs. real photography.' },
 ]
 
 const LIMITATIONS = [
   'Short text (under 150 words) has insufficient signal for reliable classification',
   'Non-native English speakers may trigger false positives due to constrained vocabulary patterns',
-  'Heavily compressed images (< 50KB) lose frequency artifacts detectors rely on',
+  'Heavily compressed images (< 50 KB) lose frequency artifacts detectors rely on',
   'AI content edited by humans after generation reduces detectability significantly',
   'Hybrid content (AI inpainting on real photos) is currently below 70% accuracy',
   'Very short audio clips (< 5 seconds) provide insufficient spectral data',
@@ -44,165 +44,165 @@ const LIMITATIONS = [
 
 export default function MethodologyPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] text-slate-100">
+    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
       <SiteNav />
+      <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
 
-      <main className="pt-24 pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 2xl:px-8">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-semibold mb-4">
-            <FlaskConical className="w-3 h-3" /> Transparency
+          {/* Header */}
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34] text-xs font-semibold mb-4">
+              <FlaskConical className="w-3 h-3" /> Transparency
+            </div>
+            <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
+              Detection Methodology
+            </h1>
+            <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto leading-relaxed">
+              How Aiscern detects AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
-            Detection <span className="gradient-text">Methodology</span>
-          </h1>
-          <p className="text-slate-500 text-base sm:text-lg max-w-2xl mx-auto">
-            How Aiscern detects AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
-          </p>
-        </div>
 
-        {/* Accuracy benchmarks */}
-        <section className="mb-14">
-          <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-black">Accuracy Benchmarks</h2>
+          {/* Accuracy benchmarks */}
+          <section className="mb-12">
+            <div className="flex items-center justify-between gap-2 mb-5 flex-wrap">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[#2BEE34]" />
+                <h2 className="text-xl font-semibold text-white">Accuracy Benchmarks</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2.5 py-1 rounded-full border border-[#2A2A2A] bg-[#1A1A1A] text-[#6B6B6B] font-mono">v4.0.0</span>
+                <span className="text-xs px-2.5 py-1 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34] font-semibold">Last validated: April 2026</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-full border border-white/[0.08] bg-[#0f0f17] text-slate-500 font-mono">
-                v4.0.0
-              </span>
-              <span className="text-xs px-2.5 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 font-semibold">
-                Last validated: April 2026
-              </span>
+            <p className="text-sm text-[#A3A3A3] leading-relaxed mb-6">
+              All figures are measured on held-out test sets from publicly available benchmark datasets.
+              These are conservative, honest numbers — not cherry-picked accuracy on easy samples.
+            </p>
+            <div className="space-y-3">
+              {ACCURACY.map(m => (
+                <div key={m.type} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className="text-sm font-semibold text-white">{m.type} Detection</span>
+                      <p className="text-xs text-[#6B6B6B] mt-0.5">{m.model}</p>
+                    </div>
+                    <span className="text-2xl font-black text-[#2BEE34]">{m.score}%</span>
+                  </div>
+                  <div className="h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#2BEE34] rounded-full"
+                      style={{ width: `${m.score}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-          <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-            Benchmarks measured on held-out test sets not used during training. Figures represent overall accuracy (true positive rate + true negative rate averaged). Test sets include content from all major AI generators available at the time of evaluation.
-          </p>
-          <div className="space-y-4">
-            {ACCURACY.map(({ type, score, model, color }) => (
-              <div key={type} className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
-                <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-[#6B6B6B] mt-3 leading-relaxed">
+              * Accuracy is the percentage of samples correctly classified on public benchmark datasets. Individual results may vary based on content type, compression, and AI generator used.
+            </p>
+          </section>
+
+          {/* Ensemble pipeline */}
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-5">
+              <Cpu className="w-5 h-5 text-[#2BEE34]" />
+              <h2 className="text-xl font-semibold text-white">Ensemble Pipeline</h2>
+            </div>
+            <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-xl p-6 mb-4">
+              <p className="text-sm text-[#A3A3A3] leading-relaxed">
+                Aiscern runs every scan through multiple independent detection signals. Rather than relying on a single model,
+                results are combined using a weighted voting mechanism — models with higher validated accuracy on that modality
+                receive more weight in the final verdict. This ensemble approach reduces false positives and improves robustness
+                against adversarial inputs.
+              </p>
+            </div>
+
+            {/* Text signals */}
+            <h3 className="text-sm font-semibold text-white mb-3">Text Detection Signals</h3>
+            <div className="space-y-2 mb-6">
+              {SIGNALS_TEXT.map(s => (
+                <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
+                  <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-100">{type} Detection</span>
-                    <p className="text-xs text-slate-500 mt-0.5">{model}</p>
+                    <span className="text-sm font-medium text-white">{s.name}</span>
+                    <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
-                  <span className="text-2xl font-black text-slate-100">~{score}%</span>
                 </div>
-                <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
-                  <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${score}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-slate-600 mt-4">
-            * Accuracy varies by content type, generator, and compression level. Figures updated with each model version release. See Limitations section below.
-          </p>
-        </section>
-
-        {/* How it works — ensemble */}
-        <section className="mb-14">
-          <div className="flex items-center gap-2 mb-6">
-            <Cpu className="w-5 h-5 text-blue-400" />
-            <h2 className="text-xl font-black">Ensemble Approach</h2>
-          </div>
-          <p className="text-slate-500 text-sm leading-relaxed mb-6">
-            No single signal reliably distinguishes AI content from human content across all edge cases. Aiscern combines multiple independent signals through a trained ensemble model. Each signal is weighted based on its empirically measured reliability for the specific content type, then combined into a single confidence score.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
-              <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-600" /> Text Signals
-              </h3>
-              <div className="space-y-3">
-                {SIGNALS_TEXT.map(s => (
-                  <div key={s.name}>
-                    <p className="text-xs font-semibold text-slate-100 mb-0.5">{s.name}</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5">
-              <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-400" /> Image Signals
-              </h3>
-              <div className="space-y-3">
-                {SIGNALS_IMAGE.map(s => (
-                  <div key={s.name}>
-                    <p className="text-xs font-semibold text-slate-100 mb-0.5">{s.name}</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
+
+            {/* Image signals */}
+            <h3 className="text-sm font-semibold text-white mb-3">Image Detection Signals</h3>
+            <div className="space-y-2">
+              {SIGNALS_IMAGE.map(s => (
+                <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
+                  <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-sm font-medium text-white">{s.name}</span>
+                    <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Confidence score interpretation */}
-        <section className="mb-14">
-          <div className="flex items-center gap-2 mb-6">
-            <CheckCircle2 className="w-5 h-5 text-blue-400" />
-            <h2 className="text-xl font-black">Interpreting Confidence Scores</h2>
-          </div>
-          <div className="space-y-3">
-            {[
-              { range: '90–100%', label: 'Very High — AI',    color: 'border-red-500/40 bg-red-500/5',    desc: 'Strong ensemble agreement. Multiple independent signals all point to AI generation.' },
-              { range: '70–89%',  label: 'High — Likely AI', color: 'border-amber-500/40 bg-amber-500-500/5', desc: 'Most signals indicate AI. Some ambiguity — review flagged signals before acting.' },
-              { range: '45–69%',  label: 'Uncertain',         color: 'border-yellow-500/40 bg-yellow-500/5', desc: 'Signals are mixed. Do not use this result as evidence of AI use without additional review.' },
-              { range: '20–44%',  label: 'Likely Human',      color: 'border-blue-500/40 bg-blue-500/5',  desc: 'Most signals point to human authorship. Low probability of AI generation.' },
-              { range: '0–19%',   label: 'Very High — Human', color: 'border-emerald-500/40 bg-emerald-500-500/5', desc: 'Strong ensemble agreement on human origin. Multiple signals confirm natural content.' },
-            ].map(({ range, label, color, desc }) => (
-              <div key={range} className={`rounded-xl border ${color} p-4 flex gap-4`}>
-                <div className="w-20 shrink-0">
-                  <p className="text-xs font-mono font-bold text-slate-100">{range}</p>
-                  <p className="text-xs font-semibold text-slate-500 mt-0.5">{label}</p>
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+          </section>
+
+          {/* Confidence scores */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-white mb-5">How to Interpret Confidence Scores</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { range: '0 – 39%',  label: 'Likely Human',    color: 'text-[#2BEE34]', border: 'border-[#2BEE34]/20', bg: 'bg-[#2BEE34]/5',  desc: 'Strong signals of human authorship. Low probability of AI generation.' },
+                { range: '40 – 69%', label: 'Uncertain',       color: 'text-[#FFB800]', border: 'border-[#FFB800]/20', bg: 'bg-[#FFB800]/5',  desc: 'Mixed signals. Use additional context and human judgment before acting.' },
+                { range: '70 – 100%',label: 'Likely AI',       color: 'text-[#FF4444]', border: 'border-[#FF4444]/20', bg: 'bg-[#FF4444]/5',  desc: 'Strong signals of AI generation. High-confidence ensemble verdict.' },
+              ].map(c => (
+                <div key={c.range} className={`rounded-xl border ${c.border} ${c.bg} p-5`}>
+                  <div className={`text-lg font-black ${c.color} mb-1`}>{c.range}</div>
+                  <div className="text-sm font-semibold text-white mb-2">{c.label}</div>
+                  <p className="text-xs text-[#A3A3A3] leading-relaxed">{c.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Known limitations */}
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-5">
+              <AlertTriangle className="w-5 h-5 text-[#FFB800]" />
+              <h2 className="text-xl font-semibold text-white">Known Limitations</h2>
+            </div>
+            <div className="bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-xl p-5 mb-4">
+              <p className="text-sm text-[#A3A3A3] leading-relaxed">
+                AI detection is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {LIMITATIONS.map((l, i) => (
+                <div key={i} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-[#FFB800] flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-[#A3A3A3] leading-relaxed">{l}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Links */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href="/benchmarks"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
+                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm
+                         transition-colors duration-150">
+              View Full Benchmarks <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/detect/text"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
+                         border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                         font-semibold text-sm transition-all duration-150">
+              Try the Detector
+            </Link>
           </div>
-        </section>
 
-        {/* Limitations */}
-        <section className="mb-14">
-          <div className="flex items-center gap-2 mb-6">
-            <AlertTriangle className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-xl font-black">Known Limitations</h2>
-          </div>
-          <p className="text-slate-500 text-sm leading-relaxed mb-5">
-            We publish these limitations openly because we believe responsible use of AI detection requires honest understanding of what it cannot do.
-            <strong className="text-slate-100"> Never use a single detection result as sole evidence for high-stakes decisions.</strong>
-          </p>
-          <ul className="space-y-2">
-            {LIMITATIONS.map(l => (
-              <li key={l} className="flex items-start gap-3 text-sm text-slate-500">
-                <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 mt-0.5 shrink-0" />
-                {l}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Model update cadence */}
-        <section className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-6 mb-10">
-          <h2 className="font-black text-lg mb-3">Model Update Cadence</h2>
-          <p className="text-slate-500 text-sm leading-relaxed">
-            Detection models are retrained quarterly or whenever a major new AI generator reaches significant market penetration. Model versions are tracked in our changelog. The accuracy figures on this page reflect the most recent production model. Fine-tuning data is sourced from public benchmarks, synthetic test sets, and anonymized user feedback (opt-in only).
-          </p>
-        </section>
-
-        {/* CTA */}
-        <div className="text-center">
-          <Link href="/detect/text"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
-            Try Detection Free →
-          </Link>
-          <p className="text-xs text-slate-600 mt-3">No account required. Free tier available — no credit card needed.</p>
         </div>
       </main>
-
       <SiteFooter />
     </div>
   )
