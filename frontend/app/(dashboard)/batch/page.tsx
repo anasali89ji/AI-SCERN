@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'

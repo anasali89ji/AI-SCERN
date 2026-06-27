@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, memo } from 'react'
-import { motion } 
+import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 
 interface Review {
