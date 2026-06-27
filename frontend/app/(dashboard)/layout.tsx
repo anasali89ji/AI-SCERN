@@ -308,21 +308,21 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       </button>
 
       {/* Desktop dropdown */}
-      
+      <AnimatePresence>
         {open && (
           <div>
             {menuContent}
           </div>
         )}
-      
+      </AnimatePresence>
 
       {/* Mobile full-screen bottom sheet */}
-      
+      <AnimatePresence>
         {open && (
           <div className="sm:hidden fixed inset-0 z-[200]" onClick={() => setOpen(false)}>
-            <div>
-            <div> e.stopPropagation()}
-            >
+            <div className="absolute inset-0 bg-black/60" />
+            <div onClick={(e) => e.stopPropagation()}
+              className="absolute inset-x-0 bottom-0 bg-[#0f0f17] border-t border-white/[0.08] rounded-t-2xl overflow-hidden">
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full bg-border" />
@@ -339,7 +339,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
             </div>
           </div>
         )}
-      
+      </AnimatePresence>
     </div>
   )
 }
