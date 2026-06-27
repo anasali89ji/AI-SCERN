@@ -103,8 +103,6 @@ const FAQ = [
   { q: 'Is there a student or educator discount?', a: 'Yes. Contact us at edu@aiscern.com with your institutional email and intended use for 50% off any plan.' },
 ]
 
-export const metadata = undefined // must be client
-
 export default function PricingPage() {
   const { user }  = useAuth()
   const [yearly, setYearly] = useState(false)
