@@ -66,7 +66,7 @@ export default function RoadmapPage() {
             <div className="rounded-xl border border-[#1E1E1E] bg-[#141414] p-6 space-y-3">
               {CURRENT.map(item => (
                 <div key={item} className="flex items-start gap-3">
-                  <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-[#A3A3A3]">{item}</span>
                 </div>
               ))}
@@ -95,7 +95,7 @@ export default function RoadmapPage() {
             </h2>
             <div className="space-y-3">
               {LIMITATIONS.map(({ title, desc }) => (
-                <div key={title} className="rounded-xl border border-amber-500/20 bg-amber-500-500/4 p-4">
+                <div key={title} className="rounded-xl border border-amber-500/20 bg-amber-500/4 p-4">
                   <p className="text-sm font-bold text-white mb-1">{title}</p>
                   <p className="text-sm text-[#6B6B6B] leading-relaxed">{desc}</p>
                 </div>

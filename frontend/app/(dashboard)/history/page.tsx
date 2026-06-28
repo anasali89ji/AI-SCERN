@@ -47,7 +47,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
           <button onClick={reset} className="px-3 bg-[#141414] text-[#6B6B6B] text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose-500-500 text-white font-bold flex items-center gap-1.5 text-sm">
+          <button onClick={onDelete} className="px-4 bg-rose-500 text-white font-bold flex items-center gap-1.5 text-sm">
             <Trash2 className="w-4 h-4" /> Delete
           </button>
         </div>
@@ -65,7 +65,7 @@ const mediaColors = {
   image: 'text-[#2BEE34] bg-[#2BEE34]/10',
   video: 'text-[#A3A3A3] bg-[#1A1A1A]',
   audio: 'text-[#2BEE34] bg-[#2BEE34]/10',
-  text:  'text-amber-400 bg-amber-500-500/10',
+  text:  'text-amber-400 bg-amber-500/10',
   url:   'text-emerald-400 bg-[#2BEE34]/10',
 }
 
@@ -78,7 +78,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
   const conf = normalizeConf(scan.confidence_score)
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="card w-full max-w-md"> e.stopPropagation()}>
+      <div className="card w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-white">Scan Details</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
@@ -351,7 +351,7 @@ export default function HistoryPage() {
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
-                    <div className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/50/25 transition-all group cursor-pointer"> setSelectedScan(scan)}>
+                    <div className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/25 transition-all group cursor-pointer" onClick={() => setSelectedScan(scan)}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                         <Icon className="w-5 h-5" />

@@ -338,7 +338,7 @@ function MessageBubble({
               'Scan another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
-                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/50/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
+                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
                 {chip}
               </button>
             ))}
@@ -682,7 +682,7 @@ export default function ChatPage() {
             <Ico.Home /><span>Back to home</span>
           </Link>
           <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500-500 shrink-0" />
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             {chats.length} conversation{chats.length!==1?'s':''} saved
           </div>
         </div>
@@ -734,7 +734,7 @@ export default function ChatPage() {
                 <div className="w-14 h-14 rounded-xl bg-black border border-[#1E1E1E] flex items-center justify-center  overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500-500 border-2 border-[#080c14] flex items-center justify-center">
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#080c14] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500-400" />
                 </div>
               </div>

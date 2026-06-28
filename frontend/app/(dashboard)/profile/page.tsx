@@ -56,7 +56,7 @@ function UsageBar({
           {sublabel && <p className="text-[11px] text-[#6B6B6B]">{sublabel}</p>}
         </div>
         <div className="text-right flex-shrink-0">
-          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-amber-400-400' : 'text-white'}`}>
+          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-amber-400' : 'text-white'}`}>
             {unlimited ? 'Unlimited' : `${left} left`}
           </p>
           {!unlimited && (
@@ -78,7 +78,7 @@ function UsageBar({
         </div>
       )}
       {warn && !unlimited && (
-        <p className="text-[11px] text-amber-400-400">
+        <p className="text-[11px] text-amber-400">
           {pct >= 100 ? '⚠ Limit reached' : `⚠ ${100 - pct}% remaining`}
           {' '}— <a href="/pricing" className="underline hover:text-amber-400-300">Upgrade your plan</a>
         </p>
@@ -350,7 +350,7 @@ export default function ProfilePage() {
                 </>
               ) : (
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm font-semibold text-[#A3A3A3] hover:bg-[#141414] hover:border-[#2BEE34]/50/40 transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm font-semibold text-[#A3A3A3] hover:bg-[#141414] hover:border-[#2BEE34]/40 transition-all">
                   <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
@@ -375,7 +375,7 @@ export default function ProfilePage() {
                       placeholder="yourname" maxLength={30} />
                     {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#1E1E1E] border-t-primary animate-spin" />}
                     {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#2BEE34]" />}
-                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400-400" />}
+                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400" />}
                   </div>
                   {uStatus === 'taken' && suggestions.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -457,12 +457,12 @@ export default function ProfilePage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-rose-400-400" />
+              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-rose-400" />
               <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500-500/10 text-amber-400-400" />
+              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500/10 text-amber-400" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500-500/10 text-amber-400-400" />
+              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
               <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
               <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
               <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />

@@ -41,7 +41,7 @@ export default function DpaPage() {
               Request Signed DPA
             </a>
           </div>
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500-500/5 px-4 py-3 text-sm text-amber-400-300">
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-400-300">
             This DPA is for enterprise and educational customers who require GDPR or CCPA compliance documentation.
             For a countersigned PDF, email <a href="mailto:privacy@aiscern.com" className="underline underline-offset-2">privacy@aiscern.com</a>.
           </div>

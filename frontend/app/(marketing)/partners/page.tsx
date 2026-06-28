@@ -77,7 +77,7 @@ export default function PartnersPage() {
                     <ul className="space-y-2">
                       {pt.benefits.map((b, j) => (
                         <li key={j} className="flex items-center gap-2 text-xs text-[#A3A3A3]">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400-400 flex-shrink-0" />
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                           {b}
                         </li>
                       ))}

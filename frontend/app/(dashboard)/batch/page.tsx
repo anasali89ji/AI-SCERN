@@ -320,9 +320,9 @@ export default function BatchPage() {
               )}
               {[
                 { label: 'Completed', value: completed, color: 'text-white' },
-                { label: 'AI Detected', value: aiCount, color: 'text-rose-400-500' },
+                { label: 'AI Detected', value: aiCount, color: 'text-rose-400' },
                 { label: 'Human/Real', value: humanCount, color: 'text-[#2BEE34]' },
-                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400-500' : 'text-[#6B6B6B]' },
+                { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400' : 'text-[#6B6B6B]' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
                   <div className={`text-xl sm:text-2xl font-black ${color}`}>{value}</div>
@@ -345,7 +345,7 @@ export default function BatchPage() {
               </button>
             ) : (
               <button onClick={togglePause}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/30 hover:bg-amber-500-500/20'}`}>
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${paused ? 'btn-primary' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20'}`}>
                 {paused ? <><Play className="w-4 h-4" />Resume</> : <><Pause className="w-4 h-4" />Pause</>}
               </button>
             )}
@@ -374,8 +374,8 @@ export default function BatchPage() {
 
           {/* Cross-tool correlation alert */}
           {correlation && (
-            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500-500/5 flex items-start gap-3 mb-2">
-              <AlertTriangle className="w-5 h-5 text-rose-400-500 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/5 flex items-start gap-3 mb-2">
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-rose-400">Correlated AI Pattern Detected</p>
                 <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
@@ -427,7 +427,7 @@ export default function BatchPage() {
                       <span className="text-xs text-[#6B6B6B]">{formatFileSize(bf.file.size)}</span>
                       <span className="text-xs text-[#6B6B6B] uppercase">{detectType(bf.file)}</span>
                       {bf.status === 'error' && bf.error && (
-                        <span className="text-xs text-amber-400-500 truncate">{bf.error}</span>
+                        <span className="text-xs text-amber-400 truncate">{bf.error}</span>
                       )}
                       {bf.processingTime && (
                         <span className="text-xs text-[#6B6B6B]">{bf.processingTime}ms</span>

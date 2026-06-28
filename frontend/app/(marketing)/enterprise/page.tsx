@@ -91,7 +91,7 @@ export default function EnterprisePage() {
                   <ul className="space-y-2 text-xs text-[#6B6B6B]">
                     {[plan.scans, plan.api, plan.support].map((item, j) => (
                       <li key={j} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400-400 flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                         {item}
                       </li>
                     ))}

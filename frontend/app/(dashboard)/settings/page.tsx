@@ -42,7 +42,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-white">{label}</span>
-            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500-500/15 text-amber-400-400 border border-amber-500/20 font-bold">{badge}</span>}
+            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 font-bold">{badge}</span>}
           </div>
           {description && <p className="text-xs text-[#6B6B6B] mt-0.5 leading-relaxed">{description}</p>}
         </div>
@@ -309,7 +309,7 @@ export default function SettingsPage() {
               if (!user?.uid) return
               await (supabase as any).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
-            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-[#FF4444]/10 transition-colors">
+            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-[#FF4444]/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Clear
             </button>
           } />
@@ -317,7 +317,7 @@ export default function SettingsPage() {
 
       {/* Danger zone */}
       <div className="card border-rose-500/20 p-4 rounded-xl">
-        <h2 className="font-bold text-rose-400-400 flex items-center gap-2 mb-4">
+        <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
@@ -327,7 +327,7 @@ export default function SettingsPage() {
               <p className="text-xs text-[#6B6B6B] mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>
             <button onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-[#FF4444]/10 transition-colors">
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-[#FF4444]/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>

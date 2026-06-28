@@ -6,7 +6,7 @@ export default function UnauthorizedPage() {
   return (
     <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
-        <div className="w-20 h-20 rounded-xl bg-rose-500-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-6">
           <Lock className="w-10 h-10 text-rose-400" />
         </div>
         <h1 className="text-3xl font-black text-white mb-3">Access Restricted</h1>

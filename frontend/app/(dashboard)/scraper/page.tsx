@@ -27,15 +27,15 @@ interface ScrapeResult {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const verdictColor = (v: string) =>
-  v === 'AI' ? 'text-rose-400-400' : v === 'HUMAN' ? 'text-[#2BEE34]' : 'text-amber-400-400'
+  v === 'AI' ? 'text-rose-400' : v === 'HUMAN' ? 'text-[#2BEE34]' : 'text-amber-400'
 
 const verdictBg = (v: string) =>
-  v === 'AI' ? 'bg-rose-500-500/15 border-rose-500/30' : v === 'HUMAN' ? 'bg-emerald-500-500/15 border-emerald-500/30' : 'bg-amber-500-500/15 border-amber-500/30'
+  v === 'AI' ? 'bg-rose-500/15 border-rose-500/30' : v === 'HUMAN' ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-amber-500/15 border-amber-500/30'
 
 function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
-  if (v === 'AI')    return <AlertTriangle className={`${cls} text-rose-400-400`} />
+  if (v === 'AI')    return <AlertTriangle className={`${cls} text-rose-400`} />
   if (v === 'HUMAN') return <CheckCircle   className={`${cls} text-[#2BEE34]`} />
-  return               <HelpCircle       className={`${cls} text-amber-400-400`} />
+  return               <HelpCircle       className={`${cls} text-amber-400`} />
 }
 
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
@@ -190,7 +190,7 @@ export default function ScraperPage() {
         
           {error && (
             <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} className="card border-rose-500/20 bg-rose-500/5 flex items-start gap-2 p-3 rounded-xl">
-              <AlertTriangle className="w-4 h-4 text-rose-400-400 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <p className="text-sm text-rose-400-300">{error}</p>
             </div>
           )}
@@ -319,9 +319,9 @@ export default function ScraperPage() {
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          result.content_quality === 'high' ? 'bg-emerald-500-500/15 text-[#2BEE34] border-emerald-500/25' :
-                          result.content_quality === 'low'  ? 'bg-rose-500-500/15 text-rose-400-400 border-rose-500/25' :
-                          'bg-amber-500-500/15 text-amber-400-400 border-amber-500/25'}`}>
+                          result.content_quality === 'high' ? 'bg-emerald-500/15 text-[#2BEE34] border-emerald-500/25' :
+                          result.content_quality === 'low'  ? 'bg-rose-500/15 text-rose-400 border-rose-500/25' :
+                          'bg-amber-500/15 text-amber-400 border-amber-500/25'}`}>
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">
@@ -375,7 +375,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {result.signals.map((sig, i) => (
-                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500-500/5 border-rose-500/15' : 'bg-emerald-500-500/5 border-emerald-500/10'}`}>
+                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500/5 border-rose-500/15' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
                         <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-rose-500-400' : 'bg-emerald-500-400'}`} />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-[#E5E5E5]">{sig.name}</p>

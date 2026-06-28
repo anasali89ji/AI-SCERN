@@ -150,11 +150,11 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                           onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
                           onClick={() => setRating(n)}
                           className="transition-all touch-manipulation">
-                          <Star className={`w-9 h-9 sm:w-10 sm:h-10 transition-colors ${n <= (hover || rating) ? 'text-amber-400-400 fill-amber-400' : 'text-zinc-600'}`} />
+                          <Star className={`w-9 h-9 sm:w-10 sm:h-10 transition-colors ${n <= (hover || rating) ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}`} />
                         </button>
                       ))}
                       {(hover || rating) > 0 && (
-                        <span className="ml-1 text-sm font-bold text-amber-400-400">{STAR_LABELS[hover || rating]}</span>
+                        <span className="ml-1 text-sm font-bold text-amber-400">{STAR_LABELS[hover || rating]}</span>
                       )}
                     </div>
                   </div>
@@ -185,7 +185,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   <div className="space-y-1">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Review *</label>
-                      <span className={`text-xs ${body.length > 0 && body.length < 30 ? 'text-rose-400-500' : 'text-slate-600'}`}>
+                      <span className={`text-xs ${body.length > 0 && body.length < 30 ? 'text-rose-400' : 'text-slate-600'}`}>
                         {body.length}/1000
                       </span>
                     </div>
@@ -196,7 +196,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                       className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 resize-none focus:outline-none focus:border-blue-500/30 transition-colors"
                     />
                     {body.length > 0 && body.length < 30 && (
-                      <p className="text-xs text-rose-400-500 mt-1">{30 - body.length} more characters needed</p>
+                      <p className="text-xs text-rose-400 mt-1">{30 - body.length} more characters needed</p>
                     )}
                   </div>
 
@@ -227,7 +227,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   </div>
 
                   {error && (
-                    <div className="px-4 py-3 rounded-xl bg-rose-500-500/10 border border-rose-500/20 text-rose-400-500 text-sm">
+                    <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
                       {error}
                     </div>
                   )}

@@ -33,7 +33,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
       {/* Stars */}
       <div className="flex gap-0.5 mb-4" aria-label={`${stars} out of 5 stars`}>
         {Array.from({ length: stars }).map((_, j) => (
-          <Star key={j} className="w-3.5 h-3.5 text-amber-400-400 fill-amber-400" aria-hidden />
+          <Star key={j} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" aria-hidden />
         ))}
         {Array.from({ length: 5 - stars }).map((_, j) => (
           <Star key={`e-${j}`} className="w-3.5 h-3.5 text-slate-700" aria-hidden />

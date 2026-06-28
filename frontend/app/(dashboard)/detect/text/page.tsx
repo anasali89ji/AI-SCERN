@@ -66,7 +66,7 @@ function TextDetectionPage() {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const charCount = text.length
   const charLimit = TEXT_MAX_CHARS
-  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : charCount > 70_000 ? 'text-amber-400-400-500' : 'text-[#6B6B6B]'
+  const charColor = charCount > TEXT_WARN_CHARS ? 'text-rose-400' : charCount > 70_000 ? 'text-amber-400-500' : 'text-[#6B6B6B]'
   const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
   const avgSentLen = avgSentenceLen(text)
 
@@ -168,12 +168,12 @@ Analyzed: ${new Date().toLocaleString()}`
 
   const verdictStyles: Record<Verdict, string> = {
     AI: 'border-rose-500/30 bg-[#FF4444]-500/5',
-    HUMAN: 'border-emerald-500/30 bg-emerald-500-500-500/5',
-    UNCERTAIN: 'border-amber-500/30 bg-amber-500-500-500/5',
+    HUMAN: 'border-emerald-500/30 bg-emerald-500-500/5',
+    UNCERTAIN: 'border-amber-500/30 bg-amber-500-500/5',
   }
 
   const verdictColor: Record<Verdict, string> = {
-    AI: 'text-rose-400-400-500', HUMAN: 'text-[#2BEE34]-400', UNCERTAIN: 'text-amber-400-400-500'
+    AI: 'text-rose-400', HUMAN: 'text-[#2BEE34]', UNCERTAIN: 'text-amber-400-500'
   }
 
   const shareResult = async () => {
@@ -194,8 +194,8 @@ Analyzed: ${new Date().toLocaleString()}`
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center shrink-0">
-            <FileText className="w-6 h-6 text-amber-400-400" />
+          <div className="w-10 h-10 rounded-xl bg-amber-500-500/10 flex items-center justify-center shrink-0">
+            <FileText className="w-6 h-6 text-amber-400" />
           </div>
           Text Detection
         </h1>
@@ -233,7 +233,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => setPdfMode(false)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500-500-500/15 text-amber-400-400-500 border border-amber-500/30' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-amber-500-500/15 text-amber-400-500 border border-amber-500/30' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                 <FileText className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
@@ -313,18 +313,18 @@ Analyzed: ${new Date().toLocaleString()}`
             {charCount > 70_000 && (
               <div className="mt-2">
                 <div className="h-1 bg-[#1A1A1A] rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${charCount > TEXT_WARN_CHARS ? 'bg-[#FF4444]' : 'bg-amber-500-500'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
+                  <div className={`h-full rounded-full transition-all ${charCount > TEXT_WARN_CHARS ? 'bg-[#FF4444]' : 'bg-amber-500'}`} style={{ width: `${Math.min((charCount / 100_000) * 100, 100)}%` }} />
                 </div>
-                <p className={`text-xs mt-1 ${charCount > TEXT_WARN_CHARS ? 'text-rose-400-400-500' : 'text-amber-400-400-500'}`}>{(TEXT_MAX_CHARS - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
+                <p className={`text-xs mt-1 ${charCount > TEXT_WARN_CHARS ? 'text-rose-400' : 'text-amber-400-500'}`}>{(TEXT_MAX_CHARS - charCount).toLocaleString()} chars remaining (50k limit — supports full PDFs)</p>
               </div>
             )}
             {/* Progress to minimum */}
             {charCount < 50 && charCount > 0 && (
               <div className="mt-2">
                 <div className="h-1 bg-[#1A1A1A] rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500-500-500 rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
+                  <div className="h-full bg-amber-500-500 rounded-full transition-all" style={{ width: `${(charCount / 50) * 100}%` }} />
                 </div>
-                <p className="text-xs text-amber-400-400-500 mt-1">{50 - charCount} more characters needed</p>
+                <p className="text-xs text-amber-400-500 mt-1">{50 - charCount} more characters needed</p>
               </div>
             )}
 
@@ -352,7 +352,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
           {error && (
             <div className="card border-rose-500/30 bg-[#FF4444]-500/5">
-              <div className="flex items-center gap-2 text-rose-400-400-500 text-sm">
+              <div className="flex items-center gap-2 text-rose-400 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
               </div>
             </div>
@@ -392,10 +392,10 @@ Analyzed: ${new Date().toLocaleString()}`
                   <div className="flex items-start gap-3 min-w-0">
                     <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
                       {result.verdict === 'AI'
-                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-rose-400-400" />
+                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-rose-400" />
                         : result.verdict === 'HUMAN'
                         ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-[#2BEE34]" />
-                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-amber-400-400" />}
+                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-amber-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
@@ -424,7 +424,7 @@ Analyzed: ${new Date().toLocaleString()}`
                       <span>→ AI</span>
                     </div>
                     <div className="h-2.5 bg-[#1A1A1A] rounded-full overflow-hidden relative">
-                      <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber-500-500 to-rose-500-500' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald-500-500/50 to-emerald-500-500' : 'bg-gradient-to-r from-amber-500-500/50 to-amber-500-500'}>
+                      <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-amber-500 to-rose-500' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald-500/50 to-emerald-500' : 'bg-gradient-to-r from-amber-500/50 to-amber-500'}>
                     </div>
                   </div>
                 </div>
@@ -439,9 +439,9 @@ Analyzed: ${new Date().toLocaleString()}`
                     {result.signals.map((signal, i) => (
                       <div className="p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}`} />
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500'}`} />
                           <span className="text-sm text-[#A3A3A3] flex-1 font-medium">{signal.name}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-[#FF4444]-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-[#2BEE34]-400'}`}>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-rose-500/15 text-rose-400' : 'bg-emerald-500/15 text-[#2BEE34]'}`}>
                             {signal.weight}%
                           </span>
                         </div>
@@ -466,10 +466,10 @@ Analyzed: ${new Date().toLocaleString()}`
                       {paragraphScores.map((s, i) => {
                         const pct = s.confidence
                         const bg =
-                          pct >= 80 ? 'bg-[#FF4444]-500/30 text-rose-400-400-200' :
-                          pct >= 60 ? 'bg-amber-500-500-500/20 text-amber-400-400-200' :
+                          pct >= 80 ? 'bg-[#FF4444]-500/30 text-rose-400-200' :
+                          pct >= 60 ? 'bg-amber-500-500/20 text-amber-400-200' :
                           pct >= 40 ? 'bg-yellow-900/20 text-[#A3A3A3]' :
-                                      'bg-emerald-500-500-500/10 text-[#2BEE34]-300'
+                                      'bg-emerald-500-500/10 text-[#2BEE34]-300'
                         return (
                           <span key={i} title={`${pct}% AI probability`}
                             className={`${bg} rounded px-0.5 mr-0.5 cursor-help transition-colors`}>
@@ -480,7 +480,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </p>
                     {/* Legend */}
                     <div className="flex items-center gap-3 flex-wrap">
-                      {[['bg-emerald-500-500-500/10 text-[#2BEE34]-300','< 40% AI'],['bg-yellow-900/20 text-[#A3A3A3]','40–59%'],['bg-amber-500-500-500/20 text-amber-400-400-200','60–79%'],['bg-[#FF4444]-500/30 text-rose-400-400-200','≥ 80%']].map(([cls, label]) => (
+                      {[['bg-emerald-500-500/10 text-[#2BEE34]-300','< 40% AI'],['bg-yellow-900/20 text-[#A3A3A3]','40–59%'],['bg-amber-500-500/20 text-amber-400-200','60–79%'],['bg-[#FF4444]-500/30 text-rose-400-200','≥ 80%']].map(([cls, label]) => (
                         <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
                       ))}
                     </div>
@@ -511,8 +511,8 @@ Analyzed: ${new Date().toLocaleString()}`
 
             {!result && !loading && (
               <div className="card flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-xl bg-amber-500-500-500/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-10 h-10 text-amber-400-400" />
+                <div className="w-20 h-20 rounded-xl bg-amber-500-500/10 flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-10 h-10 text-amber-400" />
                 </div>
                 <h3 className="font-semibold text-white mb-2">Ready to Analyze</h3>
                 <p className="text-[#6B6B6B] text-sm max-w-xs">
@@ -591,7 +591,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500/5' : 'border-amber-500/20 bg-amber-500-500/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}

@@ -32,11 +32,11 @@ export default function AccessibilityPage() {
         </div>
 
         {/* Status badge */}
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500-500/5 p-4 mb-8 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-400-400 flex-shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 mb-8 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-amber-400-300 text-sm">Partial Compliance — In Progress</p>
-            <p className="text-amber-400-400/80 text-xs mt-1">
+            <p className="text-amber-400/80 text-xs mt-1">
               Aiscern is working toward WCAG 2.1 Level AA compliance. Some areas are not yet fully compliant.
               We are actively addressing known issues and welcome feedback.
             </p>
@@ -158,9 +158,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg border border-[#1E1E1E] bg-[#141414]/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0 mt-0.5" />}
-      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-400-500 flex-shrink-0 mt-0.5" />}
-      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-400-500 flex-shrink-0 mt-0.5" />}
+      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />}
+      {icon === 'warn' && <Clock className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />}
+      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />}
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-white text-sm">{label}</p>
         <p className="text-[#6B6B6B] text-xs mt-0.5">{detail}</p>

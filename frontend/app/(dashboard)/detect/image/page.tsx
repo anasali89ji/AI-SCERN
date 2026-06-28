@@ -270,7 +270,7 @@ Analyzed: ${new Date().toLocaleString()}`
           )}
 
           {error && (
-            <div className="card border-rose-500/30 bg-[#FF4444]-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
+            <div className="card border-rose-500/30 bg-[#FF4444]-500/5 flex items-center gap-2 text-rose-400 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
@@ -329,15 +329,15 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
                     <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                           <span className="text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-[#FF4444]-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-[#2BEE34]-400'}`}>{s.weight}%</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-[#FF4444]/15 text-rose-400' : 'bg-emerald-500-500/15 text-[#2BEE34]'}`}>{s.weight}%</span>
                         </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
                         <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}>
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500'}>
                         </div>
                       </div>
                     </div>
@@ -453,7 +453,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500-500-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500-500-500/5' : 'border-amber-500/20 bg-amber-500-500-500/5'} p-4 rounded-xl`}>
+          <div className={`border p-4 rounded-xl ${result.verdict === 'AI' ? 'border-amber-500/30 bg-amber-500/5' : result.verdict === 'HUMAN' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
             <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
