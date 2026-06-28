@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { AnimatePresence, motion } 
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   LayoutDashboard, Image as ImageIcon, FileText, Clock,
   MoreHorizontal, Video, Music, Layers, MessageSquare,

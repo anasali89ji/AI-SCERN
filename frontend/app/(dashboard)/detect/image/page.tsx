@@ -393,7 +393,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <p className="text-sm text-[#6B6B6B]">GAN fingerprints · Pixel forensics · Neural ensemble</p>
                 <p className="text-xs text-[#6B6B6B]">Running 3-model ensemble + 6 pixel signals…</p>
               </div>
-            </div>
+            </motion.div>
           ) : (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-20 text-center">

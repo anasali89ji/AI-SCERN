@@ -516,7 +516,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {!result && !loading && (
