@@ -121,7 +121,7 @@ export default function WhoNeedsSection() {
   return (
     <section className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 border-t border-white/[0.06]">
       <div className="max-w-6xl mx-auto">
-        <div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
             Built For
           </p>
@@ -133,9 +133,9 @@ export default function WhoNeedsSection() {
           </p>
         </div>
 
-        <div>
+        <div className="flex-1 min-w-0">
           {WHO_NEEDS.map((card) => (
-            <div>
+            <div className="card p-5 flex flex-col gap-3 group hover:border-white/[0.12] transition-all">
               <Link href={card.href}
                 className="block h-full p-6 rounded-[14px] border border-white/[0.08]
                            bg-[#0f0f17] hover:border-white/[0.13] hover:-translate-y-px
@@ -162,7 +162,7 @@ export default function WhoNeedsSection() {
 
                 {/* Stat + CTA */}
                 <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className={`text-xl font-black ${card.color}`}>{card.stat}</span>
                     <span className="text-xs text-slate-500 ml-1.5">{card.statLabel}</span>
                   </div>

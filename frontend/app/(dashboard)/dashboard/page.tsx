@@ -174,7 +174,7 @@ export default function DashboardPage() {
             <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-5 h-5 text-[#2BEE34]" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="font-bold text-white mb-1">You're all set 🎉</h3>
               <p className="text-sm text-[#A3A3A3] mb-4 leading-relaxed">
                 Pick a detection tool to run your first scan. Free — no limits on basic scans.
@@ -198,7 +198,7 @@ export default function DashboardPage() {
       )}
 
       {/* Tool cards */}
-      <div>
+      <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-3">Detection Tools</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {TOOLS.map(t => (
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                               group-hover:border-[#2BEE34]/40 transition-colors">
                 <t.icon className="w-5 h-5 text-[#A3A3A3] group-hover:text-[#2BEE34] transition-colors" strokeWidth={1.8} />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[#E5E5E5] group-hover:text-white transition-colors">{t.label}</p>
                 <p className="text-[10px] text-[#6B6B6B] mt-0.5 leading-tight">{t.desc}</p>
               </div>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
       )}
 
       {/* Recent scans */}
-      <div>
+      <div className="space-y-3">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">Recent Scans</p>
           <div className="flex items-center gap-2">

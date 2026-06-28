@@ -103,7 +103,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
             </div>
           )}
           {scan.content_preview && (
-            <div>
+            <div className="space-y-1">
               <span className="text-[#6B6B6B] block mb-1">Content preview</span>
               <p className="text-[#A3A3A3] text-xs leading-relaxed p-2 bg-[#141414] rounded-lg line-clamp-3">
                 {scan.content_preview}
@@ -117,7 +117,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
             </span>
           </div>
           {conf != null && (
-            <div>
+            <div className="space-y-1">
               <div className="flex justify-between mb-1">
                 <span className="text-[#6B6B6B]">Confidence</span>
                 <span className="font-bold text-white">{conf}%</span>
@@ -235,7 +235,7 @@ export default function HistoryPage() {
       <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
                 <Clock className="w-6 h-6 text-[#2BEE34]" />

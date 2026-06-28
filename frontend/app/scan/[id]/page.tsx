@@ -89,7 +89,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <Icon className={`w-7 h-7 ${cfg.text} flex-shrink-0`} />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className={`text-2xl font-black ${cfg.text}`}>{cfg.label}</p>
                 <p className="text-sm text-[#A3A3A3] mt-0.5 capitalize">{scan.media_type} detection</p>
               </div>

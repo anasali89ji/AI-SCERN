@@ -244,7 +244,7 @@ Analyzed: ${new Date().toLocaleString()}`
             </div>
 
             {pdfMode && (
-              <div>
+              <div className="mt-3">
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-[#2BEE34]/30','bg-[#2BEE34]/10') }}
@@ -360,7 +360,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
-        <div>
+        <div className="flex-1 min-w-0">
           
             {loading && (
               <div className="card flex flex-col items-center justify-center py-16 gap-4">
@@ -446,7 +446,8 @@ Analyzed: ${new Date().toLocaleString()}`
                           </span>
                         </div>
                         <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden ml-5">
-                          <div className={`h-full rounded-full ${signal.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}>
+                          <div className={`h-full rounded-full ${signal.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500'}`}
+                            style={{ width: `${signal.weight}%` }} />
                         </div>
                       </div>
                     ))}
@@ -575,7 +576,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
                   <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>

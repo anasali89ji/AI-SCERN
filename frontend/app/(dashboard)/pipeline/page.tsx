@@ -80,7 +80,7 @@ export default function PipelinePage() {
     <div className="p-4 sm:p-6 2xl:p-8 space-y-6 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black text-white flex items-center gap-2">
             <Database className="w-5 h-5 text-[#2BEE34]" />
             Data Pipeline
@@ -123,7 +123,7 @@ export default function PipelinePage() {
             ].map(({ label, value, icon: Icon, color, sub }) => (
               <div key={label} className="bg-surface border border-[#1E1E1E] rounded-xl p-4">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-xs text-[#6B6B6B] uppercase tracking-wider mb-1">{label}</p>
                     <p className={`text-2xl font-black ${color}`}>{value}</p>
                     <p className="text-xs text-[#6B6B6B] mt-1">{sub}</p>
@@ -164,7 +164,7 @@ export default function PipelinePage() {
                 <div key={w.num} className="flex items-center justify-between p-3 bg-background/60 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${w.online ? 'bg-emerald-500-500' : 'bg-rose-500'}`} />
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white">{w.name}</p>
                       {w.error && <p className="text-xs text-rose-400">{w.error}</p>}
                       {w.version && <p className="text-xs text-[#6B6B6B]">v{w.version} · {w.role}</p>}
@@ -193,7 +193,7 @@ export default function PipelinePage() {
                   <div key={i} className="flex items-center justify-between p-3 bg-background/60 rounded-xl text-sm">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="font-semibold text-white">{fmt(p.item_count)} items</p>
                         <p className="text-xs text-[#6B6B6B] font-mono">{p.commit_id?.slice(0, 12)}…</p>
                       </div>
@@ -210,7 +210,7 @@ export default function PipelinePage() {
 
           {/* HF Dataset link */}
           <div className="bg-[#0f0f17]/50 border border-white/[0.06] rounded-xl p-4 flex items-center justify-between">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">HuggingFace Dataset</p>
               <p className="text-xs text-[#6B6B6B]">saghi776/detectai-dataset</p>
             </div>

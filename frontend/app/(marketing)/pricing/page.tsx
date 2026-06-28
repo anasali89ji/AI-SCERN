@@ -274,7 +274,7 @@ export default function PricingPage() {
               <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#1A1A1A] border border-[#2A2A2A]">
                 <Building2 className="w-6 h-6 text-[#2BEE34]" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-white mb-1">Enterprise</h2>
                 <p className="text-sm text-[#A3A3A3]">
                   Custom limits, dedicated SLA, DPA, and a named account manager.
@@ -292,7 +292,7 @@ export default function PricingPage() {
           </div>
 
           {/* FAQ */}
-          <div>
+          <div className="space-y-3">
             <h2 className="text-xl font-semibold text-white mb-6">Frequently Asked Questions</h2>
             <div className="space-y-3">
               {FAQ.map((item, i) => (

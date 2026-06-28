@@ -216,7 +216,7 @@ export function OnboardingWizard() {
                 ].map(([h,s]) => (
                   <div key={h} className="flex items-center gap-3 p-3 bg-[#ffffff04] border border-[#1e1e35] rounded-xl">
                     <Check className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
-                    <div>
+                    <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center mx-auto">
                       <span className="text-xs font-semibold text-white">{h} </span>
                       <span className="text-xs text-[#4a5568]">{s}</span>
                     </div>

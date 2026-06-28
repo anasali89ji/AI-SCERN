@@ -284,7 +284,7 @@ function VerdictBanner({ verdict }: { verdict: FinalVerdict }) {
         <div className={`${color} flex-shrink-0`}>
           <Icon size={40} strokeWidth={1.5} />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <div className="text-xs text-[#6B6B6B] uppercase tracking-widest mb-1">Final Verdict</div>
           <div className={`text-3xl font-bold ${color}`}>{label}</div>
         </div>

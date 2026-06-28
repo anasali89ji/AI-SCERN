@@ -49,12 +49,12 @@ export function CustomCursor() {
   return (
     <>
       {/* Outer ring */}
-      <div>
-        <div>
+      <div className="absolute inset-0 rounded-full border-2 border-blue-400/60">
+        <div className="absolute inset-[3px] rounded-full border border-blue-300/30">
       </div>
       {/* Inner dot */}
-      <div>
-        <div>
+      <div className="absolute inset-[35%] rounded-full bg-blue-400">
+        <div className="absolute inset-[40%] rounded-full bg-white">
       </div>
     </>
   )

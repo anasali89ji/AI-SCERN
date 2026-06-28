@@ -84,12 +84,12 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
   return (
     <AnimatePresence>
       {isOpen && (
-        <div>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
           {/* Modal — slides up on mobile, scales in on desktop */}
-          <div>
+          <div className="relative w-full sm:max-w-lg bg-[#0f0f17] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90dvh] overflow-hidden">
             {/* Top accent */}
             <div className="h-1 w-full bg-blue-600 rounded-t-xl flex-shrink-0" />
 
@@ -101,7 +101,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-3 pb-0 flex-shrink-0">
               {!success && user && (
-                <div>
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
                   <h2 className="text-lg font-bold text-slate-100">Write a Review</h2>
                   <p className="text-xs text-slate-500">Your feedback helps others</p>
                 </div>
@@ -130,7 +130,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 </div>
               ) : success ? (
                 <div className="text-center py-8">
-                  <div>
+                  <div className="text-center py-8 space-y-3">
                     <CheckCircle className="w-8 h-8 text-emerald-400" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-100 mb-2">Review submitted!</h2>
@@ -140,7 +140,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 <div className="space-y-4">
 
                   {/* Star rating */}
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
                       Your Rating *
                     </label>
@@ -160,7 +160,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   </div>
 
                   {/* Tool */}
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">Tool Used</label>
                     <select value={tool} onChange={e => setTool(e.target.value)}
                       className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500/30 transition-colors">
@@ -169,7 +169,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   </div>
 
                   {/* Title */}
-                  <div>
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Title *</label>
                       <span className="text-xs text-slate-600">{title.length}/100</span>
@@ -182,7 +182,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   </div>
 
                   {/* Body */}
-                  <div>
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Review *</label>
                       <span className={`text-xs ${body.length > 0 && body.length < 30 ? 'text-rose-400-500' : 'text-slate-600'}`}>

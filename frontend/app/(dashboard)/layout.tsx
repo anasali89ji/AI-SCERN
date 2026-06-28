@@ -136,7 +136,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
 
         {/* Recent chats subsection */}
         {!collapsed && chatPreviews.length > 0 && pathname.startsWith('/chat') && (
-          <div>
+          <div className="px-3 pb-2">
             <button onClick={() => setChatOpen(o => !o)}
               className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold text-[#6B6B6B] uppercase tracking-[0.08em]">
               Recent Chats

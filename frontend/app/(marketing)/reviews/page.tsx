@@ -71,7 +71,7 @@ function ReviewBody({ body }: { body: string }) {
   const [expanded, setExpanded] = useState(false)
   const isLong = body.length > 280
   return (
-    <div>
+    <div className="flex-1 min-w-0">
       <p className="text-sm text-[#A3A3A3] leading-relaxed">
         {isLong && !expanded ? body.slice(0, 280) + '…' : body}
       </p>
@@ -325,7 +325,7 @@ export default function ReviewsPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white text-sm mb-1">{r.title}</h3>
                   <ReviewBody body={r.body} />
                 </div>

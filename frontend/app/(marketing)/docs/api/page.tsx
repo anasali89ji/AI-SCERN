@@ -42,7 +42,7 @@ export default function ApiDocsPage() {
         <Link href="/" className="text-xl font-black text-[#2BEE34]">Aiscern</Link>
       </div>
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
           <p className="text-[#6B6B6B]">Programmatic access to Aiscern detection. Free for all registered users.</p>
         </div>

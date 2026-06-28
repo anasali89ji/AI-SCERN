@@ -55,7 +55,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 // ── Section ───────────────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="space-y-4">
       <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-[#1E1E1E]">
         <Icon className="w-4 h-4 text-[#2BEE34]" /> {title}
       </h2>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-2xl 2xl:max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black text-white">Settings</h1>
           <p className="text-sm text-[#6B6B6B] mt-0.5">Customize your Aiscern experience</p>
         </div>
@@ -316,13 +316,13 @@ export default function SettingsPage() {
       </Section>
 
       {/* Danger zone */}
-      <div>
+      <div className="card border-rose-500/20 p-4 rounded-xl">
         <h2 className="font-bold text-rose-400-400 flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">Delete account</p>
               <p className="text-xs text-[#6B6B6B] mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>

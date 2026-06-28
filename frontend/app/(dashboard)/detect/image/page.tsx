@@ -438,7 +438,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
                   <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>

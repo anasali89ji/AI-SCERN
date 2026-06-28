@@ -51,7 +51,7 @@ function UsageBar({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white">{label}</p>
           {sublabel && <p className="text-[11px] text-[#6B6B6B]">{sublabel}</p>}
         </div>
@@ -360,13 +360,13 @@ export default function ProfilePage() {
           <div className="mt-4 space-y-3">
             {editing ? (
               <div className="space-y-3 max-w-sm">
-                <div>
+                <div className="space-y-1">
                   <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Display Name</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}
                     className="w-full bg-[#141414] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2BEE34]/50"
                     placeholder="Your full name" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Username</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] text-sm">@</span>
@@ -390,7 +390,7 @@ export default function ProfilePage() {
                   )}
                   {uStatus === 'available' && username && <p className="text-[11px] text-[#2BEE34] mt-1">@{username} is available</p>}
                 </div>
-                <div>
+                <div className="space-y-1">
                   <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Bio</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
                     className="w-full bg-[#141414] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2BEE34]/50 resize-none"
@@ -443,7 +443,7 @@ export default function ProfilePage() {
       {user?.uid && <CreditsCard userId={user.uid} />}
 
       {/* ── Detection Stats ───────────────────────────────────── */}
-      <div>
+      <div className="card p-4">
         <h2 className="text-sm font-semibold text-[#6B6B6B] uppercase tracking-widest mb-3 px-1">
           Detection Stats
         </h2>

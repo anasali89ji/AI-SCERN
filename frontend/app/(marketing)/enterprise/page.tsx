@@ -113,24 +113,24 @@ export default function EnterprisePage() {
               <p className="text-sm text-[#6B6B6B] mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
               <div className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">First Name</label>
                     <input type="text" placeholder="Jane" className="input-field" />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Last Name</label>
                     <input type="text" placeholder="Smith" className="input-field" />
                   </div>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Work Email</label>
                   <input type="email" placeholder="jane@company.com" className="input-field" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Company</label>
                   <input type="text" placeholder="Acme Corp" className="input-field" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Use Case</label>
                   <textarea rows={3} placeholder="Describe your detection needs, expected volume, and any integration requirements..." className="input-field resize-none" />
                 </div>

@@ -155,7 +155,7 @@ export function SiteFooter() {
           </FooterCol>
 
           {/* Newsletter */}
-          <div>
+          <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#A3A3A3] mb-4">
               Newsletter
             </h3>
@@ -227,7 +227,7 @@ export function SiteFooter() {
 
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="border-t border-white/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
       <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#A3A3A3] mb-4">
         {title}
       </h3>

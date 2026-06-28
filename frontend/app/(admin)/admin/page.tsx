@@ -77,7 +77,7 @@ export default function AdminOverview() {
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-black text-slate-100">Platform Overview</h1>
             <p className="text-xs text-slate-500 mt-0.5">Live data · Auto-refreshes every 30s</p>
           </div>

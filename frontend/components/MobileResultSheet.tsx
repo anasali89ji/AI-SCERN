@@ -35,10 +35,10 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
       {isOpen && (
         <>
           {/* Backdrop — mobile only */}
-          <div>
+          <div className="fixed inset-0 bg-black/60 z-40 lg:hidden">
 
           {/* Sheet */}
-          <div>
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#0f0f17] border-t border-white/[0.08] rounded-t-2xl lg:hidden">
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-white/20" />

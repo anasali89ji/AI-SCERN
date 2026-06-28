@@ -63,7 +63,7 @@ export default function ApiUsage() {
             <div className="space-y-3">
               {errors.map(e=>(
                 <div key={e.code} className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/[0.08]">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="text-sm font-bold text-rose-400-500 mr-2">{e.code}</span>
                     <span className="text-xs text-slate-500">{e.label}</span>
                   </div>

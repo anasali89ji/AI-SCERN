@@ -69,7 +69,7 @@ function CreditsContent() {
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Credits</h1>
           <p className="text-[#6B6B6B] text-sm mt-1">Purchase scan credits. Billed in PKR via XPay.</p>
         </div>
@@ -143,7 +143,7 @@ function CreditsContent() {
 
                 <div className="mb-6 flex items-center gap-2 p-3 rounded-lg bg-[#1A1A1A] border border-[#2A2A2A]">
                   <Coins className="w-5 h-5 text-[#2BEE34] flex-shrink-0" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-lg font-black text-white">{plan.credits.toLocaleString()}</p>
                     <p className="text-[10px] text-[#6B6B6B]">{plan.creditsLabel}</p>
                   </div>
@@ -192,7 +192,7 @@ function CreditsContent() {
 
       {/* Enterprise */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-xl border border-[#1E1E1E] bg-[#0A0A0A]">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="font-semibold text-white mb-0.5">Need bulk credits or custom limits?</p>
           <p className="text-sm text-[#A3A3A3]">Enterprise plans with invoiced billing and dedicated support available.</p>
         </div>

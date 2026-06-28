@@ -29,7 +29,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
   const initial = r.is_anonymous ? '?' : name.charAt(0).toUpperCase()
 
   return (
-    <div>
+    <div className="w-full overflow-hidden">
       {/* Stars */}
       <div className="flex gap-0.5 mb-4" aria-label={`${stars} out of 5 stars`}>
         {Array.from({ length: stars }).map((_, j) => (
@@ -53,7 +53,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
         >
           {initial}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-slate-200">{name}</div>
           {r.tool_used && (
             <div className="text-[11px] text-slate-500">{r.tool_used}</div>

@@ -163,7 +163,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#1A1A1A] border border-[#2A2A2A] group-hover:border-[#2BEE34]/30 transition-colors flex-shrink-0">
                         <tool.icon className="w-4 h-4 text-[#A3A3A3] group-hover:text-[#2BEE34] transition-colors" strokeWidth={1.8} />
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-[#E5E5E5] group-hover:text-white transition-colors">{tool.label}</div>
                         <div className="text-xs text-[#6B6B6B]">{tool.desc}</div>
                       </div>
@@ -218,7 +218,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#1A1A1A] border border-[#2A2A2A] group-hover:border-[#2BEE34]/30 transition-colors flex-shrink-0">
                         <sol.icon className="w-4 h-4 text-[#A3A3A3] group-hover:text-[#2BEE34] transition-colors" strokeWidth={1.8} />
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-[#E5E5E5] group-hover:text-white transition-colors">{sol.label}</div>
                         <div className="text-xs text-[#6B6B6B]">{sol.desc}</div>
                       </div>

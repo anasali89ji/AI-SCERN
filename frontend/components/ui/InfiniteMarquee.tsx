@@ -32,7 +32,7 @@ export function InfiniteMarquee({
       onMouseEnter={() => pauseOnHover && setPaused(true)}
       onMouseLeave={() => pauseOnHover && setPaused(false)}
     >
-      <div>
+      <div className="flex gap-4 shrink-0">
         {[...children, ...children].map((child, i) => (
           <div key={i} className="flex-shrink-0">
             {child}
