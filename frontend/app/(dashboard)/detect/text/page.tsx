@@ -558,7 +558,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <pre className="px-4 py-3 text-[11px] text-[#A3A3A3] leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
             {graphContext}
           </pre>
-        </div>
+        </motion.div>
       )}
 
       <LazyReviewSuggestion toolName="AI Text Detector" />
