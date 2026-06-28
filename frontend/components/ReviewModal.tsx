@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { X, Star, CheckCircle, EyeOff, User } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import Link from 'next/link'
@@ -82,7 +82,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
   }
 
   return (
-    
+    <AnimatePresence>
       {isOpen && (
         <div>
           {/* Backdrop */}
@@ -251,6 +251,6 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
           </div>
         </div>
       )}
-    
+    </AnimatePresence>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 import { Check, X, Minus } from 'lucide-react'
-import { motion } 
+import { motion } from 'framer-motion'
 
 const FEATURES = [
   { name: 'Text AI Detection',           aiscern: true,  gptzero: true,  turnitin: true,        originality: true  },

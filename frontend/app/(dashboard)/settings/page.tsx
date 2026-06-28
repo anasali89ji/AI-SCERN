@@ -1,7 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback } from 'react'
-import { motion } 
+import { motion } from 'framer-motion'
 import {
   Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
   Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
@@ -21,7 +21,10 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
   return (
     <button onClick={onChange} disabled={disabled}
       className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-[#2BEE34]' : 'bg-border'}`}>
-      <div>
+      <div
+        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+        style={{ transform: checked ? 'translateX(20px)' : 'translateX(0)' }}
+      />
     </button>
   )
 }

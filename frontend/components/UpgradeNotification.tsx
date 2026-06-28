@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Crown, X, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
@@ -21,14 +21,15 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
   const expires = notif.data?.expires_at
 
   return (
-    <div>
-      <div>
+    <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/50 p-4">
+      <div className="relative w-full max-w-sm bg-[#0f0f17] border border-white/[0.08] rounded-2xl p-8 overflow-hidden">
         {/* Glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-secondary/5 pointer-events-none" />
 
         {/* Confetti dots */}
         {[...Array(12)].map((_,i) => (
-          <div>
+          <div key={i} className="absolute w-1.5 h-1.5 rounded-full bg-primary/50"
+            style={{ top: `${(i * 31 + 8) % 95}%`, left: `${(i * 27 + 4) % 95}%` }} />
         ))}
 
         <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/[0.05] transition-colors">
@@ -37,7 +38,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
 
         {/* Badge */}
         <div className="flex justify-center mb-6">
-          <div>
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Crown className="w-10 h-10 text-white" />
           </div>
         </div>
@@ -113,8 +114,8 @@ export function UpgradeNotificationProvider() {
   }
 
   return (
-    
+    <AnimatePresence>
       {current && <UpgradeModal notif={current} onDismiss={dismiss} />}
-    
+    </AnimatePresence>
   )
 }

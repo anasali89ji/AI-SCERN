@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import {  } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
-import { motion, AnimatePresence } 
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, Lock, ArrowRight } from 'lucide-react'
