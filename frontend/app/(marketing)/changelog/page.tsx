@@ -83,8 +83,8 @@ const RELEASES: {
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
   new:         { label: 'New',         style: 'bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20' },
-  improvement: { label: 'Improved',    style: 'bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25' },
-  fix:         { label: 'Fix',         style: 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/25' },
+  improvement: { label: 'Improved',    style: 'bg-[#2BEE34]/10 text-[#2BEE34] border border-emerald-500/25' },
+  fix:         { label: 'Fix',         style: 'bg-[#FFB800]/10 text-[#FFB800] border border-amber-500/25' },
   infra:       { label: 'Infra',       style: 'bg-surface text-[#6B6B6B] border border-[#1E1E1E]' },
 }
 
@@ -121,7 +121,7 @@ export default function ChangelogPage() {
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>
                   {i === 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25 uppercase tracking-wider">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#2BEE34]/10 text-[#2BEE34] border border-emerald-500/25 uppercase tracking-wider">
                       Latest
                     </span>
                   )}

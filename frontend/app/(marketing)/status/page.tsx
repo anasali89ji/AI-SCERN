@@ -38,8 +38,8 @@ export default function StatusPage() {
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10 text-center">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6 ${
               allOperational
-                ? 'bg-emerald-500-500/10 border border-emerald-500/20 text-emerald-400-400'
-                : 'bg-amber-500-500/10 border border-amber-500/20 text-amber-400-500'
+                ? 'bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-[#2BEE34]'
+                : 'bg-[#FFB800]/10 border border-[#FFB800]/20 text-[#FFB800]'
             }`}>
               {allOperational ? (
                 <><CheckCircle className="w-4 h-4" /> All Systems Operational</>
@@ -73,7 +73,7 @@ export default function StatusPage() {
                     <span className="text-xs text-[#6B6B6B] flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {service.latency}
                     </span>
-                    <span className="text-xs font-semibold text-emerald-400-400 capitalize">{service.status}</span>
+                    <span className="text-xs font-semibold text-[#2BEE34] capitalize">{service.status}</span>
                   </div>
                 </div>
               ))}
@@ -107,7 +107,7 @@ export default function StatusPage() {
                     <div key={i} className="card border border-[#1E1E1E] rounded-xl p-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-semibold text-white">{inc.title}</span>
-                        <span className={`text-xs font-bold ${inc.status === 'resolved' ? 'text-emerald-400-400' : 'text-amber-400-500'}`}>{inc.status}</span>
+                        <span className={`text-xs font-bold ${inc.status === 'resolved' ? 'text-[#2BEE34]' : 'text-[#FFB800]'}`}>{inc.status}</span>
                       </div>
                       <div className="text-xs text-[#6B6B6B] mb-2">{inc.date}</div>
                       <p className="text-xs text-[#A3A3A3]">{inc.desc}</p>

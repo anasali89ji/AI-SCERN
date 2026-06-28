@@ -79,9 +79,9 @@ export default function SecurityPage() {
         </div>
 
         {/* Summary card */}
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500-500/5 p-6 mb-12">
+        <div className="rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 p-6 mb-12">
           <h2 className="font-black text-lg mb-3 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-emerald-400-400" /> The short version
+            <CheckCircle className="w-5 h-5 text-[#2BEE34]" /> The short version
           </h2>
           <ul className="space-y-2 text-sm text-[#6B6B6B]">
             {[
@@ -92,7 +92,7 @@ export default function SecurityPage() {
               'API keys are stored as one-way hashes — we cannot recover the original key',
             ].map(item => (
               <li key={item} className="flex items-start gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400-400 mt-0.5 shrink-0" />
+                <CheckCircle className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
                 {item}
               </li>
             ))}

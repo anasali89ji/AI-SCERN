@@ -86,7 +86,7 @@ export default function AdminOverview() {
             <button onClick={fetchStats} className="p-1.5 rounded-lg border border-white/[0.08] hover:bg-[#141420] transition-colors">
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
             </button>
-            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500-500/10 border border-emerald-500/20 text-[10px] text-emerald-400-400 font-semibold">
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-[10px] text-[#2BEE34] font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />LIVE
             </span>
           </div>

@@ -44,7 +44,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
           {/* Verdict chip on image */}
           <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full
             text-[10px] font-bold text-white backdrop-blur-sm
-            ${isAI ? 'bg-rose-500-500/85' : 'bg-emerald-500-600/85'}`}>
+            ${isAI ? 'bg-[#FF4444]/85' : 'bg-emerald-500-600/85'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5"/> : <CheckCircle className="w-2.5 h-2.5"/>}
             {card.verdict}
           </div>
@@ -56,7 +56,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
             &ldquo;{card.preview}&rdquo;
           </p>
           <span className={`self-start inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-2
-            ${isAI ? 'bg-rose-500-500/10 text-rose-400-400' : 'bg-emerald-500-500/10 text-emerald-400-400'}`}>
+            ${isAI ? 'bg-[#FF4444]/10 text-[#FF4444]' : 'bg-[#2BEE34]/10 text-[#2BEE34]'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5"/> : <CheckCircle className="w-2.5 h-2.5"/>}
             {card.verdict}
           </span>
@@ -68,8 +68,8 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
         <div className="flex items-start justify-between gap-1 mb-2">
           <p className="text-[11px] font-semibold text-slate-200 leading-tight">{card.label}</p>
           <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide
-            ${isAI ? 'bg-rose-500-500/10 text-rose-400-400 border border-rose-500/20'
-                   : 'bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/20'}`}>
+            ${isAI ? 'bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/20'
+                   : 'bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20'}`}>
             {card.tag}
           </span>
         </div>
@@ -80,7 +80,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
             <div>
           </div>
           <span className={`text-[10px] font-bold tabular-nums shrink-0
-            ${isAI ? 'text-rose-400-400' : 'text-emerald-400-400'}`}>
+            ${isAI ? 'text-[#FF4444]' : 'text-[#2BEE34]'}`}>
             {card.confidence}%
           </span>
         </div>
@@ -95,7 +95,7 @@ export default function AIvsRealSection() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
-                          border border-rose-500/25 bg-rose-500-500/[0.06] text-rose-400-400
+                          border border-rose-500/25 bg-[#FF4444]/[0.06] text-[#FF4444]
                           text-xs font-semibold mb-5">
             <Scan className="w-3.5 h-3.5" />
             Real-World Detection Examples

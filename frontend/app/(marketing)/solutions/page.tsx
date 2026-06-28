@@ -118,9 +118,9 @@ const colorMap: Record<string, { bg: string; border: string; text: string; icon:
   primary: { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
   blue:    { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
   cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
-  amber:   { bg: 'bg-amber-500-500/10', border: 'border-amber-500/25',   text: 'text-amber-400-500',   icon: 'text-amber-400-500'   },
-  emerald: { bg: 'bg-emerald-500-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400-400', icon: 'text-emerald-400-400' },
-  rose:    { bg: 'bg-rose-500-500/10',  border: 'border-rose-500/25',    text: 'text-rose-400-500',    icon: 'text-rose-400-500'    },
+  amber:   { bg: 'bg-[#FFB800]/10', border: 'border-amber-500/25',   text: 'text-[#FFB800]',   icon: 'text-[#FFB800]'   },
+  emerald: { bg: 'bg-[#2BEE34]/10', border: 'border-emerald-500/25', text: 'text-[#2BEE34]', icon: 'text-[#2BEE34]' },
+  rose:    { bg: 'bg-[#FF4444]/10',  border: 'border-rose-500/25',    text: 'text-[#FF4444]',    icon: 'text-[#FF4444]'    },
 }
 
 export default function SolutionsHub() {

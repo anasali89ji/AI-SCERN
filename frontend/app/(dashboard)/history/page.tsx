@@ -47,7 +47,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
           <button onClick={reset} className="px-3 bg-[#141414] text-[#6B6B6B] text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose-500-500 text-white font-bold flex items-center gap-1.5 text-sm">
+          <button onClick={onDelete} className="px-4 bg-[#FF4444] text-white font-bold flex items-center gap-1.5 text-sm">
             <Trash2 className="w-4 h-4" /> Delete
           </button>
         </div>
@@ -65,7 +65,7 @@ const mediaColors = {
   image: 'text-[#2BEE34] bg-[#2BEE34]/10',
   video: 'text-[#A3A3A3] bg-[#1A1A1A]',
   audio: 'text-[#2BEE34] bg-[#2BEE34]/10',
-  text:  'text-amber-400 bg-amber-500-500/10',
+  text:  'text-amber-400 bg-[#FFB800]/10',
   url:   'text-emerald-400 bg-[#2BEE34]/10',
 }
 
@@ -319,7 +319,7 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#FF4444] hover:border-rose-500/30">
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#FF4444] hover:border-[#FF4444]/30">
                 <Trash2 className="w-3.5 h-3.5" /> Clear All
               </button>
             )}

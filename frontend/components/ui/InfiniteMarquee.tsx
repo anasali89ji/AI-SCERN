@@ -1,44 +1,23 @@
-'use client'
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+/**
+ * InfiniteMarquee — DISABLED per design spec Section 10.
+ * Anti-pattern: marquees/carousels distract and reduce readability.
+ * Replaced with a static grid renderer to keep existing import shapes working.
+ */
+import { cn } from '@/lib/cn'
 
 interface MarqueeProps {
-  children: React.ReactNode[]
-  speed?: number
-  direction?: 'left' | 'right'
-  gap?: number
+  children:      React.ReactNode[]
+  className?:    string
+  speed?:        number
+  direction?:    'left' | 'right'
+  gap?:          number
   pauseOnHover?: boolean
-  className?: string
 }
 
-export function InfiniteMarquee({
-  children,
-  speed = 40,
-  direction = 'left',
-  gap = 24,
-  pauseOnHover = true,
-  className = '',
-}: MarqueeProps) {
-  const [paused, setPaused] = useState(false)
-  const count = children.length
-  const totalWidth = count * (200 + gap)
-  const duration = totalWidth / speed
-  const xFrom = direction === 'left' ? '0%' : '-50%'
-  const xTo   = direction === 'left' ? '-50%' : '0%'
-
+export function InfiniteMarquee({ children, className }: MarqueeProps) {
   return (
-    <div
-      className={`overflow-hidden ${className}`}
-      onMouseEnter={() => pauseOnHover && setPaused(true)}
-      onMouseLeave={() => pauseOnHover && setPaused(false)}
-    >
-      <div>
-        {[...children, ...children].map((child, i) => (
-          <div key={i} className="flex-shrink-0">
-            {child}
-          </div>
-        ))}
-      </div>
+    <div className={cn('flex flex-wrap gap-4 justify-center', className)}>
+      {children}
     </div>
   )
 }

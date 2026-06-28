@@ -104,7 +104,7 @@ export default function PipelinePage() {
       </div>
 
       {pushMsg && (
-        <div className={`p-4 rounded-xl text-sm font-medium border ${pushMsg.startsWith('✅') ? 'bg-emerald-500-500/10 border-emerald-500/20 text-emerald-400-400' : 'bg-rose-500-500/10 border-rose-500/20 text-rose-400-500'}`}>
+        <div className={`p-4 rounded-xl text-sm font-medium border ${pushMsg.startsWith('✅') ? 'bg-[#2BEE34]/10 border-[#2BEE34]/20 text-[#2BEE34]' : 'bg-[#FF4444]/10 border-[#FF4444]/20 text-[#FF4444]'}`}>
           {pushMsg}
         </div>
       )}
@@ -117,7 +117,7 @@ export default function PipelinePage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Total Scraped', value: fmt(stats.total_scraped), icon: Database, color: 'text-[#2BEE34]', sub: `Last: ${ago(stats.last_scrape_at)}` },
-              { label: 'Pushed to HF',  value: fmt(stats.total_pushed),  icon: Zap,      color: 'text-emerald-400-400', sub: `Last: ${ago(stats.last_push_at)}` },
+              { label: 'Pushed to HF',  value: fmt(stats.total_pushed),  icon: Zap,      color: 'text-[#2BEE34]', sub: `Last: ${ago(stats.last_push_at)}` },
               { label: 'Pending Push',  value: fmt(stats.pending_push),  icon: Clock,    color: stats.pending_push > 5000 ? 'text-[#FFB800]' : 'text-white', sub: 'Waiting to push' },
               { label: 'Push Rate',     value: `${stats.push_rate}%`,    icon: TrendingUp, color: 'text-[#A3A3A3]', sub: 'Scraped → HF' },
             ].map(({ label, value, icon: Icon, color, sub }) => (
@@ -163,14 +163,14 @@ export default function PipelinePage() {
               {workers.length > 0 ? workers.map(w => (
                 <div key={w.num} className="flex items-center justify-between p-3 bg-background/60 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${w.online ? 'bg-emerald-500-500' : 'bg-rose-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${w.online ? 'bg-[#2BEE34]' : 'bg-[#FF4444]'}`} />
                     <div>
                       <p className="text-sm font-semibold text-white">{w.name}</p>
                       {w.error && <p className="text-xs text-rose-400">{w.error}</p>}
                       {w.version && <p className="text-xs text-[#6B6B6B]">v{w.version} · {w.role}</p>}
                     </div>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${w.online ? 'bg-emerald-500-500/10 text-emerald-400-400' : 'bg-rose-500-500/10 text-rose-400-500'}`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${w.online ? 'bg-[#2BEE34]/10 text-[#2BEE34]' : 'bg-[#FF4444]/10 text-[#FF4444]'}`}>
                     {w.online ? 'Online' : 'Offline'}
                   </span>
                 </div>
@@ -192,7 +192,7 @@ export default function PipelinePage() {
                 {pushLog.map((p, i) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-background/60 rounded-xl text-sm">
                     <div className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
+                      <CheckCircle className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-white">{fmt(p.item_count)} items</p>
                         <p className="text-xs text-[#6B6B6B] font-mono">{p.commit_id?.slice(0, 12)}…</p>

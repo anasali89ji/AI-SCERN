@@ -24,7 +24,7 @@ function Cell({ v, isDetectai }: { v: boolean | string; isDetectai?: boolean }) 
   )
   if (v === true)  return <Check className={`w-5 h-5 mx-auto ${isDetectai ? 'text-blue-400' : 'text-green-400'}`} />
   if (v === false) return <X className="w-4 h-4 mx-auto text-slate-500/30" />
-  return <Minus className="w-4 h-4 mx-auto text-amber-400-400" />
+  return <Minus className="w-4 h-4 mx-auto text-[#FFB800]" />
 }
 
 const COLS = [

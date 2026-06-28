@@ -163,13 +163,13 @@ export function OnboardingWizard() {
                   className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#2563eb] transition-colors"
                 />
                 {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-[#2563eb] animate-spin" />}
-                {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400-400" />}
-                {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-400-400" />}
+                {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2BEE34]" />}
+                {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FF4444]" />}
               </div>
-              {uStatus === 'available' && <p className="text-xs text-emerald-400-400">@{username} is available!</p>}
+              {uStatus === 'available' && <p className="text-xs text-[#2BEE34]">@{username} is available!</p>}
               {uStatus === 'taken' && (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-rose-400-400">@{username} is taken. Try one of these:</p>
+                  <p className="text-xs text-[#FF4444]">@{username} is taken. Try one of these:</p>
                   <div className="flex flex-wrap gap-2">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
@@ -210,7 +210,7 @@ export function OnboardingWizard() {
                   ['All results saved', 'in your history'],
                 ].map(([h,s]) => (
                   <div key={h} className="flex items-center gap-3 p-3 bg-[#ffffff04] border border-[#1e1e35] rounded-xl">
-                    <Check className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-white">{h} </span>
                       <span className="text-xs text-[#4a5568]">{s}</span>

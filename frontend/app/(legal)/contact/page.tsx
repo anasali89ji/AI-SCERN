@@ -189,8 +189,8 @@ export default function ContactPage() {
           {/* Right column — form */}
           <div className="lg:col-span-3">
             {sent ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500-500/5 p-10 text-center">
-                <CheckCircle className="w-12 h-12 text-emerald-400-400 mx-auto mb-4" />
+              <div className="rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 p-10 text-center">
+                <CheckCircle className="w-12 h-12 text-[#2BEE34] mx-auto mb-4" />
                 <h2 className="text-xl font-bold text-white mb-2">Message sent!</h2>
                 <p className="text-[#6B6B6B] text-sm mb-4">We'll get back to you within 24–48 hours.</p>
                 <button onClick={() => { setSent(false); setForm({ name:'', email:'', subject: SUBJECTS[0], message:'' }) }}
@@ -254,7 +254,7 @@ export default function ContactPage() {
                       focus:border-[#2BEE34]/30 transition-colors" />
                 </div>
 
-                {error && <p className="text-rose-400-400 text-sm px-1">{error}</p>}
+                {error && <p className="text-[#FF4444] text-sm px-1">{error}</p>}
 
                 <button onClick={submit}
                   disabled={sending || !form.name || !form.email || !form.message}

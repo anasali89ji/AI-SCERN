@@ -1,15 +1,8 @@
 'use client'
-/**
- * AuthGuard — client-side safety net for all protected pages.
- * Middleware handles server-side redirect; this handles client-side hydration edge cases.
- */
 import { useEffect, useState } from 'react'
-import {  } from 'next/navigation'
-import { useAuth } from '@/components/auth-provider'
-import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Zap, Shield, CheckCircle, Lock, ArrowRight } from 'lucide-react'
+import { useAuth } from '@/components/auth-provider'
+import { Loader2, Zap, Shield, CheckCircle2, Lock, ArrowRight } from 'lucide-react'
 
 const PERKS = [
   'Save your complete scan history',
@@ -20,25 +13,21 @@ const PERKS = [
 ]
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
+  const { user, loading }       = useAuth()
   const [checked, setChecked]   = useState(false)
-  // const router = useRouter()
 
   useEffect(() => {
     const t = setTimeout(() => setChecked(true), 150)
     return () => clearTimeout(t)
   }, [])
 
-  // Still initializing
+  // Initializing
   if (!checked || loading) {
     return (
-      <div className="min-h-screen bg-[#08080d] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Image src="/logo.png" alt="Aiscern" width={56} height={38}
-            className="object-contain drop-shadow-[0_0_12px_rgba(245,100,0,0.5)] animate-pulse" />
-          <div className="flex gap-1">
-            <div className="w-5 h-5 rounded-full border-2 border-blue-600/30 border-t-blue-600 animate-spin" />
-          </div>
+      <div className="min-h-screen bg-[#141414] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <span className="text-2xl font-black text-white">Aiscern</span>
+          <Loader2 className="w-6 h-6 text-[#2BEE34] animate-spin" />
         </div>
       </div>
     )
@@ -47,58 +36,67 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Authenticated — render page
   if (user) return <>{children}</>
 
-  // Not authenticated — show sign-in wall (no escape)
+  // Unauthenticated — show sign-in wall
   return (
-    <div className="min-h-screen bg-[#08080d] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[#08080d]" />
-      
+    <div className="min-h-screen bg-[#141414] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
 
-      
-        <div>
-          <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
-          <div className="bg-surface border border-white/10 rounded-b-xl  p-8 space-y-6">
+        {/* Moss accent top bar */}
+        <div className="h-1 w-full bg-[#2BEE34] rounded-t-xl" />
 
-            <div className="text-center space-y-3">
-              <Link href="/">
-                <Image src="/logo.png" alt="Aiscern" width={72} height={50}
-                  className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]" />
-              </Link>
-              <h1 className="text-2xl font-black text-slate-100">
-                Sign in to <span className="gradient-text">Aiscern</span>
-              </h1>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                Create a free account to access AI detection tools — no credit card, no limits.
-              </p>
-            </div>
+        <div className="bg-[#0A0A0A] border border-[#1E1E1E] border-t-0 rounded-b-xl p-7 space-y-6">
 
-            <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
-              {PERKS.map(p => (
-                <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
-                  <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-
-            <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700  transition-all">
-                <Zap className="w-4 h-4" />
-                Create Free Account
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#141420] transition-all">
-                <Lock className="w-4 h-4" />
-                Already have an account? Sign In
-              </Link>
-            </div>
-
-            <p className="text-center text-xs text-slate-600 flex items-center justify-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              Free tier available · No credit card required
+          {/* Brand */}
+          <div className="text-center">
+            <Link href="/">
+              <span className="text-2xl font-black text-white hover:text-[#2BEE34] transition-colors">
+                Aiscern
+              </span>
+            </Link>
+            <h1 className="text-xl font-bold text-white mt-3">
+              Sign in to <span className="text-[#2BEE34]">Aiscern</span>
+            </h1>
+            <p className="text-[#6B6B6B] text-sm mt-2 leading-relaxed">
+              Create a free account to access AI detection tools — no credit card, no limits.
             </p>
           </div>
+
+          {/* Perks list */}
+          <ul className="space-y-2.5 bg-[#141414] border border-[#1E1E1E] rounded-xl p-4">
+            {PERKS.map(p => (
+              <li key={p} className="flex items-center gap-2.5 text-sm text-[#A3A3A3]">
+                <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0" strokeWidth={2.5} />
+                {p}
+              </li>
+            ))}
+          </ul>
+
+          {/* CTAs */}
+          <div className="space-y-2.5">
+            <Link href="/signup"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg
+                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-bold text-sm
+                         transition-colors duration-150">
+              <Zap className="w-4 h-4" />
+              Create Free Account
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/login"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg
+                         border border-[#2A2A2A] text-[#A3A3A3] text-sm font-semibold
+                         hover:border-[#2BEE34] hover:text-[#2BEE34] transition-all duration-150">
+              <Lock className="w-4 h-4" />
+              Already have an account? Sign In
+            </Link>
+          </div>
+
+          {/* Trust */}
+          <p className="text-center text-xs text-[#6B6B6B] flex items-center justify-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-[#2BEE34]" />
+            Free tier available · No credit card required
+          </p>
         </div>
-      
+      </div>
     </div>
   )
 }

@@ -53,7 +53,7 @@ export function ReviewSuggestion({ toolName }: Props) {
       <div className="mt-6 rounded-xl border border-white/[0.08] bg-surface/60 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
         {alreadyReviewed ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Star className="w-4 h-4 text-amber-400-400 fill-amber-400" />
+            <Star className="w-4 h-4 text-[#FFB800] fill-amber-400" />
             <span>You reviewed {toolName} —</span>
             <button onClick={() => setModalOpen(true)} className="text-blue-500 hover:underline font-medium">Edit review</button>
           </div>
@@ -66,7 +66,7 @@ export function ReviewSuggestion({ toolName }: Props) {
                   onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
                   onClick={() => handleStarClick(n)}
                   className="transition-transform">
-                  <Star className={`w-6 h-6 transition-colors ${n <= (hover || preRating) ? 'text-amber-400-400 fill-amber-400' : 'text-zinc-700'}`} />
+                  <Star className={`w-6 h-6 transition-colors ${n <= (hover || preRating) ? 'text-[#FFB800] fill-amber-400' : 'text-zinc-700'}`} />
                 </button>
               ))}
             </div>

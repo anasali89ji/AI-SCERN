@@ -8,9 +8,9 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 const variantClasses: Record<NonNullable<BadgeProps['variant']>, string> = {
   default:     'bg-primary-500/10 text-primary-400 border-primary-500/20',
   secondary:   'bg-white/[0.05] text-slate-400 border-white/[0.08]',
-  success:     'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  warning:     'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  destructive: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+  success:     'bg-emerald-500/10 text-emerald-400 border-[#2BEE34]/30',
+  warning:     'bg-amber-500/10 text-amber-400 border-[#FFB800]/30',
+  destructive: 'bg-rose-500/10 text-rose-400 border-[#FF4444]/30',
   outline:     'bg-transparent text-slate-500 border-white/[0.08]',
 }
 

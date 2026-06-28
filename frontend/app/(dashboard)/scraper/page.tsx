@@ -27,15 +27,15 @@ interface ScrapeResult {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const verdictColor = (v: string) =>
-  v === 'AI' ? 'text-rose-400-400' : v === 'HUMAN' ? 'text-[#2BEE34]' : 'text-amber-400-400'
+  v === 'AI' ? 'text-[#FF4444]' : v === 'HUMAN' ? 'text-[#2BEE34]' : 'text-[#FFB800]'
 
 const verdictBg = (v: string) =>
-  v === 'AI' ? 'bg-rose-500-500/15 border-rose-500/30' : v === 'HUMAN' ? 'bg-emerald-500-500/15 border-emerald-500/30' : 'bg-amber-500-500/15 border-amber-500/30'
+  v === 'AI' ? 'bg-[#FF4444]/15 border-[#FF4444]/30' : v === 'HUMAN' ? 'bg-[#2BEE34]/15 border-[#2BEE34]/30' : 'bg-[#FFB800]/15 border-[#FFB800]/30'
 
 function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
-  if (v === 'AI')    return <AlertTriangle className={`${cls} text-rose-400-400`} />
+  if (v === 'AI')    return <AlertTriangle className={`${cls} text-[#FF4444]`} />
   if (v === 'HUMAN') return <CheckCircle   className={`${cls} text-[#2BEE34]`} />
-  return               <HelpCircle       className={`${cls} text-amber-400-400`} />
+  return               <HelpCircle       className={`${cls} text-[#FFB800]`} />
 }
 
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
@@ -187,14 +187,12 @@ export default function ScraperPage() {
         </div>
 
         {/* Error */}
-        
-          {error && (
-            <div>
-              <AlertTriangle className="w-4 h-4 text-rose-400-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-400-300">{error}</p>
-            </div>
-          )}
-        
+        {error && (
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FF4444]/5 border border-[#FF4444]/20">
+            <AlertTriangle className="w-4 h-4 text-[#FF4444] shrink-0 mt-0.5" />
+            <p className="text-sm text-[#FF4444]">{error}</p>
+          </div>
+        )}
 
         {/* Loading skeleton — mirrors result */}
         {loading && (
@@ -319,9 +317,9 @@ export default function ScraperPage() {
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          result.content_quality === 'high' ? 'bg-emerald-500-500/15 text-[#2BEE34] border-emerald-500/25' :
-                          result.content_quality === 'low'  ? 'bg-rose-500-500/15 text-rose-400-400 border-rose-500/25' :
-                          'bg-amber-500-500/15 text-amber-400-400 border-amber-500/25'}`}>
+                          result.content_quality === 'high' ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-emerald-500/25' :
+                          result.content_quality === 'low'  ? 'bg-[#FF4444]/15 text-[#FF4444] border-[#FF4444]/25' :
+                          'bg-[#FFB800]/15 text-[#FFB800] border-amber-500/25'}`}>
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">
@@ -375,8 +373,8 @@ export default function ScraperPage() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {result.signals.map((sig, i) => (
-                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-rose-500-500/5 border-rose-500/15' : 'bg-emerald-500-500/5 border-emerald-500/10'}`}>
-                        <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-rose-500-400' : 'bg-emerald-500-400'}`} />
+                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-[#FF4444]/5 border-[#FF4444]/15' : 'bg-[#2BEE34]/5 border-[#2BEE34]/10'}`}>
+                        <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-[#E5E5E5]">{sig.name}</p>
                           <p className="text-[10px] text-[#6B6B6B] leading-relaxed">{sig.description}</p>
@@ -401,7 +399,7 @@ export default function ScraperPage() {
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141414] border border-[#1E1E1E] hover:border-white/[0.12] transition-colors">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-rose-500-400' : sp.verdict === 'HUMAN' ? 'bg-emerald-500-400' : 'bg-amber-500-400'}`} />
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-[#FF4444]' : sp.verdict === 'HUMAN' ? 'bg-[#2BEE34]' : 'bg-[#FFB800]'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-[#E5E5E5] truncate">{sp.title}</p>
                           <a href={sp.url} target="_blank" rel="noreferrer"

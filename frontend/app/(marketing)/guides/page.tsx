@@ -75,9 +75,9 @@ const colorMap: Record<string, { bg: string; border: string; icon: string; badge
   primary: { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
   blue:    { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
   cyan:    { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
-  emerald: { bg: 'bg-emerald-500-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400-400', badge: 'text-emerald-400-400 bg-emerald-500-500/10 border-emerald-500/20' },
-  amber:   { bg: 'bg-amber-500-500/10',   border: 'border-amber-500/20',   icon: 'text-amber-400-500',   badge: 'text-amber-400-500 bg-amber-500-500/10 border-amber-500/20'   },
-  rose:    { bg: 'bg-rose-500-500/10',    border: 'border-rose-500/20',    icon: 'text-rose-400-500',    badge: 'text-rose-400-500 bg-rose-500-500/10 border-rose-500/20'     },
+  emerald: { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
+  amber:   { bg: 'bg-[#FFB800]/10',   border: 'border-[#FFB800]/20',   icon: 'text-[#FFB800]',   badge: 'text-[#FFB800] bg-[#FFB800]/10 border-[#FFB800]/20'   },
+  rose:    { bg: 'bg-[#FF4444]/10',    border: 'border-[#FF4444]/20',    icon: 'text-[#FF4444]',    badge: 'text-[#FF4444] bg-[#FF4444]/10 border-[#FF4444]/20'     },
 }
 
 export default function GuidesPage() {
