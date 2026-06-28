@@ -42,8 +42,12 @@ export default function ScanningLoader({
   const currentIdx = STAGES.findIndex(s => s.id === stage)
 
   return (
-    
-      <div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className={`card p-5 space-y-4 ${className}`}
+      >
         {/* Header */}
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
           {mediaType ? `Scanning ${mediaType}` : 'Scanning'}…
@@ -80,7 +84,8 @@ export default function ScanningLoader({
                 >
                   {/* Spinning ring for active stage */}
                   {isCurrent && !reduced && (
-                    <div>
+                    <div className="absolute inset-0 rounded-full border-2 border-t-transparent animate-spin"
+                      style={{ borderColor: `${s.color}40`, borderTopColor: s.color }} />
                   )}
                   <Icon
                     className="w-3.5 h-3.5"
@@ -108,7 +113,8 @@ export default function ScanningLoader({
                   {/* Upload progress bar */}
                   {isCurrent && s.id === 'uploading' && uploadProgress > 0 && (
                     <div className="mt-1.5 h-1 bg-white/8 rounded-full overflow-hidden">
-                      <div>
+                      <div className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%`, background: s.color }} />
                     </div>
                   )}
 
@@ -116,7 +122,8 @@ export default function ScanningLoader({
                   {isCurrent && s.id !== 'uploading' && (
                     <div className="mt-1.5 flex gap-1">
                       {[0, 1, 2].map(d => (
-                        <div>
+                        <div key={d} className="w-1.5 h-1.5 rounded-full animate-pulse"
+                          style={{ background: s.color, animationDelay: `${d * 0.15}s` }} />
                       ))}
                     </div>
                   )}
@@ -124,7 +131,7 @@ export default function ScanningLoader({
 
                 {/* Done checkmark */}
                 {isDone && (
-                  <div>
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-bold">
                     ✓
                   </div>
                 )}
@@ -132,7 +139,7 @@ export default function ScanningLoader({
             )
           })}
         </div>
-      </div>
-    
+      </motion.div>
+    </AnimatePresence>
   )
 }

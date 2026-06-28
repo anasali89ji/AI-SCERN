@@ -51,10 +51,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#08080d] flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-[#08080d]" />
-      
 
-      
-        <div>
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-2xl">
           <div className="h-1 w-full bg-blue-600 rounded-t-xl" />
           <div className="bg-surface border border-white/10 rounded-b-xl  p-8 space-y-6">
 
@@ -97,8 +99,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               Free tier available · No credit card required
             </p>
           </div>
-        </div>
-      
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
