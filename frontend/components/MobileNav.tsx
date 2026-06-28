@@ -36,12 +36,14 @@ export function MobileNav() {
 
   return (
     <>
-      
+      <AnimatePresence>
         {moreOpen && (
           <>
-            <div> setMoreOpen(false)}
-            />
-            <div>
+            <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setMoreOpen(false)} />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-[#0d0d17] border-t border-white/[0.06] rounded-t-2xl">
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
@@ -66,10 +68,10 @@ export function MobileNav() {
                   })}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </>
         )}
-      
+      </AnimatePresence>
 
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0d0d17] border-t border-white/[0.06]"

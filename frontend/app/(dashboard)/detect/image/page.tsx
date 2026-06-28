@@ -409,7 +409,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
