@@ -5,7 +5,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
-import { motion, AnimatePresence } 
 import { Mic, Upload, X, AlertTriangle, Loader2, RotateCcw, Play, Pause, Download, Share2, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
@@ -42,12 +41,7 @@ function WaveformVisualizer({ playing, progress = 0 }: { playing: boolean; progr
       {/* Progress overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: `linear-gradient(to right, transparent ${progress * 100}%, rgba(0,0,0,0.4) ${progress * 100}%)` }} />
       {Array.from({ length: 40 }).map((_, i) => (
-        <motion.div key={i}
-          className="w-1 rounded-full shrink-0"
-          style={{ background: i < progress * 40 ? '#2563eb' : '#1e3a8a' }}
-          animate={playing ? { height: [3, WAVE_HEIGHTS[i], 3] } : { height: 3 }}
-          transition={{ duration: WAVE_DURATIONS[i], repeat: playing ? Infinity : 0, ease: 'easeInOut', delay: i * 0.025 }}
-        />
+        <div className="w-1 rounded-full shrink-0">
       ))}
     </div>
   )
@@ -205,7 +199,7 @@ function AudioDetectionPage() {
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
               <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-[#2BEE34]/30 bg-[#2BEE34]/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-xl bg-[#2BEE34]/15 flex items-center justify-center">
                   <Upload className="w-8 h-8 text-[#2BEE34]" />
                 </div>
                 <div className="text-center">
@@ -217,10 +211,9 @@ function AudioDetectionPage() {
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-blue-500 bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-blue-500/50 hover:bg-[#141414]/30'}`}>
+                ${isDragActive ? 'border-[#2BEE34] bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50 hover:bg-[#141414]/30'}`}>
               <input {...getInputProps()} />
-              <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'}`} />
               </div>
               <div className="text-center">
@@ -239,8 +232,8 @@ function AudioDetectionPage() {
                 {/* Seek bar */}
                 <div className="mt-3 flex items-center gap-2">
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
+                  <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
+                    <div className="h-full bg-[#2BEE34] rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
                   </div>
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
                 </div>
@@ -258,7 +251,7 @@ function AudioDetectionPage() {
                     </p>
                   </div>
                   <button onClick={reset}
-              title="Detect Another" className="text-[#6B6B6B] hover:text-rose-400-400 p-2 rounded-lg hover:bg-rose-500-500-500/10 transition-colors shrink-0">
+              title="Detect Another" className="text-[#6B6B6B] hover:text-[#FF4444]-400 p-2 rounded-lg hover:bg-[#FF4444]-500/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -277,8 +270,7 @@ function AudioDetectionPage() {
             </div>
           )}
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
+            <div className="card border-rose-500/30 bg-[#FF4444]-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
@@ -286,9 +278,7 @@ function AudioDetectionPage() {
 
         
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="space-y-4 w-full min-w-0">
+            <div className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
                   <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
@@ -316,35 +306,29 @@ function AudioDetectionPage() {
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-2.5 sm:h-3 bg-white/[0.08] rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-blue-500" />
+                  <div className="h-2.5 sm:h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#2BEE34]">
                   </div>
                 </div>
               </div>
 
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
                   Audio Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
-                    <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
+                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
                           <span className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>{s.weight}%</span>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-[#2BEE34]-400'}`}>{s.weight}%</span>
                         </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
-                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
-                            transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-blue-500'}`} />
+                        <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}>
                         </div>
                       </div>
                     </div>
@@ -356,7 +340,7 @@ function AudioDetectionPage() {
               {result.segment_scores && result.segment_scores.length > 0 && (
                 <div className="card">
                   <h3 className="font-semibold text-white mb-3 flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
                     Audio Segment Analysis
                   </h3>
                   <div className="space-y-1.5">
@@ -365,20 +349,20 @@ function AudioDetectionPage() {
                         <span className="text-xs text-[#6B6B6B] w-16 shrink-0 font-mono">
                           {seg.start_sec}s – {seg.end_sec}s
                         </span>
-                        <div className="flex-1 h-2 bg-white/[0.08] rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${seg.ai_score > 0.62 ? 'bg-rose-500-500' : seg.ai_score > 0.38 ? 'bg-amber-500-500' : 'bg-emerald-500-500'}`}
+                            className={`h-full rounded-full transition-all ${seg.ai_score > 0.62 ? 'bg-[#FF4444]' : seg.ai_score > 0.38 ? 'bg-amber-500-500' : 'bg-emerald-500-500'}`}
                             style={{ width: `${Math.round(seg.ai_score * 100)}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-bold w-10 text-right ${seg.ai_score > 0.62 ? 'text-rose-400-400-500' : seg.ai_score > 0.38 ? 'text-amber-400-400-500' : 'text-emerald-400-400-400'}`}>
+                        <span className={`text-xs font-bold w-10 text-right ${seg.ai_score > 0.62 ? 'text-rose-400-400-500' : seg.ai_score > 0.38 ? 'text-amber-400-400-500' : 'text-[#2BEE34]-400'}`}>
                           {Math.round(seg.ai_score * 100)}%
                         </span>
                       </div>
                     ))}
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-xs text-[#6B6B6B]">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500-500" />AI-synthetic</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#FF4444]" />AI-synthetic</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500-500" />Uncertain</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500-500" />Authentic</span>
                   </div>
@@ -393,8 +377,7 @@ function AudioDetectionPage() {
               </div>
             </div>
           ) : !loading && (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
+            <div className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mx-auto mb-4 ">
                 <Mic className="w-10 h-10 text-[#2BEE34]" />
               </div>
@@ -403,7 +386,7 @@ function AudioDetectionPage() {
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60 shrink-0" />{f}
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>

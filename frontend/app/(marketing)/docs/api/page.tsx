@@ -37,7 +37,7 @@ const { verdict, confidence } = await response.json()`,
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] text-white">
+    <div className="min-h-screen bg-[#141414] text-white">
       <div className="border-b border-[#1E1E1E] px-6 py-4">
         <Link href="/" className="text-xl font-black text-[#2BEE34]">Aiscern</Link>
       </div>
@@ -49,7 +49,7 @@ export default function ApiDocsPage() {
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">Authentication</h2>
-          <p className="text-[#6B6B6B] text-sm">Include your API key in every request using the <code className="bg-[#141420] px-1.5 py-0.5 rounded text-[#2BEE34] text-xs">X-API-Key</code> header.</p>
+          <p className="text-[#6B6B6B] text-sm">Include your API key in every request using the <code className="bg-[#141414] px-1.5 py-0.5 rounded text-[#2BEE34] text-xs">X-API-Key</code> header.</p>
           <p className="text-[#6B6B6B] text-sm">Generate your API key in <Link href="/settings" className="text-[#2BEE34] hover:underline">Settings → API Access</Link> — free for all users.</p>
         </section>
 
@@ -57,9 +57,9 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">POST /api/v1/detect/text</h2>
           <p className="text-[#6B6B6B] text-sm">Analyze a text sample for AI generation.</p>
           <h3 className="font-semibold text-sm">Request Body</h3>
-          <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`{ "text": "string (50–10,000 characters)" }`}</pre>
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{ "text": "string (50–10,000 characters)" }`}</pre>
           <h3 className="font-semibold text-sm">Response</h3>
-          <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{
   "verdict": "AI" | "HUMAN" | "UNCERTAIN",
   "confidence": 0.94,
   "credits_remaining": 498,
@@ -72,7 +72,7 @@ export default function ApiDocsPage() {
           {Object.entries(CODE).map(([lang, code]) => (
             <div key={lang}>
               <h3 className="text-xs font-bold uppercase tracking-widest text-[#6B6B6B] mb-2">{lang}</h3>
-              <pre className="bg-[#141420] rounded-xl p-4 text-xs overflow-x-auto text-[#A3A3A3]">{code}</pre>
+              <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#A3A3A3]">{code}</pre>
             </div>
           ))}
         </section>

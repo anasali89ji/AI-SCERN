@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } 
 import { useAuth } from '@/components/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import {

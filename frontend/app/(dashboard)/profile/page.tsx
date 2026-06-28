@@ -17,7 +17,7 @@ function Avatar({ name, size = 96 }: { name: string; size?: number }) {
   return (
     <div
       style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', width: size, height: size, fontSize: size * 0.32 }}
-      className="rounded-full flex items-center justify-center font-black text-white ring-1 ring-blue-500/30">
+      className="rounded-full flex items-center justify-center font-black text-white ring-1 ring-[#2BEE34]/30">
       {initials}
     </div>
   )
@@ -123,7 +123,7 @@ function CreditsCard({ userId }: { userId: string }) {
         <button
           onClick={() => setRefresh(r => r + 1)}
           aria-label="Refresh credits"
-          className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-white hover:bg-[#141420] transition-colors">
+          className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-white hover:bg-[#141414] transition-colors">
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -344,13 +344,13 @@ export default function ProfilePage() {
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
                   <button onClick={() => setEditing(false)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm text-[#6B6B6B] hover:bg-[#141420] transition-all">
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm text-[#6B6B6B] hover:bg-[#141414] transition-all">
                     <X className="w-4 h-4" /> Cancel
                   </button>
                 </>
               ) : (
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm font-semibold text-[#A3A3A3] hover:bg-[#141420] hover:border-blue-500/50/40 transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#1E1E1E] text-sm font-semibold text-[#A3A3A3] hover:bg-[#141414] hover:border-[#2BEE34]/50/40 transition-all">
                   <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
@@ -363,7 +363,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Display Name</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    className="w-full bg-[#141420] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-[#141414] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2BEE34]/50"
                     placeholder="Your full name" />
                 </div>
                 <div>
@@ -371,10 +371,10 @@ export default function ProfilePage() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] text-sm">@</span>
                     <input value={username} onChange={e => checkUsername(e.target.value)}
-                      className="w-full bg-[#141420] border border-[#1E1E1E] rounded-xl pl-7 pr-9 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50"
+                      className="w-full bg-[#141414] border border-[#1E1E1E] rounded-xl pl-7 pr-9 py-2 text-sm text-white focus:outline-none focus:border-[#2BEE34]/50"
                       placeholder="yourname" maxLength={30} />
                     {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#1E1E1E] border-t-primary animate-spin" />}
-                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400-400" />}
+                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#2BEE34]" />}
                     {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400-400" />}
                   </div>
                   {uStatus === 'taken' && suggestions.length > 0 && (
@@ -388,12 +388,12 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   )}
-                  {uStatus === 'available' && username && <p className="text-[11px] text-emerald-400-400 mt-1">@{username} is available</p>}
+                  {uStatus === 'available' && username && <p className="text-[11px] text-[#2BEE34] mt-1">@{username} is available</p>}
                 </div>
                 <div>
                   <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Bio</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
-                    className="w-full bg-[#141420] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50 resize-none"
+                    className="w-full bg-[#141414] border border-[#1E1E1E] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2BEE34]/50 resize-none"
                     placeholder="A short bio (optional)" maxLength={160} />
                   <p className="text-[10px] text-[#6B6B6B] text-right mt-0.5">{bio.length}/160</p>
                 </div>
@@ -413,7 +413,7 @@ export default function ProfilePage() {
                   <span className="flex items-center gap-1.5 shrink-0">
                     <Calendar className="w-4 h-4" />Joined {joinedAt}
                   </span>
-                  <span className="flex items-center gap-1.5 text-emerald-400-400 shrink-0">
+                  <span className="flex items-center gap-1.5 text-[#2BEE34] shrink-0">
                     <Shield className="w-4 h-4" />Verified
                   </span>
                 </div>
@@ -457,8 +457,8 @@ export default function ProfilePage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500-500/10 text-rose-400-400" />
-              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald-500-500/10 text-emerald-400-400" />
+              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-rose-400-400" />
+              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
               <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500-500/10 text-amber-400-400" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -482,7 +482,7 @@ export default function ProfilePage() {
           ['Display name',   displayName || '—',                        ''],
           ['Joined',         joinedAt,                                  ''],
           ['Plan',           planLabel,                                 isPaid ? 'text-yellow-400' : 'text-[#2BEE34]'],
-          ['Status',         'Active',                                  'text-emerald-400-400'],
+          ['Status',         'Active',                                  'text-[#2BEE34]'],
         ] as [string, string | undefined, string][]).map(([label, value, cls]) => (
           <div key={label} className="flex justify-between items-center gap-4 py-2.5 border-b border-[#1E1E1E] last:border-0 text-sm min-w-0">
             <span className="text-[#6B6B6B] shrink-0">{label}</span>

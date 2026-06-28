@@ -12,8 +12,6 @@
  */
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } 
-
 interface MobileResultSheetProps {
   isOpen:   boolean
   onClose:  () => void

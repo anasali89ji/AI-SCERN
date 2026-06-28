@@ -82,7 +82,7 @@ const RELEASES: {
 ]
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
-  new:         { label: 'New',         style: 'bg-[#2BEE34]/10 text-[#2BEE34] border border-blue-500/25' },
+  new:         { label: 'New',         style: 'bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20' },
   improvement: { label: 'Improved',    style: 'bg-emerald-500-500/10 text-emerald-400-400 border border-emerald-500/25' },
   fix:         { label: 'Fix',         style: 'bg-amber-500-500/10 text-amber-400-500 border border-amber-500/25' },
   infra:       { label: 'Infra',       style: 'bg-surface text-[#6B6B6B] border border-[#1E1E1E]' },
@@ -90,7 +90,7 @@ const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
 
 export default function ChangelogPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] text-white">
+    <div className="min-h-screen bg-[#141414] text-white">
       <SiteNav />
 
       <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
@@ -146,7 +146,7 @@ export default function ChangelogPage() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/[0.06] text-center">
+        <div className="mt-12 pt-6 border-t border-[#1E1E1E] text-center">
           <p className="text-xs text-[#6B6B6B]">
             Found a bug or want to suggest a feature?{' '}
             <Link href="/contact" className="text-[#2BEE34] hover:underline">Contact us</Link>

@@ -1,7 +1,6 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { motion, AnimatePresence } 
 import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
@@ -255,7 +254,7 @@ export default function BatchPage() {
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-700/10 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6 text-[#A3A3A3]" />
           </div>
           Batch Processing
@@ -267,9 +266,9 @@ export default function BatchPage() {
 
       {/* Drop Zone */}
       <div {...getRootProps()} className={`card border-2 border-dashed cursor-pointer transition-all mb-5 py-8 flex flex-col items-center gap-3
-        ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.01]' : 'border-[#1E1E1E] hover:border-secondary/50'}`}>
+        ${isDragActive ? 'border-[#2BEE34] bg-[#1A1A1A] scale-[1.01]' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50'}`}>
         <input {...getInputProps()} />
-        <div className="w-14 h-14 rounded-xl bg-slate-700/10 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
           <Upload className={`w-7 h-7 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
         </div>
         <div className="text-center">
@@ -298,7 +297,7 @@ export default function BatchPage() {
                   <span className="font-bold text-white">{progress}%</span>
                 </div>
               </div>
-              <div className="h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
+              <div className="h-2.5 bg-[#1A1A1A] rounded-full overflow-hidden">
                 <div>
               </div>
               {completed > 0 && avgConf > 0 && (
@@ -322,7 +321,7 @@ export default function BatchPage() {
               {[
                 { label: 'Completed', value: completed, color: 'text-white' },
                 { label: 'AI Detected', value: aiCount, color: 'text-rose-400-500' },
-                { label: 'Human/Real', value: humanCount, color: 'text-emerald-400-400' },
+                { label: 'Human/Real', value: humanCount, color: 'text-[#2BEE34]' },
                 { label: 'Errors', value: errored, color: errored > 0 ? 'text-amber-400-500' : 'text-[#6B6B6B]' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="card text-center py-3">
@@ -396,7 +395,7 @@ export default function BatchPage() {
                 <button key={t.key} onClick={() => setFilter(t.key)}
                   className={`text-xs py-1.5 px-3 rounded-lg font-medium transition-all flex items-center gap-1.5 ${filter === t.key ? 'bg-[#2BEE34] text-white' : 'btn-ghost'}`}>
                   {t.label}
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-[#141420] text-[#6B6B6B]'}`}>{t.count}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === t.key ? 'bg-white/20' : 'bg-[#141414] text-[#6B6B6B]'}`}>{t.count}</span>
                 </button>
               ))}
             </div>
@@ -446,7 +445,7 @@ export default function BatchPage() {
                   {/* Remove */}
                   {bf.status === 'queued' && (
                     <button onClick={() => removeFile(bf.id)}
-                      className="text-[#6B6B6B] hover:text-rose-400 p-1 rounded hover:bg-rose-500-500/10 transition-colors shrink-0">
+                      className="text-[#6B6B6B] hover:text-[#FF4444] p-1 rounded hover:bg-[#FF4444]/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   )}
@@ -464,8 +463,8 @@ export default function BatchPage() {
           <p className="text-[#6B6B6B] text-sm max-w-xs">Drop images, audio, video, or text files above to start batch analysis</p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full max-w-xs">
             {['Up to 20 files', '5 concurrent workers', 'Auto-saves to history', 'CSV + PDF export'].map(f => (
-              <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141420]/50">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 shrink-0" />{f}
+              <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2A2A2A] shrink-0" />{f}
               </div>
             ))}
           </div>

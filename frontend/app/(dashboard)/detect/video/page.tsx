@@ -4,7 +4,6 @@ import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
-import { motion, AnimatePresence } 
 import {
   Video, Upload, X, AlertTriangle,
   Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
@@ -108,13 +107,13 @@ function FrameStrip({
                 ${isSuspicious ? 'border-rose-500/50' : 'border-emerald-500/30'}`}>
                 <img src={f.preview} alt={`Frame ${i + 1}`} className="w-full h-10 object-cover" />
                 {score?.face_detected && (
-                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-400" title="Face detected" />
+                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#2BEE34]" title="Face detected" />
                 )}
               </div>
               <div className="flex justify-between items-center mt-0.5 px-0.5">
                 <span className="text-[9px] text-[#6B6B6B]">{formatDur(f.timeSec)}</span>
                 {score && (
-                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose-400-400-500' : 'text-emerald-400-400-400'}`}>
+                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-rose-400-400-500' : 'text-[#2BEE34]-400'}`}>
                     {Math.round(score.ai_score * 100)}%
                   </span>
                 )}
@@ -125,13 +124,13 @@ function FrameStrip({
       </div>
       <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500-500-500/60" />Suspicious frame
+          <span className="w-2 h-2 rounded-full bg-[#FF4444]-500/60" />Suspicious frame
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500-500-500/60" />Clean frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-blue-400" />Face detected
+          <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />Face detected
         </span>
       </div>
     </div>
@@ -320,7 +319,7 @@ function VideoDetectionPage() {
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-700/10 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-[#A3A3A3]" />
           </div>
           Video Detection
@@ -336,8 +335,8 @@ function VideoDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-secondary/30 bg-slate-700/5 rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-xl bg-slate-700/15 flex items-center justify-center">
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-[#2BEE34]/30 bg-[#1A1A1A] rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
                   <Upload className="w-8 h-8 text-[#A3A3A3]" />
                 </div>
                 <div className="text-center">
@@ -349,10 +348,9 @@ function VideoDetectionPage() {
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-secondary bg-slate-700/5 scale-[1.02]' : 'border-[#1E1E1E] hover:border-secondary/50 hover:bg-[#141414]/30'}`}>
+                ${isDragActive ? 'border-[#2BEE34] bg-[#1A1A1A] scale-[1.02]' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50 hover:bg-[#141414]/30'}`}>
               <input {...getInputProps()} />
-              <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-xl bg-slate-700/10 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
               </div>
               <div className="text-center">
@@ -368,11 +366,11 @@ function VideoDetectionPage() {
                 <video ref={videoRef} className="w-full max-h-64 object-contain" onEnded={() => setPlaying(false)} />
 
                 {loading ? (
-                  <div className="absolute inset-0 bg-[#08080d]/90 flex flex-col items-center justify-center gap-3">
+                  <div className="absolute inset-0 bg-[#0A0A0A]/90 flex flex-col items-center justify-center gap-3">
                     <div className="relative w-16 h-16">
-                      <div className="absolute inset-0 rounded-full border-2 border-secondary/20" />
+                      <div className="absolute inset-0 rounded-full border-2 border-[#2BEE34]/20" />
                       <div className="absolute inset-0 rounded-full border-2 border-t-secondary animate-spin" />
-                      <div className="absolute inset-2 bg-slate-700/10 rounded-full flex items-center justify-center">
+                      <div className="absolute inset-2 bg-[#1A1A1A] rounded-full flex items-center justify-center">
                         {phase === 'extracting' ? <Scan className="w-5 h-5 text-[#A3A3A3]" /> : <Eye className="w-5 h-5 text-[#A3A3A3]" />}
                       </div>
                     </div>
@@ -381,7 +379,7 @@ function VideoDetectionPage() {
                       <div className="flex gap-1 mt-1">
                         {FRAME_POSITIONS.map((_, i) => (
                           <div key={i} className={`w-2 h-2 rounded-full transition-all duration-200
-                            ${i < framesDone ? 'bg-slate-700' : 'bg-slate-700/20'}`} />
+                            ${i < framesDone ? 'bg-[#2A2A2A]' : 'bg-[#2A2A2A]'}`} />
                         ))}
                       </div>
                     )}
@@ -403,8 +401,8 @@ function VideoDetectionPage() {
               <div className="px-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-blue-500 rounded-full transition-all"
+                  <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
+                    <div className="h-full bg-[#2BEE34] rounded-full transition-all"
                       style={{ width: `${progress * 100}%` }} />
                   </div>
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
@@ -417,7 +415,7 @@ function VideoDetectionPage() {
                   <p className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{file.name}</p>
                   <p className="text-[10px] sm:text-xs text-[#6B6B6B]">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-[#6B6B6B] hover:text-rose-400-400 p-2 rounded-lg hover:bg-rose-500-500-500/10 transition-colors shrink-0">
+                <button onClick={reset} className="text-[#6B6B6B] hover:text-[#FF4444]-400 p-2 rounded-lg hover:bg-[#FF4444]-500/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -441,8 +439,7 @@ function VideoDetectionPage() {
           )}
 
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
+            <div className="card border-rose-500/30 bg-[#FF4444]-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
@@ -461,9 +458,7 @@ function VideoDetectionPage() {
         {/* Right: Results */}
         
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="space-y-4 w-full min-w-0">
+            <div className="space-y-4 w-full min-w-0">
               {/* Verdict card */}
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
@@ -494,10 +489,8 @@ function VideoDetectionPage() {
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-2.5 sm:h-3 bg-white/[0.08] rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-blue-500" />
+                  <div className="h-2.5 sm:h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#2BEE34]">
                   </div>
                 </div>
 
@@ -507,15 +500,10 @@ function VideoDetectionPage() {
                     <p className="text-xs text-[#6B6B6B] mb-2 font-medium">Per-Frame AI Probability Timeline</p>
                     <div className="flex items-end gap-1 h-12">
                       {result.frame_scores.map((fs, i) => (
-                        <motion.div key={i}
-                          initial={{ height: 0 }}
-                          animate={{ height: `${Math.max(8, fs.ai_score * 100)}%` }}
-                          transition={{ delay: i * 0.08, duration: 0.5, ease: 'easeOut' }}
-                          title={`${fs.time_sec}s — ${Math.round(fs.ai_score * 100)}% AI${(fs as any).face_detected ? ' [face]' : ''}`}
-                          className={`flex-1 rounded-sm transition-all ${
-                            fs.ai_score > 0.62 ? 'bg-rose-500-500' :
+                        <div className={`flex-1 rounded-sm transition-all ${
+                            fs.ai_score > 0.62 ? 'bg-[#FF4444]' :
                             fs.ai_score > 0.45 ? 'bg-amber-500-500' : 'bg-emerald-500-500'
-                          }`} />
+                          }>
                       ))}
                     </div>
                     <div className="flex justify-between text-[10px] text-[#6B6B6B] mt-1">
@@ -529,30 +517,24 @@ function VideoDetectionPage() {
               {/* Detection signals */}
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-slate-700" />
+                  <span className="w-2 h-2 rounded-full bg-[#2A2A2A]" />
                   Detection Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
-                    <motion.div key={s.name}
-                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
+                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
                           <span className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
-                            ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>
+                            ${s.flagged ? 'bg-[#FF4444]-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-[#2BEE34]-400'}`}>
                             {s.weight}%
                           </span>
                         </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
-                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
-                          <motion.div initial={{ width: 0 }}
-                            animate={{ width: `${Math.round(s.value * 100)}%` }}
-                            transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
+                        <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}>
                         </div>
                       </div>
                     </div>
@@ -571,9 +553,8 @@ function VideoDetectionPage() {
               </div>
             </div>
           ) : !loading && (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-slate-700/10 flex items-center justify-center mx-auto mb-4 ">
+            <div className="card flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-20 h-20 rounded-xl bg-[#1A1A1A] flex items-center justify-center mx-auto mb-4 ">
                 <Video className="w-10 h-10 text-[#A3A3A3]" />
               </div>
               <h3 className="font-semibold text-white mb-2">Upload a Video</h3>
@@ -590,7 +571,7 @@ function VideoDetectionPage() {
                   'Real deepfake detection',
                 ].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-700/60 shrink-0" />{f}
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2A2A2A]/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>

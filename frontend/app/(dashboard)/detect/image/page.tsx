@@ -5,7 +5,6 @@ import { useState, useCallback } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
-import { motion, AnimatePresence } 
 import { Image as ImageIcon, Upload, X, AlertTriangle, Loader2, RotateCcw, Download, ZoomIn, Info, Share2, Database, Microscope } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
@@ -207,10 +206,9 @@ Analyzed: ${new Date().toLocaleString()}`
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-blue-500 bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-blue-500/50 hover:bg-[#141414]/30'}`}>
+                ${isDragActive ? 'border-[#2BEE34] bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50 hover:bg-[#141414]/30'}`}>
               <input {...getInputProps()} />
-              <motion.div animate={isDragActive ? { scale: 1.2 } : { scale: 1 }}
-                className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
                 <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'}`} />
               </div>
               <div className="text-center">
@@ -253,7 +251,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Detect Another" className="text-[#6B6B6B] hover:text-rose-400-400 transition-colors p-2 rounded-lg hover:bg-rose-500-500-500/10 shrink-0">
+              title="Detect Another" className="text-[#6B6B6B] hover:text-[#FF4444]-400 transition-colors p-2 rounded-lg hover:bg-[#FF4444]-500/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -272,8 +270,7 @@ Analyzed: ${new Date().toLocaleString()}`
           )}
 
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="card border-rose-500/30 bg-rose-500-500-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
+            <div className="card border-rose-500/30 bg-[#FF4444]-500/5 flex items-center gap-2 text-rose-400-400-500 text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
@@ -290,9 +287,7 @@ Analyzed: ${new Date().toLocaleString()}`
         {/* Results Panel */}
         
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="space-y-4 w-full min-w-0">
+            <div className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
                   <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
@@ -320,10 +315,8 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className="shrink-0">Confidence Score</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-3 bg-white/[0.08] rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-blue-500" />
+                  <div className="h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#2BEE34]">
                   </div>
                 </div>
               </div>
@@ -335,20 +328,16 @@ Analyzed: ${new Date().toLocaleString()}`
                 </h3>
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
-                    <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05, ease: 'easeOut' }}
-                      className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
+                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                           <span className="text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-rose-500-500-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-emerald-400-400-400'}`}>{s.weight}%</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-[#FF4444]-500/15 text-rose-400-400-500' : 'bg-emerald-500-500-500/15 text-[#2BEE34]-400'}`}>{s.weight}%</span>
                         </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
-                        <div className="h-1 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${s.weight}%` }}
-                            transition={{ delay: i * 0.06 + 0.3, duration: 0.5 }}
-                            className={`h-full rounded-full ${s.flagged ? 'bg-rose-500-500' : 'bg-emerald-500-500'}`} />
+                        <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-emerald-500-500'}>
                         </div>
                       </div>
                     </div>
@@ -360,18 +349,10 @@ Analyzed: ${new Date().toLocaleString()}`
                 <span className="text-xs text-[#6B6B6B] font-mono truncate">{result.processing_time}ms</span>
                 <div className="flex items-center gap-2">
                   {forensicScanId && (
-                    <motion.a
-                      href={`/forensic/${forensicScanId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 text-[#2BEE34] hover:bg-[#1A8F1F]/20 transition-colors font-medium"
-                    >
+                    <a className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 text-[#2BEE34] hover:bg-[#1A8F1F]/20 transition-colors font-medium">
                       <Microscope className="w-3.5 h-3.5" />
                       Deep Forensic Analysis
-                    </motion.a>
+                    </a>
                   )}
                   <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
                     <Download className="w-3.5 h-3.5" /> Export Report
@@ -380,8 +361,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </div>
           ) : loading && !result ? (
-            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="card flex flex-col items-center justify-center py-16 gap-4">
+            <div className="card flex flex-col items-center justify-center py-16 gap-4">
               <div className="relative">
                 <div className="w-20 h-20 rounded-full border-2 border-[#2BEE34]/20 flex items-center justify-center">
                   <ImageIcon className="w-8 h-8 text-[#2BEE34]" />
@@ -395,8 +375,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </div>
           ) : (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
+            <div className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mx-auto mb-4 ">
                 <ImageIcon className="w-10 h-10 text-[#2BEE34]" />
               </div>
@@ -405,7 +384,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 shrink-0" />{f}
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -417,13 +396,9 @@ Analyzed: ${new Date().toLocaleString()}`
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
       {graphContext && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="mb-4 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 overflow-hidden"
-        >
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/10 bg-[#2BEE34]/5">
-            <span className="w-2 h-2 rounded-full bg-blue-500" />
+        <div className="mb-4 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#2BEE34]/10 bg-[#2BEE34]/5">
+            <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
             <span className="text-xs font-bold text-[#2BEE34] tracking-wide uppercase">Web Verification</span>
             <span className="ml-auto text-[10px] text-[#6B6B6B]">Real-time Graph RAG</span>
           </div>

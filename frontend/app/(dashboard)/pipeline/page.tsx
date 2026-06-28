@@ -73,7 +73,7 @@ export default function PipelinePage() {
   }
 
   const COLORS: Record<string, string> = {
-    text: 'text-amber-400-500', image: 'text-blue-400', audio: 'text-blue-400', video: 'text-slate-400'
+    text: 'text-[#FFB800]', image: 'text-[#2BEE34]', audio: 'text-[#2BEE34]', video: 'text-[#A3A3A3]'
   }
 
   return (
@@ -81,22 +81,22 @@ export default function PipelinePage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-black text-slate-100 flex items-center gap-2">
-            <Database className="w-5 h-5 text-blue-400" />
+          <h1 className="text-xl font-black text-white flex items-center gap-2">
+            <Database className="w-5 h-5 text-[#2BEE34]" />
             Data Pipeline
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-[#6B6B6B] text-sm mt-0.5">
             Training data collection · 87 sources · 5 workers
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.08] text-slate-500 hover:text-slate-100 text-sm transition-all">
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1E1E1E] text-[#6B6B6B] hover:text-white text-sm transition-all">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             Refresh
           </button>
           <button onClick={triggerPush} disabled={pushing}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all disabled:opacity-60">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2BEE34] text-white text-sm font-semibold hover:bg-[#1A8F1F] transition-all disabled:opacity-60">
             {pushing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {pushing ? 'Pushing…' : 'Push to HuggingFace'}
           </button>
@@ -111,24 +111,24 @@ export default function PipelinePage() {
 
       {/* Stats Grid */}
       {loading && !stats ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-400" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[#2BEE34]" /></div>
       ) : stats ? (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Total Scraped', value: fmt(stats.total_scraped), icon: Database, color: 'text-blue-400', sub: `Last: ${ago(stats.last_scrape_at)}` },
+              { label: 'Total Scraped', value: fmt(stats.total_scraped), icon: Database, color: 'text-[#2BEE34]', sub: `Last: ${ago(stats.last_scrape_at)}` },
               { label: 'Pushed to HF',  value: fmt(stats.total_pushed),  icon: Zap,      color: 'text-emerald-400-400', sub: `Last: ${ago(stats.last_push_at)}` },
-              { label: 'Pending Push',  value: fmt(stats.pending_push),  icon: Clock,    color: stats.pending_push > 5000 ? 'text-amber-400-500' : 'text-slate-100', sub: 'Waiting to push' },
-              { label: 'Push Rate',     value: `${stats.push_rate}%`,    icon: TrendingUp, color: 'text-slate-400', sub: 'Scraped → HF' },
+              { label: 'Pending Push',  value: fmt(stats.pending_push),  icon: Clock,    color: stats.pending_push > 5000 ? 'text-[#FFB800]' : 'text-white', sub: 'Waiting to push' },
+              { label: 'Push Rate',     value: `${stats.push_rate}%`,    icon: TrendingUp, color: 'text-[#A3A3A3]', sub: 'Scraped → HF' },
             ].map(({ label, value, icon: Icon, color, sub }) => (
-              <div key={label} className="bg-surface border border-white/[0.08] rounded-xl p-4">
+              <div key={label} className="bg-surface border border-[#1E1E1E] rounded-xl p-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+                    <p className="text-xs text-[#6B6B6B] uppercase tracking-wider mb-1">{label}</p>
                     <p className={`text-2xl font-black ${color}`}>{value}</p>
-                    <p className="text-xs text-slate-600 mt-1">{sub}</p>
+                    <p className="text-xs text-[#6B6B6B] mt-1">{sub}</p>
                   </div>
-                  <Icon className="w-5 h-5 text-slate-600" />
+                  <Icon className="w-5 h-5 text-[#6B6B6B]" />
                 </div>
               </div>
             ))}
@@ -136,18 +136,18 @@ export default function PipelinePage() {
 
           {/* By Media Type */}
           {byType.length > 0 && (
-            <div className="bg-surface border border-white/[0.08] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2">
+            <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" /> Breakdown by Type
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {byType.map(b => (
                   <div key={b.media_type} className="text-center p-3 bg-background/60 rounded-xl">
-                    <p className={`text-lg font-black capitalize ${COLORS[b.media_type] || 'text-slate-100'}`}>
+                    <p className={`text-lg font-black capitalize ${COLORS[b.media_type] || 'text-white'}`}>
                       {b.media_type}
                     </p>
-                    <p className="text-2xl font-black text-slate-100">{fmt(b.count)}</p>
-                    <p className="text-xs text-slate-500 mt-1">{fmt(b.pushed)} pushed</p>
+                    <p className="text-2xl font-black text-white">{fmt(b.count)}</p>
+                    <p className="text-xs text-[#6B6B6B] mt-1">{fmt(b.pushed)} pushed</p>
                   </div>
                 ))}
               </div>
@@ -155,8 +155,8 @@ export default function PipelinePage() {
           )}
 
           {/* Workers */}
-          <div className="bg-surface border border-white/[0.08] rounded-xl p-5">
-            <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2">
+          <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Radio className="w-4 h-4" /> Workers
             </h3>
             <div className="space-y-2">
@@ -165,9 +165,9 @@ export default function PipelinePage() {
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${w.online ? 'bg-emerald-500-500' : 'bg-rose-500'}`} />
                     <div>
-                      <p className="text-sm font-semibold text-slate-100">{w.name}</p>
+                      <p className="text-sm font-semibold text-white">{w.name}</p>
                       {w.error && <p className="text-xs text-rose-400">{w.error}</p>}
-                      {w.version && <p className="text-xs text-slate-500">v{w.version} · {w.role}</p>}
+                      {w.version && <p className="text-xs text-[#6B6B6B]">v{w.version} · {w.role}</p>}
                     </div>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${w.online ? 'bg-emerald-500-500/10 text-emerald-400-400' : 'bg-rose-500-500/10 text-rose-400-500'}`}>
@@ -175,7 +175,7 @@ export default function PipelinePage() {
                   </span>
                 </div>
               )) : (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-[#6B6B6B] text-center py-4">
                   Worker URLs not configured. Add WORKER_A_URL through WORKER_E_URL in Vercel env vars.
                 </p>
               )}
@@ -184,8 +184,8 @@ export default function PipelinePage() {
 
           {/* Recent Pushes */}
           {pushLog.length > 0 && (
-            <div className="bg-surface border border-white/[0.08] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2">
+            <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-400" /> Recent Pushes to HuggingFace
               </h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -194,13 +194,13 @@ export default function PipelinePage() {
                     <div className="flex items-center gap-3">
                       <CheckCircle className="w-4 h-4 text-emerald-400-400 flex-shrink-0" />
                       <div>
-                        <p className="font-semibold text-slate-100">{fmt(p.item_count)} items</p>
-                        <p className="text-xs text-slate-500 font-mono">{p.commit_id?.slice(0, 12)}…</p>
+                        <p className="font-semibold text-white">{fmt(p.item_count)} items</p>
+                        <p className="text-xs text-[#6B6B6B] font-mono">{p.commit_id?.slice(0, 12)}…</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-xs font-medium capitalize ${COLORS[p.media_type] || 'text-slate-500'}`}>{p.media_type}</p>
-                      <p className="text-xs text-slate-600">{ago(p.created_at)}</p>
+                      <p className={`text-xs font-medium capitalize ${COLORS[p.media_type] || 'text-[#6B6B6B]'}`}>{p.media_type}</p>
+                      <p className="text-xs text-[#6B6B6B]">{ago(p.created_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -211,17 +211,17 @@ export default function PipelinePage() {
           {/* HF Dataset link */}
           <div className="bg-[#0f0f17]/50 border border-white/[0.06] rounded-xl p-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-100">HuggingFace Dataset</p>
-              <p className="text-xs text-slate-500">saghi776/detectai-dataset</p>
+              <p className="text-sm font-semibold text-white">HuggingFace Dataset</p>
+              <p className="text-xs text-[#6B6B6B]">saghi776/detectai-dataset</p>
             </div>
             <a href="https://huggingface.co/datasets/saghi776/detectai-dataset" target="_blank" rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold hover:bg-blue-600/20 transition-all">
+              className="px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 text-[#2BEE34] text-xs font-semibold hover:bg-[#2BEE34]/20 transition-all">
               View on HF →
             </a>
           </div>
         </>
       ) : (
-        <div className="text-center py-12 text-slate-500">
+        <div className="text-center py-12 text-[#6B6B6B]">
           <Database className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p>Pipeline data unavailable. Configure Cloudflare D1 env vars.</p>
         </div>

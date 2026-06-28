@@ -5,7 +5,6 @@
  * Tracks usage in localStorage per tool type.
  */
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } 
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Shield, CheckCircle, ArrowRight } from 'lucide-react'

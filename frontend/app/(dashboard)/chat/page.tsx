@@ -48,7 +48,7 @@ interface Chat        { id: string; title: string; messages: Message[]; createdA
 function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
-    <div className={`${cls} bg-black flex items-center justify-center shrink-0 overflow-hidden border border-white/[0.06]`}>
+    <div className={`${cls} bg-black flex items-center justify-center shrink-0 overflow-hidden border border-[#1E1E1E]`}>
       <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
     </div>
   )
@@ -61,7 +61,7 @@ function UserAvatar({ imageUrl, name, size = 'md' }: { imageUrl?: string|null; n
 
   if (imageUrl) {
     return (
-      <div className={`${cls} shrink-0 overflow-hidden border border-white/[0.06] mt-0.5`}>
+      <div className={`${cls} shrink-0 overflow-hidden border border-[#1E1E1E] mt-0.5`}>
         <img src={imageUrl} alt={name || 'User'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
       </div>
     )
@@ -144,7 +144,7 @@ function Markdown({ content }: { content: string }) {
     let l = line
     // inline code
     l = l.replace(/`([^`]+)`/g, (_m: string, c: string) =>
-      `<code class="px-1.5 py-0.5 rounded-md bg-blue-500/15 text-[#4FFF58] text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
+      `<code class="px-1.5 py-0.5 rounded-md bg-[#2BEE34]/15 text-[#4FFF58] text-xs font-mono">${c.replace(/</g, '&lt;')}</code>`)
     // bold / italic
     l = l.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     l = l.replace(/\*(.+?)\*/g, '<em class="text-gray-300 italic">$1</em>')
@@ -160,7 +160,7 @@ function Markdown({ content }: { content: string }) {
     const bulletMatch = l.match(/^[\-\*•]\s+(.+)/)
     if (bulletMatch) {
       if (!inList) { html += '<ul class="my-1.5 space-y-1">'; inList = true }
-      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
+      html += `<li class="flex gap-2 items-start"><span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#2BEE34]/70 shrink-0 flex-none"></span><span class="leading-relaxed">${bulletMatch[1]}</span></li>`
       continue
     }
     // numbered list
@@ -190,7 +190,7 @@ function TypingDots() {
     <div className="flex items-center gap-1.5 px-4 py-3.5">
       {[0,1,2].map(i => (
         <span key={i}
-          className="w-2 h-2 rounded-full bg-blue-400/60"
+          className="w-2 h-2 rounded-full bg-[#2BEE34]/60"
           style={{ animation: `aria-dot-bounce 1.4s cubic-bezier(0.4,0,0.6,1) ${i * 0.18}s infinite` }} />
       ))}
     </div>
@@ -254,10 +254,10 @@ function MessageBubble({
       <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[78%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
         {/* Attachments */}
         {msg.attachments?.map((att,i) => (
-          <div key={i} className="rounded-xl overflow-hidden border border-white/[0.06] max-w-[240px] sm:max-w-[280px]">
+          <div key={i} className="rounded-xl overflow-hidden border border-[#1E1E1E] max-w-[240px] sm:max-w-[280px]">
             {att.type?.startsWith('image/') && att.preview
               ? <img src={att.preview} alt={att.name} className="max-h-40 sm:max-h-48 object-cover w-full" />
-              : <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.05] text-xs text-gray-400"><Ico.Clip />{att.name}</div>
+              : <div className="flex items-center gap-2 px-3 py-2 bg-[#1A1A1A] text-xs text-gray-400"><Ico.Clip />{att.name}</div>
             }
           </div>
         ))}
@@ -321,7 +321,7 @@ function MessageBubble({
             {new Date(msg.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
           </span>
           {!isUser && !msg.isStreaming && msg.content && (
-            <button onClick={copy} className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-all px-2 py-1 rounded-lg hover:bg-white/[0.05]">
+            <button onClick={copy} className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-400 transition-all px-2 py-1 rounded-lg hover:bg-[#1A1A1A]">
               {copied ? <Ico.Check /> : <Ico.Copy />}
               {copied ? 'Copied' : 'Copy'}
             </button>
@@ -338,7 +338,7 @@ function MessageBubble({
               'Scan another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
-                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-blue-500/50/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
+                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/50/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
                 {chip}
               </button>
             ))}
@@ -628,10 +628,10 @@ export default function ChatPage() {
       {/* ── Sidebar ── */}
       <aside className={`
         fixed lg:relative z-30 lg:z-auto w-[15.5rem] sm:w-[17rem] h-full flex flex-col
-        bg-[#0d1117] border-r border-white/[0.06] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
+        bg-[#0d1117] border-r border-[#1E1E1E] transition-transform duration-[260ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]
         ${sidebarOpen?'translate-x-0':'-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-white/[0.06] space-y-2">
+        <div className="p-3 pt-[calc(1rem+env(safe-area-inset-top,0px))] border-b border-[#1E1E1E] space-y-2">
           <button onClick={newChat} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium transition-colors">
             <Ico.Plus /><span>New conversation</span>
           </button>
@@ -642,7 +642,7 @@ export default function ChatPage() {
             <input
               value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
               placeholder="Search…" autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-blue-500/50/40"
+              className="w-full px-3 py-2 rounded-xl bg-[#1A1A1A] border border-[#1E1E1E] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-[#2BEE34]/50/40"
             />
           )}
         </div>
@@ -672,7 +672,7 @@ export default function ChatPage() {
           ))}
         </div>
 
-        <div className="p-3 border-t border-white/[0.06] space-y-0.5">
+        <div className="p-3 border-t border-[#1E1E1E] space-y-0.5">
           {chats.length > 0 && (
             <button onClick={clearAll} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-500/10 text-gray-700 hover:text-red-400 transition-all text-xs">
               <Ico.TrashAll /><span>Clear all conversations</span>
@@ -692,13 +692,13 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-white/[0.06] bg-[#080c14]">
+        <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-[52px] sm:h-14 border-b border-[#1E1E1E] bg-[#080c14]">
           <button onClick={()=>setSidebarOpen(s=>!s)} className="lg:hidden p-2 rounded-lg hover:bg-white/8 text-gray-500 hover:text-white transition-colors shrink-0">
             <Ico.Menu />
           </button>
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-[#1E1E1E] flex items-center justify-center shrink-0 overflow-hidden">
               <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
             </div>
             <div className="min-w-0">
@@ -731,7 +731,7 @@ export default function ChatPage() {
             <div className="min-h-full flex flex-col items-center justify-center px-4 py-5 max-w-2xl 2xl:max-w-3xl mx-auto w-full">
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
-                <div className="w-14 h-14 rounded-xl bg-black border border-white/[0.06] flex items-center justify-center  overflow-hidden">
+                <div className="w-14 h-14 rounded-xl bg-black border border-[#1E1E1E] flex items-center justify-center  overflow-hidden">
                   <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500-500 border-2 border-[#080c14] flex items-center justify-center">
@@ -790,13 +790,13 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="shrink-0 border-t border-white/[0.06] bg-[#080c14] px-3 sm:px-4 py-2.5 sm:py-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+        <div className="shrink-0 border-t border-[#1E1E1E] bg-[#080c14] px-3 sm:px-4 py-2.5 sm:py-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
 
             {attachments.length>0 && (
               <div className="flex flex-wrap gap-2 mb-2.5">
                 {attachments.map((a,i)=>(
-                  <div key={i} className="relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 max-w-[180px]">
+                  <div key={i} className="relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-[#1E1E1E] text-xs text-gray-500 max-w-[180px]">
                     {a.type.startsWith('image/') ? <Ico.Image /> : a.type.startsWith('audio/') ? <Ico.Music /> : a.type.startsWith('video/') ? <Ico.Video /> : <Ico.FileText />}
                     <span className="truncate">{a.name}</span>
                     <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} className="hover:text-red-400 transition-colors ml-0.5 shrink-0"><Ico.Close /></button>

@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#08080d] flex items-center justify-center text-center px-6">
+    <div className="min-h-screen bg-[#141414] flex items-center justify-center text-center px-6">
       <div>
         <Image
           src="/logo.png"
@@ -12,9 +12,9 @@ export default function NotFound() {
           height={55}
           className="mx-auto mb-6 object-contain drop-shadow-[0_0_20px_rgba(245,100,0,0.4)]"
         />
-        <h1 className="text-8xl font-black gradient-text mb-4">404</h1>
-        <h2 className="text-2xl font-bold text-slate-100 mb-3">Page Not Found</h2>
-        <p className="text-slate-500 mb-8 max-w-sm mx-auto">
+        <h1 className="text-8xl font-black text-[#2BEE34] mb-4">404</h1>
+        <h2 className="text-2xl font-bold text-white mb-3">Page Not Found</h2>
+        <p className="text-[#6B6B6B] mb-8 max-w-sm mx-auto">
           This page doesn&apos;t exist. Let&apos;s get you back to detecting AI content.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

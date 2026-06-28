@@ -1,7 +1,6 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } 
 import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
@@ -64,10 +63,10 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
 const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
 const mediaColors = {
   image: 'text-[#2BEE34] bg-[#2BEE34]/10',
-  video: 'text-[#A3A3A3] bg-slate-700/10',
+  video: 'text-[#A3A3A3] bg-[#1A1A1A]',
   audio: 'text-[#2BEE34] bg-[#2BEE34]/10',
   text:  'text-amber-400 bg-amber-500-500/10',
-  url:   'text-emerald-400 bg-emerald-500-500/10',
+  url:   'text-emerald-400 bg-[#2BEE34]/10',
 }
 
 function normalizeConf(c: number | null) {
@@ -79,10 +78,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
   const conf = normalizeConf(scan.confidence_score)
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.97, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 8 }}
-        transition={{ type: 'tween', duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        className="card w-full max-w-md" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+      <div className="card w-full max-w-md"> e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-white">Scan Details</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
@@ -126,7 +122,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
                 <span className="text-[#6B6B6B]">Confidence</span>
                 <span className="font-bold text-white">{conf}%</span>
               </div>
-              <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
                 <div className="h-full rounded-full bg-[#2BEE34] transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
               </div>
             </div>
@@ -277,19 +273,19 @@ export default function HistoryPage() {
               <Filter className="w-3.5 h-3.5 text-[#6B6B6B] shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-blue-500/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
             </div>
 
-            <div className="h-4 w-px bg-white/[0.08] hidden sm:block mx-1" />
+            <div className="h-4 w-px bg-[#1A1A1A] hidden sm:block mx-1" />
 
             {/* Verdict filter */}
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-blue-500/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
@@ -323,7 +319,7 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-rose-400 hover:border-rose-500/30">
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#FF4444] hover:border-rose-500/30">
                 <Trash2 className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
@@ -355,12 +351,7 @@ export default function HistoryPage() {
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                      transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
-                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-blue-500/50/25 transition-all group cursor-pointer"
-                      onClick={() => setSelectedScan(scan)}>
+                    <div className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/50/25 transition-all group cursor-pointer"> setSelectedScan(scan)}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                         <Icon className="w-5 h-5" />
@@ -386,7 +377,7 @@ export default function HistoryPage() {
                         {conf != null && (
                           <div className="text-right hidden sm:block w-12">
                             <p className="text-sm font-bold text-white tabular-nums">{conf}%</p>
-                            <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden mt-0.5">
+                            <div className="h-1 bg-[#1A1A1A] rounded-full overflow-hidden mt-0.5">
                               <div className="h-full bg-[#2BEE34] rounded-full"
                                 style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
                             </div>
@@ -398,7 +389,7 @@ export default function HistoryPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
-                            className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-rose-400 hover:bg-rose-500-500/10 transition-colors disabled:opacity-50">
+                            className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors disabled:opacity-50">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

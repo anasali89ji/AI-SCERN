@@ -1,6 +1,9 @@
-import Link       from 'next/link'
+import Link        from 'next/link'
 import { notFound } from 'next/navigation'
-import { Shield, CheckCircle, AlertTriangle, HelpCircle, Clock } from 'lucide-react'
+import {
+  Shield, CheckCircle2, AlertTriangle, HelpCircle,
+  Clock, ArrowLeft, ExternalLink, BarChart3,
+} from 'lucide-react'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -29,161 +32,155 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params
   const scan = await getScan(id)
   if (!scan) return { title: 'Scan Not Found | Aiscern' }
-
-  const pct     = Math.round(scan.confidence_score * 100)
-  const toolMap: Record<string, string> = { text: 'text', image: 'image', audio: 'audio', video: 'video' }
-  const tool    = toolMap[scan.media_type] ?? 'text'
+  const pct  = Math.round(scan.confidence_score * 100)
+  const tool = scan.media_type ?? 'text'
   const ogTitle = encodeURIComponent(`${scan.verdict === 'AI' ? 'AI Detected' : scan.verdict === 'HUMAN' ? 'Human Verified' : 'Uncertain'} — ${pct}% confidence`)
   const ogImg   = `https://aiscern.com/api/og?title=${ogTitle}&tool=${tool}`
-
   return {
     title:       `${scan.verdict}: ${pct}% confidence | Aiscern`,
-    description: `This ${scan.media_type} was detected as ${scan.verdict} with ${pct}% confidence by Aiscern AI detector.`,
+    description: `This ${scan.media_type} was detected as ${scan.verdict} with ${pct}% confidence by Aiscern.`,
     openGraph: {
-      title:       `${scan.verdict} — ${pct}% AI confidence`,
-      description: `Aiscern detected this ${scan.media_type} as ${scan.verdict}`,
-      url:         `https://aiscern.com/scan/${id}`,
-      images:      [{ url: ogImg, width: 1200, height: 630, alt: `Aiscern scan — ${scan.verdict}` }],
+      title:   `${scan.verdict} — ${pct}% AI confidence`,
+      url:     `https://aiscern.com/scan/${id}`,
+      images:  [{ url: ogImg, width: 1200, height: 630, alt: `Aiscern scan — ${scan.verdict}` }],
     },
-    twitter: {
-      card:        'summary_large_image',
-      title:       `${scan.verdict} — ${pct}% AI confidence`,
-      description: `Aiscern detected this ${scan.media_type} as ${scan.verdict}`,
-      images:      [ogImg],
-    },
+    twitter: { card: 'summary_large_image', images: [ogImg] },
   }
 }
 
-function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')      return <AlertTriangle className="w-10 h-10 text-red-400" />
-  if (verdict === 'HUMAN')   return <CheckCircle   className="w-10 h-10 text-emerald-400-400" />
-  return                            <HelpCircle    className="w-10 h-10 text-yellow-400" />
+function verdictCfg(v: string) {
+  if (v === 'AI')    return { label: 'AI Generated',  icon: AlertTriangle, text: 'text-[#FF4444]', bg: 'bg-[#FF4444]/5',  border: 'border-[#FF4444]/20', bar: 'bg-[#FF4444]' }
+  if (v === 'HUMAN') return { label: 'Human Written', icon: CheckCircle2,  text: 'text-[#2BEE34]', bg: 'bg-[#2BEE34]/5',  border: 'border-[#2BEE34]/20', bar: 'bg-[#2BEE34]' }
+  return                    { label: 'Uncertain',     icon: HelpCircle,    text: 'text-[#FFB800]', bg: 'bg-[#FFB800]/5',  border: 'border-[#FFB800]/20', bar: 'bg-[#FFB800]' }
 }
 
-function verdictColor(verdict: string) {
-  if (verdict === 'AI')    return 'text-red-400    border-red-400/30    bg-red-400/5'
-  if (verdict === 'HUMAN') return 'text-emerald-400-400 border-emerald-400/30 bg-emerald-500-400/5'
-  return                          'text-yellow-400  border-yellow-400/30  bg-yellow-400/5'
-}
-
-function verdictLabel(verdict: string) {
-  if (verdict === 'AI')    return 'AI-Generated'
-  if (verdict === 'HUMAN') return 'Human-Created'
-  return 'Uncertain'
-}
-
-function ConfidenceBar({ score, verdict }: { score: number; verdict: string }) {
-  const pct = Math.round(score * 100)
-  const barColor = verdict === 'AI' ? 'bg-red-500' : verdict === 'HUMAN' ? 'bg-emerald-500-500' : 'bg-yellow-500'
-  return (
-    <div>
-      <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-        <span>Confidence</span>
-        <span className="font-bold text-slate-100">{pct}%</span>
-      </div>
-      <div className="h-2.5 rounded-full bg-surface-2 overflow-hidden">
-        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  )
+function formatDate(ts: string) {
+  return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export default async function ScanResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const scan = await getScan(id)
+  const scan   = await getScan(id)
   if (!scan) notFound()
 
-  const pct      = Math.round(scan.confidence_score * 100)
-  const signals  = (scan.signals ?? []).slice(0, 6)
-  const dateStr  = new Date(scan.created_at).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  const pct = Math.round(scan.confidence_score <= 1 ? scan.confidence_score * 100 : scan.confidence_score)
+  const cfg = verdictCfg(scan.verdict)
+  const Icon = cfg.icon
+  const signals = scan.signals ?? []
 
   return (
-    <div className="min-h-screen bg-[#08080d] text-slate-100">
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#08080d]">
-        <div className="max-w-2xl 2xl:max-w-3xl mx-auto h-full px-4 sm:px-6 2xl:px-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Aiscern" className="w-8 h-6 object-contain" />
-            <span className="font-black text-lg gradient-text">Aiscern</span>
+    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
+      {/* Simple header */}
+      <header className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Link href="/" className="font-black text-white hover:text-[#2BEE34] transition-colors text-lg">
+            Aiscern
           </Link>
-          <span className="text-xs text-slate-500">Shared scan result</span>
+          <Link href="/detect/text" className="text-sm text-[#A3A3A3] hover:text-white transition-colors flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" /> Run new scan
+          </Link>
         </div>
-      </nav>
+      </header>
 
-      <main className="pt-24 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
-        {/* Header card */}
-        <div className={`rounded-xl border p-8 text-center mb-6 ${verdictColor(scan.verdict)}`}>
-          <div className="flex justify-center mb-4">
-            <VerdictIcon verdict={scan.verdict} />
-          </div>
-          <h1 className="text-3xl font-black mb-1">{verdictLabel(scan.verdict)}</h1>
-          <p className="text-slate-500 text-sm mb-6 capitalize">{scan.media_type} analysis · {dateStr}</p>
-          <ConfidenceBar score={scan.confidence_score} verdict={scan.verdict} />
-        </div>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-5">
 
-        {/* Metadata */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5 mb-6 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Content type</span>
-            <span className="capitalize font-medium">{scan.media_type}</span>
+        {/* Verdict card */}
+        <div className={`rounded-xl border ${cfg.border} ${cfg.bg} p-6 sm:p-8`}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Icon className={`w-7 h-7 ${cfg.text} flex-shrink-0`} />
+              <div>
+                <p className={`text-2xl font-black ${cfg.text}`}>{cfg.label}</p>
+                <p className="text-sm text-[#A3A3A3] mt-0.5 capitalize">{scan.media_type} detection</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-black text-white tabular-nums">{pct}%</div>
+              <div className="text-xs text-[#6B6B6B]">confidence</div>
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Detection model</span>
-            <span className="font-medium text-xs font-mono">{scan.model_used ?? 'ensemble'}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Scan ID</span>
-            <span className="font-mono text-xs text-slate-600">{scan.id.slice(0, 8)}…</span>
+          <div className="mt-5 h-2 bg-[#2A2A2A] rounded-full overflow-hidden">
+            <div className={`h-full ${cfg.bar} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
           </div>
         </div>
 
-        {/* Signals */}
+        {/* Meta */}
+        <div className="rounded-xl border border-[#1E1E1E] bg-[#141414] p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {[
+            { label: 'Media type', value: scan.media_type.charAt(0).toUpperCase() + scan.media_type.slice(1) },
+            { label: 'Model',      value: scan.model_used ?? 'Ensemble' },
+            { label: 'Scan ID',    value: scan.id.slice(0, 12) + '…' },
+          ].map(m => (
+            <div key={m.label}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-1">{m.label}</p>
+              <p className="text-sm font-medium text-white font-mono">{m.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Timestamp */}
+        <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
+          <Clock className="w-4 h-4 flex-shrink-0" />
+          Scanned {formatDate(scan.created_at)}
+        </div>
+
+        {/* Signal breakdown */}
         {signals.length > 0 && (
-          <div className="rounded-xl border border-white/[0.08] bg-[#0f0f17] p-5 mb-6">
-            <h2 className="font-bold text-sm mb-4 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-blue-400" /> Detection signals
-            </h2>
-            <div className="space-y-3">
-              {signals.map((s, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">{s.name}</span>
-                    <span className="font-bold">{Math.round((s.value ?? 0) * 100)}%</span>
+          <div className="rounded-xl border border-[#1E1E1E] bg-[#141414] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-[#1E1E1E] bg-[#0A0A0A]">
+              <BarChart3 className="w-4 h-4 text-[#2BEE34]" />
+              <h2 className="text-sm font-semibold text-white">Signal Breakdown</h2>
+            </div>
+            <div className="divide-y divide-[#1E1E1E]">
+              {signals.map((sig, i) => {
+                const sigPct = Math.round((sig.value ?? 0) * 100)
+                const isAI   = sigPct >= 65
+                const isHum  = sigPct <= 35
+                const barCls = isAI ? 'bg-[#FF4444]' : isHum ? 'bg-[#2BEE34]' : 'bg-[#FFB800]'
+                return (
+                  <div key={i} className="px-5 py-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm text-[#E5E5E5] font-medium">{sig.name}</span>
+                      <span className="text-sm font-bold text-white tabular-nums">{sigPct}%</span>
+                    </div>
+                    <div className="h-1.5 bg-[#2A2A2A] rounded-full overflow-hidden">
+                      <div className={`h-full ${barCls} rounded-full transition-all duration-500`} style={{ width: `${sigPct}%` }} />
+                    </div>
+                    {sig.weight && (
+                      <p className="text-[10px] text-[#6B6B6B] mt-1">Weight: {(sig.weight * 100).toFixed(0)}%</p>
+                    )}
                   </div>
-                  <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-blue-600/60"
-                      style={{ width: `${Math.round((s.value ?? 0) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
 
         {/* Disclaimer */}
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 mb-8 flex gap-3">
-          <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-slate-500 leading-relaxed">
-            AI detection is probabilistic, not absolute. This result should be one input in a broader assessment.
-            Accuracy is approximately 82–85% depending on content type. See our{' '}
-            <Link href="/methodology" className="text-blue-500 underline">methodology</Link> for details.
+        <div className="flex gap-3 p-4 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl text-sm text-[#6B6B6B]">
+          <Shield className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
+          <p>
+            AI detection is probabilistic. Results should be considered as supporting evidence, not definitive proof.
+            Never use detection results as sole evidence in high-stakes decisions.{' '}
+            <Link href="/methodology" className="text-[#2BEE34] hover:underline">Read methodology →</Link>
           </p>
         </div>
 
-        {/* CTA */}
-        <div className="text-center space-y-3">
-          <Link href={`/detect/${scan.media_type}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
-            Verify this yourself →
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Link href="/detect/text"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg
+                       bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm transition-colors">
+            Run Another Scan
           </Link>
-          <p className="text-xs text-slate-600 flex items-center justify-center gap-1.5">
-            <Clock className="w-3 h-3" /> Free · No account required
-          </p>
+          <Link href="/signup"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg
+                       border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                       font-semibold text-sm transition-all">
+            Save to History
+          </Link>
         </div>
+
       </main>
     </div>
   )

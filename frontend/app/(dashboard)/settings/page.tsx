@@ -31,7 +31,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
   icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-white/[0.06] last:border-0 gap-4">
+    <div className="flex items-center justify-between py-4 border-b border-[#1E1E1E] last:border-0 gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
           <Icon className="w-4 h-4 text-[#2BEE34]" />
@@ -53,7 +53,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-white/[0.06]">
+      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-[#1E1E1E]">
         <Icon className="w-4 h-4 text-[#2BEE34]" /> {title}
       </h2>
       {children}
@@ -216,7 +216,7 @@ export default function SettingsPage() {
         <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
@@ -229,7 +229,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-blue-500/40 text-[#2BEE34]' : 'border-[#1E1E1E] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-[#2BEE34]/40 text-[#2BEE34]' : 'border-[#1E1E1E] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -239,7 +239,7 @@ export default function SettingsPage() {
         <SettingRow icon={Languages} label="Language" description="Interface display language"
           action={
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               <option value="en">English</option>
               <option value="ur">اردو (Urdu)</option>
               <option value="ar">العربية (Arabic)</option>
@@ -259,7 +259,7 @@ export default function SettingsPage() {
         <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-[#141420] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-blue-500/50">
+              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
       <Section title="Data & Storage" icon={Database}>
         <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
           action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#1E1E1E] text-[#A3A3A3] hover:bg-[#141420] hover:text-white transition-colors">
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#1E1E1E] text-[#A3A3A3] hover:bg-[#141414] hover:text-white transition-colors">
               <Download className="w-3 h-3" /> Export
             </button>
           } />
@@ -306,7 +306,7 @@ export default function SettingsPage() {
               if (!user?.uid) return
               await (supabase as any).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
-            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-rose-500-500/10 transition-colors">
+            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-[#FF4444]/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Clear
             </button>
           } />
@@ -324,7 +324,7 @@ export default function SettingsPage() {
               <p className="text-xs text-[#6B6B6B] mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>
             <button onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-rose-500-500/10 transition-colors">
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400-400 hover:bg-[#FF4444]/10 transition-colors">
               <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>
