@@ -151,7 +151,7 @@ export default function ContactPage() {
                   flex items-center justify-center text-white font-black text-sm flex-shrink-0">
                   T
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white">Temah</p>
                   <p className="text-xs text-[#6B6B6B]">Project Manager · Aiscern</p>
                 </div>
@@ -206,7 +206,7 @@ export default function ContactPage() {
                 </p>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-wider text-[#6B6B6B] mb-2 block">Name *</label>
                     <input value={form.name} onChange={e => set('name', e.target.value)}
                       placeholder="Your name"
@@ -214,7 +214,7 @@ export default function ContactPage() {
                         text-white placeholder:text-[#6B6B6B] focus:outline-none
                         focus:border-[#2BEE34]/30 transition-colors" />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-wider text-[#6B6B6B] mb-2 block">Email *</label>
                     <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
                       placeholder="your@email.com"
@@ -224,7 +224,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#6B6B6B] mb-2 block">Subject</label>
                   <select value={form.subject} onChange={e => set('subject', e.target.value)}
                     className="w-full bg-[#08080d] border border-[#1E1E1E] rounded-xl px-4 py-3 text-sm
@@ -245,7 +245,7 @@ export default function ContactPage() {
                   )}
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#6B6B6B] mb-2 block">Message *</label>
                   <textarea value={form.message} onChange={e => set('message', e.target.value)}
                     placeholder="Tell us how we can help…" rows={5}

@@ -298,7 +298,7 @@ export default function BatchPage() {
                 </div>
               </div>
               <div className="h-2.5 bg-[#1A1A1A] rounded-full overflow-hidden">
-                <div>
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
               {completed > 0 && avgConf > 0 && (
                 <p className="text-xs text-[#6B6B6B] mt-2">Average confidence: {avgConf}%</p>
@@ -403,9 +403,12 @@ export default function BatchPage() {
 
           {/* File list */}
           <div className="space-y-2">
-            
+            <AnimatePresence>
               {filteredFiles.map((bf, i) => (
-                <div>
+                <motion.div key={bf.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.03 }}
+                  className="flex items-center gap-3 p-3 card rounded-xl">
 
                   {/* Status icon */}
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
@@ -449,9 +452,9 @@ export default function BatchPage() {
                       <X className="w-4 h-4" />
                     </button>
                   )}
-                </div>
+                </motion.div>
               ))}
-            
+            </AnimatePresence>
           </div>
         </>
       )}

@@ -72,9 +72,14 @@ export function OnboardingWizard() {
   const stepIdx = STEPS.indexOf(step)
 
   return (
-    
-      <div>
-        <div>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="relative w-full max-w-sm bg-[#0d0d18] border border-[#1e1e35] rounded-3xl overflow-hidden"
+        >
           {/* Top gradient */}
           <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#2563eb)` }} />
 
@@ -196,7 +201,7 @@ export function OnboardingWizard() {
           {/* STEP: ready */}
           {step === 'ready' && (
             <div className="text-center space-y-5">
-              <div>
+              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 bg-blue-600/10 border border-blue-600/20">
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-black text-white">You're all set!</h2>
@@ -225,8 +230,8 @@ export function OnboardingWizard() {
               </button>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
-    
+    </AnimatePresence>
   )
 }

@@ -338,7 +338,7 @@ function MessageBubble({
               'Scan another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
-                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/50/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
+                className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
                 {chip}
               </button>
             ))}

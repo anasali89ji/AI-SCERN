@@ -23,7 +23,7 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
                  transition-all duration-200 overflow-hidden"
     >
       <div className="h-48 sm:h-64 bg-[#0A0A0A] border-b border-[#1E1E1E] flex items-end p-6">
-        <div>
+        <div className="flex-1 min-w-0">
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20 mb-3 inline-block">
             {post.category}
           </span>

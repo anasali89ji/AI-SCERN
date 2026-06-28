@@ -31,7 +31,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
   const isAI = card.verdict === 'AI'
 
   return (
-    <div>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
       {/* Preview area */}
       {card.type === 'image' && card.img ? (
         <div className="relative h-32 sm:h-36 bg-[#141420] overflow-hidden">
@@ -77,7 +77,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
         {/* Confidence bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 rounded-full bg-[#1e1e2e] overflow-hidden">
-            <div>
+            <div className="h-full rounded-full bg-[#2BEE34] transition-all duration-500">
           </div>
           <span className={`text-[10px] font-bold tabular-nums shrink-0
             ${isAI ? 'text-[#FF4444]' : 'text-[#2BEE34]'}`}>
@@ -93,7 +93,7 @@ export default function AIvsRealSection() {
   return (
     <section className="py-16 sm:py-24 border-t border-white/[0.06] overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div>
+        <div className="grid sm:grid-cols-2 gap-4 mt-8">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
                           border border-rose-500/25 bg-[#FF4444]/[0.06] text-[#FF4444]
                           text-xs font-semibold mb-5">

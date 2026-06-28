@@ -82,7 +82,7 @@ export default function MethodologyPage() {
               {ACCURACY.map(m => (
                 <div key={m.type} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <span className="text-sm font-semibold text-white">{m.type} Detection</span>
                       <p className="text-xs text-[#6B6B6B] mt-0.5">{m.model}</p>
                     </div>
@@ -123,7 +123,7 @@ export default function MethodologyPage() {
               {SIGNALS_TEXT.map(s => (
                 <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
                   <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-white">{s.name}</span>
                     <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
@@ -137,7 +137,7 @@ export default function MethodologyPage() {
               {SIGNALS_IMAGE.map(s => (
                 <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
                   <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-white">{s.name}</span>
                     <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>

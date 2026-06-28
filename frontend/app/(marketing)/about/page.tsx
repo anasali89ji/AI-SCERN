@@ -129,7 +129,7 @@ export default function AboutPage() {
                                     flex items-center justify-center text-lg font-black text-[#2BEE34] flex-shrink-0">
                       {member.initials}
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white">{member.name}</p>
                       <p className="text-sm text-[#2BEE34]">{member.role}</p>
                     </div>

@@ -186,7 +186,7 @@ export default function UsersAdmin() {
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-black text-slate-100">User Management</h1>
             <p className="text-xs text-slate-500 mt-0.5">{total.toLocaleString()} total users</p>
           </div>
@@ -542,7 +542,7 @@ export default function UsersAdmin() {
                 {modal.action === 'revoke'      && <ShieldOff  className="w-5 h-5 text-amber-400" />}
                 {modal.action === 'restore'     && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-slate-100 capitalize">
                   {modal.action.replace(/_/g, ' ')}
                 </h3>
@@ -553,7 +553,7 @@ export default function UsersAdmin() {
             {(modal.action === 'grant_pro' || modal.action === 'set_plan') && (
               <div className="space-y-3 mb-4">
                 {modal.action === 'set_plan' && (
-                  <div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">Plan</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {['free', 'pro', 'team', 'enterprise'].map(p => (
@@ -566,7 +566,7 @@ export default function UsersAdmin() {
                     </div>
                   </div>
                 )}
-                <div>
+                <div className="space-y-1">
                   <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
                     Expires in (days) — leave blank for no expiry
                   </label>
@@ -632,7 +632,7 @@ export default function UsersAdmin() {
                   ? <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   : <XCircle className="w-5 h-5 text-rose-400" />}
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-slate-100">
                   {reviewModal.action === 'approve' ? 'Approve Upgrade Request' : 'Reject Upgrade Request'}
                 </h3>

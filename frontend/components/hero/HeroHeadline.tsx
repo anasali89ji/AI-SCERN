@@ -36,7 +36,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
     <div className="select-none" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
 
       {/* "Detect" — static with gradient */}
-      <div>
+      <div className="font-black tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
         <h1
           className="font-black leading-none tracking-tight
                      text-[3rem] xs:text-[3.5rem] sm:text-[4.5rem] md:text-[5.5rem] lg:text-[6.5rem]"
@@ -52,7 +52,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
       </div>
 
       {/* Rotating word row */}
-      <div>
+      <div className="flex items-baseline gap-3 sm:gap-4">
         {/* Animated word slot — sized for longest word at each breakpoint */}
         <div
           className="relative overflow-hidden
@@ -65,7 +65,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           aria-atomic="true"
         >
           
-            <div>
+            <div className="font-black tracking-tight text-white">
               {word}
             </div>
           
@@ -80,7 +80,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
       </div>
 
       {/* Tab dots */}
-      <div>
+      <div className="flex gap-1.5 mt-4">
         {ROTATING_WORDS.map((w, i) => {
           const active = i === idx
           const ws = WORD_STYLES[w]
@@ -96,7 +96,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
                          min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-full"
             >
-              <div>
+              <div className="text-xs text-[#6B6B6B] font-medium">
             </button>
           )
         })}

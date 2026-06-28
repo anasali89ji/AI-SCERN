@@ -38,7 +38,7 @@ export default function ComparisonTable() {
   return (
     <section className="py-20 px-4 sm:px-6 2xl:px-10">
       <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto space-y-8">
-        <div>
+        <div className="overflow-x-auto">
           <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-widest">
             Competitive Edge
           </div>
@@ -50,7 +50,7 @@ export default function ComparisonTable() {
           </p>
         </div>
 
-        <div>
+        <div className="min-w-[640px] w-full">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.08]">

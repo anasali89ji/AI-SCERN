@@ -80,7 +80,7 @@ export default function PipelinePage() {
     <div className="p-4 sm:p-6 2xl:p-8 space-y-6 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black text-white flex items-center gap-2">
             <Database className="w-5 h-5 text-[#2BEE34]" />
             Data Pipeline
@@ -123,7 +123,7 @@ export default function PipelinePage() {
             ].map(({ label, value, icon: Icon, color, sub }) => (
               <div key={label} className="bg-surface border border-[#1E1E1E] rounded-xl p-4">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-xs text-[#6B6B6B] uppercase tracking-wider mb-1">{label}</p>
                     <p className={`text-2xl font-black ${color}`}>{value}</p>
                     <p className="text-xs text-[#6B6B6B] mt-1">{sub}</p>
@@ -210,7 +210,7 @@ export default function PipelinePage() {
 
           {/* HF Dataset link */}
           <div className="bg-[#0f0f17]/50 border border-white/[0.06] rounded-xl p-4 flex items-center justify-between">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">HuggingFace Dataset</p>
               <p className="text-xs text-[#6B6B6B]">saghi776/detectai-dataset</p>
             </div>

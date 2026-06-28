@@ -238,7 +238,7 @@ export default function ScraperPage() {
         {/* Results */}
         
           {result && (
-            <div>
+            <div className="space-y-4">
 
               {/* Screenshot + Score row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -475,7 +475,7 @@ export default function ScraperPage() {
                     <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                       className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
                       <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-[#E5E5E5] font-medium group-hover:text-white transition-colors">{d.name}</p>
                         <p>{d.desc}</p>
                       </div>

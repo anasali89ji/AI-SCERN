@@ -29,7 +29,7 @@ export default function DpaPage() {
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
           <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-4xl font-black text-white mb-3">Data Processing Agreement</h1>
               <p className="text-[#6B6B6B]">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
             </div>

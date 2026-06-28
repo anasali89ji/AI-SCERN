@@ -115,7 +115,7 @@ export default function GuidesPage() {
                       <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                         <GIcon className={`w-5 h-5 ${c.icon}`} />
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <h2 className="font-bold text-white mb-1">{guide.title}</h2>
                         <p className="text-sm text-[#6B6B6B] leading-relaxed">{guide.desc}</p>
                       </div>
