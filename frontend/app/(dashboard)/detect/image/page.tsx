@@ -316,8 +316,8 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
                   <div className="h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#2BEE34]">
-                  </div>
+                    <div className="h-full rounded-full bg-[#2BEE34]" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
+                  
                 </div>
               </div>
 
@@ -337,7 +337,7 @@ Analyzed: ${new Date().toLocaleString()}`
                         </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
                         <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}>
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
                         </div>
                       </div>
                     </div>

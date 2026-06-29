@@ -424,7 +424,7 @@ Analyzed: ${new Date().toLocaleString()}`
                       <span>→ AI</span>
                     </div>
                     <div className="h-2.5 bg-[#1A1A1A] rounded-full overflow-hidden relative">
-                      <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-[#FFB800] to-[#FF4444]' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-[#2BEE34]/50 to-[#2BEE34]' : 'bg-gradient-to-r from-[#FFB800]/50 to-[#FFB800]'}>
+                      <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-[#FFB800] to-[#FF4444]' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-[#2BEE34]/50 to-[#2BEE34]' : 'bg-gradient-to-r from-[#FFB800]/50 to-[#FFB800]'}`} style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -446,7 +446,7 @@ Analyzed: ${new Date().toLocaleString()}`
                           </span>
                         </div>
                         <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden ml-5">
-                          <div className={`h-full rounded-full ${signal.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}>
+                          <div className={`h-full rounded-full ${signal.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} style={{ width: `${Math.round((signal.value ?? signal.weight ?? 0) <= 1 ? (signal.value ?? signal.weight ?? 0) * 100 : (signal.value ?? signal.weight ?? 0))}%` }} />
                         </div>
                       </div>
                     ))}
