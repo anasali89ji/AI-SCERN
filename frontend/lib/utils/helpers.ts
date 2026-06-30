@@ -45,6 +45,23 @@ export function formatConfidence(score: number): string {
   return `${Math.round(clamped)}%`
 }
 
+/**
+ * Format confidence relative to the STATED VERDICT, for user-facing display.
+ *
+ * `score` from the API is always the raw AI-likelihood (0=human-like,
+ * 1=AI-like) — that's intentional, downstream RAG blending logic depends on
+ * it. But showing that raw number next to a HUMAN verdict reads as a
+ * contradiction (e.g. "Verdict: HUMAN / Confidence: 24%" when the summary
+ * separately says "76% confidence authentic"). This inverts it for display
+ * only when the verdict is HUMAN, so the shown number always means
+ * "how confident are we in THIS verdict".
+ */
+export function formatVerdictConfidence(score: number, verdict: string): string {
+  const raw = score <= 1 ? score : score / 100
+  const verdictConfidence = verdict === 'HUMAN' ? 1 - raw : raw
+  return formatConfidence(verdictConfidence)
+}
+
 export function getVerdictColor(verdict: string): string {
   switch (verdict) {
     case 'AI': return 'text-rose'
