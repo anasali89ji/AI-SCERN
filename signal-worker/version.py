@@ -6,4 +6,4 @@ main.py, the engines, and health checks never drift out of sync again.
 from another.)
 """
 
-VERSION = "4.2.0"
+VERSION = "4.4.0"

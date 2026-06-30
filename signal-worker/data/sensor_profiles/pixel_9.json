@@ -1,0 +1,28 @@
+{
+  "name": "Google Pixel 9",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2024,
+  "spectral_peaks": {
+    "R": 605,
+    "G": 542,
+    "B": 458
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.935,
+      "b_g": 0.964
+    },
+    "tungsten": {
+      "r_g": 1.163,
+      "b_g": 0.599
+    },
+    "tl84": {
+      "r_g": 0.991,
+      "b_g": 0.886
+    },
+    "f11": {
+      "r_g": 0.952,
+      "b_g": 0.943
+    }
+  }
+}
