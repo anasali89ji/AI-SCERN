@@ -1,0 +1,28 @@
+{
+  "name": "Panasonic Lumix S5 II",
+  "sensor_type": "BSI_CMOS",
+  "year": 2023,
+  "spectral_peaks": {
+    "R": 609,
+    "G": 543,
+    "B": 457
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.928,
+      "b_g": 0.968
+    },
+    "tungsten": {
+      "r_g": 1.157,
+      "b_g": 0.605
+    },
+    "tl84": {
+      "r_g": 0.983,
+      "b_g": 0.89
+    },
+    "f11": {
+      "r_g": 0.944,
+      "b_g": 0.947
+    }
+  }
+}
