@@ -13,10 +13,10 @@ export const metadata = {
 
 // Summary stat cards shown at page top
 const ACCURACY_SUMMARY = [
-  { modality: 'Image',  accuracy: '98%', auc: '0.98', f1: '0.965', layers: '14 layers',  color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-950/40',   border: 'border-blue-200 dark:border-blue-800',   note: 'L12-BDIS: 100% recall' },
-  { modality: 'Text',   accuracy: '94%', auc: '0.94', f1: '0.925', layers: '3-model',    color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800', note: 'GPT-4, Claude, Gemini' },
-  { modality: 'Audio',  accuracy: '92%', auc: '0.95', f1: '0.925', layers: 'ensemble',   color: 'text-cyan-600 dark:text-cyan-400',   bg: 'bg-cyan-50 dark:bg-cyan-950/40',   border: 'border-cyan-200 dark:border-cyan-800',   note: 'ElevenLabs, RVC, Bark' },
-  { modality: 'Video',  accuracy: '90%', auc: '0.93', f1: '0.905', layers: 'frame-level',color: 'text-violet-600 dark:text-violet-400',bg:'bg-violet-50 dark:bg-violet-950/40',border:'border-violet-200 dark:border-violet-800', note: 'Sora, Kling, Runway' },
+  { modality: 'Image',  accuracy: '98%', auc: '0.98', f1: '0.965', layers: '14 layers',   color: 'text-primary',    bg: 'bg-primary/8',      border: 'border-primary/25',    note: 'L12-BDIS: 100% recall' },
+  { modality: 'Text',   accuracy: '94%', auc: '0.94', f1: '0.925', layers: '3-model',     color: 'text-amber',      bg: 'bg-amber/8',        border: 'border-amber/25',      note: 'GPT-4, Claude, Gemini' },
+  { modality: 'Audio',  accuracy: '92%', auc: '0.95', f1: '0.925', layers: 'ensemble',    color: 'text-cyan',       bg: 'bg-cyan/8',         border: 'border-cyan/25',       note: 'ElevenLabs, RVC, Bark' },
+  { modality: 'Video',  accuracy: '90%', auc: '0.93', f1: '0.905', layers: 'frame-level', color: 'text-violet-400', bg: 'bg-violet-500/10',  border: 'border-violet-500/25', note: 'Sora, Kling, Runway' },
 ]
 
 const TEXT_RESULTS = [
