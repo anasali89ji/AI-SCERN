@@ -9,11 +9,21 @@ export const metadata = {
   openGraph: { title: 'Accuracy Benchmarks — Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 
+// ── Benchmark data ─────────────────────────────────────────────────────────────
+
+// Summary stat cards shown at page top
+const ACCURACY_SUMMARY = [
+  { modality: 'Image',  accuracy: '98%', auc: '0.98', f1: '0.965', layers: '14 layers',  color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-950/40',   border: 'border-blue-200 dark:border-blue-800',   note: 'L12-BDIS: 100% recall' },
+  { modality: 'Text',   accuracy: '94%', auc: '0.94', f1: '0.925', layers: '3-model',    color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800', note: 'GPT-4, Claude, Gemini' },
+  { modality: 'Audio',  accuracy: '92%', auc: '0.95', f1: '0.925', layers: 'ensemble',   color: 'text-cyan-600 dark:text-cyan-400',   bg: 'bg-cyan-50 dark:bg-cyan-950/40',   border: 'border-cyan-200 dark:border-cyan-800',   note: 'ElevenLabs, RVC, Bark' },
+  { modality: 'Video',  accuracy: '90%', auc: '0.93', f1: '0.905', layers: 'frame-level',color: 'text-violet-600 dark:text-violet-400',bg:'bg-violet-50 dark:bg-violet-950/40',border:'border-violet-200 dark:border-violet-800', note: 'Sora, Kling, Runway' },
+]
+
 const TEXT_RESULTS = [
-  { model: 'RoBERTa-base-openai-detector', auc: 0.97, precision: 0.95, recall: 0.94, f1: 0.945, fpr: 0.04 },
-  { model: 'Binoculars (perplexity/crossperplexity)', auc: 0.96, precision: 0.93, recall: 0.96, f1: 0.945, fpr: 0.05 },
-  { model: 'Gemini 2.0 Flash (ensemble head)', auc: 0.95, precision: 0.94, recall: 0.93, f1: 0.935, fpr: 0.05 },
-  { model: 'Ensemble (all combined)', auc: 0.98, precision: 0.96, recall: 0.97, f1: 0.965, fpr: 0.03 },
+  { model: 'RoBERTa-base-openai-detector',       auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
+  { model: 'Binoculars (perplexity/crossperplexity)', auc: 0.91, precision: 0.89, recall: 0.92, f1: 0.905, fpr: 0.09 },
+  { model: 'Gemini 2.0 Flash (ensemble head)',    auc: 0.90, precision: 0.88, recall: 0.89, f1: 0.885, fpr: 0.10 },
+  { model: 'Ensemble (all combined)',             auc: 0.94, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
 ]
 const IMAGE_RESULTS = [
   { model: 'ViT-based classifier (fine-tuned)', auc: 0.94, precision: 0.91, recall: 0.93, f1: 0.920, fpr: 0.07 },
@@ -91,10 +101,24 @@ export default function BenchmarksPage() {
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Accuracy Benchmarks</h1>
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">Per-modality evaluation results across our ensemble models. All benchmarks use held-out test splits — none of the test data was used for training.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Last updated: July 2026 · v4.4.0 · 14-layer image engine</p>
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2 max-w-xl mx-auto">
             <Info className="h-4 w-4 text-amber-600 flex-shrink-0" />
             <span>Real-world accuracy varies by generator novelty, content type, and obfuscation. Treat these as upper bounds on curated data.</span>
           </div>
+        </div>
+
+        {/* ── Accuracy summary stat cards ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-14">
+          {ACCURACY_SUMMARY.map((s) => (
+            <div key={s.modality} className={`rounded-xl border ${s.border} ${s.bg} p-4 text-center`}>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{s.modality}</p>
+              <p className={`text-4xl font-black tabular-nums ${s.color}`}>{s.accuracy}</p>
+              <p className="text-xs text-muted-foreground mt-1">AUC {s.auc} · F1 {s.f1}</p>
+              <p className={`text-xs font-medium mt-1 ${s.color}`}>{s.layers}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.note}</p>
+            </div>
+          ))}
         </div>
 
         <section className="mb-14">
