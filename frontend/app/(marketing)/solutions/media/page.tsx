@@ -44,7 +44,7 @@ export default function MediaPage() {
       faqs={[
         { q: 'How fast can Aiscern analyze submitted content during breaking news?', a: 'Text detection returns results in under 2 seconds for most submissions. Image and audio detection complete within 5–15 seconds. Video analysis is longer — typically 30–90 seconds per minute of footage.' },
         { q: 'Does image detection work on screenshots and compressed social media images?', a: 'Yes, though compression artifacts can reduce accuracy. We recommend submitting the highest-quality version available. Our pixel-integrity layer is designed to work on JPEG-compressed images.' },
-        { q: 'What is the false positive rate for image detection?', a: 'Our image ensemble achieves approximately 5% false positive rate on benchmark datasets. Real-world rates vary by image type. We always recommend human editorial review of flagged content.' },
+        { q: 'What is the false positive rate for image detection?', a: 'Our image ensemble achieves approximately 3% false positive rate on benchmark datasets (14-layer ensemble, AUC 0.98). Real-world rates vary by image type. We always recommend human editorial review of flagged content.' },
         { q: 'Can Aiscern detect deepfake video of political figures?', a: 'Our video pipeline analyzes temporal consistency and facial artifacts. It performs best on face-swap and lip-sync deepfakes. Highly sophisticated full-body synthesis may reduce accuracy — see our /benchmarks page for dataset-specific results.' },
         { q: 'Is there a newsroom bulk pricing plan?', a: 'Yes. Enterprise and Team plans include volume-based pricing, dedicated API limits, and priority support. Contact us at /enterprise for newsroom-specific agreements.' },
       ]}

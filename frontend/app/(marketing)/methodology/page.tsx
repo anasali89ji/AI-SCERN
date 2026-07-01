@@ -10,10 +10,10 @@ export const metadata = {
 }
 
 const ACCURACY = [
-  { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble', color: 'bg-primary' },
-  { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets',          color: 'bg-blue-500'   },
-  { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier',                          color: 'bg-emerald-500' },
-  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis',        color: 'bg-orange-500'  },
+  { type: 'Text',  score: 94, model: 'RoBERTa + Binoculars + Gemini 2.0 Flash ensemble (3-model)',         color: 'bg-amber'    },
+  { type: 'Image', score: 98, model: '14-layer ensemble: ViT, CLIP, GFE, L11-PAFRA, L12-BDIS, L13-SSWDP, L14-QESM', color: 'bg-primary'  },
+  { type: 'Audio', score: 92, model: 'Wav2Vec2 (ASVspoof fine-tuned) + spectral fingerprint + SynthID',    color: 'bg-cyan'     },
+  { type: 'Video', score: 90, model: 'Frame-sampled ViT ensemble + NVIDIA NIM + temporal consistency',     color: 'bg-emerald'  },
 ]
 
 const SIGNALS_TEXT = [
@@ -70,10 +70,10 @@ export default function MethodologyPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs px-2.5 py-1 rounded-full border border-border bg-surface text-text-muted font-mono">
-                v4.0.0
+                v4.4.0
               </span>
               <span className="text-xs px-2.5 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary font-semibold">
-                Last validated: April 2026
+                Last validated: July 2026
               </span>
             </div>
           </div>

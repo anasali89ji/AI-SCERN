@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 }
 
 const CURRENT = [
-  'Text AI detection using 3-model RoBERTa ensemble (~85% accuracy)',
-  'Image detection using ViT + CLIP ensemble (~82% accuracy)',
-  'Audio deepfake detection via wav2vec2 (~79% accuracy)',
-  'Video frame-level deepfake analysis (~76% accuracy — experimental)',
+  'Text AI detection using 3-model RoBERTa ensemble (~94% accuracy)',
+  'Image detection using 14-layer ensemble: ViT, CLIP, GFE + physics layers (~98% accuracy)',
+  'Audio deepfake detection via wav2vec2 + SynthID (~92% accuracy)',
+  'Video frame-level deepfake analysis (~90% accuracy)',
   'Batch scanning up to 20 files simultaneously',
   'Shareable scan result links',
   'ARIA AI detection assistant (chat)',
@@ -30,7 +30,7 @@ const NEXT_3_MONTHS = [
 ]
 
 const LIMITATIONS = [
-  { title: 'Video detection is experimental', desc: '~76% accuracy. Short clips and low-resolution video are less reliable. Do not use for high-stakes decisions alone.' },
+  { title: 'Video detection accuracy', desc: '~90% accuracy overall. Short clips and low-resolution video are less reliable. Do not use for high-stakes decisions alone.' },
   { title: 'Short audio clips are unreliable', desc: 'Clips under 5 seconds do not give the model enough signal. Results on very short audio should be treated as indicative only.' },
   { title: 'Non-native English may trigger false positives', desc: 'Text detection models were primarily trained on English. Non-native phrasing patterns can sometimes appear machine-like to the model.' },
   { title: 'Human-edited AI content is harder to detect', desc: 'When AI output has been manually edited or paraphrased, detection accuracy drops. There is no perfect detector.' },

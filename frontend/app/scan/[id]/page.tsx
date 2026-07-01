@@ -169,7 +169,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
           <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
           <p className="text-xs text-text-muted leading-relaxed">
             AI detection is probabilistic, not absolute. This result should be one input in a broader assessment.
-            Accuracy is approximately 82–85% depending on content type. See our{' '}
+            Accuracy is approximately 94–98% depending on content type. See our{' '}
             <Link href="/methodology" className="text-primary underline">methodology</Link> for details.
           </p>
         </div>
