@@ -790,6 +790,11 @@ const cvSignalsFormatted = cvWorkerResult?.cv_signals
 
 return {
   verdict,
+  // NOTE: confidence is the raw AI-likelihood score (0=human-like, 1=AI-like),
+  // NOT "confidence in the stated verdict". Downstream code (RAG blending in
+  // /api/detect/image/route.ts) depends on this being the raw AI probability
+  // for its 0.55/0.40 threshold comparisons — do not invert it here.
+  // For verdict-confidence display, use formatVerdictConfidence() instead.
   confidence:    Math.round(calibratedImgScore * 1000) / 1000,
   model_used:    modelUsed,
   model_version: '8.1.0',

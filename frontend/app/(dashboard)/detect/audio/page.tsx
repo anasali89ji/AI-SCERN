@@ -10,7 +10,7 @@ import { Mic, Upload, X, AlertTriangle, CheckCircle, HelpCircle, Loader2, Rotate
 import { useAuth } from '@/components/auth-provider'
 import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
+import { formatVerdictConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
@@ -172,7 +172,7 @@ function AudioDetectionPage() {
 
   const exportReport = () => {
     if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
+    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatVerdictConfidence(result.confidence, result.verdict)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
@@ -311,7 +311,7 @@ function AudioDetectionPage() {
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
                     <span className="shrink-0">Confidence</span>
-                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
+                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatVerdictConfidence(result.confidence, result.verdict)}</span>
                   </div>
                   <div className="h-2.5 sm:h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
@@ -457,7 +457,7 @@ function AudioDetectionPage() {
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatVerdictConfidence(result.confidence, result.verdict)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>

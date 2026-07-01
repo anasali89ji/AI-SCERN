@@ -1,0 +1,28 @@
+{
+  "name": "Google Pixel 8",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2023,
+  "spectral_peaks": {
+    "R": 604,
+    "G": 541,
+    "B": 459
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.937,
+      "b_g": 0.962
+    },
+    "tungsten": {
+      "r_g": 1.165,
+      "b_g": 0.597
+    },
+    "tl84": {
+      "r_g": 0.993,
+      "b_g": 0.884
+    },
+    "f11": {
+      "r_g": 0.954,
+      "b_g": 0.941
+    }
+  }
+}

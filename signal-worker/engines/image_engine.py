@@ -194,6 +194,39 @@ def _run_l10(img_array, img_pil) -> Dict[str, Any]:
         return build_layer_report(10, "Generative Fingerprinting Engine", [], "failure", 0, score=0.5)
 
 
+# ── Physical Consistency Layer runners (L11-L14) ──────────────────────────────
+
+def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Run the Physical Consistency ensemble (PAFRA + BDIS + SSWDP + QESM).
+    Returns the full run_physical_analysis dict.
+    Fails silently — on error returns neutral composite_score=0.5 and empty
+    layer_reports so the rest of the pipeline is unaffected.
+    """
+    from analyzers.physical_consistency import run_physical_analysis
+    from utils.evidence_builder import build_layer_report
+    try:
+        return run_physical_analysis(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][Physical] failed: %s", e)
+        neutral_layers = [
+            build_layer_report(11, "PAFRA – Polarization & Fresnel Analysis",    [], "failure", 0, score=0.5),
+            build_layer_report(12, "BDIS – Bayer Demosaicing Inconsistency",      [], "failure", 0, score=0.5),
+            build_layer_report(13, "SSWDP – Subsurface Scattering Profile",       [], "failure", 0, score=0.5),
+            build_layer_report(14, "QESM – Quantum Efficiency Spectral Match",    [], "failure", 0, score=0.5),
+        ]
+        return {
+            "pafra": {"score": 0.5, "status": "failure", "evidence": []},
+            "bdis":  {"score": 0.5, "status": "failure", "evidence": []},
+            "sswdp": {"score": 0.5, "status": "failure", "evidence": []},
+            "qesm":  {"score": 0.5, "status": "failure", "evidence": []},
+            "composite_score": 0.5,
+            "active_signals":  0,
+            "layer_reports":   neutral_layers,
+            "elapsed_ms":      0,
+        }
+
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
@@ -362,6 +395,10 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
         8:  0.9,   # L8 NLM noise tensor
         9:  1.3,   # L9 Modern AI Fingerprint
         10: 1.2,   # L10 Generative Fingerprinting Engine — attribution
+        11: 1.0,   # L11 PAFRA — Polarization (scene-dependent, neutral when N/A)
+        12: 1.3,   # L12 BDIS — Bayer pattern (always active)
+        13: 1.0,   # L13 SSWDP — SSS decay (portrait-dependent)
+        14: 0.9,   # L14 QESM — Quantum efficiency (gray-region-dependent)
     }
 
     for layer in v2_layers:
@@ -546,6 +583,10 @@ async def analyze_image_from_url(
         synthid = _run_synthid(img_array,
                                lossless=(img_pil.format or "").upper() not in ("JPEG", "JPG"))
 
+        # Physical Consistency layers (L11-L14): PAFRA, BDIS, SSWDP, QESM
+        physical = _run_physical_layers(img_array, img_pil)
+        layers.extend(physical.get("layer_reports", []))
+
         # v3 forensics
         v3 = _run_v3_forensics(temp_path)
 
@@ -575,6 +616,7 @@ async def analyze_image_from_url(
             "layers": layers,
             "synthid": synthid,
             "forensics": v3,
+            "physical_consistency": physical,
             "diffusion_inversion": l5,
             "diffusion_snapback": l5b,
             "composite_score": fused,
@@ -652,6 +694,7 @@ def analyze_image_from_bytes(
             f_l8      = pool.submit(_run_l8,      img_array, pil_img)
             f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
             f_l10     = pool.submit(_run_l10,     img_array, pil_img_original)
+            f_phys    = pool.submit(_run_physical_layers, img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, temp_path)
@@ -659,6 +702,8 @@ def analyze_image_from_bytes(
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
                        f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
                        f_l10.result()]
+            physical = f_phys.result()
+            layers.extend(physical.get("layer_reports", []))
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
@@ -691,6 +736,7 @@ def analyze_image_from_bytes(
             "layers":  layers,
             "synthid": synthid,
             "forensics": v3,
+            "physical_consistency": physical,
             # expose v3 fields at top level for /api/detect/image-v3 route
             "metadata":           v3.get("metadata",           {}),
             "frequency_analysis": v3.get("frequency_analysis", {}),

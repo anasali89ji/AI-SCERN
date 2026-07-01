@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
-import { formatConfidence } from '@/lib/utils/helpers'
+import { formatVerdictConfidence } from '@/lib/utils/helpers'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
@@ -335,7 +335,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                     </span>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatConfidence(result.confidence || 0)}</div>
+                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatVerdictConfidence(result.confidence || 0, result.verdict)}</div>
                     <div className="text-[10px] text-text-muted">confidence</div>
                   </div>
                 </div>

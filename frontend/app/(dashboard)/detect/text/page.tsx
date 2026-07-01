@@ -8,7 +8,7 @@ import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Load
 import { useAuth } from '@/components/auth-provider'
 import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
+import { formatVerdictConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
 import dynamic from 'next/dynamic'
 
@@ -129,7 +129,7 @@ function TextDetectionPage() {
       }
       // F.2: auto-download plain-text report if setting enabled
       if (autoDownloadPdf && data.result) {
-        const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${data.result.verdict}\nConfidence: ${formatConfidence(data.result.confidence)}\nSummary: ${data.result.summary}\n\nText analyzed:\n${text.trim()}`], { type: 'text/plain' })
+        const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${data.result.verdict}\nConfidence: ${formatVerdictConfidence(data.result.confidence, data.result.verdict)}\nSummary: ${data.result.summary}\n\nText analyzed:\n${text.trim()}`], { type: 'text/plain' })
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
         a.download = `aiscern-text-analysis-${Date.now()}.txt`; a.click()
       }
@@ -155,7 +155,7 @@ function TextDetectionPage() {
     const out = `Aiscern Text Analysis Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Verdict:    ${result.verdict === 'AI' ? 'AI GENERATED' : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : 'UNCERTAIN'}
-Confidence: ${formatConfidence(result.confidence)}
+Confidence: ${formatVerdictConfidence(result.confidence, result.verdict)}
 Summary:    ${result.summary}
 
 Detection Signals:
@@ -169,7 +169,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
   const exportReport = () => {
     if (!result) return
-    const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nText analyzed:\n${text}`], { type: 'text/plain' })
+    const blob = new Blob([`Aiscern Text Analysis\n\nVerdict: ${result.verdict}\nConfidence: ${formatVerdictConfidence(result.confidence, result.verdict)}\nSummary: ${result.summary}\n\nText analyzed:\n${text}`], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-text-analysis-${Date.now()}.txt`; a.click()
   }
@@ -416,7 +416,7 @@ Analyzed: ${new Date().toLocaleString()}`
                         </h3>
                         {showConfidence && (
                           <div className="text-right shrink-0">
-                            <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatConfidence(result.confidence)}</div>
+                            <div className="text-2xl sm:text-4xl font-black gradient-text tabular-nums">{formatVerdictConfidence(result.confidence, result.verdict)}</div>
                             <div className="text-[10px] sm:text-xs text-text-muted">confidence</div>
                           </div>
                         )}
@@ -615,7 +615,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatVerdictConfidence(result.confidence, result.verdict)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>

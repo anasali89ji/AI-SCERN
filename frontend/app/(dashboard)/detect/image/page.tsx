@@ -10,7 +10,7 @@ import { Image as ImageIcon, Upload, X, AlertTriangle, CheckCircle, HelpCircle, 
 import { useAuth } from '@/components/auth-provider'
 import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
+import { formatVerdictConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 
@@ -131,7 +131,7 @@ File:       ${file.name}
 Size:       ${formatFileSize(file.size)}
 ${imgDims ? `Dimensions: ${imgDims.w} × ${imgDims.h}px\n` : ''}
 Verdict:    ${result.verdict}
-Confidence: ${formatConfidence(result.confidence)}
+Confidence: ${formatVerdictConfidence(result.confidence, result.verdict)}
 Summary:    ${result.summary}
 
 Detection Signals:
@@ -320,7 +320,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
                     <span className="shrink-0">Confidence Score</span>
-                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
+                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatVerdictConfidence(result.confidence, result.verdict)}</span>
                   </div>
                   <div className="h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
@@ -474,7 +474,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            <p className="text-text-muted text-sm mt-1">{formatVerdictConfidence(result.confidence, result.verdict)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
           </div>
         </div>

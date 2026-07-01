@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser }  from '@clerk/nextjs'
 import { toast }    from 'sonner'
@@ -27,6 +27,18 @@ interface Plan {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function CreditsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-zinc-500">Loading…</p>
+      </div>
+    }>
+      <CreditsPageInner />
+    </Suspense>
+  )
+}
+
+function CreditsPageInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { user }     = useUser()

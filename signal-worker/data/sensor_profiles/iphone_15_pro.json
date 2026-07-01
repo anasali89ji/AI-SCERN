@@ -1,0 +1,28 @@
+{
+  "name": "Apple iPhone 15 Pro",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2023,
+  "spectral_peaks": {
+    "R": 602,
+    "G": 539,
+    "B": 461
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.942,
+      "b_g": 0.957
+    },
+    "tungsten": {
+      "r_g": 1.168,
+      "b_g": 0.594
+    },
+    "tl84": {
+      "r_g": 0.997,
+      "b_g": 0.879
+    },
+    "f11": {
+      "r_g": 0.959,
+      "b_g": 0.936
+    }
+  }
+}
