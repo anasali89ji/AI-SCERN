@@ -99,7 +99,6 @@ export default function TransparencyPage() {
       <main className="min-h-screen bg-background pt-16">
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald/10 border border-emerald/20 text-xs font-semibold text-emerald mb-6">
               <Shield className="w-3.5 h-3.5" />

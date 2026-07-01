@@ -325,7 +325,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   <div className="h-3 bg-border rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-secondary" />
+                      className={`h-full rounded-full ${cfg.color === 'text-rose' ? 'bg-rose' : cfg.color === 'text-emerald' ? 'bg-emerald' : 'bg-amber'}`} />
                   </div>
                 </div>
               </div>
@@ -468,15 +468,79 @@ Analyzed: ${new Date().toLocaleString()}`
         </details>
       )}
     </div>
-    {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
+    {/* Mobile bottom sheet — shows full result on phones */}
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
-      {result && (
-        <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-amber/30 bg-amber/5' : result.verdict === 'HUMAN' ? 'border-emerald/30 bg-emerald/5' : 'border-amber/20 bg-amber/5'} p-4 rounded-2xl`}>
-            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-text-muted text-sm mt-1">{formatVerdictConfidence(result.confidence, result.verdict)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-text-secondary">{result.summary}</p>}
+      {result && cfg && (
+        <div className="space-y-4 pb-6">
+          {/* Verdict card */}
+          <div className={`border ${cfg.border} ${cfg.bg} p-4 rounded-2xl`}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
+                <cfg.icon className={`w-5 h-5 ${cfg.color}`} />
+              </div>
+              <div>
+                <p className={`font-black text-lg leading-tight ${cfg.color}`}>{cfg.label}</p>
+                <p className="text-text-muted text-xs mt-0.5">{result.summary}</p>
+              </div>
+            </div>
+            {/* Confidence bar */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs text-text-muted mb-1.5">
+                <span>Confidence</span>
+                <span className={`font-black text-base ${cfg.color} tabular-nums`}>{formatVerdictConfidence(result.confidence, result.verdict)}</span>
+              </div>
+              <div className="h-2.5 bg-border rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-700 ${cfg.color === 'text-rose' ? 'bg-rose' : cfg.color === 'text-emerald' ? 'bg-emerald' : 'bg-amber'}`}
+                  style={{ width: `${normalizeConfidence(result.confidence)}%` }} />
+              </div>
+            </div>
           </div>
+
+          {/* Signals */}
+          {result.signals?.length > 0 && (
+            <div className="border border-border/50 rounded-2xl p-4">
+              <p className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                Detection Signals ({result.signals.length})
+              </p>
+              <div className="space-y-2">
+                {result.signals.map((s) => (
+                  <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface-active/50 border border-border/40">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs text-text-secondary font-medium truncate">{s.name}</span>
+                        <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-rose/15 text-rose' : 'bg-emerald/15 text-emerald'}`}>{s.weight}%</span>
+                      </div>
+                      <p className="text-xs text-text-muted truncate">{s.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col gap-2">
+            {forensicScanId && (
+              <a href={`/forensic/${forensicScanId}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-medium">
+                <Microscope className="w-4 h-4" /> Deep Forensic Analysis
+              </a>
+            )}
+            <button onClick={() => { setShowMobileResult(false); exportReport() }}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-border/55 text-text-secondary text-sm font-medium">
+              <Download className="w-4 h-4" /> Export Report
+            </button>
+            {scanId && (
+              <button onClick={() => { setShowMobileResult(false); shareResult() }}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-border/55 text-text-muted text-sm">
+                <Share2 className="w-4 h-4" /> Share Result
+              </button>
+            )}
+          </div>
+
+          <p className="text-center text-[10px] text-text-disabled font-mono">{result.processing_time}ms · Aiscern v4.4.0</p>
         </div>
       )}
     </MobileResultSheet>

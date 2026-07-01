@@ -7,12 +7,12 @@ import {
   Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
   Moon, Sun, Monitor, FileText, Zap, Eye, EyeOff,
   RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
-  ChevronRight, Star, BrainCircuit, Plus, XCircle,
+  ChevronRight, Star, BrainCircuit, Plus, XCircle, Camera, User,
 } from 'lucide-react'
 import { createClient }  from '@/lib/supabase/client'
 import { useAuth }       from '@/components/auth-provider'
 import { toast }         from 'sonner'
-import { useClerk }      from '@clerk/nextjs'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useAnimationPref } from '@/components/AnimationPreferenceContext'
 import type { UserSettings } from '@/lib/settings/types'
 
@@ -181,6 +181,9 @@ function ApiKeySection({ userId }: { userId: string }) {
 export default function SettingsPage() {
   const { user, signOut }   = useAuth()
   const { openUserProfile } = useClerk()
+  const { user: clerkUser } = useUser()
+  const avatarInputRef      = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const supabase            = createClient()
   const { setReduceAnimations } = useAnimationPref()
 
@@ -298,25 +301,85 @@ export default function SettingsPage() {
     await signOut()
   }
 
+  // ── Avatar upload ────────────────────────────────────────────────────────
+  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !clerkUser) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    setAvatarUploading(true)
+    try {
+      await clerkUser.setProfileImage({ file })
+      toast.success('Profile picture updated')
+    } catch {
+      toast.error('Failed to update profile picture')
+    } finally {
+      setAvatarUploading(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }, [clerkUser])
+
   if (loading) return (
     <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
       <Loader2 className="w-6 h-6 animate-spin text-primary" />
     </div>
   )
 
+  const avatarUrl = clerkUser?.imageUrl
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-2xl 2xl:max-w-3xl mx-auto space-y-5">
-      <div className="flex items-center justify-between">
+
+      {/* Page header — stacks on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-text-primary">Settings</h1>
           <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all hover:scale-[1.02]"
-          style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 disabled:opacity-60 transition-colors w-full sm:w-auto">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>
+      </div>
+
+      {/* Profile picture */}
+      <div className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
+        <h2 className="font-bold text-text-primary flex items-center gap-2 mb-4 pb-3 border-b border-border/30">
+          <User className="w-4 h-4 text-primary" /> Profile
+        </h2>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-border overflow-hidden flex items-center justify-center">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                : <User className="w-8 h-8 text-primary/60" />
+              }
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-primary border-2 border-surface flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
+              aria-label="Change profile picture"
+            >
+              {avatarUploading
+                ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                : <Camera className="w-3.5 h-3.5 text-white" />
+              }
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+          </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <p className="font-semibold text-text-primary truncate">{clerkUser?.fullName || user?.email?.split('@')[0] || 'Your Name'}</p>
+            <p className="text-xs text-text-muted mt-0.5 truncate">{user?.email}</p>
+            <p className="text-xs text-text-disabled mt-2">JPG, PNG or WEBP · max 5MB</p>
+            <button onClick={() => avatarInputRef.current?.click()} disabled={avatarUploading}
+              className="mt-2 text-xs text-primary font-semibold hover:underline disabled:opacity-50">
+              {avatarUploading ? 'Uploading…' : 'Change profile picture'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Notifications */}
@@ -349,10 +412,10 @@ export default function SettingsPage() {
       <Section title="Interface" icon={Palette}>
         <SettingRow icon={Moon} label="Theme" description="Changes the site color scheme immediately"
           action={
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => sel('theme', t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${s.theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/55 text-text-muted hover:text-text-secondary'}`}>
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${s.theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/55 text-text-muted hover:text-text-secondary'}`}>
                   {t==='dark' ? <Moon className="w-3 h-3 inline mr-1"/> : t==='light' ? <Sun className="w-3 h-3 inline mr-1"/> : <Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
