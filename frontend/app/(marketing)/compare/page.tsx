@@ -39,8 +39,8 @@ const ROWS: CompareRow[] = [
   { feature: 'Batch Processing',       aiscern: 'yes',      gptzero: 'yes',     zerogpt: 'no',      originality: 'yes'     },
   { feature: 'Open Methodology Page',  aiscern: 'yes',      gptzero: 'partial', zerogpt: 'no',      originality: 'partial' },
   { feature: 'Multi-Language Support', aiscern: 'partial',  gptzero: 'partial', zerogpt: 'partial', originality: 'partial' },
-  { feature: 'Text Accuracy (AUC)',    aiscern: '0.98',     gptzero: '~0.95',   zerogpt: '~0.88',   originality: '~0.96'   },
-  { feature: 'Image Accuracy (AUC)',   aiscern: '0.96',     gptzero: 'N/A',     zerogpt: 'N/A',     originality: 'N/A'     },
+  { feature: 'Text Accuracy (AUC)',    aiscern: '0.94',     gptzero: '~0.95',   zerogpt: '~0.88',   originality: '~0.96'   },
+  { feature: 'Image Accuracy (AUC)',   aiscern: '0.98',     gptzero: 'N/A',     zerogpt: 'N/A',     originality: 'N/A'     },
 ]
 
 function Cell({ value }: { value: CellValue }) {

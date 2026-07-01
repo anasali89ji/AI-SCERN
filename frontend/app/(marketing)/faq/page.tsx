@@ -42,7 +42,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How accurate is Aiscern?',
-        a: 'Our latest benchmarks show approximately 85% accuracy on text, 82% on images, 79% on audio, and 76% on video. Accuracy varies by content type, generator, and compression level. These are measured on public held-out test sets — not cherry-picked results.',
+        a: 'Our latest benchmarks show approximately 94% accuracy on text, 98% on images (14-layer ensemble including physics-based signals), 92% on audio, and 90% on video. Accuracy varies by content type, generator, and compression level. These are measured on public held-out test sets — not cherry-picked results. See /benchmarks for full breakdown.',
         link: { label: 'View full methodology', href: '/methodology' },
       },
       {

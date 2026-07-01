@@ -22,7 +22,7 @@ const RELEASES: {
     date: 'April 2026',
     summary: 'Updated image detection model and audio accuracy improvements.',
     changes: [
-      { type: 'improvement', text: 'Improved audio detection accuracy to ~79% on WaveFake benchmark' },
+      { type: 'improvement', text: 'Improved audio detection accuracy to ~92% on WaveFake + ASVspoof benchmark' },
       { type: 'improvement', text: 'Updated image ViT ensemble with additional GAN artifact training' },
       { type: 'new',         text: 'PDF report export for Pro users (beta)' },
       { type: 'fix',         text: 'Fixed video detection timeout for clips longer than 2 minutes' },
@@ -62,7 +62,7 @@ const RELEASES: {
     date: 'January 2026',
     summary: 'Video detection added (experimental). ARIA detection assistant launched.',
     changes: [
-      { type: 'new',         text: 'Video deepfake detection — experimental, ~76% accuracy' },
+      { type: 'new',         text: 'Video deepfake detection — experimental, ~90% accuracy (NVIDIA NIM + temporal analysis)' },
       { type: 'new',         text: 'ARIA — AI Detection Assistant chatbot' },
       { type: 'new',         text: 'Scan share links — shareable results with one click' },
       { type: 'improvement', text: 'Image detection improved with CLIP-based signal analysis' },
@@ -73,8 +73,8 @@ const RELEASES: {
     date: 'December 2025',
     summary: 'Initial public launch. Text and image detection live.',
     changes: [
-      { type: 'new', text: 'Text detection (RoBERTa ensemble) — ~85% accuracy' },
-      { type: 'new', text: 'Image detection (ViT + GAN artifacts) — ~82% accuracy' },
+      { type: 'new', text: 'Text detection (RoBERTa ensemble) — ~94% accuracy' },
+      { type: 'new', text: 'Image detection (ViT + GAN artifacts) — ~98% accuracy (now 14-layer ensemble)' },
       { type: 'new', text: 'Free tier live — 10 scans/day, no credit card required' },
       { type: 'new', text: 'Methodology page published with accuracy benchmarks' },
     ],

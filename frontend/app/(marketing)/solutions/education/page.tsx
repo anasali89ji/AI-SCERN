@@ -31,7 +31,7 @@ export default function EducationPage() {
         { title: 'No audit trail for grade appeals', desc: 'Instructors need a defensible, documented record. Aiscern provides forensic reports exportable for disciplinary proceedings.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for ≥96% ensemble AUC across student writing datasets.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for ≥94% ensemble AUC across student writing datasets.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Highlights', desc: 'Color-coded heatmap shows which sentences are AI-likely — not just an overall score.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Confidence threshold system: ≥62% = AI, ≤38% = Human, middle zone = uncertain. Designed for defensible academic decisions.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Processing', desc: 'Upload entire class sets at once. Process 50+ documents simultaneously with a Pro or Team plan.' },

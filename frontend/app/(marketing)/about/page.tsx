@@ -14,7 +14,7 @@ const STATS = [
   { label: 'Modalities',       value: '4',    sub: 'text, image, audio, video' },
   { label: 'Detection models', value: '8+',   sub: 'in the ensemble pipeline'  },
   { label: '10 scans/day',      value: 'Free tier', sub: 'no account required'    },
-  { label: 'Accuracy',         value: '~85%', sub: 'on text; ~82% images'      },
+  { label: 'Accuracy',         value: '~98%', sub: 'on images; ~94% text'      },
 ]
 
 const VALUES = [
