@@ -1,0 +1,28 @@
+{
+  "name": "Nikon Z9",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2021,
+  "spectral_peaks": {
+    "R": 608,
+    "G": 544,
+    "B": 456
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.926,
+      "b_g": 0.969
+    },
+    "tungsten": {
+      "r_g": 1.155,
+      "b_g": 0.608
+    },
+    "tl84": {
+      "r_g": 0.981,
+      "b_g": 0.892
+    },
+    "f11": {
+      "r_g": 0.942,
+      "b_g": 0.948
+    }
+  }
+}
