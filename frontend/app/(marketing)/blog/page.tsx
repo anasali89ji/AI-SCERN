@@ -11,8 +11,8 @@ export const metadata = {
 }
 
 const CATEGORY_GRADIENT: Record<string, string> = {
-  Guides:     'from-primary/30 to-secondary/30',
-  Education:  'from-blue-900/60  to-cyan-900/60',
+  Guides:     'bg-primary/20',
+  Education:  'bg-blue-900/50',
   Comparison: 'from-emerald-900/60 to-teal-900/60',
   Technical:  'from-orange-900/60 to-red-900/60',
 }
@@ -26,7 +26,7 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
   return (
     <Link href={`/blog/${post.slug}`}
       className="group block mb-6 rounded-2xl border border-border bg-surface hover:border-primary/30 transition-all overflow-hidden">
-      <div className={`h-48 sm:h-64 bg-gradient-to-br ${grad(post.category)} flex items-end p-6`}>
+      <div className={`h-48 sm:h-64 ${grad(post.category)} flex items-end p-6`}>
         <div>
           <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 mb-3 inline-block">
             {post.category}
@@ -52,7 +52,7 @@ function PostCard({ post }: { post: BlogPostMeta }) {
   return (
     <Link href={`/blog/${post.slug}`}
       className="group block rounded-2xl border border-border bg-surface hover:border-primary/30 transition-all overflow-hidden">
-      <div className={`h-36 bg-gradient-to-br ${grad(post.category)} flex items-end p-4`}>
+      <div className={`h-36 ${grad(post.category)} flex items-end p-4`}>
         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
           {post.category}
         </span>

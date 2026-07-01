@@ -55,7 +55,7 @@ function ReviewerAvatar({ name, isAnon }: { name: string; isAnon: boolean }) {
   const color = isAnon ? '#64748b' : colors[name.charCodeAt(0) % colors.length]
   return (
     <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-      style={{ background: isAnon ? 'linear-gradient(135deg,#374151,#1f2937)' : `linear-gradient(135deg,${color},${color}99)` }}>
+      style={{ background: isAnon ? '#1f2937' : color }}>
       {isAnon ? <EyeOff className="w-4 h-4" /> : initials}
     </div>
   )

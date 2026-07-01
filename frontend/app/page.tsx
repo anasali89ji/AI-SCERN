@@ -40,14 +40,11 @@ const DynamicHomepageReviews = HomepageReviews
 function NetworkBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.06)_0%,transparent_50%)]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.03] rounded-full blur-[120px] blur-orb hidden sm:block" />
+        
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/[0.03] rounded-full blur-[120px] blur-orb hidden sm:block" />
       <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-secondary/[0.03] rounded-full blur-[100px] blur-orb hidden sm:block" />
       {/* Dot grid hidden on mobile/low-power devices to prevent GPU glitches */}
-      <div className="absolute inset-0 opacity-[0.015] hidden sm:block"
-           style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-    </div>
+        </div>
   )
 }
 
@@ -125,7 +122,7 @@ function RootNetworkNode({ node, file, side, index, size }: {
       }}
     >
       <div className="absolute inset-0" style={{
-        background: isAI ? 'linear-gradient(160deg,#1e40af,#1e3a8a)' : 'linear-gradient(160deg,#065f46,#052e16)',
+        background: isAI ? '#1e3a8a' : '#052e16',
       }} />
       <img src={file} alt="" decoding="async"
         className="absolute inset-0 w-full h-full object-cover" style={{ display: 'block' }}
@@ -342,7 +339,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <div className="h-1.5 rounded-full bg-background overflow-hidden">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
                     transition={{ duration: 1.0, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-rose to-pink-400' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald to-teal-400' : 'bg-gradient-to-r from-amber to-yellow-400'}`} />
+                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-rose' : result.verdict === 'HUMAN' ? 'bg-emerald' : 'bg-amber'}`} />
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
                   <p className="text-xs text-text-muted">✓ Free · Sign in to save results</p>
@@ -419,10 +416,10 @@ function HeroScrollIndicator() {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/20 via-amber/8 to-transparent',          border: 'border-amber/25',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~94%', accent: '#f59e0b' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'from-primary/20 via-primary/8 to-transparent',      border: 'border-primary/25',   desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~98%', accent: '#2563eb' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'from-cyan/20 via-cyan/8 to-transparent',            border: 'border-cyan/25',      desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~91%', accent: '#06b6d4' },
-  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-violet-400',bg: 'from-violet-500/20 via-violet-500/8 to-transparent',border: 'border-violet-500/25',desc: 'Frame-by-frame deepfake analysis',                accuracy: '~88%', accent: '#8b5cf6' },
+  { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'bg-amber/8',          border: 'border-amber/25',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~94%', accent: '#f59e0b' },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',         color: 'text-primary',   bg: 'bg-primary/8',      border: 'border-primary/25',   desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~98%', accent: '#2563eb' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Clone Detector', color: 'text-cyan',      bg: 'bg-cyan/8',            border: 'border-cyan/25',      desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~91%', accent: '#06b6d4' },
+  { href: '/detect/video', icon: Video,         label: 'Free Deepfake Video Detector',    color: 'text-violet-400',bg: 'bg-violet-500/8',border: 'border-violet-500/25',desc: 'Frame-by-frame deepfake analysis',                accuracy: '~88%', accent: '#8b5cf6' },
   { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',          color: 'text-emerald',   bg: 'from-emerald/20 via-emerald/8 to-transparent',      border: 'border-emerald/25',   desc: 'Ask anything about AI detection',                 accuracy: 'New',  accent: '#10b981' },
   { href: '/batch',        icon: Database,      label: 'Batch AI Content Analyser',       color: 'text-rose',      bg: 'from-rose/20 via-rose/8 to-transparent',            border: 'border-rose/25',      desc: 'Analyze 20 files simultaneously',                 accuracy: '20x',  accent: '#f43f5e' },
 ]
@@ -442,7 +439,7 @@ const HOW_IT_WORKS = [
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,   color: 'text-primary', bg: 'from-primary/18 to-transparent', border: 'border-primary/20', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples', accent: '#2563eb' },
+  { icon: Database,   color: 'text-primary', bg: 'bg-primary/8', border: 'border-primary/20', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples', accent: '#2563eb' },
   { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/18 to-transparent', border: 'border-emerald/20', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited',    accent: '#10b981' },
   { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/18 to-transparent',   border: 'border-amber/20',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed', accent: '#f59e0b' },
   { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/18 to-transparent',     border: 'border-cyan/20',    title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start',        accent: '#06b6d4' },
@@ -522,17 +519,17 @@ export default function HomePage() {
             {[['#tools','Tools'],['#how','How It Works']].map(([href, label]) => (
               <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
                 {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
+                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300 rounded-full" />
               </a>
             ))}
             <Link href={user ? "/chat" : "/signup"} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-all duration-300 rounded-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-emerald group-hover:w-full transition-all duration-300 rounded-full" />
             </Link>
             {[['/ reviews','Reviews',''],['/ blog','Blog',''],['/ pricing','Pricing','']].map(([href, label]) => (
               <Link key={label} href={href.replace(/ /g,'')} className="relative hover:text-text-primary transition-colors duration-200 group">
                 {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
+                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300 rounded-full" />
               </Link>
             ))}
           </div>
@@ -541,7 +538,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-all duration-200 group">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+                <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
                   {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
                 </span>
                 <span className="hidden sm:inline">Dashboard</span>
@@ -552,8 +549,7 @@ export default function HomePage() {
                 <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/30 transition-all duration-200">
                   Sign In
                 </Link>
-                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold bg-primary hover:bg-primary/90 transition-colors">
                   <Zap className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Get Started</span>
                   <span className="sm:hidden">Join</span>
@@ -606,7 +602,7 @@ export default function HomePage() {
                     <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
                       <Lock className="w-4 h-4" />Sign In
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold bg-primary hover:bg-primary/90">
                       <Zap className="w-4 h-4" />Get Started Free
                     </Link>
                   </motion.div>
@@ -624,404 +620,7 @@ export default function HomePage() {
 
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="hero-mesh-1 absolute top-1/4 left-1/3 w-[700px] h-[700px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-            <div className="hero-mesh-2 absolute top-1/3 right-1/4 w-[600px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.09) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-            <div className="hero-mesh-3 absolute bottom-1/4 left-1/5 w-[500px] h-[500px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-          </div>
-
-          <NetworkBackground />
-          <FloatingCards />
-
-          {/* Center glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 65%)' }} />
-
-          {/* Content */}
-          <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl mx-auto w-full">
-
-            {/* Animated badge */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
-              <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
-              <span className="sm:hidden">8+ models · Free tier available</span>
-            </motion.div>
-
-            {/* H1 + Rotating modality animation */}
-            <div className="mb-4 sm:mb-7">
-              <HeroHeadline />
-            </div>
-
-            {/* Subheadline */}
-            <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
-              <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Free tier available — no account required for basic scans.</span>
-            </motion.p>
-
-            {/* CTAs */}
-            <motion.div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-9 sm:mb-14"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-              {user ? (
-                <>
-                  <Link href="/dashboard"
-                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', boxShadow: '0 8px 32px rgba(37,99,235,0.35)' }}>
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
-                      {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
-                    </span>
-                    Go to Dashboard
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/40 transition-all duration-200">
-                    <MessageSquare className="w-5 h-5 text-emerald" />ARIA Assistant
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/detect/text"
-                    className="group relative overflow-hidden btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Start Free Scan
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center gap-2 hover:border-primary/30">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber" />Create Free Account
-                  </Link>
-                </>
-              )}
-            </motion.div>
-
-            {/* Live demo */}
-            <motion.div className="max-w-2xl 2xl:max-w-3xl mx-auto w-full"
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
-              <LiveDemo isLoggedIn={!!user} />
-            </motion.div>
-
-            <HeroScrollIndicator />
-          </div>
-        </section>
-
-        {/* ── WHO NEEDS AISCERN ── */}
-        <ErrorBoundary>
-          <DynamicWhoNeedsSection />
-        </ErrorBoundary>
-
-        {/* ══ STATS BAR ══ */}
-        <section className="cv-auto py-12 sm:py-20 2xl:py-24 border-y border-border/20 bg-surface/20 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 70%)' }} />
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 2xl:px-10 3xl:px-16 relative">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 2xl:gap-14">
-              {STATS.map((stat, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
-                  className="text-center">
-                  <div className="text-[2.5rem] sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-2 tabular-nums"
-                    style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                    <CountUp target={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── AI VS REAL ── */}
-        <ErrorBoundary>
-          <DynamicAIvsRealSection />
-        </ErrorBoundary>
-
-        {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 2xl:py-32 3xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
-
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-14 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Cpu className="w-3 h-3" /> Six Powerful Tools
-              </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-4">
-                Detection <span className="gradient-text">Tools</span>
-              </h2>
-              <p className="text-text-muted text-base sm:text-lg 2xl:text-xl max-w-2xl 2xl:max-w-3xl mx-auto leading-relaxed">
-                Six detection tools covering text, images, audio, and video. Each delivers a clear authenticity score in seconds.
-              </p>
-              <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
-                initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 2xl:gap-6">
-              {TOOLS.map((tool, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}>
-                  <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
-                    <SpotlightCard color={`${tool.accent}28`}
-                      className={`group tool-card relative overflow-hidden rounded-2xl border ${tool.border} p-5 sm:p-6 2xl:p-7 h-full cursor-pointer transition-all duration-300 bg-surface`}>
-                      {/* Accent gradient overlay */}
-                      <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                        style={{ background: `linear-gradient(135deg, ${tool.accent}12 0%, ${tool.accent}05 40%, transparent 100%)` }} />
-                      {/* Top accent band */}
-                      <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl pointer-events-none"
-                        style={{ background: `linear-gradient(90deg, transparent, ${tool.accent}80, transparent)` }} />
-                      {/* Hover glow */}
-                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                        style={{ boxShadow: `0 0 32px ${tool.accent}22 inset, 0 0 0 1px ${tool.accent}30` }} />
-                      {/* Scanline on hover */}
-                      <div className="scanline" aria-hidden="true" />
-
-                      <div className="flex items-start justify-between mb-5">
-                        <div className={`w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl flex items-center justify-center ${tool.color} transition-transform duration-300 group-hover:scale-110`}
-                          style={{ background: `${tool.accent}22`, border: `1px solid ${tool.accent}45` }}>
-                          <tool.icon className="w-6 h-6 2xl:w-7 2xl:h-7" strokeWidth={1.8} />
-                        </div>
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tool.color}`}
-                          style={{ background: `${tool.accent}18`, border: `1px solid ${tool.accent}40` }}>
-                          {tool.accuracy}
-                        </span>
-                      </div>
-
-                      <h3 className="text-base sm:text-lg 2xl:text-xl font-bold text-text-primary mb-2 group-hover:text-primary transition-colors duration-200 leading-tight">
-                        {tool.label}
-                      </h3>
-                      <p className="text-sm 2xl:text-base text-text-muted leading-relaxed">{tool.desc}</p>
-
-                      <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors duration-200">
-                        Try now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
-                      </div>
-                    </SpotlightCard>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-16 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
-                <Activity className="w-3 h-3" /> Simple Process
-              </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
-                How It <span className="gradient-text">Works</span>
-              </h2>
-              <p className="text-text-muted text-base sm:text-lg">From upload to verdict in seconds.</p>
-            </motion.div>
-
-            <div className="relative">
-              {/* Animated vertical connector */}
-              <div className="absolute left-7 lg:left-1/2 top-0 bottom-0 w-px hidden sm:block overflow-hidden">
-                <motion.div className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, rgba(37,99,235,0.8) 0%, rgba(37,99,235,0.4) 60%, transparent 100%)' }}
-                  initial={{ scaleY: 0, originY: 0 }} animate={{ scaleY: 1 }}
-                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
-              </div>
-
-              <div className="space-y-10 sm:space-y-16">
-                {HOW_IT_WORKS.map((step, i) => {
-                  const StepIcon = HOW_IT_WORKS_ICONS[i]
-                  return (
-                    <motion.div key={i}
-                      initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.15 }}
-                      transition={{ duration: 0.6, delay: i * 0.1 }}
-                      className={`flex items-center gap-5 sm:gap-8 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
-                      <div className="flex-1 hidden lg:block" />
-                      <div className="relative z-10 flex-shrink-0">
-                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.15))', border: '1px solid rgba(37,99,235,0.3)', boxShadow: '0 8px 32px rgba(37,99,235,0.12)' }}>
-                          <StepIcon className="w-6 h-6 text-primary" strokeWidth={1.7} />
-                          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] font-black text-white shadow-lg">
-                            {i + 1}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-1 max-w-md">
-                        <div className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">{step.n}</div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-text-primary mb-2">{step.title}</h3>
-                        <p className="text-sm sm:text-base text-text-muted leading-relaxed">{step.desc}</p>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-12 sm:mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Star className="w-3 h-3" /> User Stories
-              </div>
-              <h2 className="text-2xl sm:text-4xl 2xl:text-5xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
-              <p className="text-sm 2xl:text-base text-text-muted max-w-lg 2xl:max-w-xl mx-auto leading-relaxed">
-                Real feedback from users across education, journalism, HR, and research.
-              </p>
-            </motion.div>
-
-            <ErrorBoundary>
-                <DynamicHomepageReviews />
-              </ErrorBoundary>
-
-            <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all duration-200">
-                Share Your Feedback
-              </a>
-              <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
-                See all reviews →
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
-
-          <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
-                <Shield className="w-3 h-3" /> Trust & Accuracy
-              </div>
-              <h2 className="text-3xl sm:text-5xl 2xl:text-6xl font-black text-text-primary">
-                Built for accuracy. <span className="gradient-text">Benchmarked on public datasets.</span>
-              </h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 2xl:gap-6 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel, accent }, idx) => {
-                // Override dataset stat with live HF count
-                const isDataset = title === 'Benchmarked Datasets'
-                const liveStat = isDataset && datasetRows
-                  ? datasetRows >= 1_000_000
-                    ? { val: Math.round(datasetRows / 100_000) / 10, suffix: 'M+', label: 'training samples' }
-                    : datasetRows >= 1000
-                    ? { val: Math.round(datasetRows / 1000), suffix: 'k+', label: 'training samples' }
-                    : { val: datasetRows, suffix: '+', label: 'training samples' }
-                  : null
-                const displayStat   = liveStat ? String(liveStat.val) : stat
-                const displaySuffix = liveStat ? liveStat.suffix : statSuffix
-                const displayLabel  = liveStat ? liveStat.label : statLabel
-                const displayTarget = parseFloat(displayStat) || 0
-                const accentHex     = accent ?? '#2563eb'
-                return (
-                <motion.div key={title}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
-                  <SpotlightCard color={`${accentHex}22`}
-                    className={`group relative h-full p-6 sm:p-7 rounded-2xl bg-surface bg-gradient-to-br ${bg} transition-all duration-300 ${large ? 'bento-shimmer' : ''} overflow-hidden`}>
-                    {/* Accent border + top accent line */}
-                    <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                      style={{ boxShadow: `inset 0 0 0 1px ${accentHex}28` }} />
-                    <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl pointer-events-none"
-                      style={{ background: `linear-gradient(90deg, transparent, ${accentHex}70, transparent)` }} />
-                    <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${color} group-hover:scale-110 transition-transform duration-300`}
-                      style={{ background: `${accentHex}18`, border: `1px solid ${accentHex}38` }}>
-                      <Icon className="w-5 h-5" strokeWidth={1.8} />
-                    </div>
-                    {displayStat !== undefined && (
-                      <div className="mb-3">
-                        <div className="text-3xl sm:text-4xl font-black tabular-nums"
-                          style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                          <CountUp target={displayTarget} suffix={displaySuffix} />
-                        </div>
-                        <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
-                      </div>
-                    )}
-                    <h3 className="font-bold text-text-primary text-base mb-2">{title}</h3>
-                    <p className="text-sm text-text-muted leading-relaxed">{desc}</p>
-                  </SpotlightCard>
-                </motion.div>
-              )
-              })}
-            </div>
-
-            {/* Professionals list */}
-            <div className="text-center mb-10">
-              <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-5">Built for professionals across</p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                {PROFESSIONALS.map(({ label, icon: Icon }) => (
-                  <span key={label} className="prof-item inline-flex items-center gap-2 text-sm font-medium text-text-muted px-3.5 py-2 rounded-xl border border-border/60 bg-surface/30 cursor-default">
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Methodology note */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <FlaskConical className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">How our detection works</span>
-              </div>
-              <p className="text-sm text-text-muted leading-relaxed">
-                Each scan analyzes content using multiple independent detection signals. Results are combined into a single confidence score, and a clear AI or Human verdict is returned in seconds.
-              </p>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ══ PROFESSIONALS MARQUEE ══ */}
-        <section className="py-10 sm:py-14 border-t border-border/15 [overflow:clip] relative">
-          <div className="relative">
-            <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-              style={{ background: 'linear-gradient(90deg, #08080d 0%, transparent 100%)' }} />
-            <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-              style={{ background: 'linear-gradient(-90deg, #08080d 0%, transparent 100%)' }} />
-            <div className="marquee-track marquee-left py-2">
-              {[...PROFESSIONALS, ...PROFESSIONALS, ...PROFESSIONALS].map((prof, i) => (
-                <div key={i} className="prof-item inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border/50 bg-surface/40 text-text-muted text-sm font-medium cursor-default mx-3 flex-shrink-0">
-                  <prof.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
-                  {prof.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 2xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
-          </div>
-          <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{ backgroundImage: `linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
-
-          <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
+        <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -1042,7 +641,6 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={user ? '/dashboard' : '/detect/text'}
                   className="group relative overflow-hidden btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/8 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
