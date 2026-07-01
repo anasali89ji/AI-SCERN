@@ -20,14 +20,6 @@ const PERKS = [
 ]
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  // ── PREVIEW BRANCH OVERRIDE ──────────────────────────────────────────────
-  // Auth wall temporarily disabled on feature/phase12-physical-consistency-layers
-  // so the image detection tool (with new L11-L14 physical layers) can be
-  // tested without sign-in. Do NOT merge this to main without restoring the
-  // gate below.
-  return <>{children}</>
-
-  // eslint-disable-next-line no-unreachable
   const { user, loading } = useAuth()
   const [checked, setChecked]   = useState(false)
   // const router = useRouter()
