@@ -619,8 +619,8 @@ export default function HomePage() {
         <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
 
           {/* Animated mesh gradients */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+          <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>
               <div className="flex justify-center mb-8">
                 <div className="relative">
