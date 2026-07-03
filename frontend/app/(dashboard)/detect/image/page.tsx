@@ -135,7 +135,7 @@ Confidence: ${formatVerdictConfidence(result.confidence, result.verdict)}
 Summary:    ${result.summary}
 
 Detection Signals:
-${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}\n    ${s.description}`).join('\n')}
+${(result.signals ?? []).map((s: any) => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}\n    ${s.description}`).join('\n')}
 
 Engine: Aiscern Detection Engine · ${result.processing_time}ms
 Analyzed: ${new Date().toLocaleString()}`
@@ -154,7 +154,11 @@ Analyzed: ${new Date().toLocaleString()}`
   }
 
   const reset = () => { setFile(null); setPreview(null); setResult(null); setGraphContext(null); setError(null); setImgDims(null); setZoomed(false); setUploadProgress(0) }
-  const cfg = result ? verdictConfig[result.verdict as Verdict] : null
+  // Fall back to UNCERTAIN styling instead of silently hiding the result
+  // if the API ever returns a verdict string that doesn't match a known key
+  // (casing drift, a new verdict value, etc.) — previously this made the
+  // whole result card vanish with no error shown.
+  const cfg = result ? (verdictConfig[result.verdict as Verdict] ?? verdictConfig.UNCERTAIN) : null
 
   return (
     <>
@@ -333,10 +337,10 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="card">
                 <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-primary" />
-                  Detection Signals ({result.signals.length})
+                  Detection Signals ({result.signals?.length ?? 0})
                 </h3>
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
-                  {result.signals.map((s, i) => (
+                  {(result.signals ?? []).map((s, i) => (
                     <motion.div key={s.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05, ease: 'easeOut' }}
                       className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface-active/50 border border-border/50 min-w-0">
