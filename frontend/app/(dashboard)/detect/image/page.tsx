@@ -439,46 +439,48 @@ Analyzed: ${new Date().toLocaleString()}`
         </motion.div>
       )}
 
-      <LazyReviewSuggestion toolName="Image Detector" />
-      {result && (
-        <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
-          <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
-          {scanId && (
-            <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
-              <Share2 className="w-3 h-3" /> Share result
-            </button>
-          )}
-        </div>
-      )}
-      {result && (
-        <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" />
-            Detection Models &amp; Datasets
-          </summary>
-          <div className="mt-3 space-y-2 text-xs text-text-muted">
-            <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-              {[
-                { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
-                { name: 'FAKE-images', desc: 'elsaEU synthetic image dataset', url: 'https://huggingface.co/datasets/elsaEU/FAKE-images' },
-                { name: 'AI and Real Art', desc: 'daviddvd AI vs real artwork dataset', url: 'https://huggingface.co/datasets/daviddvd/ai-and-real-art' },
-                { name: 'AI Image Detector Dataset', desc: 'haywoodsloan ViT training data', url: 'https://huggingface.co/datasets/haywoodsloan/ai-image-detector-dataset' },
-              ].map(d => (
-                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
-                    <p>{d.desc}</p>
-                  </div>
-                </a>
-              ))}
-            </div>
+      <ErrorBoundary fallback={null}>
+        <LazyReviewSuggestion toolName="Image Detector" />
+        {result && (
+          <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
+            <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
+            {scanId && (
+              <button onClick={shareResult}
+                className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors border border-border/50 rounded-lg px-3 py-1.5 hover:border-primary/30">
+                <Share2 className="w-3 h-3" /> Share result
+              </button>
+            )}
           </div>
-        </details>
-      )}
+        )}
+        {result && (
+          <details className="card mt-2 mx-4 mb-4">
+            <summary className="cursor-pointer text-sm font-semibold text-text-secondary flex items-center gap-2">
+              <Info className="w-4 h-4 text-primary" />
+              Detection Models &amp; Datasets
+            </summary>
+            <div className="mt-3 space-y-2 text-xs text-text-muted">
+              <p><span className="text-text-secondary font-medium">Engine</span> Aiscern Detection Engine</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                {[
+                  { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
+                  { name: 'FAKE-images', desc: 'elsaEU synthetic image dataset', url: 'https://huggingface.co/datasets/elsaEU/FAKE-images' },
+                  { name: 'AI and Real Art', desc: 'daviddvd AI vs real artwork dataset', url: 'https://huggingface.co/datasets/daviddvd/ai-and-real-art' },
+                  { name: 'AI Image Detector Dataset', desc: 'haywoodsloan ViT training data', url: 'https://huggingface.co/datasets/haywoodsloan/ai-image-detector-dataset' },
+                ].map(d => (
+                  <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-active transition-colors group">
+                    <Database className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-text-secondary font-medium group-hover:text-primary transition-colors">{d.name}</p>
+                      <p>{d.desc}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </details>
+        )}
+      </ErrorBoundary>
     </div>
     {/* Mobile bottom sheet — shows full result on phones */}
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
