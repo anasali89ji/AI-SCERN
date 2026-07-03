@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
-import { createClient } from '@/lib/supabase/client'
 import {
   FileText, Image, Mic, Video, Globe, ChevronRight,
   X, Sparkles, User, Zap, Check
@@ -32,9 +31,10 @@ export function OnboardingWizard() {
 
   useEffect(() => {
     if (!user) return
-    const db = createClient()
-    db.from('profiles').select('onboarding_completed').eq('id', user.uid).single()
-      .then(({ data }) => { if (data && !(data as any).onboarding_completed) setShow(true) })
+    fetch('/api/profiles/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data && !data.onboarding_completed) setShow(true) })
+      .catch(() => {})
   }, [user])
 
   const checkUsername = (val: string) => {
