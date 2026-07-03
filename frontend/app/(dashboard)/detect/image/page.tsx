@@ -296,6 +296,13 @@ Analyzed: ${new Date().toLocaleString()}`
         {/* Results Panel */}
         <AnimatePresence mode="wait">
           {result && cfg ? (
+            <ErrorBoundary key="result-boundary" fallback={
+              <div className="card border-rose/30 bg-rose/5 flex flex-col items-center gap-2 text-center py-10">
+                <AlertTriangle className="w-6 h-6 text-rose" />
+                <p className="text-sm text-rose font-semibold">Couldn't display the result card</p>
+                <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again or reload.</p>
+              </div>
+            }>
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
@@ -318,16 +325,16 @@ Analyzed: ${new Date().toLocaleString()}`
                           : `${displayName}, this image is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">{result.summary ?? ''}</p>
                   </div>
                 </div>
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-xs text-text-muted mb-2 gap-2">
                     <span className="shrink-0">Confidence Score</span>
-                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatVerdictConfidence(result.confidence, result.verdict)}</span>
+                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatVerdictConfidence(result.confidence ?? 0, result.verdict)}</span>
                   </div>
                   <div className="h-3 bg-border rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence)}%` }}
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${normalizeConfidence(result.confidence ?? 0)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                       className={`h-full rounded-full ${cfg.color === 'text-rose' ? 'bg-rose' : cfg.color === 'text-emerald' ? 'bg-emerald' : 'bg-amber'}`} />
                   </div>
@@ -385,6 +392,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </div>
               </div>
             </motion.div>
+            </ErrorBoundary>
           ) : loading && !result ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <DetectionSequenceLoader
@@ -475,6 +483,13 @@ Analyzed: ${new Date().toLocaleString()}`
     {/* Mobile bottom sheet — shows full result on phones */}
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && cfg && (
+        <ErrorBoundary fallback={
+          <div className="flex flex-col items-center gap-2 text-center py-10">
+            <AlertTriangle className="w-6 h-6 text-rose" />
+            <p className="text-sm text-rose font-semibold">Couldn't display the result</p>
+            <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again.</p>
+          </div>
+        }>
         <div className="space-y-4 pb-6">
           {/* Verdict card */}
           <div className={`border ${cfg.border} ${cfg.bg} p-4 rounded-2xl`}>
@@ -484,31 +499,31 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
               <div>
                 <p className={`font-black text-lg leading-tight ${cfg.color}`}>{cfg.label}</p>
-                <p className="text-text-muted text-xs mt-0.5">{result.summary}</p>
+                <p className="text-text-muted text-xs mt-0.5">{result.summary ?? ''}</p>
               </div>
             </div>
             {/* Confidence bar */}
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs text-text-muted mb-1.5">
                 <span>Confidence</span>
-                <span className={`font-black text-base ${cfg.color} tabular-nums`}>{formatVerdictConfidence(result.confidence, result.verdict)}</span>
+                <span className={`font-black text-base ${cfg.color} tabular-nums`}>{formatVerdictConfidence(result.confidence ?? 0, result.verdict)}</span>
               </div>
               <div className="h-2.5 bg-border rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all duration-700 ${cfg.color === 'text-rose' ? 'bg-rose' : cfg.color === 'text-emerald' ? 'bg-emerald' : 'bg-amber'}`}
-                  style={{ width: `${normalizeConfidence(result.confidence)}%` }} />
+                  style={{ width: `${normalizeConfidence(result.confidence ?? 0)}%` }} />
               </div>
             </div>
           </div>
 
           {/* Signals */}
-          {result.signals?.length > 0 && (
+          {(result.signals?.length ?? 0) > 0 && (
             <div className="border border-border/50 rounded-2xl p-4">
               <p className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Detection Signals ({result.signals.length})
+                Detection Signals ({result.signals?.length ?? 0})
               </p>
               <div className="space-y-2">
-                {result.signals.map((s) => (
+                {(result.signals ?? []).map((s) => (
                   <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface-active/50 border border-border/40">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-rose' : 'bg-emerald'}`} />
                     <div className="flex-1 min-w-0">
@@ -544,8 +559,9 @@ Analyzed: ${new Date().toLocaleString()}`
             )}
           </div>
 
-          <p className="text-center text-[10px] text-text-disabled font-mono">{result.processing_time}ms · Aiscern v4.4.0</p>
+          <p className="text-center text-[10px] text-text-disabled font-mono">{result.processing_time ?? '—'}ms · Aiscern v4.4.0</p>
         </div>
+        </ErrorBoundary>
       )}
     </MobileResultSheet>
   </>

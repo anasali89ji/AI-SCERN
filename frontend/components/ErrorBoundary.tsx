@@ -15,6 +15,12 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    // Surface in console so a "blank" section is actually diagnosable —
+    // previously errors were swallowed with no trace of what broke.
+    console.error('[ErrorBoundary] caught:', error, info.componentStack)
+  }
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
@@ -27,6 +33,11 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-text-muted text-sm mb-6 max-w-sm">
             An unexpected error occurred. Please try refreshing the page.
           </p>
+          {this.state.error?.message && (
+            <p className="text-text-disabled text-xs font-mono mb-6 max-w-sm break-words">
+              {this.state.error.message}
+            </p>
+          )}
           <button
             onClick={() => { this.setState({ hasError: false }); window.location.reload() }}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all"
