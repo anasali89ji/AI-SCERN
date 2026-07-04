@@ -169,8 +169,9 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="relative max-w-full max-h-full">
             <img src={preview} alt="Zoomed" className="max-w-full max-h-[90vh] object-contain rounded-xl" />
             <button onClick={() => setZoomed(false)}
+              aria-label="Close zoomed image"
               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80">
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -233,8 +234,9 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="relative rounded-xl overflow-hidden bg-surface-active group">
                 <img src={preview!} alt="Preview" className="w-full max-h-72 object-contain" />
                 <button onClick={() => setZoomed(true)}
+                  aria-label="Zoom into uploaded image"
                   className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                  <ZoomIn className="w-8 h-8 text-white drop-shadow" />
+                  <ZoomIn className="w-8 h-8 text-white drop-shadow" aria-hidden="true" />
                 </button>
                 {uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="mt-3 w-full">
@@ -259,8 +261,9 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
+              aria-label="Remove image and detect another"
               title="Detect Another" className="text-text-muted hover:text-rose transition-colors p-2 rounded-lg hover:bg-rose/10 shrink-0">
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
 

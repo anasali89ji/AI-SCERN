@@ -206,7 +206,7 @@ function WhoNeedsCard({ card, i }: { card: typeof WHO_NEEDS[0]; i: number }) {
         {/* CTA */}
         <Link
           href={card.href}
-          aria-label={`Start free AI detection for ${card.role}`}
+          aria-label={`Try free — AI detection for ${card.role}`}
           className="mt-auto flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-[filter,background-color] duration-200 group/btn hover:brightness-110"
           style={{ background: `${card.color}14`, border: `1px solid ${card.color}30`, color: card.color }}
         >

@@ -432,8 +432,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-14 sm:h-16 2xl:h-18 border-b border-border/40 flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-surface flex-shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
-              <button onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
-                <Menu className="w-6 h-6" />
+              <button aria-label="Open navigation menu" onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
+                <Menu className="w-6 h-6" aria-hidden="true" />
               </button>
               <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity">
                 <Image src="/logo.png" alt="Aiscern" width={28} height={28} className="object-contain" />
