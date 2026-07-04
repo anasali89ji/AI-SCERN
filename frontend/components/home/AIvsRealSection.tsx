@@ -31,7 +31,14 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
   const isAI = card.verdict === 'AI'
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4, delay: (idx % 5) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-xl overflow-hidden bg-[#141420] border border-white/[0.06]
+                 hover:border-white/[0.12] transition-colors duration-300"
+    >
       {/* Preview area */}
       {card.type === 'image' && card.img ? (
         <div className="relative h-32 sm:h-36 bg-[#141420] overflow-hidden">
@@ -44,7 +51,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
           {/* Verdict chip on image */}
           <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full
             text-[10px] font-bold text-white backdrop-blur-sm
-            ${isAI ? 'bg-[#FF4444]/85' : 'bg-emerald-500-600/85'}`}>
+            ${isAI ? 'bg-[#FF4444]/85' : 'bg-emerald-500/85'}`}>
             {isAI ? <AlertTriangle className="w-2.5 h-2.5"/> : <CheckCircle className="w-2.5 h-2.5"/>}
             {card.verdict}
           </div>
@@ -77,7 +84,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
         {/* Confidence bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 rounded-full bg-[#1e1e2e] overflow-hidden">
-            <div className="h-full rounded-full bg-[#2BEE34] transition-all duration-500">
+            <div className="h-full rounded-full bg-[#2BEE34] transition-all duration-500" style={{ width: `${card.confidence}%` }} />
           </div>
           <span className={`text-[10px] font-bold tabular-nums shrink-0
             ${isAI ? 'text-[#FF4444]' : 'text-[#2BEE34]'}`}>
@@ -85,7 +92,7 @@ const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: numb
           </span>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 })
 

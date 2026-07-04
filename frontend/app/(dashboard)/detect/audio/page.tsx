@@ -277,7 +277,7 @@ function AudioDetectionPage() {
           )}
         </div>
 
-        
+        <div className="space-y-4">
           {result && cfg ? (
             <div className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
@@ -309,7 +309,7 @@ function AudioDetectionPage() {
                   </div>
                   <div className="h-2.5 sm:h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-[#2BEE34]" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
-                  
+                  </div>
                 </div>
               </div>
 
@@ -393,7 +393,7 @@ function AudioDetectionPage() {
               </div>
             </div>
           )}
-        
+        </div>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

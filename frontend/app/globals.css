@@ -32,6 +32,31 @@
   --error:   #FF4444;
   --warning: #FFB800;
 
+  /* ── Depth layers ────────────────────────────────────────────────────────── */
+  --depth-bg:       #08080d;
+  --depth-surface:  #0f0f17;
+  --depth-elevated: #141420;
+  --depth-floating: #1a1a2e;
+
+  /* ── Modality accents ────────────────────────────────────────────────────── */
+  --modality-text:  #f59e0b; /* amber */
+  --modality-image: #2563eb; /* blue */
+  --modality-audio: #06b6d4; /* cyan */
+  --modality-video: #8b5cf6; /* violet */
+  --glow-text:  rgba(245, 158, 11, 0.3);
+  --glow-image: rgba(37, 99, 235, 0.3);
+  --glow-audio: rgba(6, 182, 212, 0.3);
+  --glow-video: rgba(139, 92, 246, 0.3);
+
+  /* ── Transition curves ───────────────────────────────────────────────────── */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:   cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-dramatic: cubic-bezier(0.87, 0, 0.13, 1);
+
+  /* ── Spacing scale ───────────────────────────────────────────────────────── */
+  --section-gap: clamp(4rem, 8vw, 8rem);
+  --content-max: 1280px;
+
   /* ── Legacy compat — kept so JSX inline styles don't break ──────────────── */
   --color-background:           20 20 20;
   --color-surface:              26 26 26;
@@ -353,5 +378,72 @@
     @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4
            focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#2BEE34]
            focus:text-[#0A0A0A] focus:rounded-lg focus:text-sm focus:font-semibold;
+  }
+
+  /* ── Glass morphism variant with subtle border ───────────────────────────── */
+  .glass-premium {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Modality-colored glow borders ───────────────────────────────────────── */
+  .glow-border-text  { box-shadow: 0 0 0 1px rgba(245,158,11,0.2), inset 0 1px 0 rgba(245,158,11,0.1); }
+  .glow-border-image { box-shadow: 0 0 0 1px rgba(37,99,235,0.2),  inset 0 1px 0 rgba(37,99,235,0.1); }
+  .glow-border-audio { box-shadow: 0 0 0 1px rgba(6,182,212,0.2),  inset 0 1px 0 rgba(6,182,212,0.1); }
+  .glow-border-video { box-shadow: 0 0 0 1px rgba(139,92,246,0.2), inset 0 1px 0 rgba(139,92,246,0.1); }
+
+  /* ── Text with subtle gradient ────────────────────────────────────────────── */
+  .text-gradient-subtle {
+    background: linear-gradient(135deg, #f1f5f9 0%, #93c5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Card hover lift ──────────────────────────────────────────────────────── */
+  .card-lift {
+    transition: transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(37,99,235,0.15);
+  }
+
+  /* ── Shimmer loading — for async content ─────────────────────────────────── */
+  .shimmer-load {
+    background: linear-gradient(90deg, var(--depth-surface) 25%, var(--depth-elevated) 50%, var(--depth-surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Magnetic button effect base ──────────────────────────────────────────── */
+  .magnetic-btn {
+    transition: transform 0.15s ease-out;
+  }
+
+  /* ── Stagger children animation ───────────────────────────────────────────── */
+  .stagger-children > * {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .stagger-children.animate > * {
+    animation: stagger-in 0.5s var(--ease-smooth) forwards;
+  }
+  .stagger-children.animate > *:nth-child(1) { animation-delay: 0s; }
+  .stagger-children.animate > *:nth-child(2) { animation-delay: 0.08s; }
+  .stagger-children.animate > *:nth-child(3) { animation-delay: 0.16s; }
+  .stagger-children.animate > *:nth-child(4) { animation-delay: 0.24s; }
+  .stagger-children.animate > *:nth-child(5) { animation-delay: 0.32s; }
+  .stagger-children.animate > *:nth-child(6) { animation-delay: 0.40s; }
+
+  @keyframes stagger-in {
+    to { opacity: 1; transform: translateY(0); }
   }
 }

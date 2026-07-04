@@ -76,6 +76,22 @@ const config: Config = {
         error:   '#FF4444',
         warning: '#FFB800',
 
+        // ── Depth layers (v5.0 plan) ────────────────────────────────────────────
+        depth: {
+          bg:       '#08080d',
+          surface:  '#0f0f17',
+          elevated: '#141420',
+          floating: '#1a1a2e',
+        },
+
+        // ── Per-modality accents (v5.0 plan) ────────────────────────────────────
+        modality: {
+          text:  '#f59e0b', // amber
+          image: '#2563eb', // blue
+          audio: '#06b6d4', // cyan
+          video: '#8b5cf6', // violet
+        },
+
         // ── Legacy compatibility (so old classes don't 404) ────────────────────
         primary: {
           DEFAULT: '#2BEE34',
@@ -146,6 +162,13 @@ const config: Config = {
           '90%':  { opacity: '1' },
           '100%': { transform: 'translateY(200%)', opacity: '0' },
         },
+        'stagger-in': {
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'shimmer': {
+          '0%':   { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
       },
 
       animation: {
@@ -155,10 +178,15 @@ const config: Config = {
         'spin-slow':   'spin 1s linear infinite',
         'pulse-slow':  'pulse-subtle 2s ease-in-out infinite',
         'scan-sweep':  'scan-sweep 2.4s ease-in-out infinite',
+        'stagger-in':  'stagger-in 0.5s var(--ease-smooth) forwards',
+        'shimmer':     'shimmer 1.5s infinite',
       },
 
       transitionTimingFunction: {
         'ease-out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'spring':        'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'smooth':        'cubic-bezier(0.22, 1, 0.36, 1)',
+        'dramatic':      'cubic-bezier(0.87, 0, 0.13, 1)',
       },
     },
   },

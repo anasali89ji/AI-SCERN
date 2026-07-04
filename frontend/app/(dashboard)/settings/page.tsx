@@ -340,7 +340,7 @@ export default function SettingsPage() {
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
-                className="flex-1 py-2 rounded-xl bg-rose-500-600 text-white text-xs font-bold hover:bg-rose-500-700 disabled:opacity-50">
+                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
                 {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>

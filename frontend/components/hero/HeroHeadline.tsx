@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
@@ -64,11 +65,19 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           aria-live="polite"
           aria-atomic="true"
         >
-          
-            <div className="font-black tracking-tight text-white">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={word}
+              initial={reduced ? false : { opacity: 0, y: 16, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduced ? undefined : { opacity: 0, y: -16, scale: 0.94 }}
+              transition={reduced ? { duration: 0 } : spring}
+              className="font-black tracking-tight"
+              style={{ color: style.color, textShadow: `0 0 30px ${style.glow}` }}
+            >
               {word}
-            </div>
-          
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <span
@@ -96,7 +105,15 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
                          min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-full"
             >
-              <div className="text-xs text-[#6B6B6B] font-medium">
+              <span
+                className="block rounded-full transition-all duration-300"
+                style={{
+                  width: active ? '20px' : '6px',
+                  height: '6px',
+                  backgroundColor: active ? ws.color : 'rgba(255,255,255,0.15)',
+                  boxShadow: active ? `0 0 12px ${ws.glow}` : 'none',
+                }}
+              />
             </button>
           )
         })}
