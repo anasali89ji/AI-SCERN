@@ -366,7 +366,7 @@ Analyzed: ${new Date().toLocaleString()}`
 
         {/* Results Panel */}
         <div>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {loading && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="card flex flex-col items-center justify-center py-16 gap-4">

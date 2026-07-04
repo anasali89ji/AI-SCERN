@@ -304,7 +304,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again or reload.</p>
           </div>
         }>
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
