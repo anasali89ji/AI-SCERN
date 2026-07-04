@@ -328,7 +328,7 @@ function VideoDetectionPage() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
         {/* Left: Upload + Video Player */}
         <div className="space-y-4">
           {!file ? (

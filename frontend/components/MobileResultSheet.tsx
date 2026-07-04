@@ -42,7 +42,7 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 bg-black/70 z-[70]"
+            className="md:hidden fixed inset-0 bg-black/70 z-[70]"
             onClick={onClose}
           />
 
@@ -52,7 +52,7 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="lg:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-border overflow-hidden"
+            className="md:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-border overflow-hidden"
             style={{
               maxHeight: '90dvh',
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',

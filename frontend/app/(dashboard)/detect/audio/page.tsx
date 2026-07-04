@@ -196,7 +196,7 @@ function AudioDetectionPage() {
         <p className="text-text-muted ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
         <div className="space-y-4">
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (

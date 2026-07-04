@@ -206,7 +206,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
         {/* Input Panel */}
         <div className="space-y-4">
           <div className="card">

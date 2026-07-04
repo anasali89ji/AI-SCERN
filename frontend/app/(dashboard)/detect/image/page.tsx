@@ -187,7 +187,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <p className="text-text-muted ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
         {/* Upload Panel */}
         <div className="space-y-4">
           {!file ? (
