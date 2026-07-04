@@ -155,7 +155,12 @@ class TestLayer9AIFingerprint:
         # PNG opened with format="PNG", no EXIF
         assert pil.format == "PNG"
         score = _lossless_no_exif_score(arr, pil)
-        assert score >= 0.60, f"Expected PNG+no-EXIF score ≥ 0.60, got {score}"
+        # Module 2 fix: format prior deliberately weakened from a strong
+        # standalone signal (0.60) to a modest nudge (0.42) -- it must never
+        # be able to single-handedly drive AI-fingerprint fusion on its own,
+        # since real screenshots/web-saved photos also lose EXIF and get
+        # re-encoded as PNG.
+        assert 0.35 <= score < 0.55, f"Expected weak PNG+no-EXIF prior ~0.42, got {score}"
 
     def test_format_prior_lower_for_jpeg(self):
         from analyzers.ai_fingerprint import _lossless_no_exif_score
@@ -163,8 +168,8 @@ class TestLayer9AIFingerprint:
         pil = Image.open(io.BytesIO(_to_jpeg_bytes(arr)))
         assert pil.format == "JPEG"
         score = _lossless_no_exif_score(arr, pil)
-        # JPEG doesn't qualify for the high-prior signal
-        assert score < 0.70, f"Expected lower score for JPEG, got {score}"
+        # JPEG doesn't qualify for the (now weak) PNG/WEBP prior at all
+        assert score < 0.45, f"Expected lower score for JPEG, got {score}"
 
 
 # ── SynthID v2 tests ────────────────────────────────────────────────────────────
@@ -265,11 +270,34 @@ class TestFusionLogic:
 
     def test_detected_synthid_triggers_floor_087(self):
         from engines.image_engine import _fuse_scores
-        layers = [self._dummy_layer(1, 0.5), self._dummy_layer(9, 0.6)]
+        # Module 1 fix: generator_detected floor now requires BOTH a high
+        # SynthID confidence AND independent corroboration from a genuine
+        # content-based layer (not just L9, which partly reflects format
+        # prior). L1=0.60 provides that corroboration here.
+        layers = [self._dummy_layer(1, 0.60), self._dummy_layer(9, 0.6)]
         synthid = {"detected": True, "confidence": 0.82, "generator_hint": "dalle3_chatgpt"}
         result = _fuse_scores(layers, {"composite_cv_score": 0.5}, synthid)
         assert result["fused_score"] >= 0.87, f"Expected SynthID floor 0.87, got {result['fused_score']}"
         assert "generator_detected" in (result["override_reason"] or "")
+
+    def test_synthid_without_content_corroboration_does_not_override(self):
+        """
+        Module 1 regression test: a real photo with a PNG-format-prior-only
+        signal (L9) and high-ish SynthID confidence but NO genuine
+        content-based corroboration must NOT hit the generator_detected
+        floor -- this was the exact mechanism that fabricated
+        "Google Gemini / Imagen" attributions on ordinary real photos.
+        """
+        from engines.image_engine import _fuse_scores
+        # L1 (content-based) deliberately kept low/ambiguous (0.4) —
+        # only L9 (format-prior-influenced) is elevated.
+        layers = [self._dummy_layer(1, 0.40), self._dummy_layer(9, 0.6)]
+        synthid = {"detected": True, "confidence": 0.82, "generator_hint": "dalle3_chatgpt"}
+        result = _fuse_scores(layers, {"composite_cv_score": 0.5}, synthid)
+        assert result["override_reason"] != "generator_detected:dalle3_chatgpt", (
+            f"Expected no generator_detected override without content corroboration, "
+            f"got override_reason={result['override_reason']!r}"
+        )
 
     def test_failure_layers_excluded(self):
         from engines.image_engine import _fuse_scores

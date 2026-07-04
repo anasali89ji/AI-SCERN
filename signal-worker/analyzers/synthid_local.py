@@ -311,7 +311,11 @@ def check_synthid(img_array: np.ndarray, lossless: bool = True) -> dict:
         return {
             "detected":        bool(detected),
             "confidence":      round(confidence, 4),
-            "generator_hint":  top_gen if top_score > 0.35 else "unknown_ai" if detected else "none",
+            # Module 1 fix: raised from >0.35 to >0.60. These track scores are
+            # heuristic FFT/pixel proxies (see module docstring) with real
+            # overlap against ordinary real photos -- a top_score of 0.35-0.60
+            # is not solid enough evidence to name a specific generator family.
+            "generator_hint":  top_gen if top_score > 0.60 else "unknown_ai" if detected else "none",
             "track_scores":    track_scores,
             "lossless_input":  lossless,
         }

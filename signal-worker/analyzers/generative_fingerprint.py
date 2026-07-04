@@ -884,7 +884,13 @@ def _attribute_generator(
         top_score = float(top_score * 0.85)  # uncertain
 
     # Unknown if none clear
-    if top_score < 0.20:
+    # Module 1 fix: raised from 0.20 -> 0.55. At 0.20, roughly a 1-in-5 heuristic
+    # match on ANY single generator profile was enough to slap a specific vendor
+    # name (e.g. "Google Gemini / Imagen") on the image. These per-generator
+    # scores are noisy heuristic proxies with real overlap against ordinary
+    # real photos -- a low top_score is not meaningfully different from noise.
+    # Only attribute a specific product when the top match is genuinely strong.
+    if top_score < 0.55:
         top_gen = "unknown_diffusion"
         top_score = overall_ai
 

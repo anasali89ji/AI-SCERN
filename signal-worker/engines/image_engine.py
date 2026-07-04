@@ -351,6 +351,53 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
 
 # ── Unified composite scoring ─────────────────────────────────────────────────
 
+def _maybe_attach_generator_attribution(fused: Dict[str, Any], gfe_attr: Dict[str, Any]) -> None:
+    """
+    Module 1 fix: only attach a specific vendor name (e.g. "Google Gemini /
+    Imagen") to the fused result when we have STRONG, genuinely content-driven
+    evidence for it -- never merely because *some* override fired (which can be
+    driven by format-prior signals like PNG+no-EXIF, unrelated to GFE's own
+    generator match).
+
+    Previous behaviour: any override_reason + GFE structural_match_pct >= 35%
+    (i.e. the top single-generator heuristic score was as low as 0.35, only
+    slightly above GFE's own "unknown" floor) was enough to slap a specific
+    product name + version onto the result. That is not solid evidence.
+
+    New gate, ALL of the following must hold:
+      1. An override already fired (fused_raw crossed the AI threshold).
+      2. GFE's top single-generator match is >= 0.65 (was 0.35).
+      3. GFE's overall_ai_score (noisy-OR across ALL generator profiles,
+         a broader corroborating signal) is also >= 0.55 -- guards against
+         one profile spiking on noise while the others disagree.
+
+    When these aren't met but an override still fired, we keep a generic,
+    non-attributed AI-suspected reason instead of inventing a vendor name.
+    """
+    structural_pct = gfe_attr.get("structural_match_pct", 0) or 0
+    overall_ai = gfe_attr.get("overall_ai_score", 0) or 0
+    gfe_gen = gfe_attr.get("top_generator", "")
+
+    if not fused.get("override_reason"):
+        return
+
+    strong_specific_match = (structural_pct >= 65) and (overall_ai >= 0.55)
+
+    if strong_specific_match and gfe_gen and gfe_gen != "unknown_diffusion":
+        fused["generator_display"]    = gfe_attr.get("top_generator_display", "")
+        fused["generator_version"]    = gfe_attr.get("top_generator_version", "")
+        fused["structural_match_pct"] = structural_pct
+        fused["override_reason"]      = f"generator_detected:{gfe_gen}"
+    elif fused.get("override_reason", "").startswith("generator_detected:"):
+        # A generator_detected override fired (from SynthID track scores, see
+        # _fuse_scores) but GFE attribution doesn't independently corroborate
+        # a specific vendor with strong confidence -- downgrade to a generic,
+        # non-attributed message rather than presenting a named product.
+        fused["generator_display"] = "AI generation suspected"
+        fused["generator_version"] = "signature inconclusive"
+        fused["override_reason"]   = "ai_generation_suspected_low_specificity"
+
+
 def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Unified score fusion v4.3 — rebuilt to fix systematic under-scoring of
@@ -384,6 +431,7 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
 
     # ── Per-layer scoring (with MAX evidence selection for noisy layers) ─────
     layer_scores: list[tuple[float, float]] = []  # (score, weight)
+    layer_by_num: dict[int, float] = {}  # layer_num -> layerSuspicionScore, for corroboration checks
 
     LAYER_WEIGHTS = {
         1:  1.1,   # L1 Pixel Integrity — reliable ELA signal
@@ -413,6 +461,7 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
         base_score = float(layer.get("layerSuspicionScore", 0.5))
         w = LAYER_WEIGHTS.get(layer_num, 1.0)
         layer_scores.append((base_score, w))
+        layer_by_num[layer_num] = base_score
 
     # SynthID / generator detection — now a full voting member
     synthid_conf = 0.0
@@ -487,22 +536,37 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
 
     floor = 0.0
     override_reason = None
+    # Content-based layers only (pixel/frequency/noise/scene forensics) --
+    # deliberately EXCLUDES L9 (partly format-prior driven) and L10/L12-L14
+    # which can be scene- or sensor-dependent. Used below as independent
+    # corroboration so format priors alone can never satisfy an override.
+    CONTENT_LAYERS = (1, 2, 3, 4, 6, 7, 8)
+    content_corroboration = any(
+        layer_by_num.get(n, 0.0) >= 0.55 for n in CONTENT_LAYERS
+    )
+
     if metadata_score >= 0.95:
         # Literal AI software tag in EXIF — certain
         floor = 0.97
         override_reason = "ai_software_tag_in_exif"
-    elif synthid_detected and synthid_conf >= 0.65:
-        # Generator fingerprint: require solid raw fusion to avoid HF-texture FPs
-        # (Track C fires on natural grass/hair textures at threshold < 0.55)
-        if fused_raw >= 0.58:
-            floor = 0.87
-            override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
+    elif synthid_detected and synthid_conf >= 0.75 and content_corroboration:
+        # Module 1 fix: previously gated on fused_raw >= 0.58, but fused_raw
+        # blends in L9 which is partly driven by a pure format prior
+        # (PNG + no EXIF), so a real screenshot/webphoto could satisfy this
+        # gate with zero genuine generator signal. Now requires BOTH a high
+        # SynthID track confidence (raised 0.65 -> 0.75) AND independent
+        # corroboration from at least one purely content-based forensic layer.
+        floor = 0.87
+        override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
     elif any_very_high and fused_raw >= 0.60:
         # Single layer genuinely at 0.92+ with broad agreement
         floor = 0.82
         override_reason = "single_layer_very_high_confidence"
-    elif high_count >= 4 and fused_raw >= 0.58:
-        # Four-signal consensus: multiple independent high signals
+    elif high_count >= 4 and fused_raw >= 0.58 and content_corroboration:
+        # Four-signal consensus: multiple independent high signals.
+        # Module 2 fix: also require content-layer corroboration so a
+        # consensus made up mostly of format/metadata-driven layers can't
+        # single-handedly clear this floor.
         # Only apply if DIRE check didn't identify this as a real image
         if not dire_check_fired:
             floor = 0.75
@@ -598,15 +662,7 @@ async def analyze_image_from_url(
         # GFE layer: enrich fused override_reason with best-guess generator attribution
         gfe_layer = next((l for l in layers if l.get("layer") == 10), {})
         gfe_attr  = gfe_layer.get("generative_attribution", {})
-        if gfe_attr.get("structural_match_pct", 0) >= 35 and fused.get("override_reason"):
-            gfe_gen = gfe_attr.get("top_generator", "")
-            sid_gen = (synthid or {}).get("generator_hint", "")
-            # Use GFE generator name when it's more specific than SynthID
-            if gfe_gen and gfe_gen != "unknown_diffusion":
-                fused["generator_display"]  = gfe_attr.get("top_generator_display", "")
-                fused["generator_version"]  = gfe_attr.get("top_generator_version", "")
-                fused["structural_match_pct"] = gfe_attr.get("structural_match_pct", 0)
-                fused["override_reason"]    = f"generator_detected:{gfe_gen}"
+        _maybe_attach_generator_attribution(fused, gfe_attr)
         elapsed = int((time.time() - start) * 1000)
 
         return {
@@ -719,13 +775,7 @@ def analyze_image_from_bytes(
         fused   = _fuse_scores(layers, v3, synthid)
         gfe_layer = next((l for l in layers if l.get("layer") == 10), {})
         gfe_attr  = gfe_layer.get("generative_attribution", {})
-        if gfe_attr.get("structural_match_pct", 0) >= 35 and fused.get("override_reason"):
-            gfe_gen = gfe_attr.get("top_generator", "")
-            if gfe_gen and gfe_gen != "unknown_diffusion":
-                fused["generator_display"]    = gfe_attr.get("top_generator_display", "")
-                fused["generator_version"]    = gfe_attr.get("top_generator_version", "")
-                fused["structural_match_pct"] = gfe_attr.get("structural_match_pct", 0)
-                fused["override_reason"]      = f"generator_detected:{gfe_gen}"
+        _maybe_attach_generator_attribution(fused, gfe_attr)
         elapsed = int((time.time() - start) * 1000)
         logger.info("[ImageEngine] bytes analysis done in %dms", elapsed)
 

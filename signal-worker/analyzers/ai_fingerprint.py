@@ -228,8 +228,15 @@ def _edge_perfection_score(img_array: np.ndarray) -> float:
 def _lossless_no_exif_score(img_array: np.ndarray, img_pil: Any) -> float:
     """
     ChatGPT (gpt-image-1 / DALL-E 3) and Midjourney output PNG or WEBP.
-    Real cameras almost never produce PNG or WEBP as the native capture format.
-    PNG + no EXIF + large resolution = very strong AI indicator.
+    Real cameras almost never produce PNG or WEBP as the native capture format
+    -- BUT any screenshot, WhatsApp/Telegram-forwarded image, or web-saved
+    photo also loses EXIF and is commonly re-encoded as PNG. This signal is a
+    weak prior, not forensic evidence of AI generation, and must never be
+    strong enough on its own to drive the fused score into "AI" territory.
+
+    Module 2 fix: magnitudes lowered (was 0.82/0.60) so this can only ever act
+    as a modest nudge alongside genuine content-based signals, never as a
+    standalone driver.
     """
     try:
         fmt = getattr(img_pil, "format", None) or ""
@@ -240,9 +247,9 @@ def _lossless_no_exif_score(img_array: np.ndarray, img_pil: Any) -> float:
         h, w = img_array.shape[:2]
         large = (h * w) > (512 * 512)
         if fmt in ("PNG", "WEBP") and not has_exif and large:
-            return 0.82  # Strong prior: ChatGPT/Midjourney generated
+            return 0.55  # weak prior nudge only — was 0.82
         if fmt in ("PNG", "WEBP") and not has_exif:
-            return 0.60
+            return 0.42  # was 0.60
     except Exception:
         pass
     return 0.40  # neutral-to-low; real photos often lose EXIF via web processing
@@ -272,8 +279,11 @@ def analyze_ai_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any
         sig_edge  = _edge_perfection_score(img_array)
         sig_fmt   = _lossless_no_exif_score(img_array, img_pil)
 
-        # Weighted fusion — format signal is a strong prior
-        weights = {"sat": 0.18, "freq": 0.22, "pal": 0.18, "edge": 0.18, "fmt": 0.24}
+        # Weighted fusion — format signal is now a MINOR prior, not a primary
+        # driver (Module 2 fix: was 0.24, tied for the largest weight in this
+        # layer; a PNG-without-EXIF real photo could satisfy most of L9's
+        # score through this single non-content signal alone).
+        weights = {"sat": 0.24, "freq": 0.26, "pal": 0.22, "edge": 0.20, "fmt": 0.08}
         score = (
             sig_sat  * weights["sat"]  +
             sig_freq * weights["freq"] +
@@ -282,8 +292,12 @@ def analyze_ai_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any
             sig_fmt  * weights["fmt"]
         )
 
-        # Boost: if ≥3 signals agree strongly (≥0.65), apply soft-max boost
-        strong = sum(1 for s in [sig_sat, sig_freq, sig_pal, sig_edge, sig_fmt] if s >= 0.65)
+        # Boost: if ≥3 CONTENT-BASED signals agree strongly (≥0.65), apply
+        # soft-max boost. Module 2 fix: sig_fmt (format prior) deliberately
+        # excluded from this count -- it is not a content signal and should
+        # never count towards "multiple independent signals agree".
+        content_signals = [sig_sat, sig_freq, sig_pal, sig_edge]
+        strong = sum(1 for s in content_signals if s >= 0.65)
         if strong >= 3:
             score = float(np.clip(score * 1.25, 0, 1))
         elif strong >= 2:
