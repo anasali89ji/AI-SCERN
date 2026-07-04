@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import HomepageReviews from '@/components/home/HomepageReviews'
+import { WhoNeedsCarousel } from '@/components/home/WhoNeedsCarousel'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 
 // ─── CountUp ──────────────────────────────────────────────────────────────────
@@ -484,23 +485,11 @@ export default function HomePage() {
             </div>
 
             {/* Professionals */}
-            <div className="text-center mb-12">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-5">
+            <div className="mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-5 text-center">
                 Built for professionals across
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {PROFESSIONALS.map(({ label, icon: Icon }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-2 text-sm font-medium text-[#A3A3A3]
-                               px-4 py-2 rounded-lg border border-[#1E1E1E] bg-[#141414]
-                               hover:border-[#2BEE34]/30 hover:text-white transition-all duration-150 cursor-default"
-                  >
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
-                    {label}
-                  </span>
-                ))}
-              </div>
+              <WhoNeedsCarousel items={PROFESSIONALS} />
             </div>
 
             {/* Methodology note */}
