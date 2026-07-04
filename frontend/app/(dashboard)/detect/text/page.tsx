@@ -210,9 +210,9 @@ Analyzed: ${new Date().toLocaleString()}`
         {/* Input Panel */}
         <div className="space-y-4">
           <div className="card">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
               <h2 className="font-semibold text-text-primary text-sm">Input Text</h2>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 flex-wrap justify-end">
                 <button onClick={handlePaste} disabled={pasteLoading}
                   className="text-xs btn-ghost py-1.5 px-2.5 flex items-center gap-1.5 disabled:opacity-50">
                   <ClipboardPaste className="w-3.5 h-3.5" />

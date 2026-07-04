@@ -346,7 +346,12 @@ function detectIntent(message: string, history: ChatMessage[]): Intent {
 // Production system prompt — fully private, zero internal disclosure
 // Merged from: v2.0 refactor + Lighthouse audit + 11-phase architecture + live repo scan
 // ═══════════════════════════════════════════════════════════════════════════════
-function buildSystemPrompt(injectedContext: string, intent: Intent): string {
+function buildSystemPrompt(
+  injectedContext: string,
+  intent: Intent,
+  needsImageCapability: boolean = false,
+  needsAudioCapability: boolean = false,
+): string {
 
   // ── Dynamic context blocks ────────────────────────────────────────────────
   const detectionGuide = `
@@ -610,14 +615,14 @@ ETHICAL CONSTRAINTS
 • ALWAYS maintain user privacy — do not reference, store, or repeat uploaded content beyond the immediate conversation
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMAGE FORENSIC PIPELINE CAPABILITIES
+${needsImageCapability ? `IMAGE FORENSIC PIPELINE CAPABILITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${ARIA_FORENSIC_CAPABILITY}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : ''}${needsAudioCapability ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AUDIO FORENSIC PIPELINE CAPABILITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${ARIA_AUDIO_CAPABILITY}
+` : ''}
 ${detectionGuide}
 ${followupGuide}
 ${urgencyGuide}
@@ -756,7 +761,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ── ASSEMBLE API MESSAGES ─────────────────────────────────────────────────
-    const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent)
+    // Low-latency fix: only inject the ~1,600-word image/audio forensic
+    // capability blocks when they're actually relevant, instead of on every
+    // single turn (including plain greetings) — this was inflating prefill
+    // size/latency on the vast majority of ordinary chat messages.
+    const needsImageCapability =
+      imageAttachments.length > 0 ||
+      intent.detectionContext === 'post_image' ||
+      /\b(image|photo|picture|deepfake|midjourney|dall-?e|stable diffusion|firefly|gan|diffusion)\b/i.test(lastUserMsg)
+    const needsAudioCapability =
+      intent.detectionContext === 'post_audio' ||
+      /\b(audio|voice|tts|elevenlabs|voice clone|speech|podcast|recording)\b/i.test(lastUserMsg)
+
+    const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent, needsImageCapability, needsAudioCapability)
 
     // FIX 3.4 — Truncate conversation history to last 12 messages to prevent context overflow
     const MAX_HISTORY = 12
@@ -841,7 +858,14 @@ export async function POST(req: NextRequest) {
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
               body: JSON.stringify({
                 model,
-                max_tokens:  2048,
+                // Low-latency fix: was 2048. On a 70B model, a long response
+                // at max_tokens can itself take well over 60s to fully
+                // generate/stream -- silently colliding with this route's
+                // own `maxDuration = 60` Vercel function limit (the platform
+                // kills the function outright, which is indistinguishable
+                // from "Aria not responding" to the user). 1024 is still
+                // generous for a chat answer and gives real headroom.
+                max_tokens:  1024,
                 temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
                 top_p:       0.9,
                 messages: [
@@ -850,7 +874,14 @@ export async function POST(req: NextRequest) {
                 ],
                 stream: true,
               }),
-              signal: AbortSignal.timeout(90000),
+              // Low-latency fix: was 90000ms. This only guards time-to-first-byte
+              // (fetch() resolves once headers arrive for a streamed response,
+              // not after the full body), but 90s per attempt x 2 attempts
+              // (primary + fallback) = up to 180s worst case, far past this
+              // route's own maxDuration=60 -- meaning Vercel would kill the
+              // function before the fallback model was ever tried. 20s fails
+              // over to the fallback model quickly instead of hanging.
+              signal: AbortSignal.timeout(20000),
             })
             if (chatRes.ok) break
             chatRes = null

@@ -196,6 +196,15 @@ function AudioDetectionPage() {
         <p className="text-text-muted ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
 
+      <div className="card border-amber/30 bg-amber/5 flex items-start gap-3 py-3 px-4 mb-6">
+        <Info className="w-4 h-4 text-amber shrink-0 mt-0.5" />
+        <p className="text-xs text-text-secondary leading-relaxed">
+          <span className="font-bold text-amber">Beta — under active development.</span>{' '}
+          Audio detection is newer than our text and image models and is still being refined.
+          Results may be less reliable — treat them as a starting signal, not a final verdict.
+        </p>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
         <div className="space-y-4">
           {!file ? (
