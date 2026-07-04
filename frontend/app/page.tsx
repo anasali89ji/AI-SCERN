@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import HomepageReviews from '@/components/home/HomepageReviews'
+import { HeroHeadline } from '@/components/hero/HeroHeadline'
 
 // ─── CountUp ──────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -243,75 +244,79 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 pb-20 sm:pb-28">
+        <section className="relative min-h-[100svh] flex items-center overflow-hidden pt-16 pb-16 sm:pb-20">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, #141414 0%, #0A0A0A 60%, #141414 100%)' }} />
 
-          <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto w-full">
+          <div className="relative z-10 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
-                            border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34]
-                            text-xs font-semibold mb-8 sm:mb-10 animate-fade-in">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34] flex-shrink-0" />
-              <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
-              <span className="sm:hidden">8+ models · Free tier available</span>
-            </div>
+              {/* Left: Headline + CTAs */}
+              <div className="text-center lg:text-left">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+                                border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34]
+                                text-xs font-semibold mb-8 animate-fade-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34] flex-shrink-0" />
+                  <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
+                  <span className="sm:hidden">8+ models · Free tier available</span>
+                </div>
 
-            {/* Headline */}
-            <h1 className="text-[48px] sm:text-[56px] lg:text-[64px] font-bold text-white tracking-[-0.02em] leading-[1.1] mb-6 animate-slide-up">
-              Detect AI Content with{' '}
-              <span className="text-gradient">Confidence</span>
-            </h1>
+                {/* Rotating headline */}
+                <div className="mb-6 animate-slide-up flex flex-col items-center lg:items-start">
+                  <HeroHeadline />
+                </div>
 
-            {/* Subheadline */}
-            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-10 leading-relaxed animate-slide-up">
-              Free, accurate detection for text, images, audio, and video.
-              Built on ensemble models with published benchmarks.
-            </p>
+                {/* Subheadline */}
+                <p className="text-base sm:text-lg text-[#A3A3A3] max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed animate-slide-up">
+                  Free, accurate detection for text, images, audio, and video.
+                  Built on ensemble models with published benchmarks.
+                </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5 animate-slide-up">
-              {user ? (
-                <>
-                  <Link href="/dashboard"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
-                               bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
-                               text-base transition-colors duration-150 w-full sm:w-auto">
-                    Dashboard <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/chat"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
-                               bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                               text-[#E5E5E5] font-semibold text-base transition-all duration-150 w-full sm:w-auto">
-                    <MessageSquare className="w-4 h-4" /> ARIA Assistant
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/detect/text"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
-                               bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
-                               text-base transition-colors duration-150 w-full sm:w-auto">
-                    <ScanLine className="w-4 h-4" /> Start Detecting Free
-                  </Link>
-                  <Link href="/methodology"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
-                               bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                               text-[#E5E5E5] font-semibold text-base transition-all duration-150 w-full sm:w-auto">
-                    View Methodology
-                  </Link>
-                </>
-              )}
-            </div>
+                {/* CTAs */}
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-5 animate-slide-up">
+                  {user ? (
+                    <>
+                      <Link href="/dashboard"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
+                                   bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
+                                   text-base transition-colors duration-150 w-full sm:w-auto">
+                        Dashboard <ArrowRight className="w-4 h-4" />
+                      </Link>
+                      <Link href="/chat"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
+                                   bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                                   text-[#E5E5E5] font-semibold text-base transition-all duration-150 w-full sm:w-auto">
+                        <MessageSquare className="w-4 h-4" /> ARIA Assistant
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/detect/text"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
+                                   bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
+                                   text-base transition-colors duration-150 w-full sm:w-auto">
+                        <ScanLine className="w-4 h-4" /> Start Detecting Free
+                      </Link>
+                      <Link href="/methodology"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
+                                   bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                                   text-[#E5E5E5] font-semibold text-base transition-all duration-150 w-full sm:w-auto">
+                        View Methodology
+                      </Link>
+                    </>
+                  )}
+                </div>
 
-            <p className="text-xs text-[#6B6B6B] mb-12">
-              Free forever · No credit card · 50K+ scans completed
-            </p>
+                <p className="text-xs text-[#6B6B6B]">
+                  Free forever · No credit card · 50K+ scans completed
+                </p>
+              </div>
 
-            {/* Live demo */}
-            <div className="max-w-2xl mx-auto w-full">
-              <LiveDemo isLoggedIn={!!user} />
+              {/* Right: Live demo */}
+              <div className="w-full max-w-2xl mx-auto lg:max-w-none relative">
+                <LiveDemo isLoggedIn={!!user} />
+              </div>
             </div>
           </div>
         </section>
