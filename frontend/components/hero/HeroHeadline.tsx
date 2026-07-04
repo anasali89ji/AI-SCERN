@@ -37,31 +37,26 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
     <div className="select-none" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
 
       {/* "Detect" — static with gradient */}
-      <div className="font-black tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-        <h1
-          className="font-black leading-none tracking-tight
-                     text-[3rem] xs:text-[3.5rem] sm:text-[4.5rem] md:text-[5.5rem] lg:text-[6.5rem]"
-          style={{
-            background: 'linear-gradient(150deg,#ffffff 0%,#cbd5e1 55%,#94a3b8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          Detect
-        </h1>
-      </div>
+      <h1
+        className="font-black leading-none tracking-tight
+                   text-[2.5rem] xs:text-[3rem] sm:text-[3.75rem] md:text-[4.5rem] lg:text-[5rem]"
+        style={{
+          background: 'linear-gradient(150deg,#ffffff 0%,#cbd5e1 55%,#94a3b8 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
+      >
+        Detect
+      </h1>
 
       {/* Rotating word row */}
-      <div className="flex items-baseline gap-3 sm:gap-4">
-        {/* Animated word slot — sized for longest word at each breakpoint */}
+      <div className="flex flex-wrap items-end gap-x-3 gap-y-1 mt-1">
+        {/* Animated word slot — height fixed for vertical-slide anim, width auto */}
         <div
           className="relative overflow-hidden
-                     w-20  h-9
-                     xs:w-24 xs:h-10
-                     sm:w-32 sm:h-12
-                     md:w-40 md:h-[3.5rem]
-                     lg:w-52 lg:h-16"
+                     h-[2.5rem] xs:h-[3rem] sm:h-[3.75rem] md:h-[4.5rem] lg:h-[5rem]
+                     flex items-center"
           aria-live="polite"
           aria-atomic="true"
         >
@@ -72,7 +67,8 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={reduced ? undefined : { opacity: 0, y: -16, scale: 0.94 }}
               transition={reduced ? { duration: 0 } : spring}
-              className="font-black tracking-tight"
+              className="font-black tracking-tight leading-none whitespace-nowrap
+                         text-[2.5rem] xs:text-[3rem] sm:text-[3.75rem] md:text-[4.5rem] lg:text-[5rem]"
               style={{ color: style.color, textShadow: `0 0 30px ${style.glow}` }}
             >
               {word}
@@ -81,8 +77,8 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         </div>
 
         <span
-          className="font-semibold tracking-tight text-slate-400
-                     text-2xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl whitespace-nowrap"
+          className="font-semibold tracking-tight text-slate-400 leading-none
+                     text-xl xs:text-2xl sm:text-3xl md:text-4xl whitespace-nowrap pb-1"
         >
           with AI
         </span>
