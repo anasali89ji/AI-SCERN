@@ -24,16 +24,32 @@ logger = logging.getLogger(__name__)
 
 def _load_tokenizer(model_name: str):
     from transformers import AutoTokenizer
-    return AutoTokenizer.from_pretrained(model_name)
+    try:
+        # Module 3 fix: prefer the baked-in local cache (see Dockerfile) —
+        # avoids depending on a live huggingface.co fetch at request time,
+        # which could silently degrade detection on a network blip, cold
+        # start, or offline deployment.
+        return AutoTokenizer.from_pretrained(model_name, local_files_only=True)
+    except Exception:
+        logger.info("[TextEngine] %s tokenizer not in local cache — fetching from network", model_name)
+        return AutoTokenizer.from_pretrained(model_name)
 
 
 def _load_language_model(model_name: str):
     import torch
     from transformers import AutoModelForCausalLM
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=torch.float32,  # CPU — float32 only
-    )
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float32,  # CPU — float32 only
+            local_files_only=True,
+        )
+    except Exception:
+        logger.info("[TextEngine] %s model not in local cache — fetching from network", model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float32,
+        )
     model.eval()
     return model
 
@@ -336,6 +352,14 @@ def analyze_text(
     clean = preprocessed["text"]
     engines: Dict[str, Any] = {}
 
+    # Module 3 fix: track when the pipeline is running in a degraded state
+    # (perplexity unavailable) so this is surfaced to the caller explicitly,
+    # instead of silently returning a score computed only from the weaker
+    # heuristic engines (burstiness/stylometry/repetition) as if nothing
+    # were missing.
+    degraded = False
+    degraded_reason: Optional[str] = None
+
     # Perplexity (requires distilgpt2 — skip if transformers not installed)
     if options.get("perplexity", True):
         try:
@@ -343,9 +367,13 @@ def analyze_text(
         except ImportError:
             logger.warning("[TextEngine] transformers/torch not installed — skipping perplexity")
             engines["perplexity"] = _empty_result("transformers_not_installed")
+            degraded = True
+            degraded_reason = "perplexity_unavailable_not_installed"
         except Exception as e:
             logger.warning("[TextEngine] perplexity failed: %s", e)
             engines["perplexity"] = _empty_result(str(e))
+            degraded = True
+            degraded_reason = "perplexity_unavailable"
 
     if options.get("burstiness", True):
         try:
@@ -395,15 +423,29 @@ def analyze_text(
         if engines else 0.0
     )
 
+    # Module 3 fix: perplexity carries the most real detection signal (40%
+    # of composite weight) and, per the accuracy benchmark, casual/technical/
+    # terse-register AI text is materially under-detected by the heuristic
+    # engines alone (burstiness/stylometry/repetition). Don't let
+    # avg_confidence be reported as if every engine ran normally when the
+    # single most informative one didn't -- apply an explicit penalty on
+    # top of whatever the (now perplexity-confidence-0) average already
+    # reflects, so degraded responses are visibly less confident, not just
+    # silently narrower.
+    if degraded:
+        avg_confidence = round(avg_confidence * 0.55, 4)
+
     elapsed_ms = int((time.time() - start) * 1000)
 
-    return {
+    result = {
         "jobId": job_id,
         "status": "success",
         "processingTimeMs": elapsed_ms,
         "engines": engines,
         "composite_score": round(composite, 4),
         "confidence": round(avg_confidence, 4),
+        "degraded": degraded,
+        "degraded_reason": degraded_reason,
         "text_stats": {
             "word_count": preprocessed["word_count"],
             "sentence_count": preprocessed["sentence_count"],
@@ -413,3 +455,11 @@ def analyze_text(
         "memory": get_memory_usage(),
         "version": VERSION,
     }
+    if degraded:
+        result["message"] = (
+            "Perplexity model was unavailable for this request — this result "
+            "relies on burstiness/stylometry/repetition heuristics only, "
+            "which are less reliable (especially for short, technical, or "
+            "casual-register text). Confidence has been reduced accordingly."
+        )
+    return result

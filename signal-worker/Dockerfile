@@ -40,6 +40,20 @@ COPY requirements.txt .
 RUN grep -v '^torch==' requirements.txt > requirements-docker.txt && \
     pip install --no-cache-dir --target=/build/wheels -r requirements-docker.txt
 
+# Module 3 fix: pre-download distilgpt2 (~350MB) at BUILD time and bake it
+# into the image, instead of relying on a live huggingface.co fetch the
+# first time text detection runs. Previously the model cache dir
+# (/tmp/aiscern-models) was purely ephemeral and never pre-populated, so a
+# cold start, a network blip, or an offline deployment silently degraded
+# text detection to heuristics-only (burstiness/stylometry/repetition),
+# which the accuracy benchmark showed is materially weaker and was not
+# surfaced to callers at all.
+ENV HF_HOME=/build/hf-cache
+RUN PYTHONPATH=/build/wheels python3 -c "\
+from transformers import AutoTokenizer, AutoModelForCausalLM; \
+AutoTokenizer.from_pretrained('distilgpt2'); \
+AutoModelForCausalLM.from_pretrained('distilgpt2')"
+
 # ---------- RUNTIME STAGE ----------
 FROM python:3.11-slim AS runtime
 
@@ -47,6 +61,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV OPENCV_IO_ENABLE_OPENEXR=0
 ENV PYTHONPATH=/app
+# Module 3 fix: baked-in distilgpt2 weights (see builder stage) — text_engine's
+# model loaders check this path first via local_files_only=True before ever
+# attempting a live network fetch.
+ENV HF_HOME=/app/hf-cache
+ENV TRANSFORMERS_OFFLINE_FALLBACK=1
 
 # Runtime-only system packages — no compilers, no -dev headers
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -65,6 +84,11 @@ WORKDIR /app
 
 # Copy pre-built dependencies from the builder stage
 COPY --from=builder /build/wheels /usr/local/lib/python3.11/site-packages
+
+# Module 3 fix: copy the pre-downloaded distilgpt2 weights baked at build
+# time (see builder stage) so perplexity scoring works offline / survives
+# huggingface.co network blips without silently degrading to heuristics-only.
+COPY --from=builder /build/hf-cache /app/hf-cache
 
 # Copy application code (models/, engines/, analyzers/, forensics/, utils/, main.py)
 COPY . .
