@@ -297,15 +297,15 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
+        <ErrorBoundary fallback={
+          <div className="card border-rose/30 bg-rose/5 flex flex-col items-center gap-2 text-center py-10">
+            <AlertTriangle className="w-6 h-6 text-rose" />
+            <p className="text-sm text-rose font-semibold">Couldn't display the result card</p>
+            <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again or reload.</p>
+          </div>
+        }>
         <AnimatePresence mode="wait">
           {result && cfg ? (
-            <ErrorBoundary key="result-boundary" fallback={
-              <div className="card border-rose/30 bg-rose/5 flex flex-col items-center gap-2 text-center py-10">
-                <AlertTriangle className="w-6 h-6 text-rose" />
-                <p className="text-sm text-rose font-semibold">Couldn't display the result card</p>
-                <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again or reload.</p>
-              </div>
-            }>
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
@@ -395,7 +395,6 @@ Analyzed: ${new Date().toLocaleString()}`
                 </div>
               </div>
             </motion.div>
-            </ErrorBoundary>
           ) : loading && !result ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <DetectionSequenceLoader
@@ -421,6 +420,7 @@ Analyzed: ${new Date().toLocaleString()}`
             </motion.div>
           )}
         </AnimatePresence>
+        </ErrorBoundary>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
