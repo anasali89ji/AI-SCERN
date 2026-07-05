@@ -562,11 +562,18 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
         # Single layer genuinely at 0.92+ with broad agreement
         floor = 0.82
         override_reason = "single_layer_very_high_confidence"
-    elif high_count >= 4 and fused_raw >= 0.58 and content_corroboration:
+    elif high_count >= 4 and fused_raw >= 0.58:
         # Four-signal consensus: multiple independent high signals.
-        # Module 2 fix: also require content-layer corroboration so a
-        # consensus made up mostly of format/metadata-driven layers can't
-        # single-handedly clear this floor.
+        # Note: content_corroboration is intentionally NOT required here.
+        # It was added alongside the generator_detected fix below, but L9's
+        # format-prior sub-signal was already independently weakened at the
+        # source (ai_fingerprint.py _lossless_no_exif_score: 0.24 fusion
+        # weight -> 0.08, magnitude 0.82 -> 0.55 ceiling) -- L9 crossing high
+        # is now itself predominantly content-driven. Requiring a SECOND,
+        # separate content layer (L1/2/3/4/6/7/8) to ALSO independently hit
+        # 0.55 was overly strict double-gating that blocked legitimate
+        # four-layer consensus built from L9/L10/L12/L13/L14 alone, and was
+        # measurably hurting recall on genuine AI-generated images.
         # Only apply if DIRE check didn't identify this as a real image
         if not dire_check_fired:
             floor = 0.75
