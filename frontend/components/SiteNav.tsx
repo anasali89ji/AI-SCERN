@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Menu, X, ChevronDown,
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/cn'
+import { ScrollProgress } from '@/components/ScrollProgress'
 
 interface SiteNavProps {
   backHref?:  string
@@ -93,7 +95,9 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   const initials = (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U').toUpperCase()
 
   return (
-    <nav
+    <>
+      <ScrollProgress />
+      <nav
       aria-label="Main navigation"
       className={cn(
         'fixed top-0 left-0 right-0 z-50 h-16 transition-transform duration-300',
@@ -302,13 +306,18 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
       </div>
 
       {/* Mobile Drawer */}
-      {mobileOpen && (
-        <div
-          id="mobile-nav"
-          role="dialog"
-          aria-label="Navigation menu"
-          className="lg:hidden border-t border-[#1E1E1E] bg-[#141414] overflow-hidden animate-slide-up"
-        >
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            id="mobile-nav"
+            role="dialog"
+            aria-label="Navigation menu"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:hidden border-t border-[#1E1E1E] bg-[#141414] overflow-hidden"
+          >
           <div className="px-4 py-4 space-y-1 max-h-[80dvh] overflow-y-auto">
 
             <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">
@@ -387,8 +396,10 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
               </div>
             )}
           </div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
+    </>
   )
 }
