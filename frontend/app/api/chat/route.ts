@@ -688,7 +688,12 @@ export async function POST(req: NextRequest) {
     const intent = detectIntent(lastUserMsg, history)
 
     // ── GRAPH RAG — build conversation knowledge graph & inject context ────────
-    const graphContext = buildGraphRAGContext(history, lastUserMsg)
+    let graphContext = ''
+    try {
+      graphContext = buildGraphRAGContext(history, lastUserMsg)
+    } catch (err) {
+      console.warn('[chat] graph RAG context failed, continuing without it:', err)
+    }
 
     // ── ARIA KB RAG — retrieve static knowledge (A.1) ────────────────────────
     // Run in parallel with intent detection / tool calls (both are already done).
@@ -697,7 +702,13 @@ export async function POST(req: NextRequest) {
       role:    m.role as string,
       content: typeof m.content === 'string' ? m.content : '',
     }))
-    const ragResult = await retrieveARIAKnowledge(lastUserMsg, historyForRAG)
+    let ragResult: Awaited<ReturnType<typeof retrieveARIAKnowledge>>
+    try {
+      ragResult = await retrieveARIAKnowledge(lastUserMsg, historyForRAG)
+    } catch (err) {
+      console.warn('[chat] KB RAG retrieval failed, continuing without it:', err)
+      ragResult = { contextChunks: [], bypassNIM: false, directAnswer: null, topScore: 0 } as Awaited<ReturnType<typeof retrieveARIAKnowledge>>
+    }
 
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
@@ -710,66 +721,85 @@ export async function POST(req: NextRequest) {
 
     // 1. Image → Vision Engine analysis
     if (imageAttachments.length > 0) {
-      const img = imageAttachments[0]
-      // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
-      // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
-      const dataUrl = `data:${img.type};base64,${img.data}`
-      const result = await analyzeImageForensic(img.data, img.type, dataUrl, lastUserMsg, apiKey)
+      try {
+        const img = imageAttachments[0]
+        // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
+        // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
+        const dataUrl = `data:${img.type};base64,${img.data}`
+        const result = await analyzeImageForensic(img.data, img.type, dataUrl, lastUserMsg, apiKey)
 
-      toolEvents.push({ tool: 'detect_image', result: {
-        verdict:        result.verdict,
-        confidence_pct: result.confidence_pct,
-        key_findings:   result.details.key_findings || [],
-        recommendation: result.details.recommendation || '',
-        engine:         'Aiscern Vision Engine',
-      }})
+        toolEvents.push({ tool: 'detect_image', result: {
+          verdict:        result.verdict,
+          confidence_pct: result.confidence_pct,
+          key_findings:   result.details.key_findings || [],
+          recommendation: result.details.recommendation || '',
+          engine:         'Aiscern Vision Engine',
+        }})
 
-      contextParts.push(
-        `[IMAGE ANALYSIS — Aiscern Vision Engine]\n` +
-        `Verdict: ${result.verdict}\n` +
-        `Confidence: ${result.confidence_pct}%\n` +
-        (((result.details as Record<string, unknown>)['key_findings'] as string[] | undefined)?.length
-          ? `Key findings:\n${((result.details as Record<string, unknown>)['key_findings'] as string[]).map((f: string) => `  • ${f}`).join('\n')}\n`
-          : '') +
-        `Technical analysis: ${result.analysis}\n` +
-        ((result.details as Record<string, unknown>)['recommendation'] ? `Recommendation: ${(result.details as Record<string, unknown>)['recommendation']}` : '')
-      )
+        contextParts.push(
+          `[IMAGE ANALYSIS — Aiscern Vision Engine]\n` +
+          `Verdict: ${result.verdict}\n` +
+          `Confidence: ${result.confidence_pct}%\n` +
+          (((result.details as Record<string, unknown>)['key_findings'] as string[] | undefined)?.length
+            ? `Key findings:\n${((result.details as Record<string, unknown>)['key_findings'] as string[]).map((f: string) => `  • ${f}`).join('\n')}\n`
+            : '') +
+          `Technical analysis: ${result.analysis}\n` +
+          ((result.details as Record<string, unknown>)['recommendation'] ? `Recommendation: ${(result.details as Record<string, unknown>)['recommendation']}` : '')
+        )
+      } catch (err) {
+        // Fix: a failure/timeout in the image forensic pipeline (9-agent
+        // semantic RAG, can be slow) previously threw all the way out to
+        // the outer catch, which returns a plain JSON error instead of a
+        // valid text/event-stream response -- the frontend's stream reader
+        // can't display that gracefully, which looked exactly like "ARIA
+        // not responding". Now it degrades: skip image context, continue
+        // with the rest of the request so the user still gets a reply.
+        console.warn('[chat] image analysis failed, continuing without it:', err)
+      }
     }
 
     // 2. Pipeline stats
     if (intent.wantsPipelineStats && cfToken) {
-      const stats = await fetchPipelineStats(cfToken)
-      toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
-      contextParts.push(
-        `[Aiscern PIPELINE STATUS]\n` +
-        `Total samples in training system: ${stats.total_samples?.toLocaleString()}\n` +
-        `Published to detection engine: ${stats.published?.toLocaleString()}\n` +
-        `Pending processing: ${stats.pending?.toLocaleString()}\n` +
-        `Publish rate: ${stats.publish_rate}%\n` +
-        `Last updated: ${stats.last_updated}\n` +
-        `By modality: ${JSON.stringify(stats.by_modality)}\n` +
-        `Daily processing capacity: ${stats.daily_capacity}\n` +
-        `Source coverage: ${stats.sources} detection datasets`
-      )
+      try {
+        const stats = await fetchPipelineStats(cfToken)
+        toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
+        contextParts.push(
+          `[Aiscern PIPELINE STATUS]\n` +
+          `Total samples in training system: ${stats.total_samples?.toLocaleString()}\n` +
+          `Published to detection engine: ${stats.published?.toLocaleString()}\n` +
+          `Pending processing: ${stats.pending?.toLocaleString()}\n` +
+          `Publish rate: ${stats.publish_rate}%\n` +
+          `Last updated: ${stats.last_updated}\n` +
+          `By modality: ${JSON.stringify(stats.by_modality)}\n` +
+          `Daily processing capacity: ${stats.daily_capacity}\n` +
+          `Source coverage: ${stats.sources} detection datasets`
+        )
+      } catch (err) {
+        console.warn('[chat] pipeline stats fetch failed, continuing without it:', err)
+      }
     }
 
     // 3. Text analysis
     if (intent.wantsTextAnalysis && intent.extractedText && intent.extractedText.length >= 50) {
-      const result = await analyzeText(intent.extractedText, baseUrl)
-      if (result) {
-        toolEvents.push({ tool: 'detect_text', result: {
-          verdict:        result.verdict,
-          confidence_pct: Math.round(result.confidence * 100),
-          engine:         'Aiscern Text Engine',
-          signals:        result.signals?.slice(0, 4),
-        }})
-        contextParts.push(
-          `[TEXT ANALYSIS — Aiscern Text Engine]\n` +
-          `Verdict: ${result.verdict}\n` +
-          `Confidence: ${Math.round(result.confidence * 100)}%\n` +
-          `Summary: ${result.summary || 'Analysis complete.'}\n` +
-          (result.signals?.length ? `Signals detected: ${result.signals.slice(0,4).join(', ')}` : '')
-        )
+      try {
+        const result = await analyzeText(intent.extractedText, baseUrl)
+        if (result) {
+          toolEvents.push({ tool: 'detect_text', result: {
+            verdict:        result.verdict,
+            confidence_pct: Math.round(result.confidence * 100),
+            engine:         'Aiscern Text Engine',
+            signals:        result.signals?.slice(0, 4),
+          }})
+          contextParts.push(
+            `[TEXT ANALYSIS — Aiscern Text Engine]\n` +
+            `Verdict: ${result.verdict}\n` +
+            `Confidence: ${Math.round(result.confidence * 100)}%\n` +
+            `Summary: ${result.summary || 'Analysis complete.'}\n` +
+            (result.signals?.length ? `Signals detected: ${result.signals.slice(0,4).join(', ')}` : '')
+          )
+        }
+      } catch (err) {
+        console.warn('[chat] text analysis failed, continuing without it:', err)
       }
     }
 
@@ -1053,7 +1083,33 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (e: unknown) {
-    const eMsg = e instanceof Error ? e.message : 'Internal server error'
-    return new Response(JSON.stringify({ error: eMsg }), { status: 500 })
+    // Fix: this catch previously returned a plain JSON {error} response.
+    // The frontend's chat client expects either application/json (handled
+    // as a special case) or a text/event-stream SSE body -- a bare JSON
+    // error with a non-JSON content-type slipped through neither path
+    // cleanly and could render as "ARIA not responding" instead of a
+    // clear message. Always return a valid SSE stream here instead.
+    console.error('[chat] unhandled error before/during stream setup:', e)
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      start(controller) {
+        const send = (obj: Record<string, unknown>) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+        send({
+          type: 'text',
+          text: '⚠️ Something went wrong on our end. Please try sending your message again.',
+        })
+        send({ type: 'done' })
+        controller.close()
+      },
+    })
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        'Content-Type':  'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection':    'keep-alive',
+      },
+    })
   }
 }
