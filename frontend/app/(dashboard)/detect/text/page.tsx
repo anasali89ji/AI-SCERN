@@ -409,7 +409,7 @@ Analyzed: ${new Date().toLocaleString()}`
                             : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
                         </h3>
                         <div className="text-right shrink-0">
-                          <div className="text-2xl sm:text-4xl font-black text-[#2BEE34] tabular-nums">{formatConfidence(result.confidence)}</div>
+                          <div className={`text-2xl sm:text-4xl font-black ${verdictColor[result.verdict]} tabular-nums`}>{formatConfidence(result.confidence)}</div>
                           <div className="text-[10px] sm:text-xs text-[#6B6B6B]">confidence</div>
                         </div>
                       </div>
