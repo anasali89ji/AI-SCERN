@@ -83,58 +83,58 @@ export function CookieConsent() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] bg-[#0f0f17] "
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1E1E1E] bg-[#141414]"
     >
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-foreground font-medium mb-1">We use cookies</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-[#E5E5E5] font-medium mb-1">We use cookies</p>
+            <p className="text-xs text-[#6B6B6B]">
               We use necessary cookies to make the site work, and optional analytics cookies to improve
               your experience. No data is ever sold.{' '}
-              <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+              <Link href="/privacy" className="underline underline-offset-2 text-[#2BEE34] hover:text-[#4FFF58] transition-colors">
                 Privacy Policy
               </Link>
             </p>
 
             {/* Expanded preferences */}
             {expanded && (
-              <div className="mt-3 space-y-2 rounded-lg border border-white/[0.08] p-3 bg-muted/30">
+              <div className="mt-3 space-y-2 rounded-lg border border-[#1E1E1E] p-3 bg-[#1A1A1A]">
                 {/* Necessary — always on */}
                 <label className="flex items-center justify-between gap-2 text-xs">
                   <span>
-                    <span className="font-medium">Necessary</span>
-                    <span className="text-muted-foreground ml-1">— session, auth, rate limiting</span>
+                    <span className="font-medium text-[#E5E5E5]">Necessary</span>
+                    <span className="text-[#6B6B6B] ml-1">— session, auth, rate limiting</span>
                   </span>
-                  <input type="checkbox" checked disabled className="accent-primary cursor-not-allowed opacity-60" />
+                  <input type="checkbox" checked disabled className="accent-[#2BEE34] cursor-not-allowed opacity-60" />
                 </label>
 
                 {/* Analytics */}
                 <label className="flex items-center justify-between gap-2 text-xs cursor-pointer">
                   <span>
-                    <span className="font-medium">Analytics</span>
-                    <span className="text-muted-foreground ml-1">— page views, scan counts (anonymised)</span>
+                    <span className="font-medium text-[#E5E5E5]">Analytics</span>
+                    <span className="text-[#6B6B6B] ml-1">— page views, scan counts (anonymised)</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={analytics}
                     onChange={e => setAnalytics(e.target.checked)}
-                    className="accent-primary cursor-pointer"
+                    className="accent-[#2BEE34] cursor-pointer"
                   />
                 </label>
 
                 {/* Marketing */}
                 <label className="flex items-center justify-between gap-2 text-xs cursor-pointer">
                   <span>
-                    <span className="font-medium">Marketing</span>
-                    <span className="text-muted-foreground ml-1">— personalised content (currently unused)</span>
+                    <span className="font-medium text-[#E5E5E5]">Marketing</span>
+                    <span className="text-[#6B6B6B] ml-1">— personalised content (currently unused)</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={marketing}
                     onChange={e => setMarketing(e.target.checked)}
-                    className="accent-primary cursor-pointer"
+                    className="accent-[#2BEE34] cursor-pointer"
                   />
                 </label>
               </div>
@@ -142,7 +142,7 @@ export function CookieConsent() {
 
             <button
               onClick={() => setExpanded(v => !v)}
-              className="mt-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              className="mt-1 text-xs text-[#6B6B6B] hover:text-[#E5E5E5] underline underline-offset-2 transition-colors"
             >
               {expanded ? 'Hide preferences' : 'Manage preferences'}
             </button>
@@ -152,21 +152,21 @@ export function CookieConsent() {
           <div className="flex flex-shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end">
             <button
               onClick={acceptAll}
-              className="rounded-md bg-blue-600 px-4 py-2 text-xs font-medium text-blue-500-foreground hover:bg-blue-700 transition-colors"
+              className="rounded-md bg-[#2BEE34] px-4 py-2 text-xs font-medium text-[#0A0A0A] hover:bg-[#1A8F1F] transition-colors"
             >
               Accept all
             </button>
             {expanded ? (
               <button
                 onClick={savePreferences}
-                className="rounded-md border border-white/[0.08] px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
+                className="rounded-md border border-[#2A2A2A] px-4 py-2 text-xs font-medium text-[#E5E5E5] hover:bg-[#1A1A1A] transition-colors"
               >
                 Save preferences
               </button>
             ) : (
               <button
                 onClick={rejectAll}
-                className="rounded-md border border-white/[0.08] px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
+                className="rounded-md border border-[#2A2A2A] px-4 py-2 text-xs font-medium text-[#E5E5E5] hover:bg-[#1A1A1A] transition-colors"
               >
                 Reject optional
               </button>
