@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   Mail, Github, Twitter, ArrowRight, CheckCircle2, Loader2,
   Shield, Zap, FileText, Image as ImageIcon, Music, Video,
@@ -72,7 +73,13 @@ export function SiteFooter() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
 
         {/* Top grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-12 lg:gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-12 lg:gap-8"
+        >
 
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
@@ -114,7 +121,7 @@ export function SiteFooter() {
                 rel="noopener noreferrer"
                 aria-label="Aiscern on GitHub"
                 className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] transition-all"
+                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Github className="w-4 h-4" />
               </a>
@@ -124,7 +131,7 @@ export function SiteFooter() {
                 rel="noopener noreferrer"
                 aria-label="Aiscern on X / Twitter"
                 className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] transition-all"
+                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Twitter className="w-4 h-4" />
               </a>
@@ -132,7 +139,7 @@ export function SiteFooter() {
                 href="mailto:hello@aiscern.com"
                 aria-label="Email Aiscern"
                 className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] transition-all"
+                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Mail className="w-4 h-4" />
               </a>
@@ -201,7 +208,7 @@ export function SiteFooter() {
               </form>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Divider */}
         <div className="border-t border-[#1E1E1E] mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -227,7 +234,7 @@ export function SiteFooter() {
 
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border-t border-white/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="flex flex-col">
       <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#A3A3A3] mb-4">
         {title}
       </h3>
@@ -241,9 +248,9 @@ function FooterLink({ label, href }: { label: string; href: string }) {
     <li>
       <Link
         href={href}
-        className="text-sm text-[#6B6B6B] hover:text-[#E5E5E5] transition-colors duration-150"
+        className="group inline-flex items-center gap-1 text-sm text-[#6B6B6B] hover:text-[#E5E5E5] transition-colors duration-150"
       >
-        {label}
+        <span className="group-hover:translate-x-0.5 transition-transform duration-150">{label}</span>
       </Link>
     </li>
   )
