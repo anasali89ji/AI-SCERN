@@ -48,6 +48,11 @@ function timeAgo(ts: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
+function normalizeConf(c: number | null | undefined) {
+  if (c == null) return 0
+  return Math.round(c <= 1 ? c * 100 : c)
+}
+
 function MediaIcon({ type }: { type: string }) {
   const icons: Record<string, any> = { text: FileText, image: ImageIcon, audio: Music, video: Video }
   const Icon = icons[type] ?? Brain
@@ -308,7 +313,7 @@ export default function DashboardPage() {
                     <span className="text-[11px] text-[#6B6B6B]">{timeAgo(scan.created_at)}</span>
                     <span className="text-[11px] text-[#3A3A3A]">·</span>
                     <span className="text-[11px] text-[#6B6B6B]">
-                      {Math.round((scan.confidence_score ?? 0) * 100)}% conf
+                      {normalizeConf(scan.confidence_score)}% conf
                     </span>
                   </div>
                 </div>
