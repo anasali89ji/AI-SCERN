@@ -105,7 +105,7 @@ function FrameStrip({
           return (
             <div key={i} className="relative group">
               <div className={`relative rounded-lg overflow-hidden border-2 transition-all
-                ${isSuspicious ? 'border-rose-500/50' : 'border-[#2BEE34]/30'}`}>
+                ${isSuspicious ? 'border-[#FF4444]/50' : 'border-[#2BEE34]/30'}`}>
                 <img src={f.preview} alt={`Frame ${i + 1}`} className="w-full h-10 object-cover" />
                 {score?.face_detected && (
                   <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#2BEE34]" title="Face detected" />

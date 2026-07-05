@@ -65,8 +65,8 @@ const mediaColors = {
   image: 'text-[#2BEE34] bg-[#2BEE34]/10',
   video: 'text-[#A3A3A3] bg-[#1A1A1A]',
   audio: 'text-[#2BEE34] bg-[#2BEE34]/10',
-  text:  'text-amber-400 bg-[#FFB800]/10',
-  url:   'text-emerald-400 bg-[#2BEE34]/10',
+  text:  'text-[#FFB800] bg-[#FFB800]/10',
+  url:   'text-[#2BEE34] bg-[#2BEE34]/10',
 }
 
 function normalizeConf(c: number | null) {
