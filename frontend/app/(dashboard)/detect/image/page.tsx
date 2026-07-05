@@ -353,7 +353,8 @@ Analyzed: ${new Date().toLocaleString()}`
                 <span className="text-xs text-[#6B6B6B] font-mono truncate">{result.processing_time}ms</span>
                 <div className="flex items-center gap-2">
                   {forensicScanId && (
-                    <a className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 text-[#2BEE34] hover:bg-[#1A8F1F]/20 transition-colors font-medium">
+                    <a href={`/forensic/${forensicScanId}`} target="_blank" rel="noreferrer"
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 text-[#2BEE34] hover:bg-[#1A8F1F]/20 transition-colors font-medium">
                       <Microscope className="w-3.5 h-3.5" />
                       Deep Forensic Analysis
                     </a>
