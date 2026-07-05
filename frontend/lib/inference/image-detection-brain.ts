@@ -1003,13 +1003,21 @@ export async function analyzeImageWithBrain(
   // Solution: when generator fingerprint AND hue ring BOTH strongly identify a
   // specific AI generator, they are far more reliable than the texture signals.
   // Apply a correction boost that overrides the false-REAL texture drag.
-  const artStyleAI = genSig.score > 0.78 && hueSig.score > 0.68
-  const artBoost   = artStyleAI ? 0.25 : genSig.score > 0.75 && satSig.score > 0.65 ? 0.18 : 0
+  //
+  // Calibration fix: detectGeneratorFingerprints() caps genSig.score at
+  // exactly 0.74 for its "2 independent rules agree" tier (e.g. "Midjourney
+  // (Gemini agree)") -- the single most common real-world corroboration
+  // level. The gate below was previously > 0.78, which that tier can NEVER
+  // reach (only the rare 3+-match tier at 0.88 could) -- making this
+  // correction structurally unreachable for the exact case it was written
+  // to catch. Lowered so the 2-match tier actually qualifies.
+  const artStyleAI = genSig.score >= 0.72 && hueSig.score >= 0.58
+  const artBoost   = artStyleAI ? 0.25 : genSig.score >= 0.70 && satSig.score >= 0.55 ? 0.18 : 0
 
   // Purple/violet dominant palette is statistically near-impossible in real
   // photographs — real cameras produce warm or neutral casts. A purple-dominated
   // image with AI generator statistics is almost certainly AI art.
-  const isPurpleDom  = genHints.some(h => /midjourney|grok|gemini/i.test(h)) && hueSig.score > 0.62
+  const isPurpleDom  = genHints.some(h => /midjourney|grok|gemini/i.test(h)) && hueSig.score >= 0.55
   const purpleBoost  = isPurpleDom ? 0.12 : 0
 
   const score   = clamp(rawSc + boost + artBoost + purpleBoost, 0.01, 0.99)

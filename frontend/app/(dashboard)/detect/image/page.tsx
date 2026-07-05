@@ -404,12 +404,18 @@ Analyzed: ${new Date().toLocaleString()}`
             </motion.div>
           ) : (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-float">
-                <ImageIcon className="w-10 h-10 text-primary" />
+              className="card flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-float">
+                <ImageIcon className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Upload an Image</h3>
-              <p className="text-text-muted text-sm max-w-xs">Drop any image to scan for GAN artifacts, metadata anomalies, and AI generation patterns</p>
+              <h3 className="font-semibold text-text-primary mb-2">
+                {file ? 'Ready to Scan' : 'Upload an Image'}
+              </h3>
+              <p className="text-text-muted text-sm max-w-xs">
+                {file
+                  ? 'Click Detect to scan for GAN artifacts, metadata anomalies, and AI generation patterns'
+                  : 'Drop any image to scan for GAN artifacts, metadata anomalies, and AI generation patterns'}
+              </p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
