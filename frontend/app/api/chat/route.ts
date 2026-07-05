@@ -9,8 +9,15 @@ export const dynamic    = 'force-dynamic'
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
 const NVIDIA_BASE    = 'https://integrate.api.nvidia.com/v1'
-const CHAT_MODEL     = 'nvidia/llama-3.1-nemotron-70b-instruct'  // primary
-const CHAT_FALLBACK  = 'meta/llama-3.3-70b-instruct'           // fallback
+const CHAT_MODEL     = 'nvidia/llama-3.1-nemotron-70b-instruct'  // primary — detection reasoning
+const CHAT_FALLBACK  = 'meta/llama-3.3-70b-instruct'           // fallback — detection reasoning
+// Low-latency fix: a much smaller/faster model for ordinary conversation
+// (greetings, general Q&A, follow-ups) -- the vast majority of chat turns.
+// 70B models are noticeably slower on both prefill and decode; reserving
+// them for cases where nuanced interpretation actually matters (explaining
+// forensic detection results) keeps the common case fast without touching
+// quality where it counts.
+const FAST_MODEL      = 'meta/llama-3.1-8b-instruct'
 const VISION_MODEL   = 'meta/llama-3.2-90b-vision-instruct'
 const VISION_FALLBACK = 'meta/llama-3.2-11b-vision-instruct'
 
@@ -850,9 +857,24 @@ export async function POST(req: NextRequest) {
           // The client must cancel this state on the first 'text' chunk it receives.
           send({ type: 'thinking', message: 'Connecting to ARIA…' })
 
+          // Low-latency fix: use the small/fast model for ordinary
+          // conversation (greetings, general Q&A, follow-ups where no fresh
+          // tool result needs nuanced interpretation), and reserve the
+          // slower 70B tier for cases where response quality on forensic
+          // reasoning actually matters -- a tool just ran (image/text
+          // analysis), the intent is explicitly detection-related, or the
+          // user is following up on a prior scan.
+          const needsHeavyModel =
+            toolEvents.length > 0 ||
+            intent.wantsHelpWith === 'detection' ||
+            intent.detectionContext !== 'none'
+          const modelChain = needsHeavyModel
+            ? [CHAT_MODEL, CHAT_FALLBACK]
+            : [FAST_MODEL, CHAT_FALLBACK]  // capped at 2 attempts — see timeout note below
+
           // Try primary model, fallback if needed
           let chatRes: Response | null = null
-          for (const model of [CHAT_MODEL, CHAT_FALLBACK]) {
+          for (const model of modelChain) {
             chatRes = await fetch(`${NVIDIA_BASE}/chat/completions`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -874,14 +896,14 @@ export async function POST(req: NextRequest) {
                 ],
                 stream: true,
               }),
-              // Low-latency fix: was 90000ms. This only guards time-to-first-byte
-              // (fetch() resolves once headers arrive for a streamed response,
-              // not after the full body), but 90s per attempt x 2 attempts
-              // (primary + fallback) = up to 180s worst case, far past this
-              // route's own maxDuration=60 -- meaning Vercel would kill the
-              // function before the fallback model was ever tried. 20s fails
+              // Low-latency fix: was 90000ms, then 20000ms. This only guards
+              // time-to-first-byte (fetch() resolves once headers arrive for
+              // a streamed response, not after the full body), but with up
+              // to 2 attempts (primary + fallback) needs real margin under
+              // this route's maxDuration=60 once RAG/graph-context work and
+              // actual token generation time are accounted for. 15s fails
               // over to the fallback model quickly instead of hanging.
-              signal: AbortSignal.timeout(20000),
+              signal: AbortSignal.timeout(15000),
             })
             if (chatRes.ok) break
             chatRes = null
