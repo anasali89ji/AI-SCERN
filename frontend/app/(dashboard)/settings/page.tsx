@@ -193,8 +193,7 @@ export default function SettingsPage() {
           <p className="text-sm text-[#6B6B6B] mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all"
-          style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#0A0A0A] bg-[#2BEE34] hover:bg-[#1A8F1F] disabled:opacity-60 transition-all">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>
@@ -340,7 +339,7 @@ export default function SettingsPage() {
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
-                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
+                className="flex-1 py-2 rounded-xl bg-[#FF4444] text-white text-xs font-bold hover:bg-[#D93636] disabled:opacity-50">
                 {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>
