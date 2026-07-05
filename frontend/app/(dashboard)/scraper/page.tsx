@@ -41,11 +41,11 @@ function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
   const r = 48; const c = 2 * Math.PI * r
   const fill  = (score / 100) * c
-  const color = score >= 60 ? '#F43F5E' : score >= 35 ? '#F59E0B' : '#10B981'
+  const color = score >= 60 ? '#FF4444' : score >= 35 ? '#FFB800' : '#2BEE34'
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg className="absolute inset-0 -rotate-90" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r={r} fill="none" stroke="#1e1e2e" strokeWidth="9" />
+        <circle cx="55" cy="55" r={r} fill="none" stroke="#2A2A2A" strokeWidth="9" />
         <circle cx="55" cy="55" r={r} fill="none" stroke={color} strokeWidth="9"
           strokeDasharray={`${fill} ${c}`} strokeLinecap="round"
           style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)' }} />
@@ -444,7 +444,7 @@ export default function ScraperPage() {
                 <div className="mt-3 space-y-1 max-h-56 overflow-y-auto">
                   {result.discovered_links.map((link, i) => (
                     <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[#141414] text-xs group/row">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-[#2BEE34]' : 'bg-[#2BEE34]'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-[#2BEE34]' : 'bg-[#6B6B6B]'}`} />
                       <span className="text-[#A3A3A3] truncate flex-1">{link.text.slice(0, 55)}</span>
                       <a href={link.url} target="_blank" rel="noreferrer"
                         className="text-[#2BEE34] hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
