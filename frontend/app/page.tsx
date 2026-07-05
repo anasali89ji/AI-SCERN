@@ -21,6 +21,8 @@ import {
 
 import HomepageReviews from '@/components/home/HomepageReviews'
 import { WhoNeedsCarousel } from '@/components/home/WhoNeedsCarousel'
+import WhoNeedsSection from '@/components/home/WhoNeedsSection'
+import AIvsRealSection from '@/components/home/AIvsRealSection'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 
 // ─── CountUp ──────────────────────────────────────────────────────────────────
@@ -321,6 +323,16 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ── WHO NEEDS AISCERN ── */}
+        <ErrorBoundary>
+          <WhoNeedsSection />
+        </ErrorBoundary>
+
+        {/* ── AI VS REAL ── */}
+        <ErrorBoundary>
+          <AIvsRealSection />
+        </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
         <section className="py-14 sm:py-20 border-y border-[#1E1E1E] bg-[#0A0A0A]">
