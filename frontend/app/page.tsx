@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -187,12 +188,12 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~85%' },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~82%' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~79%' },
-  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%' },
-  { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New'  },
-  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×'  },
+  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~85%', accent: '#f59e0b', glow: 'text'  },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~82%', accent: '#2563eb', glow: 'image' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~79%', accent: '#06b6d4', glow: 'audio' },
+  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%', accent: '#8b5cf6', glow: 'video' },
+  { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
+  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
 ]
 
 const STATS = [
@@ -367,32 +368,49 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {TOOLS.map((tool, i) => (
-                <Link
+                <motion.div
                   key={i}
-                  href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href}
-                  className="group block bg-[#141414] border border-[#1E1E1E] rounded-xl p-6
-                             hover:border-[#2A2A2A] hover:shadow-[0_0_20px_rgba(43,238,52,0.08)]
-                             transition-all duration-200"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 0.45, delay: (i % 3) * 0.08, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0
-                                    bg-[#1A1A1A] border border-[#2A2A2A] group-hover:border-[#2BEE34]/30
-                                    transition-colors duration-200">
-                      <tool.icon className="w-5 h-5 text-[#A3A3A3] group-hover:text-[#2BEE34] transition-colors duration-200" strokeWidth={1.8} />
+                  <Link
+                    href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href}
+                    className={`group block bg-[#141414] border border-[#1E1E1E] rounded-xl p-6 card-lift glow-border-${tool.glow}
+                               hover:border-[${tool.accent}40] transition-all duration-200`}
+                    style={{ '--tw-shadow-color': tool.accent } as React.CSSProperties}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = `${tool.accent}40` }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '' }}
+                  >
+                    <div className="flex items-start justify-between mb-5">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0
+                                    bg-[#1A1A1A] border transition-all duration-200 group-hover:scale-110"
+                        style={{ borderColor: `${tool.accent}30` }}
+                      >
+                        <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} />
+                      </div>
+                      <span
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1A1A1A] border"
+                        style={{ borderColor: `${tool.accent}30`, color: tool.accent }}
+                      >
+                        {tool.accuracy}
+                      </span>
                     </div>
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full
-                                     bg-[#1A1A1A] border border-[#2A2A2A] text-[#6B6B6B]">
-                      {tool.accuracy}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-semibold text-white mb-2 group-hover:text-[#2BEE34] transition-colors duration-200">
-                    {tool.label}
-                  </h3>
-                  <p className="text-sm text-[#A3A3A3] leading-relaxed">{tool.desc}</p>
-                  <div className="mt-5 flex items-center gap-1 text-xs font-medium text-[#6B6B6B] group-hover:text-[#2BEE34] transition-colors duration-200">
-                    Try now <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
-                  </div>
-                </Link>
+                    <h3 className="text-base font-semibold text-white mb-2 transition-colors duration-200">
+                      {tool.label}
+                    </h3>
+                    <p className="text-sm text-[#A3A3A3] leading-relaxed">{tool.desc}</p>
+                    <div
+                      className="mt-5 flex items-center gap-1 text-xs font-medium text-[#6B6B6B]
+                                 group-hover:gap-2 transition-all duration-200"
+                    >
+                      <span className="group-hover:text-white transition-colors duration-200">Try now</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} />
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
