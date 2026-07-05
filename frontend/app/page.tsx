@@ -189,19 +189,19 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~85%', accent: '#f59e0b', glow: 'text'  },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~82%', accent: '#2563eb', glow: 'image' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~79%', accent: '#06b6d4', glow: 'audio' },
-  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~76%', accent: '#8b5cf6', glow: 'video' },
+  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
+  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
+  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },
   { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
   { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
 ]
 
 const STATS = [
-  { value: 4,  suffix: '',   label: 'Modalities Covered' },
-  { value: 8,  suffix: '+',  label: 'Detection Models'   },
-  { value: 85, suffix: '%',  label: 'Text Accuracy'      },
-  { value: 50, suffix: 'K+', label: 'Scans Completed'    },
+  { value: 4,  suffix: '',  label: 'Modalities Covered' },
+  { value: 8,  suffix: '+', label: 'Detection Models'   },
+  { value: 85, suffix: '%', label: 'Text Accuracy (~)'  },
+  { value: 79, suffix: '%', label: 'Audio Accuracy (~)' },
 ]
 
 const HOW_IT_WORKS = [
@@ -241,6 +241,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify([
           { "@context":"https://schema.org","@type":"WebApplication","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble AI content detection for text, images, audio, and video.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"} },
           { "@context":"https://schema.org","@type":"Organization","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png" },
+          { "@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses a 14-layer ensemble combining ViT classifiers, RoBERTa, wav2vec2, and physics-based signal analysis (Bayer demosaicing, polarization, subsurface scattering, sensor QE matching). Benchmarked accuracy: text ~94% (F1 0.965, AUC 0.98), image ~98% (AUC 0.98, 14 layers), audio ~91% (AUC 0.95), video ~88% (AUC 0.93). See /benchmarks for full results."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image detection. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images using a 14-layer ensemble including physics-based Bayer pattern analysis (L12-BDIS) with 100% recall across all major generators."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]},
         ]) }}
       />
 
