@@ -381,10 +381,10 @@ export default function HomePage() {
                   <Link
                     href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href}
                     className={`group block bg-[#141414] border border-[#1E1E1E] rounded-xl p-6 card-lift glow-border-${tool.glow}
-                               hover:border-[${tool.accent}40] transition-all duration-200`}
-                    style={{ '--tw-shadow-color': tool.accent } as React.CSSProperties}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = `${tool.accent}40` }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = '' }}
+                               hover:border-[color:var(--accent)] focus-visible:border-[color:var(--accent)]
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40
+                               transition-all duration-200`}
+                    style={{ '--accent': tool.accent } as React.CSSProperties}
                   >
                     <div className="flex items-start justify-between mb-5">
                       <div
@@ -504,11 +504,9 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.45, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-[#141414] border border-[#1E1E1E]'}
+                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-[#141414] border border-[#1E1E1E] hover:border-[color:var(--accent)]'}
                               rounded-xl p-6 card-lift transition-all duration-200 relative overflow-hidden`}
-                  style={wide ? { boxShadow: `inset 0 0 0 1px ${accent}20` } : undefined}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = wide ? '' : `${accent}40` }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = wide ? '' : '' }}
+                  style={{ '--accent': accent, ...(wide ? { boxShadow: `inset 0 0 0 1px ${accent}20` } : {}) } as React.CSSProperties}
                 >
                   {wide && (
                     <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"

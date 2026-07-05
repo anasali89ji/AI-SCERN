@@ -22,7 +22,7 @@ const BLURBS: Record<string, string> = {
   Healthcare:       'Verify patient-submitted documents and records for integrity.',
 }
 
-export function WhoNeedsCarousel({ items }: { items: { label: string; icon: LucideIcon }[] }) {
+export function WhoNeedsCarousel({ items, bgColor = '#0A0A0A' }: { items: { label: string; icon: LucideIcon }[]; bgColor?: string }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
@@ -43,8 +43,10 @@ export function WhoNeedsCarousel({ items }: { items: { label: string; icon: Luci
   return (
     <div className="relative">
       {/* Edge fade masks */}
-      <div className={`pointer-events-none absolute left-0 top-0 bottom-0 w-10 z-10 bg-gradient-to-r from-[#141414] to-transparent transition-opacity duration-300 ${atStart ? 'opacity-0' : 'opacity-100'}`} />
-      <div className={`pointer-events-none absolute right-0 top-0 bottom-0 w-10 z-10 bg-gradient-to-l from-[#141414] to-transparent transition-opacity duration-300 ${atEnd ? 'opacity-0' : 'opacity-100'}`} />
+      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 z-10 transition-opacity duration-300"
+        style={{ background: `linear-gradient(to right, ${bgColor}, transparent)`, opacity: atStart ? 0 : 1 }} />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 z-10 transition-opacity duration-300"
+        style={{ background: `linear-gradient(to left, ${bgColor}, transparent)`, opacity: atEnd ? 0 : 1 }} />
 
       <div
         ref={scrollerRef}
