@@ -69,7 +69,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
 
       {/* Rotating word row */}
       <motion.div
-        className="mt-3 sm:mt-4 flex items-center justify-center gap-x-2 sm:gap-x-3"
+        className="mt-3 sm:mt-4 flex items-center justify-center gap-x-3 sm:gap-x-4"
         initial={{ opacity: 0, y: reduced ? 0 : 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduced ? 0 : 0.5, delay: 0.15, ease: 'easeOut' }}
@@ -84,11 +84,11 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         */}
         <div
           className="relative overflow-hidden
-                     w-16  h-8
-                     xs:w-20 xs:h-9
-                     sm:w-28 sm:h-11
-                     md:w-36 md:h-14
-                     lg:w-44 lg:h-16"
+                     w-[4.5rem]  h-8
+                     xs:w-[5.5rem] xs:h-9
+                     sm:w-[7.5rem] sm:h-11
+                     md:w-[9.5rem] md:h-14
+                     lg:w-[11.5rem] lg:h-16"
           aria-live="polite"
           aria-atomic="true"
         >

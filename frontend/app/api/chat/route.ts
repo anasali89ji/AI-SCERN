@@ -651,10 +651,16 @@ export async function POST(req: NextRequest) {
     if (!messages?.length) return NextResponse.json({ success: false, error: { code: 'NO_MESSAGES', message: 'Missing messages' } }, { status: 400 })
 
     const apiKey  = process.env.NVIDIA_API_KEY || ''
+    // Fallback NVIDIA API key: only used if the primary key's requests all
+    // fail (invalid key, rate-limited, account issue). Kept as a SEPARATE
+    // sequential attempt rather than racing both keys eagerly on every
+    // request, so the common case (primary key healthy) doesn't double
+    // NVIDIA API usage for no benefit.
+    const apiKeyFallback = process.env.NVIDIA_API_KEY_FALLBACK || process.env.NVIDIA_API_KEY_2 || ''
     const cfToken = process.env.CLOUDFLARE_API_TOKEN || ''
     const baseUrl = req.nextUrl.origin
 
-    if (!apiKey) {
+    if (!apiKey && !apiKeyFallback) {
       const encoder = new TextEncoder()
       const stream  = new ReadableStream({
         start(controller) {
@@ -891,11 +897,11 @@ export async function POST(req: NextRequest) {
           // under a fixed, low overall time budget.
           const MODEL_TIMEOUT_MS = 28000 // per-model budget when racing in parallel
 
-          const tryModel = async (model: string): Promise<Response | null> => {
+          const tryModel = async (model: string, key: string, timeoutMs = MODEL_TIMEOUT_MS): Promise<Response | null> => {
             try {
               const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
                 body: JSON.stringify({
                   model,
                   // Low-latency fix: was 2048. On a 70B model, a long response
@@ -914,7 +920,7 @@ export async function POST(req: NextRequest) {
                   ],
                   stream: true,
                 }),
-                signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+                signal: AbortSignal.timeout(timeoutMs),
               })
               return res.ok ? res : null
             } catch {
@@ -924,12 +930,28 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Race all models in modelChain simultaneously; take the first
-          // one that actually succeeds (resolves to a non-null Response).
-          const raceResults = await Promise.allSettled(modelChain.map(tryModel))
+          // Race all models in modelChain simultaneously using the primary
+          // key; take the first one that actually succeeds.
           let chatRes: Response | null = null
-          for (const r of raceResults) {
-            if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
+          if (apiKey) {
+            const raceResults = await Promise.allSettled(modelChain.map(m => tryModel(m, apiKey)))
+            for (const r of raceResults) {
+              if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
+            }
+          }
+
+          // Primary key produced nothing usable (missing, invalid, rate-
+          // limited, or every model timed out) -- retry once with the
+          // fallback key if one is configured. This only fires when the
+          // primary path has already failed, so it doesn't add latency or
+          // extra API usage on the healthy/common path.
+          if (!chatRes && apiKeyFallback) {
+            const fallbackResults = await Promise.allSettled(
+              modelChain.map(m => tryModel(m, apiKeyFallback, 15000))
+            )
+            for (const r of fallbackResults) {
+              if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
+            }
           }
 
           if (!chatRes) {
