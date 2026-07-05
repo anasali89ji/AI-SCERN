@@ -172,9 +172,13 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
 
               {/* Display name */}
               <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div onClick={() => setIsAnonymous(a => !a)}
-                    className={`w-9 h-5 rounded-full transition-colors relative ${isAnonymous ? 'bg-[#2BEE34]' : 'bg-[#2A2A2A]'}`}>
+                <label htmlFor="review-anonymous" className="flex items-center gap-3 cursor-pointer w-fit">
+                  <input id="review-anonymous" type="checkbox" checked={isAnonymous}
+                    onChange={e => setIsAnonymous(e.target.checked)}
+                    className="peer sr-only" />
+                  <div aria-hidden className={`w-9 h-5 rounded-full transition-colors relative shrink-0
+                    peer-focus-visible:ring-2 peer-focus-visible:ring-[#2BEE34]/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#141414]
+                    ${isAnonymous ? 'bg-[#2BEE34]' : 'bg-[#2A2A2A]'}`}>
                     <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isAnonymous ? 'translate-x-4' : 'translate-x-0.5'}`} />
                   </div>
                   <span className="text-sm text-[#A3A3A3] flex items-center gap-1.5">
