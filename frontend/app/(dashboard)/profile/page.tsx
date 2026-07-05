@@ -12,8 +12,18 @@ import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 
 // ── Avatar ────────────────────────────────────────────────────
-function Avatar({ name, size = 96 }: { name: string; size?: number }) {
+function Avatar({ name, size = 96, imageUrl }: { name: string; size?: number; imageUrl?: string | null }) {
   const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt="Profile"
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20"
+      />
+    )
+  }
   return (
     <div
       style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', width: size, height: size, fontSize: size * 0.32 }}
@@ -247,6 +257,25 @@ export default function ProfilePage() {
   const [username,    setUsername]    = useState('')
   const [bio,         setBio]         = useState('')
 
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+
+  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !clerkUser) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    setAvatarUploading(true)
+    try {
+      await clerkUser.setProfileImage({ file })
+      toast.success('Profile picture updated')
+    } catch {
+      toast.error('Failed to update profile picture')
+    } finally {
+      setAvatarUploading(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }, [clerkUser])
+
   const [uStatus,      setUStatus] = useState<'idle'|'checking'|'available'|'taken'>('idle')
   const [suggestions,  setSugg]    = useState<string[]>([])
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -340,12 +369,19 @@ export default function ProfilePage() {
         <div className="px-4 sm:px-6 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             <div className="relative group">
-              <Avatar name={displayName || user?.displayName || user?.email || 'U'} size={88} />
-              {editing && (
-                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Camera className="w-5 h-5 text-white" />
-                </div>
-              )}
+              <Avatar name={displayName || user?.displayName || user?.email || 'U'} size={88} imageUrl={clerkUser?.imageUrl} />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarUploading}
+                aria-label="Change profile picture"
+                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-wait"
+              >
+                {avatarUploading
+                  ? <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  : <Camera className="w-5 h-5 text-white" />}
+              </button>
+              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
               <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-surface" />
             </div>
 

@@ -187,9 +187,9 @@ Analyzed: ${new Date().toLocaleString()}`
         <p className="text-text-muted ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
+      <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
         {/* Upload Panel */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full md:flex-1 md:basis-0 min-w-0">
           {!file ? (
             // Fix 4.2: On touch devices, show a large tap-to-capture button with camera access
             // On desktop, keep the drag-and-drop zone
@@ -297,6 +297,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
+        <div className="w-full md:flex-1 md:basis-0 min-w-0">
         <ErrorBoundary fallback={
           <div className="card border-rose/30 bg-rose/5 flex flex-col items-center gap-2 text-center py-10">
             <AlertTriangle className="w-6 h-6 text-rose" />
@@ -427,6 +428,7 @@ Analyzed: ${new Date().toLocaleString()}`
           )}
         </AnimatePresence>
         </ErrorBoundary>
+        </div>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

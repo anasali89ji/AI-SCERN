@@ -205,8 +205,8 @@ function AudioDetectionPage() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
-        <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
+        <div className="space-y-4 w-full md:flex-1 md:basis-0 min-w-0">
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
@@ -290,6 +290,7 @@ function AudioDetectionPage() {
           )}
         </div>
 
+        <div className="w-full md:flex-1 md:basis-0 min-w-0">
         <AnimatePresence>
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -400,12 +401,14 @@ function AudioDetectionPage() {
             </motion.div>
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 animate-float">
-                <Mic className="w-10 h-10 text-cyan" />
+              className="card flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 animate-float">
+                <Mic className="w-8 h-8 text-cyan" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Upload Audio</h3>
-              <p className="text-text-muted text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
+              <h3 className="font-semibold text-text-primary mb-2">{file ? 'Ready to Scan' : 'Upload Audio'}</h3>
+              <p className="text-text-muted text-sm max-w-xs">
+                {file ? 'Click Detect to scan for TTS synthesis and voice cloning artifacts' : 'Drop a voice recording to scan for TTS synthesis and voice cloning artifacts'}
+              </p>
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-muted w-full max-w-xs">
                 {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-active/50">
@@ -416,6 +419,7 @@ function AudioDetectionPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

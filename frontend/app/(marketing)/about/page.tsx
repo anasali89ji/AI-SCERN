@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Shield, Brain, Zap, Globe, Users, GitBranch, MapPin, Briefcase } from 'lucide-react'
+import { Shield, Brain, Zap, Globe, Users, MapPin, Briefcase } from 'lucide-react'
 
 export const metadata = {
   title: 'About Aiscern — Free AI Content Detection',
@@ -174,23 +174,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Tech stack — moved after team (1.3 fix) */}
-        <div className="rounded-2xl border border-border/55 bg-surface p-4 sm:p-6 mb-10 sm:mb-14">
-          <div className="flex items-center gap-2 mb-4">
-            <GitBranch className="w-5 h-5 text-primary" />
-            <h2 className="font-black text-lg">Built with</h2>
-          </div>
-          <p className="text-text-muted text-sm leading-relaxed mb-4">
-            Aiscern is built on Next.js 15, TypeScript, Tailwind CSS, Supabase, Cloudflare R2, and a pipeline of HuggingFace inference models backed by NVIDIA NIM for GPU acceleration. Detection models are an ensemble of fine-tuned classifiers trained on public benchmarks and continuously updated as new generators emerge.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {['Next.js 15', 'TypeScript', 'Supabase', 'Cloudflare R2', 'HuggingFace', 'NVIDIA NIM', 'Inngest', 'Vercel'].map(t => (
-              <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-surface-active border border-border/50 text-text-muted">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
+        {/* Tech stack section intentionally removed — not shown publicly */}
 
         {/* CTA */}
         <div className="text-center space-y-4">

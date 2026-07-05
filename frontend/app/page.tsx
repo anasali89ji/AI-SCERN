@@ -620,7 +620,7 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
+        <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
 
           {/* Animated mesh gradients */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">

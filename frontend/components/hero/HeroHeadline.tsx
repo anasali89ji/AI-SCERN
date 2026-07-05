@@ -118,7 +118,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
 
       {/* Dot indicators */}
       <motion.div
-        className="mt-2 sm:mt-3 flex items-center justify-center gap-1.5"
+        className="mt-2 sm:mt-3 flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.4, delay: 0.3 }}
@@ -136,9 +136,13 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
               aria-current={active ? 'true' : undefined}
               onClick={() => { setIdx(i); setIsPaused(true) }}
               className={[
-                /* 44px hit area on mobile, natural on desktop */
+                /* Tap target kept generous, but negative margin lets targets
+                   overlap slightly so the visible dots sit close together —
+                   the previous gap-1.5 BETWEEN 44px boxes made dots look far
+                   apart despite each dot itself being tiny. */
                 'flex items-center justify-center',
-                'min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0',
+                'min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0',
+                '-mx-1.5 sm:mx-0.5',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full',
               ].join(' ')}
             >

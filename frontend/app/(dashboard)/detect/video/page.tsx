@@ -337,9 +337,9 @@ function VideoDetectionPage() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
+      <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
         {/* Left: Upload + Video Player */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full md:flex-1 md:basis-0 min-w-0">
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload
@@ -466,6 +466,7 @@ function VideoDetectionPage() {
         </div>
 
         {/* Right: Results */}
+        <div className="w-full md:flex-1 md:basis-0 min-w-0">
         <AnimatePresence>
           {result && cfg ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -579,13 +580,13 @@ function VideoDetectionPage() {
             </motion.div>
           ) : !loading && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 animate-float">
-                <Video className="w-10 h-10 text-secondary" />
+              className="card flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 animate-float">
+                <Video className="w-8 h-8 text-secondary" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Upload a Video</h3>
+              <h3 className="font-semibold text-text-primary mb-2">{file ? 'Ready to Scan' : 'Upload a Video'}</h3>
               <p className="text-text-muted text-sm max-w-xs">
-                Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts
+                {file ? 'Click Detect to extract frames and scan for deepfake artifacts' : 'Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts'}
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-text-muted w-full">
                 {[
@@ -604,6 +605,7 @@ function VideoDetectionPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">

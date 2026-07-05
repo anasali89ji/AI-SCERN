@@ -206,9 +206,9 @@ Analyzed: ${new Date().toLocaleString()}`
         <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 items-start">
+      <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
         {/* Input Panel */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full md:flex-1 md:basis-0 min-w-0">
           <div className="card">
             <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
               <h2 className="font-semibold text-text-primary text-sm">Input Text</h2>
@@ -365,7 +365,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
-        <div>
+        <div className="w-full md:flex-1 md:basis-0 min-w-0">
           <AnimatePresence>
             {loading && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -528,9 +528,9 @@ Analyzed: ${new Date().toLocaleString()}`
 
             {!result && !loading && (
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="card flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-2xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-10 h-10 text-amber" />
+                className="card flex flex-col items-center justify-center py-10 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-amber" />
                 </div>
                 <h3 className="font-semibold text-text-primary mb-2">Ready to Analyze</h3>
                 <p className="text-text-muted text-sm max-w-xs">
