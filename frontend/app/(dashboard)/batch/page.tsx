@@ -314,9 +314,9 @@ export default function BatchPage() {
                 <div className="col-span-2 sm:col-span-4 text-xs text-[#6B6B6B] mb-1">
                   Hey <span className="text-white font-semibold">{displayName}</span> — batch scan complete.{' '}
                   {aiCount > 0
-                    ? <span className="text-rose-400 font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
-                    : <span className="text-emerald-400 font-medium">No AI-generated content detected</span>}
-                  {humanCount > 0 && aiCount > 0 && <>, <span className="text-emerald-400 font-medium">{humanCount} authentic</span></>}.
+                    ? <span className="text-[#FF4444] font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
+                    : <span className="text-[#2BEE34] font-medium">No AI-generated content detected</span>}
+                  {humanCount > 0 && aiCount > 0 && <>, <span className="text-[#2BEE34] font-medium">{humanCount} authentic</span></>}.
                 </div>
               )}
               {[
@@ -378,7 +378,7 @@ export default function BatchPage() {
             <div className="p-4 rounded-xl border border-[#FF4444]/30 bg-[#FF4444]/5 flex items-start gap-3 mb-2">
               <AlertTriangle className="w-5 h-5 text-[#FF4444] shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-rose-400">Correlated AI Pattern Detected</p>
+                <p className="text-sm font-semibold text-[#FF4444]">Correlated AI Pattern Detected</p>
                 <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
               </div>
             </div>
@@ -415,10 +415,10 @@ export default function BatchPage() {
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
                     {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-[#1E1E1E]" />}
                     {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-[#2BEE34] animate-spin" />}
-                    {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-rose-400" />}
-                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-emerald-400" />}
-                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-amber-400" />}
-                    {bf.status === 'error' && <X className="w-5 h-5 text-amber-400" />}
+                    {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-[#FF4444]" />}
+                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-[#2BEE34]" />}
+                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-[#FFB800]" />}
+                    {bf.status === 'error' && <X className="w-5 h-5 text-[#FFB800]" />}
                   </div>
 
                   {/* File info */}
