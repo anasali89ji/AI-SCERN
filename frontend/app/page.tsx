@@ -25,6 +25,7 @@ import { WhoNeedsCarousel } from '@/components/home/WhoNeedsCarousel'
 import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
+import { MagneticButton } from '@/components/MagneticButton'
 
 // ─── CountUp ──────────────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -296,12 +297,14 @@ export default function HomePage() {
                     </>
                   ) : (
                     <>
-                      <Link href="/detect/text"
-                        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
-                                   bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
-                                   text-base transition-colors duration-150 w-full sm:w-auto">
-                        <ScanLine className="w-4 h-4" /> Start Detecting Free
-                      </Link>
+                      <MagneticButton className="w-full sm:w-auto">
+                        <Link href="/detect/text"
+                          className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
+                                     bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
+                                     text-base transition-colors duration-150 w-full sm:w-auto">
+                          <ScanLine className="w-4 h-4" /> Start Detecting Free
+                        </Link>
+                      </MagneticButton>
                       <Link href="/methodology"
                         className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
                                    bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
