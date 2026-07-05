@@ -585,14 +585,25 @@ export default function HomePage() {
                 {user ? 'Go to Dashboard' : 'Start Detecting Free'}
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                           bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                           text-[#E5E5E5] text-base font-semibold transition-all duration-150"
-              >
-                Create Free Account
-              </Link>
+              {user ? (
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
+                             bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                             text-[#E5E5E5] text-base font-semibold transition-all duration-150"
+                >
+                  <MessageSquare className="w-4 h-4" /> Try ARIA Assistant
+                </Link>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
+                             bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                             text-[#E5E5E5] text-base font-semibold transition-all duration-150"
+                >
+                  Create Free Account
+                </Link>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-[#6B6B6B]">
