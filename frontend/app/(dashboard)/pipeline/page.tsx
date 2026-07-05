@@ -166,7 +166,7 @@ export default function PipelinePage() {
                     <div className={`w-2 h-2 rounded-full ${w.online ? 'bg-[#2BEE34]' : 'bg-[#FF4444]'}`} />
                     <div>
                       <p className="text-sm font-semibold text-white">{w.name}</p>
-                      {w.error && <p className="text-xs text-rose-400">{w.error}</p>}
+                      {w.error && <p className="text-xs text-[#FF4444]">{w.error}</p>}
                       {w.version && <p className="text-xs text-[#6B6B6B]">v{w.version} · {w.role}</p>}
                     </div>
                   </div>
@@ -186,7 +186,7 @@ export default function PipelinePage() {
           {pushLog.length > 0 && (
             <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
               <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-400" /> Recent Pushes to HuggingFace
+                <CheckCircle className="w-4 h-4 text-[#2BEE34]" /> Recent Pushes to HuggingFace
               </h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {pushLog.map((p, i) => (

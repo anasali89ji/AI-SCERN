@@ -317,9 +317,9 @@ export default function ScraperPage() {
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          result.content_quality === 'high' ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-emerald-500/25' :
+                          result.content_quality === 'high' ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-[#2BEE34]/25' :
                           result.content_quality === 'low'  ? 'bg-[#FF4444]/15 text-[#FF4444] border-[#FF4444]/25' :
-                          'bg-[#FFB800]/15 text-[#FFB800] border-amber-500/25'}`}>
+                          'bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/25'}`}>
                           {result.content_quality.toUpperCase()} QUALITY
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">

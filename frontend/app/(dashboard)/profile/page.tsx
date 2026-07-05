@@ -332,7 +332,7 @@ export default function ProfilePage() {
                   <Camera className="w-5 h-5 text-white" />
                 </div>
               )}
-              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-surface" />
+              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#2BEE34] border-2 border-surface" />
             </div>
 
             <div className="flex gap-2 sm:mb-2">
