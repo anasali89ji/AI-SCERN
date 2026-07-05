@@ -365,10 +365,10 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
-        <div className="w-full md:flex-1 md:basis-0 min-w-0">
-          <AnimatePresence>
+        <div className="relative w-full md:flex-1 md:basis-0 min-w-0">
+          <AnimatePresence mode="popLayout">
             {loading && (
-              <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              <motion.div key="loading" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="card flex flex-col items-center justify-center py-16 gap-4">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full border-2 border-primary/20 flex items-center justify-center">
@@ -385,7 +385,7 @@ Analyzed: ${new Date().toLocaleString()}`
             )}
 
             {result && !loading && (
-              <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              <motion.div key="result" layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Verdict Banner */}
                 <div className={`card border ${verdictStyles[result.verdict]}`}>
                   {/* Personalized greeting */}
@@ -527,7 +527,7 @@ Analyzed: ${new Date().toLocaleString()}`
             )}
 
             {!result && !loading && (
-              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              <motion.div key="empty" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="card flex flex-col items-center justify-center py-10 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-amber/10 flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-8 h-8 text-amber" />

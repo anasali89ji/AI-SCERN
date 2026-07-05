@@ -466,10 +466,10 @@ function VideoDetectionPage() {
         </div>
 
         {/* Right: Results */}
-        <div className="w-full md:flex-1 md:basis-0 min-w-0">
-        <AnimatePresence>
+        <div className="relative w-full md:flex-1 md:basis-0 min-w-0">
+        <AnimatePresence mode="popLayout">
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            <motion.div key="result" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
               {/* Verdict card */}
@@ -579,7 +579,7 @@ function VideoDetectionPage() {
               </div>
             </motion.div>
           ) : !loading && (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            <motion.div key="empty" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto mb-4 animate-float">
                 <Video className="w-8 h-8 text-secondary" />

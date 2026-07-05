@@ -290,10 +290,10 @@ function AudioDetectionPage() {
           )}
         </div>
 
-        <div className="w-full md:flex-1 md:basis-0 min-w-0">
-        <AnimatePresence>
+        <div className="relative w-full md:flex-1 md:basis-0 min-w-0">
+        <AnimatePresence mode="popLayout">
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            <motion.div key="result" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
@@ -400,7 +400,7 @@ function AudioDetectionPage() {
               </div>
             </motion.div>
           ) : !loading && (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            <motion.div key="empty" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-cyan/10 flex items-center justify-center mx-auto mb-4 animate-float">
                 <Mic className="w-8 h-8 text-cyan" />

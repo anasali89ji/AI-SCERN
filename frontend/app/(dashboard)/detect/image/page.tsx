@@ -297,7 +297,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
 
         {/* Results Panel */}
-        <div className="w-full md:flex-1 md:basis-0 min-w-0">
+        <div className="relative w-full md:flex-1 md:basis-0 min-w-0">
         <ErrorBoundary fallback={
           <div className="card border-rose/30 bg-rose/5 flex flex-col items-center gap-2 text-center py-10">
             <AlertTriangle className="w-6 h-6 text-rose" />
@@ -305,9 +305,9 @@ Analyzed: ${new Date().toLocaleString()}`
             <p className="text-xs text-text-muted">The scan finished, but rendering the result failed. Please try again or reload.</p>
           </div>
         }>
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {result && cfg ? (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            <motion.div key="result" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
@@ -397,14 +397,14 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </motion.div>
           ) : loading && !result ? (
-            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="loading" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <DetectionSequenceLoader
                 loading={loading}
                 uploadProgress={uploadProgress}
               />
             </motion.div>
           ) : (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            <motion.div key="empty" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="card flex flex-col items-center justify-center py-10 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-float">
                 <ImageIcon className="w-8 h-8 text-primary" />
