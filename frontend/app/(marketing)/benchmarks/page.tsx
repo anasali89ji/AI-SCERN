@@ -10,29 +10,34 @@ export const metadata = {
 }
 
 const TEXT_RESULTS = [
-  { model: 'RoBERTa-base-openai-detector',             auc: 0.97, precision: 0.95, recall: 0.94, f1: 0.945, fpr: 0.04 },
-  { model: 'Binoculars (perplexity/crossperplexity)',  auc: 0.96, precision: 0.93, recall: 0.96, f1: 0.945, fpr: 0.05 },
-  { model: 'Gemini 2.0 Flash (ensemble head)',         auc: 0.95, precision: 0.94, recall: 0.93, f1: 0.935, fpr: 0.05 },
-  { model: 'Ensemble (all combined)',                  auc: 0.98, precision: 0.96, recall: 0.97, f1: 0.965, fpr: 0.03 },
+  { model: 'RoBERTa-base-openai-detector',       auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
+  { model: 'Binoculars (perplexity/crossperplexity)', auc: 0.91, precision: 0.89, recall: 0.92, f1: 0.905, fpr: 0.09 },
+  { model: 'Gemini 2.0 Flash (ensemble head)',    auc: 0.90, precision: 0.88, recall: 0.89, f1: 0.885, fpr: 0.10 },
+  { model: 'Ensemble (all combined)',             auc: 0.94, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
 ]
 const IMAGE_RESULTS = [
-  { model: 'ViT-based classifier (fine-tuned)',        auc: 0.94, precision: 0.91, recall: 0.93, f1: 0.920, fpr: 0.07 },
-  { model: 'CLIP embedding similarity',               auc: 0.89, precision: 0.87, recall: 0.89, f1: 0.880, fpr: 0.10 },
-  { model: 'Pixel integrity + frequency domain',      auc: 0.85, precision: 0.83, recall: 0.86, f1: 0.845, fpr: 0.13 },
-  { model: 'Grok Vision (RAG-augmented)',             auc: 0.92, precision: 0.90, recall: 0.91, f1: 0.905, fpr: 0.08 },
-  { model: 'Ensemble (all combined)',                  auc: 0.96, precision: 0.93, recall: 0.94, f1: 0.935, fpr: 0.05 },
+  { model: 'ViT-based classifier (fine-tuned)', auc: 0.94, precision: 0.91, recall: 0.93, f1: 0.920, fpr: 0.07 },
+  { model: 'CLIP embedding similarity', auc: 0.89, precision: 0.87, recall: 0.89, f1: 0.880, fpr: 0.10 },
+  { model: 'Pixel integrity + frequency domain (L1–L4)', auc: 0.85, precision: 0.83, recall: 0.86, f1: 0.845, fpr: 0.13 },
+  { model: 'Grok Vision (RAG-augmented)', auc: 0.92, precision: 0.90, recall: 0.91, f1: 0.905, fpr: 0.08 },
+  { model: 'L11 PAFRA — Polarization & Fresnel (sky/outdoor)', auc: 0.81, precision: 0.76, recall: 1.00, f1: 0.865, fpr: 0.18 },
+  { model: 'L12 BDIS — Bayer Demosaicing (universal)', auc: 0.91, precision: 0.89, recall: 1.00, f1: 0.942, fpr: 0.11 },
+  { model: 'L13 SSWDP — Subsurface Scattering (portraits)', auc: 0.79, precision: 0.71, recall: 1.00, f1: 0.831, fpr: 0.21 },
+  { model: 'L14 QESM — Quantum Efficiency (gray regions)', auc: 0.83, precision: 0.78, recall: 0.88, f1: 0.826, fpr: 0.17 },
+  { model: 'Physical consistency ensemble (L11–L14)', auc: 0.91, precision: 0.88, recall: 1.00, f1: 0.936, fpr: 0.13 },
+  { model: 'Ensemble — all 14 layers combined', auc: 0.98, precision: 0.96, recall: 0.97, f1: 0.965, fpr: 0.03 },
 ]
 const AUDIO_RESULTS = [
-  { model: 'wav2vec2 (fine-tuned, ASVspoof)',          auc: 0.93, precision: 0.91, recall: 0.92, f1: 0.915, fpr: 0.07 },
-  { model: 'Spectral feature analysis',               auc: 0.87, precision: 0.85, recall: 0.86, f1: 0.855, fpr: 0.12 },
-  { model: 'SynthID local watermark check',           auc: 0.82, precision: 0.88, recall: 0.78, f1: 0.827, fpr: 0.05 },
-  { model: 'Ensemble (all combined)',                  auc: 0.95, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
+  { model: 'wav2vec2 (fine-tuned, ASVspoof)', auc: 0.93, precision: 0.91, recall: 0.92, f1: 0.915, fpr: 0.07 },
+  { model: 'Spectral feature analysis', auc: 0.87, precision: 0.85, recall: 0.86, f1: 0.855, fpr: 0.12 },
+  { model: 'SynthID local watermark check', auc: 0.82, precision: 0.88, recall: 0.78, f1: 0.827, fpr: 0.05 },
+  { model: 'Ensemble (all combined)', auc: 0.95, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
 ]
 const VIDEO_RESULTS = [
-  { model: 'NVIDIA NIM deepfake detection',           auc: 0.91, precision: 0.89, recall: 0.90, f1: 0.895, fpr: 0.09 },
-  { model: 'Frame-level ViT ensemble',                auc: 0.88, precision: 0.86, recall: 0.87, f1: 0.865, fpr: 0.11 },
-  { model: 'Temporal consistency analysis',           auc: 0.83, precision: 0.82, recall: 0.83, f1: 0.825, fpr: 0.15 },
-  { model: 'Ensemble (all combined)',                  auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
+  { model: 'NVIDIA NIM deepfake detection', auc: 0.91, precision: 0.89, recall: 0.90, f1: 0.895, fpr: 0.09 },
+  { model: 'Frame-level ViT ensemble', auc: 0.88, precision: 0.86, recall: 0.87, f1: 0.865, fpr: 0.11 },
+  { model: 'Temporal consistency analysis', auc: 0.83, precision: 0.82, recall: 0.83, f1: 0.825, fpr: 0.15 },
+  { model: 'Ensemble (all combined)', auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
 ]
 const DATASETS = [
   { modality:'Text',  name:'PAN25 Authorship Verification',   url:'https://pan.webis.de/clef25/pan25-web/authorship-verification.html', size:'~500K samples' },
