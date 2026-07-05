@@ -211,10 +211,10 @@ const HOW_IT_WORKS = [
 ]
 
 const TRUST_FEATURES = [
-  { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples' },
-  { icon: Shield,      title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited' },
-  { icon: TrendingUp,  title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed' },
-  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start detecting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start' },
+  { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: '#2563eb' },
+  { icon: Shield,      title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: '#10b981' },
+  { icon: TrendingUp,  title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: '#f59e0b' },
+  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start detecting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
 ]
 
 const PROFESSIONALS = [
@@ -494,23 +494,38 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
-              {TRUST_FEATURES.map(({ icon: Icon, title, desc, wide, stat, statLabel }) => (
-                <div
+              {TRUST_FEATURES.map(({ icon: Icon, title, desc, wide, stat, statLabel, accent }, idx) => (
+                <motion.div
                   key={title}
-                  className={`${wide ? 'sm:col-span-2' : ''} bg-[#141414] border border-[#1E1E1E] rounded-xl p-6
-                              hover:border-[#2A2A2A] transition-all duration-200`}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 0.45, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-[#141414] border border-[#1E1E1E]'}
+                              rounded-xl p-6 card-lift transition-all duration-200 relative overflow-hidden`}
+                  style={wide ? { boxShadow: `inset 0 0 0 1px ${accent}20` } : undefined}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = wide ? '' : `${accent}40` }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = wide ? '' : '' }}
                 >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5
-                                  bg-[#1A1A1A] border border-[#2A2A2A]">
-                    <Icon className="w-5 h-5 text-[#2BEE34]" strokeWidth={1.8} />
+                  {wide && (
+                    <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
+                      style={{ background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)` }} />
+                  )}
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5 relative"
+                    style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
+                    <Icon className="w-5 h-5" style={{ color: accent }} strokeWidth={1.8} />
                   </div>
-                  <div className="mb-3">
-                    <div className="text-3xl sm:text-4xl font-black text-white">{stat}</div>
+                  <div className="mb-3 relative">
+                    <div className="text-3xl sm:text-4xl font-black text-white tabular-nums">
+                      {/^\d+\+?$/.test(stat)
+                        ? <CountUp target={parseInt(stat, 10)} suffix={stat.endsWith('+') ? '+' : ''} />
+                        : stat}
+                    </div>
                     <div className="text-xs text-[#6B6B6B] font-medium mt-0.5">{statLabel}</div>
                   </div>
-                  <h3 className="font-semibold text-white text-base mb-2">{title}</h3>
-                  <p className="text-sm text-[#A3A3A3] leading-relaxed">{desc}</p>
-                </div>
+                  <h3 className="font-semibold text-white text-base mb-2 relative">{title}</h3>
+                  <p className="text-sm text-[#A3A3A3] leading-relaxed relative">{desc}</p>
+                </motion.div>
               ))}
             </div>
 
