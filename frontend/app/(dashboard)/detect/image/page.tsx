@@ -11,6 +11,7 @@ import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
+import { ConfidenceRing } from '@/components/ConfidenceRing'
 import { IMAGE_MAX_SIZE_BYTES } from '@/lib/constants'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
@@ -296,9 +297,12 @@ Analyzed: ${new Date().toLocaleString()}`
                   </div>
                 )}
                 <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-                  <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center shrink-0`}>
-                    <cfg.icon className={`w-5 h-5 sm:w-7 sm:h-7 ${cfg.color}`} />
-                  </div>
+                  <ConfidenceRing
+                    confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
+                    color={cfg.hex}
+                    size={64}
+                    strokeWidth={5}
+                  />
                   <div className="flex-1 min-w-0">
                     <h3 className={`text-lg sm:text-2xl font-black ${cfg.color} mb-1 leading-tight`}>
                       {displayName
@@ -316,7 +320,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
                   <div className="h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#2BEE34]" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
                   </div>
                 </div>
               </div>
