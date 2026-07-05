@@ -872,45 +872,72 @@ export async function POST(req: NextRequest) {
             ? [CHAT_MODEL, CHAT_FALLBACK]
             : [FAST_MODEL, CHAT_FALLBACK]  // capped at 2 attempts — see timeout note below
 
-          // Try primary model, fallback if needed
+          // Fix: the previous sequential loop had NO try/catch around each
+          // fetch() attempt. AbortSignal.timeout() firing makes fetch()
+          // REJECT (not return a bad response), so a timeout on the first
+          // model threw straight out of the loop -- skipping the fallback
+          // model entirely -- and leaked the raw browser/undici error
+          // ("The operation was aborted due to timeout") to the user
+          // instead of ever trying model #2. Lowering the per-attempt
+          // timeout (in an earlier fix) made this latent bug fire far more
+          // often, which is exactly what was just reported.
+          //
+          // Real NIM cold-starts can genuinely take 30-60s (see comment
+          // above), which doesn't fit two SEQUENTIAL attempts under this
+          // route's hard maxDuration=60 ceiling on Vercel Hobby. Racing the
+          // models in PARALLEL instead means we take whichever responds
+          // first, rather than paying the full timeout cost of a slow model
+          // before ever trying the other -- the best available strategy
+          // under a fixed, low overall time budget.
+          const MODEL_TIMEOUT_MS = 28000 // per-model budget when racing in parallel
+
+          const tryModel = async (model: string): Promise<Response | null> => {
+            try {
+              const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                  model,
+                  // Low-latency fix: was 2048. On a 70B model, a long response
+                  // at max_tokens can itself take well over 60s to fully
+                  // generate/stream -- silently colliding with this route's
+                  // own `maxDuration = 60` Vercel function limit (the platform
+                  // kills the function outright, which is indistinguishable
+                  // from "Aria not responding" to the user). 1024 is still
+                  // generous for a chat answer and gives real headroom.
+                  max_tokens:  1024,
+                  temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
+                  top_p:       0.9,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...apiMessages,
+                  ],
+                  stream: true,
+                }),
+                signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+              })
+              return res.ok ? res : null
+            } catch {
+              // Timed out, aborted, or network error on THIS model only --
+              // swallow it here so the other model in the race can still win.
+              return null
+            }
+          }
+
+          // Race all models in modelChain simultaneously; take the first
+          // one that actually succeeds (resolves to a non-null Response).
+          const raceResults = await Promise.allSettled(modelChain.map(tryModel))
           let chatRes: Response | null = null
-          for (const model of modelChain) {
-            chatRes = await fetch(`${NVIDIA_BASE}/chat/completions`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-              body: JSON.stringify({
-                model,
-                // Low-latency fix: was 2048. On a 70B model, a long response
-                // at max_tokens can itself take well over 60s to fully
-                // generate/stream -- silently colliding with this route's
-                // own `maxDuration = 60` Vercel function limit (the platform
-                // kills the function outright, which is indistinguishable
-                // from "Aria not responding" to the user). 1024 is still
-                // generous for a chat answer and gives real headroom.
-                max_tokens:  1024,
-                temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
-                top_p:       0.9,
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  ...apiMessages,
-                ],
-                stream: true,
-              }),
-              // Low-latency fix: was 90000ms, then 20000ms. This only guards
-              // time-to-first-byte (fetch() resolves once headers arrive for
-              // a streamed response, not after the full body), but with up
-              // to 2 attempts (primary + fallback) needs real margin under
-              // this route's maxDuration=60 once RAG/graph-context work and
-              // actual token generation time are accounted for. 15s fails
-              // over to the fallback model quickly instead of hanging.
-              signal: AbortSignal.timeout(15000),
-            })
-            if (chatRes.ok) break
-            chatRes = null
+          for (const r of raceResults) {
+            if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
           }
 
           if (!chatRes) {
-            send({ type: 'text', text: '⚠️ ARIA is temporarily unavailable. Please try again in a moment.' })
+            send({
+              type: 'text',
+              text: '⚠️ ARIA is warming up and didn\'t respond in time — this can happen on the ' +
+                    'first request after a period of inactivity. Please try sending your message again.',
+            })
             send({ type: 'done' })
             controller.close()
             return
