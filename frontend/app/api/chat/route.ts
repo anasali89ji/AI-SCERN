@@ -928,6 +928,19 @@ export async function POST(req: NextRequest) {
           const MODEL_TIMEOUT_MS = 25000 // per-model budget when racing in parallel (was 28000 -- tightened to match vercel.json's actual 55s maxDuration, not the previously-assumed 60s)
 
           const tryModel = async (model: string, key: string, timeoutMs = MODEL_TIMEOUT_MS): Promise<Response | null> => {
+            // Fix: AbortSignal.timeout() stays armed for the ENTIRE request/
+            // response lifecycle, not just until headers arrive -- if the
+            // model connects fine but takes longer than timeoutMs to fully
+            // STREAM its response, the same signal fires mid-read and aborts
+            // it, throwing a raw AbortError ("The operation was aborted due
+            // to timeout") that isn't recognized as our own synthetic
+            // 'stream_timeout' guard further down and gets leaked to the
+            // user verbatim. Using a manual AbortController we can clear
+            // once a response is received means this timeout now only
+            // guards the CONNECT phase; body-read stalls are governed solely
+            // by the separate readWithTimeout() mechanism below, as intended.
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), timeoutMs)
             try {
               const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
                 method: 'POST',
@@ -950,13 +963,16 @@ export async function POST(req: NextRequest) {
                   ],
                   stream: true,
                 }),
-                signal: AbortSignal.timeout(timeoutMs),
+                signal: controller.signal,
               })
+              clearTimeout(timer) // got a response -- disarm the connect-timeout so it can't fire later during body reading
               return res.ok ? res : null
             } catch {
               // Timed out, aborted, or network error on THIS model only --
               // swallow it here so the other model in the race can still win.
               return null
+            } finally {
+              clearTimeout(timer)
             }
           }
 
