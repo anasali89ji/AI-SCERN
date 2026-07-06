@@ -424,7 +424,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2 mt-2">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                 isPaid
-                  ? 'bg-yellow-500/10 text-[#FFB800] border-yellow-500/20'
+                  ? 'bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20'
                   : 'bg-[#2BEE34]/10 text-[#2BEE34] border-[#2BEE34]/20'}`}>
                 {isPaid ? <Crown className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
                 {planLabel} Plan
