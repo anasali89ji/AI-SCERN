@@ -461,7 +461,7 @@ Analyzed: ${new Date().toLocaleString()}`
                       Sentence Heatmap
                       <span className="text-xs font-normal text-[#6B6B6B] ml-1">— red = AI-likely, green = human-likely</span>
                     </h3>
-                    <p className="text-xs text-[#6B6B6B] mb-3 leading-relaxed">
+                    <div className="text-sm text-[#D4D4D4] mb-3 leading-8 whitespace-pre-wrap break-words">
                       {paragraphScores.map((s, i) => {
                         const pct = s.confidence
                         const bg =
@@ -471,12 +471,16 @@ Analyzed: ${new Date().toLocaleString()}`
                                       'bg-[#2BEE34]/10 text-[#2BEE34]'
                         return (
                           <span key={i} title={`${pct}% AI probability`}
-                            className={`${bg} rounded px-0.5 mr-0.5 cursor-help transition-colors`}>
-                            {s.text}
+                            className={`${bg} rounded-md px-1 py-0.5 cursor-help transition-colors`}>
+                            {s.text.trim()}
                           </span>
                         )
-                      })}
-                    </p>
+                      }).reduce((acc: React.ReactNode[], el, i) => {
+                        if (i > 0) acc.push(' ')
+                        acc.push(el)
+                        return acc
+                      }, [])}
+                    </div>
                     {/* Legend */}
                     <div className="flex items-center gap-3 flex-wrap">
                       {[['bg-[#2BEE34]/10 text-[#2BEE34]','< 40% AI'],['bg-yellow-900/20 text-[#A3A3A3]','40–59%'],['bg-[#FFB800]/20 text-[#FFB800]','60–79%'],['bg-[#FF4444]/30 text-[#FF4444]','≥ 80%']].map(([cls, label]) => (
@@ -590,7 +594,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-[#FFB800]/30 bg-[#FFB800]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
             <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
             {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
