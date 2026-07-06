@@ -402,9 +402,23 @@ function VideoDetectionPage() {
               <div className="px-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-full cursor-pointer overflow-hidden" onClick={seekTo}>
-                    <div className="h-full bg-[#2BEE34] rounded-full transition-all"
+                  <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-full cursor-pointer overflow-hidden relative" onClick={seekTo}>
+                    <div className="h-full bg-[#2BEE34] rounded-full transition-all pointer-events-none"
                       style={{ width: `${progress * 100}%` }} />
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={0.1}
+                      value={progress * 100}
+                      onChange={e => {
+                        const pct = Number(e.target.value) / 100
+                        if (videoRef.current && duration) { videoRef.current.currentTime = pct * duration }
+                        setProgress(pct)
+                      }}
+                      aria-label="Seek video position"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
                   </div>
                   <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
                 </div>

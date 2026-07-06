@@ -246,7 +246,10 @@ Analyzed: ${new Date().toLocaleString()}`
             {pdfMode && (
               <div className="mt-3">
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
                   onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-[#2BEE34]/30','bg-[#2BEE34]/10') }}
                   onDragLeave={e => { e.currentTarget.classList.remove('border-[#2BEE34]/30','bg-[#2BEE34]/10') }}
                   onDrop={e => {

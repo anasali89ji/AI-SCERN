@@ -351,7 +351,7 @@ export default function HistoryPage() {
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
-                    <div className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/25 transition-all group cursor-pointer" onClick={() => setSelectedScan(scan)}>
+                    <div role="button" tabIndex={0} className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/25 transition-all group cursor-pointer" onClick={() => setSelectedScan(scan)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedScan(scan) } }}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                         <Icon className="w-5 h-5" />
