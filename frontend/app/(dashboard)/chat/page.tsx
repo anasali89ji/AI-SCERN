@@ -642,7 +642,7 @@ export default function ChatPage() {
             <input
               value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
               placeholder="Search…" autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-[#1A1A1A] border border-[#1E1E1E] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-[#2BEE34]/50/40"
+              className="w-full px-3 py-2 rounded-xl bg-[#1A1A1A] border border-[#1E1E1E] text-xs text-gray-300 placeholder:text-gray-700 outline-none focus:border-[#2BEE34]/40"
             />
           )}
         </div>
@@ -655,17 +655,20 @@ export default function ChatPage() {
           )}
           {filteredChats.map(c=>(
             <div key={c.id}
+              role="button"
+              tabIndex={0}
               className={`group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all text-xs ${
                 activeChatId===c.id ? 'bg-white/8 text-white border border-white/[0.07]' : 'text-gray-600 hover:text-gray-300 hover:bg-white/[0.04]'
               }`}
               onClick={()=>{setActiveChatId(c.id);setSidebarOpen(false)}}
+              onKeyDown={e=>{ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); setActiveChatId(c.id); setSidebarOpen(false) } }}
             >
               <span className="shrink-0 opacity-60"><Ico.Chat /></span>
               <div className="flex-1 min-w-0">
                 <div className="truncate">{c.title}</div>
                 <div className="text-[10px] text-gray-700 mt-0.5">{c.messages.length} messages</div>
               </div>
-              <button onClick={e=>delChat(c.id,e)} className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-all rounded shrink-0">
+              <button onClick={e=>delChat(c.id,e)} aria-label="Delete conversation" className="opacity-0 group-hover:opacity-100 p-1 hover:text-[#FF4444] transition-all rounded shrink-0">
                 <Ico.Trash />
               </button>
             </div>
@@ -674,7 +677,7 @@ export default function ChatPage() {
 
         <div className="p-3 border-t border-[#1E1E1E] space-y-0.5">
           {chats.length > 0 && (
-            <button onClick={clearAll} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-500/10 text-gray-700 hover:text-red-400 transition-all text-xs">
+            <button onClick={clearAll} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#FF4444]/10 text-gray-700 hover:text-[#FF4444] transition-all text-xs">
               <Ico.TrashAll /><span>Clear all conversations</span>
             </button>
           )}
@@ -799,7 +802,7 @@ export default function ChatPage() {
                   <div key={i} className="relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-[#1E1E1E] text-xs text-gray-500 max-w-[180px]">
                     {a.type.startsWith('image/') ? <Ico.Image /> : a.type.startsWith('audio/') ? <Ico.Music /> : a.type.startsWith('video/') ? <Ico.Video /> : <Ico.FileText />}
                     <span className="truncate">{a.name}</span>
-                    <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} className="hover:text-red-400 transition-colors ml-0.5 shrink-0"><Ico.Close /></button>
+                    <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} className="hover:text-[#FF4444] transition-colors ml-0.5 shrink-0"><Ico.Close /></button>
                   </div>
                 ))}
               </div>
@@ -826,7 +829,7 @@ export default function ChatPage() {
               />
 
               {loading
-                ? <button onClick={stop} className="p-2.5 rounded-xl bg-red-500/12 text-red-400 hover:bg-red-500/20 transition-colors shrink-0 active:scale-95" title="Stop"><Ico.Stop /></button>
+                ? <button onClick={stop} className="p-2.5 rounded-xl bg-[#FF4444]/12 text-[#FF4444] hover:bg-[#FF4444]/20 transition-colors shrink-0 active:scale-95" title="Stop"><Ico.Stop /></button>
                 : <button
                     onClick={()=>send()}
                     disabled={!input.trim()&&!attachments.length}
