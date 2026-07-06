@@ -200,16 +200,18 @@ function TypingDots() {
 // ── Smooth token-by-token fade-in for streaming text ──────────────────────
 function StreamingMessage({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
   const [displayed, setDisplayed] = useState(content)
-  const rafRef   = useRef<number>(0)
-  const targetRef = useRef(content)
+  const rafRef        = useRef<number>(0)
+  const targetRef      = useRef(content)
+  const displayedLenRef = useRef(displayed.length)
 
-  // Keep target ref in sync without triggering extra renders
+  // Keep target ref in sync without triggering extra renders or restarting the loop
   useEffect(() => { targetRef.current = content }, [content])
 
   useEffect(() => {
-    // If streaming is done or content already fully shown, skip rAF entirely
-    if (!isStreaming || displayed.length >= content.length) {
+    if (!isStreaming) {
+      // Streaming finished (or message was never streamed) — show full content immediately
       setDisplayed(content)
+      displayedLenRef.current = content.length
       return
     }
 
@@ -217,20 +219,27 @@ function StreamingMessage({ content, isStreaming }: { content: string; isStreami
     const step = () => {
       if (cancelled) return
       const target = targetRef.current
-      setDisplayed(prev => {
-        if (prev.length >= target.length) return prev
+      if (displayedLenRef.current < target.length) {
         // Reveal 8 chars per frame (~120wpm at 60fps) — fast enough to feel live
-        return target.slice(0, prev.length + 8)
-      })
-      // Only schedule next frame if there's still text to reveal
-      if (displayed.length < targetRef.current.length) {
-        rafRef.current = requestAnimationFrame(step)
+        const next = Math.min(displayedLenRef.current + 8, target.length)
+        displayedLenRef.current = next
+        setDisplayed(target.slice(0, next))
       }
+      rafRef.current = requestAnimationFrame(step)
     }
     rafRef.current = requestAnimationFrame(step)
     return () => { cancelled = true; cancelAnimationFrame(rafRef.current) }
+  // Fix: this loop must only (re)start when streaming itself starts/stops --
+  // NOT on every `content` change. content changes on every incoming chunk
+  // (multiple times per second), and with `content` in the dependency array
+  // the effect's cleanup canceled the in-progress animation frame and
+  // restarted a brand new loop on EVERY chunk, often before a single frame
+  // had run -- so the reveal never actually progressed smoothly and instead
+  // jumped straight to whatever had streamed in by the time a frame finally
+  // fired. The loop itself already reads the latest target continuously via
+  // targetRef (kept in sync above), so it doesn't need to restart per chunk.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, isStreaming])
+  }, [isStreaming])
 
   return <Markdown content={displayed} />
 }

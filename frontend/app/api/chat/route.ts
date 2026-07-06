@@ -676,6 +676,7 @@ export async function POST(req: NextRequest) {
           'Content-Type':  'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection':    'keep-alive',
+          'X-Accel-Buffering': 'no',
         },
       })
     }
@@ -870,6 +871,7 @@ export async function POST(req: NextRequest) {
           'Content-Type':  'text/event-stream',
           'Cache-Control': 'no-cache',
           'Connection':    'keep-alive',
+          'X-Accel-Buffering': 'no',
           'X-ARIA-Source': 'kb-direct',
         },
       })
@@ -976,14 +978,37 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          // Fix: resolve as soon as the FIRST model succeeds, instead of
+          // waiting for every model in the race to finish. tryModel() never
+          // rejects (it catches everything internally and resolves to
+          // null on failure), so Promise.allSettled -- which waits for
+          // ALL promises to settle regardless of value -- was silently
+          // forcing every request to wait for the SLOWEST model in the
+          // chain (often the 70B fallback) even when the fast 8B model
+          // had already succeeded in a couple of seconds. This defeated
+          // the entire point of racing a fast + slow model together and
+          // was a major, previously-unnoticed contributor to ARIA feeling
+          // slow even after the timeout/abort bugs were fixed.
+          function raceFirstSuccess<T>(promises: Promise<T | null>[]): Promise<T | null> {
+            return new Promise((resolve) => {
+              let remaining = promises.length
+              if (remaining === 0) { resolve(null); return }
+              for (const p of promises) {
+                p.then(v => {
+                  if (v !== null) resolve(v)
+                  else if (--remaining === 0) resolve(null)
+                }).catch(() => {
+                  if (--remaining === 0) resolve(null)
+                })
+              }
+            })
+          }
+
           // Race all models in modelChain simultaneously using the primary
           // key; take the first one that actually succeeds.
           let chatRes: Response | null = null
           if (apiKey) {
-            const raceResults = await Promise.allSettled(modelChain.map(m => tryModel(m, apiKey)))
-            for (const r of raceResults) {
-              if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
-            }
+            chatRes = await raceFirstSuccess(modelChain.map(m => tryModel(m, apiKey)))
           }
 
           // Primary key produced nothing usable (missing, invalid, rate-
@@ -992,12 +1017,9 @@ export async function POST(req: NextRequest) {
           // primary path has already failed, so it doesn't add latency or
           // extra API usage on the healthy/common path.
           if (!chatRes && apiKeyFallback) {
-            const fallbackResults = await Promise.allSettled(
+            chatRes = await raceFirstSuccess(
               modelChain.map(m => tryModel(m, apiKeyFallback, 12000))
             )
-            for (const r of fallbackResults) {
-              if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
-            }
           }
 
           if (!chatRes) {
@@ -1096,6 +1118,7 @@ export async function POST(req: NextRequest) {
         'Content-Type':  'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection':    'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
     })
   } catch (e: unknown) {
@@ -1125,6 +1148,7 @@ export async function POST(req: NextRequest) {
         'Content-Type':  'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection':    'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
     })
   }
