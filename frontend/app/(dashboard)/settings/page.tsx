@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
+import { useAnimationPref } from '@/components/AnimationPreferenceContext'
 
 
 
@@ -68,6 +69,7 @@ export default function SettingsPage() {
   const { user, signOut }  = useAuth()
   const { openUserProfile } = useClerk()
   const supabase            = createClient()
+  const { setReduceAnimations } = useAnimationPref()
 
   // ── Notification settings ──────────────────────────────────────────────────
   const [emailNotif,       setEmailNotif]       = useState(true)
@@ -132,11 +134,15 @@ export default function SettingsPage() {
         if (s.theme            !== undefined) setTheme(s.theme)
         if (s.language         !== undefined) setLanguage(s.language)
         if (s.compactView      !== undefined) setCompactView(s.compactView)
-        if (s.animationsOff    !== undefined) setAnimationsOff(s.animationsOff)
+        if (s.animationsOff    !== undefined) {
+          setAnimationsOff(s.animationsOff)
+          setReduceAnimations(s.animationsOff)
+          localStorage.setItem('aiscern_animations_off', String(s.animationsOff))
+        }
       }
     } catch {}
     setLoading(false)
-  }, [user?.uid]) // eslint-disable-line
+  }, [user?.uid, setReduceAnimations]) // eslint-disable-line
 
   useEffect(() => { loadSettings() }, [loadSettings])
 
@@ -250,7 +256,12 @@ export default function SettingsPage() {
             </select>
           } />
         <SettingRow icon={Monitor}     label="Compact view"      description="Reduce padding for a denser layout"          action={<Toggle checked={compactView}    onChange={() => setCompactView(v => !v)} />} />
-        <SettingRow icon={Zap}         label="Reduce animations" description="Disable motion effects for accessibility"    action={<Toggle checked={animationsOff}  onChange={() => setAnimationsOff(v => !v)} />} />
+        <SettingRow icon={Zap}         label="Reduce animations" description="Disable motion effects for accessibility"    action={<Toggle checked={animationsOff}  onChange={() => setAnimationsOff(v => {
+            const next = !v
+            setReduceAnimations(next)
+            localStorage.setItem('aiscern_animations_off', String(next))
+            return next
+          })} />} />
       </Section>
 
       {/* Privacy */}
