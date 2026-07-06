@@ -9,6 +9,7 @@ import { Image as ImageIcon, Upload, X, AlertTriangle, Loader2, RotateCcw, Downl
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
+import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 import dynamic from 'next/dynamic'
 import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 import { ConfidenceRing } from '@/components/ConfidenceRing'
@@ -366,19 +367,7 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
             </div>
           ) : loading && !result ? (
-            <div className="card flex flex-col items-center justify-center py-16 gap-4">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full border-2 border-[#2BEE34]/20 flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-[#2BEE34]" />
-                </div>
-                <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="font-semibold text-white">Analyzing image…</p>
-                <p className="text-sm text-[#6B6B6B]">GAN fingerprints · Pixel forensics · Neural ensemble</p>
-                <p className="text-xs text-[#6B6B6B]">Running 3-model ensemble + 6 pixel signals…</p>
-              </div>
-            </div>
+            <DetectionSequenceLoader loading={loading} uploadProgress={uploadProgress} />
           ) : (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mx-auto mb-4 ">
