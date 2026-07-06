@@ -49,7 +49,7 @@ function AriaAvatar({ size = 'md' }: { size?: 'sm'|'md' }) {
   const cls = size === 'sm' ? 'w-7 h-7 rounded-lg' : 'w-8 h-8 rounded-xl'
   return (
     <div className={`${cls} bg-black flex items-center justify-center shrink-0 overflow-hidden border border-[#1E1E1E]`}>
-      <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.9)]" />
+      <Image src="/logo.png" alt="ARIA" width={18} height={18} className="object-contain drop-shadow-[0_0_6px_rgba(43,238,52,0.9)]" />
     </div>
   )
 }
@@ -699,7 +699,7 @@ export default function ChatPage() {
           {/* ARIA header — Aiscern logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black border border-[#1E1E1E] flex items-center justify-center shrink-0 overflow-hidden">
-              <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(245,100,0,0.7)]" />
+              <Image src="/logo.png" alt="ARIA" width={22} height={22} className="object-contain drop-shadow-[0_0_6px_rgba(43,238,52,0.7)]" />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-bold text-white leading-none truncate">ARIA <span className="text-gray-600 font-normal text-xs ml-1">by Aiscern</span></div>
@@ -732,7 +732,7 @@ export default function ChatPage() {
               {/* Welcome logo — BLACK bg with Aiscern logo */}
               <div className="relative mb-3 shrink-0">
                 <div className="w-14 h-14 rounded-xl bg-black border border-[#1E1E1E] flex items-center justify-center  overflow-hidden">
-                  <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(245,100,0,0.9)]" />
+                  <Image src="/logo.png" alt="ARIA" width={30} height={30} className="object-contain drop-shadow-[0_0_10px_rgba(43,238,52,0.9)]" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#2BEE34] border-2 border-[#080c14] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]" />
