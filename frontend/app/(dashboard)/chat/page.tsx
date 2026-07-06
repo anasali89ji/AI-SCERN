@@ -199,21 +199,35 @@ function TypingDots() {
 
 // ── Smooth token-by-token fade-in for streaming text ──────────────────────
 function StreamingMessage({ content, isStreaming }: { content: string; isStreaming?: boolean }) {
-  const [displayed, setDisplayed] = useState(content)
-  const rafRef        = useRef<number>(0)
-  const targetRef      = useRef(content)
-  const displayedLenRef = useRef(displayed.length)
+  // Fix: the previous design relied on the PARENT swapping away from this
+  // component to plain <Markdown> the instant isStreaming flipped false --
+  // but for fast responses (short replies, the small/fast model), 'done'
+  // can arrive so soon after the final content chunk that this component
+  // barely got a chance to reveal anything before being unmounted and
+  // replaced with an instant full-text render. That's what looked like
+  // "all content firing at once." This component is now ALWAYS used for
+  // assistant messages (see call site) and manages its own reveal-complete
+  // state internally, so a premature isStreaming=false can no longer cut
+  // the animation short.
+  const wasEverStreaming = useRef(isStreaming === true)
+  const [displayed, setDisplayed] = useState(wasEverStreaming.current ? '' : content)
+  const rafRef          = useRef<number>(0)
+  const targetRef        = useRef(content)
+  const displayedLenRef  = useRef(wasEverStreaming.current ? 0 : content.length)
+  const isStreamingRef   = useRef(isStreaming)
+  const startedRef       = useRef(false)
 
-  // Keep target ref in sync without triggering extra renders or restarting the loop
   useEffect(() => { targetRef.current = content }, [content])
+  useEffect(() => { isStreamingRef.current = isStreaming }, [isStreaming])
+  useEffect(() => { if (isStreaming) wasEverStreaming.current = true }, [isStreaming])
 
   useEffect(() => {
-    if (!isStreaming) {
-      // Streaming finished (or message was never streamed) — show full content immediately
-      setDisplayed(content)
-      displayedLenRef.current = content.length
-      return
-    }
+    // Static historical message (loaded already-complete, never streamed
+    // live in this session) — show it instantly, no animation needed.
+    if (!wasEverStreaming.current) return
+    // Loop already running for this message instance — don't start a second one.
+    if (startedRef.current) return
+    startedRef.current = true
 
     let cancelled = false
     const step = () => {
@@ -224,22 +238,18 @@ function StreamingMessage({ content, isStreaming }: { content: string; isStreami
         const next = Math.min(displayedLenRef.current + 8, target.length)
         displayedLenRef.current = next
         setDisplayed(target.slice(0, next))
+        rafRef.current = requestAnimationFrame(step)
+      } else if (isStreamingRef.current) {
+        // Caught up to what's arrived so far, but the network stream may
+        // still be delivering more — keep polling rather than stopping.
+        rafRef.current = requestAnimationFrame(step)
       }
-      rafRef.current = requestAnimationFrame(step)
+      // else: caught up AND the stream has finished — let the loop end
+      // naturally instead of forcing a jump to full content.
     }
     rafRef.current = requestAnimationFrame(step)
     return () => { cancelled = true; cancelAnimationFrame(rafRef.current) }
-  // Fix: this loop must only (re)start when streaming itself starts/stops --
-  // NOT on every `content` change. content changes on every incoming chunk
-  // (multiple times per second), and with `content` in the dependency array
-  // the effect's cleanup canceled the in-progress animation frame and
-  // restarted a brand new loop on EVERY chunk, often before a single frame
-  // had run -- so the reveal never actually progressed smoothly and instead
-  // jumped straight to whatever had streamed in by the time a frame finally
-  // fired. The loop itself already reads the latest target continuously via
-  // targetRef (kept in sync above), so it doesn't need to restart per chunk.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStreaming])
+  }, [])
 
   return <Markdown content={displayed} />
 }
@@ -332,9 +342,7 @@ function MessageBubble({
           }`}>
             {isUser
               ? <p className="leading-relaxed whitespace-pre-wrap text-white text-sm">{msg.content}</p>
-              : msg.isStreaming
-                ? <StreamingMessage content={msg.content} isStreaming={msg.isStreaming} />
-                : <Markdown content={msg.content} />
+              : <StreamingMessage content={msg.content} isStreaming={msg.isStreaming} />
             }
             {/* Blinking cursor while streaming */}
             {msg.isStreaming && msg.content && (
