@@ -2,7 +2,7 @@ import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 import { retrieveARIAKnowledge, formatKBContext } from '@/lib/rag/aria-rag'
-export const maxDuration = 60
+export const maxDuration = 55
 
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic    = 'force-dynamic'
@@ -925,7 +925,7 @@ export async function POST(req: NextRequest) {
           // first, rather than paying the full timeout cost of a slow model
           // before ever trying the other -- the best available strategy
           // under a fixed, low overall time budget.
-          const MODEL_TIMEOUT_MS = 28000 // per-model budget when racing in parallel
+          const MODEL_TIMEOUT_MS = 25000 // per-model budget when racing in parallel (was 28000 -- tightened to match vercel.json's actual 55s maxDuration, not the previously-assumed 60s)
 
           const tryModel = async (model: string, key: string, timeoutMs = MODEL_TIMEOUT_MS): Promise<Response | null> => {
             try {
@@ -977,7 +977,7 @@ export async function POST(req: NextRequest) {
           // extra API usage on the healthy/common path.
           if (!chatRes && apiKeyFallback) {
             const fallbackResults = await Promise.allSettled(
-              modelChain.map(m => tryModel(m, apiKeyFallback, 15000))
+              modelChain.map(m => tryModel(m, apiKeyFallback, 12000))
             )
             for (const r of fallbackResults) {
               if (r.status === 'fulfilled' && r.value) { chatRes = r.value; break }
