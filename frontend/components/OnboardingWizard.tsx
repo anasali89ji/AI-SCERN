@@ -202,7 +202,7 @@ export function OnboardingWizard() {
           {/* STEP: ready */}
           {step === 'ready' && (
             <div className="text-center space-y-5">
-              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 bg-blue-600/10 border border-blue-600/20">
+              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 bg-[#2BEE34]/10 border border-[#2BEE34]/20">
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-black text-white">You're all set!</h2>

@@ -20,7 +20,7 @@ export function ScrollToTop() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 w-10 h-10 rounded-xl bg-[#0f0f17] border border-white/[0.08] flex items-center justify-center text-slate-500 hover:text-slate-100 hover:border-blue-500/40 hover:bg-[#141420] transition-all"
+          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 w-10 h-10 rounded-xl bg-[#1A1A1A] border border-white/[0.08] flex items-center justify-center text-[#6B6B6B] hover:text-white hover:border-[#2BEE34]/40 hover:bg-[#141414] transition-all"
           aria-label="Scroll to top"
         >
           <ArrowUp className="w-4 h-4" />

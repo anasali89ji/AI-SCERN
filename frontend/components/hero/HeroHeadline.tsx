@@ -99,7 +99,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
               onClick={() => { setIdx(i); setIsPaused(true) }}
               className="flex items-center justify-center
                          min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-full"
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2BEE34]/50 rounded-full"
             >
               <span
                 className="block rounded-full transition-all duration-300"

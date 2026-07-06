@@ -78,9 +78,9 @@ export function SignupGate() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="relative w-full max-w-sm bg-[#0d0d18] border border-white/[0.08] rounded-2xl overflow-hidden">
+          className="relative w-full max-w-sm bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
           {/* Top gradient bar */}
-          <div className="h-1 w-full bg-blue-600" />
+          <div className="h-1 w-full bg-[#2BEE34]" />
 
           <div className="p-8 space-y-6">
             {/* Logo + heading */}
@@ -90,7 +90,7 @@ export function SignupGate() {
                 alt="Aiscern"
                 width={72}
                 height={50}
-                className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]"
+                className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(43,238,52,0.5)]"
               />
               <h2 className="text-2xl font-black text-slate-100">
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
@@ -101,7 +101,7 @@ export function SignupGate() {
             </div>
 
             {/* Perks */}
-            <ul className="space-y-2.5 bg-[#141420] rounded-xl p-4">
+            <ul className="space-y-2.5 bg-[#1A1A1A] rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
                   <CheckCircle className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
@@ -112,12 +112,12 @@ export function SignupGate() {
 
             {/* CTA buttons */}
             <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700  transition-all">
+              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#2BEE34] text-[#0A0A0A] font-bold text-sm hover:bg-[#1A8F1F] transition-all">
                 <Zap className="w-4 h-4" />
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#141420] transition-all">
+              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#1A1A1A] transition-all">
                 Already have an account? Sign In
               </Link>
             </div>
