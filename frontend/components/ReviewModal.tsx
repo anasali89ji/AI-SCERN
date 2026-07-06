@@ -45,7 +45,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
     return () => document.removeEventListener('keydown', onKey)
   }, [isOpen, onClose])
 
-  const canSubmit = rating > 0 && title.trim().length > 0 && body.trim().length >= 30
+  const canSubmit = rating > 0 && title.trim().length > 0 && body.trim().length >= 30 && (isAnonymous || displayName.trim().length > 0)
 
   const handleSubmit = async () => {
     if (!canSubmit) return
