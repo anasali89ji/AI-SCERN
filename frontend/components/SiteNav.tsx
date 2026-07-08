@@ -32,12 +32,12 @@ const SOLUTIONS = [
 ]
 
 const TOOLS = [
-  { href: '/detect/text',  label: 'Text Detector',  icon: FileText,      desc: 'ChatGPT, Claude & more'  },
-  { href: '/detect/image', label: 'Image Detector', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
-  { href: '/detect/audio', label: 'Audio Detector', icon: Music,         desc: 'Voice cloning & TTS'     },
-  { href: '/detect/video', label: 'Video Detector', icon: Video,         desc: 'Frame-level analysis'    },
-  { href: '/chat',         label: 'ARIA Assistant', icon: MessageSquare, desc: 'AI detection chat'       },
-  { href: '/batch',        label: 'Batch Analyser', icon: Database,      desc: 'Bulk content analysis'   },
+  { href: '/detect/text',  label: 'Text Attestation',  icon: FileText,      desc: 'ChatGPT, Claude & more'  },
+  { href: '/detect/image', label: 'Image Attestation', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
+  { href: '/detect/audio', label: 'Audio Attestation', icon: Music,         desc: 'Voice cloning & TTS'     },
+  { href: '/detect/video', label: 'Video Attestation', icon: Video,         desc: 'Frame-level analysis'    },
+  { href: '/chat',         label: 'ARIA Assistant', icon: MessageSquare, desc: 'Attestation chat'       },
+  { href: '/batch',        label: 'Bulk Attestation', icon: Database,      desc: 'Bulk content examination'   },
 ]
 
 const NAV_LINKS = [
@@ -175,7 +175,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                   ))}
                 </div>
                 <div className="px-4 py-2.5 border-t border-[#1E1E1E] flex items-center justify-between">
-                  <span className="text-xs text-[#6B6B6B]">All detectors — free tier available</span>
+                  <span className="text-xs text-[#6B6B6B]">All attestation tools — free tier available</span>
                   <Link href="/batch" className="text-xs text-[#2BEE34] hover:text-[#4FFF58] font-medium flex items-center gap-1 transition-colors">
                     Batch mode <Zap className="w-3 h-3" />
                   </Link>
@@ -285,7 +285,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                            text-[#0A0A0A] text-sm font-semibold transition-colors duration-150"
               >
                 <Zap className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Get Started</span>
+                <span className="hidden sm:inline">Begin Attestation</span>
                 <span className="sm:hidden">Join</span>
               </Link>
             </>
@@ -391,7 +391,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                   className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg
                              bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-sm font-semibold transition-colors"
                 >
-                  <Zap className="w-4 h-4" /> Get Started Free
+                  <Zap className="w-4 h-4" /> Begin Attestation Free
                 </Link>
               </div>
             )}

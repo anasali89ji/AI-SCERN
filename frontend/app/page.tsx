@@ -102,7 +102,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
           <span className="w-2.5 h-2.5 rounded-full bg-[#3A3A3A]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#2BEE34]" />
         </div>
-        <span className="text-xs font-medium text-[#6B6B6B] ml-1">Live AI Detector</span>
+        <span className="text-xs font-medium text-[#6B6B6B] ml-1">Live Attestation Engine</span>
         <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#2BEE34]/10 text-[#2BEE34] font-semibold border border-[#2BEE34]/20">
           Free
         </span>
@@ -125,7 +125,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="Paste any text to detect if it's AI-generated… (min 50 chars)"
+          placeholder="Paste any text to examine if it's AI-generated… (min 50 chars)"
           className="w-full h-24 sm:h-28 bg-[#141414] border border-[#2A2A2A] rounded-lg
                      px-4 py-3 text-sm text-[#E5E5E5] placeholder-[#6B6B6B]
                      resize-none focus:outline-none focus:border-[#2BEE34] focus:ring-1 focus:ring-[#2BEE34]/30
@@ -144,7 +144,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                        flex items-center gap-2 min-h-[38px] transition-all duration-150"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-            {loading ? 'Scanning…' : 'Analyze Free'}
+            {loading ? 'Examining…' : 'Attest Free'}
           </button>
         </div>
 
@@ -175,7 +175,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
             <div className="mt-3 pt-3 border-t border-[#1E1E1E] flex items-center justify-between">
               <p className="text-xs text-[#6B6B6B]">Free · No account needed</p>
               <Link href="/detect/text" className="text-xs text-[#2BEE34] hover:text-[#4FFF58] font-medium flex items-center gap-1 transition-colors">
-                Full detector <ArrowRight className="w-3 h-3" />
+                Full attestation <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
@@ -189,33 +189,33 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
 const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'AI Text Detector',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Deepfake Image Detector',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
-  { href: '/detect/audio', icon: Music,         label: 'AI Audio & Voice Detector',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
-  { href: '/detect/video', icon: Video,         label: 'Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },
-  { href: '/chat',         icon: MessageSquare, label: 'ARIA Detection Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
-  { href: '/batch',        icon: Database,      label: 'Batch Content Analyser',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
+  { href: '/detect/text',  icon: FileText,      label: 'Text Attestation',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Image Attestation',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
+  { href: '/detect/audio', icon: Music,         label: 'Audio Attestation',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
+  { href: '/detect/video', icon: Video,         label: 'Video Attestation',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },
+  { href: '/chat',         icon: MessageSquare, label: 'ARIA Attestation Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
+  { href: '/batch',        icon: Database,      label: 'Bulk Attestation',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
 ]
 
 const STATS = [
   { value: 4,  suffix: '',  label: 'Modalities Covered' },
-  { value: 8,  suffix: '+', label: 'Detection Models'   },
+  { value: 8,  suffix: '+', label: 'Forensic Engines'   },
   { value: 85, suffix: '%', label: 'Text Accuracy (~)'  },
   { value: 79, suffix: '%', label: 'Audio Accuracy (~)' },
 ]
 
 const HOW_IT_WORKS = [
-  { n: '01', title: 'Upload or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL — any format, any size.' },
-  { n: '02', title: 'Ensemble Analysis', desc: 'Multi-model AI analyzes 20+ detection signals across all content types in parallel.' },
-  { n: '03', title: 'Get Full Report',   desc: 'Confidence score, signal breakdown, and sentence-level heatmap in under 3 seconds.' },
-  { n: '04', title: 'Export & Share',    desc: 'Save scan history, share results by link, or export full PDF forensic reports.' },
+  { n: '01', title: 'Submit or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL — any format, any size.' },
+  { n: '02', title: 'Forensic Examination', desc: 'Multi-model AI analyzes 20+ detection signals across all content types in parallel.' },
+  { n: '03', title: 'Review Findings',   desc: 'Integrity rating, signal breakdown, and sentence-level heatmap in under 3 seconds.' },
+  { n: '04', title: 'Export & Share',    desc: 'Save your evidence locker, share findings by link, or export full PDF case files.' },
 ]
 
 const TRUST_FEATURES = [
   { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: '#2563eb' },
   { icon: Shield,      title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: '#10b981' },
   { icon: TrendingUp,  title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: '#f59e0b' },
-  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start detecting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
+  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start attesting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
 ]
 
 const PROFESSIONALS = [
@@ -264,7 +264,7 @@ export default function HomePage() {
                                 border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34]
                                 text-xs font-semibold mb-8 animate-fade-in">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34] flex-shrink-0" />
-                  <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
+                  <span className="hidden sm:inline">Ensemble of 8+ forensic engines · Text, Image, Audio, Video</span>
                   <span className="sm:hidden">8+ models · Free tier available</span>
                 </div>
 
@@ -275,7 +275,7 @@ export default function HomePage() {
 
                 {/* Subheadline */}
                 <p className="text-base sm:text-lg text-[#A3A3A3] max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed animate-slide-up">
-                  Free, accurate detection for text, images, audio, and video.
+                  Free, accurate attestation for text, images, audio, and video.
                   Built on ensemble models with published benchmarks.
                 </p>
 
@@ -303,7 +303,7 @@ export default function HomePage() {
                           className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg
                                      bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold
                                      text-base transition-colors duration-150 w-full sm:w-auto">
-                          <ScanLine className="w-4 h-4" /> Start Detecting Free
+                          <ScanLine className="w-4 h-4" /> Begin Attestation Free
                         </Link>
                       </MagneticButton>
                       <Link href="/methodology"
@@ -317,7 +317,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="text-xs text-[#6B6B6B]">
-                  Free forever · No credit card · 50K+ scans completed
+                  Free forever · No credit card · 50K+ examinations completed
                 </p>
               </div>
 
@@ -363,10 +363,10 @@ export default function HomePage() {
                 Six Powerful Tools
               </p>
               <h2 className="text-[32px] sm:text-[40px] font-semibold text-white tracking-[-0.01em] mb-4">
-                Detection Tools
+                Attestation Tools
               </h2>
               <p className="text-[#A3A3A3] text-base max-w-xl mx-auto leading-relaxed">
-                Six detection tools covering every content type. Each returns a confidence score in under 3 seconds.
+                Six attestation tools covering every content type. Each returns an integrity rating in under 3 seconds.
               </p>
             </div>
 
@@ -430,7 +430,7 @@ export default function HomePage() {
               <h2 className="text-[32px] sm:text-[40px] font-semibold text-white tracking-[-0.01em] mb-4">
                 How It Works
               </h2>
-              <p className="text-[#A3A3A3] text-base">From upload to verdict in seconds.</p>
+              <p className="text-[#A3A3A3] text-base">From submission to verdict in seconds.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -545,12 +545,12 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 mb-4">
                   <FlaskConical className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                   <span className="text-xs font-semibold text-[#2BEE34] uppercase tracking-wider">
-                    Detection methodology
+                    Attestation methodology
                   </span>
                 </div>
                 <p className="text-[#A3A3A3] leading-relaxed text-sm">
-                  Each scan runs content through multiple independent detection signals. Results are fused into
-                  a single confidence score using weighted ensemble voting — and a clear AI or Human verdict
+                  Each examination runs content through multiple independent forensic signals. Results are fused into
+                  a single integrity rating using weighted ensemble voting — and a clear Synthesized or Authentic verdict
                   is returned in under 3 seconds.
                 </p>
                 <div className="mt-4 flex items-center gap-4 flex-wrap">
@@ -570,10 +570,10 @@ export default function HomePage() {
         <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-[#1E1E1E]">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-[40px] sm:text-[48px] font-bold text-white tracking-[-0.02em] mb-5 leading-tight">
-              Start Detecting AI Content Free
+              Start Attesting Content Free
             </h2>
             <p className="text-[#A3A3A3] text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-              Core features free — no credit card required. No account needed for basic scans.
+              Core features free — no credit card required. No account needed for basic examinations.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -583,7 +583,7 @@ export default function HomePage() {
                            bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-base font-semibold
                            transition-colors duration-150"
               >
-                {user ? 'Go to Dashboard' : 'Start Detecting Free'}
+                {user ? 'Go to Dashboard' : 'Begin Attestation Free'}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               {user ? (
@@ -608,7 +608,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-[#6B6B6B]">
-              {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
+              {['No credit card required', 'Free tier always available', 'No account for basic examinations'].map(t => (
                 <div key={t} className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#2BEE34]/70" />{t}
                 </div>

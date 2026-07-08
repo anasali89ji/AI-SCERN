@@ -20,7 +20,7 @@ const MORE_NAV = [
   { href: '/detect/video', icon: Video,         label: 'Video'   },
   { href: '/batch',        icon: Layers,        label: 'Batch'   },
   { href: '/chat',         icon: MessageSquare, label: 'AI Chat' },
-  { href: '/scraper',      icon: Globe,         label: 'Scanner' },
+  { href: '/scraper',      icon: Globe,         label: 'Examiner' },
   { href: '/credits',      icon: Coins,         label: 'Credits' },
   { href: '/profile',      icon: User,          label: 'Profile' },
   { href: '/settings',     icon: Settings,      label: 'Settings'},

@@ -36,7 +36,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
   return (
     <div className="select-none" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
 
-      {/* "Detect" — static with gradient */}
+      {/* "Attest" — static with gradient */}
       <h1
         className="font-black leading-none tracking-tight
                    text-[2.5rem] xs:text-[3rem] sm:text-[3.75rem] md:text-[4.5rem] lg:text-[5rem]"
@@ -47,7 +47,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
           backgroundClip: 'text',
         }}
       >
-        Detect
+        Attest
       </h1>
 
       {/* Rotating word row */}
