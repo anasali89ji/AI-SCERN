@@ -47,6 +47,56 @@ function mseToScore(mse: number): { score: number; confidence: number; verdict: 
 
 // ── API caller ────────────────────────────────────────────────────────────────
 
+// ── HF Space (ZeroGPU) fallback client ─────────────────────────────────────────
+// Used when SIGNAL_WORKER_URL (DO droplet / RunPod / etc.) isn't configured but
+// HF_SPACE_GPU_WORKER_URL is — lets L5 run on HF's free ZeroGPU tier instead.
+// Calls the Gradio REST API's /call/<api_name> + /call/<api_name>/<event_id>
+// two-step polling protocol (Gradio 4.x queue-based API).
+async function callHfSpaceDiffusionInversion(
+  imageUrl: string,
+  timeoutMs: number
+): Promise<{ mse: number; score: number; confidence: number; model: string; steps: number } | null> {
+  const spaceUrl = process.env.HF_SPACE_GPU_WORKER_URL   // e.g. https://yourname-aiscern-gpu-worker.hf.space
+  const hfToken  = process.env.HF_TOKEN                  // hf_... token with read access to the private Space
+  const secret   = process.env.INTERNAL_API_SECRET || ''
+
+  if (!spaceUrl) return null
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (hfToken) headers['Authorization'] = `Bearer ${hfToken}`
+
+  // Step 1: submit the job, get an event id
+  const submitRes = await fetch(`${spaceUrl}/call/diffusion_inversion`, {
+    method:  'POST',
+    headers,
+    body:    JSON.stringify({ data: [imageUrl, secret] }),
+    signal:  AbortSignal.timeout(timeoutMs),
+  })
+  if (!submitRes.ok) return null
+  const { event_id } = await submitRes.json()
+  if (!event_id) return null
+
+  // Step 2: stream the result (Gradio returns Server-Sent Events)
+  const resultRes = await fetch(`${spaceUrl}/call/diffusion_inversion/${event_id}`, {
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  })
+  if (!resultRes.ok) return null
+
+  const text = await resultRes.text()
+  // SSE format: lines like "event: complete\ndata: [{...}]"
+  const match = text.match(/data:\s*(\[.*\])/)
+  if (!match) return null
+
+  try {
+    const [result] = JSON.parse(match[1])
+    if (result?.error) return null
+    return result
+  } catch {
+    return null
+  }
+}
+
 export async function runDiffusionInversion(imageUrl: string): Promise<LayerReport> {
   const start = Date.now()
 
@@ -54,6 +104,28 @@ export async function runDiffusionInversion(imageUrl: string): Promise<LayerRepo
   const TIMEOUT_MS = 45_000  // 45s — GPU inference takes 10-30s
 
   if (!workerUrl) {
+    // No DO/RunPod worker configured — try the free HF ZeroGPU Space instead.
+    const hfResult = await callHfSpaceDiffusionInversion(imageUrl, TIMEOUT_MS)
+    if (hfResult) {
+      const { score, confidence, verdict } = mseToScore(hfResult.mse)
+      const evidenceStatus: ArtifactStatus =
+        score > 0.65 ? 'anomalous' : score < 0.35 ? 'normal' : 'inconclusive'
+      return {
+        layer:               5,
+        layerName:           LAYER_NAMES[5],
+        processingTimeMs:    Date.now() - start,
+        status:              'success',
+        evidence: [{
+          layer:        5,
+          category:     'diffusion_inversion',
+          artifactType: 'reconstruction_error',
+          status:       evidenceStatus,
+          confidence,
+          detail:       `MSE=${hfResult.mse.toFixed(4)} via ${hfResult.model} (HF ZeroGPU) — ${verdict}`,
+        }] as EvidenceNode[],
+        layerSuspicionScore: score,
+      }
+    }
     return {
       layer:               5,
       layerName:           LAYER_NAMES[5],

@@ -45,11 +45,55 @@ export interface SnapBackResult {
   aucLPIPS:      number   // area under LPIPS curve
 }
 
+// ── HF Space (ZeroGPU) fallback client ─────────────────────────────────────────
+// Mirrors the fallback in diffusion-inversion.ts — used when SIGNAL_WORKER_URL
+// isn't configured but HF_SPACE_GPU_WORKER_URL is (free ZeroGPU tier).
+async function callHfSpaceSnapBack(imageUrl: string, timeoutMs: number): Promise<SnapBackResult | null> {
+  const spaceUrl = process.env.HF_SPACE_GPU_WORKER_URL
+  const hfToken  = process.env.HF_TOKEN
+  const secret   = process.env.INTERNAL_API_SECRET || ''
+
+  if (!spaceUrl) return null
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (hfToken) headers['Authorization'] = `Bearer ${hfToken}`
+
+  const submitRes = await fetch(`${spaceUrl}/call/diffusion_snapback`, {
+    method:  'POST',
+    headers,
+    body:    JSON.stringify({ data: [imageUrl, secret] }),
+    signal:  AbortSignal.timeout(timeoutMs),
+  })
+  if (!submitRes.ok) return null
+  const { event_id } = await submitRes.json()
+  if (!event_id) return null
+
+  const resultRes = await fetch(`${spaceUrl}/call/diffusion_snapback/${event_id}`, {
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  })
+  if (!resultRes.ok) return null
+
+  const text = await resultRes.text()
+  const match = text.match(/data:\s*(\[.*\])/)
+  if (!match) return null
+
+  try {
+    const [result] = JSON.parse(match[1])
+    if (result?.error) return null
+    return result as SnapBackResult
+  } catch {
+    return null
+  }
+}
+
 export async function runDiffusionSnapBack(imageUrl: string): Promise<LayerReport> {
   const start = Date.now()
 
   const workerUrl = process.env.SIGNAL_WORKER_URL
   if (!workerUrl) {
+    const hfResult = await callHfSpaceSnapBack(imageUrl, 90_000)
+    if (hfResult) return buildLayerReport(hfResult, start)
     return failure(start)
   }
 

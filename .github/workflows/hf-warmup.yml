@@ -179,5 +179,25 @@ sys.stdout.buffer.write(wav)
           curl -s --max-time 8 "https://aiscern.com/api/health" || true
           curl -s --max-time 8 "https://aiscern.com/api/warmup" || true
 
+      # ─── L5/L5b GPU WORKER (HF Space, ZeroGPU) ─────────────────────────────
+      # Pings the /ping endpoint (CPU-only, no GPU quota consumed) purely to
+      # keep the Space container itself from going to sleep (free-tier Spaces
+      # sleep after ~48h inactivity). This does NOT prevent the per-call
+      # ZeroGPU cold-start (a few seconds to attach a GPU) — that's inherent
+      # to serverless GPU and isn't something a keepalive ping can fix.
+      - name: Warmup — L5/L5b GPU worker Space (ping only, no GPU used)
+        env:
+          HF_SPACE_GPU_WORKER_URL: ${{ secrets.HF_SPACE_GPU_WORKER_URL }}
+        run: |
+          if [ -z "$HF_SPACE_GPU_WORKER_URL" ]; then
+            echo "HF_SPACE_GPU_WORKER_URL not set — skipping (Space not yet deployed)"
+          else
+            curl -s --max-time 15 -X POST \
+              -H "Authorization: Bearer $HF_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"data":[]}' \
+              "$HF_SPACE_GPU_WORKER_URL/call/ping" || true
+          fi
+
       - name: Log warmup completion
         run: echo "✅ Full model warmup (10 models) completed at $(date -u)"
