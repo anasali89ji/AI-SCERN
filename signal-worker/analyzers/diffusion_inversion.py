@@ -44,17 +44,60 @@ MODEL_CONFIGS = {
     },
 }
 
-# ── Model cache (loaded once per worker process) ──────────────────────────────
+# ── Model cache with TTL and GPU health check ──────────────────────────────────
 _cached_model = None
 _cached_model_id = None
+_model_cache_timestamp = 0
+MODEL_CACHE_TTL_SECONDS = 3600  # 1 hour
 
 
-def _load_model(model_key: str = 'sd15'):
-    """Load and cache the diffusion model components needed for inversion."""
-    global _cached_model, _cached_model_id
+def _check_gpu_health() -> tuple[bool, float]:
+    """Check if GPU is actually usable (not just reported available). Returns (ok, vram_gb)."""
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            return False, 0.0
+        # Run a tiny CUDA op to verify the context is actually alive
+        test = torch.tensor([1.0], device='cuda')
+        _ = test * 2
+        vram = torch.cuda.get_device_properties(0).total_memory / 1e9
+        return True, vram
+    except Exception as e:
+        logger.warning(f"[L5] GPU health check failed: {e}")
+        return False, 0.0
 
-    if _cached_model is not None and _cached_model_id == model_key:
+
+def _load_model(model_key: str = 'sd15', force_reload: bool = False):
+    """Load and cache the diffusion model components, with TTL expiry and OOM recovery."""
+    global _cached_model, _cached_model_id, _model_cache_timestamp
+
+    now = time.time()
+    cache_expired = (now - _model_cache_timestamp) > MODEL_CACHE_TTL_SECONDS
+
+    gpu_ok, vram_gb = _check_gpu_health()
+    if not gpu_ok:
+        raise RuntimeError(
+            "L5 diffusion inversion requires GPU. "
+            "GPU health check failed (unavailable, or CUDA context broken)."
+        )
+
+    # Auto-upgrade to SDXL if enough VRAM is available
+    if model_key == 'sd15' and vram_gb >= 7.0:
+        model_key = 'sdxl'
+        logger.info(f"[L5] Auto-selected SDXL (VRAM: {vram_gb:.1f}GB)")
+
+    if (not force_reload and not cache_expired
+            and _cached_model is not None and _cached_model_id == model_key):
         return _cached_model
+
+    # Clear any stale cached model before loading a new one, to avoid OOM
+    if _cached_model is not None:
+        logger.info("[L5] Clearing old model cache...")
+        del _cached_model
+        _cached_model = None
+        gc.collect()
+        import torch
+        torch.cuda.empty_cache()
 
     try:
         import torch
@@ -67,22 +110,23 @@ def _load_model(model_key: str = 'sd15'):
 
     config   = MODEL_CONFIGS[model_key]
     model_id = config['model_id']
-    device   = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    if device == 'cpu':
-        raise RuntimeError(
-            "L5 diffusion inversion requires GPU. "
-            "CPU inference would take 60-120s which exceeds the 45s timeout."
-        )
+    device   = 'cuda'
 
     logger.info(f"[L5] Loading {model_id} on {device}...")
     t0 = time.time()
 
-    vae   = AutoencoderKL.from_pretrained(model_id, subfolder='vae',
-                                           torch_dtype=torch.float16).to(device)
-    unet  = UNet2DConditionModel.from_pretrained(model_id, subfolder='unet',
-                                                  torch_dtype=torch.float16).to(device)
-    sched = DDIMScheduler.from_pretrained(model_id, subfolder='scheduler')
+    try:
+        vae   = AutoencoderKL.from_pretrained(model_id, subfolder='vae',
+                                               torch_dtype=torch.float16).to(device)
+        unet  = UNet2DConditionModel.from_pretrained(model_id, subfolder='unet',
+                                                      torch_dtype=torch.float16).to(device)
+        sched = DDIMScheduler.from_pretrained(model_id, subfolder='scheduler')
+    except RuntimeError as e:
+        if "out of memory" in str(e).lower():
+            torch.cuda.empty_cache()
+            gc.collect()
+            raise RuntimeError(f"GPU OOM while loading {model_key}. Try SD 1.5 or a larger GPU.")
+        raise
 
     vae.eval()
     unet.eval()
@@ -92,6 +136,7 @@ def _load_model(model_key: str = 'sd15'):
     _cached_model    = {'vae': vae, 'unet': unet, 'scheduler': sched,
                         'device': device, 'config': config}
     _cached_model_id = model_key
+    _model_cache_timestamp = now
     return _cached_model
 
 

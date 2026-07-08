@@ -1,19 +1,31 @@
 """
-Aiscern — Python Signal Worker
-FastAPI service implementing Layers 1, 3, 4, and local SynthID detection.
+Aiscern — Python Signal Worker v2.0 (Hardened)
+FastAPI service implementing Layers 1, 3, 4, 5, 5b, and SynthID detection.
 
-Deploy to: Render.com Web Service (free tier) or HuggingFace Space (Docker)
-POST /analyze-signals — main analysis endpoint
-GET  /health         — health check
+SECURITY CHANGES:
+- INTERNAL_API_SECRET bearer token required on all non-health endpoints
+- Rate limiting: 10 requests/minute per IP on protected endpoints
+- Health endpoint no longer leaks GPU name/VRAM to unauthenticated callers
+  (use /health/detailed with auth for that)
+
+Deploy to: DigitalOcean App Platform (CPU) or GPU Droplet (for L5/L5b)
+POST /analyze-signals       — main analysis endpoint (auth required)
+POST /diffusion-inversion   — Layer 5 (auth required)
+POST /diffusion-snapback    — Layer 5b (auth required)
+GET  /health                — public, minimal health check
+GET  /health/detailed       — auth required, full GPU/layer status
 """
 
 import os
 import time
 import logging
+import hmac
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from collections import defaultdict
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from typing import Optional
 
 from analyzers.pixel_integrity      import analyze_pixel_integrity
@@ -28,7 +40,42 @@ from utils.evidence_builder     import build_layer_report
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Pydantic models ───────────────────────────────────────────────────────────
+# ── Security config ────────────────────────────────────────────────────────────
+
+INTERNAL_API_SECRET = os.getenv("INTERNAL_API_SECRET", "")
+if not INTERNAL_API_SECRET:
+    logger.warning(
+        "[security] INTERNAL_API_SECRET not set — signal worker is UNPROTECTED. "
+        "Set this environment variable immediately, especially before any public deploy."
+    )
+
+# Simple in-memory rate limiter: IP -> list of request timestamps
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+RATE_LIMIT_MAX    = 10  # requests
+RATE_LIMIT_WINDOW = 60  # seconds
+
+
+async def _check_rate_limit(client_ip: str) -> bool:
+    now = time.time()
+    window = _rate_limit_store[client_ip]
+    while window and window[0] < now - RATE_LIMIT_WINDOW:
+        window.pop(0)
+    if len(window) >= RATE_LIMIT_MAX:
+        return False
+    window.append(now)
+    return True
+
+
+def _verify_auth(authorization: Optional[str]) -> bool:
+    if not INTERNAL_API_SECRET:
+        return True  # Dev mode — warn (above) but don't block
+    if not authorization or not authorization.startswith("Bearer "):
+        return False
+    token = authorization[7:]
+    return hmac.compare_digest(token, INTERNAL_API_SECRET)
+
+
+# ── Pydantic models ────────────────────────────────────────────────────────────
 
 class TargetRegion(BaseModel):
     x:      float
@@ -53,22 +100,33 @@ class AnalyzeResponse(BaseModel):
     synthid:          dict
     error:            Optional[str] = None
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# ── App ─────────────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Signal worker starting up")
+
+    # Check optional GPU dependencies at startup so failures are visible in logs
+    # immediately, not just at first L5/L5b request.
+    try:
+        import torch
+        import diffusers
+        import transformers
+        logger.info("[startup] GPU dependencies available")
+    except ImportError as e:
+        logger.warning(f"[startup] GPU dependencies missing: {e}. L5/L5b will return 503.")
+
     yield
     logger.info("Signal worker shutting down")
 
 app = FastAPI(
     title="Aiscern Signal Worker",
-    description="Forensic image analysis — Layers 1, 3, 4, SynthID",
-    version="1.0.0",
+    description="Forensic image analysis — Layers 1, 3, 4, 5, 5b, SynthID",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
+# ── CORS ─────────────────────────────────────────────────────────────────────────
 # Restrict cross-origin access to known Aiscern origins only.
 # Do NOT use allow_origins=["*"] — this is an internal forensic API that
 # processes image URLs; wildcard CORS would expose it to arbitrary third-party sites.
@@ -83,31 +141,54 @@ app.add_middleware(
     allow_credentials=False,
 )
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ── Routes ─────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
-    import torch
-    gpu_available = torch.cuda.is_available() if True else False
+    """Public health check — minimal info, no GPU details (avoid info disclosure)."""
+    gpu_available = False
     try:
         import torch
         gpu_available = torch.cuda.is_available()
-        gpu_name      = torch.cuda.get_device_name(0) if gpu_available else None
-        vram_gb       = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 1) if gpu_available else 0
     except Exception:
-        gpu_available = False
-        gpu_name      = None
-        vram_gb       = 0
+        pass
+    return {
+        "status":    "healthy",
+        "service":   "aiscern-signal-worker",
+        "version":   "2.0.0",
+        "gpu_available": gpu_available,
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+    }
+
+
+@app.get("/health/detailed")
+async def health_detailed(authorization: Optional[str] = Header(None)):
+    """Detailed health check — requires auth. Returns GPU name, VRAM, layer status."""
+    if not _verify_auth(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    gpu_available = False
+    gpu_name      = None
+    vram_gb       = 0
+    try:
+        import torch
+        gpu_available = torch.cuda.is_available()
+        if gpu_available:
+            gpu_name = torch.cuda.get_device_name(0)
+            vram_gb  = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 1)
+    except Exception as e:
+        logger.warning(f"GPU detection failed: {e}")
+
     return {
         "status":  "healthy",
         "service": "aiscern-signal-worker",
         "version": "2.0.0",
         "layers": {
-            "l1_pixel":            "available",
-            "l3_noise":            "available",
-            "l4_frequency":        "available",
-            "l5_diffusion":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
-            "l5b_snapback":        "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
+            "l1_pixel":     "available",
+            "l3_noise":     "available",
+            "l4_frequency": "available",
+            "l5_diffusion": "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
+            "l5b_snapback": "available" if gpu_available and vram_gb >= 4.0 else "unavailable_no_gpu",
         },
         "gpu": {
             "available": gpu_available,
@@ -117,15 +198,25 @@ async def health():
         "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
     }
 
+
 @app.post("/diffusion-inversion")
-async def diffusion_inversion_endpoint(req: DiffusionRequest):
+async def diffusion_inversion_endpoint(
+    req: DiffusionRequest,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+):
     """
     Layer 5: DDIM inversion manifold test.
     Requires GPU with >=4GB VRAM. Returns 503 if GPU unavailable.
     """
+    client_ip = request.headers.get("x-forwarded-for", request.client.host)
+    if not await _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _verify_auth(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     import torch
     if not torch.cuda.is_available():
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=503,
             content={"error": "GPU not available", "score": 0.5, "confidence": 0.0}
@@ -135,21 +226,30 @@ async def diffusion_inversion_endpoint(req: DiffusionRequest):
         return result
     except Exception as e:
         logger.error(f"[L5] Diffusion inversion failed: {e}", exc_info=True)
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=500,
             content={"error": str(e), "score": 0.5, "confidence": 0.0}
         )
 
+
 @app.post("/diffusion-snapback")
-async def diffusion_snapback_endpoint(req: DiffusionRequest):
+async def diffusion_snapback_endpoint(
+    req: DiffusionRequest,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+):
     """
     Layer 5b: Diffusion snap-back multi-strength reconstruction dynamics.
     Runs 4 img2img passes. Requires GPU with >=4GB VRAM. Returns 503 if unavailable.
     """
+    client_ip = request.headers.get("x-forwarded-for", request.client.host)
+    if not await _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _verify_auth(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     import torch
     if not torch.cuda.is_available():
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=503,
             content={"error": "GPU not available", "snapBackScore": 0.5, "confidence": 0.0}
@@ -159,14 +259,24 @@ async def diffusion_snapback_endpoint(req: DiffusionRequest):
         return result
     except Exception as e:
         logger.error(f"[L5b] Snap-back failed: {e}", exc_info=True)
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=500,
             content={"error": str(e), "snapBackScore": 0.5, "confidence": 0.0}
         )
 
+
 @app.post("/analyze-signals", response_model=AnalyzeResponse)
-async def analyze_signals(req: AnalyzeRequest):
+async def analyze_signals(
+    req: AnalyzeRequest,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+):
+    client_ip = request.headers.get("x-forwarded-for", request.client.host)
+    if not await _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _verify_auth(authorization):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     start_ms = int(time.time() * 1000)
 
     try:
@@ -176,9 +286,6 @@ async def analyze_signals(req: AnalyzeRequest):
 
         target_regions = [r.dict() for r in req.targetRegions]
 
-        # Run all 3 layers + SynthID in parallel-ish
-        # (asyncio not used for CPU-bound numpy — run sequentially,
-        #  use ThreadPoolExecutor if needed for production)
         layers = []
 
         # Layer 1: Pixel Integrity
@@ -228,6 +335,7 @@ async def analyze_signals(req: AnalyzeRequest):
         logger.error(f"[{req.jobId}] Fatal error: {e}", exc_info=True)
         elapsed = int(time.time() * 1000) - start_ms
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

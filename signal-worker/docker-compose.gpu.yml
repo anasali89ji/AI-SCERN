@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  aiscern-gpu-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: aiscern/signal-worker:gpu-latest
+    container_name: aiscern-gpu-worker
+    runtime: nvidia  # Critical: enables GPU passthrough
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - ALLOWED_ORIGINS=https://aiscern.com,https://www.aiscern.com
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
+      - PORT=8080
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - "8080:8080"
+    mem_limit: 20g
+    cpus: 8
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    volumes:
+      - aiscern-models:/tmp/aiscern-models
+
+volumes:
+  aiscern-models:

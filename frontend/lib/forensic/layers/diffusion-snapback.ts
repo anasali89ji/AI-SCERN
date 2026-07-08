@@ -56,7 +56,10 @@ export async function runDiffusionSnapBack(imageUrl: string): Promise<LayerRepor
   try {
     const res = await fetch(`${workerUrl}/diffusion-snapback`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET || ''}`,
+      },
       body:    JSON.stringify({ imageUrl }),
       signal:  AbortSignal.timeout(90_000),  // 90s — 4 img2img passes at different strengths
     })

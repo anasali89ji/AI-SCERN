@@ -100,7 +100,10 @@ async function callSignalWorker(
     try {
       const res = await fetch(`${workerUrl}/analyze-signals`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET || ''}`,
+        },
         body:    JSON.stringify({ imageUrl, jobId, targetRegions }),
         signal:  AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
       })
