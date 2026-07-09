@@ -31,7 +31,7 @@ const TIERS = [
     monthlyPrice: 12,
     yearlyPrice: 8,
     label: 'Most Popular',
-    description: 'For individuals who need full detection power.',
+    description: 'For individuals who need full attestation power.',
     highlight: true,
     cta: 'Upgrade to Pro',
     ctaHref: '/signup?plan=pro',
@@ -88,7 +88,7 @@ const TIERS = [
 const FEATURE_ROWS = [
   { label: 'Scans per day',     key: 'scansPerDay',  tooltip: 'Resets at midnight UTC' },
   { label: 'Max file size',     key: 'fileSizeMB',   format: (v: any) => typeof v === 'number' ? `${v} MB` : String(v) },
-  { label: 'Scan history',      key: 'historyDays',  format: (v: any) => typeof v === 'number' ? `${v} days` : String(v) },
+  { label: 'Attestation history', key: 'historyDays',  format: (v: any) => typeof v === 'number' ? `${v} days` : String(v) },
   { label: 'API calls / month', key: 'apiCalls',     format: (v: any) => v === 0 ? '—' : String(v) },
   { label: 'Modalities',        key: 'modalities',   format: (v: any) => Array.isArray(v) ? v.join(', ') : String(v) },
   { label: 'Batch size',        key: 'batchSize',    format: (v: any) => v == null ? '—' : `${v} files` },
@@ -96,8 +96,8 @@ const FEATURE_ROWS = [
 ]
 
 const FAQ = [
-  { q: 'Is the free tier permanent?',      a: 'Yes. We believe access to basic AI detection should not require a subscription. The free tier is permanent.' },
-  { q: 'Do you store my content?',         a: 'Files are processed and immediately deleted. We do not store your text or media files for analysis purposes. Scan metadata is retained per your plan\'s history limit.' },
+  { q: 'Is the free tier permanent?',      a: 'Yes. We believe access to basic AI attestation should not require a subscription. The free tier is permanent.' },
+  { q: 'Do you store my content?',         a: 'Files are processed and immediately deleted. We do not store your text or media files for analysis purposes. Attestation metadata is retained per your plan\'s history limit.' },
   { q: 'Can I cancel anytime?',            a: 'Yes. Monthly plans cancel anytime. You keep Pro access until the end of your billing period with no hidden fees.' },
   { q: 'What payment methods do you accept?', a: 'We accept all major credit and debit cards. Invoiced billing available on Team and Enterprise plans.' },
   { q: 'Is there a student or educator discount?', a: 'Yes. Contact us at edu@aiscern.com with your institutional email and intended use for 50% off any plan.' },

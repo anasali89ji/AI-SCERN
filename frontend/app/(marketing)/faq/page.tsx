@@ -9,27 +9,27 @@ const FAQ_SECTIONS = [
   {
     title: 'Pricing & Plans',
     items: [
-      { q: 'Is there really a free plan?',           a: 'Yes. The free tier includes 10 scans per day on text and image detection. No credit card required.',                           link: { label: 'See all pricing plans', href: '/pricing' } },
-      { q: 'What happens if I hit my daily limit?',  a: 'You can wait for the next day or upgrade to Pro instantly. Your scan count resets every 24 hours.',                           link: null },
+      { q: 'Is there really a free plan?',           a: 'Yes. The free tier includes 10 examinations per day on text and image attestation. No credit card required.',                           link: { label: 'See all pricing plans', href: '/pricing' } },
+      { q: 'What happens if I hit my daily limit?',  a: 'You can wait for the next day or upgrade to Pro instantly. Your attestation count resets every 24 hours.',                           link: null },
       { q: 'Can I cancel anytime?',                  a: 'Yes. Monthly plans cancel anytime with no hidden fees. You keep Pro access until the end of your billing period.',            link: null },
-      { q: 'Will the free tier stay?',               a: 'Yes. We believe everyone deserves access to basic AI detection. The free tier is permanent.',                                  link: null },
+      { q: 'Will the free tier stay?',               a: 'Yes. We believe everyone deserves access to basic AI attestation. The free tier is permanent.',                                  link: null },
       { q: 'Why do you charge for Pro and Team?',    a: 'Running ensemble AI models across text, image, audio, and video requires significant GPU compute. Paid plans help us improve accuracy, add new modalities, and keep the service running — without selling your data or showing ads.', link: null },
     ],
   },
   {
-    title: 'Detection & Accuracy',
+    title: 'Attestation & Accuracy',
     items: [
       { q: 'How accurate is Aiscern?',               a: 'Our latest benchmarks show approximately 94% accuracy on text, 98% on images (14-layer ensemble including physics-based signals), 92% on audio, and 90% on video. Accuracy varies by content type, generator, and compression level. These are measured on public held-out test sets — not cherry-picked results. See /benchmarks for full breakdown.',                                          link: { label: 'View full methodology', href: '/methodology' } },
-      { q: 'Can I use Aiscern for legal or academic decisions?', a: 'No. Detection results are probabilistic, not definitive. Always use human judgment for high-stakes decisions. Never use a single detection result as sole evidence in legal proceedings or academic integrity cases.', link: null },
-      { q: 'What AI generators can you detect?',     a: 'Our models are updated quarterly. We detect content from major generators including ChatGPT, GPT-4, Claude, Midjourney, DALL-E, Stable Diffusion, ElevenLabs, and common TTS tools. Novel generators released after our last update may evade detection until the next fine-tune.', link: null },
-      { q: 'How does the ensemble work?',            a: 'We run content through multiple independent detection signals and combine them into a single confidence score. No single model makes the final call — results are cross-verified before delivering a verdict.',                                                                                        link: { label: 'Read the methodology', href: '/methodology' } },
-      { q: 'Does Aiscern work in languages other than English?', a: 'Text detection works best in English. We have partial support for Spanish, French, German, and Arabic. Image, audio, and video detection are language-agnostic.', link: null },
+      { q: 'Can I use Aiscern for legal or academic decisions?', a: 'No. Attestation results are probabilistic, not definitive. Always use human judgment for high-stakes decisions. Never use a single attestation result as sole evidence in legal proceedings or academic integrity cases.', link: null },
+      { q: 'What AI generators can you attest?',     a: 'Our models are updated quarterly. We attest content from major generators including ChatGPT, GPT-4, Claude, Midjourney, DALL-E, Stable Diffusion, ElevenLabs, and common TTS tools. Novel generators released after our last update may evade attestation until the next fine-tune.', link: null },
+      { q: 'How does the ensemble work?',            a: 'We run content through multiple independent forensic signals and combine them into a single integrity rating. No single model makes the final call — results are cross-verified before delivering a verdict.',                                                                                        link: { label: 'Read the methodology', href: '/methodology' } },
+      { q: 'Does Aiscern work in languages other than English?', a: 'Text attestation works best in English. We have partial support for Spanish, French, German, and Arabic. Image, audio, and video attestation are language-agnostic.', link: null },
     ],
   },
   {
     title: 'Privacy & Security',
     items: [
-      { q: 'Does Aiscern store my content?',         a: 'Files and text submitted for detection are processed and immediately deleted. We do not use your content to train models. Metadata (verdict, confidence score, timestamp) is stored per your plan\'s scan history setting.', link: { label: 'Read our Privacy Policy', href: '/privacy' } },
+      { q: 'Does Aiscern store my content?',         a: 'Files and text submitted for attestation are processed and immediately deleted. We do not use your content to train models. Metadata (verdict, integrity rating, timestamp) is stored per your plan\'s attestation history setting.', link: { label: 'Read our Privacy Policy', href: '/privacy' } },
       { q: 'Is my API key secure?',                  a: 'API keys are stored as hashed values. We never log your key in plaintext. You can rotate or revoke keys anytime from your dashboard.', link: null },
       { q: 'Is Aiscern GDPR compliant?',             a: 'Yes. Aiscern is operated as a sole proprietorship by Anas Ali in Pakistan. We process data in compliance with GDPR principles for EU users. You can request deletion of all your data at any time.', link: { label: 'View GDPR policy', href: '/gdpr' } },
     ],
