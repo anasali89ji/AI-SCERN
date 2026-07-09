@@ -11,12 +11,12 @@ interface Review {
 }
 
 const FALLBACK: Review[] = [
-  { id:'f1', rating:5, body:'Caught AI-generated submissions I would have missed entirely. The sentence-level heatmap is what sets it apart from other tools.', display_name:'Dr. Sarah M.',  tool_used:'AI Text Detector'       },
-  { id:'f2', rating:5, body:'The deepfake detector saved our editorial team from publishing a manipulated image. Essential for any newsroom doing visual verification.', display_name:'James K.',       tool_used:'Image Detector'           },
-  { id:'f3', rating:5, body:'Fast and accurate. I run every audio clip through it before broadcasting. Has saved me from voice clone disinformation twice.',             display_name:'Priya L.',       tool_used:'Audio Detector'           },
-  { id:'f4', rating:5, body:'Screening resumes for AI-polished cover letters used to be guesswork. Now it takes seconds and the confidence score is genuinely useful.', display_name:'Marcus T.',      tool_used:'AI Text Detector'         },
+  { id:'f1', rating:5, body:'Caught AI-generated submissions I would have missed entirely. The sentence-level heatmap is what sets it apart from other tools.', display_name:'Dr. Sarah M.',  tool_used:'Text Attestation'       },
+  { id:'f2', rating:5, body:'The deepfake attestation tool saved our editorial team from publishing a manipulated image. Essential for any newsroom doing visual verification.', display_name:'James K.',       tool_used:'Image Attestation'           },
+  { id:'f3', rating:5, body:'Fast and accurate. I run every audio clip through it before broadcasting. Has saved me from voice clone disinformation twice.',             display_name:'Priya L.',       tool_used:'Audio Attestation'           },
+  { id:'f4', rating:5, body:'Screening resumes for AI-polished cover letters used to be guesswork. Now it takes seconds and the confidence score is genuinely useful.', display_name:'Marcus T.',      tool_used:'Text Attestation'         },
   { id:'f5', rating:4, body:'Solid batch analyser — ran 20 student essays overnight and had a clear report by morning. Wish the free tier had a higher daily cap.',    display_name:'Anonymous',      tool_used:'Batch Content Analyser', is_anonymous:true },
-  { id:'f6', rating:5, body:'The video detector flagged a manipulated clip our team almost shared. Frame-by-frame breakdown made the case immediately.',               display_name:'Elena R.',       tool_used:'Deepfake Video Detector'  },
+  { id:'f6', rating:5, body:'The video attestation tool flagged a manipulated clip our team almost shared. Frame-by-frame breakdown made the case immediately.',               display_name:'Elena R.',       tool_used:'Video Attestation'  },
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {

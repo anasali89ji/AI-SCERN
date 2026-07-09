@@ -15,7 +15,7 @@ const BLURBS: Record<string, string> = {
   Educators:        'Check student submissions for AI-written content in seconds.',
   'HR Teams':       'Screen resumes and cover letters for AI-polished exaggerations.',
   'Legal Pros':     'Authenticate evidence and correspondence for AI tampering.',
-  'Security Teams': 'Detect deepfakes and synthetic media in incident response.',
+  'Security Teams': 'Attest deepfakes and synthetic media in incident response.',
   Researchers:      'Validate datasets and citations for AI-generated contamination.',
   'Content Creators': 'Prove authenticity of your work to platforms and audiences.',
   'Marketing Teams': 'Keep brand voice human — catch AI drafts before they ship.',

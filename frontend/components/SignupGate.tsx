@@ -37,9 +37,9 @@ export function incrementGlobalScanCount(): number {
 }
 
 const PERKS = [
-  'Save your scan history',
-  'Unlimited detections — always free',
-  'Batch scan multiple files',
+  'Save your attestation history',
+  'Unlimited attestations — always free',
+  'Bulk attest multiple files',
   'Access AI Chat assistant',
 ]
 
@@ -96,7 +96,7 @@ export function SignupGate() {
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
               </h2>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Create your free account to keep detecting — no credit card, no limits, no cost. Ever.
+                Create your free account to keep attesting — no credit card, no limits, no cost. Ever.
               </p>
             </div>
 

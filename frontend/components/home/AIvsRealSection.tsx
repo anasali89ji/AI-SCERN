@@ -105,7 +105,7 @@ export default function AIvsRealSection() {
                           border border-rose-500/25 bg-[#FF4444]/[0.06] text-[#FF4444]
                           text-xs font-semibold mb-5">
             <Scan className="w-3.5 h-3.5" />
-            Real-World Detection Examples
+            Real-World Attestation Examples
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight mb-3">
             AI vs Authentic Content
@@ -123,7 +123,7 @@ export default function AIvsRealSection() {
 
         <p className="text-center text-[11px] text-slate-600 mt-6 flex items-center justify-center gap-1.5">
           <Brain className="w-3.5 h-3.5" />
-          Illustrative examples — confidence scores are approximate. Try the live detector above for real results.
+          Illustrative examples — confidence scores are approximate. Try the live attestation tool above for real results.
         </p>
       </div>
     </section>

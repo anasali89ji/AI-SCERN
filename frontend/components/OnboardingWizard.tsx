@@ -12,7 +12,7 @@ const STEPS = ['welcome','modalities','username','ready'] as const
 type Step = typeof STEPS[number]
 
 const MODALITY_OPTIONS = [
-  { id:'text',  icon: FileText, label:'Text',   sub:'Detect AI-written articles & essays' },
+  { id:'text',  icon: FileText, label:'Text',   sub:'Attest AI-written articles & essays' },
   { id:'image', icon: Image,    label:'Image',  sub:'Spot AI-generated photos & art' },
   { id:'audio', icon: Mic,      label:'Audio',  sub:'Identify synthetic voices' },
   { id:'video', icon: Video,    label:'Video',  sub:'Find deepfakes in videos' },
@@ -99,7 +99,7 @@ export function OnboardingWizard() {
               </div>
               <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
-                The most accurate AI content detection platform. Let's get you set up in 30 seconds.
+                The most accurate AI content attestation platform. Let's get you set up in 30 seconds.
               </p>
               <div className="grid grid-cols-3 gap-3 mt-6">
                 {[['Accurate','Multi-model ensemble'],['Fast','Results in seconds'],['Private','Files never stored']].map(([h,s]) => (
@@ -119,7 +119,7 @@ export function OnboardingWizard() {
           {step === 'modalities' && (
             <div className="space-y-5">
               <div className="text-center">
-                <h2 className="text-xl font-black text-white">What will you detect?</h2>
+                <h2 className="text-xl font-black text-white">What will you attest?</h2>
                 <p className="text-[#4a5568] text-xs mt-1">Select all that apply — you can use all of them anytime</p>
               </div>
               <div className="space-y-2">
@@ -207,7 +207,7 @@ export function OnboardingWizard() {
               </div>
               <h2 className="text-2xl font-black text-white">You're all set!</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
-                Your account is ready. Start with a free scan — no upload required for text detection.
+                Your account is ready. Start with a free examination — no upload required for text attestation.
               </p>
               <div className="text-left space-y-2">
                 {[

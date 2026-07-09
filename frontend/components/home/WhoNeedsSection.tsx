@@ -38,7 +38,7 @@ const WHO_NEEDS = [
     color: 'text-violet-400',
     accent: '#8b5cf6',
     stat: '<3s',
-    statLabel: 'per scan',
+    statLabel: 'per attestation',
     value: 'Screen CVs and cover letters for AI-polished prose before shortlisting.',
     href: '/detect/text',
   },
@@ -61,7 +61,7 @@ const WHO_NEEDS = [
     accent: '#0ea5e9',
     stat: '~90%',
     statLabel: 'video accuracy',
-    value: 'Detect deepfake video calls and synthetic identities in real time.',
+    value: 'Attest deepfake video calls and synthetic identities in real time.',
     href: '/detect/video',
   },
   {
@@ -140,7 +140,7 @@ export default function WhoNeedsSection() {
             Who Uses Aiscern
           </h2>
           <p className="text-slate-400 text-base max-w-xl mx-auto leading-relaxed">
-            Nine professional verticals. One detection platform.
+            Nine professional verticals. One attestation platform.
           </p>
         </div>
 

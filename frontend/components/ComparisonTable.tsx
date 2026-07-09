@@ -43,7 +43,7 @@ export default function ComparisonTable() {
             Competitive Edge
           </div>
           <h2 className="text-3xl md:text-4xl font-black">
-            The <span className="gradient-text">Only Platform</span> That Detects All 4 Media Types
+            The <span className="gradient-text">Only Platform</span> That Attests All 4 Media Types
           </h2>
           <p className="text-slate-500 max-w-xl mx-auto">
             While others focus on text alone, Aiscern covers text, images, audio, and video — all in one platform.
