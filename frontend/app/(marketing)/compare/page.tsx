@@ -142,10 +142,10 @@ export default function ComparePage() {
         <section className="py-16">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-black text-white mb-4">Try it yourself — free</h2>
-            <p className="text-[#A3A3A3] mb-6 text-sm">No credit card required. Run your first detection in under 60 seconds.</p>
+            <p className="text-[#A3A3A3] mb-6 text-sm">No credit card required. Run your first attestation in under 60 seconds.</p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/detect/text" className="btn-primary">
-                Start Free Detection <ArrowRight className="w-4 h-4" />
+                Start Free Attestation <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pricing" className="btn-secondary">View Pricing</Link>
             </div>

@@ -4,9 +4,9 @@ import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical, ArrowRight }
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
-  title: 'Detection Methodology | Aiscern',
-  description: 'How Aiscern detects AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret confidence scores.',
-  openGraph: { title: 'Detection Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
+  title: 'Attestation Methodology | Aiscern',
+  description: 'How Aiscern attests AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret integrity ratings.',
+  openGraph: { title: 'Attestation Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
 }
 
 const ACCURACY = [
@@ -39,7 +39,7 @@ const LIMITATIONS = [
   'AI content edited by humans after generation reduces detectability significantly',
   'Hybrid content (AI inpainting on real photos) is currently below 70% accuracy',
   'Very short audio clips (< 5 seconds) provide insufficient spectral data',
-  'Novel AI generators released after our last model update may evade detection until the next fine-tune',
+  'Novel AI generators released after our last model update may evade attestation until the next fine-tune',
 ]
 
 export default function MethodologyPage() {
@@ -55,10 +55,10 @@ export default function MethodologyPage() {
               <FlaskConical className="w-3 h-3" /> Transparency
             </div>
             <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
-              Detection Methodology
+              Attestation Methodology
             </h1>
             <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto leading-relaxed">
-              How Aiscern detects AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
+              How Aiscern attests AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
             </p>
           </div>
 
@@ -83,7 +83,7 @@ export default function MethodologyPage() {
                 <div key={m.type} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-semibold text-white">{m.type} Detection</span>
+                      <span className="text-sm font-semibold text-white">{m.type} Attestation</span>
                       <p className="text-xs text-[#6B6B6B] mt-0.5">{m.model}</p>
                     </div>
                     <span className="text-2xl font-black text-[#2BEE34]">{m.score}%</span>
@@ -110,7 +110,7 @@ export default function MethodologyPage() {
             </div>
             <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-xl p-6 mb-4">
               <p className="text-sm text-[#A3A3A3] leading-relaxed">
-                Aiscern runs every scan through multiple independent detection signals. Rather than relying on a single model,
+                Aiscern runs every examination through multiple independent forensic signals. Rather than relying on a single model,
                 results are combined using a weighted voting mechanism — models with higher validated accuracy on that modality
                 receive more weight in the final verdict. This ensemble approach reduces false positives and improves robustness
                 against adversarial inputs.
@@ -118,7 +118,7 @@ export default function MethodologyPage() {
             </div>
 
             {/* Text signals */}
-            <h3 className="text-sm font-semibold text-white mb-3">Text Detection Signals</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">Text Forensic Signals</h3>
             <div className="space-y-2 mb-6">
               {SIGNALS_TEXT.map(s => (
                 <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
@@ -132,7 +132,7 @@ export default function MethodologyPage() {
             </div>
 
             {/* Image signals */}
-            <h3 className="text-sm font-semibold text-white mb-3">Image Detection Signals</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">Image Forensic Signals</h3>
             <div className="space-y-2">
               {SIGNALS_IMAGE.map(s => (
                 <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
@@ -148,12 +148,12 @@ export default function MethodologyPage() {
 
           {/* Confidence scores */}
           <section className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-5">How to Interpret Confidence Scores</h2>
+            <h2 className="text-xl font-semibold text-white mb-5">How to Interpret Integrity Ratings</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { range: '0 – 39%',  label: 'Likely Human',    color: 'text-[#2BEE34]', border: 'border-[#2BEE34]/20', bg: 'bg-[#2BEE34]/5',  desc: 'Strong signals of human authorship. Low probability of AI generation.' },
+                { range: '0 – 39%',  label: 'Likely Authentic', color: 'text-[#2BEE34]', border: 'border-[#2BEE34]/20', bg: 'bg-[#2BEE34]/5',  desc: 'Strong signals of human authorship. Low probability of AI generation.' },
                 { range: '40 – 69%', label: 'Uncertain',       color: 'text-[#FFB800]', border: 'border-[#FFB800]/20', bg: 'bg-[#FFB800]/5',  desc: 'Mixed signals. Use additional context and human judgment before acting.' },
-                { range: '70 – 100%',label: 'Likely AI',       color: 'text-[#FF4444]', border: 'border-[#FF4444]/20', bg: 'bg-[#FF4444]/5',  desc: 'Strong signals of AI generation. High-confidence ensemble verdict.' },
+                { range: '70 – 100%',label: 'Likely Synthesized', color: 'text-[#FF4444]', border: 'border-[#FF4444]/20', bg: 'bg-[#FF4444]/5',  desc: 'Strong signals of AI generation. High-confidence ensemble verdict.' },
               ].map(c => (
                 <div key={c.range} className={`rounded-xl border ${c.border} ${c.bg} p-5`}>
                   <div className={`text-lg font-black ${c.color} mb-1`}>{c.range}</div>
@@ -172,7 +172,7 @@ export default function MethodologyPage() {
             </div>
             <div className="bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-xl p-5 mb-4">
               <p className="text-sm text-[#A3A3A3] leading-relaxed">
-                AI detection is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
+                AI attestation is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
               </p>
             </div>
             <div className="space-y-2">
@@ -197,7 +197,7 @@ export default function MethodologyPage() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
                          font-semibold text-sm transition-all duration-150">
-              Try the Detector
+              Try Attestation
             </Link>
           </div>
 

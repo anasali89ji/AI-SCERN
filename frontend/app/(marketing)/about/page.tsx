@@ -4,14 +4,14 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, MapPin, Briefcase, ArrowRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform built in Mandi Bahauddin, Pakistan. Detect AI-generated text, images, audio, and video with ensemble-based analysis and published accuracy benchmarks.',
+  title: 'About Aiscern — Free AI Content Attestation',
+  description: 'Aiscern is a free multi-modal AI content attestation platform built in Mandi Bahauddin, Pakistan. Attest AI-generated text, images, audio, and video with ensemble-based analysis and published accuracy benchmarks.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
 const STATS = [
   { label: 'Modalities',       value: '4',    sub: 'text, image, audio, video' },
-  { label: 'Detection models', value: '8+',   sub: 'in the ensemble pipeline'  },
+  { label: 'Forensic engines', value: '8+',   sub: 'in the ensemble pipeline'  },
   { label: 'Free tier',        value: '10/day', sub: 'no account required'     },
   { label: 'Text accuracy',    value: '~85%', sub: 'on text, ~82% images'      },
 ]
@@ -20,17 +20,17 @@ const VALUES = [
   {
     icon: Shield,
     title: 'Transparency first',
-    desc: 'We publish our accuracy benchmarks, known limitations, and detection methodology openly. You should know exactly what our scores mean before acting on them.',
+    desc: 'We publish our accuracy benchmarks, known limitations, and attestation methodology openly. You should know exactly what our scores mean before acting on them.',
   },
   {
     icon: Brain,
     title: 'Ensemble over single models',
-    desc: 'No single signal reliably catches all AI content. We combine multiple independent detection signals into one weighted verdict, so each scan is cross-verified before delivering a result.',
+    desc: 'No single signal reliably catches all AI content. We combine multiple independent forensic signals into one weighted verdict, so each examination is cross-verified before delivering a result.',
   },
   {
     icon: Zap,
     title: 'Accessible to everyone',
-    desc: 'AI detection tools should not be locked behind subscriptions. Aiscern offers a free tier for individuals, educators, journalists, and researchers — no account required for basic detection.',
+    desc: 'AI attestation tools should not be locked behind subscriptions. Aiscern offers a free tier for individuals, educators, journalists, and researchers — no account required for basic attestation.',
   },
   {
     icon: Globe,
@@ -43,7 +43,7 @@ const TEAM = [
   {
     name:     'Anas Ali',
     role:     'Founder & CEO',
-    bio:      'Building Aiscern from Mandi Bahauddin, Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
+    bio:      'Building Aiscern from Mandi Bahauddin, Pakistan. Passionate about AI transparency, media literacy, and making powerful attestation tools accessible to everyone — regardless of budget or geography.',
     location: 'Mandi Bahauddin, Pakistan',
     skills:   'Full-Stack + AI/ML',
     initials: 'AA',
@@ -74,7 +74,7 @@ export default function AboutPage() {
               About Aiscern
             </h1>
             <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto leading-relaxed">
-              Free, open, and honest AI content detection. Built for educators, journalists, HR teams, and anyone who needs to know if content is human or machine-made.
+              Free, open, and honest AI content attestation. Built for educators, journalists, HR teams, and anyone who needs to know if content is human or machine-made.
             </p>
           </div>
 
@@ -94,10 +94,10 @@ export default function AboutPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">Our Mission</h2>
             <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-xl p-6 sm:p-8">
               <p className="text-[#A3A3A3] text-base leading-relaxed mb-4">
-                Aiscern exists because AI-generated content is now indistinguishable from human work at a glance, and the tools to detect it have historically been expensive, inaccurate, or locked behind enterprise contracts.
+                Aiscern exists because AI-generated content is now indistinguishable from human work at a glance, and the tools to attest it have historically been expensive, inaccurate, or locked behind enterprise contracts.
               </p>
               <p className="text-[#A3A3A3] text-base leading-relaxed">
-                We are building multi-modal AI detection that is honest about its accuracy, transparent about its methodology, and free enough for a high-school teacher in a rural district to use it every day. If you can read this, you can use Aiscern.
+                We are building multi-modal AI attestation that is honest about its accuracy, transparent about its methodology, and free enough for a high-school teacher in a rural district to use it every day. If you can read this, you can use Aiscern.
               </p>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function AboutPage() {
 
           {/* CTA */}
           <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-xl p-8 text-center">
-            <h2 className="text-2xl font-semibold text-white mb-3">Start detecting today</h2>
+            <h2 className="text-2xl font-semibold text-white mb-3">Start attesting today</h2>
             <p className="text-[#A3A3A3] mb-6 leading-relaxed">
               Free tier available — no account required for basic scans.
             </p>
@@ -159,7 +159,7 @@ export default function AboutPage() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
                            bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm
                            transition-colors duration-150">
-                Try Free Detector <ArrowRight className="w-4 h-4" />
+                Try Free Attestation <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/methodology"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
