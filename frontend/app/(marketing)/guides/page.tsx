@@ -6,7 +6,7 @@ import { BookOpen, ArrowRight, FileText, Eye, Music, Video, Zap } from 'lucide-r
 
 export const metadata: Metadata = {
   title: 'User Guides — Aiscern',
-  description: 'Step-by-step guides on how to detect AI text, verify deepfake images, check audio for voice cloning, and more. Free resources for all users.',
+  description: 'Step-by-step guides on how to attest AI text, verify deepfake images, check audio for voice cloning, and more. Free resources for all users.',
   openGraph: {
     title: 'User Guides — Aiscern',
     url: 'https://aiscern.com/guides',
@@ -18,38 +18,38 @@ const GUIDES = [
   {
     icon: FileText,
     color: 'primary',
-    title: 'How to Detect AI-Generated Text',
-    desc: 'A step-by-step guide to identifying AI-written content using Aiscern\'s text detection ensemble. Covers paste, upload, URL scan, and interpreting confidence scores.',
+    title: 'How to Attest AI-Generated Text',
+    desc: 'A step-by-step guide to identifying AI-written content using Aiscern\'s text attestation ensemble. Covers paste, upload, URL examination, and interpreting integrity ratings.',
     steps: ['Paste or upload your text', 'Review overall confidence score', 'Examine sentence-level heatmap', 'Export report if needed'],
     href: '/detect/text',
-    cta: 'Try Text Detection',
+    cta: 'Try Text Attestation',
   },
   {
     icon: Eye,
     color: 'blue',
     title: 'How to Verify Deepfake Images',
-    desc: 'Learn how to upload images for AI generation detection, understand the pixel-integrity analysis, and interpret results for synthetic images from Midjourney, DALL-E, Stable Diffusion, and more.',
+    desc: 'Learn how to upload images for AI generation attestation, understand the pixel-integrity analysis, and interpret results for synthetic images from Midjourney, DALL-E, Stable Diffusion, and more.',
     steps: ['Upload image (JPG, PNG, WebP)', 'Review ViT classifier confidence', 'Check pixel integrity signals', 'Review per-generator fingerprint analysis'],
     href: '/detect/image',
-    cta: 'Try Image Detection',
+    cta: 'Try Image Attestation',
   },
   {
     icon: Music,
     color: 'emerald',
-    title: 'How to Detect AI-Cloned Audio',
-    desc: 'Understand how Aiscern analyzes audio files for voice synthesis signatures. Guide covers supported formats, spectral analysis, and interpreting voice clone detection results.',
+    title: 'How to Attest AI-Cloned Audio',
+    desc: 'Understand how Aiscern analyzes audio files for voice synthesis signatures. Guide covers supported formats, spectral analysis, and interpreting voice clone attestation results.',
     steps: ['Upload audio file (MP3, WAV, M4A)', 'Wait for spectral analysis (8–15s)', 'Review voice synthesis confidence', 'Check ASVspoof benchmark comparison'],
     href: '/detect/audio',
-    cta: 'Try Audio Detection',
+    cta: 'Try Audio Attestation',
   },
   {
     icon: Video,
     color: 'amber',
-    title: 'How to Detect Deepfake Video',
-    desc: 'A complete guide to video deepfake detection using Aiscern\'s frame-level ViT ensemble and temporal consistency analysis. Covers face-swap, lip-sync, and full-body synthesis detection.',
+    title: 'How to Attest Deepfake Video',
+    desc: 'A complete guide to video deepfake attestation using Aiscern\'s frame-level ViT ensemble and temporal consistency analysis. Covers face-swap, lip-sync, and full-body synthesis attestation.',
     steps: ['Upload video file (MP4, MOV, WebM)', 'Frame extraction and analysis begins', 'Temporal consistency check runs', 'Review frame-level confidence breakdown'],
     href: '/detect/video',
-    cta: 'Try Video Detection',
+    cta: 'Try Video Attestation',
   },
   {
     icon: Zap,
@@ -64,7 +64,7 @@ const GUIDES = [
     icon: BookOpen,
     color: 'primary',
     title: 'Understanding Confidence Scores',
-    desc: 'A deep dive into what Aiscern\'s confidence percentages actually mean, how to interpret uncertain results, and when not to act on a single detection result.',
+    desc: 'A deep dive into what Aiscern\'s confidence percentages actually mean, how to interpret uncertain results, and when not to act on a single attestation result.',
     steps: ['≥62% = AI classification', '39–61% = Uncertain zone', '≤38% = Human classification', 'Always use alongside human judgment'],
     href: '/methodology',
     cta: 'Read Full Methodology',
@@ -97,7 +97,7 @@ export default function GuidesPage() {
               How to Use<br /><span className="text-[#2BEE34]">Aiscern</span>
             </h1>
             <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto">
-              Step-by-step guides for every detection modality. Learn how to get the most accurate results and interpret what the scores mean.
+              Step-by-step guides for every attestation modality. Learn how to get the most accurate results and interpret what the scores mean.
             </p>
           </div>
         </section>

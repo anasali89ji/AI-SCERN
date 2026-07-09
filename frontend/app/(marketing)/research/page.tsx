@@ -5,13 +5,13 @@ import { ExternalLink, BookOpen } from 'lucide-react'
 
 export const metadata = {
   title: 'Research Citations — Aiscern',
-  description: 'Academic papers, models, and datasets underpinning Aiscern\'s AI detection pipeline.',
+  description: 'Academic papers, models, and datasets underpinning Aiscern\'s AI attestation pipeline.',
   openGraph: { title: 'Research Citations — Aiscern', url: 'https://aiscern.com/research' },
 }
 
 const PAPERS = [
   {
-    category: 'Text Detection',
+    category: 'Text Attestation',
     entries: [
       { title: 'Binoculars: Zero-Shot Detection of LLM-Generated Text', authors: 'Hans et al.', venue: 'ICML 2024', url: 'https://arxiv.org/abs/2401.12070', description: 'Cross-perplexity scoring between two observer LLMs — the core of our text detection signal.' },
       { title: 'RoBERTa: A Robustly Optimized BERT Pretraining Approach', authors: 'Liu et al.', venue: 'arXiv 2019', url: 'https://arxiv.org/abs/1907.11692', description: 'Backbone for the openai-detector fine-tune used in our text ensemble.' },
@@ -21,7 +21,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Image Detection',
+    category: 'Image Attestation',
     entries: [
       { title: 'An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale (ViT)', authors: 'Dosovitskiy et al.', venue: 'ICLR 2021', url: 'https://arxiv.org/abs/2010.11929', description: 'Foundation architecture for our image detection classifier.' },
       { title: 'Learning Transferable Visual Models From Natural Language Supervision (CLIP)', authors: 'Radford et al. (OpenAI)', venue: 'ICML 2021', url: 'https://arxiv.org/abs/2103.00020', description: 'Embedding model for our image RAG pipeline and similarity-based retrieval.' },
@@ -30,7 +30,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Audio Detection',
+    category: 'Audio Attestation',
     entries: [
       { title: 'wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations', authors: 'Baevski et al.', venue: 'NeurIPS 2020', url: 'https://arxiv.org/abs/2006.11477', description: 'Foundation model for our audio deepfake detection fine-tune.' },
       { title: 'ASVspoof 2021: Towards Spoofed and Deepfake Speech Detection in the Wild', authors: 'Yamagishi et al.', venue: 'ASVspoof 2021', url: 'https://arxiv.org/abs/2109.00535', description: 'Primary evaluation dataset and challenge protocol for our audio models.' },
@@ -39,7 +39,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Video / Deepfake Detection',
+    category: 'Video / Deepfake Attestation',
     entries: [
       { title: 'FaceForensics++: Learning to Detect Manipulated Facial Images', authors: 'Rössler et al.', venue: 'ICCV 2019', url: 'https://arxiv.org/abs/1901.08971', description: 'Primary training and evaluation dataset for face manipulation detection.' },
       { title: 'Towards Generalizable Detection of Face Forgery via Vision Transformer', authors: 'Zheng et al.', venue: 'arXiv 2021', url: 'https://arxiv.org/abs/2107.14083', description: 'ViT-based frame-level deepfake detector used in our video ensemble.' },
