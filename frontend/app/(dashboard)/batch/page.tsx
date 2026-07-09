@@ -214,7 +214,7 @@ export default function BatchPage() {
       doc.setFontSize(11); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
       doc.text('Executive Summary', margin, 115)
       doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(200,200,200)
-      const summaryLines = doc.splitTextToSize(`This batch scan analyzed ${done.length} files. ${aiCount} files were flagged as AI-generated (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
+      const summaryLines = doc.splitTextToSize(`This attestation batch examined ${done.length} files. ${aiCount} files were flagged as synthesized (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
       doc.text(summaryLines, margin, 125)
 
       // ── Per-file breakdown ────────────────────────────────────────────
@@ -242,7 +242,7 @@ export default function BatchPage() {
       for (let i = 1; i <= total; i++) {
         doc.setPage(i)
         doc.setFontSize(8); doc.setTextColor(60,60,80); doc.setFont('helvetica','normal')
-        doc.text(`Aiscern · AI Content Detection Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
+        doc.text(`Aiscern · AI Content Attestation Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
       }
 
       doc.save(`aiscern-batch-report-${Date.now()}.pdf`)
@@ -258,10 +258,10 @@ export default function BatchPage() {
           <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6 text-[#A3A3A3]" />
           </div>
-          Batch Processing
+          Bulk Attestation
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">
-          Analyze up to {MAX_FILES} files · PDF, images, audio, video, text · {CONCURRENCY} concurrent workers · Correlation detection · PDF export
+          Examine up to {MAX_FILES} files · PDF, images, audio, video, text · {CONCURRENCY} concurrent workers · Correlation analysis · PDF export
         </p>
       </div>
 
@@ -312,16 +312,16 @@ export default function BatchPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {displayName && completed > 0 && !running && (
                 <div className="col-span-2 sm:col-span-4 text-xs text-[#6B6B6B] mb-1">
-                  Hey <span className="text-white font-semibold">{displayName}</span> — batch scan complete.{' '}
+                  Hey <span className="text-white font-semibold">{displayName}</span> — bulk attestation complete.{' '}
                   {aiCount > 0
-                    ? <span className="text-[#FF4444] font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as AI-generated</span>
-                    : <span className="text-[#2BEE34] font-medium">No AI-generated content detected</span>}
+                    ? <span className="text-[#FF4444] font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as synthesized</span>
+                    : <span className="text-[#2BEE34] font-medium">No synthesized content detected</span>}
                   {humanCount > 0 && aiCount > 0 && <>, <span className="text-[#2BEE34] font-medium">{humanCount} authentic</span></>}.
                 </div>
               )}
               {[
                 { label: 'Completed', value: completed, color: 'text-white' },
-                { label: 'AI Detected', value: aiCount, color: 'text-[#FF4444]' },
+                { label: 'Synthesized', value: aiCount, color: 'text-[#FF4444]' },
                 { label: 'Human/Real', value: humanCount, color: 'text-[#2BEE34]' },
                 { label: 'Errors', value: errored, color: errored > 0 ? 'text-[#FFB800]' : 'text-[#6B6B6B]' },
               ].map(({ label, value, color }) => (
@@ -378,7 +378,7 @@ export default function BatchPage() {
             <div className="p-4 rounded-xl border border-[#FF4444]/30 bg-[#FF4444]/5 flex items-start gap-3 mb-2">
               <AlertTriangle className="w-5 h-5 text-[#FF4444] shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-[#FF4444]">Correlated AI Pattern Detected</p>
+                <p className="text-sm font-semibold text-[#FF4444]">Correlated Synthesis Pattern Detected</p>
                 <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
               </div>
             </div>

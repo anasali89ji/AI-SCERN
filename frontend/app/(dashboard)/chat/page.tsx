@@ -335,7 +335,7 @@ function MessageBubble({
               'What does this confidence score mean?',
               'How do I cite this result?',
               'Explain the key signals found',
-              'Scan another piece of content',
+              'Attest another piece of content',
             ].map(chip => (
               <button key={chip} onClick={() => onSend(chip)}
                 className="text-xs px-3 py-1.5 rounded-full border border-[#1E1E1E] bg-white/[0.03] text-gray-400 hover:border-[#2BEE34]/40 hover:text-white hover:bg-[#2BEE34]/5 transition-all">
@@ -356,12 +356,12 @@ function MessageBubble({
 
 // ── Welcome suggestions ────────────────────────────────────────────────────
 const SUGGESTIONS = [
-  { Ic: Ico.Image,    text: "Upload an image to detect if it's AI-generated or a deepfake",  cat: 'Image'   },
+  { Ic: Ico.Image,    text: "Upload an image to attest if it's AI-generated or a deepfake",  cat: 'Image'   },
   { Ic: Ico.FileText, text: 'Paste text to check if it was written by AI',                    cat: 'Text'    },
-  { Ic: Ico.Music,    text: 'How does ensemble detection work for voice cloning?',             cat: 'Audio'   },
+  { Ic: Ico.Music,    text: 'How does ensemble attestation work for voice cloning?',             cat: 'Audio'   },
   { Ic: Ico.Shield,   text: 'Who built Aiscern and what is it designed to do?',               cat: 'About'   },
   { Ic: Ico.Globe,    text: 'What makes Aiscern different from GPTZero and Turnitin?',        cat: 'Compare' },
-  { Ic: Ico.DB,       text: "Show me Aiscern's current detection statistics",                 cat: 'Data'    },
+  { Ic: Ico.DB,       text: "Show me Aiscern's current attestation statistics",                 cat: 'Data'    },
 ]
 
 // ── Main ───────────────────────────────────────────────────────────────────
@@ -557,7 +557,7 @@ export default function ChatPage() {
       if (unsupportedAtts?.length) {
         setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{
           ...m,
-          content:`⚠️ Note: Audio/video files can't be analyzed directly in chat. Please use the dedicated [Audio](/detect/audio) or [Video](/detect/video) detection tools.\n\n`,
+          content:`⚠️ Note: Audio/video files can't be analyzed directly in chat. Please use the dedicated [Audio](/detect/audio) or [Video](/detect/video) attestation tools.\n\n`,
         }:m)}:c))
       }
       if (!res.ok) throw new Error(`Server error ${res.status}`)
@@ -707,7 +707,7 @@ export default function ChatPage() {
             <div className="min-w-0">
               <div className="text-sm font-bold text-white leading-none truncate">ARIA <span className="text-gray-600 font-normal text-xs ml-1">by Aiscern</span></div>
               <div className="text-xs text-gray-600 mt-0.5 hidden sm:block">
-                {activeChat ? `${activeChat.messages.length} messages · ${activeChat.title.slice(0,40)}` : 'Multi-modal · Tool-enabled · AI detection specialist'}
+                {activeChat ? `${activeChat.messages.length} messages · ${activeChat.title.slice(0,40)}` : 'Multi-modal · Tool-enabled · AI attestation specialist'}
               </div>
             </div>
           </div>
@@ -743,13 +743,13 @@ export default function ChatPage() {
               </div>
 
               <h1 className="text-2xl font-black text-white mb-0.5 tracking-tight">ARIA</h1>
-              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">Aiscern AI Detection Assistant</p>
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">Aiscern AI Attestation Assistant</p>
               <p className="text-gray-600 text-xs sm:text-sm text-center mb-4 max-w-sm leading-relaxed">
-                Ask anything about AI detection, upload media for deepfake analysis, or explore Aiscern's capabilities.
+                Ask anything about AI attestation, upload media for deepfake analysis, or explore Aiscern's capabilities.
               </p>
 
               <div className="hidden xs:flex flex-wrap justify-center gap-1.5 mb-3">
-                {[['Text Detection',Ico.FileText],['Deepfake Analysis',Ico.Image],['Voice Cloning',Ico.Music],['Video Deepfakes',Ico.Video],['General Q&A',Ico.Globe],['Dataset Insights',Ico.DB]].map(([l,I])=>{
+                {[['Text Attestation',Ico.FileText],['Deepfake Analysis',Ico.Image],['Voice Cloning',Ico.Music],['Video Deepfakes',Ico.Video],['General Q&A',Ico.Globe],['Dataset Insights',Ico.DB]].map(([l,I])=>{
                   const Icon = I as ()=>React.ReactElement
                   return (
                     <div key={l as string} className="flex items-center gap-1 px-2 py-1 rounded-full border border-white/8 bg-white/[0.02] text-[11px] text-gray-500">
