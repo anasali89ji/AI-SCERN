@@ -101,7 +101,7 @@ function TextDetectionPage() {
 
   const handleDetect = async () => {
     if (!pdfMode && (!text.trim() || text.length < 50)) {
-      setError('Please enter at least 50 characters for accurate detection.')
+      setError('Please enter at least 50 characters for accurate attestation.')
       return
     }
     setLoading(true); setError(null); setResult(null); setGraphContext(null)
@@ -146,14 +146,14 @@ function TextDetectionPage() {
     if (!result) return
     const out = `Aiscern Text Analysis Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Verdict:    ${result.verdict === 'AI' ? 'AI GENERATED' : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : 'UNCERTAIN'}
+Verdict:    ${result.verdict === 'AI' ? 'SYNTHESIZED' : result.verdict === 'HUMAN' ? 'AUTHENTIC' : 'UNCERTAIN'}
 Confidence: ${formatConfidence(result.confidence)}
 Summary:    ${result.summary}
 
-Detection Signals:
+Forensic Signals:
 ${result.signals.map(s => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}`).join('\n')}
 
-Engine: Aiscern Detection Engine
+Engine: Aiscern Attestation Engine
 Analyzed: ${new Date().toLocaleString()}`
     navigator.clipboard?.writeText(out)
     setCopied(true); setTimeout(() => setCopied(false), 2000)
@@ -189,7 +189,7 @@ Analyzed: ${new Date().toLocaleString()}`
     <>
     {/* Screen reader announcement of analysis results */}
     <div aria-live="polite" aria-atomic="true" className="sr-only">
-      {result && `Analysis complete. Verdict: ${result.verdict === 'AI' ? 'AI GENERATED' : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : 'UNCERTAIN'}. Confidence: ${formatConfidence(result.confidence)}.`}
+      {result && `Analysis complete. Verdict: ${result.verdict === 'AI' ? 'SYNTHESIZED' : result.verdict === 'HUMAN' ? 'AUTHENTIC' : 'UNCERTAIN'}. Confidence: ${formatConfidence(result.confidence)}.`}
     </div>
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
@@ -197,7 +197,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-[#FFB800]/10 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-[#FFB800]" />
           </div>
-          Text Detection
+          Text Attestation
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
@@ -344,7 +344,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading || charCount < 50}
                   className="btn-primary py-2 px-5 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {loading ? 'Analyzing…' : 'Detect'}
+                  {loading ? 'Examining…' : 'Attest'}
                 </button>
               </div>
             </div>
@@ -409,7 +409,7 @@ Analyzed: ${new Date().toLocaleString()}`
                               : result.verdict === 'HUMAN'
                               ? `${displayName}, this is Human Written`
                               : `${displayName}, this is Uncertain`
-                            : result.verdict === 'HUMAN' ? 'HUMAN WRITTEN' : result.verdict === 'AI' ? 'AI GENERATED' : 'UNCERTAIN'}
+                            : result.verdict === 'HUMAN' ? 'AUTHENTIC' : result.verdict === 'AI' ? 'SYNTHESIZED' : 'UNCERTAIN'}
                         </h3>
                         <div className="text-right shrink-0">
                           <div className={`text-2xl sm:text-4xl font-black ${verdictColor[result.verdict]} tabular-nums`}>{formatConfidence(result.confidence)}</div>
@@ -436,7 +436,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <div className="card">
                   <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
-                    Detection Signals ({result.signals.length})
+                    Forensic Signals ({result.signals.length})
                   </h3>
                   <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                     {result.signals.map((signal, i) => (
@@ -498,7 +498,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
                     <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
                       className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
-                      <RotateCcw className="w-3.5 h-3.5" /> Detect Another
+                      <RotateCcw className="w-3.5 h-3.5" /> Attest Another
                     </button>
                     <button onClick={copyResult}
                       className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
@@ -522,7 +522,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </div>
                 <h3 className="font-semibold text-white mb-2">Ready to Analyze</h3>
                 <p className="text-[#6B6B6B] text-sm max-w-xs">
-                  Enter text on the left and click Detect. Minimum 50 characters for accurate results.
+                  Enter text on the left and click Attest. Minimum 50 characters for accurate results.
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
                   {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
@@ -552,7 +552,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="AI Text Detector" />
+      <LazyReviewSuggestion toolName="Text Attestation" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -568,10 +568,10 @@ Analyzed: ${new Date().toLocaleString()}`
         <details className="card mt-4 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
             <Info className="w-4 h-4 text-[#2BEE34]" />
-            Detection Models &amp; Datasets
+            Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
@@ -594,7 +594,7 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>

@@ -28,8 +28,8 @@ const LazyFeedbackBar = dynamic(
 
 
 const verdictConfig = {
-  AI:        { ...baseVerdictConfig.AI,        label: 'AI GENERATED' },
-  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'HUMAN CREATED' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'SYNTHESIZED' },
+  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC' },
   UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
 
@@ -129,10 +129,10 @@ Verdict:    ${result.verdict}
 Confidence: ${formatConfidence(result.confidence)}
 Summary:    ${result.summary}
 
-Detection Signals:
+Forensic Signals:
 ${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}\n    ${s.description}`).join('\n')}
 
-Engine: Aiscern Detection Engine · ${result.processing_time}ms
+Engine: Aiscern Attestation Engine · ${result.processing_time}ms
 Analyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
@@ -176,7 +176,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
             <ImageIcon className="w-6 h-6 text-[#2BEE34]" />
           </div>
-          Image Detection
+          Image Attestation
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
@@ -253,7 +253,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Detect Another" className="text-[#6B6B6B] hover:text-[#FF4444] transition-colors p-2 rounded-lg hover:bg-[#FF4444]/10 shrink-0">
+              title="Attest Another" className="text-[#6B6B6B] hover:text-[#FF4444] transition-colors p-2 rounded-lg hover:bg-[#FF4444]/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -265,7 +265,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                  {loading ? 'Scanning…' : 'Detect'}
+                  {loading ? 'Examining…' : 'Attest'}
                 </button>
               </div>
             </div>
@@ -281,7 +281,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="card py-3 px-4 border-[#1E1E1E]">
             <div className="flex items-start gap-2 text-xs text-[#6B6B6B]">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#2BEE34]/60" />
-              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce detection accuracy.</span>
+              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce attestation accuracy.</span>
             </div>
           </div>
         </div>
@@ -329,7 +329,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
-                  Detection Signals ({result.signals.length})
+                  Forensic Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
@@ -374,7 +374,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <ImageIcon className="w-10 h-10 text-[#2BEE34]" />
               </div>
               <h3 className="font-semibold text-white mb-2">Upload an Image</h3>
-              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop any image to scan for GAN artifacts, metadata anomalies, and AI generation patterns</p>
+              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop any image to examine for GAN artifacts, metadata anomalies, and AI generation patterns</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
@@ -402,7 +402,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="Image Detector" />
+      <LazyReviewSuggestion toolName="Image Attestation" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -418,10 +418,10 @@ Analyzed: ${new Date().toLocaleString()}`
         <details className="card mt-2 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
             <Info className="w-4 h-4 text-[#2BEE34]" />
-            Detection Models &amp; Datasets
+            Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
@@ -444,7 +444,7 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>

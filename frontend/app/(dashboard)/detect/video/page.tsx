@@ -28,7 +28,7 @@ import { SignupGate } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { ...baseVerdictConfig.AI,        label: 'DEEPFAKE / AI DETECTED' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'DEEPFAKE / SYNTHESIZED' },
   HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC VIDEO' },
   UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
@@ -279,11 +279,11 @@ function VideoDetectionPage() {
       '',
       `Verdict:    ${result.verdict}`,
       `Confidence: ${Math.round(result.confidence * 100)}%`,
-      `Engine:     Aiscern Detection Engine`,
+      `Engine:     Aiscern Attestation Engine`,
       '',
       `Summary:    ${result.summary}`,
       '',
-      'Detection Signals:',
+      'Forensic Signals:',
       result.signals.map(s => `  • ${s.name} — ${s.weight}%${s.flagged ? ' ⚠ flagged' : ''}`).join('\n'),
       '',
       frameTable ? 'Per-Frame Scores:\n' + frameTable : '',
@@ -323,7 +323,7 @@ function VideoDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-[#A3A3A3]" />
           </div>
-          Video Detection
+          Video Attestation
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
@@ -536,7 +536,7 @@ function VideoDetectionPage() {
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#2A2A2A]" />
-                  Detection Signals ({result.signals.length})
+                  Forensic Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
@@ -600,7 +600,7 @@ function VideoDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Video Detector" />
+      <LazyReviewSuggestion toolName="Video Attestation" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -616,10 +616,10 @@ function VideoDetectionPage() {
         <details className="card mt-2 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
             <Info className="w-4 h-4 text-[#2BEE34]" />
-            Detection Models &amp; Datasets
+            Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
@@ -640,7 +640,7 @@ function VideoDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>

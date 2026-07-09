@@ -27,7 +27,7 @@ import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
 
 
 const verdictConfig = {
-  AI:        { ...baseVerdictConfig.AI,        label: 'AI GENERATED VOICE' },
+  AI:        { ...baseVerdictConfig.AI,        label: 'SYNTHESIZED VOICE' },
   HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC HUMAN VOICE' },
   UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
 }
@@ -167,7 +167,7 @@ function AudioDetectionPage() {
 
   const exportReport = () => {
     if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
+    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Attestation Engine\nAnalyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
@@ -190,7 +190,7 @@ function AudioDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
             <Mic className="w-6 h-6 text-[#2BEE34]" />
           </div>
-          Audio Detection
+          Audio Attestation
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
@@ -267,7 +267,7 @@ function AudioDetectionPage() {
                     </p>
                   </div>
                   <button onClick={reset}
-              title="Detect Another" className="text-[#6B6B6B] hover:text-[#FF4444] p-2 rounded-lg hover:bg-[#FF4444]/10 transition-colors shrink-0">
+              title="Attest Another" className="text-[#6B6B6B] hover:text-[#FF4444] p-2 rounded-lg hover:bg-[#FF4444]/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -280,7 +280,7 @@ function AudioDetectionPage() {
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
-                  {loading ? 'Analyzing…' : 'Detect'}
+                  {loading ? 'Examining…' : 'Attest'}
                 </button>
               </div>
             </div>
@@ -401,9 +401,9 @@ function AudioDetectionPage() {
                 <Mic className="w-10 h-10 text-[#2BEE34]" />
               </div>
               <h3 className="font-semibold text-white mb-2">Upload Audio</h3>
-              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop a voice recording to scan for TTS synthesis and voice cloning artifacts</p>
+              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop a voice recording to examine for TTS synthesis and voice cloning artifacts</p>
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full max-w-xs">
-                {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact detection', 'Voice cloning'].map(f => (
+                {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact examination', 'Voice cloning'].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]/60 shrink-0" />{f}
                   </div>
@@ -416,7 +416,7 @@ function AudioDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Audio Detector" />
+      <LazyReviewSuggestion toolName="Audio Attestation" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -432,10 +432,10 @@ function AudioDetectionPage() {
         <details className="card mt-2 mx-4 mb-4">
           <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
             <Info className="w-4 h-4 text-[#2BEE34]" />
-            Detection Models &amp; Datasets
+            Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
@@ -457,7 +457,7 @@ function AudioDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
           <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>

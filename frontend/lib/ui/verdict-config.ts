@@ -8,7 +8,7 @@ export const verdictConfig = {
     border: 'border-[#FF4444]/30',
     bg:     'bg-[#FF4444]/5',
     hex:    '#FF4444',
-    label:  'AI GENERATED',
+    label:  'SYNTHESIZED',
   },
   HUMAN: {
     icon:   CheckCircle,
@@ -16,7 +16,7 @@ export const verdictConfig = {
     border: 'border-[#2BEE34]/30',
     bg:     'bg-[#2BEE34]/5',
     hex:    '#2BEE34',
-    label:  'HUMAN WRITTEN',
+    label:  'AUTHENTIC',
   },
   UNCERTAIN: {
     icon:   HelpCircle,
