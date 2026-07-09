@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, ArrowRight, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Aiscern AI Detection at Scale',
+  title: 'Enterprise — Aiscern AI Attestation at Scale',
   description: 'Custom pricing, SLA guarantees, priority support, and private deployment options for enterprise teams. Contact our sales team.',
   openGraph: {
     title: 'Enterprise Solutions — Aiscern',
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
 }
 
 const FEATURES = [
-  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your scan volume requirements.' },
+  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your attestation volume requirements.' },
   { icon: Shield, title: 'SLA Guarantees', desc: '99.9% uptime SLA with priority incident response and dedicated status page communication.' },
-  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk scan thousands of documents simultaneously via async batch API with webhook callbacks.' },
+  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk attest thousands of documents simultaneously via async batch API with webhook callbacks.' },
   { icon: Lock, title: 'Data Processing Agreements', desc: 'GDPR-compliant DPA and BAA available for healthcare and legal customers. Enhanced data handling options.' },
   { icon: Users, title: 'Team Management', desc: 'Centralized billing, role-based access control, audit logs, and team usage dashboards.' },
   { icon: Building2, title: 'Dedicated Onboarding', desc: 'Technical onboarding call, integration support, and a named account manager for enterprise clients.' },
@@ -44,7 +44,7 @@ export default function EnterprisePage() {
               Enterprise
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
-              AI Detection at<br /><span className="text-[#2BEE34]">Enterprise Scale</span>
+              AI Attestation at<br /><span className="text-[#2BEE34]">Enterprise Scale</span>
             </h1>
             <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.
@@ -132,7 +132,7 @@ export default function EnterprisePage() {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Use Case</label>
-                  <textarea rows={3} placeholder="Describe your detection needs, expected volume, and any integration requirements..." className="input-field resize-none" />
+                  <textarea rows={3} placeholder="Describe your attestation needs, expected volume, and any integration requirements..." className="input-field resize-none" />
                 </div>
                 <a href="mailto:enterprise@aiscern.com?subject=Enterprise Inquiry" className="btn-primary w-full justify-center">
                   Send Inquiry <ArrowRight className="w-4 h-4" />

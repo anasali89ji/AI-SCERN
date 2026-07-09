@@ -23,7 +23,7 @@ const PRACTICES = [
     icon: Server,
     title: 'Data at rest',
     items: [
-      'Supabase stores all scan metadata — AES-256 encrypted at rest',
+      'Supabase stores all attestation metadata — AES-256 encrypted at rest',
       'Uploaded files stored in Cloudflare R2 — server-side encrypted',
       'API keys stored as hashed values only — plaintext never persisted',
     ],
@@ -33,7 +33,7 @@ const PRACTICES = [
     title: 'Data access',
     items: [
       'Row-Level Security (RLS) enforced on all Supabase tables',
-      'Users can only read and modify their own scan records',
+      'Users can only read and modify their own attestation records',
       'Service-role key used server-side only, never exposed to clients',
       'Clerk handles authentication — we never store passwords',
     ],
@@ -52,9 +52,9 @@ const PRACTICES = [
 ]
 
 const RETENTION = [
-  { item: 'Scan results (verdict, confidence, signals)', retention: 'Retained indefinitely — visible in your History' },
+  { item: 'Attestation results (verdict, confidence, signals)', retention: 'Retained indefinitely — visible in your History' },
   { item: 'Uploaded files (images, audio, video)',       retention: 'Deleted from R2 after 24 hours automatically' },
-  { item: 'Scan content previews (text)',                retention: 'First 500 characters stored for History display' },
+  { item: 'Attestation content previews (text)',                retention: 'First 500 characters stored for History display' },
   { item: 'Anonymous scans (no account)',                retention: 'Not persisted — results shown in session only' },
   { item: 'API keys',                                    retention: 'Stored as hash — retained until you delete them' },
 ]
@@ -87,7 +87,7 @@ export default function SecurityPage() {
             {[
               'Uploaded files are deleted within 24 hours — we do not keep your images, audio, or video',
               'Text content previews (first 500 chars) are stored for your History — delete anytime',
-              'Anonymous scans are never stored — if you scan without an account, nothing is saved',
+              'Anonymous attestations are never stored — if you attest without an account, nothing is saved',
               'We never sell your data or use it for advertising',
               'API keys are stored as one-way hashes — we cannot recover the original key',
             ].map(item => (
