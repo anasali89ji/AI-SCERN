@@ -56,7 +56,7 @@ export default function DpaPage() {
             </p>
             <p>
               This DPA supplements the <Link href="/terms" className="text-[#2BEE34] hover:underline">Terms of Service</Link> and
-              governs the processing of personal data that the Data Controller submits to Aiscern for AI content detection.
+              governs the processing of personal data that the Data Controller submits to Aiscern for AI content attestation.
             </p>
             <p>This DPA applies where the processing of personal data is subject to:</p>
             <ul>
@@ -79,20 +79,20 @@ export default function DpaPage() {
 
           <Section title="3. Processing Details">
             <SubSection title="3.1 Subject Matter">
-              <p>Aiscern processes personal data contained in content submitted for AI detection analysis (text documents, images, audio, video).</p>
+              <p>Aiscern processes personal data contained in content submitted for AI attestation analysis (text documents, images, audio, video).</p>
             </SubSection>
             <SubSection title="3.2 Duration">
               <p>Processing continues for the duration of the customer&apos;s subscription. Upon termination, personal data is deleted within 30 days unless retention is required by law.</p>
             </SubSection>
             <SubSection title="3.3 Nature and Purpose">
-              <p>Processing is performed solely to provide AI content detection results to the Data Controller. No secondary processing for Aiscern&apos;s own purposes occurs without explicit consent.</p>
+              <p>Processing is performed solely to provide AI content attestation results to the Data Controller. No secondary processing for Aiscern&apos;s own purposes occurs without explicit consent.</p>
             </SubSection>
             <SubSection title="3.4 Types of Personal Data">
               <ul>
                 <li>Written content (text documents, emails, essays) that may contain names, identifiers, or personal opinions</li>
                 <li>Images, audio, or video that may contain biometric data (faces, voices)</li>
                 <li>User account identifiers (email, username) for authentication</li>
-                <li>Usage metadata (timestamps, scan counts, IP addresses)</li>
+                <li>Usage metadata (timestamps, attestation counts, IP addresses)</li>
               </ul>
             </SubSection>
             <SubSection title="3.5 Categories of Data Subjects">
@@ -103,7 +103,7 @@ export default function DpaPage() {
           <Section title="4. Processor Obligations">
             <p>Aiscern agrees to:</p>
             <ul>
-              <li>Process Personal Data only on documented instructions from the Data Controller (i.e., providing detection results)</li>
+              <li>Process Personal Data only on documented instructions from the Data Controller (i.e., providing attestation results)</li>
               <li>Ensure all personnel authorised to process Personal Data are bound by confidentiality obligations</li>
               <li>Implement appropriate technical and organisational security measures (see Section 6)</li>
               <li>Not engage new Sub-processors without informing the Data Controller (see Section 5)</li>
@@ -132,7 +132,7 @@ export default function DpaPage() {
                     ['Supabase (supabase.com)',      'Database & API',                        'EU / US (AWS)',    'SCC'],
                     ['Vercel (vercel.com)',          'Application hosting & serverless',       'US / Edge',        'SCC'],
                     ['Cloudflare (cloudflare.com)', 'CDN, R2 storage, D1 database',          'Global edge',      'SCC'],
-                    ['Google Gemini API',            'AI inference (text/image detection)',   'US (Google)',      'SCC'],
+                    ['Google Gemini API',            'AI inference (text/image attestation)',   'US (Google)',      'SCC'],
                     ['Hugging Face (huggingface.co)','AI model inference (text/audio)',       'US (AWS)',         'SCC'],
                     ['Upstash (upstash.com)',        'Rate limiting (hashed IPs only)',       'US / EU',          'SCC'],
                   ].map(([name, purpose, location, mechanism]) => (

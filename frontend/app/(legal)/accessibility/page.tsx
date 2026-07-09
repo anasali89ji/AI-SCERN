@@ -69,7 +69,7 @@ export default function AccessibilityPage() {
               <StatusItem icon="pass" label="Skip Navigation" detail="A 'Skip to main content' link is available at the top of every page." />
               <StatusItem icon="pass" label="Semantic HTML" detail="Pages use landmark roles (main, nav, header, footer), heading hierarchy, and ARIA labels where appropriate." />
               <StatusItem icon="warn" label="Screen Reader Testing" detail="Automated testing via axe-core has been performed. Manual screen reader testing with NVDA/JAWS is in progress." />
-              <StatusItem icon="warn" label="Complex Widgets" detail="The scan result confidence visualisations and animated charts may not convey all information to screen reader users. Text alternatives are being added." />
+              <StatusItem icon="warn" label="Complex Widgets" detail="The attestation result confidence visualisations and animated charts may not convey all information to screen reader users. Text alternatives are being added." />
               <StatusItem icon="warn" label="File Upload" detail="The drag-and-drop file upload interface has keyboard fallback but may present challenges for some assistive technologies." />
               <StatusItem icon="fail" label="WCAG 2.1 Full Audit" detail="A formal third-party WCAG audit has not yet been completed. We plan to commission one in Q3 2026." />
             </div>
@@ -94,8 +94,8 @@ export default function AccessibilityPage() {
           <Section title="4. Known Limitations">
             <p>Despite our best efforts to ensure accessibility of Aiscern, there may be some limitations. Below is a description of known limitations and potential workarounds:</p>
             <ul>
-              <li><strong>Detection result confidence rings:</strong> SVG-based visualisations may not be announced correctly by all screen readers. A numeric percentage is always displayed as a text alternative.</li>
-              <li><strong>Real-time scan progress:</strong> Live detection updates use aria-live regions but may announce too frequently. We are reviewing announcement frequency.</li>
+              <li><strong>Attestation result confidence rings:</strong> SVG-based visualisations may not be announced correctly by all screen readers. A numeric percentage is always displayed as a text alternative.</li>
+              <li><strong>Real-time attestation progress:</strong> Live attestation updates use aria-live regions but may announce too frequently. We are reviewing announcement frequency.</li>
               <li><strong>PDF export:</strong> Generated PDFs are not yet tagged for accessibility. Tagged PDF output is planned for a future release.</li>
               <li><strong>Video player (demo):</strong> The homepage hero video does not currently have captions. We are adding caption support.</li>
             </ul>

@@ -4,8 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Aiscern AI Detector',
-  description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI detection tools.',
+  title: 'Privacy Policy | Aiscern AI Attestation',
+  description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI attestation tools.',
 }
 
 const LAST_UPDATED = 'June 7, 2026'
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
           <Section title="1. Introduction">
             <p>
               Welcome to Aiscern, a sole proprietorship operated by Anas Ali (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;). This Privacy Policy explains how we collect,
-              use, disclose, and safeguard your information when you use our AI content detection platform at{' '}
+              use, disclose, and safeguard your information when you use our AI content attestation platform at{' '}
               <a href="https://aiscern.com" className="text-[#2BEE34] hover:underline">aiscern.com</a>.
             </p>
             <p>
@@ -49,14 +49,14 @@ export default function PrivacyPage() {
             <SubSection title="2.1 Information You Provide">
               <ul>
                 <li><strong>Account data:</strong> Email address, username, and password when you register</li>
-                <li><strong>Content you submit:</strong> Text, images, audio, or video files you upload for detection analysis</li>
+                <li><strong>Content you submit:</strong> Text, images, audio, or video files you upload for attestation analysis</li>
                 <li><strong>Chat messages:</strong> Conversations with our AI assistant</li>
                 <li><strong>Profile information:</strong> Any optional details you choose to add</li>
               </ul>
             </SubSection>
             <SubSection title="2.2 Automatically Collected Data">
               <ul>
-                <li><strong>Usage data:</strong> Pages visited, features used, detection history, timestamps</li>
+                <li><strong>Usage data:</strong> Pages visited, features used, attestation history, timestamps</li>
                 <li><strong>Device information:</strong> Browser type, operating system, screen resolution</li>
                 <li><strong>IP address:</strong> For security, rate limiting, and fraud prevention</li>
                 <li><strong>Cookies:</strong> Authentication tokens and session management (see Section 7)</li>
@@ -66,11 +66,11 @@ export default function PrivacyPage() {
 
           <Section title="3. How We Use Your Information">
             <ul>
-              <li>Providing and improving the Aiscern detection service</li>
-              <li>Processing your submitted content through AI models to generate detection results</li>
+              <li>Providing and improving the Aiscern attestation service</li>
+              <li>Processing your submitted content through AI models to generate attestation results</li>
               <li>Maintaining your account and authentication</li>
-              <li>Storing your scan history for your reference</li>
-              <li>Improving our AI models and detection accuracy using anonymized, aggregated data</li>
+              <li>Storing your attestation history for your reference</li>
+              <li>Improving our AI models and attestation accuracy using anonymized, aggregated data</li>
               <li>Responding to support requests</li>
               <li>Sending service-related notifications (no marketing without consent)</li>
               <li>Detecting and preventing fraud, abuse, or security threats</li>
@@ -79,13 +79,13 @@ export default function PrivacyPage() {
 
           <Section title="4. Content You Submit">
             <p>
-              Files you upload for analysis are processed by our AI models and results are returned to you. We store detection
-              results in your scan history. Uploaded files may be temporarily cached for processing purposes and are not
+              Files you upload for analysis are processed by our AI models and results are returned to you. We store attestation
+              results in your attestation history. Uploaded files may be temporarily cached for processing purposes and are not
               permanently stored beyond what is necessary for the service.
             </p>
             <p>
               <strong>We do not sell, share, or use your submitted content</strong> for any purpose other than providing the
-              detection service to you.
+              attestation service to you.
             </p>
           </Section>
 
@@ -95,8 +95,8 @@ export default function PrivacyPage() {
               <li><strong>Clerk (clerk.com):</strong> User authentication, session management, and identity. Clerk never shares your data with third parties for advertising. <a href="https://clerk.com/privacy" className="text-[#2BEE34] hover:underline">Clerk Privacy Policy</a></li>
               <li><strong>Supabase (supabase.com):</strong> Database storage and API. Data hosted on AWS infrastructure (EU/US). <a href="https://supabase.com/privacy" className="text-[#2BEE34] hover:underline">Supabase Privacy Policy</a></li>
               <li><strong>Vercel (vercel.com):</strong> Application hosting, serverless functions, and edge delivery. <a href="https://vercel.com/legal/privacy-policy" className="text-[#2BEE34] hover:underline">Vercel Privacy Policy</a></li>
-              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio detection. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-[#2BEE34] hover:underline">Hugging Face Privacy Policy</a></li>
-              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image detection. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-[#2BEE34] hover:underline">Google AI Terms</a></li>
+              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio attestation. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-[#2BEE34] hover:underline">Hugging Face Privacy Policy</a></li>
+              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image attestation. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-[#2BEE34] hover:underline">Google AI Terms</a></li>
               <li><strong>Cloudflare (cloudflare.com):</strong> CDN, edge workers, R2 file storage, and D1 database. <a href="https://www.cloudflare.com/privacypolicy/" className="text-[#2BEE34] hover:underline">Cloudflare Privacy Policy</a></li>
               <li><strong>Upstash (upstash.com):</strong> Redis-based rate limiting. Only request counts and IP hashes are stored, not content. <a href="https://upstash.com/privacy" className="text-[#2BEE34] hover:underline">Upstash Privacy Policy</a></li>
             </ul>
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
           <Section title="6. Data Retention">
             <ul>
               <li><strong>Account data:</strong> Retained until you delete your account</li>
-              <li><strong>Scan history:</strong> Retained for 12 months, then automatically deleted</li>
+              <li><strong>Attestation history:</strong> Retained for 12 months, then automatically deleted</li>
               <li><strong>Uploaded files:</strong> Deleted within 24 hours of processing. This applies equally to files uploaded through Batch Analysis — all batch-uploaded files follow the same 24-hour deletion policy as individual uploads.</li>
               <li><strong>Chat logs:</strong> Retained for 30 days for quality and abuse monitoring, then deleted</li>
             </ul>
@@ -118,11 +118,11 @@ export default function PrivacyPage() {
 
           <Section title="7. Shareable Result Links">
             <p>
-              Aiscern allows you to generate a shareable link for any detection result. These links remain active for
+              Aiscern allows you to generate a shareable link for any attestation result. These links remain active for
               <strong> 30 days</strong> from the time of creation, after which they expire automatically.
             </p>
             <p>
-              Shareable links contain only the detection verdict, confidence score, and associated metadata (modality, timestamp,
+              Shareable links contain only the attestation verdict, confidence score, and associated metadata (modality, timestamp,
               model version). <strong>They never expose the original uploaded file.</strong> Anyone with the link can view the
               summary result — treat shared links accordingly.
             </p>
@@ -168,7 +168,7 @@ export default function PrivacyPage() {
               <li><strong>Access:</strong> Request a copy of your personal data</li>
               <li><strong>Correction:</strong> Update inaccurate personal data</li>
               <li><strong>Deletion:</strong> Request deletion of your account and associated data</li>
-              <li><strong>Portability:</strong> Export your scan history in JSON format</li>
+              <li><strong>Portability:</strong> Export your attestation history in JSON format</li>
               <li><strong>Objection:</strong> Object to processing of your data</li>
             </ul>
             <p>
@@ -201,7 +201,7 @@ export default function PrivacyPage() {
                 <li><strong>Right to object</strong> — object to processing based on legitimate interests</li>
                 <li><strong>Right to withdraw consent</strong> — at any time, without affecting prior processing</li>
               </ul>
-              <p>Legal basis for processing: contract performance (scan results), legitimate interest (fraud prevention), and consent (analytics cookies).</p>
+              <p>Legal basis for processing: contract performance (attestation results), legitimate interest (fraud prevention), and consent (analytics cookies).</p>
               <p>Data transfers to the US (Vercel, Supabase US regions) rely on Standard Contractual Clauses (SCCs). You may request a copy of the applicable SCCs at <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.</p>
             </SubSection>
             <SubSection title="California Users (CCPA/CPRA)">
