@@ -162,7 +162,7 @@ function CreditsCard({ userId }: { userId: string }) {
           {/* Credits balance */}
           {data.credits_total > 0 && (
             <UsageBar
-              label="Scan Credits"
+              label="Attestation Credits"
               sublabel="Resets with your plan · used for audio & video"
               used={data.credits_used}
               total={data.credits_total}
@@ -442,10 +442,10 @@ export default function ProfilePage() {
       {/* ── Credits & Usage (live from /api/user/credits) ──────── */}
       {user?.uid && <CreditsCard userId={user.uid} />}
 
-      {/* ── Detection Stats ───────────────────────────────────── */}
+      {/* ── Attestation Stats ───────────────────────────────────── */}
       <div className="card p-4">
         <h2 className="text-sm font-semibold text-[#6B6B6B] uppercase tracking-widest mb-3 px-1">
-          Detection Stats
+          Attestation Stats
         </h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -457,8 +457,8 @@ export default function ProfilePage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-[#FF4444]" />
-              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
+              <StatCard icon={Shield}    label="Synthesized"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-[#FF4444]" />
+              <StatCard icon={User}      label="Authentic"      value={stats?.human_detected ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
               <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-[#FFB800]/10 text-[#FFB800]" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -130,7 +130,7 @@ export default function ScraperPage() {
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">RAG</span>
           </div>
           <p className="text-sm text-[#A3A3A3] ml-12">
-            Analyze any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal detection.
+            Examine any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal attestation.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function ScraperPage() {
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              {loading ? 'Scanning…' : 'Scan Site'}
+              {loading ? 'Examining…' : 'Attest Site'}
             </button>
           </div>
 
@@ -368,7 +368,7 @@ export default function ScraperPage() {
                 <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
                   <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
                     <Shield className="w-4 h-4 text-[#2BEE34]" />
-                    Detection Signals
+                    Forensic Signals
                     <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.signals.filter(s => s.flagged).length} flagged of {result.signals.length}</span>
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -450,7 +450,7 @@ export default function ScraperPage() {
                         className="text-[#2BEE34] hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
-                      <button onClick={() => handleScrape(link.url)} title="Scan this page"
+                      <button onClick={() => handleScrape(link.url)} title="Attest this page"
                         className="text-[#6B6B6B] hover:text-white transition-colors shrink-0 ml-1">
                         <Zap className="w-3.5 h-3.5" />
                       </button>
@@ -462,7 +462,7 @@ export default function ScraperPage() {
               {/* Datasets info */}
               <details className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
                 <summary className="cursor-pointer text-sm font-semibold text-[#E5E5E5] flex items-center gap-2 list-none select-none">
-                  <Info className="w-4 h-4 text-[#2BEE34]" />Detection Models &amp; Reference Datasets
+                  <Info className="w-4 h-4 text-[#2BEE34]" />Forensic Engines &amp; Reference Datasets
                   <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto" />
                 </summary>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#6B6B6B]">
@@ -496,7 +496,7 @@ export default function ScraperPage() {
             </div>
             <p className="text-sm text-[#A3A3A3] font-medium">Enter any website URL above</p>
             <p className="text-xs text-[#6B6B6B] mt-1 max-w-xs">
-              Works best with articles, blog posts, and content-heavy pages. Gets a screenshot and runs 12-signal AI detection.
+              Works best with articles, blog posts, and content-heavy pages. Gets a screenshot and runs 12-signal AI attestation.
             </p>
           </div>
         )}

@@ -78,7 +78,7 @@ export default function SettingsPage() {
   const [autoSave,         setAutoSave]         = useState(true)
   const [upgradeAlerts,    setUpgradeAlerts]    = useState(true)
 
-  // ── Detection settings ─────────────────────────────────────────────────────
+  // ── Attestation settings ─────────────────────────────────────────────────────
   const [highAccMode,      setHighAccMode]      = useState(false)
   const [saveHistory,      setSaveHistory]      = useState(true)
   const [autoDownload,     setAutoDownload]     = useState(false)
@@ -207,21 +207,21 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       <Section title="Notifications" icon={Bell}>
-        <SettingRow icon={Mail}       label="Email notifications" description="Scan summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
-        <SettingRow icon={Bell}       label="Batch scan alerts"   description="Notify when bulk scan results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
+        <SettingRow icon={Mail}       label="Email notifications" description="Attestation summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
+        <SettingRow icon={Bell}       label="Bulk attestation alerts"   description="Notify when bulk attestation results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
         <SettingRow icon={Star}       label="Upgrade alerts"      description="Get notified of plan changes from admin"         action={<Toggle checked={upgradeAlerts}  onChange={() => setUpgradeAlerts(v => !v)} />} />
-        <SettingRow icon={FileText}   label="Weekly report"       description="Weekly digest of your detection activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
-        <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every scan result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
+        <SettingRow icon={FileText}   label="Weekly report"       description="Weekly digest of your attestation activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
+        <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every attestation result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
       </Section>
 
-      {/* Detection */}
-      <Section title="Detection Preferences" icon={BrainCircuit}>
+      {/* Attestation */}
+      <Section title="Attestation Preferences" icon={BrainCircuit}>
         <SettingRow icon={Zap}    label="High-accuracy mode"   description="Use slower but more precise ensemble analysis" badge="PRO"  action={<Toggle checked={highAccMode}    onChange={() => setHighAccMode(v => !v)} />} />
-        <SettingRow icon={Database} label="Save scan history"  description="Keep all scan results in your history tab"             action={<Toggle checked={saveHistory}    onChange={() => setSaveHistory(v => !v)} />} />
-        <SettingRow icon={Download} label="Auto-download PDF"  description="Automatically download PDF report after each scan"     action={<Toggle checked={autoDownload}   onChange={() => setAutoDownload(v => !v)} />} />
+        <SettingRow icon={Database} label="Save attestation history"  description="Keep all attestation results in your history tab"             action={<Toggle checked={saveHistory}    onChange={() => setSaveHistory(v => !v)} />} />
+        <SettingRow icon={Download} label="Auto-download PDF"  description="Automatically download PDF report after each attestation"     action={<Toggle checked={autoDownload}   onChange={() => setAutoDownload(v => !v)} />} />
         <SettingRow icon={Sliders}  label="Show confidence %"  description="Display confidence scores on all results"              action={<Toggle checked={showConfidence} onChange={() => setShowConfidence(v => !v)} />} />
-        <SettingRow icon={Eye}      label="Show signal details" description="Show individual detection signals on results"          action={<Toggle checked={showSignals}    onChange={() => setShowSignals(v => !v)} />} />
-        <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the detector"
+        <SettingRow icon={Eye}      label="Show signal details" description="Show individual forensic signals on results"          action={<Toggle checked={showSignals}    onChange={() => setShowSignals(v => !v)} />} />
+        <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the attestation tool"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
               className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
@@ -267,9 +267,9 @@ export default function SettingsPage() {
       {/* Privacy */}
       <Section title="Privacy" icon={Shield}>
         <SettingRow icon={Globe}       label="Public profile"      description="Allow others to see your username and stats"      action={<Toggle checked={publicProfile}   onChange={() => setPublicProfile(v => !v)} />} />
-        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized scan results to improve accuracy" action={<Toggle checked={shareAnon}      onChange={() => setShareAnon(v => !v)} />} />
+        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized attestation results to improve accuracy" action={<Toggle checked={shareAnon}      onChange={() => setShareAnon(v => !v)} />} />
         <SettingRow icon={Eye}         label="Opt out of analytics" description="Disable usage analytics collection"              action={<Toggle checked={analyticsOptOut} onChange={() => setAnalyticsOptOut(v => !v)} />} />
-        <SettingRow icon={Clock}       label="Data retention" description="How long to keep scan history"
+        <SettingRow icon={Clock}       label="Data retention" description="How long to keep attestation history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
               className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
@@ -313,7 +313,7 @@ export default function SettingsPage() {
               <Download className="w-3 h-3" /> Export
             </button>
           } />
-        <SettingRow icon={Trash2} label="Clear scan history" description="Delete all saved detection results permanently"
+        <SettingRow icon={Trash2} label="Clear attestation history" description="Delete all saved attestation results permanently"
           action={
             <button onClick={async () => {
               if (!user?.uid) return

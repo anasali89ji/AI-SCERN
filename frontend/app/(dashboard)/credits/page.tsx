@@ -71,7 +71,7 @@ function CreditsContent() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Credits</h1>
-          <p className="text-[#6B6B6B] text-sm mt-1">Purchase scan credits. Billed in PKR via XPay.</p>
+          <p className="text-[#6B6B6B] text-sm mt-1">Purchase attestation credits. Billed in PKR via XPay.</p>
         </div>
         {balance !== null && (
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#141414] border border-[#2BEE34]/20">
@@ -150,7 +150,7 @@ function CreditsContent() {
                 </div>
 
                 <ul className="space-y-2.5 mb-6 flex-1">
-                  {['Text detection', 'Image detection', 'Audio detection', 'Video detection',
+                  {['Text attestation', 'Image attestation', 'Audio attestation', 'Video attestation',
                     ...(plan.credits >= 500 ? ['Batch analysis', 'Priority queue'] : []),
                   ].map(f => (
                     <li key={f} className="flex items-center gap-2 text-sm text-[#A3A3A3]">
@@ -184,7 +184,7 @@ function CreditsContent() {
       <div className="flex gap-3 p-4 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] text-sm text-[#A3A3A3]">
         <Info className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <p>Credits are consumed per scan. 1 credit = 1 detection on any modality.</p>
+          <p>Credits are consumed per examination. 1 credit = 1 attestation on any modality.</p>
           <p>Batch scans consume 1 credit per file. ARIA chat does not consume credits.</p>
           <p>Payments are processed securely by XPay (Pakistan). No card data stored by Aiscern.</p>
         </div>

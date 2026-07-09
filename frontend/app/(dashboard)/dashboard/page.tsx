@@ -9,12 +9,12 @@ import {
 import { useAuth } from '@/components/auth-provider'
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,   label: 'Text',  desc: 'Detect AI writing'      },
-  { href: '/detect/image', icon: ImageIcon,  label: 'Image', desc: 'Deepfake detection'      },
-  { href: '/detect/audio', icon: Music,      label: 'Audio', desc: 'Voice clone detection'   },
-  { href: '/detect/video', icon: Video,      label: 'Video', desc: 'Deepfake video analysis' },
-  { href: '/batch',        icon: Layers,     label: 'Batch', desc: 'Scan 20 files at once'   },
-  { href: '/chat',         icon: Bot,        label: 'ARIA',  desc: 'AI detection assistant'  },
+  { href: '/detect/text',  icon: FileText,   label: 'Text',  desc: 'Attest AI writing'      },
+  { href: '/detect/image', icon: ImageIcon,  label: 'Image', desc: 'Deepfake attestation'      },
+  { href: '/detect/audio', icon: Music,      label: 'Audio', desc: 'Voice clone attestation'   },
+  { href: '/detect/video', icon: Video,      label: 'Video', desc: 'Deepfake video attestation' },
+  { href: '/batch',        icon: Layers,     label: 'Batch', desc: 'Attest 20 files at once'   },
+  { href: '/chat',         icon: Bot,        label: 'ARIA',  desc: 'AI attestation assistant'  },
 ]
 
 function verdictColors(verdict: string) {
@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
   const STAT_CARDS = [
     { label: 'Total Scans',   value: loading ? '—' : totalScans.toLocaleString(), icon: Brain         },
-    { label: 'AI Detected',   value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle },
+    { label: 'Synthesized',   value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle },
     { label: 'Human Rate',    value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle   },
     { label: 'Avg Confidence',value: loading ? '—' : `${avgConf}%`,               icon: BarChart3     },
   ]
@@ -148,8 +148,8 @@ export default function DashboardPage() {
         </h1>
         <p className="text-[#6B6B6B] text-sm mt-1">
           {totalScans === 0
-            ? 'Run your first scan below — completely free.'
-            : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
+            ? 'Run your first attestation below — completely free.'
+            : `You've run ${totalScans.toLocaleString()} attestation${totalScans !== 1 ? 's' : ''} so far.`}
         </p>
       </div>
 
@@ -182,19 +182,19 @@ export default function DashboardPage() {
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-white mb-1">You're all set 🎉</h3>
               <p className="text-sm text-[#A3A3A3] mb-4 leading-relaxed">
-                Pick a detection tool to run your first scan. Free — no limits on basic scans.
+                Pick an attestation tool to run your first examination. Free — no limits on basic examinations.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/detect/text"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
                              bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-xs font-bold transition-colors">
-                  <FileText className="w-3.5 h-3.5" /> Try Text Detection
+                  <FileText className="w-3.5 h-3.5" /> Try Text Attestation
                 </Link>
                 <Link href="/detect/image"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
                              border border-[#2A2A2A] text-xs font-semibold text-[#A3A3A3]
                              hover:text-white hover:border-[#3A3A3A] transition-all">
-                  <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
+                  <ImageIcon className="w-3.5 h-3.5" /> Try Image Attestation
                 </Link>
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
 
       {/* Tool cards */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-3">Detection Tools</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-3">Attestation Tools</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {TOOLS.map(t => (
             <Link key={t.href} href={t.href}
@@ -231,7 +231,7 @@ export default function DashboardPage() {
       {totalScans > 0 && (
         <div className="p-5 rounded-xl bg-[#141414] border border-[#1E1E1E]">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-white">Detection Balance</h2>
+            <h2 className="text-sm font-semibold text-white">Attestation Balance</h2>
             <span className="text-xs text-[#6B6B6B]">{totalScans.toLocaleString()} scans</span>
           </div>
           <div className="flex rounded-full overflow-hidden h-2 gap-px">
@@ -275,7 +275,7 @@ export default function DashboardPage() {
         ) : fetchError ? (
           <div className="p-8 rounded-xl bg-[#141414] border border-[#1E1E1E] text-center">
             <AlertTriangle className="w-8 h-8 text-[#FFB800] mx-auto mb-3" />
-            <p className="text-[#A3A3A3] text-sm font-medium mb-1">Couldn't load scan history</p>
+            <p className="text-[#A3A3A3] text-sm font-medium mb-1">Couldn't load attestation history</p>
             <p className="text-[#6B6B6B] text-xs mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A1A1A]
@@ -288,11 +288,11 @@ export default function DashboardPage() {
           <div className="p-10 rounded-xl bg-[#141414] border border-[#1E1E1E] text-center">
             <Shield className="w-10 h-10 text-[#3A3A3A] mx-auto mb-3" />
             <p className="text-[#A3A3A3] text-sm font-medium mb-1">No scans yet</p>
-            <p className="text-[#6B6B6B] text-xs mb-5">Pick a tool above to run your first detection</p>
+            <p className="text-[#6B6B6B] text-xs mb-5">Pick a tool above to run your first attestation</p>
             <Link href="/detect/text"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
                          bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-sm font-semibold transition-colors">
-              <FileText className="w-4 h-4" /> Try Text Detector
+              <FileText className="w-4 h-4" /> Try Text Attestation
             </Link>
           </div>
         ) : (
