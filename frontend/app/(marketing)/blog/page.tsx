@@ -5,9 +5,9 @@ import { getAllPosts, type BlogPostMeta } from '@/lib/blog'
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
-  title: 'Aiscern Blog — AI Detection Insights',
-  description: 'Learn how to detect AI-generated content, understand deepfakes, and stay ahead of synthetic media with Aiscern.',
-  openGraph: { title: 'Aiscern Blog', description: 'AI detection insights and guides', url: 'https://aiscern.com/blog' },
+  title: 'Aiscern Blog — AI Attestation Insights',
+  description: 'Learn how to attest AI-generated content, understand deepfakes, and stay ahead of synthetic media with Aiscern.',
+  openGraph: { title: 'Aiscern Blog', description: 'AI attestation insights and guides', url: 'https://aiscern.com/blog' },
 }
 
 function formatDate(d: string) {

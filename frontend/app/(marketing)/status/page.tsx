@@ -5,7 +5,7 @@ import { CheckCircle, Clock, AlertTriangle, Activity } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'System Status — Aiscern',
-  description: 'Current operational status for Aiscern AI detection services, API, and infrastructure.',
+  description: 'Current operational status for Aiscern AI attestation services, API, and infrastructure.',
   openGraph: {
     title: 'System Status — Aiscern',
     url: 'https://aiscern.com/status',
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 }
 
 const SERVICES = [
-  { name: 'Text Detection API',    status: 'operational', latency: '< 2s'   },
-  { name: 'Image Detection API',   status: 'operational', latency: '5–10s'  },
-  { name: 'Audio Detection API',   status: 'operational', latency: '8–15s'  },
-  { name: 'Video Detection API',   status: 'operational', latency: '30–90s' },
+  { name: 'Text Attestation API',    status: 'operational', latency: '< 2s'   },
+  { name: 'Image Attestation API',   status: 'operational', latency: '5–10s'  },
+  { name: 'Audio Attestation API',   status: 'operational', latency: '8–15s'  },
+  { name: 'Video Attestation API',   status: 'operational', latency: '30–90s' },
   { name: 'Authentication (Clerk)', status: 'operational', latency: '< 100ms'},
   { name: 'Web Application',       status: 'operational', latency: '< 500ms'},
   { name: 'API Documentation',     status: 'operational', latency: '< 200ms'},

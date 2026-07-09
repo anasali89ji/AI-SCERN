@@ -5,7 +5,7 @@ import { ExternalLink, ArrowRight, Info } from 'lucide-react'
 
 export const metadata = {
   title: 'Accuracy Benchmarks — Aiscern',
-  description: 'Aiscern detection accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
+  description: 'Aiscern attestation accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
   openGraph: { title: 'Accuracy Benchmarks — Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 
@@ -138,7 +138,7 @@ export default function BenchmarksPage() {
             <section key={s.label} className="mb-12">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
-                {s.label} Detection
+                {s.label} Attestation
               </h2>
               <BenchTable rows={s.rows} />
             </section>
@@ -195,7 +195,7 @@ export default function BenchmarksPage() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
                          font-semibold text-sm transition-all duration-150">
-              Try the Detector
+              Try Attestation
             </Link>
           </div>
 
