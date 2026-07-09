@@ -3,11 +3,11 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Users, FileSearch, BarChart3, Shield, Brain, Layers, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for HR & Recruiting — Aiscern',
+  title: 'AI Attestation for HR & Recruiting — Aiscern',
   description: 'Catch AI-generated cover letters, CVs, and work samples before they reach interview stage. Free tier for HR teams and recruiters.',
   openGraph: {
-    title: 'AI Detection for HR & Recruiting — Aiscern',
-    description: 'Verify authenticity of job applications and work samples with ensemble AI detection.',
+    title: 'AI Attestation for HR & Recruiting — Aiscern',
+    description: 'Verify authenticity of job applications and work samples with ensemble AI attestation.',
     url: 'https://aiscern.com/solutions/hr',
     siteName: 'Aiscern',
   },
@@ -30,11 +30,11 @@ export default function HRPage() {
         { title: 'Legal exposure from unverified assessments', desc: 'Hiring decisions made on AI-generated work samples can create liability if discovered post-hire.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Text Detection', desc: 'Multi-model analysis flags AI-generated cover letters, personal statements, and written assessments with high confidence.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Text Attestation', desc: 'Multi-model analysis flags AI-generated cover letters, personal statements, and written assessments with high confidence.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Upload', desc: 'Drop a folder of applications and screen all cover letters in minutes. Results dashboard shows risk scores at a glance.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Work Sample Analysis', desc: 'Analyze longer documents like project write-ups, case study responses, and code documentation for AI generation.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Every result shows a confidence breakdown — not just a binary flag. Decide your own threshold for follow-up questioning.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trails', desc: 'Exportable PDF reports with scan timestamp and model breakdown — defensible records for HR documentation.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trails', desc: 'Exportable PDF reports with attestation timestamp and model breakdown — defensible records for HR documentation.' },
         { icon: <Shield className="w-5 h-5" />, title: 'Privacy First', desc: 'Candidate data is processed ephemerally. We never train on your submissions. Full data handling details at /transparency.' },
       ]}
       useCases={[
@@ -43,11 +43,11 @@ export default function HRPage() {
         { title: 'Pre-Interview Verification', desc: 'Before scheduling interviews, a staffing agency runs final shortlisted candidates\' materials through Aiscern to confirm consistency between application and self-reported capabilities.' },
       ]}
       faqs={[
-        { q: 'Is it fair to reject candidates based on AI detection?', a: 'We recommend using Aiscern as a screening signal, not a final decision. High AI scores should prompt a follow-up conversation or an alternative assessment — not automatic rejection. The tool surfaces patterns; humans make decisions.' },
-        { q: 'Can Aiscern analyze PDF resumes?', a: 'Yes. Our batch endpoint accepts PDF, DOCX, and plain text. Text is extracted and analyzed through the full detection ensemble.' },
+        { q: 'Is it fair to reject candidates based on AI attestation?', a: 'We recommend using Aiscern as a screening signal, not a final decision. High AI scores should prompt a follow-up conversation or an alternative assessment — not automatic rejection. The tool surfaces patterns; humans make decisions.' },
+        { q: 'Can Aiscern analyze PDF resumes?', a: 'Yes. Our batch endpoint accepts PDF, DOCX, and plain text. Text is extracted and analyzed through the full attestation ensemble.' },
         { q: 'What about candidates who use AI to polish grammar only?', a: 'Light AI editing (grammar correction, tone adjustment) typically scores in our uncertain zone (39–61%). Full AI generation scores ≥62%. We distinguish between editing assistance and wholesale generation.' },
         { q: 'Do candidates know their applications are being scanned?', a: 'We recommend disclosing in your job posting that applications may be screened with AI verification tools, consistent with your regional privacy laws and HR policies.' },
-        { q: 'Can we integrate with ATS platforms like Greenhouse or Lever?', a: 'API access is available on Pro and Team plans. You can integrate our detection endpoint with any ATS that supports custom webhooks or zapier-style automation.' },
+        { q: 'Can we integrate with ATS platforms like Greenhouse or Lever?', a: 'API access is available on Pro and Team plans. You can integrate our attestation endpoint with any ATS that supports custom webhooks or zapier-style automation.' },
       ]}
     />
   )

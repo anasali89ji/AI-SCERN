@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Heart, FileSearch, Brain, Shield, Lock, Eye, BarChart3, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Healthcare — Aiscern',
+  title: 'AI Attestation for Healthcare — Aiscern',
   description: 'Identify AI-generated medical literature, synthetic patient data, and fabricated imagery in clinical submissions. Free tier for healthcare professionals.',
   openGraph: {
-    title: 'AI Detection for Healthcare — Aiscern',
+    title: 'AI Attestation for Healthcare — Aiscern',
     url: 'https://aiscern.com/solutions/healthcare',
     siteName: 'Aiscern',
   },
@@ -29,9 +29,9 @@ export default function HealthcarePage() {
         { title: 'Medical imaging manipulation is a growing concern', desc: 'AI-generated or modified medical images (X-rays, MRIs) submitted in research or insurance contexts require forensic-level verification.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Medical Literature Screening', desc: 'Detect AI-generated sections in submitted research papers, systematic reviews, and clinical study reports.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Medical Literature Screening', desc: 'Attest AI-generated sections in submitted research papers, systematic reviews, and clinical study reports.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Clinical Document Analysis', desc: 'Analyze clinical notes, discharge summaries, and patient reports for AI-generation patterns.' },
-        { icon: <Eye className="w-5 h-5" />, title: 'Medical Image Forensics', desc: 'ViT-based detection identifies digitally synthesized medical imagery for research and insurance fraud contexts.' },
+        { icon: <Eye className="w-5 h-5" />, title: 'Medical Image Forensics', desc: 'ViT-based attestation identifies digitally synthesized medical imagery for research and insurance fraud contexts.' },
         { icon: <Lock className="w-5 h-5" />, title: 'HIPAA-Conscious Design', desc: 'Ephemeral processing ensures patient data is never retained. Enterprise plans include Data Processing Agreements.' },
         { icon: <Shield className="w-5 h-5" />, title: 'Audit Reports', desc: 'Timestamped PDF reports for compliance documentation, IRB submissions, and quality assurance records.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Transparency', desc: 'Explicit confidence intervals ensure healthcare professionals understand result limitations before acting on them.' },
@@ -43,8 +43,8 @@ export default function HealthcarePage() {
       ]}
       faqs={[
         { q: 'Is Aiscern HIPAA compliant?', a: 'Aiscern processes submitted content ephemerally and does not retain patient data. For HIPAA-covered use cases, our Enterprise plan includes a Business Associate Agreement (BAA). Contact us at /enterprise for healthcare-specific compliance documentation.' },
-        { q: 'How accurate is detection on medical writing specifically?', a: 'Medical writing has distinct stylistic patterns. Our ensemble performs well on academic medical text. Clinical notes — which are typically terse and formulaic — may score in uncertain ranges even when genuine. We recommend using Aiscern as a screening layer, not a definitive judgment tool.' },
-        { q: 'Can Aiscern detect AI-generated radiology reports?', a: 'Yes — radiology reports are text documents and are analyzed by our text detection ensemble. The formulaic nature of radiology reporting means some genuine reports may fall in our uncertain confidence zone.' },
+        { q: 'How accurate is attestation on medical writing specifically?', a: 'Medical writing has distinct stylistic patterns. Our ensemble performs well on academic medical text. Clinical notes — which are typically terse and formulaic — may score in uncertain ranges even when genuine. We recommend using Aiscern as a screening layer, not a definitive judgment tool.' },
+        { q: 'Can Aiscern attest AI-generated radiology reports?', a: 'Yes — radiology reports are text documents and are analyzed by our text attestation ensemble. The formulaic nature of radiology reporting means some genuine reports may fall in our uncertain confidence zone.' },
         { q: 'What about AI-assisted writing versus fully AI-generated?', a: 'We distinguish between AI-assisted writing (score 39–61%, uncertain zone) and fully AI-generated content (≥62%). Clinicians who use AI to structure or check their notes will typically score in the uncertain range.' },
         { q: 'Can we integrate with our EHR system?', a: 'API access is available on Pro and Enterprise plans. REST API integration with most EHR systems is technically feasible via custom middleware. Contact us for healthcare-specific integration guidance.' },
       ]}

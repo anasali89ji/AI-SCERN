@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Scale, FileSearch, BarChart3, Shield, Brain, Lock, CheckCircle, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Legal & Compliance — Aiscern',
-  description: 'Verify authorship of legal documents, contracts, and evidence. Forensic-grade AI detection with exportable audit reports for legal proceedings.',
+  title: 'AI Attestation for Legal & Compliance — Aiscern',
+  description: 'Verify authorship of legal documents, contracts, and evidence. Forensic-grade AI attestation with exportable audit reports for legal proceedings.',
   openGraph: {
-    title: 'AI Detection for Legal & Compliance — Aiscern',
+    title: 'AI Attestation for Legal & Compliance — Aiscern',
     url: 'https://aiscern.com/solutions/legal',
     siteName: 'Aiscern',
   },
@@ -17,7 +17,7 @@ export default function LegalPage() {
     <SolutionPage
       industry="Legal & Compliance"
       tagline="Forensic AI Verification for Legal Documents"
-      description="Legal professionals need more than a score — they need a defensible audit trail. Aiscern delivers forensic-grade AI detection with timestamped reports, confidence breakdowns, and model transparency for use in compliance and legal proceedings."
+      description="Legal professionals need more than a score — they need a defensible audit trail. Aiscern delivers forensic-grade AI attestation with timestamped reports, confidence breakdowns, and model transparency for use in compliance and legal proceedings."
       heroIcon={<Scale className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="emerald"
       ctaLabel="Start Free Legal Account"
@@ -29,10 +29,10 @@ export default function LegalPage() {
         { title: 'Regulatory compliance documentation risk', desc: 'AI-generated compliance reports and filings that don\'t reflect genuine organizational analysis create significant liability exposure.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble detects AI text across legal drafting styles with ≥96% AUC.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble attests AI text across legal drafting styles with ≥96% AUC.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Document-Level Analysis', desc: 'Analyze full legal documents including briefs, contracts, affidavits, and compliance filings.' },
-        { icon: <Lock className="w-5 h-5" />, title: 'Forensic PDF Reports', desc: 'Timestamped, scan-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every scan generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
+        { icon: <Lock className="w-5 h-5" />, title: 'Forensic PDF Reports', desc: 'Timestamped, attestation-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
+        { icon: <CheckCircle className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every attestation generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
         { icon: <Shield className="w-5 h-5" />, title: 'Data Security', desc: 'Enterprise plans support private deployment options and enhanced data handling for privileged legal material.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Sentence-Level Audit', desc: 'Pinpoint which sections of a document are AI-flagged — not just a document-level score — for targeted human review.' },
       ]}
@@ -43,10 +43,10 @@ export default function LegalPage() {
       ]}
       faqs={[
         { q: 'Are Aiscern reports admissible in legal proceedings?', a: 'Our reports are designed to be audit-trail documents, not expert witness testimony. They provide technical evidence that supports — not replaces — expert analysis. Consult with your legal team on jurisdiction-specific admissibility.' },
-        { q: 'Can Aiscern detect AI text in legal documents with heavy boilerplate?', a: 'Legal documents contain significant boilerplate that may appear in AI training data. Our ensemble is tuned to distinguish genuine AI generation from standard legal language. Confidence scores below 62% indicate ambiguous sections.' },
+        { q: 'Can Aiscern attest AI text in legal documents with heavy boilerplate?', a: 'Legal documents contain significant boilerplate that may appear in AI training data. Our ensemble is tuned to distinguish genuine AI generation from standard legal language. Confidence scores below 62% indicate ambiguous sections.' },
         { q: 'What security certifications does Aiscern hold?', a: 'We are actively working toward SOC 2 Type II compliance. Current security measures are documented at /security. Enterprise clients can request our security assessment documentation.' },
         { q: 'Is there attorney-client privilege protection for submitted documents?', a: 'Documents are processed ephemerally — not stored beyond the session unless you explicitly save a report. We do not train on submitted content. For privileged material, we recommend our Enterprise plan with enhanced data handling agreements.' },
-        { q: 'Can we run detection on documents in languages other than English?', a: 'English, Spanish, French, German, and Portuguese are supported with high accuracy. Other languages may return results in the uncertain confidence range. Legal documents in non-supported languages are best verified with English translation first.' },
+        { q: 'Can we run attestation on documents in languages other than English?', a: 'English, Spanish, French, German, and Portuguese are supported with high accuracy. Other languages may return results in the uncertain confidence range. Legal documents in non-supported languages are best verified with English translation first.' },
       ]}
     />
   )
