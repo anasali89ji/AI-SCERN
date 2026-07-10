@@ -416,7 +416,120 @@ function analyzeStructure(text: string): BrainSignal[] {
   return signals
 }
 
+// ── CATEGORY 3b: READABILITY CONSISTENCY ─────────────────────────────────────
+
+/** Rough syllable counter (vowel-group heuristic, good enough for readability formulas). */
+function countSyllables(word: string): number {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '')
+  if (w.length === 0) return 0
+  if (w.length <= 3) return 1
+  const stripped = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '')
+  const groups = stripped.match(/[aeiouy]{1,2}/g)
+  return Math.max(1, groups ? groups.length : 1)
+}
+
+function fleschKincaidGrade(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const syllables = words.reduce((s, w) => s + countSyllables(w), 0)
+  return 0.39 * (words.length / sentences.length) + 11.8 * (syllables / words.length) - 15.59
+}
+
+function gunningFog(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const complexWords = words.filter(w => countSyllables(w) >= 3).length
+  return 0.4 * ((words.length / sentences.length) + 100 * (complexWords / words.length))
+}
+
+/**
+ * Readability Consistency — AI text tends to hold a near-identical
+ * reading-grade level across every paragraph. We compute Flesch-Kincaid
+ * grade and Gunning Fog per paragraph and flag suspiciously low variance.
+ */
+function analyzeReadabilityConsistency(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.split(/\s+/).length >= 25)
+  if (paragraphs.length < 4) return signals
+
+  const fkGrades = paragraphs.map(fleschKincaidGrade)
+  const fogScores = paragraphs.map(gunningFog)
+
+  const stdDev = (arr: number[]): number => {
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length
+    const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length
+    return Math.sqrt(variance)
+  }
+
+  const fkStd  = stdDev(fkGrades)
+  const fogStd = stdDev(fogScores)
+
+  if (fkGrades.length >= 4) {
+    const fkScore = fkStd < 1.2 ? 0.85 : fkStd < 1.8 ? 0.68 : fkStd < 2.5 ? 0.45 : 0.22
+    signals.push({
+      name: 'Flesch-Kincaid Consistency',
+      category: 'structure',
+      score: fkScore,
+      weight: 0.07,
+      evidence: `grade-level std dev=${fkStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <1.8, Human: >2.5)`,
+    })
+  }
+
+  if (fogScores.length >= 4) {
+    const fogScore = fogStd < 1.5 ? 0.82 : fogStd < 2.5 ? 0.65 : fogStd < 3.5 ? 0.42 : 0.20
+    signals.push({
+      name: 'Gunning Fog Consistency',
+      category: 'structure',
+      score: fogScore,
+      weight: 0.06,
+      evidence: `Gunning Fog std dev=${fogStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <2.5, Human: >3.5)`,
+    })
+  }
+
+  return signals
+}
+
 // ── CATEGORY 4: VOCABULARY ANALYSIS ──────────────────────────────────────────
+
+/**
+ * MTLD (Measure of Textual Lexical Diversity) — McCarthy & Jarvis (2010).
+ * Unlike TTR, MTLD is stable across text lengths: it walks the token
+ * sequence accumulating a running type-token ratio and "factors out" every
+ * time that ratio drops to a threshold (0.72), then does the same in
+ * reverse and averages the two factor counts. Higher MTLD = more diverse
+ * vocabulary sustained over the text, independent of how long the text is.
+ */
+function computeMTLD(tokens: string[], threshold = 0.72): number {
+  if (tokens.length < 10) return 0
+
+  const factorCount = (seq: string[]): number => {
+    let factors = 0
+    let seen = new Set<string>()
+    let tokenCount = 0
+    for (const tok of seq) {
+      seen.add(tok)
+      tokenCount++
+      const ttr = seen.size / tokenCount
+      if (ttr <= threshold) {
+        factors++
+        seen = new Set<string>()
+        tokenCount = 0
+      }
+    }
+    if (tokenCount > 0) {
+      const remainderTTR = seen.size / tokenCount
+      const partial = (1 - remainderTTR) / (1 - threshold)
+      factors += Math.max(0, Math.min(1, partial))
+    }
+    return factors > 0 ? seq.length / factors : seq.length
+  }
+
+  const forward  = factorCount(tokens)
+  const backward = factorCount([...tokens].reverse())
+  return (forward + backward) / 2
+}
 
 function analyzeVocabulary(text: string): BrainSignal[] {
   const signals: BrainSignal[] = []
@@ -438,6 +551,19 @@ function analyzeVocabulary(text: string): BrainSignal[] {
     weight: 0.08,
     evidence: `TTR=${ttr.toFixed(3)} (${uniqueWords} unique / ${words.length} total words)`,
   })
+
+  // --- MTLD (length-independent lexical diversity) ---
+  if (words.length >= 60) {
+    const mtld = computeMTLD(words)
+    const mtldScore = mtld < 40 ? 0.82 : mtld < 55 ? 0.66 : mtld < 75 ? 0.45 : mtld < 100 ? 0.30 : 0.20
+    signals.push({
+      name: 'MTLD Lexical Diversity',
+      category: 'vocabulary',
+      score: mtldScore,
+      weight: 0.08,
+      evidence: `MTLD=${mtld.toFixed(1)} (length-independent; AI: <55, Human: >75)`,
+    })
+  }
 
   // --- Hedging language density ---
   const hedgePhrases = [
@@ -673,19 +799,51 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
     })
   }
 
+  // --- Entity recurrence-pattern uniformity (coreference-lite) ---
+  const paragraphsForEntities = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 40)
+  if (paragraphsForEntities.length >= 4) {
+    const STOPWORD_ENTITIES = new Set(['The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of',
+      'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They', 'This', 'That', 'These', 'Those'])
+    const extractEntities = (p: string): string[] =>
+      (p.match(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g) || []).filter(n => !STOPWORD_ENTITIES.has(n))
+
+    const seen = new Set<string>()
+    const callbackRatios: number[] = []
+    for (const p of paragraphsForEntities) {
+      const entities = extractEntities(p)
+      if (entities.length === 0) continue
+      const callbacks = entities.filter(e => seen.has(e)).length
+      callbackRatios.push(callbacks / entities.length)
+      entities.forEach(e => seen.add(e))
+    }
+
+    if (callbackRatios.length >= 4) {
+      const mean = callbackRatios.reduce((a, b) => a + b, 0) / callbackRatios.length
+      const variance = callbackRatios.reduce((s, v) => s + (v - mean) ** 2, 0) / callbackRatios.length
+      const stdDev = Math.sqrt(variance)
+      const entityScore = stdDev < 0.10 ? 0.78 : stdDev < 0.15 ? 0.62 : stdDev < 0.22 ? 0.42 : 0.25
+      signals.push({
+        name: 'Entity Callback Uniformity',
+        category: 'semantic',
+        score: entityScore,
+        weight: 0.07,
+        evidence: `entity callback-ratio std dev=${stdDev.toFixed(3)} across ${callbackRatios.length} paragraphs (AI: <0.15, Human: >0.22)`,
+      })
+    }
+  }
+
   return signals
 }
 
-// ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
-
 export function analyzeTextWithBrain(text: string): TextBrainResult {
   // Run all analysis categories in one pass
-  const phraseSignals    = analyzePhraseFingerprints(text)
-  const structureSignals = analyzeStructure(text)
-  const vocabSignals     = analyzeVocabulary(text)
-  const semanticSignals  = analyzeSemanticCoherence(text)
+  const phraseSignals       = analyzePhraseFingerprints(text)
+  const structureSignals    = analyzeStructure(text)
+  const vocabSignals        = analyzeVocabulary(text)
+  const semanticSignals     = analyzeSemanticCoherence(text)
+  const readabilitySignals  = analyzeReadabilityConsistency(text)
 
-  const allSignals = [...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals]
+  const allSignals = [...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals, ...readabilitySignals]
 
   // Weighted average
   const totalWeight = allSignals.reduce((s, sig) => s + sig.weight, 0) || 1
