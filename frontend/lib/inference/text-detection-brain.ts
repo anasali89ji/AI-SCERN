@@ -862,6 +862,59 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
   return signals
 }
 
+// ── EXTENSION: Long-text / PDF chunk analysis ─────────────────────────────────
+// Ported from enhancement/deep-detection-v3 (audit day). Not yet wired into
+// any PDF/long-document route on main — added as an available utility for
+// when that integration work happens.
+
+export interface ChunkAnalysisResult {
+  chunkScores:   number[]
+  meanScore:     number
+  highAIChunks:  number
+  chunkFindings: string[]
+}
+
+/**
+ * analyzeTextInChunks — splits long text into overlapping 1000-word chunks,
+ * runs the brain on each chunk, and returns aggregate statistics.
+ * Intended for long-document (PDF) scanning once wired into that route.
+ */
+export function analyzeTextInChunks(text: string, chunkSize = 800, overlap = 100): ChunkAnalysisResult {
+  const words  = text.split(/\s+/)
+  const chunks: string[] = []
+
+  if (words.length <= chunkSize) {
+    chunks.push(text)
+  } else {
+    for (let i = 0; i < words.length; i += chunkSize - overlap) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '))
+      if (i + chunkSize >= words.length) break
+    }
+  }
+
+  const chunkScores: number[] = []
+  for (const chunk of chunks) {
+    if (chunk.split(/\s+/).length < 30) continue
+    const result = analyzeTextWithBrain(chunk)
+    chunkScores.push(result.score)
+  }
+
+  if (!chunkScores.length) return { chunkScores: [0.5], meanScore: 0.5, highAIChunks: 0, chunkFindings: [] }
+
+  const meanScore    = chunkScores.reduce((a, b) => a + b, 0) / chunkScores.length
+  const highAIChunks = chunkScores.filter(s => s > 0.65).length
+  const maxScore     = Math.max(...chunkScores)
+  const minScore     = Math.min(...chunkScores)
+
+  const chunkFindings = [
+    `Analysed ${chunkScores.length} text segments of ~${chunkSize} words each`,
+    `Mean AI score: ${(meanScore * 100).toFixed(1)}% | Max: ${(maxScore * 100).toFixed(0)}% | Min: ${(minScore * 100).toFixed(0)}%`,
+    `High-AI segments: ${highAIChunks}/${chunkScores.length} (>${65}%)`,
+  ]
+
+  return { chunkScores, meanScore, highAIChunks, chunkFindings }
+}
+
 // ── EXTENSION: Academic Assignment Pattern Detection ─────────────────────────
 // Ported from enhancement/deep-detection-v3 (audit day) — this module already
 // existed and was tested there but had never made it into production.

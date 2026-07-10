@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { analyzeTextWithBrain } from './text-detection-brain'
+import { analyzeTextWithBrain, analyzeTextInChunks } from './text-detection-brain'
 
 describe('analyzeTextWithBrain — edge cases', () => {
   it('handles empty string without throwing', () => {
@@ -173,5 +173,28 @@ describe('analyzeTextWithBrain — ported modules (audit day): Academic, Cross-P
   it('does not throw when statistical features run on <40 words', () => {
     const tiny = 'Too short for statistics.'
     expect(() => analyzeTextWithBrain(tiny)).not.toThrow()
+  })
+})
+
+describe('analyzeTextInChunks — ported long-text/PDF chunk analysis (audit day)', () => {
+  it('returns a default result for empty input without throwing', () => {
+    const r = analyzeTextInChunks('')
+    expect(r.chunkScores.length).toBeGreaterThan(0)
+    expect(Number.isFinite(r.meanScore)).toBe(true)
+  })
+
+  it('splits long text into multiple overlapping chunks and aggregates scores', () => {
+    const longText = 'This is a normal sentence with reasonable variety in wording and structure. '.repeat(2000)
+    const r = analyzeTextInChunks(longText)
+    expect(r.chunkScores.length).toBeGreaterThan(1)
+    expect(r.meanScore).toBeGreaterThanOrEqual(0)
+    expect(r.meanScore).toBeLessThanOrEqual(1)
+    expect(r.chunkFindings.length).toBe(3)
+  })
+
+  it('treats short text (<= chunkSize) as a single chunk', () => {
+    const shortText = 'A short piece of text that fits in a single chunk without needing to split into multiple overlapping segments at all here.'
+    const r = analyzeTextInChunks(shortText)
+    expect(r.chunkScores.length).toBe(1)
   })
 })
