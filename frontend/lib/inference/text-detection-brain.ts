@@ -418,6 +418,45 @@ function analyzeStructure(text: string): BrainSignal[] {
 
 // ── CATEGORY 4: VOCABULARY ANALYSIS ──────────────────────────────────────────
 
+/**
+ * MTLD (Measure of Textual Lexical Diversity) — McCarthy & Jarvis (2010).
+ * Unlike TTR, MTLD is stable across text lengths: it walks the token
+ * sequence accumulating a running type-token ratio and "factors out" every
+ * time that ratio drops to a threshold (0.72), then does the same in
+ * reverse and averages the two factor counts. Higher MTLD = more diverse
+ * vocabulary sustained over the text, independent of how long the text is.
+ */
+function computeMTLD(tokens: string[], threshold = 0.72): number {
+  if (tokens.length < 10) return 0
+
+  const factorCount = (seq: string[]): number => {
+    let factors = 0
+    let seen = new Set<string>()
+    let tokenCount = 0
+    for (const tok of seq) {
+      seen.add(tok)
+      tokenCount++
+      const ttr = seen.size / tokenCount
+      if (ttr <= threshold) {
+        factors++
+        seen = new Set<string>()
+        tokenCount = 0
+      }
+    }
+    // Partial factor for the remainder
+    if (tokenCount > 0) {
+      const remainderTTR = seen.size / tokenCount
+      const partial = (1 - remainderTTR) / (1 - threshold)
+      factors += Math.max(0, Math.min(1, partial))
+    }
+    return factors > 0 ? seq.length / factors : seq.length
+  }
+
+  const forward  = factorCount(tokens)
+  const backward = factorCount([...tokens].reverse())
+  return (forward + backward) / 2
+}
+
 function analyzeVocabulary(text: string): BrainSignal[] {
   const signals: BrainSignal[] = []
   const lower  = text.toLowerCase()
@@ -438,6 +477,24 @@ function analyzeVocabulary(text: string): BrainSignal[] {
     weight: 0.08,
     evidence: `TTR=${ttr.toFixed(3)} (${uniqueWords} unique / ${words.length} total words)`,
   })
+
+  // --- MTLD (length-independent lexical diversity) ---
+  // TTR alone is biased by text length; MTLD stays stable across short
+  // and long texts, so it catches AI's flatter vocabulary sustain-rate
+  // even on documents where TTR looks "normal" purely due to length.
+  if (words.length >= 60) {
+    const mtld = computeMTLD(words)
+    // Empirical bands from McCarthy & Jarvis + academic-writing corpora:
+    // Human academic/casual writing: MTLD ~55-115. AI: tends 35-70 (flatter).
+    const mtldScore = mtld < 40 ? 0.82 : mtld < 55 ? 0.66 : mtld < 75 ? 0.45 : mtld < 100 ? 0.30 : 0.20
+    signals.push({
+      name: 'MTLD Lexical Diversity',
+      category: 'vocabulary',
+      score: mtldScore,
+      weight: 0.08,
+      evidence: `MTLD=${mtld.toFixed(1)} (length-independent; AI: <55, Human: >75)`,
+    })
+  }
 
   // --- Hedging language density ---
   const hedgePhrases = [
