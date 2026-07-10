@@ -1,17 +1,29 @@
 // ════════════════════════════════════════════════════════════════════════════
-// AISCERN — Text Detection Brain v1.0
+// AISCERN — Text Detection Brain v1.1
 // Deep embedded knowledge engine for AI vs human text classification.
 // Replaces Gemini as the PRIMARY text detector — zero API calls, zero latency.
 //
 // Architecture:
-//   1. Phrase Fingerprint Analysis   — 200+ exact AI tells with TF-IDF weights
-//   2. Structural Pattern Analysis   — paragraph/sentence uniformity
-//   3. Vocabulary & Register Analysis— Zipf deviation, hedging density
-//   4. Burstiness & Rhythm Analysis  — sentence length variance
-//   5. Semantic Coherence Analysis   — topical drift, coherence without life
-//   6. Human-Writing Signal Analysis — contractions, typos, register breaks
+//   1. Phrase Fingerprint Analysis     — 200+ exact AI tells with TF-IDF weights
+//   2. Structural Pattern Analysis     — paragraph/sentence uniformity
+//   3. Readability Consistency         — Flesch-Kincaid / Gunning Fog uniformity
+//                                         across paragraphs (added v1.1)
+//   4. Vocabulary & Register Analysis  — Zipf deviation, hedging density,
+//                                         TTR + MTLD lexical diversity (v1.1)
+//   5. Burstiness & Rhythm Analysis    — sentence length variance
+//   6. Semantic Coherence Analysis     — topical drift, coherence without life,
+//                                         entity callback uniformity (v1.1)
+//   7. Human-Writing Signal Analysis   — contractions, typos, register breaks
 //
-// Returns: { score: 0–1, signals: Signal[], findings: string[] }
+// v1.1 also adds cross-signal divergence detection: when strongly
+// AI-leaning and strongly human-leaning signals coexist, the composite
+// score alone can look "borderline" while actually hiding real conflicting
+// evidence. TextBrainResult.isDivergent flags this so downstream consumers
+// (API responses, ARIA, ensemble scoring) can treat such results with
+// extra caution instead of presenting a single confident-looking number.
+//
+// Returns: { score, signals, findings, verdict, divergence?, isDivergent? }
+// Tests: text-detection-brain.test.ts (run via `npm run test`)
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface BrainSignal {
