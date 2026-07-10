@@ -816,8 +816,21 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
   // --- Entity recurrence-pattern uniformity (coreference-lite) ---
   const paragraphsForEntities = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 40)
   if (paragraphsForEntities.length >= 4) {
-    const STOPWORD_ENTITIES = new Set(['The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of',
-      'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They', 'This', 'That', 'These', 'Those'])
+    const STOPWORD_ENTITIES = new Set([
+      'The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of',
+      'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They', 'This', 'That', 'These', 'Those',
+      // Common sentence-initial transition/adverb words — these were being
+      // misidentified as proper-noun entities because they're capitalized
+      // at the start of a sentence, corrupting the callback-ratio signal.
+      'However', 'Additionally', 'Therefore', 'Meanwhile', 'Furthermore', 'Moreover',
+      'Nevertheless', 'Nonetheless', 'Consequently', 'Accordingly', 'Thus', 'Hence',
+      'Also', 'Then', 'So', 'Now', 'Here', 'There', 'Overall', 'Finally', 'First',
+      'Second', 'Third', 'Next', 'Later', 'Still', 'Indeed', 'Instead', 'Otherwise',
+      'Similarly', 'Conversely', 'Regardless', 'Ultimately', 'Notably', 'Specifically',
+      'Generally', 'Certainly', 'Clearly', 'Importantly', 'Interestingly', 'Unfortunately',
+      'Fortunately', 'Perhaps', 'Sometimes', 'Often', 'Again', 'Yet', 'While', 'When',
+      'If', 'Because', 'Since', 'Although', 'Though', 'Despite', 'Given',
+    ])
     const extractEntities = (p: string): string[] =>
       (p.match(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g) || []).filter(n => !STOPWORD_ENTITIES.has(n))
 
