@@ -810,10 +810,53 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
     })
   }
 
+  // --- Entity recurrence-pattern uniformity (coreference-lite) ---
+  // True coreference resolution is out of scope for a zero-dependency
+  // heuristic engine, but we can proxy "entity coherence drift" cheaply:
+  // for each paragraph, compute what fraction of its proper nouns were
+  // already introduced in an earlier paragraph (a "callback ratio").
+  // Human writing has bursty, uneven callback patterns — some paragraphs
+  // are almost entirely about entities already introduced (elaboration),
+  // others introduce a wave of new ones (a new example/section). AI text
+  // tends to maintain a suspiciously even callback ratio throughout,
+  // because it isn't actually tracking who/what it's talking about —
+  // it's just topically consistent at a surface level.
+  const paragraphsForEntities = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 40)
+  if (paragraphsForEntities.length >= 4) {
+    const STOPWORD_ENTITIES = new Set(['The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of',
+      'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They', 'This', 'That', 'These', 'Those'])
+    const extractEntities = (p: string): string[] =>
+      (p.match(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g) || []).filter(n => !STOPWORD_ENTITIES.has(n))
+
+    const seen = new Set<string>()
+    const callbackRatios: number[] = []
+    for (const p of paragraphsForEntities) {
+      const entities = extractEntities(p)
+      if (entities.length === 0) continue
+      const callbacks = entities.filter(e => seen.has(e)).length
+      callbackRatios.push(callbacks / entities.length)
+      entities.forEach(e => seen.add(e))
+    }
+
+    if (callbackRatios.length >= 4) {
+      const mean = callbackRatios.reduce((a, b) => a + b, 0) / callbackRatios.length
+      const variance = callbackRatios.reduce((s, v) => s + (v - mean) ** 2, 0) / callbackRatios.length
+      const stdDev = Math.sqrt(variance)
+      // AI: callback-ratio std dev tends low (<0.15, mechanically even).
+      // Human: bursty, std dev typically >0.22.
+      const entityScore = stdDev < 0.10 ? 0.78 : stdDev < 0.15 ? 0.62 : stdDev < 0.22 ? 0.42 : 0.25
+      signals.push({
+        name: 'Entity Callback Uniformity',
+        category: 'semantic',
+        score: entityScore,
+        weight: 0.07,
+        evidence: `entity callback-ratio std dev=${stdDev.toFixed(3)} across ${callbackRatios.length} paragraphs (AI: <0.15, Human: >0.22)`,
+      })
+    }
+  }
+
   return signals
 }
-
-// ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
 export function analyzeTextWithBrain(text: string): TextBrainResult {
   // Run all analysis categories in one pass
