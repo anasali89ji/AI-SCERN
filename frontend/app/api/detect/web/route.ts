@@ -378,9 +378,11 @@ export async function POST(req: NextRequest) {
 
       // Brain signals
       brain: {
-        score:    Math.round(brainResult.score * 1000) / 1000,
-        verdict:  brainResult.verdict,
-        findings: brainResult.findings?.slice(0, 6) ?? [],
+        score:       Math.round(brainResult.score * 1000) / 1000,
+        verdict:     brainResult.verdict,
+        findings:    brainResult.findings?.slice(0, 6) ?? [],
+        divergence:  brainResult.divergence !== undefined ? Math.round(brainResult.divergence * 1000) / 1000 : undefined,
+        isDivergent: brainResult.isDivergent ?? false,
       },
 
       // Image analysis (only populated when includeImages: true)

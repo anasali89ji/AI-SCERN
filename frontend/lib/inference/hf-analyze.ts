@@ -234,7 +234,10 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
   ])
 
   // Only call Gemini as supplementary if brain is uncertain (0.42–0.58 range)
-  const brainUncertain   = brainResult.score > 0.42 && brainResult.score < 0.58
+  // or the brain's own signals disagree with each other (isDivergent) — a
+  // composite score outside the "uncertain" band can still be hiding real
+  // conflicting evidence that's worth a second opinion.
+  const brainUncertain   = (brainResult.score > 0.42 && brainResult.score < 0.58) || brainResult.isDivergent === true
   const geminiPromise    = (brainUncertain && geminiAvailable())
     ? geminiAnalyzeText(text.slice(0, 8000)).catch(() => null)
     : Promise.resolve(null)
@@ -388,7 +391,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
       {
         name:        'Graph RAG Detection Brain',
         category:    'ML',
-        description: `${engineDesc}${truncNote}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). Top signals: ${brainResult.findings.slice(0, 3).join(' | ')}${geminiResult?.reasoning ? ` | Gemini: ${geminiResult.reasoning}` : ''}`,
+        description: `${engineDesc}${truncNote}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%)${brainResult.isDivergent ? ' ⚡ conflicting internal signals' : ''}. Top signals: ${brainResult.findings.slice(0, 3).join(' | ')}${geminiResult?.reasoning ? ` | Gemini: ${geminiResult.reasoning}` : ''}`,
         weight:  50,
         value:   Math.round(brainResult.score * 1000) / 1000,
         flagged: brainResult.score > 0.58,
@@ -409,7 +412,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
       ? `AI-generated text detected with ${Math.round(adjustedScore * 100)}% confidence${truncNote}. Brain signals: ${brainResult.findings[0] ?? 'neural pattern match'}.${homoglyphSuspicious ? ' ⚠ Homoglyph evasion detected.' : ''}`
       : verdict === 'HUMAN'
       ? `Human-written text — ${Math.round((1 - adjustedScore) * 100)}% confidence. Analyzed ${charCount.toLocaleString()} chars. Natural linguistic variation detected.`
-      : `Inconclusive (${Math.round(adjustedScore * 100)}% AI probability). Analyzed ${charCount.toLocaleString()} chars${truncNote}. ${ensVariance > 0.15 ? 'Models disagree — may be mixed authorship.' : 'Submit more text for better accuracy.'}`,
+      : `Inconclusive (${Math.round(adjustedScore * 100)}% AI probability). Analyzed ${charCount.toLocaleString()} chars${truncNote}. ${ensVariance > 0.15 ? 'Models disagree — may be mixed authorship.' : brainResult.isDivergent ? 'Internal signals conflict — treat this result with caution.' : 'Submit more text for better accuracy.'}`,
     sentence_scores,
   }
 }
