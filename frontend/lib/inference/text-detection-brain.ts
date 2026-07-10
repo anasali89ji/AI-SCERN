@@ -23,10 +23,12 @@ export interface BrainSignal {
 }
 
 export interface TextBrainResult {
-  score:     number          // 0–1 composite AI probability
-  signals:   BrainSignal[]
-  findings:  string[]        // human-readable top findings for ARIA
-  verdict:   'AI' | 'HUMAN' | 'UNCERTAIN'
+  score:       number          // 0–1 composite AI probability
+  signals:     BrainSignal[]
+  findings:    string[]        // human-readable top findings for ARIA
+  verdict:     'AI' | 'HUMAN' | 'UNCERTAIN'
+  divergence?: number          // 0–1: how much signals disagree with each other (weighted std dev)
+  isDivergent?: boolean        // true when strong AI-leaning and strong Human-leaning signals coexist
 }
 
 // ── CATEGORY 1: AI PHRASE FINGERPRINTS ───────────────────────────────────────
@@ -853,12 +855,29 @@ export function analyzeTextWithBrain(text: string): TextBrainResult {
   const score   = Math.max(0.01, Math.min(0.99, rawScore))
   const verdict = score > 0.65 ? 'AI' : score < 0.38 ? 'HUMAN' : 'UNCERTAIN'
 
+  // --- Cross-signal divergence ---
+  // A weighted average alone can hide real disagreement: five signals all
+  // scoring 0.5 and one signal at 0.95 + one at 0.05 can land on the exact
+  // same composite score, but they describe very different situations —
+  // the first is "genuinely ambiguous everywhere," the second is "strong,
+  // conflicting evidence in both directions." We surface that difference
+  // instead of quietly averaging it away.
+  const divergence = totalWeight > 0
+    ? Math.sqrt(allSignals.reduce((s, sig) => s + sig.weight * (sig.score - score) ** 2, 0) / totalWeight)
+    : 0
+  const strongAI    = allSignals.filter(s => s.score > 0.70 && s.weight >= 0.05)
+  const strongHuman = allSignals.filter(s => s.score < 0.30 && s.weight >= 0.05)
+  const isDivergent = divergence > 0.22 && strongAI.length > 0 && strongHuman.length > 0
+
   // Build top findings for ARIA
   const sorted   = [...allSignals].sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
   const findings = sorted.slice(0, 6).map(s => {
     const dir = s.score > 0.65 ? '🤖 AI' : s.score < 0.38 ? '✅ Human' : '⚠️ Mixed'
     return `${dir} — ${s.name}: ${s.evidence}`
   })
+  if (isDivergent) {
+    findings.unshift(`⚡ Conflicting signals detected — ${strongAI.length} strongly AI-leaning and ${strongHuman.length} strongly human-leaning signal(s) disagree (divergence=${divergence.toFixed(2)}). Treat the composite score with extra caution.`)
+  }
 
-  return { score, signals: allSignals, findings, verdict }
+  return { score, signals: allSignals, findings, verdict, divergence, isDivergent }
 }
