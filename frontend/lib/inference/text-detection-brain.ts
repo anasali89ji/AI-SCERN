@@ -416,6 +416,86 @@ function analyzeStructure(text: string): BrainSignal[] {
   return signals
 }
 
+// ── CATEGORY 3b: READABILITY CONSISTENCY ─────────────────────────────────────
+
+/** Rough syllable counter (vowel-group heuristic, good enough for readability formulas). */
+function countSyllables(word: string): number {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '')
+  if (w.length === 0) return 0
+  if (w.length <= 3) return 1
+  const stripped = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '')
+  const groups = stripped.match(/[aeiouy]{1,2}/g)
+  return Math.max(1, groups ? groups.length : 1)
+}
+
+function fleschKincaidGrade(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const syllables = words.reduce((s, w) => s + countSyllables(w), 0)
+  return 0.39 * (words.length / sentences.length) + 11.8 * (syllables / words.length) - 15.59
+}
+
+function gunningFog(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const complexWords = words.filter(w => countSyllables(w) >= 3).length
+  return 0.4 * ((words.length / sentences.length) + 100 * (complexWords / words.length))
+}
+
+/**
+ * Readability Consistency — AI text tends to hold a near-identical
+ * reading-grade level across every paragraph (it doesn't naturally vary
+ * register the way humans do when they get more casual, more technical,
+ * more excited, etc. from section to section). We compute Flesch-Kincaid
+ * grade and Gunning Fog per paragraph and flag suspiciously low variance.
+ */
+function analyzeReadabilityConsistency(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.split(/\s+/).length >= 25)
+  if (paragraphs.length < 4) return signals
+
+  const fkGrades = paragraphs.map(fleschKincaidGrade)
+  const fogScores = paragraphs.map(gunningFog)
+
+  const stdDev = (arr: number[]): number => {
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length
+    const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length
+    return Math.sqrt(variance)
+  }
+
+  const fkStd  = stdDev(fkGrades)
+  const fogStd = stdDev(fogScores)
+
+  // Human writing naturally swings across paragraphs (new topic, aside,
+  // example, technical digression). AI holds a near-constant "explainer" register.
+  // Empirical bands: AI: FK std <1.8. Human: FK std >2.5 typically.
+  if (fkGrades.length >= 4) {
+    const fkScore = fkStd < 1.2 ? 0.85 : fkStd < 1.8 ? 0.68 : fkStd < 2.5 ? 0.45 : 0.22
+    signals.push({
+      name: 'Flesch-Kincaid Consistency',
+      category: 'structure',
+      score: fkScore,
+      weight: 0.07,
+      evidence: `grade-level std dev=${fkStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <1.8, Human: >2.5)`,
+    })
+  }
+
+  if (fogScores.length >= 4) {
+    const fogScore = fogStd < 1.5 ? 0.82 : fogStd < 2.5 ? 0.65 : fogStd < 3.5 ? 0.42 : 0.20
+    signals.push({
+      name: 'Gunning Fog Consistency',
+      category: 'structure',
+      score: fogScore,
+      weight: 0.06,
+      evidence: `Gunning Fog std dev=${fogStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <2.5, Human: >3.5)`,
+    })
+  }
+
+  return signals
+}
+
 // ── CATEGORY 4: VOCABULARY ANALYSIS ──────────────────────────────────────────
 
 /**
@@ -1103,14 +1183,15 @@ export function analyzeTextWithBrainV2(text: string): TextBrainResult & {
   const semanticSignals  = analyzeSemanticCoherence(text)
 
   // v2 extension signals
-  const academicSignals = analyzeAcademicPatterns(text)
-  const statsSignals    = analyzeStatisticalFeatures(text)
-  const repSig          = analyzeCrossParaRepetition(text)
-  const repSignals      = repSig ? [repSig] : []
+  const academicSignals    = analyzeAcademicPatterns(text)
+  const statsSignals       = analyzeStatisticalFeatures(text)
+  const repSig             = analyzeCrossParaRepetition(text)
+  const repSignals         = repSig ? [repSig] : []
+  const readabilitySignals = analyzeReadabilityConsistency(text)
 
   const allSignals = [
     ...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals,
-    ...academicSignals, ...statsSignals, ...repSignals,
+    ...academicSignals, ...statsSignals, ...repSignals, ...readabilitySignals,
   ]
 
   // Weighted average
