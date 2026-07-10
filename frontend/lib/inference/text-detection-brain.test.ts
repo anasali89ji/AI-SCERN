@@ -138,3 +138,40 @@ describe('analyzeTextWithBrain — Cross-signal divergence (Day 4)', () => {
     expect(r.isDivergent).toBe(false)
   })
 })
+
+describe('analyzeTextWithBrain — ported modules (audit day): Academic, Cross-Para Repetition, Statistical', () => {
+  it('flags academic AI phrase patterns', () => {
+    const academicAI = 'In this essay, I will explore the topic in detail. It is widely accepted that research suggests that this phenomenon is common. In conclusion, this essay has demonstrated the key findings clearly.'
+    const r = analyzeTextWithBrain(academicAI)
+    const sig = r.signals.find(s => s.name === 'Academic AI Phrase Patterns')
+    expect(sig).toBeDefined()
+    expect(sig!.score).toBeGreaterThan(0.4)
+  })
+
+  it('flags high cross-paragraph repetition for repeated trigram content', () => {
+    const repeated = Array(4).fill('The quick brown fox jumps over the lazy dog near the riverbank every single morning before breakfast time arrives each day without fail.').join('\n\n')
+    const r = analyzeTextWithBrain(repeated)
+    const sig = r.signals.find(s => s.name === 'Cross-Paragraph Repetition')
+    expect(sig).toBeDefined()
+    expect(sig!.score).toBeGreaterThan(0.6)
+  })
+
+  it('does not fire cross-paragraph repetition signal for fewer than 3 qualifying paragraphs', () => {
+    const twoParas = 'This is one paragraph with enough words in it to qualify for the repetition check here today.\n\nThis is a second, different paragraph discussing something else entirely for good measure now.'
+    const r = analyzeTextWithBrain(twoParas)
+    expect(r.signals.find(s => s.name === 'Cross-Paragraph Repetition')).toBeUndefined()
+  })
+
+  it('flags impersonal "one" pronoun statistical signal appropriately', () => {
+    const formalOne = "One must consider that one should evaluate one's own position before one decides to proceed with one's plan regarding one's future one hopes for. ".repeat(3)
+    const r = analyzeTextWithBrain(formalOne)
+    const oneSig = r.signals.find(s => s.name === 'Impersonal "One" Pronoun Usage')
+    expect(oneSig).toBeDefined()
+    expect(oneSig!.score).toBeGreaterThan(0.5)
+  })
+
+  it('does not throw when statistical features run on <40 words', () => {
+    const tiny = 'Too short for statistics.'
+    expect(() => analyzeTextWithBrain(tiny)).not.toThrow()
+  })
+})
