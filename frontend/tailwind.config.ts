@@ -76,12 +76,13 @@ const config: Config = {
         error:   '#FF4444',
         warning: '#FFB800',
 
-        // ── Depth layers (v5.0 plan) ────────────────────────────────────────────
+        // ── Depth layers — special overlay panels ONLY. Do not mix with `silver`
+        //    on the same surface type (see Module 0.1 token-consistency rule).
         depth: {
-          bg:       '#08080d',
-          surface:  '#0f0f17',
-          elevated: '#141420',
-          floating: '#1a1a2e',
+          bg:       '#0A0A0A',
+          surface:  '#141414',
+          elevated: '#1A1A1A',
+          floating: '#1E1E1E',
         },
 
         // ── Per-modality accents (v5.0 plan) ────────────────────────────────────
@@ -92,21 +93,31 @@ const config: Config = {
           video: '#8b5cf6', // violet
         },
 
-        // ── Legacy compatibility (so old classes don't 404) ────────────────────
+        // ── Legacy compatibility alias — kept (not deleted) because button.tsx,
+        //    badge.tsx, tabs.tsx, accordion.tsx, dialog.tsx, dropdown-menu.tsx
+        //    reference primary-400/500/600 directly. Values equal `accent` so
+        //    there is no visual duplication, just a second name for the same color.
         primary: {
-          DEFAULT: '#2BEE34',
+          400:     '#4FFF58',
           500:     '#2BEE34',
           600:     '#1A8F1F',
+          DEFAULT: '#2BEE34',
         },
       },
 
       fontFamily: {
-        sans:  ['var(--font-inter)', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-        mono:  ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
-        display: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-inter)', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        heading: ['var(--font-geist-sans)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono:    ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
+        display: ['var(--font-geist-sans)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
       },
 
       fontSize: {
+        // ── Fluid scale (Module 0.1) — use these instead of arbitrary text-[...] values
+        'display':  ['clamp(3rem, 8vw, 6rem)',      { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'headline': ['clamp(2rem, 5vw, 3.5rem)',     { lineHeight: '1.1',  letterSpacing: '-0.02em', fontWeight: '600' }],
+        'lead':     ['clamp(1.125rem, 1.5vw, 1.25rem)', { lineHeight: '1.6', fontWeight: '400' }],
+        // ── Legacy fixed sizes — kept so existing usages don't 404, prefer fluid scale above
         'hero': ['clamp(48px,6vw,64px)', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
         'h2':   ['clamp(32px,4vw,40px)', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
         'h3':   ['clamp(24px,3vw,28px)', { lineHeight: '1.3', fontWeight: '600' }],
@@ -132,9 +143,15 @@ const config: Config = {
         'glow':    '0 0 20px rgba(43, 238, 52, 0.15)',
         'glow-lg': '0 0 40px rgba(43, 238, 52, 0.20)',
         'deep':    '0 8px 40px rgba(0, 0, 0, 0.6)',
+        'ambient': '0 2px 8px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3)',
+        'lift':    '0 12px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
       },
 
       keyframes: {
+        // NOTE: generic `fade-in` / `slide-up` keyframes removed from the animation
+        // registry below per the vibecode ban (Module 0.1). Keyframes stay defined
+        // here only so any lingering `animate-fade-in` class doesn't hard-404 while
+        // call sites are migrated to `animate-enter`; do not reference them in new code.
         'fade-in': {
           '0%':   { opacity: '0' },
           '100%': { opacity: '1' },
@@ -142,6 +159,14 @@ const config: Config = {
         'slide-up': {
           '0%':   { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'enter': {
+          '0%':   { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'exit': {
+          '0%':   { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-8px)' },
         },
         'scale-in': {
           '0%':   { opacity: '0', transform: 'scale(0.98)' },
@@ -172,8 +197,10 @@ const config: Config = {
       },
 
       animation: {
-        'fade-in':     'fade-in 200ms ease-out',
-        'slide-up':    'slide-up 200ms ease-out',
+        // 'fade-in' / 'slide-up' intentionally NOT registered here — banned generic
+        // entrance patterns (Module 0.1). Use 'enter' for purposeful entrance motion.
+        'enter':       'enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'exit':        'exit 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'scale-in':    'scale-in 150ms ease-out',
         'spin-slow':   'spin 1s linear infinite',
         'pulse-slow':  'pulse-subtle 2s ease-in-out infinite',
