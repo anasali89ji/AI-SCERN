@@ -208,20 +208,93 @@ function calibrateScore(raw: number, beta: number = 1.15): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXT DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
+// ── MODULE 2: Self-hosted text perplexity (signal-worker/text_engine.py) ───
+// AUDIT (MODULE 2 task 1): text_engine.py's burstiness/stylometry/repetition
+// engines duplicate signals already computed by the more battle-tested,
+// 86.7%-calibrated TS engines (analyzeTextWithBrain / extractTextSignalsV2)
+// — those three are explicitly disabled below via `options`. Perplexity is
+// kept because it requires an actual language model (distilgpt2) that TS
+// cannot cheaply replicate; the TS "Perplexity Proxy" signal in
+// text-signals.ts is a bigram-frequency heuristic, not true LM perplexity —
+// genuinely complementary information, not a duplicate.
+interface PythonTextResult {
+  status: string
+  composite_score: number
+  confidence: number
+  degraded: boolean
+  degraded_reason?: string
+  engines: { perplexity?: { score: number; confidence: number } }
+  version: string
+}
+
+const TEXT_WORKER_TIMEOUT_MS = 20_000 // distilgpt2 inference — slower than the heuristic engines it replaces
+
+async function callPythonTextWorker(text: string): Promise<PythonTextResult | null> {
+  if (!SIGNAL_WORKER_BASE_URL) return null
+  if (text.trim().split(/\s+/).length < 10) return null // matches text_engine.py's own minimum
+  try {
+    const res = await fetch(`${SIGNAL_WORKER_BASE_URL}/analyze/text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text.slice(0, 10_000),
+        jobId: `text_${Date.now()}`,
+        options: { perplexity: true, burstiness: false, stylometry: false, repetition: false },
+      }),
+      signal: AbortSignal.timeout(TEXT_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) {
+      console.error(`[hf-analyze] Text perplexity worker returned ${res.status} ${res.statusText} — continuing without it.`)
+      return null
+    }
+    const data = await res.json() as PythonTextResult
+    if (data.status !== 'success') {
+      console.error('[hf-analyze] Text perplexity worker returned non-success status — continuing without it.', data)
+      return null
+    }
+    return data
+  } catch (err) {
+    console.error('[hf-analyze] Text perplexity worker call failed — continuing without it. Reason:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 export async function analyzeText(text: string): Promise<DetectionResult> {
-  // ── TEXT DETECTION ENGINE v6.0 ─────────────────────────────────────────────
+  // ── TEXT DETECTION ENGINE v6.1 (MODULE 2) ───────────────────────────────────
   // Priority stack:
   //   1. Graph RAG Detection Brain (PRIMARY, 50%) — embedded knowledge, zero latency, 50k char support
   //   2. HF transformer ensemble (25%) — 6 models in parallel, fail-fast 12s
   //   3. Linguistic signals (25%) — 7 heuristic signals
-  //   Gemini is now a supplementary fallback (only if brain confidence < 0.55)
+  //   4. Self-hosted perplexity worker (signal-worker/text_engine.py, distilgpt2) —
+  //      blended in at 15% when available; the one text signal Node genuinely
+  //      cannot replicate (a real LM, not a heuristic proxy).
+  //   Gemini is a supplementary fallback — see TEXT_GEMINI_MODE below.
+  //
+  // MODULE 2 audit note: text_engine.py's burstiness/stylometry/repetition
+  // engines were found to duplicate signals already covered by the
+  // battle-tested, 86.7%-calibrated TextBrainV2 (`analyzeTextWithBrain`) +
+  // `extractTextSignalsV2` — those are NOT called here (options below
+  // explicitly disable them at the worker). Only perplexity, which requires
+  // an actual language model TS can't run cheaply, is wired in.
+
+  // MODULE 2 task 4: trivially-reversible kill switch if self-hosted-primary
+  // underperforms in production. 'fallback' = current/default behavior
+  // (Gemini only on uncertainty/disagreement). 'parallel' = always call
+  // Gemini alongside everything else (useful for A/B measurement).
+  // 'off' = never call Gemini, self-hosted only.
+  const TEXT_GEMINI_MODE = (process.env.TEXT_GEMINI_MODE || 'fallback') as 'fallback' | 'parallel' | 'off'
 
   // Full text up to 50,000 chars for brain (PDFs, long documents supported)
   const MAX_TEXT_CHARS   = 50_000
   const truncated        = text.slice(0, MAX_TEXT_CHARS)
 
-  // Run brain + HF + linguistic signals in parallel — brain is instant
+  // Brain + linguistic signals are both synchronous/instant — compute both
+  // BEFORE deciding whether to call Gemini, so the fine-tuned-model-vs-
+  // linguistic-engine disagreement check (MODULE 2 task 3) actually has
+  // something to compare, rather than deciding blind and hoping.
   const brainResult  = analyzeTextWithBrain(truncated)
+  const lingSignals  = extractTextSignalsV2(truncated)
+  const lingScorePre = aggregateTextSignals(lingSignals)
 
   const hfPromise = Promise.allSettled([
     // Aiscern fine-tuned DeBERTa (PRIMARY — highest weight 0.45)
@@ -233,19 +306,30 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     hfInference(MODELS.text_quinary,    { inputs: text.substring(0, 1800) }).catch(() => null),
   ])
 
-  // Only call Gemini as supplementary if brain is uncertain (0.42–0.58 range)
-  // or the brain's own signals disagree with each other (isDivergent) — a
-  // composite score outside the "uncertain" band can still be hiding real
-  // conflicting evidence that's worth a second opinion.
-  const brainUncertain   = (brainResult.score > 0.42 && brainResult.score < 0.58) || brainResult.isDivergent === true
-  const geminiPromise    = (brainUncertain && geminiAvailable())
+  const perplexityPromise = callPythonTextWorker(truncated)
+
+  // Only call Gemini as supplementary if brain is uncertain (0.42–0.58 range),
+  // the brain's own signals disagree with each other (isDivergent), OR — per
+  // MODULE 2 task 3 — the fine-tuned brain and the linguistic signal engine
+  // disagree with each other by more than 0.15 (reusing the same
+  // computeEnsembleVariance-adjacent "trust the second opinion when the
+  // first two don't agree" logic used elsewhere in this ensemble).
+  const brainUncertain     = (brainResult.score > 0.42 && brainResult.score < 0.58) || brainResult.isDivergent === true
+  const brainLingDisagree  = Math.abs(brainResult.score - lingScorePre) > 0.15
+  const geminiShouldRun    = TEXT_GEMINI_MODE === 'off'
+    ? false
+    : TEXT_GEMINI_MODE === 'parallel'
+    ? true
+    : (brainUncertain || brainLingDisagree) // 'fallback' (default)
+  const geminiPromise    = (geminiShouldRun && geminiAvailable())
     ? geminiAnalyzeText(text.slice(0, 8000)).catch(() => null)
     : Promise.resolve(null)
 
-  const [hfResults, geminiResult, lingSignals] = await Promise.all([
+  const [hfResults, geminiResult, perplexityResult] = await Promise.all([
     hfPromise,
     geminiPromise,
-    Promise.resolve(extractTextSignalsV2(truncated)),
+    perplexityPromise,
+
   ])
 
   // Parse HF results — null values are cold-start failures
@@ -266,7 +350,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 
   const mlTotalW   = mlScores.reduce((s, m) => s + m.weight, 0) || 1
   const mlScore    = mlScores.length ? mlScores.reduce((s, m) => s + m.aiScore * (m.weight / mlTotalW), 0) : null
-  const lingScore  = aggregateTextSignals(lingSignals)
+  const lingScore  = lingScorePre
   const geminiScore = geminiResult?.aiScore ?? null
 
   // ── ENSEMBLE v6.0 scoring ──────────────────────────────────────────────────
@@ -287,6 +371,21 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     // Brain(60%) + Linguistic(40%) — HF cold
     aiScore    = brainResult.score * 0.60 + lingScore * 0.40
     engineDesc = `Graph RAG Brain (60%) + 7 linguistic signals (40%) — HF models cold-starting`
+  }
+
+  // MODULE 2 task 2: self-hosted perplexity worker (real distilgpt2 LM via
+  // signal-worker/text_engine.py) blended in at a flat 15%, renormalizing
+  // the existing ensemble down to 85%. Kept as a simple post-hoc blend
+  // rather than adding it as another branch permutation above — it's
+  // optional/best-effort by design (see callPythonTextWorker's graceful
+  // degrade), and this way its presence or absence never changes which
+  // branch fired for HF/Gemini above.
+  const perplexityScore = (perplexityResult && !perplexityResult.degraded)
+    ? perplexityResult.engines?.perplexity?.score ?? null
+    : null
+  if (perplexityScore !== null) {
+    aiScore = aiScore * 0.85 + perplexityScore * 0.15
+    engineDesc += ` + self-hosted perplexity (distilgpt2, 15%)`
   }
 
   // Homoglyph normalization — detect adversarial Unicode evasion
@@ -373,6 +472,12 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
       verdict:    scoreToVerdict(geminiScore),
       latency_ms: 0,
     }] : []),
+    ...(perplexityScore !== null ? [{
+      model_id:   'text-worker-perplexity-v1',
+      raw_score:  perplexityScore,
+      verdict:    scoreToVerdict(perplexityScore),
+      latency_ms: 0,
+    }] : []),
     {
       model_id:   'linguistic-signals-v2',
       raw_score:  lingScore,
@@ -427,7 +532,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 // silently-null CV worker result makes accuracy regressions impossible to
 // diagnose. Declared at module scope (not inside analyzeImage()) so
 // analyzeVideo() can actually call it.
-const VIDEO_PYTHON_WORKER_URL = process.env.PYTHON_WORKER_URL || ''
+const SIGNAL_WORKER_BASE_URL = process.env.PYTHON_WORKER_URL || ''
 
 interface PythonCVVideoResult {
   composite_cv_score: number
@@ -448,11 +553,11 @@ interface PythonCVVideoResult {
 const VIDEO_CV_WORKER_TIMEOUT_MS = 45_000
 
 async function callPythonCVWorkerVideo(videoBuffer: Buffer, mimeType: string): Promise<PythonCVVideoResult | null> {
-  if (!VIDEO_PYTHON_WORKER_URL) return null
+  if (!SIGNAL_WORKER_BASE_URL) return null
   try {
     const form = new FormData()
     form.append('file', new Blob([new Uint8Array(videoBuffer)], { type: mimeType }), 'video.mp4')
-    const res = await fetch(`${VIDEO_PYTHON_WORKER_URL}/analyze/video`, {
+    const res = await fetch(`${SIGNAL_WORKER_BASE_URL}/analyze/video`, {
       method: 'POST', body: form,
       signal: AbortSignal.timeout(VIDEO_CV_WORKER_TIMEOUT_MS),
     })
@@ -1159,7 +1264,7 @@ export async function analyzeVideo(
   // r2Key path never has bytes on Vercel by design, so it still falls
   // through to analyzeVideoFallback() below exactly as before — this does
   // NOT change behavior for that path.
-  if (_videoBuffer && VIDEO_PYTHON_WORKER_URL) {
+  if (_videoBuffer && SIGNAL_WORKER_BASE_URL) {
     const mimeType = format.startsWith('video/') ? format : `video/${format}`
     const cvResult = await callPythonCVWorkerVideo(_videoBuffer, mimeType)
 
