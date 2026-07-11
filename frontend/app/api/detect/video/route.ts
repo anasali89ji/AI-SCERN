@@ -169,7 +169,8 @@ export async function POST(req: NextRequest) {
       )
 
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
-    const result = await analyzeVideo(file.name, file.size, ext)
+    const videoBuffer = Buffer.from(await file.arrayBuffer())
+    const result = await analyzeVideo(file.name, file.size, ext, videoBuffer)
 
         // Return 422 when NVIDIA NIM unavailable and frame extraction required
         if (result.model_used.includes('FrameExtractionRequired')) {

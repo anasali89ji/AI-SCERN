@@ -420,6 +420,66 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
 // ─────────────────────────────────────────────────────────────────────────────
 // IMAGE DETECTION
 // ─────────────────────────────────────────────────────────────────────────────
+// ── MODULE 1: Video-through-Image-Engine Reuse ─────────────────────────────
+// Self-hosted alternative to NVIDIA-NIM-only video detection. Mirrors
+// callPythonCVWorker()'s (see below, inside analyzeImage()) timeout/retry/
+// graceful-degrade pattern exactly, including the loud-failure logging — a
+// silently-null CV worker result makes accuracy regressions impossible to
+// diagnose. Declared at module scope (not inside analyzeImage()) so
+// analyzeVideo() can actually call it.
+const VIDEO_PYTHON_WORKER_URL = process.env.PYTHON_WORKER_URL || ''
+
+interface PythonCVVideoResult {
+  composite_cv_score: number
+  frame_scores: { frame_index: number; composite_cv_score: number | null; status: string }[]
+  temporal_variance: { overall_variance: number; watch_layer_variance: number; flagged: boolean }
+  per_layer_frame_breakdown: Record<string, (number | null)[]>
+  frames_analyzed: number
+  frames_sampled: number
+  version: string
+}
+
+// Video frame analysis reuses the full 12-layer image_engine pipeline once
+// PER SAMPLED FRAME (8-16 frames), which is materially slower than a single
+// image call. Give it a longer budget than the 15s image-worker timeout
+// rather than starving it — a partial/failed video CV call falls back to
+// NVIDIA NIM cleanly either way, so a generous timeout here costs nothing
+// but latency on the (already-parallel) self-hosted path.
+const VIDEO_CV_WORKER_TIMEOUT_MS = 45_000
+
+async function callPythonCVWorkerVideo(videoBuffer: Buffer, mimeType: string): Promise<PythonCVVideoResult | null> {
+  if (!VIDEO_PYTHON_WORKER_URL) return null
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(videoBuffer)], { type: mimeType }), 'video.mp4')
+    const res = await fetch(`${VIDEO_PYTHON_WORKER_URL}/analyze/video`, {
+      method: 'POST', body: form,
+      signal: AbortSignal.timeout(VIDEO_CV_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) {
+      console.error(`[hf-analyze] Video CV worker returned ${res.status} ${res.statusText} — falling back to NVIDIA NIM / HF only.`)
+      return null
+    }
+    const data = await res.json() as PythonCVVideoResult
+    if (typeof data.composite_cv_score !== 'number') {
+      console.error('[hf-analyze] Video CV worker response missing composite_cv_score — falling back to NVIDIA NIM / HF only.', data)
+      return null
+    }
+    return data
+  } catch (err) {
+    // NOT a silent fallback — log it, same rationale as callPythonCVWorker.
+    console.error('[hf-analyze] Video CV worker call failed — falling back to NVIDIA NIM / HF only. Reason:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
+// Initial trust weight for the self-hosted video CV signal — image-engine
+// reuse is proven tech but new to video context, so this starts lower than
+// image's own weight and should only be raised after
+// .github/scripts/calibrate-video.js has been run against a labeled sample
+// set (MODULE 1, task 7).
+const VIDEO_CV_WORKER_WEIGHT = 0.40
+
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileName: string): Promise<DetectionResult> {
   // Check cache first — skip re-analysis for identical files
   const imgCacheHash = hashBuffer(imageBuffer)
@@ -1093,6 +1153,62 @@ export async function analyzeVideo(
   fileName: string, fileSize: number, format: string, _videoBuffer?: Buffer
 ): Promise<DetectionResult> {
   const durationEst = Math.max(1, Math.round(fileSize / (1024 * 1024 * 2)))
+
+  // MODULE 1 — self-hosted CV path. Only reachable when raw video bytes are
+  // actually available server-side (FormData/legacy-upload callers). The
+  // r2Key path never has bytes on Vercel by design, so it still falls
+  // through to analyzeVideoFallback() below exactly as before — this does
+  // NOT change behavior for that path.
+  if (_videoBuffer && VIDEO_PYTHON_WORKER_URL) {
+    const mimeType = format.startsWith('video/') ? format : `video/${format}`
+    const cvResult = await callPythonCVWorkerVideo(_videoBuffer, mimeType)
+
+    if (cvResult) {
+      const calibrated = calibrateScore(cvResult.composite_cv_score)
+      const verdict = toVerdict(calibrated, 'video')
+      return {
+        verdict,
+        confidence: Math.round(calibrated * 1000) / 1000,
+        model_used: `Aiscern-SelfHostedVideoCV(image-engine-reuse,${cvResult.frames_analyzed}/${cvResult.frames_sampled}frames,v${cvResult.version})`,
+        model_version: '5.0.0',
+        signals: [
+          {
+            name: 'Self-Hosted Frame Forensics (image-engine reuse)',
+            category: 'CV',
+            description: `${cvResult.frames_analyzed} sampled frames analyzed via the full 12-layer image forensic cascade.`,
+            weight: Math.round(VIDEO_CV_WORKER_WEIGHT * 100),
+            value: Math.round(cvResult.composite_cv_score * 1000) / 1000,
+            flagged: cvResult.composite_cv_score > 0.55,
+          },
+          {
+            name: 'Temporal Consistency',
+            category: 'Heuristic',
+            description: cvResult.temporal_variance.flagged
+              ? 'High frame-to-frame variance in noise/frequency/DCT layers — inconsistent compression signature, a common AI-video tell.'
+              : 'Consistent per-frame forensic signatures across the clip.',
+            weight: Math.round((1 - VIDEO_CV_WORKER_WEIGHT) * 100),
+            value: Math.round((1 - cvResult.temporal_variance.watch_layer_variance) * 1000) / 1000,
+            flagged: cvResult.temporal_variance.flagged,
+          },
+        ],
+        frame_scores: cvResult.frame_scores.map((f: { frame_index: number; composite_cv_score: number | null }) => ({
+          frame: f.frame_index,
+          time_sec: 0,
+          ai_score: f.composite_cv_score ?? cvResult.composite_cv_score,
+          face_detected: false,
+        })),
+        summary: verdict === 'AI'
+          ? `Self-hosted forensic cascade flagged this video — ${Math.round(calibrated * 100)}% confidence across ${cvResult.frames_analyzed} sampled frames.${cvResult.temporal_variance.flagged ? ' Frame-to-frame forensic signature is inconsistent, a common AI-video indicator.' : ''}`
+          : verdict === 'HUMAN'
+          ? `Video appears authentic — ${Math.round((1 - calibrated) * 100)}% confidence across ${cvResult.frames_analyzed} sampled frames (self-hosted forensic cascade, no paid API used).`
+          : `Inconclusive (${Math.round(calibrated * 100)}% AI probability) across ${cvResult.frames_analyzed} sampled frames.`,
+      }
+    }
+    // cvResult === null: worker unavailable/failed — logged already inside
+    // callPythonCVWorkerVideo(). Fall through to the existing path below,
+    // never silently degrade without a trace.
+  }
+
   return analyzeVideoFallback(fileName, fileSize, format, durationEst)
 }
 
