@@ -183,7 +183,21 @@ export async function POST(req: NextRequest) {
     // ── Fire forensic cascade (non-blocking, parallel to response) ────────────
     // Runs the 6-layer pipeline in the background. User gets instant result now,
     // forensic deep-analysis is ready ~10s later at /forensic/[forensicScanId].
+    // MODULE 5 — Failure Visibility / Dead-Button Fix.
+    // Previously, if r2Key was null (R2 not configured or upload path
+    // skipped), the forensic cascade was silently never created and the
+    // frontend had no way to know why — it would render the "Deep Forensic
+    // Analysis" button anyway, which then 404s when clicked. We now always
+    // report forensic availability with a reason code so the frontend can
+    // hide/disable the button instead.
     let forensicScanId: string | null = null
+    let forensicAvailable = false
+    let forensicUnavailableReason: 'R2_NOT_CONFIGURED' | 'UPLOAD_SKIPPED' | 'CASCADE_FIRE_FAILED' | null = null
+
+    if (!r2Key) {
+      forensicUnavailableReason = r2Available() ? 'UPLOAD_SKIPPED' : 'R2_NOT_CONFIGURED'
+    }
+
     if (r2Key) {
       try {
         const { inngest }    = await import('@/lib/inngest/client')
@@ -244,16 +258,30 @@ export async function POST(req: NextRequest) {
             brainTelemetry,
           },
         })
+        forensicAvailable = true
       } catch (e) {
         // Never block the response — forensic cascade is best-effort
         console.warn('[detect/image] forensic cascade fire failed:', e)
         forensicScanId = null
+        forensicAvailable = false
+        forensicUnavailableReason = 'CASCADE_FIRE_FAILED'
       }
     }
+
+    // MODULE 5 — degraded_signals surfaced from the ensemble (hf-analyze.ts)
+    // plus the forensic-cascade availability computed above, merged into one
+    // honest picture of "which signal sources actually contributed" so the
+    // UI/ARIA never presents a partial result as if it were the full one.
+    const degradedSignals = [
+      ...(result.degraded_signals ?? []),
+      ...(!forensicAvailable && forensicUnavailableReason ? [`forensic-cascade-${forensicUnavailableReason.toLowerCase().replace(/_/g, '-')}`] : []),
+    ]
 
     return NextResponse.json({
       success: true, scan_id: scanId,
       forensic_scan_id: forensicScanId,
+      forensic_available: forensicAvailable,
+      forensic_unavailable_reason: forensicUnavailableReason,
       result:  {
         ...result,
         verdict: finalVerdict,
@@ -261,6 +289,7 @@ export async function POST(req: NextRequest) {
         processing_time: processingTime,
         file_name: fileName,
         file_size: fileSize,
+        degraded_signals: degradedSignals,
         rag_stats: ragResult ? {
           rag_applied: ragResult.rag_applied,
           retrieval_confidence: ragResult.retrieval_confidence,

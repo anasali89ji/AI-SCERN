@@ -57,6 +57,15 @@ export interface DetectionResult {
   model_breakdown?: import('@/lib/accuracy/log-predictions').ModelPrediction[]
   /** Multi-source generator identification (Brain + Gemini voting; Grok disabled — see GROK_ENABLED in hf-analyze.ts) — image detection only */
   generator_attribution?: { generator: string; corroborating_sources: string[]; confidence: 'high' | 'low' } | null
+  /**
+   * MODULE 5 — Failure Visibility. Machine-readable list of signal sources that
+   * were skipped or failed for THIS specific request (e.g. 'cv-worker-offline',
+   * 'gemini-unavailable', 'hf-ensemble-cold'). Populated per-request, not just
+   * logged server-side, so the API response and ARIA can honestly say "this
+   * result used fewer signals than usual" instead of presenting a partial
+   * ensemble as if it were the full one. Empty array = full ensemble ran.
+   */
+  degraded_signals?: string[]
 }
 
 const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
@@ -388,6 +397,13 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     engineDesc += ` + self-hosted perplexity (distilgpt2, 15%)`
   }
 
+  // MODULE 5 — Failure Visibility.
+  const txtDegradedSignals: string[] = [
+    ...(mlScore === null        ? ['hf-ensemble-cold-or-failed'] : []),
+    ...(geminiScore === null    ? (geminiShouldRun ? ['gemini-call-failed'] : []) : []),
+    ...(perplexityScore === null ? ['perplexity-worker-unavailable'] : []),
+  ]
+
   // Homoglyph normalization — detect adversarial Unicode evasion
   const { isSuspicious: homoglyphSuspicious } = normalizeHomoglyphs(text)
 
@@ -492,6 +508,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     model_used:    `Aiscern-TextEngine-v6(${modelStr})`,
     model_version: '6.0.0',
     model_breakdown,
+    degraded_signals: txtDegradedSignals,
     signals: [
       {
         name:        'Graph RAG Detection Brain',
@@ -794,6 +811,15 @@ const cvAvailable = cvScore !== null
 const hfAvailable = mlScore !== null
 const llmAvailable = llmScore !== null
 
+// MODULE 5 — Failure Visibility. Reuses the availability flags the ensemble
+// branching below already computes — no new detection logic, just surfacing
+// what was already being decided silently.
+const imgDegradedSignals: string[] = [
+  ...(!cvAvailable  ? [PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
+  ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
+  ...(!llmAvailable ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
+]
+
 if (cvAvailable && hfAvailable && llmAvailable) {
   // Full ensemble: Brain(31%) + CV(22%) + HF(18%) + Pixel(9%) + LLM(20%)
   llmWeightUsed = 0.20
@@ -969,6 +995,7 @@ return {
   generator_attribution: generatorVote.name
     ? { generator: generatorVote.name, corroborating_sources: generatorVote.sources, confidence: generatorVote.sources.length >= 2 ? 'high' : 'low' }
     : null,
+  degraded_signals: imgDegradedSignals,
   signals: [
     {
       name:        'Image Detection Brain',
@@ -1089,6 +1116,13 @@ export async function analyzeAudio(
   const verdict  = toVerdict(calibratedAudioScore, "audio")
   const segCount = Math.max(3, Math.min(10, Math.ceil(durationEst / 5)))
 
+  // MODULE 5 — Failure Visibility.
+  const audioDegradedSignals: string[] = [
+    ...(!hasBuffer ? ['no-audio-buffer-metadata-only'] : []),
+    ...(mlMean === null    ? [hasBuffer && HF_TOKEN ? 'hf-ensemble-cold-or-failed' : 'hf-ensemble-unconfigured'] : []),
+    ...(geminiScore === null ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
+  ]
+
   // Deterministic segment scores using sin wave (no Math.random)
   const segment_scores = Array.from({ length: segCount }, (_, i) => ({
     start_sec: i * 5,
@@ -1104,6 +1138,7 @@ export async function analyzeAudio(
     confidence:    Math.round(calibratedAudioScore * 1000) / 1000,
     model_used:    modelUsed,
     model_version: '5.0.0',
+    degraded_signals: audioDegradedSignals,
     signals: [
       {
         name:        'Neural Deepfake Classifier',
@@ -1168,6 +1203,7 @@ export async function analyzeVideoWithFrames(
         model_version: '5.0.0',
         signals:       ensemble.signals,
         frame_scores:  ensemble.frame_scores,
+        degraded_signals: [], // NIM path succeeded — primary signal source available
         summary: verdict === 'AI'
           ? `Deepfake detected with ${Math.round(ensemble.ai_score * 100)}% confidence. ${nimResult.frames.filter(f => f.face_detected).length} face frames analyzed via NVIDIA NIM.`
           : verdict === 'HUMAN'
@@ -1239,6 +1275,7 @@ export async function analyzeVideoWithFrames(
             ai_score:     Math.round((frameScores[i] ?? ensScore) * 1000) / 1000,
             face_detected: true,
           })),
+          degraded_signals: [process.env.NVIDIA_API_KEY ? 'nvidia-nim-call-failed' : 'nvidia-nim-unconfigured'],
           summary: verdict === 'AI'
             ? `Deepfake detected — ${Math.round(ensScore * 100)}% confidence across ${frameScores.length} frames (IQR=${iqr.toFixed(2)}).`
             : verdict === 'HUMAN'
@@ -1302,6 +1339,7 @@ export async function analyzeVideo(
           ai_score: f.composite_cv_score ?? cvResult.composite_cv_score,
           face_detected: false,
         })),
+        degraded_signals: ['nvidia-nim-not-used-cv-worker-primary-in-this-path'],
         summary: verdict === 'AI'
           ? `Self-hosted forensic cascade flagged this video — ${Math.round(calibrated * 100)}% confidence across ${cvResult.frames_analyzed} sampled frames.${cvResult.temporal_variance.flagged ? ' Frame-to-frame forensic signature is inconsistent, a common AI-video indicator.' : ''}`
           : verdict === 'HUMAN'
@@ -1340,6 +1378,7 @@ function analyzeVideoFallback(
     ],
     summary: 'Video analysis requires frame extraction. Please use the video detection page at aiscern.com/detect/video in a modern browser (Chrome/Edge) which captures canvas frames for NVIDIA NIM analysis. API video detection without pre-extracted frames is not supported.',
     frame_scores: [],
+    degraded_signals: ['nvidia-nim-not-attempted-no-frames', 'self-hosted-cv-worker-not-attempted-no-buffer', 'hf-ensemble-not-attempted-no-frames'],
   }
 }
 
