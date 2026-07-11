@@ -659,12 +659,19 @@ function analyzeVocabulary(text: string): BrainSignal[] {
   const exclRatio      = exclamations / sentences
   const questRatio     = questionMarks / sentences
   // AI formal: exclRatio < 0.02, questRatio < 0.05
-  const punctScore     = (exclRatio > 0.05 || questRatio > 0.08) ? 0.25 : exclRatio < 0.01 && questRatio < 0.03 ? 0.78 : 0.50
+  // Calibration fix (audit day): plenty of ordinary human writing (plain
+  // narrative, casual recounting of events) simply doesn't use exclamation
+  // marks or rhetorical questions — that's not distinctly AI behavior, it's
+  // just unexcited prose. Softened the "no punctuation variety" branch from
+  // a strong AI lean (0.78) to a mild one, and reduced its weight, since
+  // this feature alone is weak evidence without corroboration from other
+  // signals.
+  const punctScore     = (exclRatio > 0.05 || questRatio > 0.08) ? 0.25 : exclRatio < 0.01 && questRatio < 0.03 ? 0.58 : 0.48
   signals.push({
     name: 'Punctuation Naturalness',
     category: 'vocabulary',
     score: punctScore,
-    weight: 0.06,
+    weight: 0.04,
     evidence: `!: ${exclRatio.toFixed(3)}/sentence, ?: ${questRatio.toFixed(3)}/sentence`,
   })
 
@@ -736,9 +743,16 @@ function analyzePhraseFingerprints(text: string): BrainSignal[] {
     }
   }
 
-  const rawPhraseScore = totalWeight > 0 ? Math.min(1, totalScore / totalWeight) : 0.5
+  // Calibration fix (audit day): previously defaulted to 0.5 (neutral) when
+  // zero AI phrases matched — but with this signal carrying 30% of total
+  // weight, that neutral default was systematically dragging plain,
+  // ordinary human text (which naturally contains none of these AI
+  // fingerprint phrases) upward toward "uncertain/AI". Absence of AI
+  // phrases is itself informative and should default lower, and genuine
+  // human-phrase evidence should count for more.
+  const rawPhraseScore = totalWeight > 0 ? Math.min(1, totalScore / totalWeight) : 0.30
   const humanPenalty   = humanWeight > 0 ? humanScore / humanWeight : 0
-  const phraseScore    = Math.max(0, Math.min(1, rawPhraseScore - humanPenalty * 0.4))
+  const phraseScore    = Math.max(0, Math.min(1, rawPhraseScore - humanPenalty * 0.6))
 
   return [{
     name: 'AI Phrase Fingerprints',
@@ -766,23 +780,33 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
     .filter(n => !['The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of', 'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They'].includes(n))
     .length
   const groundingDensity  = (specificNumbers + properNouns) / (wordCount / 100)
-  // AI: low grounding density (generic claims, few specifics). Human: higher
-  const groundingScore    = groundingDensity < 1 ? 0.82 : groundingDensity < 3 ? 0.65 : groundingDensity < 6 ? 0.42 : 0.22
-  signals.push({
-    name: 'Grounding Density',
-    category: 'semantic',
-    score: groundingScore,
-    weight: 0.09,
-    evidence: `${specificNumbers} numbers, ${properNouns} proper nouns (${groundingDensity.toFixed(2)}/100 words)`,
-  })
-
-  // --- Personal anecdote / experiential language ---
-  const anecdoteSignals = [
+  // Calibration fix (audit day): the original bands treated low grounding
+  // density (few numbers/names) as strongly AI-like — but that conflates
+  // "citation-style specificity" (essay register) with narrative grounding.
+  // Casual personal storytelling ("I tried making sourdough...") is
+  // genuinely grounded in lived experience even with zero proper nouns or
+  // statistics. Softened the bands and added a discount when personal
+  // anecdote language is present (checked below), since that's a stronger,
+  // more direct signal of human narrative grounding than raw noun-counting.
+  const anecdoteSignalsForGrounding = [
     'i remember', 'i once', 'i used to', 'i saw', 'i heard', 'i experienced',
     'i was there', 'i met', 'i tried', 'i read about', 'i found', 'i learned',
     'my experience', 'my opinion', 'my perspective', 'i believe', 'i think',
     'i feel', 'i noticed', 'i realized', 'i discovered', 'in my experience',
   ]
+  const hasAnecdoteLanguage = anecdoteSignalsForGrounding.some(a => lower.includes(a))
+  let groundingScore = groundingDensity < 1 ? 0.62 : groundingDensity < 3 ? 0.50 : groundingDensity < 6 ? 0.38 : 0.22
+  if (hasAnecdoteLanguage) groundingScore = Math.max(0.15, groundingScore - 0.20)
+  signals.push({
+    name: 'Grounding Density',
+    category: 'semantic',
+    score: groundingScore,
+    weight: 0.06,
+    evidence: `${specificNumbers} numbers, ${properNouns} proper nouns (${groundingDensity.toFixed(2)}/100 words)${hasAnecdoteLanguage ? ' — discounted, personal anecdote language present' : ''}`,
+  })
+
+  // --- Personal anecdote / experiential language ---
+  const anecdoteSignals = anecdoteSignalsForGrounding
   const anecdoteCount = anecdoteSignals.reduce((n, a) => n + (lower.includes(a) ? 1 : 0), 0)
   if (anecdoteCount > 0) {
     signals.push({

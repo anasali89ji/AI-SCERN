@@ -198,3 +198,28 @@ describe('analyzeTextInChunks — ported long-text/PDF chunk analysis (audit day
     expect(r.chunkScores.length).toBe(1)
   })
 })
+
+describe('analyzeTextWithBrain — calibration fix (audit day): casual human text should not skew AI-leaning', () => {
+  it('scores plain, personal, anecdote-driven casual text as HUMAN, not UNCERTAIN/AI', () => {
+    const casual = "so i tried making sourdough for the first time this weekend and honestly it was a disaster lol. the dough just wouldnt rise properly and i think i messed up the starter somehow. my roommate said it still tasted fine but i'm pretty sure she was just being nice about it. gonna try again next week, maybe ill actually read the instructions this time instead of just winging it like i always do with everything"
+    const r = analyzeTextWithBrain(casual)
+    expect(r.verdict).toBe('HUMAN')
+    expect(r.score).toBeLessThan(0.38)
+  })
+
+  it('does not over-penalize text lacking exclamation marks or proper nouns when personal/anecdotal', () => {
+    const plain = 'I remember when I tried to fix my bike last month. I found the problem after a while but it took me longer than I expected. I learned a lot from doing it myself instead of taking it to a shop.'
+    const r = analyzeTextWithBrain(plain)
+    const grounding = r.signals.find(s => s.name === 'Grounding Density')
+    expect(grounding).toBeDefined()
+    expect(grounding!.score).toBeLessThan(0.5)
+  })
+
+  it('AI Phrase Fingerprints defaults to a low (not neutral) score when no AI phrases are found', () => {
+    const noPhrases = 'The weather today is nice. I went for a walk. It was pretty relaxing overall.'
+    const r = analyzeTextWithBrain(noPhrases)
+    const phraseSig = r.signals.find(s => s.name === 'AI Phrase Fingerprints')
+    expect(phraseSig).toBeDefined()
+    expect(phraseSig!.score).toBeLessThan(0.4)
+  })
+})
