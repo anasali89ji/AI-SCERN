@@ -289,6 +289,51 @@ async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     return result
 
 
+@app.post("/analyze/video")
+async def analyze_video_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    MODULE 1 — self-hosted video analysis via frame-sampled reuse of
+    image_engine.py. Runs PARALLEL to NVIDIA NIM on the frontend (not a
+    replacement) — see callPythonCVWorkerVideo() in hf-analyze.ts.
+
+    Returns: composite_cv_score, frame_scores[], temporal_variance,
+    per_layer_frame_breakdown.
+    """
+    ALLOWED_VIDEO_MIMES = {
+        "video/mp4", "video/quicktime", "video/webm", "video/x-matroska",
+        "video/avi", "video/x-msvideo", "video/mpeg",
+    }
+    if not file.content_type or file.content_type.lower() not in ALLOWED_VIDEO_MIMES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported video type '{file.content_type}'. "
+                   f"Allowed: {', '.join(sorted(ALLOWED_VIDEO_MIMES))}",
+        )
+
+    contents = await file.read()
+    max_mb = int(os.getenv("MAX_VIDEO_SIZE_MB", 50))
+    if len(contents) > max_mb * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"Video must be under {max_mb}MB")
+
+    import asyncio
+    from engines.video_engine import analyze_video
+
+    t0 = time.time()
+    _inc("requests_total"); _inc("requests_video")
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None, analyze_video, contents, file.content_type,
+        f"upload_{int(time.time())}",
+    )
+    _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
+
+    if result.get("status") == "error":
+        _inc("errors_total")
+        raise HTTPException(status_code=500, detail=result.get("error", "Video analysis failed"))
+
+    return result
+
+
 @app.post("/analyze/text")
 async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
     """
