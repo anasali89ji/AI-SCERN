@@ -1,10 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import {
   Mail, Github, Twitter, ArrowRight, CheckCircle2, Loader2,
-  Shield, Zap, FileText, Image as ImageIcon, Music, Video,
+  Shield, Zap,
 } from 'lucide-react'
 
 const TOOLS_COL = [
@@ -42,10 +41,13 @@ const LEGAL_COL = [
   { label: 'GDPR',             href: '/gdpr'    },
 ]
 
+// NOTE: Deliberately not using the "SOC 2 Type II • GDPR Compliant • ISO 27001" trust
+// bar copy — those are unverified certification claims we can't currently back up.
+// Kept the existing honest badges instead.
 const TRUST_BADGES = [
-  { icon: Shield,   label: 'SOC 2 Ready'      },
-  { icon: Zap,      label: 'API Available'     },
-  { icon: CheckCircle2, label: 'Free Tier'     },
+  { icon: Shield,   label: 'SOC 2 Ready'  },
+  { icon: Zap,      label: 'API Available' },
+  { icon: CheckCircle2, label: 'Free Tier' },
 ]
 
 export function SiteFooter() {
@@ -69,45 +71,40 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="border-t border-[#1E1E1E] bg-[#0A0A0A]">
+    <footer className="border-t border-white/5 bg-depth-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
 
-        {/* Top grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-12 lg:gap-8"
-        >
+        {/* Top grid — no viewport-entrance animation; footer is always below-fold */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-12 lg:gap-8">
 
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2 mb-5 group" aria-label="Aiscern home">
-              <span className="font-black text-xl text-white tracking-tight group-hover:text-[#2BEE34] transition-colors duration-200">
+              <span className="font-heading font-black text-xl text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-200">
                 Aiscern
               </span>
             </Link>
 
-            <p className="text-sm text-[#A3A3A3] leading-relaxed mb-6 max-w-[220px]">
+            <p className="text-sm text-silver-700 leading-relaxed mb-6 max-w-[220px]">
               Free multi-modal AI content attestation. Text, image, audio, and video.
             </p>
 
             {/* Status */}
             <Link
               href="/status"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1E1E1E]
-                         bg-[#141414] text-xs text-[#A3A3A3] hover:border-[#2BEE34]/30 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.06]
+                         bg-surface text-xs text-silver-700 hover:border-accent/30 transition-colors duration-200
+                         focus-visible:ring-2 focus-visible:ring-accent/50"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34] flex-shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" aria-hidden="true" />
               All systems operational
             </Link>
 
             {/* Trust badges */}
             <div className="mt-5 flex flex-col gap-2">
               {TRUST_BADGES.map(b => (
-                <div key={b.label} className="flex items-center gap-2 text-xs text-[#6B6B6B]">
-                  <b.icon className="w-3.5 h-3.5 text-[#3A3A3A]" />
+                <div key={b.label} className="flex items-center gap-2 text-xs text-silver-600">
+                  <b.icon className="w-3.5 h-3.5 text-silver-500" aria-hidden="true" />
                   {b.label}
                 </div>
               ))}
@@ -120,28 +117,31 @@ export function SiteFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Aiscern on GitHub"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
+                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
+                           focus-visible:ring-2 focus-visible:ring-accent/50"
               >
-                <Github className="w-4 h-4" />
+                <Github className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href="https://twitter.com/aiscern"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Aiscern on X / Twitter"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
+                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
+                           focus-visible:ring-2 focus-visible:ring-accent/50"
               >
-                <Twitter className="w-4 h-4" />
+                <Twitter className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href="mailto:hello@aiscern.com"
                 aria-label="Email Aiscern"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1E1E1E]
-                           text-[#6B6B6B] hover:text-white hover:border-[#2A2A2A] hover:-translate-y-0.5 transition-all duration-200"
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
+                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
+                           focus-visible:ring-2 focus-visible:ring-accent/50"
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-4 h-4" aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -163,16 +163,16 @@ export function SiteFooter() {
 
           {/* Newsletter */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#A3A3A3] mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-700 mb-4">
               Newsletter
             </h3>
-            <p className="text-sm text-[#6B6B6B] leading-relaxed mb-4">
+            <p className="text-sm text-silver-600 leading-relaxed mb-4">
               Attestation research, product updates, and AI news. Once a week.
             </p>
 
             {sent ? (
-              <div className="flex items-center gap-2 text-sm text-[#2BEE34]">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-accent">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 You&apos;re subscribed!
               </div>
             ) : (
@@ -180,39 +180,42 @@ export function SiteFooter() {
                 <label htmlFor="footer-email" className="sr-only">
                   Email address
                 </label>
-                <input
-                  id="footer-email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-2.5
-                             text-sm text-[#E5E5E5] placeholder-[#6B6B6B]
-                             focus:border-[#2BEE34] focus:ring-1 focus:ring-[#2BEE34]/30 focus:outline-none
-                             transition-all duration-150"
-                />
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-                             bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-sm font-semibold
-                             transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {sending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>Subscribe <ArrowRight className="w-4 h-4" /></>
-                  )}
-                </button>
+                <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface-elevated
+                                 focus-within:border-accent/50 focus-within:ring-1 focus-within:ring-accent/20
+                                 transition-all duration-200 pl-4 pr-1.5 py-1.5">
+                  <input
+                    id="footer-email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className="w-full bg-transparent text-sm text-silver-800 placeholder-silver-600 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    aria-label="Subscribe"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md shrink-0
+                               bg-accent hover:bg-accent-hover text-depth-bg text-xs font-semibold
+                               transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed
+                               focus-visible:ring-2 focus-visible:ring-accent/50"
+                  >
+                    {sending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <>Subscribe <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></>
+                    )}
+                  </button>
+                </div>
               </form>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Divider */}
-        <div className="border-t border-[#1E1E1E] mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#6B6B6B]">
+        {/* Bottom row */}
+        <div className="border-t border-white/5 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-silver-600">
             © {new Date().getFullYear()} Aiscern. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-4">
@@ -220,7 +223,7 @@ export function SiteFooter() {
               <Link
                 key={l.href}
                 href={l.href}
-                className="text-xs text-[#6B6B6B] hover:text-[#A3A3A3] transition-colors"
+                className="text-xs text-silver-600 hover:text-silver-800 transition-colors duration-200"
               >
                 {l.label}
               </Link>
@@ -235,7 +238,7 @@ export function SiteFooter() {
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#A3A3A3] mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-700 mb-4">
         {title}
       </h3>
       <ul className="space-y-2.5">{children}</ul>
@@ -248,9 +251,9 @@ function FooterLink({ label, href }: { label: string; href: string }) {
     <li>
       <Link
         href={href}
-        className="group inline-flex items-center gap-1 text-sm text-[#6B6B6B] hover:text-[#E5E5E5] transition-colors duration-150"
+        className="group inline-flex items-center gap-1 text-sm text-silver-600 hover:text-silver-800 transition-colors duration-200"
       >
-        <span className="group-hover:translate-x-0.5 transition-transform duration-150">{label}</span>
+        <span className="group-hover:translate-x-0.5 transition-transform duration-200">{label}</span>
       </Link>
     </li>
   )
