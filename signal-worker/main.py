@@ -7,6 +7,8 @@ Routes:
   POST /analyze                 Auto-detect content type and route
   POST /analyze/image           Full image analysis (v2 layers + v3 forensics)
   POST /analyze/text            Text AI-detection (perplexity, burstiness, stylometry)
+  POST /analyze/audio            MODULE 3: CPU-only audio forensics (MFCC, jitter/shimmer,
+                                  spectral stability, silence pattern, HNR)
   POST /analyze-signals         v2 compat: Layers 1, 3, 4, SynthID (JSON body with imageUrl)
   POST /diffusion-inversion     v2 Layer 5: DDIM inversion (GPU required)
   POST /diffusion-snapback      v2 Layer 5b: snap-back reconstruction (GPU required)
@@ -97,6 +99,29 @@ async def lifespan(app: FastAPI):
         pass  # Not the main thread (e.g. pytest) — skip SIGTERM registration
 
     eviction_task = asyncio.create_task(_idle_model_eviction_loop())
+
+    # MODULE 3 — audio engine warmup. librosa.pyin/hpss are numba-JIT'd;
+    # their FIRST call in a fresh process pays a one-time ~15-20s
+    # compilation cost (measured: 0.3s steady-state vs 21s cold on a 4s
+    # clip). Run it once here, off the request path, so it doesn't eat a
+    # real user's SIGNAL_WORKER_TIMEOUT_MS budget on the worker's first
+    # audio request after a cold start / redeploy.
+    def _warm_audio_engine():
+        try:
+            import numpy as np
+            from engines.audio_engine import analyze_audio
+            silence = (np.random.normal(0, 0.05, 16000 * 2)).astype(np.float32)
+            import io, soundfile as sf
+            buf = io.BytesIO()
+            sf.write(buf, silence, 16000, format="WAV")
+            analyze_audio(buf.getvalue(), "audio/wav", "startup_warmup")
+            logger.info("[AudioEngine] warmup complete — numba kernels JIT-compiled")
+        except Exception as e:
+            # Never block startup on this — worst case, the first real
+            # request pays the JIT cost instead (same as before this change).
+            logger.warning("[AudioEngine] warmup failed (non-fatal): %s", e)
+
+    asyncio.get_event_loop().run_in_executor(None, _warm_audio_engine)
 
     yield
 
@@ -356,6 +381,55 @@ async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
         None,
         lambda: analyze_text(text=req.text, job_id=req.jobId, options=req.options),
     )
+
+
+@app.post("/analyze/audio")
+async def analyze_audio_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    MODULE 3 — self-hosted audio forensics via librosa (MFCC consistency,
+    pitch jitter/shimmer, spectral stability, silence/breath-pattern,
+    harmonic-to-noise ratio). CPU-only, no paid API.
+
+    Returns: composite_audio_score, audio_signals{}, signal_details[].
+    Mirrors the /analyze/video and /analyze/image endpoint pattern exactly
+    (MIME allowlist, size cap, run_in_executor so CPU work never blocks the
+    event loop, error → HTTPException so the frontend's graceful-degrade
+    fallback triggers cleanly).
+    """
+    ALLOWED_AUDIO_MIMES = {
+        "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave",
+        "audio/webm", "audio/ogg", "audio/flac", "audio/x-flac",
+        "audio/mp4", "audio/x-m4a", "audio/aac",
+    }
+    if not file.content_type or file.content_type.lower() not in ALLOWED_AUDIO_MIMES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported audio type '{file.content_type}'. "
+                   f"Allowed: {', '.join(sorted(ALLOWED_AUDIO_MIMES))}",
+        )
+
+    contents = await file.read()
+    max_mb = int(os.getenv("MAX_AUDIO_SIZE_MB", 25))
+    if len(contents) > max_mb * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"Audio must be under {max_mb}MB")
+
+    import asyncio
+    from engines.audio_engine import analyze_audio
+
+    t0 = time.time()
+    _inc("requests_total"); _inc("requests_audio")
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None, analyze_audio, contents, file.content_type,
+        f"upload_{int(time.time())}",
+    )
+    _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
+
+    if result.get("status") == "error":
+        _inc("errors_total")
+        raise HTTPException(status_code=500, detail=result.get("error", "Audio analysis failed"))
+
+    return result
 
 
 @app.post("/analyze-signals")

@@ -39,5 +39,9 @@ nltk==3.8.1
 textstat==0.7.3
 langdetect==1.0.9
 
+# ── Audio engine (MODULE 3, CPU-only) ─────────────────────────────────────────
+librosa==0.10.2.post1
+soundfile==0.12.1
+
 # ── Utilities ─────────────────────────────────────────────────────────────────
 psutil==5.9.8

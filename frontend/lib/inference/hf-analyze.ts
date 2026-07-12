@@ -602,6 +602,60 @@ async function callPythonCVWorkerVideo(videoBuffer: Buffer, mimeType: string): P
 // set (MODULE 1, task 7).
 const VIDEO_CV_WORKER_WEIGHT = 0.40
 
+// ── MODULE 3: Audio Engine Expansion ────────────────────────────────────────
+// Self-hosted CPU-only audio forensics (MFCC, jitter/shimmer, spectral
+// stability, silence pattern, HNR — see signal-worker/engines/audio_engine.py).
+// Mirrors callPythonCVWorkerVideo's timeout/retry/graceful-degrade pattern
+// exactly, including the loud-failure logging.
+interface PythonAudioWorkerResult {
+  composite_audio_score: number
+  audio_signals: Record<string, number | null>
+  signal_details: { name: string; available: boolean; value: number | null; weight: number; flagged: boolean; description: string }[]
+  duration_sec: number
+  insufficient_audio?: boolean
+  version: string
+}
+
+const AUDIO_WORKER_TIMEOUT_MS = 20_000
+
+async function callPythonAudioWorker(audioBuffer: Buffer, mimeType: string): Promise<PythonAudioWorkerResult | null> {
+  if (!SIGNAL_WORKER_BASE_URL || !audioBuffer || audioBuffer.length === 0) return null
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(audioBuffer)], { type: mimeType || 'audio/mpeg' }), 'audio.mp3')
+    const res = await fetch(`${SIGNAL_WORKER_BASE_URL}/analyze/audio`, {
+      method: 'POST', body: form,
+      signal: AbortSignal.timeout(AUDIO_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) {
+      console.error(`[hf-analyze] Audio worker returned ${res.status} ${res.statusText} — falling back to Gemini/HF ensemble only.`)
+      return null
+    }
+    const data = await res.json() as PythonAudioWorkerResult
+    if (typeof data.composite_audio_score !== 'number') {
+      console.error('[hf-analyze] Audio worker response missing composite_audio_score — falling back to Gemini/HF ensemble only.', data)
+      return null
+    }
+    return data
+  } catch (err) {
+    // NOT a silent fallback — log it, same rationale as callPythonCVWorker.
+    console.error('[hf-analyze] Audio worker call failed — falling back to Gemini/HF ensemble only. Reason:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
+// Initial trust weight for the self-hosted audio worker — per Module 3 task
+// 4, lower starting trust than image (25%) since this is genuinely new,
+// uncalibrated code (see audio_engine.py docstring). Raise only after a
+// calibration pass against labeled real/synthetic audio.
+const AUDIO_CV_WORKER_WEIGHT = 0.35
+
+// MODULE 3 task 4: trivially-reversible kill switch, same pattern as
+// TEXT_GEMINI_MODE (Module 2). 'fallback' = default — Gemini only runs when
+// the self-hosted worker is uncertain or absent. 'parallel' = always call
+// Gemini (for A/B measurement). 'off' = self-hosted + HF ensemble only.
+const AUDIO_GEMINI_MODE = (process.env.AUDIO_GEMINI_MODE || 'fallback') as 'fallback' | 'parallel' | 'off'
+
 export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileName: string): Promise<DetectionResult> {
   // Check cache first — skip re-analysis for identical files
   const imgCacheHash = hashBuffer(imageBuffer)
@@ -1048,9 +1102,14 @@ export async function analyzeAudio(
   const durationEst = Math.round(fileSize / (128 * 1024 / 8))
   const hasBuffer   = !!(audioBuffer && audioBuffer.length > 0)
 
-  const geminiPromise = (geminiAvailable() && hasBuffer)
-    ? geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null)
-    : Promise.resolve(null)
+  // MODULE 3: self-hosted audio worker + HF ensemble both fire immediately
+  // and unconditionally (cheap/self-hosted, same as Module 1's video-worker
+  // pattern) — only Gemini is sequenced behind a decision, since it's the
+  // one paid call we're trying to reduce. This does mean the
+  // uncertain/disagreement case pays worker-latency + gemini-latency
+  // sequentially rather than in parallel; that's the accepted tradeoff for
+  // not burning a Gemini call on every request (see AUDIO_GEMINI_MODE).
+  const audioWorkerPromise = callPythonAudioWorker(hasBuffer ? audioBuffer! : Buffer.alloc(0), format)
 
   const hfP0 = (hasBuffer && HF_TOKEN)
     ? hfInference(MODELS.audio_finetuned, null, { binary: true, binaryData: audioBuffer!, retries: 0, timeoutMs: 15000 }).catch(() => null)
@@ -1066,7 +1125,10 @@ export async function analyzeAudio(
     ? extractAudioSignalsExtended(audioBuffer!, fileSize)
     : extractAudioSignalsExtended(Buffer.alloc(0), fileSize)
 
-  const [geminiResult, mlR0, mlR1, mlR2] = await Promise.all([geminiPromise, hfP0, hfP1, hfP2])
+  const [audioWorkerResult, mlR0, mlR1, mlR2] = await Promise.all([audioWorkerPromise, hfP0, hfP1, hfP2])
+  const audioWorkerScore = (audioWorkerResult && !audioWorkerResult.insufficient_audio)
+    ? audioWorkerResult.composite_audio_score
+    : null
 
   try {
     const audioCal = await getAudioCalibrationStats()
@@ -1093,24 +1155,46 @@ export async function analyzeAudio(
   const mlMean      = mlScores.length
     ? mlScores.reduce((sum, s) => sum + s.score * s.weight, 0) / totalWeight
     : null
+
+  // MODULE 3 task 4: Gemini demoted to UNCERTAIN-band fallback, same logic
+  // shape as Module 2's text pipeline — call it only when the self-hosted
+  // worker is uncertain, disagrees with the heuristic signal engine by
+  // >0.15, or is unavailable (worker down/unconfigured — in which case we
+  // fall back to the pre-Module-3 behavior of always calling Gemini, so the
+  // existing fallback path never breaks).
+  const workerUncertain    = audioWorkerScore !== null && audioWorkerScore > 0.38 && audioWorkerScore < 0.62
+  const workerSigDisagree  = audioWorkerScore !== null && Math.abs(audioWorkerScore - sigScore) > 0.15
+  const geminiShouldRun    = AUDIO_GEMINI_MODE === 'off'
+    ? false
+    : AUDIO_GEMINI_MODE === 'parallel'
+    ? true
+    : (audioWorkerScore === null || workerUncertain || workerSigDisagree) // 'fallback' (default)
+
+  const geminiResult = (geminiShouldRun && geminiAvailable() && hasBuffer)
+    ? await geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null)
+    : null
   const geminiScore = geminiResult?.aiScore ?? null
 
-  let aiScore: number
-  let modelUsed: string
+  // Weighted blend across whichever sources actually ran. Base weights
+  // (renormalized over available sources): gemini 0.35 (down from
+  // pre-Module-3's up-to-0.45 — demoted from primary to fallback),
+  // self-hosted audio worker 0.35 (AUDIO_CV_WORKER_WEIGHT), HF ensemble
+  // 0.20, heuristic acoustic signals 0.10 (always available, lowest trust).
+  const weighted: { score: number; weight: number }[] = [
+    ...(geminiScore      !== null ? [{ score: geminiScore,      weight: 0.35 }] : []),
+    ...(audioWorkerScore !== null ? [{ score: audioWorkerScore, weight: AUDIO_CV_WORKER_WEIGHT }] : []),
+    ...(mlMean            !== null ? [{ score: mlMean,           weight: 0.20 }] : []),
+    { score: sigScore, weight: 0.10 },
+  ]
+  const wTotal  = weighted.reduce((a, b) => a + b.weight, 0)
+  const aiScore = weighted.reduce((a, b) => a + b.score * b.weight, 0) / wTotal
 
-  if (geminiScore !== null && mlMean !== null) {
-    aiScore   = geminiScore * 0.45 + mlMean * 0.30 + sigScore * 0.25
-    modelUsed = `Aiscern-AudioEnsemble(Gemini2Flash+${mlScores.length}Models+8AcousticSignals)`
-  } else if (geminiScore !== null) {
-    aiScore   = geminiScore * 0.70 + sigScore * 0.30
-    modelUsed = 'Aiscern-AudioGemini(Gemini2Flash+8AcousticSignals)'
-  } else if (mlMean !== null) {
-    aiScore   = mlMean * 0.70 + sigScore * 0.30
-    modelUsed = `Aiscern-AudioEnsemble(${mlScores.length}Models+8AcousticSignals)`
-  } else {
-    aiScore   = sigScore
-    modelUsed = 'Aiscern-AudioSignals(8AcousticHeuristics)'
-  }
+  const modelUsed = [
+    geminiScore      !== null ? 'Gemini2Flash'          : null,
+    audioWorkerScore !== null ? 'SelfHostedForensics'   : null,
+    mlMean            !== null ? `${mlScores.length}HFModels` : null,
+    '8AcousticSignals',
+  ].filter(Boolean).join('+')
 
   const calibratedAudioScore = calibrateScore(aiScore)
   const verdict  = toVerdict(calibratedAudioScore, "audio")
@@ -1119,8 +1203,9 @@ export async function analyzeAudio(
   // MODULE 5 — Failure Visibility.
   const audioDegradedSignals: string[] = [
     ...(!hasBuffer ? ['no-audio-buffer-metadata-only'] : []),
+    ...(audioWorkerScore === null ? [SIGNAL_WORKER_BASE_URL ? (audioWorkerResult?.insufficient_audio ? 'audio-worker-insufficient-clip' : 'audio-worker-offline-or-failed') : 'audio-worker-unconfigured'] : []),
     ...(mlMean === null    ? [hasBuffer && HF_TOKEN ? 'hf-ensemble-cold-or-failed' : 'hf-ensemble-unconfigured'] : []),
-    ...(geminiScore === null ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
+    ...(geminiScore === null ? (geminiShouldRun ? ['gemini-call-failed'] : []) : []),
   ]
 
   // Deterministic segment scores using sin wave (no Math.random)
@@ -1152,6 +1237,19 @@ export async function analyzeAudio(
         value:   Math.round((geminiScore ?? mlMean ?? sigScore) * 1000) / 1000,
         flagged: (geminiScore ?? mlMean ?? sigScore) > 0.58,
       },
+      // MODULE 3 — self-hosted forensic signals (MFCC/jitter-shimmer/
+      // spectral-stability/silence-pattern/HNR), one entry per sub-signal
+      // when the worker responded, matching the granularity of audioSignals below.
+      ...(audioWorkerResult?.signal_details ?? [])
+        .filter(sd => sd.available)
+        .map(sd => ({
+          name:        `Self-Hosted: ${sd.name.replace(/_/g, ' ')}`,
+          category:    'Forensic (self-hosted)',
+          description: sd.description,
+          weight:      Math.round(sd.weight * AUDIO_CV_WORKER_WEIGHT * 100),
+          value:       sd.value ?? 0,
+          flagged:     sd.flagged,
+        })),
       ...audioSignals.map(sig => ({
         name:        sig.name,
         category:    'Acoustic',
@@ -1169,6 +1267,7 @@ export async function analyzeAudio(
     segment_scores,
     model_breakdown: [
       ...(geminiScore !== null ? [{ model_id: 'gemini-2.5-flash-audio', raw_score: geminiScore, verdict: scoreToVerdict(geminiScore), latency_ms: 0 }] : []),
+      ...(audioWorkerScore !== null ? [{ model_id: 'python-audio-worker-v1', raw_score: audioWorkerScore, verdict: scoreToVerdict(audioWorkerScore), latency_ms: 0 }] : []),
       ...mlScores.map((m, i) => ({
         model_id:   i === 0 ? MODELS.audio_finetuned : i === 1 ? MODELS.audio_primary : MODELS.audio_asvspoof,
         raw_score:  m.score,
