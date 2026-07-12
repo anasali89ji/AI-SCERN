@@ -1,129 +1,148 @@
 'use client'
-import { memo } from 'react'
-import { motion } from 'framer-motion'
-import { Scan, AlertTriangle, CheckCircle, Brain } from 'lucide-react'
+
+import { useState } from 'react'
 import Image from 'next/image'
+import { XCircle, CheckCircle2, FileText, ImageIcon, Music, Video } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
-interface ComparisonCard {
-  type: 'text' | 'image'
-  label: string
-  verdict: 'AI' | 'HUMAN'
-  preview?: string
-  img?: string
-  tag: string
-  confidence: number
-}
+type Tab = 'text' | 'image' | 'audio' | 'video'
 
-const CARDS: ComparisonCard[] = [
-  { type:'text',  label:'AI Essay',              verdict:'AI',    confidence:94, tag:'GPT-4',      preview:'The implementation of advanced machine learning algorithms has fundamentally transformed the paradigm of data processing and cognitive frameworks across all domains…' },
-  { type:'text',  label:'Human Writing',         verdict:'HUMAN', confidence:91, tag:'Authentic',  preview:"I burned my toast again. Third time this week. My smoke alarm and I have a complicated relationship at this point — it screams, I wave a dish towel." },
-  { type:'image', label:'AI Portrait',           verdict:'AI',    confidence:88, tag:'Midjourney', img:'/compare/ai-portrait-01.webp' },
-  { type:'image', label:'Real Photo',            verdict:'HUMAN', confidence:86, tag:'Authentic',  img:'/compare/real-portrait-01.webp' },
-  { type:'image', label:'DALL-E 3 Scene',        verdict:'AI',    confidence:92, tag:'DALL-E 3',   img:'/compare/ai-city-01.webp' },
-  { type:'image', label:'Real Landscape',        verdict:'HUMAN', confidence:89, tag:'Authentic',  img:'/compare/real-mountain-01.webp' },
-  { type:'text',  label:'AI-Polished CV',        verdict:'AI',    confidence:81, tag:'Claude 3',   preview:'Furthermore, my multifaceted skill set enables me to leverage synergistic outcomes across cross-functional teams, driving impactful paradigm shifts in organizational excellence…' },
-  { type:'text',  label:'Student Essay',         verdict:'HUMAN', confidence:84, tag:'Authentic',  preview:"ok so i know this is due tomorrow but i literally just figured out what my thesis even means. starting over at midnight felt bad but it's actually going somewhere now" },
-  { type:'image', label:'SD XL Art',             verdict:'AI',    confidence:90, tag:'SD XL',      img:'/compare/ai-abstract-01.webp' },
-  { type:'image', label:'Real Urban Photo',      verdict:'HUMAN', confidence:87, tag:'Authentic',  img:'/compare/real-street-01.webp' },
+const TABS: { key: Tab; label: string; icon: typeof FileText }[] = [
+  { key: 'text',  label: 'Text',  icon: FileText  },
+  { key: 'image', label: 'Image', icon: ImageIcon },
+  { key: 'audio', label: 'Audio', icon: Music     },
+  { key: 'video', label: 'Video', icon: Video     },
 ]
 
-const Card = memo(function Card({ card, idx }: { card: ComparisonCard; idx: number }) {
-  const isAI = card.verdict === 'AI'
+const TEXT_EXAMPLE = {
+  ai: 'The implementation of advanced machine learning algorithms has fundamentally transformed the paradigm of data processing and cognitive frameworks across all domains, enabling unprecedented synergies between computational efficiency and analytical depth.',
+  human: "I burned my toast again. Third time this week. My smoke alarm and I have a complicated relationship at this point — it screams, I wave a dish towel around like an idiot, the whole kitchen smells like regret.",
+}
 
+// Module 9.2 note: using the spec's abstract-geometric / nature Unsplash pair here instead
+// of the local /public/compare/ai-portrait-01 & real-face-01 assets — those are exactly the
+// "ai-face" / "portrait" files flagged for removal later, no reason to lean on them further.
+const IMAGE_EXAMPLE = {
+  ai:    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80',
+  human: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80',
+}
+
+// Deterministic pseudo-waveform bars — no audio/video assets needed for the placeholder UI.
+function seededBars(seed: number, count: number) {
+  let x = seed
+  return Array.from({ length: count }, () => {
+    x = (x * 9301 + 49297) % 233280
+    return 20 + (x / 233280) * 80
+  })
+}
+const AI_BARS    = seededBars(7, 40)
+const HUMAN_BARS = seededBars(13, 40)
+
+function Waveform({ bars, color }: { bars: number[]; color: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.4, delay: (idx % 5) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-xl overflow-hidden bg-[#141420] border border-white/[0.06]
-                 hover:border-white/[0.12] transition-colors duration-300"
-    >
-      {/* Preview area */}
-      {card.type === 'image' && card.img ? (
-        <div className="relative h-32 sm:h-36 bg-[#141420] overflow-hidden">
-          <Image
-            src={card.img} alt={card.label} fill
-            sizes="(max-width:640px) 45vw,(max-width:1024px) 30vw,20vw"
-            className="object-cover" loading="lazy"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display='none' }}
-          />
-          {/* Verdict chip on image */}
-          <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full
-            text-[10px] font-bold text-white backdrop-blur-sm
-            ${isAI ? 'bg-[#FF4444]/85' : 'bg-emerald-500/85'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5"/> : <CheckCircle className="w-2.5 h-2.5"/>}
-            {card.verdict}
-          </div>
-        </div>
-      ) : (
-        <div className={`h-32 sm:h-36 p-4 bg-[#0b0b14] flex flex-col justify-between
-          border-l-2 ${isAI ? 'border-rose-500/50' : 'border-emerald-500/50'}`}>
-          <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-4 italic">
-            &ldquo;{card.preview}&rdquo;
-          </p>
-          <span className={`self-start inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-2
-            ${isAI ? 'bg-[#FF4444]/10 text-[#FF4444]' : 'bg-[#2BEE34]/10 text-[#2BEE34]'}`}>
-            {isAI ? <AlertTriangle className="w-2.5 h-2.5"/> : <CheckCircle className="w-2.5 h-2.5"/>}
-            {card.verdict}
-          </span>
-        </div>
-      )}
-
-      {/* Card footer */}
-      <div className="px-3 pt-2.5 pb-3">
-        <div className="flex items-start justify-between gap-1 mb-2">
-          <p className="text-[11px] font-semibold text-slate-200 leading-tight">{card.label}</p>
-          <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide
-            ${isAI ? 'bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/20'
-                   : 'bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20'}`}>
-            {card.tag}
-          </span>
-        </div>
-
-        {/* Confidence bar */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1 rounded-full bg-[#1e1e2e] overflow-hidden">
-            <div className="h-full rounded-full bg-[#2BEE34] transition-all duration-500" style={{ width: `${card.confidence}%` }} />
-          </div>
-          <span className={`text-[10px] font-bold tabular-nums shrink-0
-            ${isAI ? 'text-[#FF4444]' : 'text-[#2BEE34]'}`}>
-            {card.confidence}%
-          </span>
-        </div>
-      </div>
-    </motion.div>
+    <div className="flex items-center gap-[2px] h-16" aria-hidden="true">
+      {bars.map((h, i) => (
+        <span key={i} className="flex-1 rounded-full" style={{ height: `${h}%`, backgroundColor: color, opacity: 0.6 }} />
+      ))}
+    </div>
   )
-})
+}
+
+function VerdictLabel({ isAI }: { isAI: boolean }) {
+  return isAI ? (
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+      <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> AI Generated
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Human Created
+    </span>
+  )
+}
 
 export default function AIvsRealSection() {
+  const [tab, setTab] = useState<Tab>('text')
+
   return (
     <section className="py-16 sm:py-24 border-t border-white/[0.06] overflow-hidden">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid sm:grid-cols-2 gap-4 mt-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
-                          border border-rose-500/25 bg-[#FF4444]/[0.06] text-[#FF4444]
-                          text-xs font-semibold mb-5">
-            <Scan className="w-3.5 h-3.5" />
-            Real-World Attestation Examples
-          </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight mb-3">
-            AI vs Authentic Content
-          </h2>
-          <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            How Aiscern distinguishes synthetic content from human originals — across text and images.
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-10">
+          <h2 className="text-headline text-silver-900 mb-3">AI vs Authentic Content</h2>
+          <p className="text-silver-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+            How Aiscern distinguishes synthetic content from human originals.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {CARDS.map((card, i) => (
-            <Card key={i} card={card} idx={i} />
+        {/* Tab bar */}
+        <div role="tablist" aria-label="Content type" className="flex justify-center gap-1 mb-8">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={tab === t.key}
+              onClick={() => setTab(t.key)}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50',
+                tab === t.key
+                  ? 'bg-accent/10 text-accent border border-accent/20'
+                  : 'text-silver-600 hover:text-silver-800 border border-transparent',
+              )}
+            >
+              <t.icon className="w-4 h-4" aria-hidden="true" />
+              {t.label}
+            </button>
           ))}
         </div>
 
-        <p className="text-center text-[11px] text-slate-600 mt-6 flex items-center justify-center gap-1.5">
-          <Brain className="w-3.5 h-3.5" />
-          Illustrative examples — confidence scores are approximate. Try the live attestation tool above for real results.
+        {/* Split pane */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* AI side */}
+          <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.04] p-5 overflow-hidden">
+            <div className="mb-3"><VerdictLabel isAI /></div>
+
+            {tab === 'text' && (
+              <p className="text-sm text-silver-600 leading-relaxed border-l-4 border-rose-500/30 pl-3 italic">
+                &ldquo;{TEXT_EXAMPLE.ai}&rdquo;
+              </p>
+            )}
+            {tab === 'image' && (
+              <div className="relative h-48 rounded-lg overflow-hidden bg-depth-bg">
+                <Image src={IMAGE_EXAMPLE.ai} alt="Abstract geometric pattern, representative of AI-generated imagery" fill sizes="(max-width:640px) 90vw, 45vw" className="object-cover" loading="lazy" />
+              </div>
+            )}
+            {(tab === 'audio' || tab === 'video') && (
+              <div className="py-4">
+                <Waveform bars={AI_BARS} color="#FF4444" />
+                <p className="text-xs text-silver-600 mt-3">Synthetic {tab} — irregular spectral signature detected</p>
+              </div>
+            )}
+          </div>
+
+          {/* Human side */}
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 overflow-hidden">
+            <div className="mb-3"><VerdictLabel isAI={false} /></div>
+
+            {tab === 'text' && (
+              <p className="text-sm text-silver-600 leading-relaxed border-l-4 border-emerald-500/30 pl-3 italic">
+                &ldquo;{TEXT_EXAMPLE.human}&rdquo;
+              </p>
+            )}
+            {tab === 'image' && (
+              <div className="relative h-48 rounded-lg overflow-hidden bg-depth-bg">
+                <Image src={IMAGE_EXAMPLE.human} alt="Natural fog over a landscape, representative of authentic photography" fill sizes="(max-width:640px) 90vw, 45vw" className="object-cover" loading="lazy" />
+              </div>
+            )}
+            {(tab === 'audio' || tab === 'video') && (
+              <div className="py-4">
+                <Waveform bars={HUMAN_BARS} color="#2BEE34" />
+                <p className="text-xs text-silver-600 mt-3">Authentic {tab} — natural spectral variance</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-silver-600 mt-6">
+          Illustrative example — try the live attestation tool above for real results.
         </p>
       </div>
     </section>

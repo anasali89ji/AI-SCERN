@@ -8,19 +8,18 @@ import { SiteNav } from '@/components/SiteNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
   Shield, FileText, Zap,
-  ArrowRight, CheckCircle2,
+  ArrowRight,
   Image as ImageIcon, Video, Music,
-  Layers, Scan, Activity, Wand2,
-  MessageSquare, Database, TrendingUp, Users,
+  MessageSquare, Database, TrendingUp,
   FlaskConical,
-  GraduationCap, Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
-  ScanLine, BarChart3,
+  ScanLine,
 } from 'lucide-react'
 
 import HomepageReviews from '@/components/home/HomepageReviews'
-import { WhoNeedsCarousel } from '@/components/home/WhoNeedsCarousel'
 import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
+import { MethodologySection } from '@/components/home/MethodologySection'
+import { CTASection } from '@/components/home/CTASection'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { MagneticButton } from '@/components/MagneticButton'
 import { LiveDemo } from '@/components/home/LiveDemo'
@@ -58,7 +57,6 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,      label: 'Text Attestation',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
@@ -69,30 +67,11 @@ const TOOLS = [
   { href: '/batch',        icon: Database,      label: 'Bulk Attestation',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
 ]
 
-const HOW_IT_WORKS = [
-  { n: '01', title: 'Submit or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL — any format, any size.' },
-  { n: '02', title: 'Forensic Examination', desc: 'Multi-model AI analyzes 20+ detection signals across all content types in parallel.' },
-  { n: '03', title: 'Review Findings',   desc: 'Integrity rating, signal breakdown, and sentence-level heatmap in under 3 seconds.' },
-  { n: '04', title: 'Export & Share',    desc: 'Save your evidence locker, share findings by link, or export full PDF case files.' },
-]
-
 const TRUST_FEATURES = [
   { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: '#2563eb' },
   { icon: Shield,      title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: '#10b981' },
   { icon: TrendingUp,  title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: '#f59e0b' },
   { icon: Zap,         title: 'Free Tier Available',    desc: 'Start attesting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
-]
-
-const PROFESSIONALS = [
-  { label: 'Journalists',      icon: Pen           },
-  { label: 'Educators',        icon: GraduationCap },
-  { label: 'HR Teams',         icon: Users         },
-  { label: 'Legal Pros',       icon: Scale         },
-  { label: 'Security Teams',   icon: ShieldCheck   },
-  { label: 'Researchers',      icon: Microscope    },
-  { label: 'Content Creators', icon: Megaphone     },
-  { label: 'Marketing Teams',  icon: TrendingUp    },
-  { label: 'Healthcare',       icon: Heart         },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -278,41 +257,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
-                Simple Process
-              </p>
-              <h2 className="text-headline text-silver-900 mb-4">
-                How It Works
-              </h2>
-              <p className="text-silver-600 text-base">From submission to verdict in seconds.</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {HOW_IT_WORKS.map((step, i) => {
-                const Icon = HOW_IT_WORKS_ICONS[i]
-                return (
-                  <div key={i} className="bg-surface border border-white/[0.06] rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center
-                                      bg-accent/10 border border-accent/20 flex-shrink-0">
-                        <Icon className="w-5 h-5 text-accent" strokeWidth={1.7} aria-hidden="true" />
-                      </div>
-                      <span className="text-xs font-bold text-accent uppercase tracking-[0.08em]">
-                        {step.n}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-silver-900 mb-2">{step.title}</h3>
-                    <p className="text-sm text-silver-600 leading-relaxed">{step.desc}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </section>
+        {/* ══ METHODOLOGY (Module 3.3) — replaces the old static How It Works block ══ */}
+        <MethodologySection />
 
         {/* ══ REVIEWS ══ */}
         <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
@@ -389,13 +335,6 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Professionals */}
-            <div className="mb-12">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-600 mb-5 text-center">
-                Built for professionals across
-              </p>
-              <WhoNeedsCarousel items={PROFESSIONALS} />
-            </div>
 
             {/* Methodology note */}
             <div className="max-w-2xl mx-auto">
@@ -424,58 +363,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══ CTA ══ */}
-        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-[40px] sm:text-[48px] font-bold text-silver-900 tracking-[-0.02em] mb-5 leading-tight">
-              Start Attesting Content Free
-            </h2>
-            <p className="text-silver-600 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-              Core features free — no credit card required. No account needed for basic examinations.
-            </p>
-
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link
-                href={user ? '/dashboard' : '/detect/text'}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                           bg-accent hover:bg-accent-hover text-depth-bg text-base font-semibold
-                           transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {user ? 'Go to Dashboard' : 'Begin Attestation Free'}
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
-              {user ? (
-                <Link
-                  href="/chat"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                             bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
-                             text-silver-800 text-base font-semibold transition-all duration-200
-                             focus-visible:ring-2 focus-visible:ring-accent/50"
-                >
-                  <MessageSquare className="w-4 h-4" aria-hidden="true" /> Try ARIA Assistant
-                </Link>
-              ) : (
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                             bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
-                             text-silver-800 text-base font-semibold transition-all duration-200
-                             focus-visible:ring-2 focus-visible:ring-accent/50"
-                >
-                  Create Free Account
-                </Link>
-              )}
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-silver-600">
-              {['No credit card required', 'Free tier always available', 'No account for basic examinations'].map(t => (
-                <div key={t} className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-accent/70" aria-hidden="true" />{t}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* ══ CTA (Module 3.5) ══ */}
+        <CTASection />
 
       </main>
       <SiteFooter />
