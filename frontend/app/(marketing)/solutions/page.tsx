@@ -21,13 +21,13 @@ export const metadata: Metadata = {
 }
 
 type Solution = {
-  href:    string
-  icon:    LucideIcon
-  color:   string
-  title:   string
+  href: string
+  icon: LucideIcon
+  color: 'primary' | 'blue' | 'amber' | 'emerald' | 'rose'
+  title: string
   tagline: string
-  desc:    string
-  cta:     string
+  desc: string
+  cta: string
 }
 
 const SOLUTIONS: Solution[] = [
@@ -43,7 +43,7 @@ const SOLUTIONS: Solution[] = [
   {
     href: '/solutions/hr',
     icon: Users,
-    color: 'cyan',
+    color: 'blue',
     title: 'Human Resources',
     tagline: 'Hire with confidence',
     desc: 'Verify authenticity of cover letters, CVs, and work samples. Catch AI-written applications before they reach interview stage.',
@@ -97,7 +97,7 @@ const SOLUTIONS: Solution[] = [
   {
     href: '/solutions/research',
     icon: Microscope,
-    color: 'cyan',
+    color: 'blue',
     title: 'Academic Research',
     tagline: 'Uphold scientific integrity',
     desc: 'Validate authenticity of papers, datasets, and experiment logs. Integrate with your research workflow via API.',
@@ -114,51 +114,50 @@ const SOLUTIONS: Solution[] = [
   },
 ]
 
-const colorMap: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  primary: { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
-  blue:    { bg: 'bg-[#2BEE34]/10',  border: 'border-[#2BEE34]/20',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
-  cyan:    { bg: 'bg-cyan-500/10',  border: 'border-cyan-500/25',    text: 'text-[#2BEE34]',    icon: 'text-[#2BEE34]'    },
-  amber:   { bg: 'bg-[#FFB800]/10', border: 'border-amber-500/25',   text: 'text-[#FFB800]',   icon: 'text-[#FFB800]'   },
-  emerald: { bg: 'bg-[#2BEE34]/10', border: 'border-emerald-500/25', text: 'text-[#2BEE34]', icon: 'text-[#2BEE34]' },
-  rose:    { bg: 'bg-[#FF4444]/10',  border: 'border-rose-500/25',    text: 'text-[#FF4444]',    icon: 'text-[#FF4444]'    },
+const colorMap: Record<Solution['color'], { bg: string; border: string; text: string }> = {
+  primary: { bg: 'bg-accent/10', border: 'border-accent/20', text: 'text-accent' },
+  blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+  amber: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
+  rose: { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400' },
 }
 
 export default function SolutionsHub() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-[#08080d] pt-16">
+      <main className="min-h-screen bg-surface-deep pt-16">
         {/* Hero */}
         <section className="relative py-20 md:py-28 overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)]" />
+          <div className="absolute inset-0 pointer-events-none" aria-hidden>
+            <div className="absolute top-0 right-1/4 w-[400px] h-[400px] rounded-full bg-accent/5 blur-3xl" />
           </div>
           <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent mb-6">
               <Zap className="w-3.5 h-3.5" />
               Industry Solutions
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
+            <h1 className="text-headline text-silver-900 mb-5">
               AI Attestation Built<br />
-              <span className="text-[#2BEE34]">for Your Industry</span>
+              <span className="text-accent">for Your Industry</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-lead text-silver-600 max-w-2xl mx-auto mb-8">
               Every industry faces unique AI content challenges. Aiscern delivers tailored attestation workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/detect/text" className="btn-primary">
+              <Link href="/detect/text" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
                 Try Free Attestation <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/pricing" className="btn-secondary">
+              <Link href="/pricing" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
                 View Pricing
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Solutions Grid */}
-        <section className="py-12 md:py-16">
+        {/* Solutions Bento Grid */}
+        <section className="py-12 md:py-16 border-t border-white/5">
           <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {SOLUTIONS.map((sol) => {
@@ -166,16 +165,14 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group card card-hover flex flex-col gap-4 p-6 rounded-xl border border-[#1E1E1E] hover:border-white/[0.12] transition-all duration-200">
-                    <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-5 h-5 ${c.icon}`} />
-                    </div>
+                    className="group flex flex-col gap-4 p-6 rounded-xl border border-white/5 bg-surface hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lift transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-accent/50">
+                    <Icon className={`w-6 h-6 ${c.text}`} />
                     <div className="flex-1">
                       <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>
-                      <h2 className="text-lg font-bold text-white mb-2 group-hover:text-white transition-colors">{sol.title}</h2>
-                      <p className="text-sm text-[#6B6B6B] leading-relaxed">{sol.desc}</p>
+                      <h2 className="text-lg font-semibold text-silver-900 mb-2">{sol.title}</h2>
+                      <p className="text-sm text-silver-600 leading-relaxed">{sol.desc}</p>
                     </div>
-                    <div className={`text-xs font-semibold ${c.text} flex items-center gap-1 group-hover:gap-2 transition-all`}>
+                    <div className={`text-xs font-semibold ${c.text} flex items-center gap-1 group-hover:gap-2 transition-all duration-300`}>
                       {sol.cta} <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </Link>
@@ -186,19 +183,19 @@ export default function SolutionsHub() {
         </section>
 
         {/* Bottom CTA */}
-        <section className="py-16 md:py-20">
+        <section className="py-16 md:py-20 border-t border-white/5">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-4">
+            <h2 className="text-3xl font-semibold text-silver-900 mb-4">
               Don&apos;t see your industry?
             </h2>
-            <p className="text-[#A3A3A3] mb-6">
+            <p className="text-silver-600 mb-6">
               Aiscern works for any workflow that requires AI content verification. Contact us for a custom solution.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/enterprise" className="btn-primary">
+              <Link href="/enterprise" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
                 Talk to Enterprise Sales <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/contact" className="btn-secondary">
+              <Link href="/contact" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
                 Contact Us
               </Link>
             </div>
