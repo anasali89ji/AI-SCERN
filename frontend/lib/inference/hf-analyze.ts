@@ -20,6 +20,7 @@ import { hashBuffer, hashText, getCachedScan, setCachedScan } from '@/lib/cache/
 import { extractAudioSignals, extractAudioSignalsExtended, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
 import { SIGNAL_WORKER_TIMEOUT_MS } from '@/lib/forensic/constants'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
+import { trackVendorCall } from './vendor-call-tracker'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
 import { buildVideoSignals }                                                   from './signals/video-signals'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
@@ -314,6 +315,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     hfInference(MODELS.text_quaternary, { inputs: text.substring(0, 1800) }).catch(() => null),
     hfInference(MODELS.text_quinary,    { inputs: text.substring(0, 1800) }).catch(() => null),
   ])
+  trackVendorCall('huggingface', 'text', 6) // MODULE 6 — 6 underlying model calls fired above
 
   const perplexityPromise = callPythonTextWorker(truncated)
 
@@ -331,7 +333,7 @@ export async function analyzeText(text: string): Promise<DetectionResult> {
     ? true
     : (brainUncertain || brainLingDisagree) // 'fallback' (default)
   const geminiPromise    = (geminiShouldRun && geminiAvailable())
-    ? geminiAnalyzeText(text.slice(0, 8000)).catch(() => null)
+    ? (trackVendorCall('gemini', 'text'), geminiAnalyzeText(text.slice(0, 8000)).catch(() => null))
     : Promise.resolve(null)
 
   const [hfResults, geminiResult, perplexityResult] = await Promise.all([
@@ -729,10 +731,10 @@ const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
 const GROK_ENABLED = false
 
 const geminiPromise = geminiAvailable()
-  ? geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch((err) => {
+  ? (trackVendorCall('gemini', 'image'), geminiAnalyzeImage(inferenceBuffer, inferenceMime).catch((err) => {
       console.error('[hf-analyze] Gemini image analysis failed (both keys, if configured) — excluded from ensemble. Reason:', err instanceof Error ? err.message : err)
       return null
-    })
+    }))
   : Promise.resolve(null)
 
 const grokPromise: Promise<{aiScore: number; verdict: string; reasoning: string; generator: string} | null> =
@@ -779,6 +781,7 @@ const hfPromise = Promise.allSettled([
   hfInference(MODELS.image_vit,      null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
   hfInference(MODELS.image_deepfake, null, { binary: true, binaryData: inferenceBuffer, timeoutMs: 12000 }).catch(() => null),
 ])
+trackVendorCall('huggingface', 'image', 6) // MODULE 6 — 6 underlying model calls fired above
 
 // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
 let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
@@ -1120,6 +1123,7 @@ export async function analyzeAudio(
   const hfP2 = (hasBuffer && HF_TOKEN)
     ? hfInference(MODELS.audio_asvspoof, null, { binary: true, binaryData: audioBuffer!, retries: 0, timeoutMs: 12000 }).catch(() => null)
     : Promise.resolve(null)
+  if (hasBuffer && HF_TOKEN) trackVendorCall('huggingface', 'audio', 3) // MODULE 6 — 3 underlying model calls fired above
 
   let audioSignals = hasBuffer
     ? extractAudioSignalsExtended(audioBuffer!, fileSize)
@@ -1171,7 +1175,7 @@ export async function analyzeAudio(
     : (audioWorkerScore === null || workerUncertain || workerSigDisagree) // 'fallback' (default)
 
   const geminiResult = (geminiShouldRun && geminiAvailable() && hasBuffer)
-    ? await geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null)
+    ? (trackVendorCall('gemini', 'audio'), await geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null))
     : null
   const geminiScore = geminiResult?.aiScore ?? null
 
@@ -1292,6 +1296,7 @@ export async function analyzeVideoWithFrames(
 
   if (frames.length > 0 && process.env.NVIDIA_API_KEY) {
     try {
+      trackVendorCall('nvidia_nim', 'video')
       const nimResult = await analyzeVideoFrames(frames)
       const ensemble  = buildVideoSignals(nimResult)
       const verdict   = toVerdict(calibrateScore(ensemble.ai_score), "video")
@@ -1320,6 +1325,7 @@ export async function analyzeVideoWithFrames(
       const frameScores: number[] = []
       // Run finetuned model on up to 8 evenly-spaced frames in parallel
       const sampleFrames = frames.filter((_, i) => i % Math.max(1, Math.floor(frames.length / 8)) === 0).slice(0, 8)
+      trackVendorCall('huggingface', 'video', sampleFrames.length) // MODULE 6 — one call per sampled frame below
       await Promise.allSettled(sampleFrames.map(async (frame) => {
         const buf = Buffer.from(frame.base64, 'base64')
         const raw = await hfInference(MODELS.video_finetuned, null, {

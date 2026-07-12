@@ -10,7 +10,7 @@ import {
 export type TabId =
   | 'overview' | 'analytics' | 'marketing' | 'revenue'
   | 'users' | 'support' | 'apikeys' | 'pipeline'
-  | 'flags' | 'announcements' | 'health' | 'errors' | 'audit' | 'settings'
+  | 'flags' | 'announcements' | 'health' | 'costsummary' | 'errors' | 'audit' | 'settings'
 
 interface NavItem { id: TabId; label: string; icon: React.ElementType; group: string }
 
@@ -26,6 +26,7 @@ const NAV: NavItem[] = [
   { id: 'flags',         label: 'Feature Flags',   icon: Flag,          group: 'SYSTEM' },
   { id: 'announcements', label: 'Announcements',   icon: Megaphone,     group: 'SYSTEM' },
   { id: 'health',        label: 'Health Monitor',  icon: Activity,      group: 'SYSTEM' },
+  { id: 'costsummary',   label: 'Pipeline Cost',    icon: DollarSign,    group: 'SYSTEM' },
   { id: 'errors',        label: 'Error Logs',      icon: AlertTriangle, group: 'SYSTEM' },
   { id: 'audit',         label: 'Audit Log',       icon: FileText,      group: 'SYSTEM' },
   { id: 'settings',      label: 'Settings',        icon: Settings,      group: 'SYSTEM' },

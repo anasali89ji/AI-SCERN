@@ -24,6 +24,7 @@ const PipelineTab      = nextDynamic(() => import('./tabs/PipelineTab'),      { 
 const FlagsTab         = nextDynamic(() => import('./tabs/FlagsTab'),         { ssr: false, loading: TabLoader })
 const AnnouncementsTab = nextDynamic(() => import('./tabs/AnnouncementsTab'), { ssr: false, loading: TabLoader })
 const HealthTab        = nextDynamic(() => import('./tabs/HealthTab'),        { ssr: false, loading: TabLoader })
+const PipelineCostSummaryTab = nextDynamic(() => import('./tabs/PipelineCostSummaryTab'), { ssr: false, loading: TabLoader })
 const ErrorsTab        = nextDynamic(() => import('./tabs/ErrorsTab'),        { ssr: false, loading: TabLoader })
 const AuditTab         = nextDynamic(() => import('./tabs/AuditTab'),         { ssr: false, loading: TabLoader })
 const SettingsTab      = nextDynamic(() => import('./tabs/SettingsTab'),      { ssr: false, loading: TabLoader })
@@ -40,6 +41,7 @@ const TAB_MAP: Record<TabId, React.ComponentType> = {
   flags:         FlagsTab,
   announcements: AnnouncementsTab,
   health:        HealthTab,
+  costsummary:   PipelineCostSummaryTab,
   errors:        ErrorsTab,
   audit:         AuditTab,
   settings:      SettingsTab,
@@ -49,6 +51,7 @@ const TAB_LABELS: Record<TabId, string> = {
   overview: 'Overview', analytics: 'Analytics', marketing: 'Marketing', revenue: 'Revenue',
   users: 'Users', support: 'Support Tickets', apikeys: 'API Keys', pipeline: 'Pipeline',
   flags: 'Feature Flags', announcements: 'Announcements', health: 'Health Monitor',
+  costsummary: 'Pipeline Cost Summary',
   errors: 'Error Logs', audit: 'Audit Log', settings: 'Settings',
 }
 
