@@ -100,7 +100,7 @@ export default function HomePage() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-[#141414] text-[#E5E5E5] overflow-x-hidden">
+    <div className="min-h-screen bg-surface text-silver-700 overflow-x-hidden">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify([
@@ -217,13 +217,13 @@ export default function HomePage() {
         <section id="tools" className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-14">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Six Powerful Tools
               </p>
-              <h2 className="text-[32px] sm:text-[40px] font-semibold text-white tracking-[-0.01em] mb-4">
+              <h2 className="text-headline text-silver-900 mb-4">
                 Attestation Tools
               </h2>
-              <p className="text-[#A3A3A3] text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-silver-600 text-base max-w-xl mx-auto leading-relaxed">
                 Six attestation tools covering every content type. Each returns an integrity rating in under 3 seconds.
               </p>
             </div>
@@ -239,7 +239,7 @@ export default function HomePage() {
                 >
                   <Link
                     href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href}
-                    className={`group block bg-[#141414] border border-[#1E1E1E] rounded-xl p-6 card-lift glow-border-${tool.glow}
+                    className={`group block bg-surface border border-white/[0.06] rounded-xl p-6 card-lift glow-border-${tool.glow}
                                hover:border-[color:var(--accent)] focus-visible:border-[color:var(--accent)]
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40
                                transition-all duration-200`}
@@ -248,28 +248,28 @@ export default function HomePage() {
                     <div className="flex items-start justify-between mb-5">
                       <div
                         className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0
-                                    bg-[#1A1A1A] border transition-all duration-200 group-hover:scale-110"
+                                    bg-surface-elevated border transition-all duration-200 group-hover:scale-110"
                         style={{ borderColor: `${tool.accent}30` }}
                       >
-                        <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} />
+                        <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
                       </div>
                       <span
-                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1A1A1A] border"
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-surface-elevated border"
                         style={{ borderColor: `${tool.accent}30`, color: tool.accent }}
                       >
                         {tool.accuracy}
                       </span>
                     </div>
-                    <h3 className="text-base font-semibold text-white mb-2 transition-colors duration-200">
+                    <h3 className="text-base font-semibold text-silver-900 mb-2 transition-colors duration-200">
                       {tool.label}
                     </h3>
-                    <p className="text-sm text-[#A3A3A3] leading-relaxed">{tool.desc}</p>
+                    <p className="text-sm text-silver-600 leading-relaxed">{tool.desc}</p>
                     <div
-                      className="mt-5 flex items-center gap-1 text-xs font-medium text-[#6B6B6B]
+                      className="mt-5 flex items-center gap-1 text-xs font-medium text-silver-600
                                  group-hover:gap-2 transition-all duration-200"
                     >
-                      <span className="group-hover:text-white transition-colors duration-200">Try now</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} />
+                      <span className="group-hover:text-silver-900 transition-colors duration-200">Try now</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} aria-hidden="true" />
                     </div>
                   </Link>
                 </motion.div>
@@ -279,34 +279,34 @@ export default function HomePage() {
         </section>
 
         {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-[#1E1E1E] bg-[#0A0A0A]">
+        <section id="how" className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Simple Process
               </p>
-              <h2 className="text-[32px] sm:text-[40px] font-semibold text-white tracking-[-0.01em] mb-4">
+              <h2 className="text-headline text-silver-900 mb-4">
                 How It Works
               </h2>
-              <p className="text-[#A3A3A3] text-base">From submission to verdict in seconds.</p>
+              <p className="text-silver-600 text-base">From submission to verdict in seconds.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {HOW_IT_WORKS.map((step, i) => {
                 const Icon = HOW_IT_WORKS_ICONS[i]
                 return (
-                  <div key={i} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-6">
+                  <div key={i} className="bg-surface border border-white/[0.06] rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center
-                                      bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex-shrink-0">
-                        <Icon className="w-5 h-5 text-[#2BEE34]" strokeWidth={1.7} />
+                                      bg-accent/10 border border-accent/20 flex-shrink-0">
+                        <Icon className="w-5 h-5 text-accent" strokeWidth={1.7} aria-hidden="true" />
                       </div>
-                      <span className="text-xs font-bold text-[#2BEE34] uppercase tracking-[0.08em]">
+                      <span className="text-xs font-bold text-accent uppercase tracking-[0.08em]">
                         {step.n}
                       </span>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
-                    <p className="text-sm text-[#A3A3A3] leading-relaxed">{step.desc}</p>
+                    <h3 className="text-lg font-semibold text-silver-900 mb-2">{step.title}</h3>
+                    <p className="text-sm text-silver-600 leading-relaxed">{step.desc}</p>
                   </div>
                 )
               })}
@@ -315,28 +315,28 @@ export default function HomePage() {
         </section>
 
         {/* ══ REVIEWS ══ */}
-        <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-[#1E1E1E]">
+        <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 User Stories
               </p>
-              <h2 className="text-[28px] sm:text-[36px] font-semibold text-white tracking-[-0.01em] mb-3">
+              <h2 className="text-[28px] sm:text-[36px] font-semibold text-silver-900 tracking-[-0.01em] mb-3">
                 What Users Are Saying
               </h2>
-              <p className="text-sm text-[#A3A3A3] max-w-lg mx-auto leading-relaxed">
+              <p className="text-sm text-silver-600 max-w-lg mx-auto leading-relaxed">
                 Real feedback from educators, journalists, HR teams, and researchers.
               </p>
             </div>
             <ErrorBoundary><HomepageReviews /></ErrorBoundary>
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#2A2A2A]
-                           bg-[#1A1A1A] text-sm font-medium text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                           transition-all duration-150">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/[0.08]
+                           bg-surface-elevated text-sm font-medium text-silver-700 hover:border-accent hover:text-accent
+                           transition-all duration-200">
                 Share Your Feedback
               </a>
-              <Link href="/reviews" className="text-sm text-[#A3A3A3] hover:text-white transition-colors font-medium">
+              <Link href="/reviews" className="text-sm text-silver-600 hover:text-silver-900 transition-colors duration-200 font-medium">
                 See all reviews →
               </Link>
             </div>
@@ -344,13 +344,13 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES ══ */}
-        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-[#1E1E1E] bg-[#0A0A0A]">
+        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-14">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Trust &amp; Accuracy
               </p>
-              <h2 className="text-[32px] sm:text-[40px] font-semibold text-white tracking-[-0.01em]">
+              <h2 className="text-headline text-silver-900">
                 Built for accuracy. Benchmarked on public datasets.
               </h2>
             </div>
@@ -363,35 +363,35 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.45, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-[#141414] border border-[#1E1E1E] hover:border-[color:var(--accent)]'}
+                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-surface border border-white/[0.06] hover:border-[color:var(--accent)]'}
                               rounded-xl p-6 card-lift transition-all duration-200 relative overflow-hidden`}
                   style={{ '--accent': accent, ...(wide ? { boxShadow: `inset 0 0 0 1px ${accent}20` } : {}) } as React.CSSProperties}
                 >
                   {wide && (
                     <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
-                      style={{ background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)` }} />
+                      style={{ background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)` }} aria-hidden="true" />
                   )}
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5 relative"
                     style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
-                    <Icon className="w-5 h-5" style={{ color: accent }} strokeWidth={1.8} />
+                    <Icon className="w-5 h-5" style={{ color: accent }} strokeWidth={1.8} aria-hidden="true" />
                   </div>
                   <div className="mb-3 relative">
-                    <div className="text-3xl sm:text-4xl font-black text-white tabular-nums">
+                    <div className="text-3xl sm:text-4xl font-bold text-silver-900 tabular-nums">
                       {/^\d+\+?$/.test(stat)
                         ? <CountUp target={parseInt(stat, 10)} suffix={stat.endsWith('+') ? '+' : ''} />
                         : stat}
                     </div>
-                    <div className="text-xs text-[#6B6B6B] font-medium mt-0.5">{statLabel}</div>
+                    <div className="text-xs text-silver-600 font-medium mt-0.5">{statLabel}</div>
                   </div>
-                  <h3 className="font-semibold text-white text-base mb-2 relative">{title}</h3>
-                  <p className="text-sm text-[#A3A3A3] leading-relaxed relative">{desc}</p>
+                  <h3 className="font-semibold text-silver-900 text-base mb-2 relative">{title}</h3>
+                  <p className="text-sm text-silver-600 leading-relaxed relative">{desc}</p>
                 </motion.div>
               ))}
             </div>
 
             {/* Professionals */}
             <div className="mb-12">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-5 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-600 mb-5 text-center">
                 Built for professionals across
               </p>
               <WhoNeedsCarousel items={PROFESSIONALS} />
@@ -399,24 +399,24 @@ export default function HomePage() {
 
             {/* Methodology note */}
             <div className="max-w-2xl mx-auto">
-              <div className="p-6 sm:p-8 rounded-xl border border-[#1E1E1E] bg-[#141414]">
+              <div className="p-6 sm:p-8 rounded-xl border border-white/[0.06] bg-surface">
                 <div className="flex items-center gap-2 mb-4">
-                  <FlaskConical className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
-                  <span className="text-xs font-semibold text-[#2BEE34] uppercase tracking-wider">
+                  <FlaskConical className="w-4 h-4 text-accent flex-shrink-0" aria-hidden="true" />
+                  <span className="text-xs font-semibold text-accent uppercase tracking-wider">
                     Attestation methodology
                   </span>
                 </div>
-                <p className="text-[#A3A3A3] leading-relaxed text-sm">
+                <p className="text-silver-600 leading-relaxed text-sm">
                   Each examination runs content through multiple independent forensic signals. Results are fused into
                   a single integrity rating using weighted ensemble voting — and a clear Synthesized or Authentic verdict
                   is returned in under 3 seconds.
                 </p>
                 <div className="mt-4 flex items-center gap-4 flex-wrap">
-                  <Link href="/methodology" className="text-xs text-[#2BEE34] hover:text-[#4FFF58] transition-colors font-medium flex items-center gap-1">
-                    Read full methodology <ArrowRight className="w-3 h-3" />
+                  <Link href="/methodology" className="text-xs text-accent hover:text-moss-200 transition-colors duration-200 font-medium flex items-center gap-1">
+                    Read full methodology <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </Link>
-                  <Link href="/benchmarks" className="text-xs text-[#A3A3A3] hover:text-white transition-colors font-medium flex items-center gap-1">
-                    View benchmarks <ArrowRight className="w-3 h-3" />
+                  <Link href="/benchmarks" className="text-xs text-silver-600 hover:text-silver-900 transition-colors duration-200 font-medium flex items-center gap-1">
+                    View benchmarks <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </Link>
                 </div>
               </div>
@@ -425,12 +425,12 @@ export default function HomePage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-[#1E1E1E]">
+        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-[40px] sm:text-[48px] font-bold text-white tracking-[-0.02em] mb-5 leading-tight">
+            <h2 className="text-[40px] sm:text-[48px] font-bold text-silver-900 tracking-[-0.02em] mb-5 leading-tight">
               Start Attesting Content Free
             </h2>
-            <p className="text-[#A3A3A3] text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+            <p className="text-silver-600 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
               Core features free — no credit card required. No account needed for basic examinations.
             </p>
 
@@ -438,37 +438,39 @@ export default function HomePage() {
               <Link
                 href={user ? '/dashboard' : '/detect/text'}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                           bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-base font-semibold
-                           transition-colors duration-150"
+                           bg-accent hover:bg-accent-hover text-depth-bg text-base font-semibold
+                           transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
               >
                 {user ? 'Go to Dashboard' : 'Begin Attestation Free'}
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
               {user ? (
                 <Link
                   href="/chat"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                             bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                             text-[#E5E5E5] text-base font-semibold transition-all duration-150"
+                             bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
+                             text-silver-800 text-base font-semibold transition-all duration-200
+                             focus-visible:ring-2 focus-visible:ring-accent/50"
                 >
-                  <MessageSquare className="w-4 h-4" /> Try ARIA Assistant
+                  <MessageSquare className="w-4 h-4" aria-hidden="true" /> Try ARIA Assistant
                 </Link>
               ) : (
                 <Link
                   href="/signup"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
-                             bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#2BEE34] hover:text-[#2BEE34]
-                             text-[#E5E5E5] text-base font-semibold transition-all duration-150"
+                             bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
+                             text-silver-800 text-base font-semibold transition-all duration-200
+                             focus-visible:ring-2 focus-visible:ring-accent/50"
                 >
                   Create Free Account
                 </Link>
               )}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-[#6B6B6B]">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-silver-600">
               {['No credit card required', 'Free tier always available', 'No account for basic examinations'].map(t => (
                 <div key={t} className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#2BEE34]/70" />{t}
+                  <CheckCircle2 className="w-3.5 h-3.5 text-accent/70" aria-hidden="true" />{t}
                 </div>
               ))}
             </div>
