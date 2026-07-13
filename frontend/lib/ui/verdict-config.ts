@@ -1,29 +1,33 @@
 import { AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react'
 import type { Verdict } from '@/types'
 
+// `hex` is intentionally kept as a literal value — it feeds inline `style`/SVG
+// `stroke` props (e.g. ConfidenceRing's arc color, drop-shadow glow) where
+// Tailwind classes can't reach. That's the documented per-item data-driven
+// color exception (Module 10.2 audit) — everything else here uses tokens.
 export const verdictConfig = {
   AI: {
     icon:   AlertTriangle,
-    color:  'text-[#FF4444]',
-    border: 'border-[#FF4444]/30',
-    bg:     'bg-[#FF4444]/5',
-    hex:    '#FF4444',
+    color:  'text-error',
+    border: 'border-error/30',
+    bg:     'bg-error/5',
+    hex:    '#FF4444', // error token
     label:  'SYNTHESIZED',
   },
   HUMAN: {
     icon:   CheckCircle,
-    color:  'text-[#2BEE34]',
-    border: 'border-[#2BEE34]/30',
-    bg:     'bg-[#2BEE34]/5',
-    hex:    '#2BEE34',
+    color:  'text-accent',
+    border: 'border-accent/30',
+    bg:     'bg-accent/5',
+    hex:    '#2BEE34', // accent.DEFAULT token
     label:  'AUTHENTIC',
   },
   UNCERTAIN: {
     icon:   HelpCircle,
-    color:  'text-[#FFB800]',
-    border: 'border-[#FFB800]/30',
-    bg:     'bg-[#FFB800]/5',
-    hex:    '#FFB800',
+    color:  'text-warning',
+    border: 'border-warning/30',
+    bg:     'bg-warning/5',
+    hex:    '#FFB800', // warning token
     label:  'UNCERTAIN',
   },
 } as const

@@ -173,12 +173,12 @@ Analyzed: ${new Date().toLocaleString()}`
 
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
-            <ImageIcon className="w-6 h-6 text-[#2BEE34]" />
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+            <ImageIcon className="w-6 h-6 text-accent" />
           </div>
           Image Attestation
         </h1>
-        <p className="text-[#6B6B6B] ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
+        <p className="text-silver-600 ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -189,13 +189,13 @@ Analyzed: ${new Date().toLocaleString()}`
             // On desktop, keep the drag-and-drop zone
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               <div className="space-y-3">
-                <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-[#2BEE34]/20 bg-[#2BEE34]/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
-                  <div className="w-16 h-16 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-[#2BEE34]" />
+                <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-accent/20 bg-accent/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
+                  <div className="w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-accent" />
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-[#2BEE34] text-base">Tap to Take Photo or Choose File</p>
-                    <p className="text-xs text-[#6B6B6B] mt-1">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
+                    <p className="font-bold text-accent text-base">Tap to Take Photo or Choose File</p>
+                    <p className="text-xs text-silver-600 mt-1">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
                   </div>
                   <input
                     type="file"
@@ -208,23 +208,23 @@ Analyzed: ${new Date().toLocaleString()}`
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[200px] sm:min-h-[280px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-[#2BEE34] bg-[#2BEE34]/5 ' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50 hover:bg-[#141414]/30'}`}>
+                ${isDragActive ? 'border-accent bg-accent/5 ' : 'border-silver-300 hover:border-accent/50 hover:bg-surface/30'}`}>
               <input {...getInputProps()} />
-              <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#2BEE34]' : 'text-[#6B6B6B]'}`} />
+              <div className="w-20 h-20 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-accent' : 'text-silver-600'}`} />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-white mb-1">
                   {isDragActive ? 'Drop image here' : 'Drag & drop an image'}
                 </p>
-                <p className="text-sm text-[#6B6B6B]">or click to browse</p>
-                <p className="text-xs text-[#6B6B6B] mt-2">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
+                <p className="text-sm text-silver-600">or click to browse</p>
+                <p className="text-xs text-silver-600 mt-2">JPG · PNG · WEBP · GIF · BMP · Max 10MB</p>
               </div>
             </div>
             )
           ) : (
             <div className="card space-y-4">
-              <div className="relative rounded-xl overflow-hidden bg-[#141414] group">
+              <div className="relative rounded-xl overflow-hidden bg-surface group">
                 <img src={preview!} alt="Preview" className="w-full max-h-72 object-contain" />
                 <button onClick={() => setZoomed(true)}
                   className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
@@ -232,11 +232,11 @@ Analyzed: ${new Date().toLocaleString()}`
                 </button>
                 {uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="mt-3 w-full">
-                    <div className="flex justify-between text-xs text-[#6B6B6B] mb-1">
+                    <div className="flex justify-between text-xs text-silver-600 mb-1">
                       <span>Uploading…</span><span>{uploadProgress}%</span>
                     </div>
-                    <div className="h-1.5 bg-[#141414] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#2BEE34] rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
+                    <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                      <div className="h-full bg-accent rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   </div>
                 )}
@@ -245,15 +245,15 @@ Analyzed: ${new Date().toLocaleString()}`
               {/* File info */}
               <div className="flex items-center gap-3 px-1">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#A3A3A3] font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-[#6B6B6B]">
+                  <p className="text-sm text-silver-700 font-medium truncate">{file.name}</p>
+                  <p className="text-xs text-silver-600">
                     {formatFileSize(file.size)}
                     {imgDims && ` · ${imgDims.w} × ${imgDims.h}px`}
                     {imgDims && ` · ${(imgDims.w / (imgDims.h || 1)).toFixed(2)}:1 ratio`}
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Attest Another" className="text-[#6B6B6B] hover:text-[#FF4444] transition-colors p-2 rounded-lg hover:bg-[#FF4444]/10 shrink-0">
+              title="Attest Another" className="text-silver-600 hover:text-error transition-colors p-2 rounded-lg hover:bg-error/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -272,15 +272,15 @@ Analyzed: ${new Date().toLocaleString()}`
           )}
 
           {error && (
-            <div className="card border-[#FF4444]/30 bg-[#FF4444]/5 flex items-center gap-2 text-[#FF4444] text-sm py-3">
+            <div className="card border-error/30 bg-error/5 flex items-center gap-2 text-error text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
 
           {/* Info card */}
-          <div className="card py-3 px-4 border-[#1E1E1E]">
-            <div className="flex items-start gap-2 text-xs text-[#6B6B6B]">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#2BEE34]/60" />
+          <div className="card py-3 px-4 border-silver-300">
+            <div className="flex items-start gap-2 text-xs text-silver-600">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-accent/60" />
               <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce attestation accuracy.</span>
             </div>
           </div>
@@ -292,7 +292,7 @@ Analyzed: ${new Date().toLocaleString()}`
             <div className="space-y-4 w-full min-w-0">
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
-                  <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
+                  <div className="mb-3 text-xs font-medium text-silver-600">
                     Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
                     {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
                   </div>
@@ -312,15 +312,15 @@ Analyzed: ${new Date().toLocaleString()}`
                           : `${displayName}, this image is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-[#6B6B6B] text-xs sm:text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-silver-600 text-xs sm:text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
                 <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-[#6B6B6B] mb-2 gap-2">
+                  <div className="flex items-center justify-between text-xs text-silver-600 mb-2 gap-2">
                     <span className="shrink-0">Confidence Score</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
+                  <div className="h-3 bg-surface-elevated rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
                   </div>
                 </div>
@@ -328,21 +328,21 @@ Analyzed: ${new Date().toLocaleString()}`
 
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
+                  <span className="w-2 h-2 rounded-full bg-accent" />
                   Forensic Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[300px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
-                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} />
+                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? 'bg-error' : 'bg-accent'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-[#FF4444]/15 text-[#FF4444]' : 'bg-[#2BEE34]/15 text-[#2BEE34]'}`}>{s.weight}%</span>
+                          <span className="text-sm text-silver-700 font-medium truncate">{s.name}</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>{s.weight}%</span>
                         </div>
-                        <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
-                        <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
+                        <p className="text-xs text-silver-600 truncate">{s.description}</p>
+                        <div className="h-1 bg-surface-elevated rounded-full mt-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
                         </div>
                       </div>
                     </div>
@@ -351,11 +351,11 @@ Analyzed: ${new Date().toLocaleString()}`
               </div>
 
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-[#6B6B6B] font-mono truncate">{result.processing_time}ms</span>
+                <span className="text-xs text-silver-600 font-mono truncate">{result.processing_time}ms</span>
                 <div className="flex items-center gap-2">
                   {forensicScanId && (
                     <a href={`/forensic/${forensicScanId}`} target="_blank" rel="noreferrer"
-                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 text-[#2BEE34] hover:bg-[#1A8F1F]/20 transition-colors font-medium">
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/30 text-accent hover:bg-accent-hover/20 transition-colors font-medium">
                       <Microscope className="w-3.5 h-3.5" />
                       Deep Forensic Analysis
                     </a>
@@ -370,15 +370,15 @@ Analyzed: ${new Date().toLocaleString()}`
             <DetectionSequenceLoader loading={loading} uploadProgress={uploadProgress} />
           ) : (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mx-auto mb-4 ">
-                <ImageIcon className="w-10 h-10 text-[#2BEE34]" />
+              <div className="w-20 h-20 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4 ">
+                <ImageIcon className="w-10 h-10 text-accent" />
               </div>
               <h3 className="font-semibold text-white mb-2">Upload an Image</h3>
-              <p className="text-[#6B6B6B] text-sm max-w-xs">Drop any image to examine for GAN artifacts, metadata anomalies, and AI generation patterns</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
+              <p className="text-silver-600 text-sm max-w-xs">Drop any image to examine for GAN artifacts, metadata anomalies, and AI generation patterns</p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-silver-600 w-full">
                 {['GAN fingerprinting', 'Metadata analysis', 'Pixel forensics', 'Lighting consistency'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34]/60 shrink-0" />{f}
+                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface/50">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -390,13 +390,13 @@ Analyzed: ${new Date().toLocaleString()}`
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
       {graphContext && (
-        <div className="mb-4 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#2BEE34]/10 bg-[#2BEE34]/5">
-            <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
-            <span className="text-xs font-bold text-[#2BEE34] tracking-wide uppercase">Web Verification</span>
-            <span className="ml-auto text-[10px] text-[#6B6B6B]">Real-time Graph RAG</span>
+        <div className="mb-4 rounded-xl border border-accent/20 bg-accent/5 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-accent/10 bg-accent/5">
+            <span className="w-2 h-2 rounded-full bg-accent" />
+            <span className="text-xs font-bold text-accent tracking-wide uppercase">Web Verification</span>
+            <span className="ml-auto text-[10px] text-silver-600">Real-time Graph RAG</span>
           </div>
-          <pre className="px-4 py-3 text-[11px] text-[#A3A3A3] leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+          <pre className="px-4 py-3 text-[11px] text-silver-700 leading-relaxed whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
             {graphContext}
           </pre>
         </div>
@@ -408,7 +408,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-white transition-colors border border-[#1E1E1E] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
+              className="flex items-center gap-1.5 text-xs text-silver-600 hover:text-white transition-colors border border-silver-300 rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -416,12 +416,12 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
       {result && (
         <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#2BEE34]" />
+          <summary className="cursor-pointer text-sm font-semibold text-silver-700 flex items-center gap-2">
+            <Info className="w-4 h-4 text-accent" />
             Forensic Engines &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-silver-600">
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
@@ -430,10 +430,10 @@ Analyzed: ${new Date().toLocaleString()}`
                 { name: 'AI Image Detector Dataset', desc: 'haywoodsloan ViT training data', url: 'https://huggingface.co/datasets/haywoodsloan/ai-image-detector-dataset' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-accent mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
+                    <p className="text-silver-700 font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -447,10 +447,10 @@ Analyzed: ${new Date().toLocaleString()}`
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-error/30 bg-error/5' : result.verdict === 'HUMAN' ? 'border-accent/30 bg-accent/5' : 'border-warning/20 bg-warning/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
+            <p className="text-silver-600 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-silver-700">{result.summary}</p>}
           </div>
         </div>
       )}

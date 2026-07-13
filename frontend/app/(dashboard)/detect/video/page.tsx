@@ -97,7 +97,7 @@ function FrameStrip({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-[#6B6B6B] font-medium">Extracted Frames ({frames.length})</p>
+      <p className="text-xs text-silver-600 font-medium">Extracted Frames ({frames.length})</p>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {frames.map((f, i) => {
           const score = frameScores?.find(fs => fs.frame === f.index)
@@ -105,16 +105,16 @@ function FrameStrip({
           return (
             <div key={i} className="relative group">
               <div className={`relative rounded-lg overflow-hidden border-2 transition-all
-                ${isSuspicious ? 'border-[#FF4444]/50' : 'border-[#2BEE34]/30'}`}>
+                ${isSuspicious ? 'border-error/50' : 'border-accent/30'}`}>
                 <img src={f.preview} alt={`Frame ${i + 1}`} className="w-full h-10 object-cover" />
                 {score?.face_detected && (
-                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#2BEE34]" title="Face detected" />
+                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-accent" title="Face detected" />
                 )}
               </div>
               <div className="flex justify-between items-center mt-0.5 px-0.5">
-                <span className="text-[9px] text-[#6B6B6B]">{formatDur(f.timeSec)}</span>
+                <span className="text-[9px] text-silver-600">{formatDur(f.timeSec)}</span>
                 {score && (
-                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-[#FF4444]' : 'text-[#2BEE34]'}`}>
+                  <span className={`text-[9px] font-bold ${isSuspicious ? 'text-error' : 'text-accent'}`}>
                     {Math.round(score.ai_score * 100)}%
                   </span>
                 )}
@@ -123,15 +123,28 @@ function FrameStrip({
           )
         })}
       </div>
-      <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
+      {/* Module 7.3: timeline strip below frames, markers at suspicious-frame positions */}
+      <div className="relative h-1 bg-white/10 rounded-full">
+        {frames.map((f, i) => {
+          const score = frameScores?.find(fs => fs.frame === f.index)
+          if (!score || score.ai_score <= 0.55) return null
+          const maxTime = frames[frames.length - 1]?.timeSec || 1
+          const pct = (f.timeSec / maxTime) * 100
+          return (
+            <span key={i} className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-error"
+              style={{ left: `${pct}%` }} title={`Suspicious at ${formatDur(f.timeSec)}`} />
+          )
+        })}
+      </div>
+      <div className="flex items-center gap-4 text-xs text-silver-600">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#FF4444]/60" />Suspicious frame
+          <span className="w-2 h-2 rounded-full bg-error/60" />Suspicious frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#2BEE34]/60" />Clean frame
+          <span className="w-2 h-2 rounded-full bg-accent/60" />Clean frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />Face detected
+          <span className="w-2 h-2 rounded-full bg-accent" />Face detected
         </span>
       </div>
     </div>
@@ -320,12 +333,12 @@ function VideoDetectionPage() {
     <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
-            <Video className="w-6 h-6 text-[#A3A3A3]" />
+          <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center shrink-0">
+            <Video className="w-6 h-6 text-silver-700" />
           </div>
           Video Attestation
         </h1>
-        <p className="text-[#6B6B6B] ml-14 text-sm">
+        <p className="text-silver-600 ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
         </p>
       </div>
@@ -336,28 +349,28 @@ function VideoDetectionPage() {
           {!file ? (
             typeof window !== 'undefined' && 'ontouchstart' in window ? (
               // FIX B.4: Mobile tap-to-upload
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-[#2BEE34]/30 bg-[#1A1A1A] rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-[#A3A3A3]" />
+              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-accent/30 bg-surface-elevated rounded-xl py-10 cursor-pointer active:scale-95 transition-transform min-h-[180px] justify-center">
+                <div className="w-16 h-16 rounded-xl bg-surface-elevated flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-silver-700" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-[#A3A3A3] text-base">Tap to Choose Video File</p>
-                  <p className="text-xs text-[#6B6B6B] mt-1">MP4 · WEBM · MOV · AVI · Max 100MB</p>
+                  <p className="font-bold text-silver-700 text-base">Tap to Choose Video File</p>
+                  <p className="text-xs text-silver-600 mt-1">MP4 · WEBM · MOV · AVI · Max 100MB</p>
                 </div>
                 <input type="file" accept="video/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
               </label>
             ) : (
             <div {...getRootProps()}
               className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-[#2BEE34] bg-[#1A1A1A] scale-[1.02]' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50 hover:bg-[#141414]/30'}`}>
+                ${isDragActive ? 'border-accent bg-surface-elevated scale-[1.02]' : 'border-silver-300 hover:border-accent/50 hover:bg-surface/30'}`}>
               <input {...getInputProps()} />
-              <div className="w-20 h-20 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
+              <div className="w-20 h-20 rounded-xl bg-surface-elevated flex items-center justify-center">
+                <Upload className={`w-10 h-10 ${isDragActive ? 'text-silver-700' : 'text-silver-600'}`} />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-white mb-1">{isDragActive ? 'Drop video here' : 'Drag & drop a video'}</p>
-                <p className="text-sm text-[#6B6B6B]">or click to browse</p>
-                <p className="text-xs text-[#6B6B6B] mt-2">MP4 · WEBM · MOV · AVI · Max 100MB</p>
+                <p className="text-sm text-silver-600">or click to browse</p>
+                <p className="text-xs text-silver-600 mt-2">MP4 · WEBM · MOV · AVI · Max 100MB</p>
               </div>
             </div>
             )
@@ -367,25 +380,25 @@ function VideoDetectionPage() {
                 <video ref={videoRef} className="w-full max-h-64 object-contain" onEnded={() => setPlaying(false)} />
 
                 {loading ? (
-                  <div className="absolute inset-0 bg-[#0A0A0A]/90 flex flex-col items-center justify-center gap-3">
+                  <div className="absolute inset-0 bg-surface-deep/90 flex flex-col items-center justify-center gap-3">
                     <div className="relative w-16 h-16">
-                      <div className="absolute inset-0 rounded-full border-2 border-[#2BEE34]/20" />
+                      <div className="absolute inset-0 rounded-full border-2 border-accent/20" />
                       <div className="absolute inset-0 rounded-full border-2 border-t-secondary animate-spin" />
-                      <div className="absolute inset-2 bg-[#1A1A1A] rounded-full flex items-center justify-center">
-                        {phase === 'extracting' ? <Scan className="w-5 h-5 text-[#A3A3A3]" /> : <Eye className="w-5 h-5 text-[#A3A3A3]" />}
+                      <div className="absolute inset-2 bg-surface-elevated rounded-full flex items-center justify-center">
+                        {phase === 'extracting' ? <Scan className="w-5 h-5 text-silver-700" /> : <Eye className="w-5 h-5 text-silver-700" />}
                       </div>
                     </div>
-                    <p className="text-sm text-[#A3A3A3] font-semibold">{loadingLabel}</p>
+                    <p className="text-sm text-silver-700 font-semibold">{loadingLabel}</p>
                     {phase === 'extracting' && (
                       <div className="flex gap-1 mt-1">
                         {FRAME_POSITIONS.map((_, i) => (
                           <div key={i} className={`w-2 h-2 rounded-full transition-all duration-200
-                            ${i < framesDone ? 'bg-[#2A2A2A]' : 'bg-[#2A2A2A]'}`} />
+                            ${i < framesDone ? 'bg-silver-400' : 'bg-silver-400'}`} />
                         ))}
                       </div>
                     )}
                     {phase === 'analyzing' && (
-                      <p className="text-xs text-[#6B6B6B]">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
+                      <p className="text-xs text-silver-600">Analyzing {extractedFrames.length} frames for deepfake artifacts…</p>
                     )}
                   </div>
                 ) : (
@@ -401,9 +414,9 @@ function VideoDetectionPage() {
               {/* Seek bar */}
               <div className="px-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-full cursor-pointer overflow-hidden relative" onClick={seekTo}>
-                    <div className="h-full bg-[#2BEE34] rounded-full transition-all pointer-events-none"
+                  <span className="text-xs text-silver-600 w-10 shrink-0 tabular-nums">{formatDur(currentTime)}</span>
+                  <div className="flex-1 h-1.5 bg-surface-elevated rounded-full cursor-pointer overflow-hidden relative" onClick={seekTo}>
+                    <div className="h-full bg-accent rounded-full transition-all pointer-events-none"
                       style={{ width: `${progress * 100}%` }} />
                     <input
                       type="range"
@@ -420,17 +433,17 @@ function VideoDetectionPage() {
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                   </div>
-                  <span className="text-xs text-[#6B6B6B] w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
+                  <span className="text-xs text-silver-600 w-10 shrink-0 tabular-nums text-right">{formatDur(duration)}</span>
                 </div>
               </div>
 
               {/* File info */}
               <div className="flex items-center justify-between px-1">
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{file.name}</p>
-                  <p className="text-[10px] sm:text-xs text-[#6B6B6B]">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
+                  <p className="text-xs sm:text-sm text-silver-700 font-medium truncate">{file.name}</p>
+                  <p className="text-[10px] sm:text-xs text-silver-600">{formatFileSize(file.size)}{duration > 0 ? ` · ${formatDur(duration)}` : ''}</p>
                 </div>
-                <button onClick={reset} className="text-[#6B6B6B] hover:text-[#FF4444] p-2 rounded-lg hover:bg-[#FF4444]/10 transition-colors shrink-0">
+                <button onClick={reset} className="text-silver-600 hover:text-error p-2 rounded-lg hover:bg-error/10 transition-colors shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -454,16 +467,16 @@ function VideoDetectionPage() {
           )}
 
           {error && (
-            <div className="card border-[#FF4444]/30 bg-[#FF4444]/5 flex items-center gap-2 text-[#FF4444] text-sm py-3">
+            <div className="card border-error/30 bg-error/5 flex items-center gap-2 text-error text-sm py-3">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
 
-          <div className="card py-3 px-4 border-[#1E1E1E]">
-            <div className="flex items-start gap-2 text-xs text-[#6B6B6B]">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#A3A3A3]/60" />
+          <div className="card py-3 px-4 border-silver-300">
+            <div className="flex items-start gap-2 text-xs text-silver-600">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-silver-700/60" />
               <span>
-                <span className="text-[#A3A3A3] font-medium">How it works:</span> Your browser extracts {FRAME_POSITIONS.length} frames directly from the video,
+                <span className="text-silver-700 font-medium">How it works:</span> Your browser extracts {FRAME_POSITIONS.length} frames directly from the video,
                 then Aiscern's vision engine analyzes each frame for deepfake artifacts. No video data is stored.
               </span>
             </div>
@@ -477,7 +490,7 @@ function VideoDetectionPage() {
               {/* Verdict card */}
               <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
                 {displayName && (
-                  <div className="mb-3 text-xs font-medium text-[#6B6B6B]">
+                  <div className="mb-3 text-xs font-medium text-silver-600">
                     Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
                     {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
                   </div>
@@ -497,17 +510,17 @@ function VideoDetectionPage() {
                           : `${displayName}, this video is Uncertain`
                         : cfg.label}
                     </h3>
-                    <p className="text-[#6B6B6B] text-sm leading-relaxed">{result.summary}</p>
+                    <p className="text-silver-600 text-sm leading-relaxed">{result.summary}</p>
                   </div>
                 </div>
 
                 {/* Confidence bar */}
                 <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-[#6B6B6B] mb-2 gap-2">
+                  <div className="flex items-center justify-between text-xs text-silver-600 mb-2 gap-2">
                     <span className="shrink-0">Confidence</span>
                     <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
                   </div>
-                  <div className="h-2.5 sm:h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
+                  <div className="h-2.5 sm:h-3 bg-surface-elevated rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
                   </div>
                 </div>
@@ -515,16 +528,16 @@ function VideoDetectionPage() {
                 {/* Frame timeline */}
                 {result.frame_scores && result.frame_scores.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-xs text-[#6B6B6B] mb-2 font-medium">Per-Frame AI Probability Timeline</p>
+                    <p className="text-xs text-silver-600 mb-2 font-medium">Per-Frame AI Probability Timeline</p>
                     <div className="flex items-end gap-1 h-12">
                       {result.frame_scores.map((fs, i) => (
                         <div className={`flex-1 rounded-sm transition-all ${
-                            fs.ai_score > 0.62 ? 'bg-[#FF4444]' :
-                            fs.ai_score > 0.45 ? 'bg-[#FFB800]' : 'bg-[#2BEE34]'
+                            fs.ai_score > 0.62 ? 'bg-error' :
+                            fs.ai_score > 0.45 ? 'bg-warning' : 'bg-accent'
                           }`} style={{ height: `${Math.round(fs.ai_score * 100)}%` }} />
                       ))}
                     </div>
-                    <div className="flex justify-between text-[10px] text-[#6B6B6B] mt-1">
+                    <div className="flex justify-between text-[10px] text-silver-600 mt-1">
                       <span>0s</span>
                       <span>{duration > 0 ? formatDur(duration) : '—'}</span>
                     </div>
@@ -535,24 +548,24 @@ function VideoDetectionPage() {
               {/* Detection signals */}
               <div className="card">
                 <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#2A2A2A]" />
+                  <span className="w-2 h-2 rounded-full bg-silver-400" />
                   Forensic Signals ({result.signals.length})
                 </h3>
                 <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
                   {result.signals.map((s, i) => (
-                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-[#141414]/50 border border-[#1E1E1E] min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} />
+                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-error' : 'bg-accent'}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1 gap-2">
-                          <span className="text-xs sm:text-sm text-[#A3A3A3] font-medium truncate">{s.name}</span>
+                          <span className="text-xs sm:text-sm text-silver-700 font-medium truncate">{s.name}</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
-                            ${s.flagged ? 'bg-[#FF4444]/15 text-[#FF4444]' : 'bg-[#2BEE34]/15 text-[#2BEE34]'}`}>
+                            ${s.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>
                             {s.weight}%
                           </span>
                         </div>
-                        <p className="text-xs text-[#6B6B6B] truncate">{s.description}</p>
-                        <div className="h-1 bg-[#1A1A1A] rounded-full mt-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${s.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
+                        <p className="text-xs text-silver-600 truncate">{s.description}</p>
+                        <div className="h-1 bg-surface-elevated rounded-full mt-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${s.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
                         </div>
                       </div>
                     </div>
@@ -562,7 +575,7 @@ function VideoDetectionPage() {
 
               {/* Footer */}
               <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-[#6B6B6B] font-mono truncate">
+                <span className="text-xs text-silver-600 font-mono truncate">
                   {result.processing_time}ms
                 </span>
                 <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
@@ -572,14 +585,14 @@ function VideoDetectionPage() {
             </div>
           ) : !loading && (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-[#1A1A1A] flex items-center justify-center mx-auto mb-4 ">
-                <Video className="w-10 h-10 text-[#A3A3A3]" />
+              <div className="w-20 h-20 rounded-xl bg-surface-elevated flex items-center justify-center mx-auto mb-4 ">
+                <Video className="w-10 h-10 text-silver-700" />
               </div>
               <h3 className="font-semibold text-white mb-2">Upload a Video</h3>
-              <p className="text-[#6B6B6B] text-sm max-w-xs">
+              <p className="text-silver-600 text-sm max-w-xs">
                 Your browser extracts frames, Aiscern analyzes each one for deepfake artifacts
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-[#6B6B6B] w-full">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-silver-600 w-full">
                 {[
                   'Browser frame extraction',
                   'Aiscern vision engine',
@@ -588,8 +601,8 @@ function VideoDetectionPage() {
                   'Per-frame confidence scores',
                   'Real deepfake detection',
                 ].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#141414]/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2A2A2A]/60 shrink-0" />{f}
+                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface/50">
+                    <span className="w-1.5 h-1.5 rounded-full bg-silver-400/60 shrink-0" />{f}
                   </div>
                 ))}
               </div>
@@ -606,7 +619,7 @@ function VideoDetectionPage() {
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
           {scanId && (
             <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-white transition-colors border border-[#1E1E1E] rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
+              className="flex items-center gap-1.5 text-xs text-silver-600 hover:text-white transition-colors border border-silver-300 rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
               <Share2 className="w-3 h-3" /> Share result
             </button>
           )}
@@ -614,22 +627,22 @@ function VideoDetectionPage() {
       )}
       {result && (
         <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-[#A3A3A3] flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#2BEE34]" />
+          <summary className="cursor-pointer text-sm font-semibold text-silver-700 flex items-center gap-2">
+            <Info className="w-4 h-4 text-accent" />
             Forensic Engines &amp; Datasets
           </summary>
-          <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-            <p><span className="text-[#A3A3A3] font-medium">Engine</span> Aiscern Attestation Engine</p>
+          <div className="mt-3 space-y-2 text-xs text-silver-600">
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
                 { name: 'DFDC Dataset', desc: 'Meta DeepFake Detection Challenge', url: 'https://ai.meta.com/datasets/dfdc/' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 flex-shrink-0" />
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
+                  <Database className="w-3.5 h-3.5 text-accent mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#A3A3A3] font-medium group-hover:text-white transition-colors">{d.name}</p>
+                    <p className="text-silver-700 font-medium group-hover:text-white transition-colors">{d.name}</p>
                     <p>{d.desc}</p>
                   </div>
                 </a>
@@ -643,10 +656,10 @@ function VideoDetectionPage() {
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
         <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-[#FF4444]/30 bg-[#FF4444]/5' : result.verdict === 'HUMAN' ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#FFB800]/20 bg-[#FFB800]/5'} p-4 rounded-xl`}>
+          <div className={`card border ${result.verdict === 'AI' ? 'border-error/30 bg-error/5' : result.verdict === 'HUMAN' ? 'border-accent/30 bg-accent/5' : 'border-warning/20 bg-warning/5'} p-4 rounded-xl`}>
             <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-[#6B6B6B] text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-[#A3A3A3]">{result.summary}</p>}
+            <p className="text-silver-600 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
+            {result.summary && <p className="text-sm mt-2 text-silver-700">{result.summary}</p>}
           </div>
         </div>
       )}
