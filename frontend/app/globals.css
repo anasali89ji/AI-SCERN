@@ -457,4 +457,19 @@
   @keyframes stagger-in {
     to { opacity: 1; transform: translateY(0); }
   }
+
+  /* ── Custom thin scrollbar (Module 6.1: sidebar overflow) ─────────────────── */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.silver.400') transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.silver.400');
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: theme('colors.silver.500');
+  }
 }
