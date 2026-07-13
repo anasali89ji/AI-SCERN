@@ -10,7 +10,7 @@
   },
   "functions": {
     "app/api/detect/text/route.ts":     { "maxDuration": 45 },
-    "app/api/detect/image/route.ts":    { "maxDuration": 45 },
+    "app/api/detect/image/route.ts":    { "maxDuration": 60 },
     "app/api/detect/image-v3/route.ts": { "maxDuration": 60 },
     "app/api/detect/audio/route.ts":    { "maxDuration": 45 },
     "app/api/detect/video/route.ts":    { "maxDuration": 55 },
