@@ -23,109 +23,136 @@ function LoginContent() {
   }, [isLoaded, isSignedIn, router, redirectUrl])
 
   if (redirecting) return (
-    <div className="min-h-screen bg-[#141414] flex items-center justify-center">
+    <div className="min-h-screen bg-surface-deep flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
-        <p className="text-sm text-[#6B6B6B]">Redirecting to dashboard…</p>
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        <p className="text-sm text-silver-600">Redirecting to dashboard…</p>
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col lg:flex-row">
 
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mb-8 group" aria-label="Aiscern home">
-        <span className="text-xl font-black text-white tracking-tight group-hover:text-[#2BEE34] transition-colors">
-          Aiscern
-        </span>
-      </Link>
-
-      {/* Card */}
-      <div className="w-full max-w-[420px]">
-        {/* Custom header */}
-        <div className="bg-[#0A0A0A] border border-[#2A2A2A] border-b-0 rounded-t-xl px-7 pt-7 pb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase
-                             text-[#2BEE34] bg-[#2BEE34]/10 border border-[#2BEE34]/20 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2BEE34] animate-pulse" />
-              Secure sign in
+      {/* Left panel — brand (Module 5.1: split screen) */}
+      <div className="lg:w-1/2 bg-surface-deep flex flex-col justify-center px-6 py-10 lg:px-16 lg:py-0 border-b lg:border-b-0 lg:border-r border-white/5">
+        <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10 group w-fit" aria-label="Aiscern home">
+          <span className="text-xl font-semibold text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-300">
+            Aiscern
+          </span>
+        </Link>
+        <h1 className="hidden lg:block text-headline text-silver-700 max-w-md">
+          The standard for content authenticity.
+        </h1>
+        <div className="hidden lg:flex items-center gap-3 mt-10 flex-wrap">
+          {TRUST_PILLS.map(({ icon: Icon, label }) => (
+            <span key={label}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-silver-600
+                         bg-surface border border-white/10 px-3 py-1.5 rounded-full">
+              <Icon className="w-3.5 h-3.5 text-accent" />
+              {label}
             </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="lg:w-1/2 bg-surface-deep flex flex-col items-center justify-center px-4 py-10 lg:py-0">
+        <div className="w-full max-w-[420px]">
+          {/* Custom header */}
+          <div className="bg-surface-deep border border-white/10 border-b-0 rounded-t-xl px-7 pt-7 pb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase
+                               text-accent bg-accent/10 border border-accent/20 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                Secure sign in
+              </span>
+            </div>
+            <h2 className="text-silver-900 font-semibold text-2xl tracking-tight">Welcome back</h2>
+            <p className="text-silver-600 text-sm mt-1.5">Sign in to your Aiscern account</p>
           </div>
-          <h1 className="text-white font-bold text-2xl tracking-tight">Welcome back</h1>
-          <p className="text-[#6B6B6B] text-sm mt-1.5">Sign in to your Aiscern account</p>
+
+          {/* Clerk widget — theming is done through the appearance API since
+              the form fields themselves are rendered by Clerk, not by us.
+              (Deviation from spec 5.1: per-field stagger animation, a 3-step
+              flow, and a password-strength meter are not reachable through
+              this API without replacing Clerk with a custom auth form — see
+              Module 5 handoff notes.) */}
+          <SignIn
+            routing="path"
+            path="/login"
+            forceRedirectUrl={redirectUrl}
+            fallbackRedirectUrl="/dashboard"
+            signUpUrl="/signup"
+            appearance={{
+              layout: {
+                socialButtonsPlacement: 'bottom',
+                socialButtonsVariant: 'blockButton',
+                showOptionalFields: false,
+              },
+              // Clerk's `variables` API requires literal color values — it cannot
+              // consume Tailwind classes or CSS custom properties. Every value below
+              // is copied verbatim from tailwind.config.ts (accent / silver / error /
+              // warning / surface tokens), not invented — keeps the rendered widget
+              // in lockstep with the design system. See Module 0.1 token-consistency rule.
+              variables: {
+                colorPrimary:                  '#2BEE34',  // accent.DEFAULT
+                colorBackground:               '#0A0A0A',  // surface.deep
+                colorInputBackground:          '#141414',  // surface.DEFAULT
+                colorInputText:                '#E5E5E5',  // silver.800
+                colorText:                     '#E5E5E5',  // silver.800
+                colorTextSecondary:            '#A3A3A3',  // silver.700
+                colorTextOnPrimaryBackground:  '#0A0A0A',  // surface.deep
+                colorNeutral:                  '#2A2A2A',  // silver.400
+                colorDanger:                   '#FF4444',  // error
+                colorSuccess:                  '#2BEE34',  // accent.DEFAULT
+                colorWarning:                  '#FFB800',  // warning
+                borderRadius:                  '8px',
+                fontFamily:                    'inherit',
+                fontSize:                      '14px',
+                spacingUnit:                   '16px',
+                fontWeight: { normal: 400, medium: 500, bold: 700 },
+              },
+              elements: {
+                rootBox:                   'w-full',
+                card:                      'bg-surface-deep border border-white/10 border-t-0 shadow-lift rounded-b-xl overflow-hidden p-0',
+                header:                    '!hidden',
+                main:                      'px-7 pb-2 pt-6',
+                formFieldLabel:            'text-[12px] font-semibold tracking-[0.07em] uppercase text-silver-700',
+                formFieldInput:            'w-full bg-surface border border-white/10 text-silver-800 placeholder:text-silver-600 rounded-lg text-sm px-3.5 py-2.5 transition-all duration-300 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20',
+                formFieldAction:           'text-accent hover:text-accent-hover text-xs font-medium transition-colors duration-300',
+                formFieldErrorText:        'text-rose-400 text-xs mt-1.5',
+                formButtonPrimary:         'w-full bg-accent hover:bg-accent-hover text-surface-deep font-semibold text-sm rounded-lg py-2.5 border-0 transition-colors duration-300 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent/50',
+                dividerLine:               'bg-white/10',
+                dividerText:               'text-silver-600 text-[11px] uppercase tracking-widest',
+                socialButtonsBlockButton:  'w-full bg-surface border border-white/10 text-silver-800 rounded-lg hover:border-white/20 hover:text-silver-900 transition-all duration-300 py-2.5 focus-visible:ring-2 focus-visible:ring-accent/50',
+                socialButtonsBlockButtonText: 'text-sm font-semibold',
+                alert:                     'border rounded-lg px-4 py-3 my-4 bg-rose-500/5 border-rose-500/20',
+                alertText:                 'text-rose-400 text-xs leading-relaxed',
+                footer:                    'px-7 pt-3 pb-6',
+                footerActionText:          'text-silver-600 text-sm',
+                footerActionLink:          'text-accent hover:text-accent-hover font-semibold text-sm transition-colors duration-300 ml-1',
+                footerPages:               '!hidden',
+                spinner:                   'text-accent',
+              },
+            }}
+          />
         </div>
 
-        {/* Clerk widget */}
-        <SignIn
-          routing="path"
-          path="/login"
-          forceRedirectUrl={redirectUrl}
-          fallbackRedirectUrl="/dashboard"
-          signUpUrl="/signup"
-          appearance={{
-            layout: {
-              socialButtonsPlacement: 'bottom',
-              socialButtonsVariant: 'blockButton',
-              showOptionalFields: false,
-            },
-            variables: {
-              colorPrimary:                  '#2BEE34',
-              colorBackground:               '#0A0A0A',
-              colorInputBackground:          '#141414',
-              colorInputText:                '#E5E5E5',
-              colorText:                     '#E5E5E5',
-              colorTextSecondary:            '#A3A3A3',
-              colorTextOnPrimaryBackground:  '#0A0A0A',
-              colorNeutral:                  '#2A2A2A',
-              colorDanger:                   '#FF4444',
-              colorSuccess:                  '#2BEE34',
-              colorWarning:                  '#FFB800',
-              borderRadius:                  '8px',
-              fontFamily:                    'inherit',
-              fontSize:                      '14px',
-              spacingUnit:                   '16px',
-              fontWeight: { normal: 400, medium: 500, bold: 700 },
-            },
-            elements: {
-              rootBox:                   'w-full',
-              card:                      'bg-[#0A0A0A] border border-[#2A2A2A] border-t-0 shadow-[0_32px_80px_rgba(0,0,0,0.8)] rounded-b-xl overflow-hidden p-0',
-              header:                    '!hidden',
-              main:                      'px-7 pb-2 pt-6',
-              formFieldLabel:            'text-[12px] font-semibold tracking-[0.07em] uppercase text-[#A3A3A3]',
-              formFieldInput:            'w-full bg-[#141414] border border-[#2A2A2A] text-[#E5E5E5] placeholder:text-[#6B6B6B] rounded-lg text-sm px-3.5 py-2.5 transition-all focus:outline-none focus:border-[#2BEE34] focus:shadow-[0_0_0_3px_rgba(43,238,52,0.15)]',
-              formFieldAction:           'text-[#2BEE34] hover:text-[#4FFF58] text-xs font-medium transition-colors',
-              formFieldErrorText:        'text-[#FF4444] text-xs mt-1.5',
-              formButtonPrimary:         'w-full bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm rounded-lg py-2.5 border-0 transition-colors disabled:opacity-50',
-              dividerLine:               'bg-[#2A2A2A]',
-              dividerText:               'text-[#6B6B6B] text-[11px] uppercase tracking-widest',
-              socialButtonsBlockButton:  'w-full bg-[#141414] border border-[#2A2A2A] text-[#E5E5E5] rounded-lg hover:border-[#3A3A3A] hover:text-white transition-all py-2.5',
-              socialButtonsBlockButtonText: 'text-sm font-semibold',
-              alert:                     'border rounded-lg px-4 py-3 my-4 bg-[#FF4444]/5 border-[#FF4444]/20',
-              alertText:                 'text-[#FF4444] text-xs leading-relaxed',
-              footer:                    'px-7 pt-3 pb-6',
-              footerActionText:          'text-[#6B6B6B] text-sm',
-              footerActionLink:          'text-[#2BEE34] hover:text-[#4FFF58] font-semibold text-sm transition-colors ml-1',
-              footerPages:               '!hidden',
-              spinner:                   'text-[#2BEE34]',
-            },
-          }}
-        />
-      </div>
+        {/* Trust pills (mobile only — desktop shows them in the left panel) */}
+        <div className="flex lg:hidden items-center gap-3 mt-6 flex-wrap justify-center">
+          {TRUST_PILLS.map(({ icon: Icon, label }) => (
+            <span key={label}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-silver-600
+                         bg-surface border border-white/10 px-3 py-1.5 rounded-full">
+              <Icon className="w-3.5 h-3.5 text-accent" />
+              {label}
+            </span>
+          ))}
+        </div>
 
-      {/* Trust pills */}
-      <div className="flex items-center gap-3 mt-6 flex-wrap justify-center">
-        {TRUST_PILLS.map(({ icon: Icon, label }) => (
-          <span key={label}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6B6B6B]
-                       bg-[#1A1A1A] border border-[#2A2A2A] px-3 py-1.5 rounded-full">
-            <Icon className="w-3.5 h-3.5 text-[#2BEE34]" />
-            {label}
-          </span>
-        ))}
+        <p className="mt-5 text-xs text-silver-500">© 2026 Aiscern · Secured by Clerk</p>
       </div>
-
-      <p className="mt-5 text-xs text-[#3A3A3A]">© 2026 Aiscern · Secured by Clerk</p>
     </div>
   )
 }
@@ -133,8 +160,8 @@ function LoginContent() {
 export default function LoginContentPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#141414] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
+      <div className="min-h-screen bg-surface-deep flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     }>
       <LoginContent />
