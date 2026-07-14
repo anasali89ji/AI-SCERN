@@ -112,6 +112,15 @@ function ImageDetectionPage() {
 
       const data = await res.json()
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
+
+      if (data.status === 'processing' && data.scan_id) {
+        // Async path (Cloudflare worker hand-off) — poll until the scan completes.
+        await pollForResult(data.scan_id)
+        return
+      }
+
+      // Synchronous path (worker not configured, or fallback) — result is
+      // already in the response.
       setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
       setForensicScanId(data.forensic_scan_id ?? null)
@@ -121,6 +130,35 @@ function ImageDetectionPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? toUserError(undefined, e.message) : toUserError())
     } finally { setLoading(false) }
+  }
+
+  // Polls GET /api/scan/[id] until the async (Cloudflare worker) detection
+  // completes or fails. Loading UI (DetectionSequenceLoader) stays visible
+  // for the whole duration since `loading` isn't cleared until this resolves.
+  const pollForResult = async (id: string) => {
+    const POLL_INTERVAL_MS = 1500
+    const MAX_ATTEMPTS     = 40   // ~60s ceiling — generous vs. the worker's real budget
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      await new Promise(r => setTimeout(r, POLL_INTERVAL_MS))
+      try {
+        const res  = await fetch(`/api/scan/${id}`)
+        const data = await res.json()
+        if (!data.success) continue   // transient — keep polling
+
+        if (data.status === 'complete') {
+          setResult(data.result); setShowMobileResult(true)
+          setScanId(id)
+          window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
+          return
+        }
+        if (data.status === 'failed') {
+          setError(toUserError(undefined, data.error))
+          return
+        }
+        // status === 'processing' — keep polling
+      } catch { /* transient network hiccup — keep polling */ }
+    }
+    setError('Analysis is taking longer than expected. Check History in a moment — it may still complete.')
   }
 
   const exportReport = () => {

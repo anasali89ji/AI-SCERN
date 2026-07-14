@@ -8,6 +8,10 @@ import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
 import { logModelPredictions }       from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG } from '@/lib/rag/detection-rag'
+import { preprocessImage } from '@/lib/inference/preprocess-image'
+import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
+import { extractImageSignals, aggregateImageSignals, applyCalibration } from '@/lib/inference/signals/image-signals'
+import { getCalibrationStats } from '@/lib/inference/calibration-client'
 
 export const dynamic = 'force-dynamic'
 // Vercel Hobby: 60s max. Pro/Enterprise: up to 300s.
@@ -109,6 +113,84 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    const preprocessed = await preprocessImage(buffer, mimeType)
+
+    // ── Async path via Cloudflare Worker (fixes the Vercel Hobby 10s timeout) ──
+    // Falls back to the original synchronous path below if IMAGE_WORKER_URL
+    // isn't configured (e.g. local dev before the worker is deployed) — this
+    // is a deliberate resilience choice, not a leftover: the route must keep
+    // working even if the worker is down or not yet set up.
+    const workerUrl    = process.env.IMAGE_WORKER_URL
+    const workerSecret = process.env.IMAGE_WORKER_SECRET
+
+    if (workerUrl && workerSecret) {
+      try {
+        // Brain + pixel signals stay on Vercel — they're fast, local, and Brain
+        // needs `sharp`, which the Worker (Cloudflare's V8 isolate runtime) can't
+        // run. Only the slow network fan-out (CV worker, Gemini, 6 HF models)
+        // moves to the Worker, where fetch()-wait time doesn't count against
+        // the execution limit.
+        const brainResult = await analyzeImageWithBrain(buffer, buffer.length, mimeType)
+        let imgSignals     = extractImageSignals(buffer, buffer.length)
+        try {
+          const cal = await getCalibrationStats()
+          if (cal?.ai_sample_count >= 10) imgSignals = applyCalibration(imgSignals, cal)
+        } catch { /* non-fatal — uncalibrated signals still usable */ }
+        const imgSignalScore = aggregateImageSignals(imgSignals)
+
+        let scanId: string | null = null
+        if (userId && !userId.startsWith('anon_')) {
+          const { data: sr } = await getSupabaseAdmin().from('scans').insert({
+            user_id:    userId,
+            media_type: 'image',
+            file_name:  fileName,
+            file_size:  fileSize,
+            r2_key:     r2Key,
+            status:     'processing',
+            metadata:   { format: mimeType, size_kb: Math.round(fileSize / 1024), r2: !!r2Key },
+          }).select('id').single()
+          scanId = sr?.id ?? null
+        }
+
+        if (!scanId) {
+          // Anonymous users have no scans row to poll against — the async
+          // hand-off has nothing to report back to. Fall through to the
+          // synchronous path below instead of returning a scan_id the client
+          // can never resolve.
+          throw new Error('ANON_NO_SCAN_ROW')
+        }
+
+        const workerRes = await fetch(`${workerUrl}/analyze`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': workerSecret },
+          body: JSON.stringify({
+            scanId, userId,
+            imageBase64: preprocessed.buffer.toString('base64'),
+            mimeType:    preprocessed.mimeType,
+            brainResult: {
+              score: brainResult.score, verdict: brainResult.verdict,
+              generatorHints: brainResult.generatorHints, findings: brainResult.findings,
+              signals: brainResult.signals.map(s => ({ name: s.name, evidence: s.evidence, score: s.score, weight: s.weight })),
+            },
+            imgSignals: imgSignals.map(s => ({ name: s.name, description: s.description, score: s.score, weight: s.weight })),
+            imgSignalScore,
+          }),
+          signal: AbortSignal.timeout(8000),   // just the ACK — worker responds in <1s via waitUntil
+        })
+
+        if (!workerRes.ok) throw new Error(`Worker returned ${workerRes.status}`)
+
+        return NextResponse.json({ success: true, scan_id: scanId, status: 'processing' })
+      } catch (workerErr) {
+        // Worker unreachable/misconfigured — fall back to the synchronous path.
+        // Not silent: logged so a persistently-failing worker is diagnosable
+        // rather than invisibly degrading every request back to the slow path.
+        console.error('[detect/image] Worker hand-off failed, falling back to sync path:', workerErr instanceof Error ? workerErr.message : workerErr)
+      }
+    }
+
+    // ── Synchronous fallback path (original behavior — used when the worker
+    //    isn't configured, or as a resilience fallback if it errors above) ───
     const result         = await analyzeImage(buffer, mimeType, fileName)
     const processingTime = Date.now() - start
 
