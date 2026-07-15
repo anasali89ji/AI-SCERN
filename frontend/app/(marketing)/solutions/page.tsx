@@ -163,18 +163,19 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group card card-hover flex flex-col gap-4 p-6 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300">
+                    className="group card card-hover flex flex-col gap-4 p-6 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10">
                     <div className="relative w-full aspect-[5/3] rounded-xl overflow-hidden border border-border/40">
                       <Image
                         src={sol.thumb}
                         alt={`${sol.title} solution preview`}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
-                    </div>
-                    <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-5 h-5 ${c.icon}`} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      <div className={`absolute bottom-3 left-3 w-11 h-11 rounded-xl ${c.bg} border ${c.border} backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-md`}>
+                        <Icon className={`w-5 h-5 ${c.icon}`} />
+                      </div>
                     </div>
                     <div className="flex-1">
                       <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>

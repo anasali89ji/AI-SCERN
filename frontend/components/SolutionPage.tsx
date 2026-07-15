@@ -181,60 +181,53 @@ export function SolutionPage(props: SolutionPageProps) {
         />
 
         {/* Hero */}
-        <section className="relative py-20 md:py-28 overflow-hidden">
+        <section className="relative py-24 md:py-36 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" aria-hidden>
-            <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at top, ${c.heroGlow} 0%, transparent 60%)` }} />
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px]"
-              style={{ background: c.glow }} />
+            {heroImage ? (
+              <>
+                <Image
+                  src={heroImage}
+                  alt={heroImageAlt || ''}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="100vw"
+                />
+                {/* Readability overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
+                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-background/20" />
+                <div className="absolute inset-0 mix-blend-overlay opacity-40"
+                  style={{ background: `radial-gradient(ellipse at 20% 20%, ${c.glow}, transparent 65%)` }} />
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at top, ${c.heroGlow} 0%, transparent 60%)` }} />
+                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px]"
+                  style={{ background: c.glow }} />
+              </>
+            )}
           </div>
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative">
-            <div className="flex flex-col lg:flex-row items-center gap-12">
-              <div className="flex-1 text-center lg:text-left">
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 ${c.badge}`}>
-                  <Zap className="w-3.5 h-3.5" />
-                  {industry} Solution
-                </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-4 leading-tight">
-                  {tagline}
-                </h1>
-                <p className="text-lg text-text-secondary mb-8 leading-relaxed max-w-xl">
-                  {description}
-                </p>
-                <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                  <Link href="/signup" className="btn-primary">
-                    {ctaLabel} <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/detect/text" className="btn-secondary">
-                    Try Free Demo
-                  </Link>
-                </div>
-                <p className="mt-4 text-xs text-text-muted">No credit card required · Free tier always available</p>
+            <div className="max-w-2xl text-center lg:text-left mx-auto lg:mx-0">
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 backdrop-blur-sm ${c.badge}`}>
+                <Zap className="w-3.5 h-3.5" />
+                {industry} Solution
               </div>
-              {heroImage ? (
-                <div className="flex-shrink-0 w-full lg:w-[45%]">
-                  <div className="solution-hero-image relative w-full aspect-[16/10]">
-                    <Image
-                      src={heroImage}
-                      alt={heroImageAlt || `${industry} professional using Aiscern`}
-                      fill
-                      priority
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 45vw"
-                    />
-                  </div>
-                </div>
-              ) : (
-                /* Abstract geometric illustration (fallback when no photo is supplied) */
-                <div className="flex-shrink-0 lg:w-64 xl:w-80">
-                  <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
-                    style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
-                    {heroIcon}
-                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
-                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
-                    </div>
-                  </div>
-                </div>
-              )}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-4 leading-tight drop-shadow-sm">
+                {tagline}
+              </h1>
+              <p className="text-lg text-text-secondary mb-8 leading-relaxed">
+                {description}
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                <Link href="/signup" className="btn-primary">
+                  {ctaLabel} <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link href="/detect/text" className="btn-secondary backdrop-blur-sm">
+                  Try Free Demo
+                </Link>
+              </div>
+              <p className="mt-4 text-xs text-text-muted">No credit card required · Free tier always available</p>
             </div>
           </div>
         </section>
@@ -243,11 +236,11 @@ export function SolutionPage(props: SolutionPageProps) {
         {trustBar && trustBar.length > 0 && (
           <section className="solution-trust-bar py-8">
             <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-              <div className={`grid grid-cols-2 gap-6 ${
+              <div className={`grid grid-cols-2 gap-6 divide-x divide-border/20 ${
                 trustBar.length >= 4 ? 'sm:grid-cols-4' : trustBar.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
               }`}>
                 {trustBar.map((stat, i) => (
-                  <div key={i} className="text-center">
+                  <div key={i} className={`text-center ${i > 0 ? 'pl-6' : ''}`}>
                     <div className={`text-2xl md:text-3xl font-black ${c.icon}`}>{stat.value}</div>
                     <div className="mt-1 text-xs text-text-muted uppercase tracking-wider">{stat.label}</div>
                   </div>
@@ -281,9 +274,10 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               {painPoints.map((p, i) => (
-                <div key={i} className="card border border-border/60 p-5 rounded-xl">
-                  <h3 className="font-semibold text-text-primary mb-2 text-sm">{p.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{p.desc}</p>
+                <div key={i} className="group relative card border border-border/60 p-6 rounded-xl overflow-hidden hover:border-border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10">
+                  <div className={`absolute top-0 left-0 w-1 h-full ${c.iconBg.split(' ')[0]} opacity-60`} aria-hidden />
+                  <h3 className="font-semibold text-text-primary mb-2 text-sm pl-2">{p.title}</h3>
+                  <p className="text-sm text-text-muted leading-relaxed pl-2">{p.desc}</p>
                 </div>
               ))}
             </div>
@@ -299,7 +293,7 @@ export function SolutionPage(props: SolutionPageProps) {
                 {workflow.map((step, i) => (
                   <div key={i} className="relative text-center px-2">
                     {i < workflow.length - 1 && <div className="solution-workflow-connector" />}
-                    <div className={`relative z-10 w-12 h-12 rounded-full ${c.iconBg} border flex items-center justify-center mx-auto mb-4 font-black ${c.icon}`}>
+                    <div className={`relative z-10 w-14 h-14 rounded-full ${c.iconBg} border-2 flex items-center justify-center mx-auto mb-4 font-black text-lg ${c.icon} shadow-md`}>
                       {i + 1}
                     </div>
                     <h3 className="font-semibold text-text-primary text-sm mb-2">{step.title}</h3>
@@ -324,8 +318,8 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {features.map((f, i) => {
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-border/60 hover:border-primary/20 transition-colors">
-                    <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4`}>
+                  <div key={i} className="group card p-6 rounded-xl border border-border/60 hover:border-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10">
+                    <div className={`w-11 h-11 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}>
                       {f.icon}
                     </div>
                     <h3 className="font-semibold text-text-primary text-sm mb-2">{f.title}</h3>
@@ -349,15 +343,16 @@ export function SolutionPage(props: SolutionPageProps) {
             <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">Real-World Use Cases</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {useCases.map((uc, i) => (
-                <div key={i} className="relative p-6 rounded-2xl border border-border/60 bg-surface/20">
-                  <div className={`text-3xl font-black mb-3 ${c.icon} opacity-30`}>0{i+1}</div>
+                <div key={i} className="group relative p-6 rounded-2xl border border-border/60 bg-surface/20 hover:border-border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10 flex flex-col">
+                  <div className={`text-4xl font-black mb-3 ${c.icon} opacity-20 group-hover:opacity-30 transition-opacity`}>0{i+1}</div>
                   <h3 className="font-semibold text-text-primary mb-3">{uc.title}</h3>
                   <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Challenge</p>
                   <p className="text-sm text-text-muted leading-relaxed mb-3">{uc.challenge}</p>
                   <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Action</p>
                   <p className="text-sm text-text-muted leading-relaxed mb-4">{uc.action}</p>
-                  <div className={`rounded-lg border p-3 text-sm font-semibold ${c.badge}`}>
-                    {uc.outcome}
+                  <div className={`mt-auto flex items-start gap-2 rounded-lg border p-3 text-sm font-semibold ${c.badge}`}>
+                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{uc.outcome}</span>
                   </div>
                 </div>
               ))}
@@ -383,7 +378,7 @@ export function SolutionPage(props: SolutionPageProps) {
                   </thead>
                   <tbody>
                     {comparisonRows.map((row, i) => (
-                      <tr key={i}>
+                      <tr key={i} className={`transition-colors hover:bg-surface/40 ${i % 2 === 1 ? 'bg-surface/10' : ''}`}>
                         <td className="text-text-secondary">{row.feature}</td>
                         <td className="aiscern-cell">
                           {typeof row.aiscern === 'boolean'
@@ -413,18 +408,23 @@ export function SolutionPage(props: SolutionPageProps) {
                   <span className="solution-placeholder-badge">Placeholder — replace with a real customer</span>
                 </div>
               )}
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <blockquote className="solution-case-quote flex-1 text-center md:text-left">
-                  &ldquo;{caseStudy.quote}&rdquo;
-                </blockquote>
-                <div className="flex-shrink-0 flex flex-col items-center md:items-start gap-3">
-                  <cite className="not-italic text-sm text-center md:text-left">
-                    <span className="text-text-primary font-semibold block">{caseStudy.author}</span>
-                    <span className="text-text-muted">{caseStudy.role}, {caseStudy.company}</span>
-                  </cite>
-                  <div className={`rounded-xl border p-3 text-center ${c.badge}`}>
-                    <div className="text-2xl font-black">{caseStudy.metric}</div>
-                    <div className="text-xs uppercase tracking-wider">{caseStudy.metricLabel}</div>
+              <div className="card border border-border/60 rounded-2xl p-8 md:p-10">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="flex-1 text-center md:text-left">
+                    <span className={`text-5xl font-black leading-none ${c.icon} opacity-30 block mb-2`} aria-hidden>&ldquo;</span>
+                    <blockquote className="solution-case-quote -mt-6">
+                      {caseStudy.quote}&rdquo;
+                    </blockquote>
+                  </div>
+                  <div className="flex-shrink-0 flex flex-col items-center md:items-start gap-3 md:border-l md:border-border/40 md:pl-8">
+                    <cite className="not-italic text-sm text-center md:text-left">
+                      <span className="text-text-primary font-semibold block">{caseStudy.author}</span>
+                      <span className="text-text-muted">{caseStudy.role}, {caseStudy.company}</span>
+                    </cite>
+                    <div className={`rounded-xl border p-4 text-center min-w-[140px] ${c.badge}`}>
+                      <div className="text-2xl font-black">{caseStudy.metric}</div>
+                      <div className="text-xs uppercase tracking-wider">{caseStudy.metricLabel}</div>
+                    </div>
                   </div>
                 </div>
               </div>
