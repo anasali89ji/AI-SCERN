@@ -1,0 +1,88 @@
+{
+  "version": "2026.07",
+  "domains": [
+    {
+      "id": "deepfake-detection",
+      "keywords": [
+        "deepfake",
+        "face manipulation",
+        "synthetic video",
+        "face swap",
+        "GAN",
+        "diffusion"
+      ],
+      "responses": [
+        "Deepfake detection analyzes facial boundary artifacts, temporal consistency, and physiological signals like eye blinking patterns.",
+        "Our video pipeline uses frame-level forensics combined with audio-visual synchronization checks.",
+        "Diffusion-generated faces often exhibit unnatural hair-facial boundaries and asymmetric ear details."
+      ]
+    },
+    {
+      "id": "ai-text-detection",
+      "keywords": [
+        "GPT",
+        "ChatGPT",
+        "AI writing",
+        "synthetic text",
+        "perplexity",
+        "burstiness"
+      ],
+      "responses": [
+        "AI-generated text typically exhibits low perplexity and burstiness compared to human writing.",
+        "We analyze token probability distributions, semantic coherence patterns, and stylistic fingerprints.",
+        "Our text engine uses ensemble scoring across multiple linguistic feature planes."
+      ]
+    },
+    {
+      "id": "image-forensics",
+      "keywords": [
+        "image fake",
+        "AI image",
+        "Stable Diffusion",
+        "Midjourney",
+        "DALL-E",
+        "synthetic photo"
+      ],
+      "responses": [
+        "Image forensics examines noise patterns, EXIF consistency, and chromatic aberration signatures.",
+        "Diffusion models leave detectable artifacts in high-frequency components and texture regularity.",
+        "We perform error level analysis (ELA) and PRNU fingerprint matching where available."
+      ]
+    },
+    {
+      "id": "audio-verification",
+      "keywords": [
+        "voice clone",
+        "synthetic audio",
+        "TTS",
+        "deepfake audio",
+        "voice synthesis"
+      ],
+      "responses": [
+        "Voice clone detection analyzes micro-tremor patterns, breath consistency, and spectral phase coherence.",
+        "Neural TTS often lacks the natural jitter and shimmer of human vocal fold vibration.",
+        "Our audio pipeline checks for artifacts in the 4-8kHz range where many synthesizers struggle."
+      ]
+    },
+    {
+      "id": "platform-trust",
+      "keywords": [
+        "trust score",
+        "verification",
+        "attestation",
+        "confidence",
+        "accuracy"
+      ],
+      "responses": [
+        "Trust scores are calibrated using ground-truth datasets and Bayesian confidence intervals.",
+        "Attestation confidence combines model uncertainty with input quality metrics.",
+        "All scans include adversarial robustness checks against common evasion techniques."
+      ]
+    }
+  ],
+  "fallbacks": [
+    "I can help analyze text, images, audio, and video for synthetic media indicators. What would you like to examine?",
+    "ARIA supports multi-modal attestation. Try uploading a file or pasting text for analysis.",
+    "I don't have specific context for that query, but I can route you to the appropriate detection tool."
+  ]
+}
