@@ -1,14 +1,18 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
+import { isOrganizationEmail, ORG_TYPES, ORG_TYPE_LABELS, type OrgType } from '@/lib/auth/organizationEmail'
 import {
   FileText, Image, Mic, Video, Globe, ChevronRight, ChevronLeft,
   X, Sparkles, User, Zap, Check, AlertTriangle, Loader2,
+  Building2, UserRound, Briefcase, GraduationCap, Users,
 } from 'lucide-react'
 
-const STEPS = ['welcome', 'modalities', 'username', 'ready'] as const
-type Step = typeof STEPS[number]
+type AccountType = 'individual' | 'organization'
+
+const BASE_STEPS = ['welcome', 'accountType', 'modalities', 'username', 'ready'] as const
+type Step = typeof BASE_STEPS[number] | 'orgDetails'
 
 const MODALITY_OPTIONS = [
   { id: 'text',  icon: FileText, label: 'Text',  sub: 'Detect AI-written articles & essays' },
@@ -18,10 +22,30 @@ const MODALITY_OPTIONS = [
   { id: 'url',   icon: Globe,    label: 'Web',   sub: 'Analyze entire websites for AI content' },
 ]
 
+const ORG_TYPE_ICONS: Record<OrgType, typeof Building2> = {
+  corporate: Briefcase,
+  hr:        Users,
+  education: GraduationCap,
+}
+
+const ORG_TYPE_SUB: Record<OrgType, string> = {
+  corporate: 'Business, agency, or company team',
+  hr:        'Recruiting or hiring team screening candidates',
+  education: 'School, university, or academic institution',
+}
+
 export function OnboardingWizard() {
   const { user }                 = useAuth()
   const [show, setShow]          = useState(false)
   const [step, setStep]          = useState<Step>('welcome')
+
+  // Account type state
+  const [accountType, setAccountType] = useState<AccountType | null>(null)
+  const [orgType, setOrgType]         = useState<OrgType | null>(null)
+  const [orgName, setOrgName]         = useState('')
+  const [jobTitle, setJobTitle]       = useState('')
+  const [orgEmailBlocked, setOrgEmailBlocked] = useState(false)
+
   const [selected, setSelected]  = useState<string[]>([])
   const [username, setUsername]  = useState('')
   const [uStatus, setUStatus]    = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
@@ -64,9 +88,30 @@ export function OnboardingWizard() {
     }, 400)
   }
 
-  const stepIdx = STEPS.indexOf(step)
-  const next = () => { if (stepIdx < STEPS.length - 1) setStep(STEPS[stepIdx + 1]) }
-  const back = () => { if (stepIdx > 0) setStep(STEPS[stepIdx - 1]) }
+  // The actual step sequence depends on whether an organization was chosen —
+  // computed fresh each render rather than mutated, so back/forward never
+  // desyncs from the current selection.
+  const steps: Step[] = useMemo(() => {
+    if (accountType === 'organization') {
+      return ['welcome', 'accountType', 'orgDetails', 'modalities', 'username', 'ready']
+    }
+    return ['welcome', 'accountType', 'modalities', 'username', 'ready']
+  }, [accountType])
+
+  const stepIdx = steps.indexOf(step)
+  const next = () => { if (stepIdx < steps.length - 1) setStep(steps[stepIdx + 1]) }
+  const back = () => { if (stepIdx > 0) setStep(steps[stepIdx - 1]) }
+
+  const selectAccountType = (type: AccountType) => {
+    setAccountType(type)
+    if (type === 'organization') {
+      setOrgEmailBlocked(!isOrganizationEmail(user?.email))
+    } else {
+      setOrgEmailBlocked(false)
+    }
+  }
+
+  const orgDetailsValid = orgType !== null && orgName.trim().length >= 2 && !orgEmailBlocked
 
   const persist = useCallback(async (update: Record<string, unknown>) => {
     setSaving(true); setSaveError(null)
@@ -74,13 +119,14 @@ export function OnboardingWizard() {
       const res = await fetch('/api/profiles/update', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(update),
       })
-      if (!res.ok) throw new Error('Request failed')
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || 'Request failed')
       setShow(false)
-    } catch {
+    } catch (err) {
       // Keep the wizard open with a visible retry instead of silently closing —
       // closing here would leave onboarding_completed unset and re-show the
       // wizard on every future page load with no way to explain why.
-      setSaveError("Couldn't save your setup. Check your connection and try again.")
+      setSaveError(err instanceof Error ? err.message : "Couldn't save your setup. Check your connection and try again.")
     } finally {
       setSaving(false)
     }
@@ -89,6 +135,12 @@ export function OnboardingWizard() {
   const finish = () => {
     const update: Record<string, unknown> = { onboarding_completed: true, preferred_modalities: selected }
     if (username && uStatus === 'available') update.username = username
+    if (accountType) update.account_type = accountType
+    if (accountType === 'organization') {
+      update.organization_name = orgName.trim()
+      update.organization_type = orgType
+      update.job_title = jobTitle.trim() || null
+    }
     persist(update)
   }
 
@@ -129,12 +181,12 @@ export function OnboardingWizard() {
 
           {/* Progress */}
           <div className="flex items-center justify-center gap-2 mb-1 mt-1">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${i <= stepIdx ? 'bg-primary w-8' : 'bg-border w-4'}`} />
             ))}
           </div>
           <p className="text-center text-[11px] text-text-disabled mb-6" aria-live="polite">
-            Step {stepIdx + 1} of {STEPS.length}
+            Step {stepIdx + 1} of {steps.length}
           </p>
 
           {/* STEP: welcome */}
@@ -158,6 +210,150 @@ export function OnboardingWizard() {
               <button onClick={next} className="w-full mt-4 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 transition-colors">
                 Get Started <ChevronRight className="w-4 h-4" aria-hidden="true" />
               </button>
+            </div>
+          )}
+
+          {/* STEP: accountType */}
+          {step === 'accountType' && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <h2 id="onboarding-title" className="text-xl font-black text-text-primary">How will you use Aiscern?</h2>
+                <p className="text-text-disabled text-xs mt-1">This helps us tailor your dashboard — you can change it later in settings</p>
+              </div>
+              <div className="space-y-2.5" role="group" aria-label="Account type">
+                <button
+                  type="button"
+                  aria-pressed={accountType === 'individual'}
+                  onClick={() => selectAccountType('individual')}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${accountType === 'individual' ? 'border-primary/50 bg-primary/10' : 'border-border bg-surface-active/20 hover:border-primary/30'}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accountType === 'individual' ? 'bg-primary/25' : 'bg-surface-active/60'}`}>
+                    <UserRound className={`w-5 h-5 ${accountType === 'individual' ? 'text-primary' : 'text-text-disabled'}`} aria-hidden="true" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold ${accountType === 'individual' ? 'text-text-primary' : 'text-text-muted'}`}>Individual</p>
+                    <p className="text-[11px] text-text-disabled">Personal use — writing, research, or content you create yourself</p>
+                  </div>
+                  {accountType === 'individual' && <Check className="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />}
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={accountType === 'organization'}
+                  onClick={() => selectAccountType('organization')}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${accountType === 'organization' ? 'border-primary/50 bg-primary/10' : 'border-border bg-surface-active/20 hover:border-primary/30'}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accountType === 'organization' ? 'bg-primary/25' : 'bg-surface-active/60'}`}>
+                    <Building2 className={`w-5 h-5 ${accountType === 'organization' ? 'text-primary' : 'text-text-disabled'}`} aria-hidden="true" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold ${accountType === 'organization' ? 'text-text-primary' : 'text-text-muted'}`}>Organization</p>
+                    <p className="text-[11px] text-text-disabled">Corporate team, HR &amp; recruiting, or an educational institution</p>
+                  </div>
+                  {accountType === 'organization' && <Check className="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />}
+                </button>
+              </div>
+
+              {accountType === 'organization' && orgEmailBlocked && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber/10 border border-amber/20 text-left">
+                  <AlertTriangle className="w-4 h-4 text-amber shrink-0 mt-0.5" aria-hidden="true" />
+                  <p className="text-xs text-amber leading-relaxed">
+                    Organization accounts need a work or institution email. You signed up with{' '}
+                    <span className="font-semibold">{user?.email}</span>, which looks like a personal address.
+                    You can continue with an Individual account instead, or sign up again using your organization email.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button onClick={back} aria-label="Go back to previous step"
+                  className="p-3 rounded-2xl border border-border text-text-muted hover:text-text-primary hover:border-primary/30 transition-colors">
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                </button>
+                <button
+                  onClick={next}
+                  disabled={!accountType || (accountType === 'organization' && orgEmailBlocked)}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                >
+                  Continue <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP: orgDetails (only when accountType === 'organization') */}
+          {step === 'orgDetails' && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 bg-surface-active/40 border border-border">
+                  <Building2 className="w-5 h-5 text-primary" aria-hidden="true" />
+                </div>
+                <h2 id="onboarding-title" className="text-xl font-black text-text-primary">Tell us about your organization</h2>
+                <p className="text-text-disabled text-xs mt-1">Verified against your sign-up email: {user?.email}</p>
+              </div>
+
+              <div className="space-y-2" role="group" aria-label="Organization type">
+                {ORG_TYPES.map(t => {
+                  const Icon = ORG_TYPE_ICONS[t]
+                  const active = orgType === t
+                  return (
+                    <button key={t}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setOrgType(t)}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-primary/50 bg-primary/10' : 'border-border bg-surface-active/20 hover:border-primary/30'}`}
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-primary/25' : 'bg-surface-active/60'}`}>
+                        <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-text-disabled'}`} aria-hidden="true" />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${active ? 'text-text-primary' : 'text-text-muted'}`}>{ORG_TYPE_LABELS[t]}</p>
+                        <p className="text-[11px] text-text-disabled">{ORG_TYPE_SUB[t]}</p>
+                      </div>
+                      {active && <Check className="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div>
+                <label htmlFor="onboarding-org-name" className="text-xs font-semibold text-text-muted mb-1.5 block">
+                  Organization name
+                </label>
+                <input
+                  id="onboarding-org-name"
+                  value={orgName}
+                  onChange={e => setOrgName(e.target.value)}
+                  placeholder="e.g. Northbridge College, Acme Inc."
+                  maxLength={120}
+                  className="w-full bg-background border border-border rounded-xl px-3.5 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="onboarding-job-title" className="text-xs font-semibold text-text-muted mb-1.5 block">
+                  Your role <span className="text-text-disabled font-normal">(optional)</span>
+                </label>
+                <input
+                  id="onboarding-job-title"
+                  value={jobTitle}
+                  onChange={e => setJobTitle(e.target.value)}
+                  placeholder="e.g. Recruiting Manager, Professor, Content Lead"
+                  maxLength={100}
+                  className="w-full bg-background border border-border rounded-xl px-3.5 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={back} aria-label="Go back to previous step"
+                  className="p-3 rounded-2xl border border-border text-text-muted hover:text-text-primary hover:border-primary/30 transition-colors">
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                </button>
+                <button onClick={next} disabled={!orgDetailsValid}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5">
+                  Continue <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -274,7 +470,9 @@ export function OnboardingWizard() {
               </motion.div>
               <h2 id="onboarding-title" className="text-2xl font-black text-text-primary">You're all set!</h2>
               <p className="text-text-muted text-sm leading-relaxed">
-                Your account is ready. Start with a free scan — no upload required for text detection.
+                {accountType === 'organization' && orgName
+                  ? `Your ${ORG_TYPE_LABELS[orgType as OrgType]?.toLowerCase()} account for ${orgName} is ready.`
+                  : 'Your account is ready.'} Start with a free scan — no upload required for text detection.
               </p>
               <div className="text-left space-y-2">
                 {[
