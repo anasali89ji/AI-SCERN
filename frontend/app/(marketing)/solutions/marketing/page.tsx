@@ -16,12 +16,32 @@ export default function MarketingPage() {
   return (
     <SolutionPage
       industry="Marketing & Brand"
-      tagline="Verify Your Content Is Genuinely Human"
-      description="Brand authenticity depends on genuine human creativity. Aiscern helps marketing teams verify that UGC campaigns, influencer deliverables, and agency content reflect real human effort — not AI-generated filler."
+      tagline="Audit Content for Authenticity, Not Just Quality"
+      description="FTC endorsement guidance requires disclosure of AI-generated content in sponsored posts. Aiscern screens UGC, influencer deliverables, and agency content so your brand isn't caught publishing unverified AI material."
       heroIcon={<Megaphone className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="amber"
       ctaLabel="Start Free Marketing Account"
-      problemTitle="The Brand Authenticity Problem"
+      heroImage="/solutions/marketing/hero.webp"
+      heroImageAlt="A marketing director standing in a warehouse-style war room reviewing a large digital wall of campaign content"
+      trustBar={[
+        { label: 'Ensemble AUC', value: '≥94%' },
+        { label: 'Batch Size', value: '1,000 posts' },
+        { label: 'Modalities', value: 'Text + image' },
+      ]}
+      workflow={[
+        { title: 'Import Campaign Content', desc: 'Pull in UGC submissions, influencer drafts, or agency deliverables.' },
+        { title: 'Run Multi-Modal Scan', desc: 'Text and image ensembles score each item for AI-generation confidence.' },
+        { title: 'Review Authenticity Dashboard', desc: 'Sort flagged content by risk score before publishing or paying out.' },
+      ]}
+      comparisonCompetitorName="Copyleaks"
+      comparisonRows={[
+        { feature: 'Modalities covered', aiscern: 'Text + image', competitor: 'Text-focused' },
+        { feature: 'Bulk campaign scanning', aiscern: '1,000 posts/batch', competitor: 'Limited batch size' },
+        { feature: 'Confidence uncertainty zone', aiscern: true, competitor: false },
+        { feature: 'Influencer deliverable workflow', aiscern: true, competitor: false },
+        { feature: 'Free tier', aiscern: true, competitor: false },
+      ]}
+      problemTitle="Unverified AI Content Is a Brand Risk"
       painPoints={[
         { title: 'Influencers delivering AI-generated captions and reviews', desc: 'Paid partners and micro-influencers increasingly use AI to produce sponsored content, violating authenticity guidelines and FTC disclosure requirements.' },
         { title: 'UGC campaigns contaminated with synthetic submissions', desc: 'Customer stories, reviews, and photo contest entries can be AI-generated, undermining the genuine social proof that UGC campaigns depend on.' },
@@ -37,10 +57,34 @@ export default function MarketingPage() {
         { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
       ]}
       useCases={[
-        { title: 'UGC Campaign Verification', desc: 'A consumer brand running a "real customer stories" campaign scans all 2,000 written submissions through Aiscern before featuring them, ensuring only genuine customer voices appear in campaign materials.' },
-        { title: 'Influencer Deliverable Auditing', desc: 'A brand manager runs all sponsored post drafts from 50 micro-influencers through Aiscern before approving. 12 posts score as high-probability AI-generated, triggering revision requests and contract clause enforcement.' },
-        { title: 'Agency Content Quality Control', desc: 'A marketing director audits monthly content deliverables from a retained content agency using Aiscern, ensuring that blog posts and email copy reflect genuine creative work rather than AI-generated boilerplate.' },
+        {
+          title: 'UGC Campaign Verification',
+          challenge: 'A consumer brand\'s "real customer stories" campaign depends on genuine customer voices.',
+          action: 'All 2,000 written submissions are scanned before any are featured.',
+          outcome: 'Only verified-human submissions make it into campaign materials',
+        },
+        {
+          title: 'Influencer Deliverable Auditing',
+          challenge: 'A brand manager needs sponsored posts from 50 micro-influencers to be genuinely theirs.',
+          action: 'Every draft is scanned before approval and payout.',
+          outcome: '12 posts flagged high-probability AI-generated, triggering revision requests',
+        },
+        {
+          title: 'Agency Content Quality Control',
+          challenge: 'A marketing director audits monthly deliverables from a retained content agency.',
+          action: 'Blog posts and email copy are scanned before sign-off.',
+          outcome: 'AI-generated boilerplate identified and sent back for rework',
+        },
       ]}
+      caseStudy={{
+        quote: '[QUOTE TEXT HERE]',
+        author: '[CUSTOMER NAME]',
+        role: '[ROLE]',
+        company: '[COMPANY]',
+        metric: '[METRIC]',
+        metricLabel: 'Placeholder metric',
+        isPlaceholder: true,
+      }}
       faqs={[
         { q: 'Can Aiscern detect AI content that has been edited by a human?', a: 'Human editing reduces AI confidence scores, particularly extensive editing. Lightly edited AI content typically scores 45–75%. Heavily edited content may fall below our 62% AI threshold. We report confidence ranges, not binary verdicts, to reflect this nuance.' },
         { q: 'How does detection work for short-form content like social captions?', a: 'Short texts (under 150 words) have wider confidence intervals because there is less linguistic signal to analyze. We recommend supplementing with longer form analysis when assessing short-form content.' },

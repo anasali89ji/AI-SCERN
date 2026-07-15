@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import {
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
-  Heart, Megaphone, Microscope, Pen, ArrowRight, Zap,
+  Heart, Megaphone, Microscope, Pen, ArrowRight, Zap, Check,
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 const SOLUTIONS = [
   {
     href: '/solutions/education',
+    thumb: '/solutions/education/hero.webp',
     icon: GraduationCap,
     color: 'primary',
     title: 'Education',
@@ -31,6 +33,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/hr',
+    thumb: '/solutions/hr/hero.webp',
     icon: Users,
     color: 'cyan',
     title: 'Human Resources',
@@ -40,6 +43,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/media',
+    thumb: '/solutions/media/hero.webp',
     icon: Newspaper,
     color: 'amber',
     title: 'Media & Journalism',
@@ -49,6 +53,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/legal',
+    thumb: '/solutions/legal/hero.webp',
     icon: Scale,
     color: 'emerald',
     title: 'Legal & Compliance',
@@ -58,6 +63,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/security',
+    thumb: '/solutions/security/hero.webp',
     icon: ShieldCheck,
     color: 'rose',
     title: 'Cybersecurity',
@@ -67,6 +73,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/healthcare',
+    thumb: '/solutions/healthcare/hero.webp',
     icon: Heart,
     color: 'rose',
     title: 'Healthcare',
@@ -76,6 +83,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/marketing',
+    thumb: '/solutions/marketing/hero.webp',
     icon: Megaphone,
     color: 'amber',
     title: 'Marketing & Brand',
@@ -85,6 +93,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/research',
+    thumb: '/solutions/research/hero.webp',
     icon: Microscope,
     color: 'cyan',
     title: 'Academic Research',
@@ -94,6 +103,7 @@ const SOLUTIONS = [
   },
   {
     href: '/solutions/content-creators',
+    thumb: '/solutions/content-creators/hero.webp',
     icon: Pen,
     color: 'primary',
     title: 'Content Creators',
@@ -154,6 +164,15 @@ export default function SolutionsHub() {
                 return (
                   <Link key={sol.href} href={sol.href}
                     className="group card card-hover flex flex-col gap-4 p-6 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300">
+                    <div className="relative w-full aspect-[5/3] rounded-xl overflow-hidden border border-border/40">
+                      <Image
+                        src={sol.thumb}
+                        alt={`${sol.title} solution preview`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
                     <div className={`w-11 h-11 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                       <Icon className={`w-5 h-5 ${c.icon}`} />
                     </div>
@@ -168,6 +187,35 @@ export default function SolutionsHub() {
                   </Link>
                 )
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Strip */}
+        <section className="py-12 border-t border-border/20 bg-surface/20">
+          <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+            <h2 className="text-xl md:text-2xl font-black text-text-primary mb-8 text-center">
+              Aiscern vs. Single-Model Detectors
+            </h2>
+            <div className="grid sm:grid-cols-3 gap-5">
+              <div className="card border border-border/60 p-5 rounded-xl text-center">
+                <div className="text-2xl font-black text-primary mb-1">8+ models</div>
+                <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Ensemble size</p>
+                <p className="text-sm text-text-muted">Single-model tools rely on one classifier. Aiscern combines multiple detection approaches per modality.</p>
+              </div>
+              <div className="card border border-border/60 p-5 rounded-xl text-center">
+                <div className="text-2xl font-black text-primary mb-1">4 modalities</div>
+                <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Text, image, audio, video</p>
+                <p className="text-sm text-text-muted">Most competitors specialize in one modality. Aiscern covers all four from a single account.</p>
+              </div>
+              <div className="card border border-border/60 p-5 rounded-xl text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-1">
+                  <Check className="w-5 h-5 text-primary" />
+                  <span className="text-2xl font-black text-primary">Uncertainty zone</span>
+                </div>
+                <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Confidence transparency</p>
+                <p className="text-sm text-text-muted">Instead of a binary verdict, Aiscern reports a middle confidence range so you know when to apply human judgment.</p>
+              </div>
             </div>
           </div>
         </section>

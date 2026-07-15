@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { ArrowRight, CheckCircle, ChevronDown, Zap } from 'lucide-react'
+import { ArrowRight, CheckCircle, ChevronDown, Zap, Check, X } from 'lucide-react'
 
 
 export interface SolutionFAQ {
@@ -18,7 +19,9 @@ export interface SolutionFeature {
 
 export interface SolutionUseCase {
   title: string
-  desc: string
+  challenge: string
+  action: string
+  outcome: string
 }
 
 export interface SolutionPainPoint {
@@ -26,7 +29,34 @@ export interface SolutionPainPoint {
   desc: string
 }
 
+export interface SolutionTrustStat {
+  label: string
+  value: string
+}
+
+export interface SolutionWorkflowStep {
+  title: string
+  desc: string
+}
+
+export interface SolutionComparisonRow {
+  feature: string
+  aiscern: string | boolean
+  competitor: string | boolean
+}
+
+export interface SolutionCaseStudy {
+  quote: string
+  author: string
+  role: string
+  company: string
+  metric: string
+  metricLabel: string
+  isPlaceholder?: boolean
+}
+
 export interface SolutionPageProps {
+  // --- existing (unchanged, kept backward-compatible) ---
   industry: string
   tagline: string
   description: string
@@ -41,6 +71,17 @@ export interface SolutionPageProps {
   testimonialQuote?: string
   testimonialAuthor?: string
   testimonialRole?: string
+
+  // --- new, all optional ---
+  heroImage?: string
+  heroImageAlt?: string
+  problemImage?: string
+  problemImageAlt?: string
+  trustBar?: SolutionTrustStat[]
+  workflow?: SolutionWorkflowStep[]
+  comparisonCompetitorName?: string
+  comparisonRows?: SolutionComparisonRow[]
+  caseStudy?: SolutionCaseStudy
 }
 
 const colorMap = {
@@ -112,6 +153,8 @@ export function SolutionPage(props: SolutionPageProps) {
     industry, tagline, description, heroIcon, accentColor, ctaLabel,
     problemTitle, painPoints, features, useCases, faqs,
     testimonialQuote, testimonialAuthor, testimonialRole,
+    heroImage, heroImageAlt, problemImage, problemImageAlt,
+    trustBar, workflow, comparisonCompetitorName, comparisonRows, caseStudy,
   } = props
 
   const c = colorMap[accentColor]
@@ -167,26 +210,74 @@ export function SolutionPage(props: SolutionPageProps) {
                 </div>
                 <p className="mt-4 text-xs text-text-muted">No credit card required · Free tier always available</p>
               </div>
-              {/* Abstract geometric illustration */}
-              <div className="flex-shrink-0 lg:w-64 xl:w-80">
-                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
-                  style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
-                  {heroIcon}
-                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
-                    <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+              {heroImage ? (
+                <div className="flex-shrink-0 w-full lg:w-[45%]">
+                  <div className="solution-hero-image relative w-full aspect-[16/10]">
+                    <Image
+                      src={heroImage}
+                      alt={heroImageAlt || `${industry} professional using Aiscern`}
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 45vw"
+                    />
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Abstract geometric illustration (fallback when no photo is supplied) */
+                <div className="flex-shrink-0 lg:w-64 xl:w-80">
+                  <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-3xl border ${c.iconBg.replace('bg-', 'border-').split(' ')[1]} flex items-center justify-center`}
+                    style={{ background: `radial-gradient(circle at 30% 30%, ${c.glow}, transparent 70%)` }}>
+                    {heroIcon}
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
+                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
 
+        {/* Trust Bar */}
+        {trustBar && trustBar.length > 0 && (
+          <section className="solution-trust-bar py-8">
+            <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+              <div className={`grid grid-cols-2 gap-6 ${
+                trustBar.length >= 4 ? 'sm:grid-cols-4' : trustBar.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+              }`}>
+                {trustBar.map((stat, i) => (
+                  <div key={i} className="text-center">
+                    <div className={`text-2xl md:text-3xl font-black ${c.icon}`}>{stat.value}</div>
+                    <div className="mt-1 text-xs text-text-muted uppercase tracking-wider">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* The Problem */}
         <section className="py-16 md:py-20 border-t border-border/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
-              <p className="text-text-secondary max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
+            <div className="flex flex-col lg:flex-row items-center gap-10 mb-12">
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
+                <p className="text-text-secondary max-w-xl mx-auto lg:mx-0">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
+              </div>
+              {problemImage && (
+                <div className="flex-shrink-0 w-full lg:w-[45%]">
+                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-border/40">
+                    <Image
+                      src={problemImage}
+                      alt={problemImageAlt || `Illustration of the AI content risk facing ${industry.toLowerCase()}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 45vw"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               {painPoints.map((p, i) => (
@@ -198,6 +289,27 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
           </div>
         </section>
+
+        {/* Workflow */}
+        {workflow && workflow.length > 0 && (
+          <section className="py-16 md:py-20 bg-surface/20 border-t border-border/20">
+            <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-12 text-center">How It Fits Your Workflow</h2>
+              <div className="grid sm:grid-cols-3 gap-8 sm:gap-4">
+                {workflow.map((step, i) => (
+                  <div key={i} className="relative text-center px-2">
+                    {i < workflow.length - 1 && <div className="solution-workflow-connector" />}
+                    <div className={`relative z-10 w-12 h-12 rounded-full ${c.iconBg} border flex items-center justify-center mx-auto mb-4 font-black ${c.icon}`}>
+                      {i + 1}
+                    </div>
+                    <h3 className="font-semibold text-text-primary text-sm mb-2">{step.title}</h3>
+                    <p className="text-xs text-text-muted leading-relaxed max-w-[220px] mx-auto">{step.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* How Aiscern Solves It */}
         <section className="py-16 md:py-20 bg-surface/30">
@@ -239,16 +351,89 @@ export function SolutionPage(props: SolutionPageProps) {
               {useCases.map((uc, i) => (
                 <div key={i} className="relative p-6 rounded-2xl border border-border/60 bg-surface/20">
                   <div className={`text-3xl font-black mb-3 ${c.icon} opacity-30`}>0{i+1}</div>
-                  <h3 className="font-semibold text-text-primary mb-2">{uc.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{uc.desc}</p>
+                  <h3 className="font-semibold text-text-primary mb-3">{uc.title}</h3>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Challenge</p>
+                  <p className="text-sm text-text-muted leading-relaxed mb-3">{uc.challenge}</p>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Action</p>
+                  <p className="text-sm text-text-muted leading-relaxed mb-4">{uc.action}</p>
+                  <div className={`rounded-lg border p-3 text-sm font-semibold ${c.badge}`}>
+                    {uc.outcome}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Testimonial */}
-        {testimonialQuote && (
+        {/* Comparison Table */}
+        {comparisonRows && comparisonRows.length > 0 && (
+          <section className="py-16 md:py-20 bg-surface/20 border-t border-border/20">
+            <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">
+                How Aiscern Compares{comparisonCompetitorName ? ` to ${comparisonCompetitorName}` : ''}
+              </h2>
+              <div className="overflow-x-auto card border border-border/60 rounded-2xl p-0">
+                <table className="solution-comparison-table w-full">
+                  <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th>Aiscern</th>
+                      <th>{comparisonCompetitorName || 'Alternative'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonRows.map((row, i) => (
+                      <tr key={i}>
+                        <td className="text-text-secondary">{row.feature}</td>
+                        <td className="aiscern-cell">
+                          {typeof row.aiscern === 'boolean'
+                            ? (row.aiscern ? <Check className={`w-4 h-4 ${c.icon}`} /> : <X className="w-4 h-4 text-text-muted" />)
+                            : row.aiscern}
+                        </td>
+                        <td className="competitor-cell">
+                          {typeof row.competitor === 'boolean'
+                            ? (row.competitor ? <Check className="w-4 h-4 text-text-muted" /> : <X className="w-4 h-4 text-text-muted" />)
+                            : row.competitor}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Case Study */}
+        {caseStudy && (
+          <section className="py-16 md:py-20 bg-surface/30">
+            <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+              {caseStudy.isPlaceholder && (
+                <div className="flex justify-center mb-4">
+                  <span className="solution-placeholder-badge">Placeholder — replace with a real customer</span>
+                </div>
+              )}
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <blockquote className="solution-case-quote flex-1 text-center md:text-left">
+                  &ldquo;{caseStudy.quote}&rdquo;
+                </blockquote>
+                <div className="flex-shrink-0 flex flex-col items-center md:items-start gap-3">
+                  <cite className="not-italic text-sm text-center md:text-left">
+                    <span className="text-text-primary font-semibold block">{caseStudy.author}</span>
+                    <span className="text-text-muted">{caseStudy.role}, {caseStudy.company}</span>
+                  </cite>
+                  <div className={`rounded-xl border p-3 text-center ${c.badge}`}>
+                    <div className="text-2xl font-black">{caseStudy.metric}</div>
+                    <div className="text-xs uppercase tracking-wider">{caseStudy.metricLabel}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Legacy testimonial (kept for backward compatibility) */}
+        {!caseStudy && testimonialQuote && (
           <section className="py-12 bg-surface/30">
             <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
               <blockquote className="text-lg text-text-secondary italic leading-relaxed mb-4">

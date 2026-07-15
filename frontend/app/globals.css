@@ -122,6 +122,40 @@
   .skeleton {
     @apply bg-surface-active animate-pulse rounded-lg;
   }
+
+  /* --- Solution page sections --- */
+  .solution-hero-image {
+    @apply rounded-2xl shadow-2xl shadow-black/20 border border-border/30 overflow-hidden;
+  }
+
+  .solution-trust-bar {
+    @apply border-y border-border/20 bg-surface/30;
+  }
+
+  .solution-workflow-connector {
+    @apply hidden sm:block absolute top-6 left-[calc(50%+28px)] w-[calc(100%-56px)] h-px bg-border/40;
+  }
+
+  .solution-comparison-table th {
+    @apply text-left text-xs font-semibold text-text-muted uppercase tracking-wider py-3 px-4 border-b border-border/40;
+  }
+  .solution-comparison-table td {
+    @apply py-4 px-4 text-sm border-b border-border/20;
+  }
+  .solution-comparison-table .aiscern-cell {
+    @apply text-text-primary font-medium;
+  }
+  .solution-comparison-table .competitor-cell {
+    @apply text-text-muted;
+  }
+
+  .solution-case-quote {
+    @apply text-xl md:text-2xl font-medium text-text-primary leading-relaxed;
+  }
+
+  .solution-placeholder-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber/10 text-amber border border-amber/20;
+  }
 }
 
 @layer utilities {

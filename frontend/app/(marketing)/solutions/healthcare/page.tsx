@@ -16,12 +16,34 @@ export default function HealthcarePage() {
   return (
     <SolutionPage
       industry="Healthcare"
-      tagline="Ensure Clinical Accuracy in an AI-Generated World"
-      description="Fabricated research, synthetic patient records, and AI-generated clinical notes are threats to patient safety and scientific integrity. Aiscern helps healthcare organizations verify the authenticity of submitted medical content."
+      tagline="Verify Clinical Content Before It Reaches Patients"
+      description="AI-hallucinated citations have already surfaced in published medical literature, and synthetic clinical notes carry real liability risk. Aiscern screens submitted medical text and imagery before it enters the record or the peer-review queue."
       heroIcon={<Heart className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="rose"
       ctaLabel="Start Free Healthcare Account"
-      problemTitle="AI Fabrication Risks in Healthcare"
+      heroImage="/solutions/healthcare/hero.webp"
+      heroImageAlt="A physician reviewing a tablet showing patient charts while walking through a hospital corridor"
+      problemImage="/solutions/healthcare/problem.webp"
+      problemImageAlt="A tablet displaying a fabricated medical journal article alongside an alert notification, illustrating the risk of AI-generated clinical content"
+      trustBar={[
+        { label: 'Ensemble AUC', value: '≥94%' },
+        { label: 'Data Handling', value: 'Ephemeral' },
+        { label: 'BAA', value: 'Available' },
+      ]}
+      workflow={[
+        { title: 'Submit Manuscript', desc: 'Upload a paper, clinical note, or research submission for screening.' },
+        { title: 'Run Multi-Model Analysis', desc: 'Text and imaging ensembles analyze content for AI-generation patterns.' },
+        { title: 'Receive Confidence Report', desc: 'Get a report suitable for IRB documentation or editorial review.' },
+      ]}
+      comparisonCompetitorName="Manual peer review"
+      comparisonRows={[
+        { feature: 'Screening speed per manuscript', aiscern: 'Under 2 minutes', competitor: 'Hours to days' },
+        { feature: 'Sentence-level AI flagging', aiscern: true, competitor: false },
+        { feature: 'Consistent across reviewers', aiscern: true, competitor: false },
+        { feature: 'HIPAA-ready processing', aiscern: true, competitor: 'N/A' },
+        { feature: 'Scales to high submission volume', aiscern: true, competitor: false },
+      ]}
+      problemTitle="AI Fabrication Reaches Clinical Content"
       painPoints={[
         { title: 'AI-generated medical research is entering journals', desc: 'Predatory journals and some mainstream publications have published papers with AI-generated content and hallucinated references, threatening evidence-based medicine.' },
         { title: 'Synthetic clinical notes create liability', desc: 'AI-generated clinical documentation that does not accurately reflect patient encounters creates malpractice exposure and patient safety risks.' },
@@ -37,10 +59,34 @@ export default function HealthcarePage() {
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Transparency', desc: 'Explicit confidence intervals ensure healthcare professionals understand result limitations before acting on them.' },
       ]}
       useCases={[
-        { title: 'Research Submission Pre-Screening', desc: 'A medical journal\'s editorial team runs submitted manuscripts through Aiscern before peer review assignment, flagging high-AI-probability sections for additional scrutiny.' },
-        { title: 'Clinical Documentation Audit', desc: 'A hospital quality assurance team spot-checks clinical notes from high-volume providers to identify AI-generated documentation patterns that may not reflect actual patient encounters.' },
-        { title: 'Insurance Claim Verification', desc: 'An insurance medical review team scans supporting documentation submitted with claims to identify AI-generated narratives inconsistent with standard clinical language patterns.' },
+        {
+          title: 'Research Submission Pre-Screening',
+          challenge: 'A medical journal\'s editorial team needs to flag AI-generated sections before assigning peer reviewers.',
+          action: 'Every manuscript is run through Aiscern at intake, with high-probability sections highlighted for the editor.',
+          outcome: 'Suspect sections flagged before reviewer time is spent on them',
+        },
+        {
+          title: 'Clinical Documentation Audit',
+          challenge: 'A hospital quality assurance team wants to spot-check notes from high-volume providers.',
+          action: 'A sample of clinical notes is scanned monthly for AI-generation patterns.',
+          outcome: 'Documentation inconsistent with actual encounters surfaced for follow-up',
+        },
+        {
+          title: 'Insurance Claim Verification',
+          challenge: 'A medical review team needs to catch narratives inconsistent with standard clinical language.',
+          action: 'Supporting documentation submitted with claims is scanned before adjudication.',
+          outcome: 'Anomalous submissions routed to manual review',
+        },
       ]}
+      caseStudy={{
+        quote: '[QUOTE TEXT HERE]',
+        author: '[CUSTOMER NAME]',
+        role: '[ROLE]',
+        company: '[COMPANY]',
+        metric: '[METRIC]',
+        metricLabel: 'Placeholder metric',
+        isPlaceholder: true,
+      }}
       faqs={[
         { q: 'Is Aiscern HIPAA compliant?', a: 'Aiscern processes submitted content ephemerally and does not retain patient data. For HIPAA-covered use cases, our Enterprise plan includes a Business Associate Agreement (BAA). Contact us at /enterprise for healthcare-specific compliance documentation.' },
         { q: 'How accurate is detection on medical writing specifically?', a: 'Medical writing has distinct stylistic patterns. Our ensemble performs well on academic medical text. Clinical notes — which are typically terse and formulaic — may score in uncertain ranges even when genuine. We recommend using Aiscern as a screening layer, not a definitive judgment tool.' },

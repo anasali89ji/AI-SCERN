@@ -16,12 +16,34 @@ export default function SecurityPage() {
   return (
     <SolutionPage
       industry="Cybersecurity"
-      tagline="Stop Synthetic Threats Before They Land"
-      description="AI-powered fraud — voice clone scams, deepfake identity verification bypass, and AI-crafted spear-phishing — is the fastest-growing attack surface. Aiscern gives security teams multi-modal detection to stop synthetic content at every ingestion point."
+      tagline="Catch Synthetic Fraud at Ingestion"
+      description="Voice-clone fraud incidents like the Arup video-call scam, which cost the firm $25.6M in a single day, show how far synthetic identity attacks have come. Aiscern's audio, image, and text ensembles screen calls, documents, and messages before they reach a decision point."
       heroIcon={<ShieldCheck className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       accentColor="rose"
       ctaLabel="Start Free Security Account"
-      problemTitle="Synthetic Content in the Threat Landscape"
+      heroImage="/solutions/security/hero.webp"
+      heroImageAlt="A security operations center analyst at a curved monitor array displaying threat maps at night"
+      problemImage="/solutions/security/problem.webp"
+      problemImageAlt="A split image showing a grandmother on the phone in a warm kitchen next to an attacker using voice-cloning software in a dark room"
+      trustBar={[
+        { label: 'Text Scan Time', value: '<2 sec' },
+        { label: 'Audio Benchmark', value: 'ASVspoof' },
+        { label: 'Output Format', value: 'SIEM-ready JSON' },
+      ]}
+      workflow={[
+        { title: 'Ingest Call or Document', desc: 'Route inbound calls, emails, or documents to the API.' },
+        { title: 'Run Ensemble Scan', desc: 'Audio, image, and text models score the content in real time.' },
+        { title: 'Alert With Confidence Score', desc: 'The SOC dashboard receives structured JSON with a confidence score.' },
+      ]}
+      comparisonCompetitorName="Pindrop (audio only)"
+      comparisonRows={[
+        { feature: 'Modalities covered', aiscern: 'Audio + image + text', competitor: 'Audio only' },
+        { feature: 'Text detection latency', aiscern: 'Under 2 sec', competitor: 'N/A' },
+        { feature: 'SIEM-ready JSON output', aiscern: true, competitor: true },
+        { feature: 'KYC document screening', aiscern: true, competitor: false },
+        { feature: 'Enterprise SLA', aiscern: true, competitor: true },
+      ]}
+      problemTitle="Synthetic Identity Attacks Are Scaling"
       painPoints={[
         { title: 'Voice clone fraud is bypassing traditional authentication', desc: 'Real-time voice synthesis tools allow attackers to impersonate executives, family members, and customer service agents in live calls.' },
         { title: 'Deepfake identity documents fool KYC systems', desc: 'AI-generated ID photos and synthesized video selfies are being used to bypass Know Your Customer verification at financial institutions.' },
@@ -37,10 +59,34 @@ export default function SecurityPage() {
         { icon: <BarChart3 className="w-5 h-5" />, title: 'SIEM-Ready Reporting', desc: 'Scan results include structured JSON output compatible with SIEM ingestion and SOC dashboards.' },
       ]}
       useCases={[
-        { title: 'Real-Time Call Authentication', desc: 'A financial services firm integrates Aiscern\'s audio API into its inbound call verification pipeline to flag real-time voice synthesis attempts during account access requests.' },
-        { title: 'KYC Identity Document Screening', desc: 'A fintech company screens user-submitted selfie videos and ID photos through Aiscern\'s image pipeline as part of its onboarding fraud detection stack.' },
-        { title: 'Phishing Email Triage', desc: 'A SOC team routes flagged inbound emails through Aiscern\'s text API to identify AI-generated spear-phishing, reducing analyst triage time by prioritizing high-confidence synthetic content.' },
+        {
+          title: 'Real-Time Call Authentication',
+          challenge: 'A financial services firm needs to flag voice synthesis attempts during account access calls.',
+          action: 'The audio API is wired into the inbound call verification pipeline.',
+          outcome: 'Suspected voice clone attempts flagged during the call, not after',
+        },
+        {
+          title: 'KYC Identity Document Screening',
+          challenge: 'A fintech company needs to catch synthetic ID photos and selfie videos at onboarding.',
+          action: 'Submitted documents run through the image pipeline as part of the onboarding stack.',
+          outcome: 'Synthetic identity attempts blocked before account approval',
+        },
+        {
+          title: 'Phishing Email Triage',
+          challenge: 'A SOC team is overwhelmed by inbound email volume during triage.',
+          action: 'Flagged emails are routed through the text API automatically.',
+          outcome: 'Analyst triage time concentrated on high-confidence synthetic content',
+        },
       ]}
+      caseStudy={{
+        quote: '[QUOTE TEXT HERE]',
+        author: '[CUSTOMER NAME]',
+        role: '[ROLE]',
+        company: '[COMPANY]',
+        metric: '[METRIC]',
+        metricLabel: 'Placeholder metric',
+        isPlaceholder: true,
+      }}
       faqs={[
         { q: 'What is the latency of real-time audio detection?', a: 'Asynchronous audio detection processes a 30-second clip in approximately 3–8 seconds. Real-time streaming detection is on our roadmap. For call center integration, we recommend a post-call analysis pipeline initially.' },
         { q: 'Can Aiscern detect voice clones of specific individuals?', a: 'Our detection is general-purpose — it identifies AI-synthesized speech characteristics rather than comparing against a specific person\'s voiceprint. Speaker verification (matching a claimed identity) requires a separate biometric system.' },
