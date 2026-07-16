@@ -13,8 +13,9 @@ import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(_req: NextRequest, { params }: { params: { hash: string } }) {
-  const hash = params.hash?.trim()
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ hash: string }> }) {
+  const { hash: rawHash } = await params
+  const hash = rawHash?.trim()
   if (!hash || !/^[0-9a-f]{16}$/i.test(hash)) {
     return NextResponse.json({ success: false, error: { code: 'INVALID_HASH', message: 'Expected a 16-char hex integrity seal hash' } }, { status: 400 })
   }

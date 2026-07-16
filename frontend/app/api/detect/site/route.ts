@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
             voice_diversity_index:     result.voiceDiversityIndex,
             transparency_score:        result.transparencyScore,
             link_trust_score:          result.linkTrustScore,
-            integrity_hash:            result.integritySeal.hash,
+            integrity_hash:            result.integritySeal?.hash ?? null,
           },
         }).select('id').single()
         scanId = sr?.id ?? null
