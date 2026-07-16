@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth-provider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { ConfidenceRing } from '@/components/ConfidenceRing'
+import { verdictConfig } from '@/lib/ui/verdict-config'
 import type { DetectionResult } from '@/types'
 
 export default function WebVerificationPage() {
@@ -109,7 +110,11 @@ function WebVerificationContent() {
         <div className="mt-8 rounded-2xl border border-white/[0.08] bg-slate-900/50 backdrop-blur-sm p-6 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <ConfidenceRing confidence={result.confidence || 0} size={56} />
+              <ConfidenceRing
+                confidence={result.confidence <= 1 ? (result.confidence || 0) * 100 : (result.confidence || 0)}
+                color={verdictConfig[result.verdict]?.hex ?? verdictConfig.UNCERTAIN.hex}
+                size={56}
+              />
               <div>
                 <div className="text-lg font-bold text-white">{result.verdict}</div>
                 <div className="text-xs text-slate-400">Confidence {(result.confidence * 100).toFixed(1)}%</div>
@@ -127,21 +132,38 @@ function WebVerificationContent() {
           </div>
 
           <div className="space-y-3">
-            {result.details?.map((detail: any, i: number) => (
+            {result.signals?.map((signal, i) => (
               <div key={i} className="flex items-start gap-3 text-sm text-slate-300 bg-slate-950/50 rounded-lg p-3 border border-white/[0.04]">
-                {detail.verdict === 'AI' ? (
+                {signal.flagged ? (
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                 ) : (
                   <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
                 )}
-                <span>{detail.message}</span>
+                <span>{signal.description || signal.name}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <MobileResultSheet open={showMobile} onClose={() => setShowMobile(false)} result={result} />
+      <MobileResultSheet isOpen={showMobile} onClose={() => setShowMobile(false)} title="Verification Result">
+        {result && (
+          <div className="space-y-4 pb-4">
+            <div className="flex items-center gap-3">
+              <ConfidenceRing
+                confidence={result.confidence <= 1 ? (result.confidence || 0) * 100 : (result.confidence || 0)}
+                color={verdictConfig[result.verdict]?.hex ?? verdictConfig.UNCERTAIN.hex}
+                size={56}
+              />
+              <div>
+                <div className="text-lg font-bold text-white">{result.verdict}</div>
+                <div className="text-xs text-slate-400">Confidence {(result.confidence * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+            {result.summary && <p className="text-sm text-slate-300">{result.summary}</p>}
+          </div>
+        )}
+      </MobileResultSheet>
     </div>
   )
 }

@@ -8,7 +8,8 @@ import { Loader2 } from 'lucide-react'
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/pricing', '/about', '/contact', '/faq', '/terms', '/privacy', '/security', '/roadmap']
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded } = useAuth()
+  const { user, loading } = useAuth()
+  const isLoaded = !loading
   const router = useRouter()
   const pathname = usePathname()
 
