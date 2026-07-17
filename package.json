@@ -15,6 +15,7 @@
   "author": "Aiscern",
   "license": "MIT",
   "dependencies": {
+    "cheerio": "^1.2.0",
     "convex": "^1.40.0"
   }
 }
