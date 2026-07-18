@@ -80,8 +80,8 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   };
 
   const model = env.GROQ_API_KEY 
-    ? 'llama-3.1-70b-versatile' 
-    : 'meta-llama/llama-3.1-70b-instruct:free';
+    ? 'llama-3.3-70b-versatile' 
+    : 'meta-llama/llama-3.3-70b-instruct:free';
 
   if (!env.GROQ_API_KEY) {
     headers['HTTP-Referer'] = 'https://aiscern.com';
@@ -131,7 +131,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
             const parsed = JSON.parse(data);
             const delta = parsed.choices?.[0]?.delta?.content || '';
             if (delta) {
-              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'text', text: delta })}\n\n`));
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: delta } }] })}\n\n`));
             }
           } catch { /* skip malformed */ }
         }
