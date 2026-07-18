@@ -17,5 +17,8 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "convex": "^1.40.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
   }
 }
