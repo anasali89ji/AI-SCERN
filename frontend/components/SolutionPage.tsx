@@ -138,13 +138,16 @@ export function SolutionPage(props: SolutionPageProps) {
           }}
         />
 
-        {/* Hero */}
-        <section className="relative py-20 md:py-28 overflow-hidden">
+        {/* Hero — main's pt-16 already clears the fixed nav (64px), so this
+            section's own vertical padding shouldn't stack another 80px on
+            top on mobile: 64+80=144px of dead space before the headline
+            eats a fifth of a phone's visible height before the fold. */}
+        <section className="relative pt-8 pb-14 md:py-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" aria-hidden>
             <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-3xl ${c.glow}`} />
           </div>
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative">
-            <div className="flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-12">
               <div className="flex-1 text-center lg:text-left">
                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 ${c.badge}`}>
                   <Zap className="w-3.5 h-3.5" />
@@ -153,22 +156,22 @@ export function SolutionPage(props: SolutionPageProps) {
                 <h1 className="text-headline text-silver-900 mb-4">
                   {tagline}
                 </h1>
-                <p className="text-lead text-silver-600 mb-8 max-w-xl">
+                <p className="text-lead text-silver-600 mb-8 max-w-xl mx-auto lg:mx-0">
                   {description}
                 </p>
-                <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                  <Link href="/signup" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center lg:justify-start">
+                  <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
                     {ctaLabel} <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/detect/text" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
+                  <Link href="/detect/text" className="btn-secondary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
                     Try Free Demo
                   </Link>
                 </div>
                 <p className="mt-4 text-xs text-silver-600">No credit card required · Free tier always available</p>
               </div>
               {/* Abstract geometric illustration */}
-              <div className="flex-shrink-0 lg:w-64 xl:w-80">
-                <div className={`relative w-48 h-48 lg:w-64 lg:h-64 mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
+              <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 lg:w-64 lg:h-64">
+                <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
                   <span className={c.icon}>{heroIcon}</span>
                   <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
                     <CheckCircle className={`w-4 h-4 ${c.icon}`} />
@@ -180,13 +183,13 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* The Problem */}
-        <section className="py-16 md:py-20 border-t border-white/5">
+        <section className="py-12 md:py-20 border-t border-white/5">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-semibold text-silver-900 mb-3">{problemTitle}</h2>
-              <p className="text-silver-600 max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">{problemTitle}</h2>
+              <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div className="grid sm:grid-cols-2 gap-4 md:gap-5">
               {painPoints.map((p, i) => (
                 <div key={i} className="bg-surface border border-white/5 p-5 rounded-xl">
                   <h3 className="font-semibold text-silver-900 mb-2 text-sm">{p.title}</h3>
@@ -198,16 +201,16 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* How Aiscern Solves It */}
-        <section className="py-16 md:py-20 bg-surface-elevated border-y border-white/5">
+        <section className="py-12 md:py-20 bg-surface-elevated border-y border-white/5">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
-              <p className="text-silver-600 max-w-xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
+              <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">
                 Our ensemble-based attestation pipeline combines 8+ specialized models with a confidence threshold system.
                 <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Learn about our methodology →</Link>
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {features.map((f, i) => (
                 <div key={i} className="bg-surface p-5 rounded-xl border border-white/5 hover:border-white/10 transition-colors duration-300">
                   <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4 ${c.icon}`}>
@@ -228,10 +231,10 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* Use Cases */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-3xl font-semibold text-silver-900 mb-10 text-center">Real-World Use Cases</h2>
-            <div className="grid sm:grid-cols-3 gap-6">
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 md:mb-10 text-center">Real-World Use Cases</h2>
+            <div className="grid sm:grid-cols-3 gap-4 md:gap-6">
               {useCases.map((uc, i) => (
                 <div key={i} className="relative p-6 rounded-xl border border-white/5 bg-surface">
                   <div className={`text-4xl font-bold mb-3 ${c.icon} opacity-30`}>0{i + 1}</div>
@@ -245,9 +248,9 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* Testimonial */}
         {testimonialQuote && (
-          <section className="py-12 bg-surface-elevated border-y border-white/5">
+          <section className="py-10 md:py-12 bg-surface-elevated border-y border-white/5">
             <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-              <blockquote className="text-lg text-silver-600 italic leading-relaxed mb-4">
+              <blockquote className="text-base md:text-lg text-silver-600 italic leading-relaxed mb-4">
                 &ldquo;{testimonialQuote}&rdquo;
               </blockquote>
               {testimonialAuthor && (
@@ -266,32 +269,32 @@ export function SolutionPage(props: SolutionPageProps) {
         )}
 
         {/* FAQ */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-3xl font-semibold text-silver-900 mb-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="bg-surface border border-white/5 rounded-xl p-6">
+            <div className="bg-surface border border-white/5 rounded-xl p-5 md:p-6">
               <FAQ faqs={faqs} />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-16 md:py-20 border-t border-white/5">
+        <section className="py-12 md:py-20 border-t border-white/5">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-            <h2 className="text-3xl font-semibold text-silver-900 mb-4">
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-4">
               Ready to attest content in {industry.toLowerCase()}?
             </h2>
-            <p className="text-silver-600 mb-8">
+            <p className="text-silver-600 text-sm md:text-base mb-8">
               Start with a free account — no credit card, no commitment. Upgrade when you need more attestations.
             </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/signup" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+              <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
                 {ctaLabel} <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/pricing" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">View Pricing</Link>
-              <Link href="/about" className="btn-ghost focus-visible:ring-2 focus-visible:ring-accent/50">About Aiscern</Link>
+              <Link href="/pricing" className="btn-secondary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">View Pricing</Link>
+              <Link href="/about" className="btn-ghost w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">About Aiscern</Link>
             </div>
           </div>
         </section>
