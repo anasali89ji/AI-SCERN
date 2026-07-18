@@ -16,7 +16,9 @@
   "license": "MIT",
   "dependencies": {
     "cheerio": "^1.2.0",
-    "convex": "^1.40.0"
+    "convex": "^1.40.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "typescript": "^7.0.2"
