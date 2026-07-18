@@ -444,87 +444,140 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
           >
-            {mobileOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
+            <AnimatePresence mode="wait" initial={false}>
+              {mobileOpen ? (
+                <motion.span
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex"
+                >
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0, scale: 0.6 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: -90, opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex"
+                >
+                  <Menu className="w-5 h-5" aria-hidden="true" />
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer — simple fade only, per spec (no hamburger-to-X animation) */}
+      {/* Mobile Drawer — height/slide open with staggered link entrance */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             id="mobile-nav"
             role="dialog"
             aria-label="Navigation menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
             className="lg:hidden border-t border-white/5 bg-depth-bg overflow-hidden"
           >
-          <div className="px-4 py-4 space-y-1 max-h-[80dvh] overflow-y-auto">
-
-            <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600">
-              Tools
-            </p>
+          <motion.div
+            className="px-4 py-4 space-y-1 max-h-[80dvh] overflow-y-auto"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } },
+            }}
+            initial="hidden"
+            animate="show"
+          >
+            {[
+              { key: 'tools', label: 'Tools' },
+            ].map(h => (
+              <motion.p
+                key={h.key}
+                variants={{ hidden: { opacity: 0, y: -6 }, show: { opacity: 1, y: 0 } }}
+                className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600"
+              >
+                {h.label}
+              </motion.p>
+            ))}
             {TOOLS.map(tool => (
-              <Link
-                key={tool.href}
-                href={tool.href}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
-                           hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
-                           focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                <tool.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                {tool.label}
-              </Link>
+              <motion.div key={tool.href} variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
+                <Link
+                  href={tool.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
+                             hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
+                             focus-visible:ring-2 focus-visible:ring-accent/50"
+                >
+                  <tool.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  {tool.label}
+                </Link>
+              </motion.div>
             ))}
 
-            <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600 mt-3">
-              Solutions
-            </p>
-            {SOLUTIONS.slice(0, 5).map(sol => (
-              <Link
-                key={sol.href}
-                href={sol.href}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
-                           hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
-                           focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                <sol.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                {sol.label}
-              </Link>
-            ))}
-            <Link
-              href="/solutions"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-accent
-                         hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
-                         focus-visible:ring-2 focus-visible:ring-accent/50"
+            <motion.p
+              variants={{ hidden: { opacity: 0, y: -6 }, show: { opacity: 1, y: 0 } }}
+              className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600 mt-3"
             >
-              All solutions →
-            </Link>
-
-            <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600 mt-3">
-              More
-            </p>
-            {[...NAV_LINKS, { label: 'Methodology', href: '/methodology' }, { label: 'Enterprise', href: '/enterprise' }].map(l => (
+              Solutions
+            </motion.p>
+            {SOLUTIONS.slice(0, 5).map(sol => (
+              <motion.div key={sol.href} variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
+                <Link
+                  href={sol.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
+                             hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
+                             focus-visible:ring-2 focus-visible:ring-accent/50"
+                >
+                  <sol.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  {sol.label}
+                </Link>
+              </motion.div>
+            ))}
+            <motion.div variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
               <Link
-                key={l.href}
-                href={l.href}
+                href="/solutions"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
-                           hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
+                className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-accent
+                           hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
                            focus-visible:ring-2 focus-visible:ring-accent/50"
               >
-                {l.label}
+                All solutions →
               </Link>
+            </motion.div>
+
+            <motion.p
+              variants={{ hidden: { opacity: 0, y: -6 }, show: { opacity: 1, y: 0 } }}
+              className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-silver-600 mt-3"
+            >
+              More
+            </motion.p>
+            {[...NAV_LINKS, { label: 'Methodology', href: '/methodology' }, { label: 'Enterprise', href: '/enterprise' }].map(l => (
+              <motion.div key={l.href} variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
+                <Link
+                  href={l.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-silver-700
+                             hover:text-silver-900 hover:bg-surface-elevated transition-all duration-200 text-sm font-medium
+                             focus-visible:ring-2 focus-visible:ring-accent/50"
+                >
+                  {l.label}
+                </Link>
+              </motion.div>
             ))}
 
             {!user && (
-              <div className="pt-3 mt-2 border-t border-white/5 flex flex-col gap-2">
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
+                className="pt-3 mt-2 border-t border-white/5 flex flex-col gap-2"
+              >
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
@@ -543,9 +596,9 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                 >
                   <Zap className="w-4 h-4" aria-hidden="true" /> Begin Attestation Free
                 </Link>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </motion.div>
         )}
       </AnimatePresence>

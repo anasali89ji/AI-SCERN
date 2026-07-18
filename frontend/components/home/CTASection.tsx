@@ -10,7 +10,7 @@ export function CTASection() {
   const { user } = useAuth()
 
   return (
-    <section className="relative py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg overflow-hidden">
+    <section className="relative py-16 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg overflow-hidden">
       {/* Radial glow from center — no particles, no floating elements */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -19,17 +19,20 @@ export function CTASection() {
       />
 
       <div className="relative max-w-3xl mx-auto text-center">
-        <h2 className="text-display text-silver-900 mb-5 leading-[1.05]">
+        {/* text-display (clamp 48–96px) wraps "Start Attesting Content Free" into 3+
+            oversized lines below ~400px viewports — text-headline (clamp 32–56px)
+            reads properly on a phone; sm+ steps back up to the bigger display scale. */}
+        <h2 className="text-headline sm:text-display text-silver-900 mb-4 sm:mb-5 leading-[1.1] sm:leading-[1.05]">
           Start Attesting Content Free
         </h2>
-        <p className="text-lead text-silver-600 mb-10 max-w-xl mx-auto">
+        <p className="text-lead text-silver-600 mb-8 sm:mb-10 max-w-xl mx-auto">
           Core features free — no credit card required. No account needed for basic examinations.
         </p>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
           <Link
             href={user ? '/dashboard' : '/detect/text'}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg w-full sm:w-auto
                        bg-accent hover:bg-accent-hover text-depth-bg text-base font-semibold
                        transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
@@ -39,7 +42,7 @@ export function CTASection() {
           {user ? (
             <Link
               href="/chat"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg w-full sm:w-auto
                          bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
                          text-silver-800 text-base font-semibold transition-all duration-200
                          focus-visible:ring-2 focus-visible:ring-accent/50"
@@ -49,7 +52,7 @@ export function CTASection() {
           ) : (
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg w-full sm:w-auto
                          bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
                          text-silver-800 text-base font-semibold transition-all duration-200
                          focus-visible:ring-2 focus-visible:ring-accent/50"
@@ -59,10 +62,10 @@ export function CTASection() {
           )}
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs text-silver-600">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-silver-600">
           {REASSURANCES.map(t => (
             <div key={t} className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-accent/70" aria-hidden="true" />{t}
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent/70 shrink-0" aria-hidden="true" />{t}
             </div>
           ))}
         </div>

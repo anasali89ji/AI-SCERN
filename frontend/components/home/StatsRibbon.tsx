@@ -48,14 +48,14 @@ function CountUpValue({ target, suffix = '' }: { target: number; suffix?: string
 export function StatsRibbon({ stats = DEFAULT_STATS }: { stats?: Stat[] }) {
   return (
     <section className="bg-surface-elevated border-y border-white/5">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0 lg:divide-x lg:divide-white/5">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 lg:gap-0 lg:divide-x lg:divide-white/5">
           {stats.map((stat) => (
             <div key={stat.label} className="text-center lg:px-4">
-              <div className="text-4xl font-bold text-silver-900 mb-1.5">
+              <div className="text-3xl sm:text-4xl font-bold text-silver-900 mb-1.5">
                 <CountUpValue target={stat.value} suffix={stat.suffix} />
               </div>
-              <p className="text-silver-600 text-xs sm:text-sm uppercase tracking-wider font-medium">{stat.label}</p>
+              <p className="text-silver-600 text-[11px] sm:text-sm uppercase tracking-wider font-medium leading-snug">{stat.label}</p>
             </div>
           ))}
         </div>

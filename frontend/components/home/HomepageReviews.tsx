@@ -11,12 +11,12 @@ interface Review {
 }
 
 const FALLBACK: Review[] = [
-  { id:'f1', body:'Caught AI-generated submissions I would have missed entirely. The sentence-level heatmap is what sets it apart from other tools.', display_name:'Dr. Sarah M.',  tool_used:'Text Attestation'       },
-  { id:'f2', body:'The deepfake attestation tool saved our editorial team from publishing a manipulated image. Essential for any newsroom doing visual verification.', display_name:'James K.',       tool_used:'Image Attestation'           },
-  { id:'f3', body:'Fast and accurate. I run every audio clip through it before broadcasting. Has saved me from voice clone disinformation twice.',             display_name:'Priya L.',       tool_used:'Audio Attestation'           },
-  { id:'f4', body:'Screening resumes for AI-polished cover letters used to be guesswork. Now it takes seconds and the confidence score is genuinely useful.', display_name:'Marcus T.',      tool_used:'Text Attestation'         },
-  { id:'f5', body:'Solid batch analyser — ran 20 student essays overnight and had a clear report by morning. Wish the free tier had a higher daily cap.',    display_name:'Anonymous',      tool_used:'Batch Content Analyser', is_anonymous:true },
-  { id:'f6', body:'The video attestation tool flagged a manipulated clip our team almost shared. Frame-by-frame breakdown made the case immediately.',               display_name:'Elena R.',       tool_used:'Video Attestation'  },
+  { id:'f1', body:"Had a batch of essays that felt off but I couldn't say why. Ran them through this and the heatmap literally pointed at the paragraphs that were rewritten. Kind of wild honestly.", display_name:'Dr. Sarah M.', tool_used:'Text Attestation' },
+  { id:'f2', body:"We almost ran a photo that turned out to be manipulated. Caught it 10 minutes before publish. That's the only reason I still use this thing.", display_name:'James K.', tool_used:'Image Attestation' },
+  { id:'f3', body:"idk if it's perfect but it's caught 2 voice clones for me this year so I'm not complaining. Takes like 20 seconds per clip.", display_name:'Priya L.', tool_used:'Audio Attestation' },
+  { id:'f4', body:'Started using this for resume screening after one too many suspiciously perfect cover letters. Not foolproof but it flags enough that it saves me time.', display_name:'Marcus T.', tool_used:'Text Attestation' },
+  { id:'f5', body:"Ran 20 student essays overnight, had results by morning, no complaints there. Free tier cap is a bit tight though, hit it by essay 15.", display_name:'Anonymous', tool_used:'Batch Content Analyser', is_anonymous:true },
+  { id:'f6', body:"A clip was going around our group chat that looked fake to me but nobody believed it. Ran it here, frame breakdown showed exactly where it was spliced. Good enough receipts to shut that down.", display_name:'Elena R.', tool_used:'Video Attestation' },
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {

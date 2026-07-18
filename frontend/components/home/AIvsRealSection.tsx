@@ -73,8 +73,14 @@ export default function AIvsRealSection() {
           </p>
         </div>
 
-        {/* Tab bar */}
-        <div role="tablist" aria-label="Content type" className="flex justify-center gap-1 mb-8">
+        {/* Tab bar — compact on mobile so 4 tabs never wrap on narrow phones (~360px);
+            overflow-x-auto is a safety net, not the primary interaction, since the
+            compact sizing already fits comfortably down to 320px viewports. */}
+        <div
+          role="tablist"
+          aria-label="Content type"
+          className="flex justify-center gap-1 mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {TABS.map(t => (
             <button
               key={t.key}
@@ -82,20 +88,22 @@ export default function AIvsRealSection() {
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50',
+                'flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50',
                 tab === t.key
                   ? 'bg-accent/10 text-accent border border-accent/20'
                   : 'text-silver-600 hover:text-silver-800 border border-transparent',
               )}
             >
-              <t.icon className="w-4 h-4" aria-hidden="true" />
+              <t.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Split pane */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        {/* Split pane — stacked on mobile (not squeezed side-by-side), with a
+            centered "VS" divider so the comparison still reads as a comparison
+            rather than two unrelated cards in a list. */}
+        <div className="grid sm:grid-cols-2 gap-4 relative">
           {/* AI side */}
           <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.04] p-5 overflow-hidden">
             <div className="mb-3"><VerdictLabel isAI /></div>
@@ -116,6 +124,14 @@ export default function AIvsRealSection() {
                 <p className="text-xs text-silver-600 mt-3">Synthetic {tab} — irregular spectral signature detected</p>
               </div>
             )}
+          </div>
+
+          {/* Mobile-only divider — removed from layout at sm+ (display:none), so it
+              never becomes a stray grid cell in the 2-column desktop layout. */}
+          <div className="sm:hidden flex items-center justify-center -my-1 relative z-10">
+            <span className="w-9 h-9 rounded-full bg-surface border border-white/[0.1] flex items-center justify-center text-[11px] font-bold text-silver-600 tracking-wide">
+              VS
+            </span>
           </div>
 
           {/* Human side */}

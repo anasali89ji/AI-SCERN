@@ -94,7 +94,7 @@ export default function HomePage() {
       <main id="main-content">
 
         {/* ══ HERO ══ */}
-        <section className="relative min-h-[100svh] flex items-center overflow-hidden pt-16 pb-16 sm:pb-20 bg-depth-bg">
+        <section className="relative min-h-[100svh] flex items-center overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-24 bg-depth-bg">
           {/* Base gradient backdrop */}
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-surface via-depth-bg to-surface" />
           {/* Single ambient orb, top-right — no particle fields, no mesh gradients */}
@@ -193,16 +193,16 @@ export default function HomePage() {
         <StatsRibbon />
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6">
+        <section id="tools" className="py-14 sm:py-28 lg:py-32 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Six Powerful Tools
               </p>
-              <h2 className="text-headline text-silver-900 mb-4">
+              <h2 className="text-headline text-silver-900 mb-3 sm:mb-4">
                 Attestation Tools
               </h2>
-              <p className="text-silver-600 text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-silver-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
                 Six attestation tools covering every content type. Each returns an integrity rating in under 3 seconds.
               </p>
             </div>
@@ -261,9 +261,9 @@ export default function HomePage() {
         <MethodologySection />
 
         {/* ══ REVIEWS ══ */}
-        <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
+        <section className="py-14 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8 sm:mb-12">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 User Stories
               </p>
@@ -290,9 +290,9 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES ══ */}
-        <section className="py-20 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
+        <section className="py-14 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Trust &amp; Accuracy
               </p>
@@ -301,7 +301,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10 sm:mb-14">
               {TRUST_FEATURES.map(({ icon: Icon, title, desc, wide, stat, statLabel, accent }, idx) => (
                 <motion.div
                   key={title}
