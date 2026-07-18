@@ -27,7 +27,7 @@ export default {
         return await handleScan(request, env);
       }
       if (path === '/chat' && request.method === 'POST') {
-        return await handleChat(request, env);
+        return await handleChat(request, env, ctx);
       }
       if (path === '/health' && request.method === 'GET') {
         return json({ status: 'ok', worker: 'detectai', timestamp: Date.now() });
@@ -61,7 +61,7 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
   });
 }
 
-async function handleChat(request: Request, env: Env): Promise<Response> {
+async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const body = await request.json().catch(() => ({}));
   const { messages } = body as any;
 
