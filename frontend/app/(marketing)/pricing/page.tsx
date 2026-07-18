@@ -163,15 +163,15 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-surface text-silver-700">
       <SiteNav />
-      <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
+      <main id="main-content" className="pt-24 pb-14 sm:pb-20 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
 
           {/* Header */}
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
               Transparent Pricing
             </p>
-            <h1 className="text-display text-silver-900 mb-4">
+            <h1 className="text-headline sm:text-display text-silver-900 mb-3 sm:mb-4">
               Simple, honest pricing
             </h1>
             <p className="text-lead text-silver-600 max-w-xl mx-auto">
@@ -209,7 +209,7 @@ export default function PricingPage() {
           </div>
 
           {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10 sm:mb-16">
             {TIERS.map(tier => (
               <div
                 key={tier.name}
@@ -272,12 +272,55 @@ export default function PricingPage() {
           </div>
 
           {/* Comparison table — sticky header */}
-          <div className="mb-16">
-            <h2 className="text-xl font-semibold text-silver-900 mb-6 flex items-center gap-2">
+          <div className="mb-10 sm:mb-16">
+            <h2 className="text-lg sm:text-xl font-semibold text-silver-900 mb-4 sm:mb-6 flex items-center gap-2">
               <Users className="w-5 h-5 text-accent" aria-hidden="true" />
               Full Feature Comparison
             </h2>
-            <div className="overflow-x-auto rounded-xl border border-white/[0.06] max-h-[420px] overflow-y-auto">
+
+            {/* Mobile (<640px): one card per tier instead of a 5-column table
+                squeezed into ~330px — a horizontally-scrolled table with
+                Enterprise's column cropped at the edge is exactly the kind
+                of thing that reads as "not finished" on a phone. */}
+            <div className="sm:hidden space-y-3">
+              {TIERS.map(t => (
+                <div
+                  key={t.name}
+                  className={cn(
+                    'rounded-xl border p-4',
+                    t.highlight ? 'border-accent/25 bg-accent/[0.04]' : 'border-white/[0.06] bg-surface',
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={cn('text-sm font-semibold', t.highlight ? 'text-accent' : 'text-silver-900')}>
+                      {t.name}
+                    </span>
+                    {t.highlight && (
+                      <span className="text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 rounded-full px-2 py-0.5">
+                        Most Popular
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-2">
+                    {FEATURE_ROWS.map(row => {
+                      const val = (t.limits as any)[row.key]
+                      const display = row.format ? row.format(val) : String(val)
+                      return (
+                        <li key={row.key} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="text-silver-600">{row.label}</span>
+                          <span className={cn('font-medium tabular-nums text-right', t.highlight ? 'text-accent' : 'text-silver-800')}>
+                            {display}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet & up: table */}
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-white/[0.06] max-h-[420px] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-10">
                   <tr className="border-b border-white/[0.06] bg-depth-bg">
@@ -318,7 +361,7 @@ export default function PricingPage() {
           </div>
 
           {/* Enterprise */}
-          <div className="mb-16 p-8 rounded-xl border border-white/[0.06] bg-depth-bg flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="mb-10 sm:mb-16 p-6 sm:p-8 rounded-xl border border-white/[0.06] bg-depth-bg flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surface-elevated border border-white/[0.08]">
                 <Building2 className="w-6 h-6 text-accent" aria-hidden="true" />
