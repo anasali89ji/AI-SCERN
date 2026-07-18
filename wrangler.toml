@@ -1,4 +1,4 @@
-name = "aiscern-worker"
+name = "detectai"
 main = "cloudflare-worker.ts"
 compatibility_date = "2026-07-18"
 
