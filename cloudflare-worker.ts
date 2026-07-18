@@ -5,6 +5,8 @@
 export interface Env {
   OPENROUTER_API_KEY?: string;
   GROQ_API_KEY?: string;
+  GEMINI_API_KEY?: string;
+  NVIDIA_API_KEY?: string;
 }
 
 const CORS_HEADERS = {
@@ -65,48 +67,81 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   const body = await request.json().catch(() => ({}));
   const { messages } = body as any;
 
-  const apiKey = env.OPENROUTER_API_KEY || env.GROQ_API_KEY;
-  
-  if (!apiKey) {
+  type Provider = { name: string; apiKey: string; upstream: string; model: string; extraHeaders?: Record<string, string> };
+
+  const providers: Provider[] = [];
+  if (env.GROQ_API_KEY) {
+    providers.push({
+      name: 'groq',
+      apiKey: env.GROQ_API_KEY,
+      upstream: 'https://api.groq.com/openai/v1/chat/completions',
+      model: 'llama-3.3-70b-versatile',
+    });
+  }
+  if (env.OPENROUTER_API_KEY) {
+    providers.push({
+      name: 'openrouter',
+      apiKey: env.OPENROUTER_API_KEY,
+      upstream: 'https://openrouter.ai/api/v1/chat/completions',
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      extraHeaders: { 'HTTP-Referer': 'https://aiscern.com', 'X-Title': 'Aiscern' },
+    });
+  }
+  if (env.GEMINI_API_KEY) {
+    providers.push({
+      name: 'gemini',
+      apiKey: env.GEMINI_API_KEY,
+      upstream: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      model: 'gemini-2.0-flash',
+    });
+  }
+  if (env.NVIDIA_API_KEY) {
+    providers.push({
+      name: 'nvidia',
+      apiKey: env.NVIDIA_API_KEY,
+      upstream: 'https://integrate.api.nvidia.com/v1/chat/completions',
+      model: 'meta/llama-3.3-70b-instruct',
+    });
+  }
+
+  if (!providers.length) {
     return json({
       text: "I'm ARIA, Aiscern's detection assistant. I can analyze text, images, audio, and video for AI-generated content. Upload a file or ask me anything about deepfake detection.",
       source: 'knowledge_base_fallback',
     });
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`,
-  };
+  let upstreamRes: Response | null = null;
+  let lastErr = '';
 
-  const model = env.GROQ_API_KEY 
-    ? 'llama-3.3-70b-versatile' 
-    : 'meta-llama/llama-3.3-70b-instruct:free';
+  for (const provider of providers) {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${provider.apiKey}`,
+      ...(provider.extraHeaders || {}),
+    };
 
-  if (!env.GROQ_API_KEY) {
-    headers['HTTP-Referer'] = 'https://aiscern.com';
-    headers['X-Title'] = 'Aiscern';
+    const res = await fetch(provider.upstream, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: provider.model,
+        messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (res.ok) {
+      upstreamRes = res;
+      break;
+    }
+    lastErr = `[${provider.name}] ${await res.text()}`;
   }
 
-  const upstream = env.GROQ_API_KEY
-    ? 'https://api.groq.com/openai/v1/chat/completions'
-    : 'https://openrouter.ai/api/v1/chat/completions';
-
-  const upstreamRes = await fetch(upstream, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      model,
-      messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
-      stream: true,
-      temperature: 0.7,
-      max_tokens: 2048,
-    }),
-  });
-
-  if (!upstreamRes.ok) {
-    const err = await upstreamRes.text();
-    return json({ error: `Upstream error: ${err}` }, 502);
+  if (!upstreamRes) {
+    return json({ error: `All providers failed. Last error: ${lastErr}` }, 502);
   }
 
   const { readable, writable } = new TransformStream();
