@@ -42,6 +42,159 @@ function avgSentenceLen(text: string) {
   return Math.round(words / sentences.length)
 }
 
+function ResultDetails({
+  result, paragraphScores, verdictStyles, verdictColor, displayName, pdfFile, text,
+  copyResult, exportReport, copied, onReset,
+}: {
+  result: DetectionResult
+  paragraphScores: { text: string; confidence: number; verdict: string }[]
+  verdictStyles: Record<Verdict, string>
+  verdictColor: Record<Verdict, string>
+  displayName: string | null
+  pdfFile: File | null
+  text: string
+  copyResult: () => void
+  exportReport: () => void
+  copied: boolean
+  onReset: () => void
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Verdict Banner */}
+      <div className={`card border ${verdictStyles[result.verdict]}`}>
+        {displayName && (
+          <div className="mb-3 text-xs font-medium text-silver-600">
+            Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
+            {pdfFile ? <> for <span className="text-white font-medium">"{pdfFile.name}"</span></> : text.trim() ? <> for your submitted text</> : null}:
+          </div>
+        )}
+        <div className="flex items-start gap-3 min-w-0">
+          <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
+            {result.verdict === 'AI'
+              ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-error" />
+              : result.verdict === 'HUMAN'
+              ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
+              : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-warning" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+              <h3 className={`text-base sm:text-2xl font-black ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
+                {displayName
+                  ? result.verdict === 'AI'
+                    ? `${displayName}, this is AI Generated`
+                    : result.verdict === 'HUMAN'
+                    ? `${displayName}, this is Human Written`
+                    : `${displayName}, this is Uncertain`
+                  : result.verdict === 'HUMAN' ? 'AUTHENTIC' : result.verdict === 'AI' ? 'SYNTHESIZED' : 'UNCERTAIN'}
+              </h3>
+              <div className="shrink-0">
+                <ConfidenceRing
+                  confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
+                  color={verdictConfig[result.verdict]?.hex ?? verdictConfig.UNCERTAIN.hex}
+                  size={64}
+                  strokeWidth={6}
+                />
+              </div>
+            </div>
+            <p className="text-silver-600 text-xs sm:text-sm leading-relaxed">{result.summary}</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex justify-between text-xs text-silver-600 mb-1.5">
+            <span>Human ←</span>
+            <span>→ AI</span>
+          </div>
+          <div className="h-2.5 bg-surface-elevated rounded-full overflow-hidden relative">
+            <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-warning to-error' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-accent/50 to-accent' : 'bg-gradient-to-r from-warning/50 to-warning'}`} style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Signals */}
+      <div className="card">
+        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-accent" />
+          Forensic Signals ({result.signals.length})
+        </h3>
+        <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
+          {result.signals.map((signal, i) => (
+            <div key={i} className="p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-error' : 'bg-accent'}`} />
+                <span className="text-sm text-silver-700 flex-1 font-medium">{signal.name}</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>
+                  {signal.weight}%
+                </span>
+              </div>
+              <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden ml-5">
+                <div className={`h-full rounded-full ${signal.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((signal.value ?? signal.weight ?? 0) <= 1 ? (signal.value ?? signal.weight ?? 0) * 100 : (signal.value ?? signal.weight ?? 0))}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sentence-level AI probability heatmap */}
+      {paragraphScores.length > 0 && (
+        <div className="card">
+          <h3 className="font-semibold text-white mb-1 flex items-center gap-2 text-sm">
+            <span className="w-2 h-2 rounded-full bg-error" />
+            Sentence Heatmap
+            <span className="text-xs font-normal text-silver-600 ml-1">— red = AI-likely, green = human-likely</span>
+          </h3>
+          <div className="text-sm text-silver-800 mb-3 leading-8 whitespace-pre-wrap break-words">
+            {paragraphScores.map((s, i) => {
+              const pct = s.confidence
+              const bg =
+                pct >= 80 ? 'bg-error/30 text-error' :
+                pct >= 60 ? 'bg-warning/20 text-warning' :
+                pct >= 40 ? 'bg-yellow-900/20 text-silver-700' :
+                            'bg-accent/10 text-accent'
+              return (
+                <span key={i} title={`${pct}% AI probability`}
+                  className={`${bg} rounded-md px-1 py-0.5 cursor-help transition-colors`}>
+                  {s.text.trim()}
+                </span>
+              )
+            }).reduce((acc: React.ReactNode[], el, i) => {
+              if (i > 0) acc.push(' ')
+              acc.push(el)
+              return acc
+            }, [])}
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            {[['bg-accent/10 text-accent','< 40% AI'],['bg-yellow-900/20 text-silver-700','40–59%'],['bg-warning/20 text-warning','60–79%'],['bg-error/30 text-error','≥ 80%']].map(([cls, label]) => (
+              <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Actions footer */}
+      <div className="card py-3 px-4 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+        <span className="text-xs text-silver-600 font-mono">{result.processing_time}ms</span>
+        <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
+          <button onClick={onReset}
+            className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
+            <RotateCcw className="w-3.5 h-3.5" /> Attest Another
+          </button>
+          <button onClick={copyResult}
+            className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
+            <Copy className="w-3.5 h-3.5" />
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <button onClick={exportReport}
+            className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
+            <Download className="w-3.5 h-3.5" />
+            Export
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TextDetectionPage() {
   const { user: currentUser } = useAuth()
   // Derive first name for personalized messages
@@ -403,140 +556,20 @@ Analyzed: ${new Date().toLocaleString()}`
             )}
 
             {result && !loading && (
-              <div className="space-y-4">
-                {/* Verdict Banner */}
-                <div className={`card border ${verdictStyles[result.verdict]}`}>
-                  {/* Personalized greeting */}
-                  {displayName && (
-                    <div className="mb-3 text-xs font-medium text-silver-600">
-                      Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
-                      {pdfFile ? <> for <span className="text-white font-medium">"{pdfFile.name}"</span></> : text.trim() ? <> for your submitted text</> : null}:
-                    </div>
-                  )}
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
-                      {result.verdict === 'AI'
-                        ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-error" />
-                        : result.verdict === 'HUMAN'
-                        ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
-                        : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-warning" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
-                        <h3 className={`text-base sm:text-2xl font-black ${verdictColor[result.verdict]} leading-tight shrink min-w-0`}>
-                          {displayName
-                            ? result.verdict === 'AI'
-                              ? `${displayName}, this is AI Generated`
-                              : result.verdict === 'HUMAN'
-                              ? `${displayName}, this is Human Written`
-                              : `${displayName}, this is Uncertain`
-                            : result.verdict === 'HUMAN' ? 'AUTHENTIC' : result.verdict === 'AI' ? 'SYNTHESIZED' : 'UNCERTAIN'}
-                        </h3>
-                        <div className="shrink-0">
-                          <ConfidenceRing
-                            confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
-                            color={verdictConfig[result.verdict]?.hex ?? verdictConfig.UNCERTAIN.hex}
-                            size={72}
-                            strokeWidth={6}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-silver-600 text-xs sm:text-sm leading-relaxed">{result.summary}</p>
-                    </div>
-                  </div>
-
-                  {/* Confidence bar */}
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs text-silver-600 mb-1.5">
-                      <span>Human ←</span>
-                      <span>→ AI</span>
-                    </div>
-                    <div className="h-2.5 bg-surface-elevated rounded-full overflow-hidden relative">
-                      <div className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-warning to-error' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-accent/50 to-accent' : 'bg-gradient-to-r from-warning/50 to-warning'}`} style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Signals */}
-                <div className="card">
-                  <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-accent" />
-                    Forensic Signals ({result.signals.length})
-                  </h3>
-                  <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
-                    {result.signals.map((signal, i) => (
-                      <div className="p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${signal.flagged ? 'bg-error' : 'bg-accent'}`} />
-                          <span className="text-sm text-silver-700 flex-1 font-medium">{signal.name}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${signal.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>
-                            {signal.weight}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden ml-5">
-                          <div className={`h-full rounded-full ${signal.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((signal.value ?? signal.weight ?? 0) <= 1 ? (signal.value ?? signal.weight ?? 0) * 100 : (signal.value ?? signal.weight ?? 0))}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* FIX B.6: Sentence-level AI probability heatmap */}
-                {paragraphScores.length > 0 && (
-                  <div className="card">
-                    <h3 className="font-semibold text-white mb-1 flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-error" />
-                      Sentence Heatmap
-                      <span className="text-xs font-normal text-silver-600 ml-1">— red = AI-likely, green = human-likely</span>
-                    </h3>
-                    <div className="text-sm text-silver-800 mb-3 leading-8 whitespace-pre-wrap break-words">
-                      {paragraphScores.map((s, i) => {
-                        const pct = s.confidence
-                        const bg =
-                          pct >= 80 ? 'bg-error/30 text-error' :
-                          pct >= 60 ? 'bg-warning/20 text-warning' :
-                          pct >= 40 ? 'bg-yellow-900/20 text-silver-700' :
-                                      'bg-accent/10 text-accent'
-                        return (
-                          <span key={i} title={`${pct}% AI probability`}
-                            className={`${bg} rounded-md px-1 py-0.5 cursor-help transition-colors`}>
-                            {s.text.trim()}
-                          </span>
-                        )
-                      }).reduce((acc: React.ReactNode[], el, i) => {
-                        if (i > 0) acc.push(' ')
-                        acc.push(el)
-                        return acc
-                      }, [])}
-                    </div>
-                    {/* Legend */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {[['bg-accent/10 text-accent','< 40% AI'],['bg-yellow-900/20 text-silver-700','40–59%'],['bg-warning/20 text-warning','60–79%'],['bg-error/30 text-error','≥ 80%']].map(([cls, label]) => (
-                        <span key={label} className={`text-xs px-2 py-0.5 rounded ${cls}`}>{label}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Actions footer */}
-                <div className="card py-3 px-4 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
-                  <span className="text-xs text-silver-600 font-mono">{result.processing_time}ms</span>
-                  <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
-                    <button onClick={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
-                      className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
-                      <RotateCcw className="w-3.5 h-3.5" /> Attest Another
-                    </button>
-                    <button onClick={copyResult}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
-                      <Copy className="w-3.5 h-3.5" />
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                    <button onClick={exportReport}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
-                      <Download className="w-3.5 h-3.5" />
-                      Export
-                    </button>
-                  </div>
-                </div>
+              <div className="hidden lg:block">
+                <ResultDetails
+                  result={result}
+                  paragraphScores={paragraphScores}
+                  verdictStyles={verdictStyles}
+                  verdictColor={verdictColor}
+                  displayName={displayName}
+                  pdfFile={pdfFile}
+                  text={text}
+                  copyResult={copyResult}
+                  exportReport={exportReport}
+                  copied={copied}
+                  onReset={() => { setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false) }}
+                />
               </div>
             )}
 
@@ -619,16 +652,25 @@ Analyzed: ${new Date().toLocaleString()}`
         </details>
       )}
     </div>
-    {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
+    {/* Mobile results — full parity with the desktop inline panel via ResultDetails,
+        so mobile isn't a stripped-down experience and nothing is duplicated. */}
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
       {result && (
-        <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-error/30 bg-error/5' : result.verdict === 'HUMAN' ? 'border-accent/30 bg-accent/5' : 'border-warning/20 bg-warning/5'} p-4 rounded-xl`}>
-            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human Written' : '⚠️ Uncertain'}</p>
-            <p className="text-silver-600 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-silver-700">{result.summary}</p>}
-          </div>
-        </div>
+        <ResultDetails
+          result={result}
+          paragraphScores={paragraphScores}
+          verdictStyles={verdictStyles}
+          verdictColor={verdictColor}
+          displayName={displayName}
+          pdfFile={pdfFile}
+          text={text}
+          copyResult={copyResult}
+          exportReport={exportReport}
+          copied={copied}
+          onReset={() => {
+            setText(''); setResult(null); setError(null); setPdfFile(null); setPdfMode(false); setShowMobileResult(false)
+          }}
+        />
       )}
     </MobileResultSheet>
   </>
