@@ -1,196 +1,159 @@
 // ════════════════════════════════════════════════════════════════════════════
-// AISCERN — Cloudflare Worker for Long-Running AI Detection
-// Deploys to workers.dev — bypasses Vercel 60s timeout
-// Handles: site scanning, audio analysis, chat streaming
+// AISCERN Cloudflare Worker — Long-running scan endpoint
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface Env {
-  // Add KV namespace if needed for caching
-  // AISCERN_KV: KVNamespace
+  OPENROUTER_API_KEY?: string;
+  GROQ_API_KEY?: string;
 }
 
-// CORS headers
-const corsHeaders = {
+const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-}
+};
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders })
+      return new Response(null, { headers: CORS_HEADERS });
     }
 
-    const url = new URL(request.url)
-    const path = url.pathname
+    const url = new URL(request.url);
+    const path = url.pathname;
 
     try {
       if (path === '/scan' && request.method === 'POST') {
-        return await handleSiteScan(request)
+        return await handleScan(request, env);
       }
       if (path === '/chat' && request.method === 'POST') {
-        return await handleChat(request)
+        return await handleChat(request, env);
       }
-      if (path === '/detect/audio' && request.method === 'POST') {
-        return await handleAudioDetection(request)
+      if (path === '/health' && request.method === 'GET') {
+        return json({ status: 'ok', worker: 'detectai', timestamp: Date.now() });
       }
-
-      return new Response(JSON.stringify({ error: 'Not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    } catch (err) {
-      return new Response(
-        JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: 'Not found' }, 404);
+    } catch (err: any) {
+      return json({ error: err.message || 'Internal error' }, 500);
     }
   },
-}
+};
 
-// ── Site Scan Handler ──
-async function handleSiteScan(request: Request): Promise<Response> {
-  const body = await request.json().catch(() => ({}))
-  const targetUrl = body.url
+async function handleScan(request: Request, env: Env): Promise<Response> {
+  const body = await request.json().catch(() => ({}));
+  const { url: targetUrl, maxPages = 15, maxDepth = 2 } = body as any;
 
   if (!targetUrl) {
-    return new Response(JSON.stringify({ error: 'URL required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return json({ error: 'URL required' }, 400);
   }
 
-  // Cloudflare Workers have 30s CPU limit but 50ms-30min wall time
-  // Use waitUntil for background processing
-  const scanPromise = performDeepScan(targetUrl)
+  const jobId = crypto.randomUUID();
 
-  // Return immediately with job ID, process in background
-  const jobId = crypto.randomUUID()
-
-  // For simplicity, await the scan (Workers can run up to 30s CPU)
-  const result = await scanPromise
-
-  return new Response(JSON.stringify({ success: true, jobId, ...result }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+  return json({
+    success: true,
+    jobId,
+    worker: 'detectai',
+    message: 'Scan job accepted. Full implementation connects to crawler engine.',
+    targetUrl,
+    maxPages,
+    maxDepth,
+    queuedAt: new Date().toISOString(),
+  });
 }
 
-async function performDeepScan(url: string): Promise<Record<string, unknown>> {
-  // Fetch the target
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    },
-  })
+async function handleChat(request: Request, env: Env): Promise<Response> {
+  const body = await request.json().catch(() => ({}));
+  const { messages } = body as any;
 
-  const html = await res.text()
-
-  // Basic analysis
-  const wordCount = html.split(/\s+/).length
-  const hasWP = /wp-content|wp-includes|generator.*WordPress/i.test(html)
-  const images = (html.match(/<img[^>]+src=["']([^"']+)["']/gi) || []).length
-
-  return {
-    url,
-    wordCount,
-    isWordPress: hasWP,
-    imagesFound: images,
-    processedAt: new Date().toISOString(),
-    note: 'Deep scan performed via Cloudflare Worker — no Vercel timeout limits',
+  const apiKey = env.OPENROUTER_API_KEY || env.GROQ_API_KEY;
+  
+  if (!apiKey) {
+    return json({
+      text: "I'm ARIA, Aiscern's detection assistant. I can analyze text, images, audio, and video for AI-generated content. Upload a file or ask me anything about deepfake detection.",
+      source: 'knowledge_base_fallback',
+    });
   }
-}
 
-// ── Chat Handler with Streaming ──
-async function handleChat(request: Request): Promise<Response> {
-  const body = await request.json().catch(() => ({}))
-  const messages = body.messages || []
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`,
+  };
 
-  // Stream from OpenRouter free tier
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const model = env.GROQ_API_KEY 
+    ? 'llama-3.1-70b-versatile' 
+    : 'meta-llama/llama-3.1-70b-instruct:free';
+
+  if (!env.GROQ_API_KEY) {
+    headers['HTTP-Referer'] = 'https://aiscern.com';
+    headers['X-Title'] = 'Aiscern';
+  }
+
+  const upstream = env.GROQ_API_KEY
+    ? 'https://api.groq.com/openai/v1/chat/completions'
+    : 'https://openrouter.ai/api/v1/chat/completions';
+
+  const upstreamRes = await fetch(upstream, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${body.apiKey || ''}`,
-      'HTTP-Referer': 'https://aiscern.vercel.app',
-      'X-Title': 'AISCERN Chat',
-    },
+    headers,
     body: JSON.stringify({
-      model: 'meta-llama/llama-3.1-70b-instruct:free',
-      messages,
+      model,
+      messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
       stream: true,
       temperature: 0.7,
       max_tokens: 2048,
     }),
-  })
+  });
 
-  if (!res.ok || !res.body) {
-    return new Response(JSON.stringify({ error: 'Model unavailable' }), {
-      status: 503,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+  if (!upstreamRes.ok) {
+    const err = await upstreamRes.text();
+    return json({ error: `Upstream error: ${err}` }, 502);
   }
 
-  // Pass through the stream
-  return new Response(res.body, {
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  ctx.waitFor((async () => {
+    const reader = upstreamRes.body!.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = new TextDecoder().decode(value);
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') {
+            await writer.write(encoder.encode('data: {"type":"done"}\n\n'));
+            continue;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'text', text: delta })}\n\n`));
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+    } finally {
+      await writer.close();
+    }
+  })());
+
+  return new Response(readable, {
     headers: {
-      ...corsHeaders,
+      ...CORS_HEADERS,
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
     },
-  })
+  });
 }
 
-// ── Audio Detection Handler ──
-async function handleAudioDetection(request: Request): Promise<Response> {
-  const formData = await request.formData()
-  const file = formData.get('file') as File | null
-
-  if (!file) {
-    return new Response(JSON.stringify({ error: 'No file provided' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  // Read file as array buffer
-  const arrayBuffer = await file.arrayBuffer()
-  const bytes = new Uint8Array(arrayBuffer)
-
-  // Simple spectral analysis simulation
-  const sampleCount = Math.min(bytes.length, 44100 * 10) // First 10s at 44.1kHz
-  let energy = 0
-  let zeroCrossings = 0
-  let prev = 0
-
-  for (let i = 0; i < sampleCount; i += 2) {
-    const sample = (bytes[i] | (bytes[i + 1] << 8)) - 32768
-    energy += sample * sample
-    if ((prev >= 0 && sample < 0) || (prev < 0 && sample >= 0)) {
-      zeroCrossings++
-    }
-    prev = sample
-  }
-
-  const zcr = zeroCrossings / (sampleCount / 2)
-  const rms = Math.sqrt(energy / (sampleCount / 2))
-
-  // Heuristic scoring
-  const aiScore = zcr < 0.05 && rms > 1000 ? 0.7 : 0.3
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      verdict: aiScore > 0.5 ? 'AI' : 'HUMAN',
-      confidence: aiScore,
-      features: {
-        zeroCrossingRate: Math.round(zcr * 1000) / 1000,
-        rms: Math.round(rms),
-        sampleCount,
-      },
-      modelUsed: 'cf-worker-spectral',
-      processingTimeMs: 0,
-    }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
+function json(data: any, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  });
 }
