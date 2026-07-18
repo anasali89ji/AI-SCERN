@@ -18,6 +18,8 @@ import {
 import HomepageReviews from '@/components/home/HomepageReviews'
 import WhoNeedsSection from '@/components/home/WhoNeedsSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
+import ComparisonSection from '@/components/home/ComparisonSection'
+import { FAQSection } from '@/components/home/FAQSection'
 import { MethodologySection } from '@/components/home/MethodologySection'
 import { CTASection } from '@/components/home/CTASection'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
@@ -257,6 +259,11 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ══ COMPARISON ══ */}
+        <ErrorBoundary>
+          <ComparisonSection />
+        </ErrorBoundary>
+
         {/* ══ METHODOLOGY (Module 3.3) — replaces the old static How It Works block ══ */}
         <MethodologySection />
 
@@ -362,6 +369,11 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ══ FAQ — matches the FAQPage JSON-LD above, which previously had no visible UI ══ */}
+        <ErrorBoundary>
+          <FAQSection />
+        </ErrorBoundary>
 
         {/* ══ CTA (Module 3.5) ══ */}
         <CTASection />
