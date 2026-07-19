@@ -148,7 +148,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
-  ctx.waitFor((async () => {
+  ctx.waitUntil((async () => {
     const reader = upstreamRes.body!.getReader();
     try {
       while (true) {

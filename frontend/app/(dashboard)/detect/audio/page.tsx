@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { uploadToR2WithProgress } from "@/lib/storage/upload-with-progress"
 import {
   Mic,
   Upload,
@@ -105,26 +106,56 @@ export default function AudioDetectionPage() {
     startAnalysisAnimation()
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      let r2Key: string | null = null
 
-      const res = await fetch("/api/detect/audio", {
-        method: "POST",
-        body: formData,
-      })
+      // Try R2 presigned upload first (bypasses Vercel's 4.5MB request body
+      // limit — audio files routinely exceed that, which is what was causing
+      // "Failed to fetch" on anything longer than a few seconds of audio).
+      try {
+        const presignCtrl = new AbortController()
+        const presignTimer = setTimeout(() => presignCtrl.abort(), 5000)
+        const presignRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size, mediaType: "audio" }),
+          signal: presignCtrl.signal,
+        })
+        clearTimeout(presignTimer)
+        const presignData = await presignRes.json()
+        if (presignData.success && presignData.uploadUrl) {
+          await uploadToR2WithProgress(presignData.uploadUrl, file, () => {})
+          r2Key = presignData.key
+        }
+      } catch { /* fallback to direct upload — R2 slow or unavailable */ }
+
+      let res: Response
+      if (r2Key) {
+        res = await fetch("/api/detect/audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ r2Key, fileName: file.name, fileSize: file.size, format: file.name.split(".").pop() }),
+        })
+      } else {
+        const formData = new FormData()
+        formData.append("file", file)
+        res = await fetch("/api/detect/audio", {
+          method: "POST",
+          body: formData,
+        })
+      }
 
       stopAnalysisAnimation()
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || `Server error ${res.status}`)
+        throw new Error(err.error?.message || err.error || `Server error ${res.status}`)
       }
 
       const data = await res.json()
       if (data.success) {
-        setResult(data)
+        setResult(data.result)
       } else {
-        throw new Error(data.error || "Analysis failed")
+        throw new Error(data.error?.message || data.error || "Analysis failed")
       }
     } catch (err: any) {
       stopAnalysisAnimation()
