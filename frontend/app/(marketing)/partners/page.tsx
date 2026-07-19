@@ -41,20 +41,20 @@ export default function PartnersPage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-20 md:py-28 relative overflow-hidden">
+        <section className="pt-10 pb-14 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <Handshake className="w-3.5 h-3.5" />
               Partner Program
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
               Build on Aiscern.<br /><span className="text-[#2BEE34]">Grow Together.</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
               Integrate multi-modal AI attestation into your platform, resell to your clients, or collaborate on research. We&apos;re building the trust infrastructure for the AI age — join us.
             </p>
-            <a href="mailto:partners@aiscern.com" className="btn-primary inline-flex items-center gap-2">
+            <a href="mailto:partners@aiscern.com" className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2">
               <Mail className="w-4 h-4" /> Apply to Partner Program
             </a>
           </div>
@@ -101,9 +101,9 @@ export default function PartnersPage() {
                 <p className="text-[#6B6B6B] text-sm leading-relaxed mb-5">
                   Every attestation capability is available via our documented REST API. Text, image, audio, and video attestation endpoints with structured JSON responses. SDKs and code examples available in the docs.
                 </p>
-                <div className="flex gap-3 flex-wrap">
-                  <Link href="/docs/api" className="btn-primary text-sm">API Documentation <ArrowRight className="w-4 h-4" /></Link>
-                  <Link href="/pricing" className="btn-secondary text-sm">API Pricing</Link>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/docs/api" className="btn-primary text-sm w-full sm:w-auto justify-center">API Documentation <ArrowRight className="w-4 h-4" /></Link>
+                  <Link href="/pricing" className="btn-secondary text-sm w-full sm:w-auto justify-center">API Pricing</Link>
                 </div>
               </div>
               <div className="flex-shrink-0 w-full lg:w-auto">
@@ -137,7 +137,7 @@ X-API-Key: your-key
           <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl font-black text-white mb-4">Ready to partner with Aiscern?</h2>
             <p className="text-[#A3A3A3] mb-6 text-sm">Tell us about your platform, use case, and expected volume. We&apos;ll respond within 2 business days.</p>
-            <a href="mailto:partners@aiscern.com?subject=Partnership Inquiry" className="btn-primary inline-flex items-center gap-2">
+            <a href="mailto:partners@aiscern.com?subject=Partnership Inquiry" className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2">
               <Mail className="w-4 h-4" /> Email partners@aiscern.com
             </a>
           </div>
