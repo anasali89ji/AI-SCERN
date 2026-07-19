@@ -75,7 +75,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
       name: 'groq',
       apiKey: env.GROQ_API_KEY,
       upstream: 'https://api.groq.com/openai/v1/chat/completions',
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
     });
   }
   if (env.OPENROUTER_API_KEY) {
@@ -112,7 +112,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   }
 
   let upstreamRes: Response | null = null;
-  let lastErr = '';
+  const errors: string[] = [];
 
   for (const provider of providers) {
     const headers: Record<string, string> = {
@@ -121,27 +121,33 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
       ...(provider.extraHeaders || {}),
     };
 
-    const res = await fetch(provider.upstream, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: provider.model,
-        messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 2048,
-      }),
-    });
+    try {
+      const res = await fetch(provider.upstream, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: provider.model,
+          messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 2048,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
 
-    if (res.ok) {
-      upstreamRes = res;
-      break;
+      if (res.ok) {
+        upstreamRes = res;
+        break;
+      }
+      errors.push(`[${provider.name}] HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    } catch (err: any) {
+      errors.push(`[${provider.name}] ${err.name === 'TimeoutError' ? 'timed out after 15s' : (err.message || String(err))}`);
     }
-    lastErr = `[${provider.name}] ${await res.text()}`;
   }
 
   if (!upstreamRes) {
-    return json({ error: `All providers failed. Last error: ${lastErr}` }, 502);
+    console.error('[handleChat] All providers failed:', errors.join(' | '));
+    return json({ error: `All providers failed.`, details: errors }, 502);
   }
 
   const { readable, writable } = new TransformStream();
