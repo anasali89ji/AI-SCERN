@@ -151,6 +151,119 @@ function FrameStrip({
   )
 }
 
+function ResultDetails({
+  result, cfg, displayName, file, exportReport, duration,
+}: {
+  result: DetectionResult
+  cfg: NonNullable<ReturnType<typeof getCfg>>
+  displayName: string | null
+  file: File | null
+  exportReport: () => void
+  duration: number
+}) {
+  return (
+    <div className="space-y-4 w-full min-w-0">
+      {/* Verdict card */}
+      <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
+        {displayName && (
+          <div className="mb-3 text-xs font-medium text-silver-600">
+            Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
+            {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
+          </div>
+        )}
+        <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+          <ConfidenceRing
+            confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
+            color={cfg.hex}
+            size={64}
+            strokeWidth={5}
+          />
+          <div className="flex-1 min-w-0">
+            <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>
+              {displayName
+                ? result.verdict === 'AI' ? `${displayName}, this video is AI Generated`
+                  : result.verdict === 'HUMAN' ? `${displayName}, this is an Authentic Video`
+                  : `${displayName}, this video is Uncertain`
+                : cfg.label}
+            </h3>
+            <p className="text-silver-600 text-sm leading-relaxed">{result.summary}</p>
+          </div>
+        </div>
+
+        {/* Confidence bar */}
+        <div className="mt-5">
+          <div className="flex items-center justify-between text-xs text-silver-600 mb-2 gap-2">
+            <span className="shrink-0">Confidence</span>
+            <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
+          </div>
+          <div className="h-2.5 sm:h-3 bg-surface-elevated rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
+          </div>
+        </div>
+
+        {/* Frame timeline */}
+        {result.frame_scores && result.frame_scores.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs text-silver-600 mb-2 font-medium">Per-Frame AI Probability Timeline</p>
+            <div className="flex items-end gap-1 h-12">
+              {result.frame_scores.map((fs, i) => (
+                <div key={i} className={`flex-1 rounded-sm transition-all ${
+                    fs.ai_score > 0.62 ? 'bg-error' :
+                    fs.ai_score > 0.45 ? 'bg-warning' : 'bg-accent'
+                  }`} style={{ height: `${Math.round(fs.ai_score * 100)}%` }} />
+              ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-silver-600 mt-1">
+              <span>0s</span>
+              <span>{duration > 0 ? formatDur(duration) : '—'}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Detection signals */}
+      <div className="card">
+        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-silver-400" />
+          Forensic Signals ({result.signals.length})
+        </h3>
+        <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
+          {result.signals.map((s, i) => (
+            <div key={i} className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
+              <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-error' : 'bg-accent'}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between mb-1 gap-2">
+                  <span className="text-xs sm:text-sm text-silver-700 font-medium truncate">{s.name}</span>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
+                    ${s.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>
+                    {s.weight}%
+                  </span>
+                </div>
+                <p className="text-xs text-silver-600 truncate">{s.description}</p>
+                <div className="h-1 bg-surface-elevated rounded-full mt-1.5 overflow-hidden">
+                  <div className={`h-full rounded-full ${s.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-xs text-silver-600 font-mono truncate">
+          {result.processing_time}ms
+        </span>
+        <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+          <Download className="w-3.5 h-3.5" /> Export Report
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function getCfg(v: Verdict) { return verdictConfig[v] }
+
 function VideoDetectionPage() {
   const { user: currentUser } = useAuth()
   const displayName: string | null =
@@ -486,102 +599,8 @@ function VideoDetectionPage() {
         {/* Right: Results */}
         <div className="space-y-4">
           {result && cfg ? (
-            <div className="space-y-4 w-full min-w-0">
-              {/* Verdict card */}
-              <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
-                {displayName && (
-                  <div className="mb-3 text-xs font-medium text-silver-600">
-                    Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
-                    {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
-                  </div>
-                )}
-                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-                  <ConfidenceRing
-                    confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
-                    color={cfg.hex}
-                    size={64}
-                    strokeWidth={5}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>
-                      {displayName
-                        ? result.verdict === 'AI' ? `${displayName}, this video is AI Generated`
-                          : result.verdict === 'HUMAN' ? `${displayName}, this is an Authentic Video`
-                          : `${displayName}, this video is Uncertain`
-                        : cfg.label}
-                    </h3>
-                    <p className="text-silver-600 text-sm leading-relaxed">{result.summary}</p>
-                  </div>
-                </div>
-
-                {/* Confidence bar */}
-                <div className="mt-5">
-                  <div className="flex items-center justify-between text-xs text-silver-600 mb-2 gap-2">
-                    <span className="shrink-0">Confidence</span>
-                    <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
-                  </div>
-                  <div className="h-2.5 sm:h-3 bg-surface-elevated rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
-                  </div>
-                </div>
-
-                {/* Frame timeline */}
-                {result.frame_scores && result.frame_scores.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs text-silver-600 mb-2 font-medium">Per-Frame AI Probability Timeline</p>
-                    <div className="flex items-end gap-1 h-12">
-                      {result.frame_scores.map((fs, i) => (
-                        <div className={`flex-1 rounded-sm transition-all ${
-                            fs.ai_score > 0.62 ? 'bg-error' :
-                            fs.ai_score > 0.45 ? 'bg-warning' : 'bg-accent'
-                          }`} style={{ height: `${Math.round(fs.ai_score * 100)}%` }} />
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-[10px] text-silver-600 mt-1">
-                      <span>0s</span>
-                      <span>{duration > 0 ? formatDur(duration) : '—'}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Detection signals */}
-              <div className="card">
-                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-silver-400" />
-                  Forensic Signals ({result.signals.length})
-                </h3>
-                <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
-                  {result.signals.map((s, i) => (
-                    <div className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-error' : 'bg-accent'}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between mb-1 gap-2">
-                          <span className="text-xs sm:text-sm text-silver-700 font-medium truncate">{s.name}</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0
-                            ${s.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>
-                            {s.weight}%
-                          </span>
-                        </div>
-                        <p className="text-xs text-silver-600 truncate">{s.description}</p>
-                        <div className="h-1 bg-surface-elevated rounded-full mt-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${s.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs text-silver-600 font-mono truncate">
-                  {result.processing_time}ms
-                </span>
-                <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-                  <Download className="w-3.5 h-3.5" /> Export Report
-                </button>
-              </div>
+            <div className="hidden lg:block">
+              <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
             </div>
           ) : !loading && (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
@@ -654,14 +673,8 @@ function VideoDetectionPage() {
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
     <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
-      {result && (
-        <div className="space-y-4 pb-4">
-          <div className={`card border ${result.verdict === 'AI' ? 'border-error/30 bg-error/5' : result.verdict === 'HUMAN' ? 'border-accent/30 bg-accent/5' : 'border-warning/20 bg-warning/5'} p-4 rounded-xl`}>
-            <p className="font-black text-xl">{result.verdict === 'AI' ? '🤖 AI Generated' : result.verdict === 'HUMAN' ? '✅ Human' : '⚠️ Uncertain'}</p>
-            <p className="text-silver-600 text-sm mt-1">{formatConfidence(result.confidence)} confidence</p>
-            {result.summary && <p className="text-sm mt-2 text-silver-700">{result.summary}</p>}
-          </div>
-        </div>
+      {result && cfg && (
+        <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
       )}
     </MobileResultSheet>
   </>
