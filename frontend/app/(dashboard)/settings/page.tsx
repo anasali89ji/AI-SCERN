@@ -35,7 +35,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
   icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-[#1E1E1E] last:border-0 gap-4">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-[#1E1E1E] last:border-0 gap-3 sm:gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
           <Icon className="w-4 h-4 text-[#2BEE34]" />
@@ -48,7 +48,8 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
           {description && <p className="text-xs text-[#6B6B6B] mt-0.5 leading-relaxed">{description}</p>}
         </div>
       </div>
-      <div className="flex-shrink-0">{action}</div>
+      {/* pl-11 on mobile aligns the action under the label text (matches icon width + gap), not under the icon itself */}
+      <div className="flex-shrink-0 pl-11 sm:pl-0">{action}</div>
     </div>
   )
 }
