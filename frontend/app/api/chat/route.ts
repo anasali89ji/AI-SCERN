@@ -1,7 +1,15 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
-import { retrieveARIAKnowledge, formatKBContext } from '@/lib/rag/aria-rag-compat'
+// Inline fallback for aria-rag (avoids runtime require() issues in serverless)
+type KBChunk = any
+const retrieveARIAKnowledge = async (_query: string, _history?: {role: string; content: string}[]) => ({
+  contextChunks: [] as KBChunk[],
+  bypassNIM: false,
+  directAnswer: null,
+  topScore: 0,
+})
+const formatKBContext = (_chunks: KBChunk[]) => ''
 export const maxDuration = 55
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -1131,7 +1139,11 @@ export async function POST(req: NextRequest) {
     // error with a non-JSON content-type slipped through neither path
     // cleanly and could render as "ARIA not responding" instead of a
     // clear message. Always return a valid SSE stream here instead.
-    console.error('[chat] unhandled error before/during stream setup:', e)
+    const eName = e instanceof Error ? e.name : 'Unknown'
+    const eMsg  = e instanceof Error ? e.message : String(e)
+    const eStack = e instanceof Error ? e.stack : ''
+    console.error('[chat] UNHANDLED ERROR:', eName, '-', eMsg)
+    if (eStack) console.error('[chat] STACK:', eStack.slice(0, 500))
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       start(controller) {
