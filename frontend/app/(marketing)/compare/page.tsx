@@ -56,17 +56,17 @@ export default function ComparePage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
+        <section className="pt-10 pb-14 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <Zap className="w-3.5 h-3.5" />
               Comparison
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
               How Aiscern Compares<br /><span className="text-[#2BEE34]">to Other Detectors</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto">
               Most AI detectors only handle text. Aiscern is the only free-tier detector with multi-modal coverage across text, image, audio, and video.
             </p>
           </div>
@@ -75,7 +75,39 @@ export default function ComparePage() {
         {/* Comparison Table */}
         <section className="pb-16">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="overflow-x-auto rounded-xl border border-[#1E1E1E]">
+            {/* Mobile (<640px): one card per competitor. A 5-column table forced into
+                min-w-[640px] just scrolls horizontally past the edge on any phone --
+                cards keep each competitor's checks/crosses legible without scrolling. */}
+            <div className="sm:hidden space-y-3">
+              {([
+                { key: 'aiscern' as const,     label: 'Aiscern',        sub: 'Free tier available', highlight: true },
+                { key: 'gptzero' as const,     label: 'GPTZero',        sub: 'From $10/mo' },
+                { key: 'zerogpt' as const,     label: 'ZeroGPT',        sub: 'Free / paid' },
+                { key: 'originality' as const, label: 'Originality.ai', sub: 'Pay-per-credit' },
+              ]).map(col => (
+                <div key={col.key} className={`rounded-xl border p-4 ${col.highlight ? 'border-[#2BEE34]/25 bg-[#2BEE34]/[0.04]' : 'border-[#1E1E1E] bg-surface/10'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className={`text-sm font-bold ${col.highlight ? 'text-[#2BEE34]' : 'text-white'}`}>{col.label}</span>
+                      <p className="text-[10px] text-[#6B6B6B]">{col.sub}</p>
+                    </div>
+                    {col.highlight && (
+                      <span className="text-[10px] font-bold text-[#2BEE34] bg-[#2BEE34]/10 border border-[#2BEE34]/20 rounded-full px-2 py-0.5">Our pick</span>
+                    )}
+                  </div>
+                  <ul className="space-y-2">
+                    {ROWS.map(row => (
+                      <li key={row.feature} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-[#A3A3A3]">{row.feature}</span>
+                        <Cell value={row[col.key]} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#1E1E1E]">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b border-[#1E1E1E] bg-surface/60">
@@ -111,6 +143,7 @@ export default function ComparePage() {
                 </tbody>
               </table>
             </div>
+            </div>
             <p className="text-xs text-[#6B6B6B] mt-3 text-center">
               Competitor data based on publicly available information as of June 2026. Accuracy figures are approximate and vary by dataset. See{' '}
               <Link href="/benchmarks" className="text-[#2BEE34] hover:underline">our benchmarks</Link> for Aiscern&apos;s measured performance.
@@ -143,11 +176,11 @@ export default function ComparePage() {
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-black text-white mb-4">Try it yourself — free</h2>
             <p className="text-[#A3A3A3] mb-6 text-sm">No credit card required. Run your first attestation in under 60 seconds.</p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/detect/text" className="btn-primary">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/detect/text" className="btn-primary w-full sm:w-auto justify-center">
                 Start Free Attestation <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/pricing" className="btn-secondary">View Pricing</Link>
+              <Link href="/pricing" className="btn-secondary w-full sm:w-auto justify-center">View Pricing</Link>
             </div>
           </div>
         </section>
