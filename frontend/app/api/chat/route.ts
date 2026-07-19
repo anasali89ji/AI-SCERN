@@ -3,7 +3,13 @@ import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 // Inline fallback for aria-rag (avoids runtime require() issues in serverless)
 type KBChunk = any
-const retrieveARIAKnowledge = async (_query: string, _history?: {role: string; content: string}[]) => ({
+interface RAGResult {
+  contextChunks: KBChunk[]
+  bypassNIM: boolean
+  directAnswer: string | null
+  topScore: number
+}
+const retrieveARIAKnowledge = async (_query: string, _history?: {role: string; content: string}[]): Promise<RAGResult> => ({
   contextChunks: [] as KBChunk[],
   bypassNIM: false,
   directAnswer: null,
