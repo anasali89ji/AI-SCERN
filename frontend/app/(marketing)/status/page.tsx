@@ -34,7 +34,7 @@ export default function StatusPage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-16 md:py-20">
+        <section className="pt-10 pb-12 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10 text-center">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6 ${
               allOperational
@@ -47,7 +47,7 @@ export default function StatusPage() {
                 <><AlertTriangle className="w-4 h-4" /> Service Degradation Detected</>
               )}
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4">System Status</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">System Status</h1>
             <p className="text-[#A3A3A3]">
               Real-time operational status for all Aiscern services.
               Last checked: {new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}
@@ -61,15 +61,15 @@ export default function StatusPage() {
             <h2 className="text-sm font-bold text-[#6B6B6B] uppercase tracking-widest mb-4">Services</h2>
             <div className="card border border-[#1E1E1E] rounded-xl divide-y divide-border/40">
               {SERVICES.map((service, i) => (
-                <div key={i} className="flex items-center justify-between px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="relative flex h-2.5 w-2.5">
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-5 py-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="relative flex h-2.5 w-2.5 shrink-0">
                       
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                     </span>
-                    <span className="text-sm font-medium text-white">{service.name}</span>
+                    <span className="text-sm font-medium text-white truncate">{service.name}</span>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 pl-[22px] sm:pl-0 shrink-0">
                     <span className="text-xs text-[#6B6B6B] flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {service.latency}
                     </span>
