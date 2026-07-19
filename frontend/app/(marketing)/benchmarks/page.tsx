@@ -54,7 +54,38 @@ const DATASETS = [
 
 function BenchTable({ rows }: { rows: { model: string; auc: number; precision: number; recall: number; f1: number; fpr: number }[] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#1E1E1E]">
+    <>
+      {/* Mobile (<640px): one card per model — a 6-column table (Model + 5 metrics)
+          only has overflow-x-auto with no fallback, so the model name scrolls
+          off-screen from the numbers it describes. Cards keep name and metrics
+          in the same view. */}
+      <div className="sm:hidden space-y-2.5">
+        {rows.map((row, i) => {
+          const isEnsemble = row.model.startsWith('Ensemble')
+          return (
+            <div key={i} className={`rounded-xl border p-4 ${isEnsemble ? 'bg-[#2BEE34]/5 border-[#2BEE34]/20' : 'bg-[#141414] border-[#1E1E1E]'}`}>
+              <p className={`text-sm font-medium mb-3 ${isEnsemble ? 'text-[#2BEE34]' : 'text-[#E5E5E5]'}`}>{row.model}</p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: 'AUC-ROC',   value: row.auc.toFixed(2), accent: isEnsemble },
+                  { label: 'Precision', value: `${(row.precision*100).toFixed(1)}%` },
+                  { label: 'Recall',    value: `${(row.recall*100).toFixed(1)}%` },
+                  { label: 'F1',        value: row.f1.toFixed(3) },
+                  { label: 'FPR',       value: `${(row.fpr*100).toFixed(1)}%`, warn: true },
+                ].map(m => (
+                  <div key={m.label} className="bg-[#0A0A0A] rounded-lg py-2 px-1">
+                    <p className={`text-sm font-bold tabular-nums ${m.warn ? 'text-[#FFB800]' : m.accent ? 'text-[#2BEE34]' : 'text-[#E5E5E5]'}`}>{m.value}</p>
+                    <p className="text-[9px] text-[#6B6B6B] uppercase tracking-wide mt-0.5">{m.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Tablet & up: table */}
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#1E1E1E]">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
@@ -92,7 +123,8 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -111,21 +143,21 @@ export default function BenchmarksPage() {
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
               Transparency
             </p>
-            <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
+            <h1 className="text-[32px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-3 sm:mb-4">
               Accuracy Benchmarks
             </h1>
-            <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[#A3A3A3] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               AUC-ROC, precision, recall, F1, and false-positive rates across all modalities.
               Measured on held-out test sets from public benchmark datasets.
             </p>
           </div>
 
           {/* Disclaimer */}
-          <div className="flex gap-3 p-4 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl mb-10 text-sm text-[#A3A3A3]">
+          <div className="flex gap-3 p-4 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl mb-8 sm:mb-10 text-sm text-[#A3A3A3]">
             <Info className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
             <p>
               All figures are from held-out test sets — not cherry-picked. Results vary by content type, AI generator, compression level, and whether content has been edited after AI generation.
