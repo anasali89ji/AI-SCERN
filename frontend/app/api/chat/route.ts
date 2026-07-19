@@ -895,7 +895,6 @@ export async function POST(req: NextRequest) {
           // FIX B.2: Send thinking indicator before NVIDIA fetch so the UI can
           // show "Connecting to ARIA…" during cold-start delays (30-60s on NIM).
           // The client must cancel this state on the first 'text' chunk it receives.
-          console.log('[chat] stream started, modelChain:', modelChain)
           send({ type: 'thinking', message: 'Connecting to ARIA…' })
 
           // Low-latency fix: use the small/fast model for ordinary
