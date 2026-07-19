@@ -2,11 +2,16 @@
 // AISCERN Cloudflare Worker — Long-running scan endpoint
 // ════════════════════════════════════════════════════════════════════════════
 
+interface WorkersAIBinding {
+  run(model: string, inputs: Record<string, unknown>): Promise<any>;
+}
+
 export interface Env {
   OPENROUTER_API_KEY?: string;
   GROQ_API_KEY?: string;
   GEMINI_API_KEY?: string;
   NVIDIA_API_KEY?: string;
+  AI: WorkersAIBinding; // Workers AI binding — no API key, no cold start, always available
 }
 
 const CORS_HEADERS = {
@@ -104,13 +109,6 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     });
   }
 
-  if (!providers.length) {
-    return json({
-      text: "I'm ARIA, Aiscern's detection assistant. I can analyze text, images, audio, and video for AI-generated content. Upload a file or ask me anything about deepfake detection.",
-      source: 'knowledge_base_fallback',
-    });
-  }
-
   let upstreamRes: Response | null = null;
   const errors: string[] = [];
 
@@ -146,8 +144,55 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
   }
 
   if (!upstreamRes) {
-    console.error('[handleChat] All providers failed:', errors.join(' | '));
-    return json({ error: `All providers failed.`, details: errors }, 502);
+    console.error('[handleChat] All external providers failed:', errors.join(' | '));
+
+    // ── Final fallback: Workers AI (Cloudflare's own edge inference) ────────
+    // No API key to misconfigure, no cold start, no external rate limit —
+    // this only fails if the account itself has no Workers AI access.
+    try {
+      const aiResult: any = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-awq', {
+        messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
+        max_tokens: 1024,
+      });
+
+      const text: string = aiResult?.response || '';
+      if (!text) throw new Error('Workers AI returned an empty response');
+
+      // Not natively streamed here (avoids depending on Workers AI's raw SSE
+      // chunk shape, which differs from the OpenAI delta shape the other
+      // four providers use) — instead we chunk the completed text ourselves
+      // so the frontend's existing SSE parser works unchanged either way.
+      const { readable, writable } = new TransformStream();
+      const writer = writable.getWriter();
+      const encoder = new TextEncoder();
+
+      ctx.waitUntil((async () => {
+        const words = text.split(' ');
+        try {
+          for (let i = 0; i < words.length; i++) {
+            const chunk = words[i] + (i < words.length - 1 ? ' ' : '');
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`));
+          }
+          await writer.write(encoder.encode('data: {"type":"done"}\n\n'));
+        } finally {
+          await writer.close();
+        }
+      })());
+
+      return new Response(readable, {
+        headers: {
+          ...CORS_HEADERS,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Chat-Provider': 'workers-ai-fallback',
+        },
+      });
+    } catch (err: any) {
+      errors.push(`[workers-ai] ${err.message || String(err)}`);
+      console.error('[handleChat] Workers AI fallback also failed:', err);
+      return json({ error: 'All providers failed.', details: errors }, 502);
+    }
   }
 
   const { readable, writable } = new TransformStream();
