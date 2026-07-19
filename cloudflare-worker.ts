@@ -150,7 +150,7 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
     // No API key to misconfigure, no cold start, no external rate limit —
     // this only fails if the account itself has no Workers AI access.
     try {
-      const aiResult: any = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-awq', {
+      const aiResult: any = await env.AI.run('@cf/zai-org/glm-4.7-flash', {
         messages: messages?.map((m: any) => ({ role: m.role, content: m.content })) || [],
         max_tokens: 1024,
       });
