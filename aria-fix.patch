@@ -1,0 +1,149 @@
+diff --git a/frontend/app/(dashboard)/chat/page.tsx b/frontend/app/(dashboard)/chat/page.tsx
+index 22207cc..1a60d5d 100644
+--- a/frontend/app/(dashboard)/chat/page.tsx
++++ b/frontend/app/(dashboard)/chat/page.tsx
+@@ -614,14 +614,34 @@ export default function ChatPage() {
+           for(const line of block.split('\n')){
+             if(!line.startsWith('data: ')) continue
+             const raw = line.slice(6).trim()
+-            if(!raw || raw==='[DONE]') continue
++            if(!raw) continue
+             try{
+               const ev = JSON.parse(raw)
+-              // FIX B.2: 'thinking' event sets isThinking flag; cleared on first 'text' chunk
+-              if(ev.type==='thinking')    setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:true}:m)}:c))
+-              if(ev.type==='text')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,content:m.content+ev.text}:m)}:c))
+-              if(ev.type==='tool_result') setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,toolEvents:[...(m.toolEvents||[]).filter(t=>t.tool!==ev.tool),{tool:ev.tool,status:'done',result:ev.result}]}:m)}:c))
+-              if(ev.type==='done')        setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,isStreaming:false}:m),updatedAt:now()}:c))
++
++              // ── ARIA format (transformed backend) ──────────────────────────
++              if(ev.type==='thinking'){
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:true}:m)}:c))
++              }
++              if(ev.type==='text'){
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,content:m.content+ev.text}:m)}:c))
++              }
++              if(ev.type==='tool_result'){
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,toolEvents:[...(m.toolEvents||[]).filter(t=>t.tool!==ev.tool),{tool:ev.tool,status:'done',result:ev.result}]}:m)}:c))
++              }
++              if(ev.type==='done'){
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,isStreaming:false}:m),updatedAt:now()}:c))
++              }
++
++              // ── RAW NVIDIA format (fallback for stale deployments / direct NIM) ──
++              if(ev.choices && ev.choices[0]?.delta?.content){
++                const chunk = ev.choices[0].delta.content
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,content:m.content+chunk}:m)}:c))
++              }
++
++              // ── End-of-stream marker (raw OpenAI/NVIDIA format) ────────────
++              if(raw === '[DONE]'){
++                setChats(p=>p.map(c=>c.id===chatId?{...c,messages:c.messages.map(m=>m.id===aid?{...m,isThinking:false,isStreaming:false}:m),updatedAt:now()}:c))
++              }
+             }catch(_){ /* skip malformed SSE */ }
+           }
+         }
+diff --git a/frontend/app/api/chat/health/route.ts b/frontend/app/api/chat/health/route.ts
+new file mode 100644
+index 0000000..41a71b6
+--- /dev/null
++++ b/frontend/app/api/chat/health/route.ts
+@@ -0,0 +1,52 @@
++import { NextResponse } from 'next/server'
++
++const NVIDIA_BASE = 'https://integrate.api.nvidia.com/v1'
++
++export async function GET() {
++  const apiKey = process.env.NVIDIA_API_KEY || ''
++  const apiKeyFallback = process.env.NVIDIA_API_KEY_FALLBACK || process.env.NVIDIA_API_KEY_2 || ''
++
++  const checks: Record<string, any> = {
++    timestamp: new Date().toISOString(),
++    nvidia_primary_key_set: !!apiKey,
++    nvidia_fallback_key_set: !!apiKeyFallback,
++    nvidia_primary_connected: false,
++    nvidia_fallback_connected: false,
++    nvidia_primary_error: null,
++    nvidia_fallback_error: null,
++    models_available: 0,
++  }
++
++  async function testKey(key: string, label: string) {
++    if (!key) return { ok: false, error: 'Key not configured' }
++    try {
++      const res = await fetch(`${NVIDIA_BASE}/models`, {
++        headers: { Authorization: `Bearer ${key}` },
++        signal: AbortSignal.timeout(10000),
++      })
++      if (!res.ok) {
++        const text = await res.text()
++        return { ok: false, error: `HTTP ${res.status}: ${text.slice(0, 200)}` }
++      }
++      const data = await res.json()
++      return { ok: true, models: data.data?.length || 0 }
++    } catch (err) {
++      return { ok: false, error: err instanceof Error ? err.message : String(err) }
++    }
++  }
++
++  const [primary, fallback] = await Promise.all([
++    testKey(apiKey, 'primary'),
++    testKey(apiKeyFallback, 'fallback'),
++  ])
++
++  checks.nvidia_primary_connected = primary.ok
++  checks.nvidia_primary_error = primary.error || null
++  checks.nvidia_fallback_connected = fallback.ok
++  checks.nvidia_fallback_error = fallback.error || null
++  checks.models_available = primary.models || fallback.models || 0
++
++  const allOk = primary.ok || fallback.ok
++
++  return NextResponse.json(checks, { status: allOk ? 200 : 503 })
++}
+diff --git a/frontend/app/api/chat/route.ts b/frontend/app/api/chat/route.ts
+index 43a49ec..8deff9a 100644
+--- a/frontend/app/api/chat/route.ts
++++ b/frontend/app/api/chat/route.ts
+@@ -881,8 +881,10 @@ export async function POST(req: NextRequest) {
+     const encoder = new TextEncoder()
+     const stream  = new ReadableStream({
+       async start(controller) {
+-        const send = (obj: Record<string, unknown>) =>
+-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
++        const send = (obj: Record<string, unknown>) => {
++          const payload = `data: ${JSON.stringify(obj)}\n\n`
++          controller.enqueue(encoder.encode(payload))
++        }
+ 
+         try {
+           // Emit tool results first so UI cards appear immediately
+@@ -893,6 +895,7 @@ export async function POST(req: NextRequest) {
+           // FIX B.2: Send thinking indicator before NVIDIA fetch so the UI can
+           // show "Connecting to ARIA…" during cold-start delays (30-60s on NIM).
+           // The client must cancel this state on the first 'text' chunk it receives.
++          console.log('[chat] stream started, modelChain:', modelChain)
+           send({ type: 'thinking', message: 'Connecting to ARIA…' })
+ 
+           // Low-latency fix: use the small/fast model for ordinary
+@@ -1023,6 +1026,7 @@ export async function POST(req: NextRequest) {
+           }
+ 
+           if (!chatRes) {
++            console.error('[chat] all models failed — primary:', !!apiKey, 'fallback:', !!apiKeyFallback)
+             send({
+               type: 'text',
+               text: '⚠️ ARIA is warming up and didn\'t respond in time — this can happen on the ' +
+@@ -1132,8 +1136,10 @@ export async function POST(req: NextRequest) {
+     const encoder = new TextEncoder()
+     const stream = new ReadableStream({
+       start(controller) {
+-        const send = (obj: Record<string, unknown>) =>
+-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
++        const send = (obj: Record<string, unknown>) => {
++          const payload = `data: ${JSON.stringify(obj)}\n\n`
++          controller.enqueue(encoder.encode(payload))
++        }
+         send({
+           type: 'text',
+           text: '⚠️ Something went wrong on our end. Please try sending your message again.',
