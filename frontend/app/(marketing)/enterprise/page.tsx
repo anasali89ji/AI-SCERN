@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, ArrowRight, Mail } from 'lucide-react'
+import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, Mail } from 'lucide-react'
+import { EnterpriseContactForm } from '@/components/EnterpriseContactForm'
 
 export const metadata: Metadata = {
   title: 'Enterprise — Aiscern AI Attestation at Scale',
@@ -36,24 +37,24 @@ export default function EnterprisePage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-20 md:py-28 relative overflow-hidden">
+        <section className="pt-10 pb-14 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <Building2 className="w-3.5 h-3.5" />
               Enterprise
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
               AI Attestation at<br /><span className="text-[#2BEE34]">Enterprise Scale</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.
             </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <a href="mailto:enterprise@aiscern.com" className="btn-primary">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a href="mailto:enterprise@aiscern.com" className="btn-primary w-full sm:w-auto justify-center">
                 <Mail className="w-4 h-4" /> Contact Enterprise Sales
               </a>
-              <Link href="/pricing" className="btn-secondary">View All Plans</Link>
+              <Link href="/pricing" className="btn-secondary w-full sm:w-auto justify-center">View All Plans</Link>
             </div>
           </div>
         </section>
@@ -111,34 +112,7 @@ export default function EnterprisePage() {
             <div className="card border border-[#1E1E1E] rounded-xl p-8">
               <h2 className="text-xl font-black text-white mb-2">Talk to Sales</h2>
               <p className="text-sm text-[#6B6B6B] mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
-              <div className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">First Name</label>
-                    <input type="text" placeholder="Jane" className="input-field" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Last Name</label>
-                    <input type="text" placeholder="Smith" className="input-field" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Work Email</label>
-                  <input type="email" placeholder="jane@company.com" className="input-field" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Company</label>
-                  <input type="text" placeholder="Acme Corp" className="input-field" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Use Case</label>
-                  <textarea rows={3} placeholder="Describe your attestation needs, expected volume, and any integration requirements..." className="input-field resize-none" />
-                </div>
-                <a href="mailto:enterprise@aiscern.com?subject=Enterprise Inquiry" className="btn-primary w-full justify-center">
-                  Send Inquiry <ArrowRight className="w-4 h-4" />
-                </a>
-                <p className="text-xs text-[#6B6B6B] text-center">Or email us directly at enterprise@aiscern.com</p>
-              </div>
+              <EnterpriseContactForm>
             </div>
           </div>
         </section>
