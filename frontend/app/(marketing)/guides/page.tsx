@@ -86,17 +86,17 @@ export default function GuidesPage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
+        <section className="pt-10 pb-12 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <BookOpen className="w-3.5 h-3.5" />
               User Guides
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
               How to Use<br /><span className="text-[#2BEE34]">Aiscern</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto">
               Step-by-step guides for every attestation modality. Learn how to get the most accurate results and interpret what the scores mean.
             </p>
           </div>
