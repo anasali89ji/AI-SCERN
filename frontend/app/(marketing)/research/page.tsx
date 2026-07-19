@@ -70,8 +70,8 @@ export default function ResearchPage() {
     <>
       <SiteNav />
       <main className="min-h-screen bg-surface-deep pt-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 2xl:px-8 py-16 sm:py-24 2xl:py-32">
-          <div className="mb-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 2xl:px-8 pt-8 pb-16 sm:py-24 2xl:py-32">
+          <div className="mb-10 sm:mb-16">
             <div className="flex items-center gap-3 mb-4">
               <BookOpen className="h-7 w-7 text-accent" />
               <h1 className="text-headline text-silver-900">Research Citations</h1>
@@ -89,12 +89,14 @@ export default function ResearchPage() {
             </h2>
             <div className="space-y-5">
               {BENCHMARKS.map((b) => (
-                <div key={b.label} className="flex items-center gap-4">
-                  <span className="w-48 flex-shrink-0 text-sm text-silver-600">{b.label}</span>
-                  <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden" role="img" aria-label={`${b.label}: ${b.value}%`}>
-                    <div className="h-full rounded-full bg-accent" style={{ width: `${b.value}%` }} />
+                <div key={b.label} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
+                  <span className="sm:w-48 sm:flex-shrink-0 text-sm text-silver-600">{b.label}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 sm:w-auto h-2 rounded-full bg-white/10 overflow-hidden" role="img" aria-label={`${b.label}: ${b.value}%`}>
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${b.value}%` }} />
+                    </div>
+                    <span className="w-12 flex-shrink-0 text-right text-sm font-semibold text-silver-900">{b.value}%</span>
                   </div>
-                  <span className="w-12 flex-shrink-0 text-right text-sm font-semibold text-silver-900">{b.value}%</span>
                 </div>
               ))}
             </div>
