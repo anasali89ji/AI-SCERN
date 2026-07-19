@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import {
   Mail, Shield, BarChart3, Calendar, Edit3, Save, X,
   Loader2, Check, FileText, Image as ImageIcon, Music, Video,
-  Brain, User, Zap, Camera, Crown, ChevronRight, RefreshCw
+  Brain, User, Zap, Crown, ChevronRight, RefreshCw
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
@@ -327,11 +327,6 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             <div className="relative group">
               <Avatar name={displayName || user?.displayName || user?.email || 'U'} size={88} />
-              {editing && (
-                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Camera className="w-5 h-5 text-white" />
-                </div>
-              )}
               <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#2BEE34] border-2 border-surface" />
             </div>
 
