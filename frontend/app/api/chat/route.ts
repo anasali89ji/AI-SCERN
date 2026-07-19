@@ -1,7 +1,7 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
-import { retrieveARIAKnowledge, formatKBContext } from '@/lib/rag/aria-rag'
+import { retrieveARIAKnowledge, formatKBContext } from '@/lib/rag/aria-rag-compat'
 export const maxDuration = 55
 
 import { NextRequest, NextResponse } from 'next/server'
