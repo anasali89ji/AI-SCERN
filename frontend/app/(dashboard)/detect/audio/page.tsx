@@ -26,26 +26,25 @@ import {
   BrainCircuit
 } from "lucide-react"
 
+interface AudioSignal {
+  name: string
+  category: string
+  description: string
+  weight: number
+  value: number
+  flagged: boolean
+}
+
 interface AudioResult {
   verdict: "AI" | "HUMAN" | "UNCERTAIN"
   confidence: number
-  modelUsed: string
-  processingTimeMs: number
-  features: {
-    spectralCentroidMean: number
-    spectralFlatnessMean: number
-    zeroCrossingRate: number
-    harmonicToNoiseRatio: number
-    jitter: number
-    shimmer: number
-    f0Mean: number
-    f0Std: number
-    mfccVariance: number
-    subbandEnergyVariance: number
-  }
-  topFindings: string[]
-  rawScore: number
-  ensemble: Record<string, number>
+  model_used: string
+  processing_time?: number
+  summary: string
+  signals: AudioSignal[]
+  segment_scores?: { start_sec: number; end_sec: number; label: string; ai_score: number }[]
+  degraded_signals?: string[]
+  file_name?: string
 }
 
 export default function AudioDetectionPage() {
@@ -393,70 +392,74 @@ export default function AudioDetectionPage() {
                 Confidence: <span className="font-medium text-slate-300">{(result.confidence * 100).toFixed(1)}%</span>
               </div>
               <div className="text-xs text-slate-600 mt-1">
-                Model: {result.modelUsed} · {result.processingTimeMs}ms
+                Model: {result.model_used}{result.processing_time ? ` · ${result.processing_time}ms` : ""}
               </div>
+              {result.summary && (
+                <p className="text-sm text-slate-400 mt-3">{result.summary}</p>
+              )}
             </div>
 
-            {/* Features Grid */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-              <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                Feature Analysis
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <FeaturePill label="Spectral Centroid" value={result.features.spectralCentroidMean} unit="Hz" />
-                <FeaturePill label="Flatness" value={result.features.spectralFlatnessMean} />
-                <FeaturePill label="Zero Crossing" value={result.features.zeroCrossingRate} />
-                <FeaturePill label="HNR" value={result.features.harmonicToNoiseRatio} unit="dB" />
-                <FeaturePill label="Jitter" value={result.features.jitter} />
-                <FeaturePill label="Shimmer" value={result.features.shimmer} />
-                <FeaturePill label="F0 Mean" value={result.features.f0Mean} unit="Hz" />
-                <FeaturePill label="F0 Std" value={result.features.f0Std} />
-                <FeaturePill label="MFCC Variance" value={result.features.mfccVariance} />
+            {/* Degraded signal notice — be honest when fewer signals ran than usual */}
+            {!!result.degraded_signals?.length && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-400">
+                  This result used fewer signals than usual ({result.degraded_signals.join(", ")}).
+                </p>
               </div>
-            </div>
+            )}
 
-            {/* Top Findings */}
-            {result.topFindings.length > 0 && (
+            {/* Detection Signals */}
+            {!!result.signals?.length && (
               <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-                <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  Top Findings
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Detection Signals ({result.signals.length})
                 </h3>
-                <div className="space-y-2">
-                  {result.topFindings.map((finding, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-slate-400">
-                      <ArrowRight className="w-3 h-3 mt-1 shrink-0 text-primary" />
-                      {finding}
+                <div className="space-y-2.5">
+                  {result.signals.map((s, i) => (
+                    <div key={`${s.name}-${i}`} className="flex items-center gap-2.5 p-3 rounded-xl bg-[#141420] border border-white/5">
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? "bg-rose-500" : "bg-emerald-500"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-300 font-medium truncate">{s.name}</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                            {s.weight}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">{s.description}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Ensemble Scores */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-              <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
-                <BrainCircuit className="w-4 h-4 text-primary" />
-                Ensemble Breakdown
-              </h3>
-              <div className="space-y-2">
-                {Object.entries(result.ensemble).map(([model, score]) => (
-                  <div key={model} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500 w-32 truncate">{model}</span>
-                    <div className="flex-1 h-1.5 bg-[#141420] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${score > 0.6 ? "bg-rose-500" : score < 0.4 ? "bg-emerald-500" : "bg-amber-500"}`}
-                        style={{ width: `${score * 100}%` }}
-                      />
+            {/* Segment Timeline */}
+            {!!result.segment_scores?.length && (
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Timeline
+                </h3>
+                <div className="space-y-2">
+                  {result.segment_scores.map((seg, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 w-20 shrink-0">{seg.start_sec}s–{seg.end_sec}s</span>
+                      <div className="flex-1 h-1.5 bg-[#141420] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${seg.ai_score > 0.6 ? "bg-rose-500" : seg.ai_score < 0.4 ? "bg-emerald-500" : "bg-amber-500"}`}
+                          style={{ width: `${seg.ai_score * 100}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-medium w-10 text-right ${seg.ai_score > 0.6 ? "text-rose-400" : seg.ai_score < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>
+                        {(seg.ai_score * 100).toFixed(0)}%
+                      </span>
                     </div>
-                    <span className={`text-xs font-medium w-10 text-right ${score > 0.6 ? "text-rose-400" : score < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>
-                      {(score * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Reset */}
             <div className="flex justify-center">
@@ -471,18 +474,6 @@ export default function AudioDetectionPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-function FeaturePill({ label, value, unit = "" }: { label: string; value: number; unit?: string }) {
-  return (
-    <div className="p-3 bg-[#141420] rounded-xl">
-      <div className="text-[10px] text-slate-600 mb-1">{label}</div>
-      <div className="text-sm font-mono text-slate-300">
-        {typeof value === "number" ? value.toFixed(3) : value}
-        {unit && <span className="text-slate-600 text-xs ml-1">{unit}</span>}
-      </div>
     </div>
   )
 }
