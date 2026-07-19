@@ -155,8 +155,14 @@ async function handleChat(request: Request, env: Env, ctx: ExecutionContext): Pr
         max_tokens: 1024,
       });
 
-      const text: string = aiResult?.response || '';
-      if (!text) throw new Error('Workers AI returned an empty response');
+      const text: string =
+        aiResult?.response ||
+        aiResult?.choices?.[0]?.message?.content ||
+        aiResult?.result?.response ||
+        '';
+      if (!text) {
+        throw new Error(`Workers AI returned no usable text. Raw shape: ${JSON.stringify(aiResult).slice(0, 400)}`);
+      }
 
       // Not natively streamed here (avoids depending on Workers AI's raw SSE
       // chunk shape, which differs from the OpenAI delta shape the other
