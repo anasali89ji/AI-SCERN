@@ -99,17 +99,17 @@ export default function TransparencyPage() {
       <SiteNav />
       <main className="min-h-screen bg-[#08080d] pt-16">
         {/* Hero */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
+        <section className="pt-10 pb-12 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
               <Shield className="w-3.5 h-3.5" />
               Full Transparency
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
               How We Handle<br /><span className="text-[#2BEE34]">Your Data</span>
             </h1>
-            <p className="text-lg text-[#A3A3A3] leading-relaxed">
+            <p className="text-base sm:text-lg text-[#A3A3A3] leading-relaxed">
               We believe users deserve to know exactly how their content is processed. No vague policies — just a clear, direct explanation of what happens to your data.
             </p>
           </div>
@@ -167,10 +167,10 @@ export default function TransparencyPage() {
             <div className="text-center p-6 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5">
               <h2 className="text-lg font-bold text-white mb-2">Questions about your data?</h2>
               <p className="text-sm text-[#6B6B6B] mb-4">Contact our privacy team or submit a GDPR data request.</p>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Link href="/contact" className="btn-primary text-sm">Contact Privacy Team</Link>
-                <Link href="/privacy" className="btn-secondary text-sm">Full Privacy Policy</Link>
-                <Link href="/dpa" className="btn-secondary text-sm">Data Processing Agreement</Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/contact" className="btn-primary text-sm w-full sm:w-auto justify-center">Contact Privacy Team</Link>
+                <Link href="/privacy" className="btn-secondary text-sm w-full sm:w-auto justify-center">Full Privacy Policy</Link>
+                <Link href="/dpa" className="btn-secondary text-sm w-full sm:w-auto justify-center">Data Processing Agreement</Link>
               </div>
             </div>
           </div>
