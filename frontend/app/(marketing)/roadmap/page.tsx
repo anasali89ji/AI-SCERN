@@ -1,5 +1,6 @@
 import { Rocket, CheckCircle2, Circle, FlaskConical } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
+import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Product Roadmap — AI-SCERN',
@@ -73,7 +74,7 @@ export default function RoadmapPage() {
             <div className="space-y-12">
               {ROADMAP.map((group) => (
                 <div key={group.quarter} className="relative pl-12 sm:pl-20">
-                  <div className="absolute left-2.5 sm:left-6.5 top-1.5 w-3 h-3 rounded-full border-2 border-slate-800 bg-slate-700" />
+                  <div className="absolute left-2.5 sm:left-[26px] top-1.5 w-3 h-3 rounded-full border-2 border-slate-800 bg-slate-700" />
 
                   <div className="flex items-center gap-3 mb-4">
                     <h2 className="text-xl font-bold text-white">{group.quarter}</h2>
@@ -107,6 +108,7 @@ export default function RoadmapPage() {
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   )
 }
