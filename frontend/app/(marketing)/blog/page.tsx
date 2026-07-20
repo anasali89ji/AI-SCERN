@@ -37,7 +37,7 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
         </div>
       </div>
       <div className="p-5 sm:p-6 flex items-center justify-between gap-4">
-        <p className="text-lead text-silver-600">{post.description}</p>
+        <p className="text-lead text-silver-600 flex-1 min-w-0">{post.description}</p>
         <ArrowRight className="w-5 h-5 text-accent flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300" />
       </div>
     </Link>
