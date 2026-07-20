@@ -112,7 +112,7 @@ export default function EnterprisePage() {
             <div className="card border border-[#1E1E1E] rounded-xl p-8">
               <h2 className="text-xl font-black text-white mb-2">Talk to Sales</h2>
               <p className="text-sm text-[#6B6B6B] mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
-              <EnterpriseContactForm>
+              <EnterpriseContactForm />
             </div>
           </div>
         </section>

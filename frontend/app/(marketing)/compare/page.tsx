@@ -143,7 +143,6 @@ export default function ComparePage() {
                 </tbody>
               </table>
             </div>
-            </div>
             <p className="text-xs text-[#6B6B6B] mt-3 text-center">
               Competitor data based on publicly available information as of June 2026. Accuracy figures are approximate and vary by dataset. See{' '}
               <Link href="/benchmarks" className="text-[#2BEE34] hover:underline">our benchmarks</Link> for Aiscern&apos;s measured performance.
