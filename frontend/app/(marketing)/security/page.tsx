@@ -1,5 +1,6 @@
 import { Shield, Lock, Eye, Server, Fingerprint, FileCheck } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
+import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Security & Compliance — AI-SCERN',
@@ -51,8 +52,8 @@ export default function SecurityPage() {
               <Shield className="w-3.5 h-3.5" />
               Trust & Safety
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-              Security is not a feature.<br />It is the foundation.
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
+              Security is not a feature. It is the foundation.
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
               AI-SCERN is built on a zero-trust architecture designed for enterprises handling sensitive media. Every byte is protected.
@@ -88,6 +89,7 @@ export default function SecurityPage() {
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   )
 }
