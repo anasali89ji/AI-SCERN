@@ -116,36 +116,57 @@ export default function DpaPage() {
 
           <Section title="5. Sub-processors (Annex A)">
             <p>Aiscern engages the following sub-processors. By accepting this DPA you authorise their use:</p>
-            <div className="overflow-x-auto rounded-xl border border-[#1E1E1E] mt-3">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#1E1E1E] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
-                    <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
-                    <th className="px-4 py-3 text-left font-medium">Purpose</th>
-                    <th className="px-4 py-3 text-left font-medium">Data Location</th>
-                    <th className="px-4 py-3 text-left font-medium">Transfer Mechanism</th>
-                  </tr>
-                </thead>
-                <tbody className="text-[#A3A3A3]">
-                  {[
-                    ['Clerk (clerk.com)',           'Authentication & identity',              'US (AWS)',         'SCC'],
-                    ['Supabase (supabase.com)',      'Database & API',                        'EU / US (AWS)',    'SCC'],
-                    ['Vercel (vercel.com)',          'Application hosting & serverless',       'US / Edge',        'SCC'],
-                    ['Cloudflare (cloudflare.com)', 'CDN, R2 storage, D1 database',          'Global edge',      'SCC'],
-                    ['Google Gemini API',            'AI inference (text/image attestation)',   'US (Google)',      'SCC'],
-                    ['Hugging Face (huggingface.co)','AI model inference (text/audio)',       'US (AWS)',         'SCC'],
-                    ['Upstash (upstash.com)',        'Rate limiting (hashed IPs only)',       'US / EU',          'SCC'],
-                  ].map(([name, purpose, location, mechanism]) => (
-                    <tr key={name} className="border-b border-[#1E1E1E] last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium text-white">{name}</td>
-                      <td className="px-4 py-3">{purpose}</td>
-                      <td className="px-4 py-3">{location}</td>
-                      <td className="px-4 py-3">{mechanism}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {(() => {
+              const SUBPROCESSORS: [string, string, string, string][] = [
+                ['Clerk (clerk.com)',            'Authentication & identity',             'US (AWS)',      'SCC'],
+                ['Supabase (supabase.com)',       'Database & API',                        'EU / US (AWS)', 'SCC'],
+                ['Vercel (vercel.com)',           'Application hosting & serverless',      'US / Edge',     'SCC'],
+                ['Cloudflare (cloudflare.com)',   'CDN, R2 storage, D1 database',          'Global edge',   'SCC'],
+                ['Google Gemini API',             'AI inference (text/image attestation)', 'US (Google)',   'SCC'],
+                ['Hugging Face (huggingface.co)', 'AI model inference (text/audio)',       'US (AWS)',      'SCC'],
+                ['Upstash (upstash.com)',         'Rate limiting (hashed IPs only)',       'US / EU',       'SCC'],
+              ]
+              return (
+                <>
+                  {/* Mobile card fallback */}
+                  <div className="sm:hidden space-y-3 mt-3">
+                    {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
+                      <div key={name} className="rounded-xl border border-[#1E1E1E] p-4 text-sm">
+                        <p className="font-medium text-white mb-2">{name}</p>
+                        <dl className="space-y-1 text-[#A3A3A3]">
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Purpose</dt><dd>{purpose}</dd></div>
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Location</dt><dd>{location}</dd></div>
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Transfer</dt><dd>{mechanism}</dd></div>
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Table for sm+ */}
+                  <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#1E1E1E] mt-3">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-[#1E1E1E] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
+                          <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
+                          <th className="px-4 py-3 text-left font-medium">Purpose</th>
+                          <th className="px-4 py-3 text-left font-medium">Data Location</th>
+                          <th className="px-4 py-3 text-left font-medium">Transfer Mechanism</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-[#A3A3A3]">
+                        {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
+                          <tr key={name} className="border-b border-[#1E1E1E] last:border-0 hover:bg-muted/20">
+                            <td className="px-4 py-3 font-medium text-white">{name}</td>
+                            <td className="px-4 py-3">{purpose}</td>
+                            <td className="px-4 py-3">{location}</td>
+                            <td className="px-4 py-3">{mechanism}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )
+            })()}
             <p className="mt-3 text-xs text-[#6B6B6B]">
               SCC = Standard Contractual Clauses (EU Commission Decision 2021/914). Copies available on request.
               We will notify you 30 days before adding new sub-processors.
