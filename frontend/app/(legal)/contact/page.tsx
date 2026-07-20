@@ -178,7 +178,7 @@ export default function ContactPage() {
                   <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                     title={label}
                     className="w-9 h-9 rounded-lg border border-[#1E1E1E] bg-[#141420]
-                      hover:border-blue-500/50/40 hover:bg-[#2BEE34]/5 transition-all flex items-center justify-center">
+                      hover:border-blue-500/40 hover:bg-[#2BEE34]/5 transition-all flex items-center justify-center">
                     <Icon className="w-4 h-4 text-[#6B6B6B]" />
                   </a>
                 ))}
