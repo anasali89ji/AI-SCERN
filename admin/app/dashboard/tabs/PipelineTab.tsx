@@ -1,6 +1,6 @@
 'use client'
 import useSWR from 'swr'
-import { Pipeline, RefreshCw, Database, Server } from 'lucide-react'
+import { GitBranch, RefreshCw, Database, Server } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { ShimmerCard } from '../components/ShimmerBlock'
 
@@ -14,7 +14,7 @@ export default function PipelineTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><Pipeline className="w-5 h-5 text-primary" /> Pipeline Monitor</h2>
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><GitBranch className="w-5 h-5 text-primary" /> Pipeline Monitor</h2>
         <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

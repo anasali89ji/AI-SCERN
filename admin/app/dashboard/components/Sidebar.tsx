@@ -5,7 +5,7 @@ import {
   Activity, KeyRound, Flag, AlertTriangle, FileText, Zap, LogOut,
   ChevronLeft, ChevronRight, Bell, ScanLine, Webhook, Gauge,
   Database, UserCog, Palette, Wrench, Crown, HelpCircle, Receipt,
-  TrendingUp, HeartPulse, Pipeline
+  TrendingUp, HeartPulse, GitBranch
 } from 'lucide-react'
 
 export type TabId =
@@ -53,7 +53,7 @@ const SECTIONS: { label: string; items: { id: TabId; label: string; icon: any }[
   {
     label: 'System',
     items: [
-      { id: 'pipeline', label: 'Pipeline', icon: Pipeline },
+      { id: 'pipeline', label: 'Pipeline', icon: GitBranch },
       { id: 'costsummary', label: 'Cost Summary', icon: Zap },
       { id: 'apikeys', label: 'API Keys', icon: KeyRound },
       { id: 'flags', label: 'Feature Flags', icon: Flag },
