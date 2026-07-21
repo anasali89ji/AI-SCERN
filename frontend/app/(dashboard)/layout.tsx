@@ -5,10 +5,9 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { useUser } from '@clerk/nextjs'
 import {
   LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe, Globe2,
-  Layers, Clock, User, Settings, ChevronLeft, GitBranch,
+  Layers, Clock, User, Settings, ChevronLeft,
   ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap, Star
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -16,9 +15,6 @@ import { AuthGuard } from '@/components/AuthGuard'
 import { MobileNav } from '@/components/MobileNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
-import { WelcomeHeader } from '@/components/dashboard/WelcomeHeader'
-import { isFirstTimeUser } from '@/lib/onboarding/detect-first-run'
-import { getOnboardingState } from '@/lib/onboarding/store'
 
 // ── Lazy-loaded modals — not needed until after first render ──────────────────
 const OnboardingWizard = dynamic(
@@ -30,8 +26,8 @@ const navGroups = [
   {
     label: 'Detection',
     items: [
-      { href: '/dashboard',     icon: 'LayoutDashboard', label: 'Overview',      tour: 'overview' },
-      { href: '/detect/image',  icon: 'ImageIcon',       label: 'Image',         tour: 'image' },
+      { href: '/dashboard',     icon: 'LayoutDashboard', label: 'Overview'      },
+      { href: '/detect/image',  icon: 'ImageIcon',       label: 'Image'         },
       { href: '/detect/video',  icon: 'Video',           label: 'Video'         },
       { href: '/detect/audio',  icon: 'Music',           label: 'Audio'         },
       { href: '/detect/text',   icon: 'FileText',        label: 'Text'          },
@@ -49,8 +45,7 @@ const navGroups = [
       { href: '/chat',     icon: 'MessageSquare', label: 'AI Assistant'  },
       { href: '/scraper',  icon: 'Globe',         label: 'Web Scanner'   },
       { href: '/batch',    icon: 'Layers',        label: 'Batch Scan'    },
-      { href: '/workflows', icon: 'GitBranch',    label: 'Workflows'     },
-      { href: '/history',  icon: 'Clock',         label: 'History',       tour: 'history' },
+      { href: '/history',  icon: 'Clock',         label: 'History'       },
       { href: '/dashboard#analytics', icon: 'BarChart2', label: 'Analytics' },
     ],
   },
@@ -65,19 +60,21 @@ const navGroups = [
 
 const iconMap: Record<string, any> = {
   LayoutDashboard, ImageIcon, Video, Music, FileText, Globe, Globe2,
-  Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap, Star, GitBranch,
+  Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap, Star,
 }
 
 const ACCOUNT_ITEMS = [
   { href: '/profile',  icon: 'User',     label: 'Profile'  },
-  { href: '/settings', icon: 'Settings', label: 'Settings', tour: 'settings' },
+  { href: '/settings', icon: 'Settings', label: 'Settings' },
 ]
 
 function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() || 'U'
+  // BUG-08 FIX: Static class strings — Tailwind JIT cannot analyze template literals
   const sizeClass = size === 11 ? 'w-11 h-11' : size === 9 ? 'w-9 h-9' : size === 8 ? 'w-8 h-8' : 'w-7 h-7'
+  // BUG-13 FIX: Standardize on Clerk's imageUrl field (photoURL was Firebase naming)
   const avatarUrl = user?.imageUrl || user?.photoURL
   if (avatarUrl) {
     return (
@@ -93,7 +90,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   )
 }
 
-// ── Chat history helpers ─────────────────────────────────────────────────────
+// ── Chat history helpers (reads same localStorage key as chat page) ─────────────
 const CHAT_STORAGE_KEY = 'aiscern_chats_v2'
 
 interface ChatPreview { id: string; title: string; updatedAt: string }
@@ -107,11 +104,11 @@ function loadChatPreviews(): ChatPreview[] {
     return parsed
       .filter((c: any) => c?.id && c?.title)
       .map((c: any) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt || '' }))
-      .slice(0, 8)
+      .slice(0, 8) // show max 8 recent chats
   } catch { return [] }
 }
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
+// ── Sidebar — extracted as module-level component (fixes BUG-02) ─────────────
 interface SidebarProps {
   user: any
   signOut: () => void
@@ -139,7 +136,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
         {navGroups.map(group => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-3 mb-2">
+              <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
                 {group.label}
               </p>
             )}
@@ -153,12 +150,8 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                   <Link key={item.href} href={item.href} onClick={onNavClick}
                     prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                     title={collapsed ? item.label : undefined}
-                    data-tour={item.tour || undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                      ${active
-                        ? 'bg-primary/10 text-primary border-r-[3px] border-primary'
-                        : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-100'
-                      }
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
+                      ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
                       ${collapsed ? 'justify-center' : ''}`}>
                     <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-primary' : ''}`} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
@@ -169,22 +162,22 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
           </div>
         ))}
 
-        {/* Chat History */}
+        {/* ARIA Chat History — collapsible subsection */}
         {!collapsed && chatPreviews.length > 0 && pathname.startsWith('/chat') && (
           <div>
             <button
               onClick={() => setHistoryOpen(h => !h)}
               className="w-full flex items-center justify-between px-3 py-1.5 group"
             >
-              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Recent Chats</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
+              <span className="text-xs font-semibold text-text-disabled uppercase tracking-widest">Recent Chats</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-text-disabled transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
             </button>
             {historyOpen && (
               <div className="space-y-0.5 mt-0.5">
                 {chatPreviews.map(chat => (
                   <button key={chat.id}
                     onClick={() => { onChatSelect(chat.id); onNavClick() }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-100 transition-all text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left"
                   >
                     <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
                     <span className="text-xs truncate flex-1">{chat.title}</span>
@@ -195,10 +188,10 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
           </div>
         )}
 
-        {/* Account section */}
+        {/* Account section — always visible, icon-only when collapsed (fixes BUG-16) */}
         <div>
           {!collapsed && (
-            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-3 mb-2">
+            <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
               Account
             </p>
           )}
@@ -211,12 +204,8 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                 <Link key={item.href} href={item.href} onClick={onNavClick}
                   prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
                   title={collapsed ? item.label : undefined}
-                  data-tour={item.tour || undefined}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                    ${active
-                      ? 'bg-primary/10 text-primary border-r-[3px] border-primary'
-                      : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-100'
-                    }
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
+                    ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
                     ${collapsed ? 'justify-center' : ''}`}>
                   <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
                   {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
@@ -228,180 +217,249 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-neutral-800 p-3">
+      <div className="border-t border-border p-3">
         {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-neutral-800/50 transition-colors">
+          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
             <UserAvatar user={user} size={8} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-neutral-300 truncate">
+              <p className="text-xs font-medium text-text-secondary truncate">
                 {user?.displayName || user?.email?.split('@')[0] || 'User'}
               </p>
-              <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
+              <p className="text-[10px] text-emerald font-medium">&#x25CF; Online</p>
             </div>
-            <button
-              onClick={signOut}
-              className="p-1.5 rounded-lg hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
+            <button onClick={signOut} title="Sign out"
+              className="text-text-muted hover:text-rose transition-colors p-1 rounded-lg hover:bg-rose/10">
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
-          <div className="flex justify-center">
-            <button
-              onClick={signOut}
-              className="p-2 rounded-xl hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
+          <button onClick={signOut} title="Sign out"
+            className="w-full flex justify-center py-2 text-text-muted hover:text-rose transition-colors rounded-xl hover:bg-rose/10">
+            <LogOut className="w-5 h-5" />
+          </button>
         )}
       </div>
     </div>
   )
 }
 
-// ── Main Dashboard Layout ────────────────────────────────────────────────────
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const { user: authUser, signOut } = useAuth()
-  const { user: clerkUser } = useUser()
+function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
-  const [collapsed, setCollapsed] = useState(false)
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    if (open) document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const name  = user?.displayName || user?.email?.split('@')[0] || 'User'
+  const email = user?.email || ''
+
+  const menuContent = (
+    <>
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-surface-active">
+        <UserAvatar user={user} size={11} />
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-text-primary truncate">{name}</p>
+          <p className="text-xs text-text-muted truncate">{email}</p>
+          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald bg-emerald/10 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald animate-pulse" />
+            Active
+          </span>
+        </div>
+      </div>
+      <div className="p-2 space-y-0.5">
+        {[
+          { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'    },
+          { href: '/profile',   icon: User,            label: 'My Profile'   },
+          { href: '/settings',  icon: Settings,        label: 'Settings'     },
+          { href: '/history',   icon: Clock,           label: 'Scan History' },
+        ].map(item => (
+          <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-hover transition-colors text-sm text-text-secondary hover:text-text-primary">
+            <item.icon className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium">{item.label}</span>
+          </Link>
+        ))}
+      </div>
+      <div className="p-2 border-t border-border">
+        <button onClick={() => { setOpen(false); signOut() }}
+          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose/10 transition-colors text-sm text-text-muted hover:text-rose w-full">
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <span className="font-medium">Sign Out</span>
+        </button>
+      </div>
+    </>
+  )
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-hover transition-colors">
+        <UserAvatar user={user} size={9} />
+        <div className="hidden sm:block text-left min-w-0">
+          <p className="text-sm font-semibold text-text-primary truncate max-w-[120px]">{name}</p>
+          <p className="text-xs text-text-muted truncate max-w-[120px]">{email}</p>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-text-muted transition-transform hidden sm:block ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Desktop dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ type: 'tween', duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
+            className="hidden sm:block absolute right-0 top-full mt-2 w-72 bg-surface border border-border/55 rounded-2xl shadow-2xl shadow-black/50 z-[200] overflow-hidden"
+          >
+            {menuContent}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile full-screen bottom sheet */}
+      <AnimatePresence>
+        {open && (
+          <div className="sm:hidden fixed inset-0 z-[200]" onClick={() => setOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/70"
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+              className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-border/55 overflow-hidden"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-border" />
+              </div>
+              {/* Scrollable content — prevents overflow on short phones */}
+              <div
+                className="overflow-y-auto"
+                style={{ maxHeight: 'calc(85dvh - 4rem)' }}
+              >
+                {menuContent}
+              </div>
+              {/* Space above MobileNav: 4rem (nav) + safe area */}
+              <div style={{ height: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }} />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, signOut } = useAuth()
+  const [collapsed, setCollapsed]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [chatPreviews, setChatPreviews] = useState<ChatPreview[]>([])
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [isFirstTime, setIsFirstTime] = useState(false)
-  const [onboardingChecked, setOnboardingChecked] = useState(false)
+  const pathname = usePathname()
+  const router = useRouter()
 
-  // Load chat previews
+  // Load chat previews from localStorage, refresh when on chat page
   useEffect(() => {
     setChatPreviews(loadChatPreviews())
+    // Also refresh on storage changes (when chat page saves)
+    const onStorage = () => setChatPreviews(loadChatPreviews())
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [pathname])
 
-  // Onboarding detection
-  useEffect(() => {
-    if (!clerkUser || onboardingChecked) return
-
-    const checkOnboarding = async () => {
-      const firstTime = isFirstTimeUser(clerkUser)
-      setIsFirstTime(firstTime)
-
-      if (firstTime) {
-        const state = await getOnboardingState(clerkUser.id)
-        const needsOnboarding =
-          !state?.has_completed_onboarding &&
-          !state?.onboarding_skipped_at
-        setShowOnboarding(needsOnboarding)
-      }
-      setOnboardingChecked(true)
-    }
-
-    checkOnboarding()
-  }, [clerkUser, onboardingChecked])
-
-  const handleChatSelect = useCallback((id: string) => {
-    router.push(`/chat?conversation=${id}`)
-  }, [router])
-
-  const handleNavClick = useCallback(() => {
+  const handleChatSelect = useCallback((chatId: string) => {
+    // Navigate to chat and pass selected chat id via URL hash
+    router.push(`/chat#${chatId}`)
     setMobileOpen(false)
-  }, [])
+  }, [router])
 
   return (
     <AuthGuard>
-      <UpgradeNotificationProvider />
-        <ErrorBoundary>
-          <div className="flex h-screen bg-neutral-950 text-white overflow-hidden">
-            {/* Desktop Sidebar */}
-            <aside
-              className={`hidden md:flex flex-col border-r border-neutral-800 bg-neutral-900/50 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-                ${collapsed ? 'w-20' : 'w-72'}`}
-            >
-              <div className="flex items-center justify-end p-2">
-                <button
-                  onClick={() => setCollapsed(c => !c)}
-                  className="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
-                >
-                  {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                </button>
+      <div className="flex h-[100dvh] bg-background overflow-hidden">
+        {/* Desktop sidebar */}
+        <motion.aside animate={{ width: collapsed ? 72 : 260 }}
+          transition={{ type: 'tween', duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+          className="hidden lg:flex flex-col bg-surface border-r border-border/50 relative flex-shrink-0 2xl:!w-[280px]" style={collapsed ? { width: 72 } : undefined}>
+          <Sidebar
+            user={user} signOut={signOut}
+            collapsed={collapsed} pathname={pathname}
+            onNavClick={() => setMobileOpen(false)}
+            chatPreviews={chatPreviews}
+            onChatSelect={handleChatSelect}
+          />
+          <button onClick={() => setCollapsed(!collapsed)}
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center hover:bg-primary hover:border-primary transition-all text-text-muted hover:text-white z-10">
+            {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+          </button>
+        </motion.aside>
+
+        {/* Mobile sidebar drawer */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
+              <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+                transition={{ type: 'tween', duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
+                className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-surface border-r border-border/50 z-50 flex flex-col">
+                <Sidebar
+                  user={user} signOut={signOut}
+                  collapsed={false} pathname={pathname}
+                  onNavClick={() => setMobileOpen(false)}
+                  chatPreviews={chatPreviews}
+                  onChatSelect={handleChatSelect}
+                />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <header className="h-14 sm:h-16 2xl:h-18 border-b border-border/40 flex items-center justify-between px-3 sm:px-4 lg:px-6 2xl:px-8 bg-surface flex-shrink-0 sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button aria-label="Open navigation menu" onClick={() => setMobileOpen(true)} className="lg:hidden text-text-muted hover:text-text-primary">
+                <Menu className="w-6 h-6" aria-hidden="true" />
+              </button>
+              <Link href="/" className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity">
+                <Image src="/logo.png" alt="Aiscern" width={28} height={28} className="object-contain" />
+                <span className="font-bold gradient-text text-sm">Aiscern</span>
+              </Link>
+              <div className="hidden lg:flex items-center gap-2 text-sm text-text-muted">
+                <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
+                All systems operational
               </div>
-              <Sidebar
-                user={authUser}
-                signOut={signOut}
-                collapsed={collapsed}
-                pathname={pathname}
-                onNavClick={handleNavClick}
-                chatPreviews={chatPreviews}
-                onChatSelect={handleChatSelect}
-              />
-            </aside>
+            </div>
+            <UserDropdown user={user} signOut={signOut} />
+          </header>
 
-            {/* Mobile Sidebar Overlay */}
-            <AnimatePresence>
-              {mobileOpen && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/60 z-40 md:hidden"
-                    onClick={() => setMobileOpen(false)}
-                  />
-                  <motion.aside
-                    initial={{ x: -280 }}
-                    animate={{ x: 0 }}
-                    exit={{ x: -280 }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className="fixed left-0 top-0 bottom-0 w-72 bg-neutral-900 border-r border-neutral-800 z-50 md:hidden"
-                  >
-                    <Sidebar
-                      user={authUser}
-                      signOut={signOut}
-                      collapsed={false}
-                      pathname={pathname}
-                      onNavClick={handleNavClick}
-                      chatPreviews={chatPreviews}
-                      onChatSelect={handleChatSelect}
-                    />
-                  </motion.aside>
-                </>
-              )}
-            </AnimatePresence>
-
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-              {/* Mobile Header */}
-              <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900/50">
-                <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg hover:bg-neutral-800">
-                  <Menu className="w-5 h-5" />
-                </button>
-                <Image src="/logo.png" alt="Aiscern" width={28} height={28} />
-                <div className="w-9" />
-              </header>
-
-              {/* Page Content */}
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-6 md:p-8 max-w-7xl mx-auto">
-                  {pathname === '/dashboard' && (
-                    <WelcomeHeader isFirstTime={isFirstTime} />
-                  )}
-                  {children}
-                </div>
+          <ErrorBoundary>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+              {/* pb clears the MobileNav (4rem) + safe area on mobile; desktop has no nav */}
+              <div className="min-h-full pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+                {children}
               </div>
             </main>
-          </div>
-
-          {/* Onboarding Wizard */}
-          {showOnboarding && (
-            <OnboardingWizard
-              onComplete={() => setShowOnboarding(false)}
-              onSkip={() => setShowOnboarding(false)}
-            />
-          )}
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </div>
+      </div>
+      <MobileNav />
+      <OnboardingWizard />
+      <UpgradeNotificationProvider />
     </AuthGuard>
   )
 }

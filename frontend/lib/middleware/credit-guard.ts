@@ -132,7 +132,7 @@ export async function creditGuard(
   if (!['text', 'image'].includes(scanType)) {
     throw new HTTPError(401, `Sign in to use ${scanType} detection.`, {
       code:        'AUTH_REQUIRED',
-      upgrade_url: '/sign-up',
+      upgrade_url: '/signup',
     })
   }
 
@@ -144,7 +144,7 @@ export async function creditGuard(
   if (rl.limited) {
     throw new HTTPError(429, 'Anonymous scan limit reached. Sign in for 10 free scans per day.', {
       code:        'ANON_LIMIT_REACHED',
-      upgrade_url: '/sign-up',
+      upgrade_url: '/signup',
       reset_at:    rl.reset,
     })
   }
