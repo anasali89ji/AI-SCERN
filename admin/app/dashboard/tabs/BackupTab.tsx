@@ -12,7 +12,7 @@ interface Backup {
 }
 
 export default function BackupTab() {
-  const { data, isLoading, error, mutate } = useSWR<{ backups: Backup[] }>('/backup', (p: string) => api(p))
+  const { data, isLoading, error, mutate } = useSWR<{ backups: Backup[] }>('/backup', (p: string) => api<{ backups: Backup[] }>(p))
   const [modal, setModal] = useState(false)
   const [name, setName] = useState('')
   const [creating, setCreating] = useState(false)

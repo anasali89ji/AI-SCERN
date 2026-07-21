@@ -11,7 +11,7 @@ interface AuditEntry { id: string; action: string; admin_id: string; admin_ip: s
 export default function AuditTab() {
   const [page, setPage] = useState(1)
   const [actionFilter, setActionFilter] = useState('')
-  const { data, isLoading, error, mutate } = useSWR(`/audit-log?page=${page}${actionFilter ? `&action=${actionFilter}` : ''}`, (url: string) => api(url))
+  const { data, isLoading, error, mutate } = useSWR<{ entries: AuditEntry[]; pages: number }>(`/audit-log?page=${page}${actionFilter ? `&action=${actionFilter}` : ''}`, (url: string) => api<{ entries: AuditEntry[]; pages: number }>(url))
 
   const columns = [
     { key: 'action', header: 'Action', render: (e: AuditEntry) => <span className="text-xs font-bold text-text-primary">{e.action}</span> },

@@ -27,7 +27,7 @@ export default function ScansTab() {
   const verdictParam = verdict !== 'all' ? `&verdict=${verdict}` : ''
   const { data, isLoading, error, mutate } = useSWR<{ scans: Scan[]; total: number; pages: number }>(
     `/scans?page=${page}${typeParam}${verdictParam}`,
-    (p: string) => api(p)
+    (p: string) => api<{ scans: Scan[]; total: number; pages: number }>(p)
   )
 
   const exportScans = async () => {

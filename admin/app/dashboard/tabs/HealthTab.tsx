@@ -12,7 +12,7 @@ export default function HealthTab() {
   if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
 
   const overallColor = d?.overall === 'healthy' ? 'text-emerald-400' : d?.overall === 'degraded' ? 'text-amber-400' : 'text-rose-400'
-  const overallIcon = d?.overall === 'healthy' ? CheckCircle : d?.overall === 'degraded' ? AlertTriangle : XCircle
+  const OverallIcon = d?.overall === 'healthy' ? CheckCircle : d?.overall === 'degraded' ? AlertTriangle : XCircle
 
   return (
     <div className="space-y-6">
@@ -21,7 +21,7 @@ export default function HealthTab() {
         <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
       </div>
       <div className="card p-6 text-center">
-        <overallIcon className={`w-12 h-12 mx-auto mb-2 ${overallColor}`} />
+        <OverallIcon className={`w-12 h-12 mx-auto mb-2 ${overallColor}`} />
         <p className={`text-2xl font-bold ${overallColor}`}>{d?.overall?.toUpperCase()}</p>
         <p className="text-xs text-text-muted mt-1">Uptime: {Math.floor((d?.uptime_seconds ?? 0) / 3600)}h {Math.floor(((d?.uptime_seconds ?? 0) % 3600) / 60)}m</p>
         <p className="text-xs text-text-muted">Version: {d?.version}</p>

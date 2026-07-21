@@ -5,7 +5,7 @@ import { Settings, RefreshCw, Save } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { ShimmerCard } from '../components/ShimmerBlock'
 
-interface Setting { key: string; value: string | number | boolean; label: string; type: 'text' | 'number' | 'boolean' | 'select'; options?: string[]; description: string }
+interface Setting { key: string; value?: string | number | boolean; label: string; type: 'text' | 'number' | 'boolean' | 'select'; options?: string[]; description: string }
 
 const SETTINGS_DEF: Setting[] = [
   { key: 'maintenance_mode', label: 'Maintenance Mode', type: 'boolean', description: 'Put the site in maintenance mode' },

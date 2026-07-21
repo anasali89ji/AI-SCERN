@@ -28,7 +28,7 @@ export default function ContentModerationTab() {
   const [resolution, setResolution] = useState('')
   const { data, isLoading, error, mutate } = useSWR<{ flags: ContentFlag[]; total: number; pages: number }>(
     `/content-moderation?status=${status}`,
-    (p: string) => api(p)
+    (p: string) => api<{ flags: ContentFlag[]; total: number; pages: number }>(p)
   )
 
   const resolve = async (flagId: string, status: string) => {

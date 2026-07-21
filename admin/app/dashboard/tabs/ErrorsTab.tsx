@@ -15,7 +15,7 @@ export default function ErrorsTab() {
   const [modal, setModal] = useState<ErrorLog | null>(null)
   const [note, setNote] = useState('')
 
-  const { data, isLoading, error, mutate } = useSWR(`/errors?resolved=${resolved}&page=${page}`, (url: string) => api(url))
+  const { data, isLoading, error, mutate } = useSWR<{ errors: ErrorLog[]; pages: number }>(`/errors?resolved=${resolved}&page=${page}`, (url: string) => api<{ errors: ErrorLog[]; pages: number }>(url))
 
   const resolveError = async (id: string) => {
     try { await api('/errors', 'PATCH', { id, resolved: true, note }); await mutate(); setModal(null); setNote('') }

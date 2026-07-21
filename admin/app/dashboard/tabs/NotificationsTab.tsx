@@ -19,7 +19,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function NotificationsTab() {
   const { data, isLoading, error, mutate } = useSWR<{ notifications: Notification[]; total: number; pages: number }>(
-    '/notifications', (p: string) => api(p)
+    '/notifications', (p: string) => api<{ notifications: Notification[]; total: number; pages: number }>(p)
   )
   const [broadcastModal, setBroadcastModal] = useState(false)
   const [broadcastForm, setBroadcastForm] = useState({
@@ -31,7 +31,7 @@ export default function NotificationsTab() {
   const sendBroadcast = async () => {
     setSending(true)
     try {
-      const res = await api('/notifications/broadcast', 'POST', broadcastForm)
+      const res = await api<{ sent: number; failed: number }>('/notifications/broadcast', 'POST', broadcastForm)
       setResult(res)
       setBroadcastForm({ title: '', body: '', type: 'system', priority: 'normal', target_audience: 'all', action_url: '' })
       await mutate()

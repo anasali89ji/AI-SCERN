@@ -25,7 +25,7 @@ export default function PipelineCostSummaryTab() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(d?.totals ?? {}).map(([vendor, counts]: [string, any]) => {
-          const total = Object.values(counts).reduce((a: number, b: number) => a + b, 0)
+          const total = (Object.values(counts) as number[]).reduce((a: number, b: number) => a + b, 0)
           return <div key={vendor} className="card p-4"><p className="text-xl font-bold text-text-primary">{total.toLocaleString()}</p><p className="text-[11px] text-text-muted capitalize">{vendor} Calls</p></div>
         })}
       </div>

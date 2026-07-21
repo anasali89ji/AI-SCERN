@@ -13,7 +13,7 @@ export default function RateLimitsTab() {
   const [period, setPeriod] = useState('24h')
   const { data, isLoading, error, mutate } = useSWR<{ aggregated: RateLimitEvent[]; total: number }>(
     `/rate-limits?period=${period}`,
-    (p: string) => api(p)
+    (p: string) => api<{ aggregated: RateLimitEvent[]; total: number }>(p)
   )
 
   const blockIp = async (ip: string) => {
