@@ -38,9 +38,10 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
 );
 
 -- Content moderation flags
+-- NOTE: profiles.id is TEXT in Aiscern, so user_id must be TEXT
 CREATE TABLE IF NOT EXISTS content_flags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   content_type TEXT NOT NULL,
   content_url TEXT,
   reason TEXT NOT NULL,
@@ -126,9 +127,10 @@ CREATE TABLE IF NOT EXISTS admin_client_errors (
 );
 
 -- Payment events (for revenue tracking)
+-- NOTE: profiles.id is TEXT in Aiscern, so user_id must be TEXT
 CREATE TABLE IF NOT EXISTS payment_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id),
+  user_id TEXT REFERENCES profiles(id),
   amount NUMERIC,
   currency TEXT DEFAULT 'USD',
   gateway TEXT DEFAULT 'stripe',
@@ -140,10 +142,11 @@ CREATE TABLE IF NOT EXISTS payment_events (
 );
 
 -- Analytics events
+-- NOTE: profiles.id is TEXT in Aiscern, so user_id must be TEXT
 CREATE TABLE IF NOT EXISTS analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT NOT NULL,
-  user_id UUID REFERENCES profiles(id),
+  user_id TEXT REFERENCES profiles(id),
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
