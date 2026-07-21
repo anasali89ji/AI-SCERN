@@ -84,15 +84,23 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   const router = useRouter();
 
   const handleNext = useCallback(async () => {
-    if (currentStep < TOTAL_STEPS) {
+   if (currentStep < TOTAL_STEPS) {
       if (user?.id) {
-        await updateOnboardingStep(user.id, currentStep + 1, selectedUseCase || undefined);
+        try {
+          await updateOnboardingStep(user.id, currentStep + 1, selectedUseCase || undefined);
+        } catch (err) {
+          console.error('Failed to persist onboarding step (continuing anyway):', err);
+        }
       }
       setCurrentStep((s) => s + 1);
     } else {
       // Final step — complete onboarding
       if (user?.id) {
-        await completeOnboarding(user.id, selectedUseCase || undefined);
+        try {
+          await completeOnboarding(user.id, selectedUseCase || undefined);
+        } catch (err) {
+          console.error('Failed to persist onboarding completion (continuing anyway):', err);
+        }
       }
       setIsVisible(false);
       onComplete?.();
@@ -103,7 +111,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const handleSkip = useCallback(async () => {
     if (user?.id) {
-      await skipOnboarding(user.id);
+      try {
+        await skipOnboarding(user.id);
+      } catch (err) {
+        console.error('Failed to persist onboarding skip (continuing anyway):', err);
+      }
     }
     setIsVisible(false);
     onSkip?.();
