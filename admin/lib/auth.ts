@@ -67,6 +67,7 @@ async function hmacVerify(data: string, sig: string, secret: string): Promise<bo
 
 // ── Session management ────────────────────────────────────────────────────────
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function createAdminSession(
   ip: string,
@@ -80,6 +81,7 @@ export async function createAdminSession(
   const payload = `admin:${ip}:${Date.now()}:${adminId || 'legacy'}`
   const sig = await hmacSign(payload, secret)
   const token = `${payload}:${sig}`
+  const dbAdminId = adminId && UUID_RE.test(adminId) ? adminId : null
 
   try {
     const sb = createClient(
@@ -87,21 +89,26 @@ export async function createAdminSession(
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { persistSession: false } }
     )
-    await sb.from('admin_sessions').insert({
+    const { error: insertErr } = await sb.from('admin_sessions').insert({
       session_token: token,
-      admin_id: adminId || null,
+      admin_id: dbAdminId,
       ip_address: ip,
       user_agent: userAgent,
       expires_at: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
     })
+    if (insertErr) {
+      console.error('[auth] admin_sessions insert failed:', insertErr.message)
+      throw new Error(`Session could not be stored: ${insertErr.message}`)
+    }
     await sb.from('admin_audit_log').insert({
       action: 'login_success',
-      admin_id: adminId || null,
+      admin_id: dbAdminId,
       admin_ip: ip,
       metadata: { user_agent: userAgent, email: email || null },
     })
   } catch (e) {
     console.error('[auth] Session store failed:', e)
+    throw e instanceof Error ? e : new Error('Session store failed')
   }
 
   return token
