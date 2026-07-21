@@ -6,7 +6,8 @@ import { validateEnv } from '@/lib/env-validator';
 
 validateEnv();
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ success: false, error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { data: workflow, error } = await supabase
     .from('workflows')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', userId)
     .single();
 
