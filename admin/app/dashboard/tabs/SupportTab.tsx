@@ -16,7 +16,7 @@ export default function SupportTab() {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
 
-  const { data, isLoading, error, mutate } = useSWR<{ tickets: Ticket[]; total: number; pages: number }>(`/support-tickets?status=${status}&page=${page}`, (p: string) => api(p))
+  const { data, isLoading, error, mutate } = useSWR(`/support-tickets?status=${status}&page=${page}`, (url: string) => api(url))
 
   const updateTicket = async (id: string, updates: any) => {
     try { await api(`/support-tickets/${id}`, 'PATCH', updates); await mutate(); setModal(null); setReply('') }
