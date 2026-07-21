@@ -1,4 +1,4 @@
-import type { UserResource } from '@clerk/types';
+import type { UserResource } from '@clerk/shared/types';
 
 export function isFirstTimeUser(user: UserResource): boolean {
   const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0;

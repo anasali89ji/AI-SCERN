@@ -4,9 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import { inngest } from '@/lib/inngest/client';
 import { validateEnv } from '@/lib/env-validator';
 
-validateEnv();
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    validateEnv();
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) {

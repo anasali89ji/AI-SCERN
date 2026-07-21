@@ -312,7 +312,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
-      <UpgradeNotificationProvider>
+      <UpgradeNotificationProvider />
         <ErrorBoundary>
           <div className="flex h-screen bg-neutral-950 text-white overflow-hidden">
             {/* Desktop Sidebar */}
@@ -402,7 +402,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
           )}
         </ErrorBoundary>
-      </UpgradeNotificationProvider>
     </AuthGuard>
   )
 }

@@ -8,8 +8,7 @@ const supabase = createClient(
 );
 
 export const executeWorkflow = inngest.createFunction(
-  { id: 'execute-workflow', retries: 3 },
-  { event: 'workflow/execute' },
+  { id: 'execute-workflow', retries: 3, triggers: [{ event: 'workflow/execute' }] },
   async ({ event, step }) => {
     const { runId, workflowId, userId, steps } = event.data;
 

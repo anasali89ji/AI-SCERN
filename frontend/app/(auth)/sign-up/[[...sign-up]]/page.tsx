@@ -72,7 +72,7 @@ export default function SignUpPage() {
           socialButtonsVariant: 'blockButton',
         },
       }}
-      redirectUrl="/dashboard?onboarding=true"
+      fallbackRedirectUrl="/dashboard?onboarding=true"
     />
   );
 }

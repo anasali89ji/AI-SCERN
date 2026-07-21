@@ -36,7 +36,7 @@ export default function SignInPage() {
           socialButtonsVariant: 'blockButton',
         },
       }}
-      redirectUrl="/dashboard"
+      fallbackRedirectUrl="/dashboard"
     />
   );
 }
