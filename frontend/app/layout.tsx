@@ -140,7 +140,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AnimationPreferenceProvider>
               <MotionProvider>
               {children}
-              <Toaster richColors position="top-right" />
+              <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: '#171717',
+                  border: '1px solid #262626',
+                  color: '#fff',
+                },
+              }}
+            />
               <CookieConsent />
               </MotionProvider>
             </AnimationPreferenceProvider>
