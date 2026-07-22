@@ -1,45 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req, 'webhooks:read')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
-  const { data, error } = await db
-    .from('webhooks')
-    .select('*')
-    .order('created_at', { ascending: false })
-
+  const { data, error } = await db.from('webhooks').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data ?? [])
+
+  return NextResponse.json(data || [])
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req, 'webhooks:write')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const body = await req.json()
-  if (!body.url || !body.events || !Array.isArray(body.events)) {
-    return NextResponse.json({ error: 'url and events array required' }, { status: 400 })
-  }
-
   const db = getAdminDb()
-  const secret = crypto.randomUUID()
 
-  const { data, error } = await db.from('webhooks').insert({
-    url: body.url,
-    events: body.events,
+  const secret = `whsec_${Array.from({length:32},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('')}`
+
+  const { error } = await db.from('webhooks').insert({
+    ...body,
     secret,
-    active: body.active ?? true,
-    description: body.description || '',
-    created_by: auth.adminId,
-  }).select().single()
+    created_at: new Date().toISOString(),
+  })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await logAdminAction('webhook_created', data.id as string, auth.ip, { url: body.url }, auth.adminId)
-  return NextResponse.json({ ...data, secret }, { status: 201 })
+  await db.from('admin_audit_log').insert({
+    action: 'webhook_created',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { url: body.url, events: body.events },
+  })
+
+  return NextResponse.json({ ok: true, secret })
 }

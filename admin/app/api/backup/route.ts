@@ -1,76 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
-const TABLES_TO_BACKUP = [
-  'profiles', 'scans', 'credit_transactions', 'subscriptions',
-  'support_tickets', 'announcements', 'notifications', 'admin_audit_log',
-  'error_logs', 'security_events', 'feature_flags', 'settings',
-  'api_keys', 'webhooks', 'content_flags', 'blocked_domains',
-]
+const TABLES = ['profiles', 'scans', 'credit_transactions', 'support_tickets', 'error_logs', 'admin_audit_log', 'api_keys', 'content_flags', 'webhooks', 'feature_flags', 'announcements', 'admin_users', 'site_settings', 'rate_limit_events', 'backups', 'marketing_analytics', 'pipeline_stats', 'pipeline_costs', 'fallback_flags']
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req, 'backup:read')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
-
-  // List existing backups
-  const { data: backups, error } = await db
-    .from('backups')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50)
-
+  const { data, error } = await db.from('backups').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ backups: backups ?? [] })
+  return NextResponse.json({ backups: data || [] })
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req, 'backup:write')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json() as { tables?: string[]; name?: string }
-  const tables = body.tables || TABLES_TO_BACKUP
+  const { name } = await req.json()
   const db = getAdminDb()
 
-  const backupData: Record<string, unknown[]> = {}
   let totalRows = 0
-
-  for (const table of tables) {
+  for (const table of TABLES) {
     try {
-      const { data, error } = await db.from(table).select('*').limit(10000)
-      if (!error && data) {
-        backupData[table] = data
-        totalRows += data.length
-      }
-    } catch (e) {
-      console.error(`[backup] Failed to backup ${table}:`, e)
-    }
+      const { count } = await db.from(table).select('*', { count: 'exact', head: true })
+      totalRows += count || 0
+    } catch { /* table may not exist yet */ }
   }
 
-  const backupRecord = {
-    name: body.name || `Backup ${new Date().toISOString()}`,
-    tables: Object.keys(backupData),
+  const { error } = await db.from('backups').insert({
+    name: name || `Backup ${new Date().toISOString()}`,
+    tables: TABLES,
     total_rows: totalRows,
-    data: backupData,
     created_by: auth.adminId,
-  }
+  })
 
-  const { data, error } = await db.from('backups').insert(backupRecord).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  await logAdminAction('backup_created', data.id as string, auth.ip, {
-    tables: Object.keys(backupData),
-    totalRows,
-  }, auth.adminId)
-
-  return NextResponse.json({
-    ok: true,
-    backup: data,
-    tablesBackedUp: Object.keys(backupData),
-    totalRows,
-  }, { status: 201 })
+  return NextResponse.json({ ok: true, totalRows })
 }

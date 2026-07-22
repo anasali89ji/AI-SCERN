@@ -1,53 +1,69 @@
 'use client'
-import { useState } from 'react'
+
 import useSWR from 'swr'
-import { Zap, RefreshCw, AlertTriangle } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { api } from '@/lib/api-client'
-import { ShimmerCard } from '../components/ShimmerBlock'
+import { fetcher } from '@/lib/api-client'
+import { ShimmerBlock } from '../components/ShimmerBlock'
+import { KpiCard } from '../components/KpiCard'
+import { DollarSign, BarChart3, AlertTriangle } from 'lucide-react'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 
 export default function PipelineCostSummaryTab() {
-  const [days, setDays] = useState(7)
-  const { data, isLoading, error, mutate } = useSWR(`/pipeline-cost-summary?days=${days}`, (p: string) => api(p))
-  const d = data as any
+  const { data, error, isLoading } = useSWR('/api/pipeline-cost-summary?days=7', fetcher, { refreshInterval: 60000 })
 
-  if (error) return <div className="text-center py-10 text-sm text-rose-400">Failed to load cost data</div>
-  if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
+  if (isLoading) return <ShimmerBlock />
+  if (error) return <div className="p-6 text-red-400">Failed to load cost data</div>
+  if (!data) return <div className="p-6 text-slate-400">No cost data available</div>
+
+  const daily = data.daily || []
+  const fallbackFlags = data.fallback_flags || []
+
+  const totalCalls = daily.reduce((sum: number, d: any) => sum + (d.gemini || 0) + (d.nvidia_nim || 0) + (d.huggingface || 0), 0)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><Zap className="w-5 h-5 text-primary" /> Pipeline Cost Summary</h2>
-        <div className="flex items-center gap-2">
-          {[7, 30, 90].map(d => <button key={d} onClick={() => setDays(d)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${days === d ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>{d}d</button>)}
-          <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <KpiCard title="Total API Calls (7d)" value={totalCalls.toLocaleString()} icon={<BarChart3 size={20} />} color="blue" />
+        <KpiCard title="Fallback Flags" value={fallbackFlags.length} icon={<AlertTriangle size={20} />} color="amber" />
+        <KpiCard title="Daily Avg" value={daily.length > 0 ? Math.round(totalCalls / daily.length).toLocaleString() : '0'} icon={<DollarSign size={20} />} color="green" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(d?.totals ?? {}).map(([vendor, counts]: [string, any]) => {
-          const total = (Object.values(counts) as number[]).reduce((a: number, b: number) => a + b, 0)
-          return <div key={vendor} className="card p-4"><p className="text-xl font-bold text-text-primary">{total.toLocaleString()}</p><p className="text-[11px] text-text-muted capitalize">{vendor} Calls</p></div>
-        })}
-      </div>
-      <div className="card p-4">
-        <h3 className="text-sm font-bold text-text-primary mb-4">Daily Vendor Calls</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={d?.daily ?? []}><XAxis dataKey="day" tickFormatter={v => v.slice(5)} tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} width={40} /><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /><Bar dataKey="gemini" fill="#3b82f6" radius={[4,4,0,0]} /><Bar dataKey="nvidia_nim" fill="#10b981" radius={[4,4,0,0]} /><Bar dataKey="huggingface" fill="#f59e0b" radius={[4,4,0,0]} /></BarChart>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-100 mb-4">Daily API Calls by Vendor</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={daily}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+            <YAxis stroke="#64748b" fontSize={12} />
+            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+            <Legend />
+            <Bar dataKey="gemini" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="nvidia_nim" fill="#10b981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="huggingface" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="card p-4">
-        <h3 className="text-sm font-bold text-text-primary mb-4">Fallback Flags</h3>
-        <div className="space-y-2">{(d?.fallback_flags ?? []).map((f: any) => (
-          <div key={f.modality} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border">
-            <span className="text-xs text-text-primary capitalize">{f.modality}</span>
-            <div className="flex items-center gap-4 text-xs text-text-muted">
-              <span>{f.paid_calls} paid calls</span>
-              <span>{f.detections} detections</span>
-              <span className={f.flagged ? 'text-rose-400 font-bold' : 'text-emerald-400'}>{f.paid_call_rate ? `${f.paid_call_rate.toFixed(2)}x` : 'N/A'}</span>
-              {f.flagged && <AlertTriangle className="w-4 h-4 text-rose-400" />}
-            </div>
-          </div>
-        ))}</div>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-100 mb-4">Fallback Flags</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-800/50 text-slate-400">
+              <tr><th className="text-left p-3">Modality</th><th className="text-left p-3">Paid Calls</th><th className="text-left p-3">Detections</th><th className="text-left p-3">Rate</th><th className="text-left p-3">Flagged</th></tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {fallbackFlags.length === 0 && <tr><td colSpan={5} className="p-4 text-slate-400 text-center">No fallback flags</td></tr>}
+              {fallbackFlags.map((f: any, i: number) => (
+                <tr key={i} className="hover:bg-slate-800/30">
+                  <td className="p-3 text-slate-200">{f.modality}</td>
+                  <td className="p-3 text-slate-400">{f.paid_calls ?? 0}</td>
+                  <td className="p-3 text-slate-400">{f.detections ?? 0}</td>
+                  <td className="p-3 text-slate-400">{f.paid_call_rate ?? 0}%</td>
+                  <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${f.flagged ? 'bg-red-400/10 text-red-400' : 'bg-green-400/10 text-green-400'}`}>{f.flagged ? 'Yes' : 'No'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

@@ -1,43 +1,68 @@
 'use client'
+
 import useSWR from 'swr'
-import { GitBranch, RefreshCw, Database, Server } from 'lucide-react'
-import { api } from '@/lib/api-client'
-import { ShimmerCard } from '../components/ShimmerBlock'
+import { fetcher } from '@/lib/api-client'
+import { ShimmerBlock } from '../components/ShimmerBlock'
+import { KpiCard } from '../components/KpiCard'
+import { Database, GitCommit, Cpu, Layers } from 'lucide-react'
 
 export default function PipelineTab() {
-  const { data, isLoading, error, mutate } = useSWR('/pipeline', (p: string) => api(p))
-  const d = data as any
+  const { data, error, isLoading } = useSWR('/api/pipeline', fetcher, { refreshInterval: 30000 })
 
-  if (error) return <div className="text-center py-10 text-sm text-rose-400">Failed to load pipeline data</div>
-  if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
+  if (isLoading) return <ShimmerBlock />
+  if (error) return <div className="p-6 text-red-400">Failed to load pipeline data</div>
+  if (!data) return <div className="p-6 text-slate-400">No pipeline data available</div>
+
+  const pipeline = data.pipeline || {}
+  const d1Buffer = data.d1_buffer || {}
+  const workerStats = data.worker_stats || []
+  const recentPushes = data.recent_pushes || []
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><GitBranch className="w-5 h-5 text-primary" /> Pipeline Monitor</h2>
-        <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <KpiCard title="Total Scraped" value={pipeline.total_scraped ?? 0} icon={<Database size={20} />} color="blue" />
+        <KpiCard title="Total Pushed" value={pipeline.total_pushed ?? 0} icon={<Layers size={20} />} color="green" />
+        <KpiCard title="D1 Buffer" value={d1Buffer.total ?? 0} icon={<Cpu size={20} />} color="purple" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[{ label: 'Total Scraped', value: d?.pipeline?.total_scraped ?? 0, icon: Database }, { label: 'Total Pushed', value: d?.pipeline?.total_pushed ?? 0, icon: Database }, { label: 'Buffer Total', value: d?.d1_buffer?.total ?? 0, icon: Database }, { label: 'Pending', value: d?.d1_buffer?.pending ?? 0, icon: Server }].map(k => (
-          <div key={k.label} className="card p-4"><k.icon className="w-5 h-5 text-primary mb-2" /><p className="text-xl font-bold text-text-primary">{k.value.toLocaleString()}</p><p className="text-[11px] text-text-muted">{k.label}</p></div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Worker Stats</h3>
-          <div className="space-y-2">{(d?.worker_stats ?? []).map((w: any) => (
-            <div key={w.worker_id} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border">
-              <span className="text-xs text-text-primary font-mono">{w.worker_id}</span>
-              <div className="flex items-center gap-4 text-xs text-text-muted"><span>{w.items} items</span><span>Q: {w.avg_q}</span></div>
-            </div>
-          ))}</div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Worker Stats</h3>
+          <div className="space-y-3">
+            {workerStats.length === 0 && <p className="text-slate-400">No worker data</p>}
+            {workerStats.map((w: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Cpu size={16} className="text-blue-400" />
+                  <span className="text-slate-200 font-medium">{w.worker_id || `Worker ${i + 1}`}</span>
+                </div>
+                <div className="flex gap-4 text-sm text-slate-400">
+                  <span>Items: <span className="text-slate-200">{w.items ?? 0}</span></span>
+                  <span>Avg Q: <span className="text-slate-200">{w.avg_q ?? 0}</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Recent Pushes</h3>
-          <div className="space-y-2">{(d?.recent_pushes ?? []).map((p: any) => (
-            <div key={p.commit_id || p.created_at} className="flex items-center justify-between p-2 rounded-lg bg-surface border border-border">
-              <span className="text-xs text-text-primary font-mono truncate max-w-[200px]">{p.commit_id?.slice(0, 12) || '—'}</span>
-              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${p.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{p.status}</span>
-            </div>
-          ))}</div>
+
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Recent Pushes</h3>
+          <div className="space-y-3">
+            {recentPushes.length === 0 && <p className="text-slate-400">No recent pushes</p>}
+            {recentPushes.map((p: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <GitCommit size={16} className="text-green-400" />
+                  <span className="text-slate-200 font-mono text-sm">{p.commit_id || 'N/A'}</span>
+                </div>
+                <div className="flex gap-4 text-sm text-slate-400">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${p.status === 'success' ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>{p.status || 'unknown'}</span>
+                  <span>{p.created_at ? new Date(p.created_at).toLocaleString() : 'N/A'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

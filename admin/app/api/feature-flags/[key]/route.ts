@@ -1,40 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
-type Params = Promise<{ key: string }>
-
-export async function PATCH(req: NextRequest, { params }: { params: Params }) {
-  const auth = await requireAdmin(req, 'flags:write')
+export async function PATCH(req: NextRequest, { params }: { params: { key: string } }) {
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
-  const { key } = await params
 
   const body = await req.json()
   const db = getAdminDb()
 
-  const { data, error } = await db
-    .from('feature_flags')
-    .update({ ...body, updated_at: new Date().toISOString(), updated_by: auth.adminId })
-    .eq('key', key)
-    .select()
-    .single()
+  const { error } = await db.from('feature_flags').update({
+    ...body,
+    updated_at: new Date().toISOString(),
+  }).eq('key', params.key)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  await logAdminAction('flag_updated', data.id as string, auth.ip, { key, ...body }, auth.adminId)
-  return NextResponse.json(data)
+  return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Params }) {
-  const auth = await requireAdmin(req, 'flags:write')
+export async function DELETE(req: NextRequest, { params }: { params: { key: string } }) {
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
-  const { key } = await params
 
   const db = getAdminDb()
-  const { error } = await db.from('feature_flags').delete().eq('key', key)
+  const { error } = await db.from('feature_flags').delete().eq('key', params.key)
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await logAdminAction('flag_deleted', null, auth.ip, { key }, auth.adminId)
+  await db.from('admin_audit_log').insert({
+    action: 'feature_flag_deleted',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { flag_key: params.key },
+  })
+
   return NextResponse.json({ ok: true })
 }

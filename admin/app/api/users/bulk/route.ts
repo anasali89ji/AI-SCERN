@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,72 +7,43 @@ export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req, 'users:write')
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json() as {
-    action: 'ban' | 'unban' | 'delete' | 'credits' | 'plan'
-    userIds: string[]
-    reason?: string
-    delta?: number
-    plan?: string
-  }
-
-  if (!body.userIds || !Array.isArray(body.userIds) || body.userIds.length === 0) {
+  const { action, userIds, delta, plan } = await req.json()
+  if (!Array.isArray(userIds) || userIds.length === 0) {
     return NextResponse.json({ error: 'userIds array required' }, { status: 400 })
   }
 
   const db = getAdminDb()
-  const results: Record<string, { success: boolean; error?: string }> = {}
+  const results = { success: 0, failed: 0, errors: [] as string[] }
 
-  for (const userId of body.userIds) {
+  for (const userId of userIds) {
     try {
-      switch (body.action) {
-        case 'ban':
-          await db.from('profiles').update({ is_banned: true }).eq('id', userId)
-          break
-        case 'unban':
-          await db.from('profiles').update({ is_banned: false }).eq('id', userId)
-          break
-        case 'delete':
-          await db.from('profiles').delete().eq('id', userId)
-          break
-        case 'credits':
-          if (body.delta === undefined) throw new Error('delta required')
-          const { data: profile } = await db.from('profiles').select('credits_balance').eq('id', userId).single()
-          const newBalance = Math.max(0, (profile?.credits_balance ?? 0) + body.delta)
-          await db.from('profiles').update({ credits_balance: newBalance, credits_remaining: newBalance }).eq('id', userId)
-          await db.from('credit_transactions').insert({
-            user_id: userId,
-            transaction_type: 'admin_bulk_grant',
-            credits: body.delta,
-            status: 'completed',
-            metadata: { admin_ip: auth.ip, reason: body.reason, bulk: true },
-          })
-          break
-        case 'plan':
-          if (!body.plan) throw new Error('plan required')
-          await db.from('profiles').update({ plan: body.plan, plan_id: body.plan }).eq('id', userId)
-          break
+      if (action === 'ban') {
+        await db.from('profiles').update({ is_banned: true, updated_at: new Date().toISOString() }).eq('id', userId)
+      } else if (action === 'unban') {
+        await db.from('profiles').update({ is_banned: false, updated_at: new Date().toISOString() }).eq('id', userId)
+      } else if (action === 'delete') {
+        await db.from('profiles').delete().eq('id', userId)
+      } else if (action === 'plan' && plan) {
+        await db.from('profiles').update({ plan, plan_id: plan, plan_updated_at: new Date().toISOString() }).eq('id', userId)
+      } else if (action === 'credits' && typeof delta === 'number') {
+        const { data: p } = await db.from('profiles').select('credits_balance').eq('id', userId).single()
+        const newBal = Math.max(0, (p?.credits_balance ?? 0) + delta)
+        await db.from('profiles').update({ credits_balance: newBal, credits_remaining: newBal, updated_at: new Date().toISOString() }).eq('id', userId)
+        await db.from('credit_transactions').insert({ user_id: userId, delta, credits: newBal, reason: 'admin_bulk' })
       }
-      results[userId] = { success: true }
+      results.success++
     } catch (e: any) {
-      results[userId] = { success: false, error: e.message }
+      results.failed++
+      results.errors.push(`${userId}: ${e.message}`)
     }
   }
 
-  const successCount = Object.values(results).filter(r => r.success).length
-  const failedCount = body.userIds.length - successCount
-
-  await logAdminAction(`users_bulk_${body.action}`, null, auth.ip, {
-    count: body.userIds.length,
-    success: successCount,
-    failed: failedCount,
-    reason: body.reason,
-  }, auth.adminId)
-
-  return NextResponse.json({
-    ok: true,
-    processed: body.userIds.length,
-    success: successCount,
-    failed: failedCount,
-    results,
+  await db.from('admin_audit_log').insert({
+    action: `bulk_${action}`,
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { count: userIds.length, action, success: results.success, failed: results.failed },
   })
+
+  return NextResponse.json(results)
 }

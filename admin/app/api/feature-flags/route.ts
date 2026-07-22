@@ -1,36 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req, 'flags:read')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const { data, error } = await getAdminDb()
-    .from('feature_flags')
-    .select('*')
-    .order('key')
-
+  const db = getAdminDb()
+  const { data, error } = await db.from('feature_flags').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data ?? [])
+
+  return NextResponse.json(data || [])
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req, 'flags:write')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json() as Record<string, unknown>
-  const { key, name, description, enabled = false, rollout_percentage = 100, target_audience = 'all' } = body
-  if (!key || !name) return NextResponse.json({ error: 'key and name are required' }, { status: 400 })
+  const body = await req.json()
+  const db = getAdminDb()
 
-  const { data, error } = await getAdminDb()
-    .from('feature_flags')
-    .insert({ key, name, description, enabled, rollout_percentage, target_audience, created_by: auth.adminId })
-    .select()
-    .single()
+  const { error } = await db.from('feature_flags').insert({
+    ...body,
+    created_at: new Date().toISOString(),
+  })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  await logAdminAction('flag_created', data.id as string, auth.ip, { key }, auth.adminId)
-  return NextResponse.json(data, { status: 201 })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await db.from('admin_audit_log').insert({
+    action: 'feature_flag_created',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { key: body.key, name: body.name },
+  })
+
+  return NextResponse.json({ ok: true })
 }

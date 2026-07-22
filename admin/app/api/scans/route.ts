@@ -4,35 +4,38 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req, 'scans:read')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const { searchParams } = new URL(req.url)
+  const type = searchParams.get('type') || 'all'
+  const verdict = searchParams.get('verdict') || 'all'
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-  const limit = Math.min(100, parseInt(searchParams.get('limit') ?? '20'))
-  const mediaType = searchParams.get('type')
-  const verdict = searchParams.get('verdict')
-  const userId = searchParams.get('userId')
-  const since = searchParams.get('since')
+  const limit = 20
 
   const db = getAdminDb()
-  let query = db
-    .from('scans')
-    .select('*, profiles(email, display_name)', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range((page - 1) * limit, page * limit - 1)
+  let query = db.from('scans').select('*, profiles(email, display_name)').order('created_at', { ascending: false })
 
-  if (mediaType) query = query.eq('media_type', mediaType)
-  if (verdict) query = query.eq('verdict', verdict)
-  if (userId) query = query.eq('user_id', userId)
-  if (since) query = query.gte('created_at', since)
+  if (type !== 'all') query = query.eq('media_type', type)
+  if (verdict !== 'all') query = query.eq('verdict', verdict)
 
-  const { data, count, error } = await query
+  const { data, count, error } = await query.range((page - 1) * limit, page * limit - 1)
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  const scans = (data || []).map((row: any) => ({
+    id: row.id,
+    user_id: row.user_id,
+    media_type: row.media_type,
+    verdict: row.verdict,
+    confidence_score: row.confidence_score,
+    created_at: row.created_at,
+    profiles: row.profiles,
+  }))
+
   return NextResponse.json({
-    scans: data ?? [],
-    total: count ?? 0,
-    pages: Math.ceil((count ?? 0) / limit),
+    scans,
+    total: count || 0,
+    pages: Math.ceil((count || 0) / limit),
   })
 }

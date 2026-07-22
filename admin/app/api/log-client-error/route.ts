@@ -1,26 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
+import { getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req)
-  if (auth instanceof NextResponse) return auth
+  const { message, path, stack, userAgent } = await req.json()
+  const db = getAdminDb()
 
-  try {
-    const { message, stack, tab, url, userAgent } = await req.json() as Record<string, string>
-    if (!message) return NextResponse.json({ ok: true })
+  // Check if similar error exists in last hour
+  const oneHourAgo = new Date(Date.now() - 3600000).toISOString()
+  const { data: existing } = await db
+    .from('error_logs')
+    .select('id, count')
+    .eq('message', message)
+    .eq('path', path || '')
+    .gte('created_at', oneHourAgo)
+    .limit(1)
+    .single()
 
-    const db = getAdminDb()
-    await db.from('admin_client_errors').insert({
-      message: String(message).slice(0, 1000),
-      stack: stack ? String(stack).slice(0, 4000) : null,
-      tab: tab ?? null,
-      url: url ?? null,
-      user_agent: userAgent ?? null,
-      ip: auth.ip,
-    }).select()
-  } catch { /* non-fatal */ }
+  if (existing) {
+    await db.from('error_logs').update({
+      count: (existing.count || 1) + 1,
+      last_seen: new Date().toISOString(),
+    }).eq('id', existing.id)
+  } else {
+    await db.from('error_logs').insert({
+      message,
+      path: path || '',
+      stack_trace: stack || '',
+      severity: 'medium',
+      count: 1,
+      first_seen: new Date().toISOString(),
+      last_seen: new Date().toISOString(),
+      resolved: false,
+    })
+  }
 
   return NextResponse.json({ ok: true })
 }

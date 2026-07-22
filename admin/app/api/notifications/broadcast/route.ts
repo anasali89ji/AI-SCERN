@@ -1,47 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, logAdminAction } from '@/lib/admin-middleware'
-import { broadcastNotification } from '@/lib/notifications'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req, 'notifications:broadcast')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json() as {
-    title: string
-    body: string
-    type?: string
-    priority?: string
-    target_audience?: string
-    action_url?: string
-    metadata?: Record<string, unknown>
+  const { title, body, type, priority, target_audience, action_url } = await req.json()
+  if (!title || !body) return NextResponse.json({ error: 'title and body required' }, { status: 400 })
+
+  const db = getAdminDb()
+
+  if (target_audience === 'all') {
+    const { error } = await db.from('notifications').insert({
+      user_id: null,
+      title,
+      body,
+      type: type || 'system',
+      priority: priority || 'normal',
+      target_audience: 'all',
+      read: false,
+      action_url: action_url || null,
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  } else {
+    const { data: users } = await db.from('profiles').select('id').eq('plan', target_audience)
+    const inserts = (users || []).map(u => ({
+      user_id: u.id,
+      title,
+      body,
+      type: type || 'system',
+      priority: priority || 'normal',
+      target_audience,
+      read: false,
+      action_url: action_url || null,
+    }))
+    if (inserts.length > 0) {
+      const { error } = await db.from('notifications').insert(inserts)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
   }
 
-  if (!body.title || !body.body) {
-    return NextResponse.json({ error: 'title and body are required' }, { status: 400 })
-  }
-
-  const result = await broadcastNotification({
-    title: body.title,
-    body: body.body,
-    type: (body.type || 'system') as any,
-    priority: (body.priority || 'normal') as any,
-    target_audience: (body.target_audience || 'all') as any,
-    action_url: body.action_url,
-    metadata: body.metadata,
+  await db.from('admin_audit_log').insert({
+    action: 'notification_broadcast',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { title, target_audience },
   })
 
-  await logAdminAction('notification_broadcast', null, auth.ip, {
-    title: body.title,
-    target: body.target_audience,
-    sent: result.sent,
-    failed: result.failed,
-  }, auth.adminId)
-
-  return NextResponse.json({
-    ok: true,
-    sent: result.sent,
-    failed: result.failed,
-  })
+  return NextResponse.json({ ok: true, sent: target_audience === 'all' ? 'broadcast' : 'targeted' })
 }

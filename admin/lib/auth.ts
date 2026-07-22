@@ -69,6 +69,12 @@ async function hmacVerify(data: string, sig: string, secret: string): Promise<bo
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
 export async function createAdminSession(
   ip: string,
   userAgent: string,
@@ -84,11 +90,7 @@ export async function createAdminSession(
   const dbAdminId = adminId && UUID_RE.test(adminId) ? adminId : null
 
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
+    const sb = getSupabaseAdmin()
     const { error: insertErr } = await sb.from('admin_sessions').insert({
       session_token: token,
       admin_id: dbAdminId,
@@ -136,11 +138,7 @@ export async function verifyAdminSession(token: string | undefined): Promise<boo
 
   // 3. Check Supabase revocation table
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
+    const sb = getSupabaseAdmin()
     const { data: row, error } = await sb
       .from('admin_sessions')
       .select('revoked_at, expires_at')
@@ -163,11 +161,7 @@ export async function verifyAdminSession(token: string | undefined): Promise<boo
 
 export async function revokeAdminSession(token: string): Promise<void> {
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
+    const sb = getSupabaseAdmin()
     await sb
       .from('admin_sessions')
       .update({ revoked_at: new Date().toISOString() })
@@ -222,11 +216,7 @@ export async function verifyAdminPassword(password: string): Promise<{
 
   // Multi-admin DB lookup
   try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
+    const sb = getSupabaseAdmin()
     const { data: admins } = await sb
       .from('admin_users')
       .select('id, email, password_hash, role, is_active')

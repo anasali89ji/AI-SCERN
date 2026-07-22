@@ -1,38 +1,87 @@
 'use client'
+
 import useSWR from 'swr'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Receipt, RefreshCw } from 'lucide-react'
-import { api } from '@/lib/api-client'
-import { ShimmerCard } from '../components/ShimmerBlock'
+import { fetcher } from '@/lib/api-client'
+import { KpiCard } from '../components/KpiCard'
+import { ShimmerBlock } from '../components/ShimmerBlock'
+import { DollarSign, TrendingUp, Users, Repeat } from 'lucide-react'
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, BarChart, Bar
+} from 'recharts'
 
 export default function RevenueTab() {
-  const { data, isLoading, error, mutate } = useSWR('/revenue', (p: string) => api(p))
-  const d = data as any
+  const { data, error, isLoading } = useSWR('/api/revenue', fetcher, { refreshInterval: 60000 })
 
-  if (error) return <div className="text-center py-10 text-sm text-rose-400">Failed to load revenue data</div>
-  if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
+  if (isLoading) return <ShimmerBlock />
+  if (error) return <div className="p-6 text-red-400">Failed to load revenue data</div>
+  if (!data) return <div className="p-6 text-slate-400">No revenue data available</div>
+
+  const kpis = data.kpis || {}
+  const mrrTrend = data.mrr_trend || []
+  const byPlan = data.by_plan || []
+  const forecast = data.forecast || []
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><Receipt className="w-5 h-5 text-primary" /> Revenue</h2>
-        <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard title="MRR" value={`$${(kpis.mrr ?? 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="green" />
+        <KpiCard title="ARR" value={`$${(kpis.arr ?? 0).toLocaleString()}`} icon={<TrendingUp size={20} />} color="blue" />
+        <KpiCard title="Churn Rate" value={`${kpis.churn_rate ?? 0}%`} icon={<Repeat size={20} />} color="red" />
+        <KpiCard title="ARPU" value={`$${(kpis.avg_revenue_per_user ?? 0).toFixed(2)}`} icon={<Users size={20} />} color="purple" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[{ label: 'MRR', value: `$${(d?.kpis?.mrr ?? 0).toLocaleString()}` }, { label: 'ARR', value: `$${(d?.kpis?.arr ?? 0).toLocaleString()}` }, { label: 'Churn Rate', value: `${d?.kpis?.churn_rate ?? 0}%` }, { label: 'ARPU', value: `$${(d?.kpis?.avg_revenue_per_user ?? 0).toFixed(2)}` }].map(k => (
-          <div key={k.label} className="card p-4"><p className="text-xl font-bold text-text-primary">{k.value}</p><p className="text-[11px] text-text-muted">{k.label}</p></div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">MRR Trend</h3>
-          <ResponsiveContainer width="100%" height={220}><AreaChart data={d?.mrr_trend ?? []}><defs><linearGradient id="mrrG" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient></defs><XAxis dataKey="month" tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} width={40} /><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /><Area type="monotone" dataKey="mrr" stroke="#3b82f6" fill="url(#mrrG)" strokeWidth={2} /></AreaChart></ResponsiveContainer>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">MRR Trend</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={mrrTrend}>
+              <defs>
+                <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+              <Area type="monotone" dataKey="mrr" stroke="#10b981" fillOpacity={1} fill="url(#colorMrr)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Revenue by Plan</h3>
-          <ResponsiveContainer width="100%" height={220}><BarChart data={d?.by_plan ?? []}><XAxis dataKey="plan" tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} width={40} /><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /><Bar dataKey="revenue" fill="#3b82f6" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
+
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Revenue by Plan</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={byPlan}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="plan" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+              <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
-      <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Revenue Forecast</h3>
-        <ResponsiveContainer width="100%" height={180}><AreaChart data={d?.forecast ?? []}><XAxis dataKey="month" tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} width={50} /><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /><Area type="monotone" dataKey="mrr" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeWidth={2} strokeDasharray="5 5" /></AreaChart></ResponsiveContainer>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-100 mb-4">Revenue Forecast</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <AreaChart data={forecast}>
+            <defs>
+              <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+            <YAxis stroke="#64748b" fontSize={12} />
+            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+            <Area type="monotone" dataKey="mrr" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorForecast)" />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )

@@ -1,51 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction, checkMaintenanceMode } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
+const KEYS = ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips']
+
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req, 'maintenance:read')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
-  const { data: settings } = await db.from('settings').select('key, value')
+  const { data } = await db.from('site_settings').select('key, value').in('key', KEYS)
 
-  const maintenance = {
-    enabled: false,
-    message: 'We are performing scheduled maintenance. Please check back soon.',
-    allowed_ips: [] as string[],
-    estimated_duration: '',
-  }
-
-  for (const s of settings ?? []) {
-    if (s.key === 'maintenance_mode') maintenance.enabled = s.value === 'true'
-    if (s.key === 'maintenance_message') maintenance.message = s.value
-    if (s.key === 'maintenance_allowed_ips') {
-      try { maintenance.allowed_ips = JSON.parse(s.value) } catch {}
+  const settings: Record<string, any> = { enabled: false, message: '', estimated_duration: '', allowed_ips: [] }
+  for (const row of data || []) {
+    if (row.key === 'maintenance_allowed_ips') {
+      try { settings.allowed_ips = JSON.parse(row.value || '[]') } catch { settings.allowed_ips = [] }
+    } else if (row.key === 'maintenance_enabled') {
+      settings.enabled = row.value === 'true'
+    } else if (row.key === 'maintenance_message') {
+      settings.message = row.value || ''
+    } else if (row.key === 'maintenance_duration') {
+      settings.estimated_duration = row.value || ''
     }
-    if (s.key === 'maintenance_duration') maintenance.estimated_duration = s.value
   }
 
-  return NextResponse.json(maintenance)
+  return NextResponse.json(settings)
 }
 
 export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req, 'maintenance:write')
+  const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json()
+  const { enabled, message, estimated_duration, allowed_ips } = await req.json()
   const db = getAdminDb()
 
-  const updates: { key: string; value: string }[] = []
-  if (body.enabled !== undefined) updates.push({ key: 'maintenance_mode', value: String(body.enabled) })
-  if (body.message !== undefined) updates.push({ key: 'maintenance_message', value: body.message })
-  if (body.allowed_ips !== undefined) updates.push({ key: 'maintenance_allowed_ips', value: JSON.stringify(body.allowed_ips) })
-  if (body.estimated_duration !== undefined) updates.push({ key: 'maintenance_duration', value: body.estimated_duration })
+  const updates = [
+    { key: 'maintenance_enabled', value: String(!!enabled) },
+    { key: 'maintenance_message', value: message || '' },
+    { key: 'maintenance_duration', value: estimated_duration || '' },
+    { key: 'maintenance_allowed_ips', value: JSON.stringify(allowed_ips || []) },
+  ]
 
   for (const u of updates) {
-    await db.from('settings').upsert(u, { onConflict: 'key' })
+    const { error } = await db.from('site_settings').upsert({ key: u.key, value: u.value, updated_at: new Date().toISOString() })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  await logAdminAction('maintenance_updated', null, auth.ip, body, auth.adminId)
-  return NextResponse.json({ ok: true, maintenance: body })
+  await db.from('admin_audit_log').insert({
+    action: 'maintenance_updated',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { enabled, message },
+  })
+
+  return NextResponse.json({ ok: true })
 }

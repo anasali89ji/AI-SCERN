@@ -1,43 +1,70 @@
 'use client'
+
 import useSWR from 'swr'
-import { HeartPulse, RefreshCw, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
-import { api } from '@/lib/api-client'
-import { ShimmerCard } from '../components/ShimmerBlock'
+import { fetcher } from '@/lib/api-client'
+import { ShimmerBlock } from '../components/ShimmerBlock'
+import { CheckCircle, XCircle, AlertTriangle, Activity, Server, Database, Shield } from 'lucide-react'
 
 export default function HealthTab() {
-  const { data, isLoading, error, mutate } = useSWR('/health', (p: string) => api(p))
-  const d = data as any
+  const { data, error, isLoading } = useSWR('/api/health', fetcher, { refreshInterval: 30000 })
 
-  if (error) return <div className="text-center py-10 text-sm text-rose-400">Failed to load health data</div>
-  if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
+  if (isLoading) return <ShimmerBlock />
+  if (error) return <div className="p-6 text-red-400">Failed to load health data</div>
+  if (!data) return <div className="p-6 text-slate-400">No health data available</div>
 
-  const overallColor = d?.overall === 'healthy' ? 'text-emerald-400' : d?.overall === 'degraded' ? 'text-amber-400' : 'text-rose-400'
-  const OverallIcon = d?.overall === 'healthy' ? CheckCircle : d?.overall === 'degraded' ? AlertTriangle : XCircle
+  const overall = data.overall || 'unknown'
+  const checks = data.checks || []
+  const recentErrors = data.recent_errors_1h || 0
+
+  const statusColors: Record<string, string> = {
+    healthy: 'text-green-400 bg-green-400/10',
+    degraded: 'text-amber-400 bg-amber-400/10',
+    unhealthy: 'text-red-400 bg-red-400/10',
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><HeartPulse className="w-5 h-5 text-primary" /> Health Monitor</h2>
-        <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
-      </div>
-      <div className="card p-6 text-center">
-        <OverallIcon className={`w-12 h-12 mx-auto mb-2 ${overallColor}`} />
-        <p className={`text-2xl font-bold ${overallColor}`}>{d?.overall?.toUpperCase()}</p>
-        <p className="text-xs text-text-muted mt-1">Uptime: {Math.floor((d?.uptime_seconds ?? 0) / 3600)}h {Math.floor(((d?.uptime_seconds ?? 0) % 3600) / 60)}m</p>
-        <p className="text-xs text-text-muted">Version: {d?.version}</p>
-        <p className="text-xs text-text-muted">Recent Errors (1h): {d?.recent_errors_1h ?? 0}</p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {(d?.checks ?? []).map((check: any) => (
-          <div key={check.name} className="card p-4 flex items-center gap-3">
-            {check.status === 'healthy' ? <CheckCircle className="w-5 h-5 text-emerald-400" /> : check.status === 'degraded' ? <AlertTriangle className="w-5 h-5 text-amber-400" /> : <XCircle className="w-5 h-5 text-rose-400" />}
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-text-primary">{check.name}</p>
-              <p className="text-xs text-text-muted">{check.status === 'healthy' ? `${check.latency_ms}ms` : check.message}</p>
-            </div>
-            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${check.status === 'healthy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : check.status === 'degraded' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{check.status}</span>
+      <div className={`p-6 rounded-xl border ${statusColors[overall] || 'text-slate-400 bg-slate-400/10'} border-current`}>
+        <div className="flex items-center gap-3">
+          {overall === 'healthy' ? <CheckCircle size={24} /> : overall === 'degraded' ? <AlertTriangle size={24} /> : <XCircle size={24} />}
+          <div>
+            <h2 className="text-xl font-bold capitalize">{overall}</h2>
+            <p className="text-sm opacity-80">System Status</p>
           </div>
-        ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-slate-400 mb-2"><Server size={16} /> Uptime</div>
+          <div className="text-2xl font-bold text-slate-100">{Math.floor((data.uptime_seconds || 0) / 3600)}h</div>
+        </div>
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-slate-400 mb-2"><Shield size={16} /> Version</div>
+          <div className="text-2xl font-bold text-slate-100">{data.version || 'N/A'}</div>
+        </div>
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-slate-400 mb-2"><Database size={16} /> Errors (1h)</div>
+          <div className="text-2xl font-bold text-slate-100">{recentErrors}</div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-800/50 text-slate-400">
+            <tr><th className="text-left p-4">Service</th><th className="text-left p-4">Status</th><th className="text-left p-4">Latency</th><th className="text-left p-4">Message</th></tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800">
+            {checks.map((check: any, i: number) => (
+              <tr key={i} className="hover:bg-slate-800/30">
+                <td className="p-4 text-slate-200">{check.name}</td>
+                <td className="p-4"><span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[check.status] || ''}`}>{check.status}</span></td>
+                <td className="p-4 text-slate-400">{check.latency_ms}ms</td>
+                <td className="p-4 text-slate-400">{check.message}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

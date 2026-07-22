@@ -1,36 +1,90 @@
 'use client'
+
 import useSWR from 'swr'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { TrendingUp, RefreshCw } from 'lucide-react'
-import { api } from '@/lib/api-client'
-import { ShimmerCard } from '../components/ShimmerBlock'
+import { fetcher } from '@/lib/api-client'
+import { ShimmerBlock } from '../components/ShimmerBlock'
+import { KpiCard } from '../components/KpiCard'
+import { Users, MousePointer, TrendingUp, BarChart3 } from 'lucide-react'
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts'
+
+const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444']
 
 export default function MarketingTab() {
-  const { data, isLoading, error, mutate } = useSWR('/marketing', (p: string) => api(p))
-  const d = data as any
+  const { data, error, isLoading } = useSWR('/api/marketing', fetcher, { refreshInterval: 60000 })
 
-  if (error) return <div className="text-center py-10 text-sm text-rose-400">Failed to load marketing data</div>
-  if (isLoading) return <div className="space-y-3">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} />)}</div>
+  if (isLoading) return <ShimmerBlock />
+  if (error) return <div className="p-6 text-red-400">Failed to load marketing data</div>
+  if (!data) return <div className="p-6 text-slate-400">No marketing data available</div>
+
+  const kpis = data.kpis || {}
+  const trafficDaily = data.traffic_daily || []
+  const referrers = data.referrers || []
+  const utmPerformance = data.utm_performance || []
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><TrendingUp className="w-5 h-5 text-primary" /> Marketing Analytics</h2>
-        <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard title="Total Visits" value={(kpis.total_visits ?? 0).toLocaleString()} icon={<MousePointer size={20} />} color="blue" />
+        <KpiCard title="Unique Visitors" value={(kpis.unique_visitors ?? 0).toLocaleString()} icon={<Users size={20} />} color="purple" />
+        <KpiCard title="Signups" value={(kpis.signups ?? 0).toLocaleString()} icon={<TrendingUp size={20} />} color="green" />
+        <KpiCard title="Conversion Rate" value={`${(kpis.conversion_rate ?? 0).toFixed(2)}%`} icon={<BarChart3 size={20} />} color="amber" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[{ label: 'Total Visits', value: d?.kpis?.total_visits ?? 0 }, { label: 'Unique Visitors', value: d?.kpis?.unique_visitors ?? 0 }, { label: 'Signups', value: d?.kpis?.signups ?? 0 }, { label: 'Conversion', value: `${(d?.kpis?.conversion_rate ?? 0).toFixed(1)}%` }].map(k => (
-          <div key={k.label} className="card p-4"><p className="text-xl font-bold text-text-primary">{k.value.toLocaleString()}</p><p className="text-[11px] text-text-muted">{k.label}</p></div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Traffic Daily</h3>
-          <ResponsiveContainer width="100%" height={200}><BarChart data={d?.traffic_daily ?? []}><XAxis dataKey="date" tickFormatter={v => v.slice(5)} tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: '#718096', fontSize: 10 }} axisLine={false} tickLine={false} width={30} /><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /><Bar dataKey="visits" fill="#3b82f6" radius={[4,4,0,0]} /><Bar dataKey="signups" fill="#10b981" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Traffic (30 Days)</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={trafficDaily}>
+              <defs>
+                <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+              <Area type="monotone" dataKey="visits" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTraffic)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
-        <div className="card p-4"><h3 className="text-sm font-bold text-text-primary mb-4">Device Breakdown</h3>
-          <ResponsiveContainer width="100%" height={200}><PieChart><Pie data={d?.device_breakdown ?? []} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} paddingAngle={3}>
-            {(d?.device_breakdown ?? []).map((_: any, i: number) => <Cell key={i} fill={['#3b82f6', '#10b981', '#f59e0b'][i]} />)}
-          </Pie><Tooltip contentStyle={{ background: '#0f0f17', border: '1px solid #1c1c2e', borderRadius: 10, fontSize: 11 }} /></PieChart></ResponsiveContainer>
+
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Top Referrers</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={referrers} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label>
+                {referrers.map((_: any, i: number) => (
+                  <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b' }} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-100 mb-4">UTM Performance</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-800/50 text-slate-400">
+              <tr><th className="text-left p-3">Source</th><th className="text-left p-3">Medium</th><th className="text-left p-3">Visits</th><th className="text-left p-3">Signups</th></tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {utmPerformance.length === 0 && <tr><td colSpan={4} className="p-4 text-slate-400 text-center">No UTM data</td></tr>}
+              {utmPerformance.map((u: any, i: number) => (
+                <tr key={i} className="hover:bg-slate-800/30">
+                  <td className="p-3 text-slate-200">{u.utm_source || 'N/A'}</td>
+                  <td className="p-3 text-slate-400">{u.utm_medium || 'N/A'}</td>
+                  <td className="p-3 text-slate-400">{u.visits ?? 0}</td>
+                  <td className="p-3 text-slate-400">{u.signups ?? 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
