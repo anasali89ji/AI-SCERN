@@ -114,7 +114,7 @@ function VerifyDocPage() {
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100))
     })
- xhr.addEventListener('load', () => {
+    xhr.addEventListener('load', () => {
       setLoading(false)
       try {
         const json = JSON.parse(xhr.responseText)
@@ -134,7 +134,6 @@ function VerifyDocPage() {
           setError(`Unexpected response from the server (status ${xhr.status}). Please try again.`)
         }
       }
-    })
     })
     xhr.addEventListener('error', () => { setLoading(false); setError('Network error — please try again.') })
     xhr.addEventListener('abort', () => { setLoading(false) })
