@@ -10,7 +10,7 @@ import {
   FileText, Clock, Settings, CheckCircle2, X
 } from 'lucide-react';
 import { isFirstTimeUser } from '@/lib/onboarding/detect-first-run';
-import { completeOnboarding, skipOnboarding, updateOnboardingStep } from '@/lib/onboarding/store';
+import { completeOnboarding, skipOnboarding, updateOnboardingStep, getOnboardingState } from '@/lib/onboarding/store';
 
 const TOTAL_STEPS = 4;
 
@@ -79,9 +79,43 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedUseCase, setSelectedUseCase] = useState<string | null>(null);
   const [tourIndex, setTourIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
-  const { user } = useUser();
+  const [isVisible, setIsVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const { user, isLoaded } = useUser();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded || checked) return;
+    if (!user?.id) { setChecked(true); return; }
+
+    let cancelled = false;
+    (async () => {
+      const state = await getOnboardingState(user.id);
+      if (cancelled) return;
+
+      // Already completed or explicitly skipped before — never show again.
+      if (state?.has_completed_onboarding || state?.onboarding_skipped_at) {
+        setIsVisible(false);
+      } else if (state === null) {
+        // Couldn't load a profile row (e.g. new user, race with profile creation, or
+        // a transient error). Fall back to the createdAt/lastSignInAt heuristic instead
+        // of showing on every visit.
+        setIsVisible(isFirstTimeUser(user));
+      } else {
+        // Resume from wherever they left off, if that was persisted.
+        if (state.onboarding_step_reached && state.onboarding_step_reached > 1) {
+          setCurrentStep(state.onboarding_step_reached);
+        }
+        if (state.onboarding_use_case) {
+          setSelectedUseCase(state.onboarding_use_case);
+        }
+        setIsVisible(true);
+      }
+      setChecked(true);
+    })();
+
+    return () => { cancelled = true };
+  }, [isLoaded, user, checked]);
 
   const handleNext = useCallback(async () => {
    if (currentStep < TOTAL_STEPS) {
