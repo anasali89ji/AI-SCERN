@@ -114,7 +114,7 @@ function VerifyDocPage() {
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100))
     })
-    xhr.addEventListener('load', () => {
+ xhr.addEventListener('load', () => {
       setLoading(false)
       try {
         const json = JSON.parse(xhr.responseText)
@@ -124,8 +124,17 @@ function VerifyDocPage() {
           setError(toUserError(json?.error?.code, json?.error?.message))
         }
       } catch {
-        setError('Something went wrong reading the response. Please try again.')
+        if (xhr.status === 504 || xhr.status === 0) {
+          setError('This document took too long to analyze (large files with many images can exceed the time limit). Try a smaller file, or a document with fewer embedded images.')
+        } else if (xhr.status >= 500) {
+          setError(`The server had a problem processing this document (error ${xhr.status}). Please try again in a moment.`)
+        } else if (xhr.status === 413) {
+          setError('Document must be under 25MB.')
+        } else {
+          setError(`Unexpected response from the server (status ${xhr.status}). Please try again.`)
+        }
       }
+    })
     })
     xhr.addEventListener('error', () => { setLoading(false); setError('Network error — please try again.') })
     xhr.addEventListener('abort', () => { setLoading(false) })
