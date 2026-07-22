@@ -52,18 +52,20 @@ function getR2Client(): S3Client {
   return _client
 }
 
-export type R2MediaType = 'image' | 'audio' | 'video'
+export type R2MediaType = 'image' | 'audio' | 'video' | 'document'
 
 const ALLOWED_EXTENSIONS: Record<R2MediaType, string[]> = {
   image: ['jpg','jpeg','png','webp','gif','bmp'],
   audio: ['mp3','wav','ogg','flac','m4a','aac','webm'],
   video: ['mp4','mov','avi','mkv','webm','mpeg'],
+  document: ['pdf','docx','pptx'],
 }
 
 const MAX_SIZES: Record<R2MediaType, number> = {
   image: 10  * 1024 * 1024,  // 10MB
   audio: 25  * 1024 * 1024,  // 25MB
   video: 500 * 1024 * 1024,  // 500MB (R2 can handle it; Vercel never touches the bytes)
+  document: 25 * 1024 * 1024, // 25MB
 }
 
 export interface R2UploadResult {

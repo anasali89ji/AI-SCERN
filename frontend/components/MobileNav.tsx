@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   LayoutDashboard, Image as ImageIcon, FileText, Clock,
   MoreHorizontal, Video, Music, Layers, MessageSquare,
-  User, Settings, X, Globe,
+  User, Settings, X, Globe, FileSearch,
 } from 'lucide-react'
 
 const PRIMARY_NAV = [
@@ -17,6 +17,7 @@ const PRIMARY_NAV = [
 ]
 
 const MORE_NAV = [
+  { href: '/detect/document', icon: FileSearch, label: 'VerifyDoc' },
   { href: '/detect/audio', icon: Music,        label: 'Audio'    },
   { href: '/detect/video', icon: Video,        label: 'Video'    },
   { href: '/batch',        icon: Layers,       label: 'Batch'    },

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import {
   LayoutDashboard, Image as ImageIcon, Video, Music, FileText, Globe, Globe2,
-  Layers, Clock, User, Settings, ChevronLeft,
+  Layers, Clock, User, Settings, ChevronLeft, FileSearch,
   ChevronRight, Menu, BarChart2, LogOut, ChevronDown, MessageSquare, Zap, Star
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -31,6 +31,7 @@ const navGroups = [
       { href: '/detect/video',  icon: 'Video',           label: 'Video'         },
       { href: '/detect/audio',  icon: 'Music',           label: 'Audio'         },
       { href: '/detect/text',   icon: 'FileText',        label: 'Text'          },
+      { href: '/detect/document', icon: 'FileSearch',    label: 'VerifyDoc'     },
     ],
   },
   {
@@ -59,7 +60,7 @@ const navGroups = [
 ]
 
 const iconMap: Record<string, any> = {
-  LayoutDashboard, ImageIcon, Video, Music, FileText, Globe, Globe2,
+  LayoutDashboard, ImageIcon, Video, Music, FileText, Globe, Globe2, FileSearch,
   Layers, Clock, BarChart2, User, Settings, MessageSquare, Zap, Star,
 }
 

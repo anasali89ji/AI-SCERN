@@ -432,6 +432,60 @@ async def analyze_audio_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     return result
 
 
+@app.post("/analyze/document")
+async def analyze_document_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    VerifyDoc — full document verification via file upload (multipart/form-data).
+    Accepts PDF, DOCX, or PPTX. Extracts embedded text AND images, then runs
+    image detection (full pipeline incl. physical-consistency L11-L14 layers)
+    and text detection (perplexity/burstiness/stylometry/repetition) IN
+    PARALLEL, plus an offline plagiarism/originality-risk pass on the text.
+
+    Mirrors the /analyze/image and /analyze/audio endpoint pattern (MIME
+    allowlist, size cap, run_in_executor so CPU work never blocks the event
+    loop, error → HTTPException so the frontend's graceful-degrade fallback
+    triggers cleanly).
+    """
+    ALLOWED_DOCUMENT_MIMES = {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }
+    name = (file.filename or "").lower()
+    is_allowed_ext = name.endswith((".pdf", ".docx", ".pptx"))
+    if (not file.content_type or file.content_type.lower() not in ALLOWED_DOCUMENT_MIMES) and not is_allowed_ext:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported document type '{file.content_type}'. Allowed: PDF, DOCX, PPTX.",
+        )
+
+    contents = await file.read()
+    max_mb = int(os.getenv("MAX_DOCUMENT_SIZE_MB", 25))
+    if len(contents) > max_mb * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"Document must be under {max_mb}MB")
+
+    import asyncio
+    from engines.document_engine import analyze_document_from_bytes, UnsupportedDocumentError
+
+    t0 = time.time()
+    _inc("requests_total"); _inc("requests_document")
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(
+            None, analyze_document_from_bytes, contents, file.content_type, file.filename,
+            f"upload_{int(time.time())}",
+        )
+    except UnsupportedDocumentError as e:
+        raise HTTPException(status_code=415, detail=str(e))
+    _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
+
+    if result.get("status") == "error":
+        _inc("errors_total")
+        raise HTTPException(status_code=500, detail=result.get("error", "Document analysis failed"))
+
+    return result
+
+
 @app.post("/analyze-signals")
 async def analyze_signals(req: AnalyzeSignalsRequest) -> Dict[str, Any]:
     """
