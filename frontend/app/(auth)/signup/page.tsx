@@ -1,25 +1,34 @@
 'use client'
 
-import { Suspense }          from 'react'
-import { useEffect, useState } from 'react'
-import { SignUp, useAuth }   from '@clerk/nextjs'
-import { useRouter }         from 'next/navigation'
-import { Loader2 }           from 'lucide-react'
-import Link                  from 'next/link'
-import { AuthShell }         from '@/components/auth/AuthShell'
-import { clerkAppearance }   from '@/components/auth/clerkAppearance'
+import { Suspense }                     from 'react'
+import { useEffect, useState }          from 'react'
+import { SignUp, useAuth, useSignUp }   from '@clerk/nextjs'
+import { useRouter, useSearchParams }   from 'next/navigation'
+import { Loader2 }                      from 'lucide-react'
+import Link                             from 'next/link'
+import { AuthShell }                    from '@/components/auth/AuthShell'
+import { clerkAppearance }              from '@/components/auth/clerkAppearance'
 
 function SignUpContent() {
   const { isSignedIn, isLoaded } = useAuth()
-  const router = useRouter()
+  const { signUp }    = useSignUp()
+  const router        = useRouter()
+  const searchParams  = useSearchParams()
   const [redirecting, setRedirecting] = useState(false)
+
+  const redirectUrl = (() => {
+    const raw = searchParams.get('redirect_url') ?? ''
+    // Only allow same-origin redirects
+    if (raw.startsWith('/') && !raw.startsWith('//')) return raw
+    return '/dashboard'
+  })()
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       setRedirecting(true)
-      router.replace('/dashboard')
+      router.replace(redirectUrl)
     }
-  }, [isLoaded, isSignedIn, router])
+  }, [isLoaded, isSignedIn, router, redirectUrl])
 
   if (redirecting) {
     return (
@@ -33,9 +42,22 @@ function SignUpContent() {
     )
   }
 
+  // Clerk pauses a sign-up with status "missing_requirements" once someone
+  // has authenticated (e.g. via the Google button) but a required field —
+  // username, once enabled as required in the Clerk Dashboard — hasn't been
+  // collected yet. It's still the same <SignUp/>, same /signup route, same
+  // embedded form: no separate screen or extra redirect to build or wire up.
+  // We just re-skin the card header so it reads as "last step", not a
+  // second, unrelated "Create your account" screen.
+  const needsUsername = signUp?.status === 'missing_requirements'
+    && (signUp?.missingFields ?? []).includes('username')
+
   return (
     <AuthShell
       mode="signup"
+      badge={needsUsername ? 'Step 2 of 2' : undefined}
+      titleOverride={needsUsername ? 'Pick a username' : undefined}
+      subtitleOverride={needsUsername ? "One last step — this is how you'll show up on Aiscern." : undefined}
       extraFooter={
         <p
           className="text-center mt-4 leading-relaxed"
@@ -64,7 +86,7 @@ function SignUpContent() {
       <SignUp
         routing="path"
         path="/signup"
-        forceRedirectUrl="/dashboard"
+        forceRedirectUrl={redirectUrl}
         fallbackRedirectUrl="/dashboard"
         signInUrl="/login"
         appearance={clerkAppearance}

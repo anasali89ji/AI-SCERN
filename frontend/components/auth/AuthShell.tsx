@@ -28,6 +28,13 @@ interface AuthShellProps {
   mode:        'signin' | 'signup'
   children:    ReactNode
   extraFooter?: ReactNode
+  /** Overrides the default mode copy — used for the post-OAuth "pick a
+   *  username" continuation step so it doesn't just repeat "Create your
+   *  account" on the same screen the user is already past. */
+  titleOverride?:    string
+  subtitleOverride?: string
+  /** Small pill above the title, e.g. "Step 2 of 2". Omit for the default flow. */
+  badge?: string
 }
 
 /* ── Left panel — product mockup ─────────────────────────────────────────────
@@ -47,8 +54,8 @@ function DetectionMockup() {
       className="w-full max-w-[308px] rounded-2xl overflow-hidden text-left"
       style={{
         background:  '#06061a',
-        border:      '1px solid #181840',
-        boxShadow:   '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(37,99,235,0.06)',
+        border:      '1px solid rgba(255,255,255,0.09)',
+        boxShadow:   '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(37,99,235,0.08)',
       }}
     >
       {/* Window chrome */}
@@ -208,7 +215,7 @@ const FEATURES = [
 ]
 
 /* ── Shell ───────────────────────────────────────────────────────────────────*/
-export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
+export function AuthShell({ mode, children, extraFooter, titleOverride, subtitleOverride, badge }: AuthShellProps) {
   return (
     <div
       className="min-h-screen flex relative overflow-x-hidden"
@@ -241,7 +248,7 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
           width:         '42%',
           minHeight:     '100vh',
           padding:       '40px 48px 36px',
-          borderRight:   '1px solid rgba(255,255,255,0.04)',
+          borderRight:   '1px solid rgba(255,255,255,0.08)',
         }}
       >
         {/* Logo */}
@@ -360,12 +367,13 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
           {/* Card frame — single unified border */}
           <div
             style={{
-              background:   '#06061a',
-              border:       '1px solid #14143a',
+              background:   '#080820',
+              border:       '1px solid rgba(255,255,255,0.10)',
               borderRadius: '20px',
               overflow:     'hidden',
               boxShadow: [
-                '0 0 0 1px rgba(37,99,235,0.05)',
+                '0 0 0 1px rgba(37,99,235,0.08)',
+                'inset 0 1px 0 rgba(255,255,255,0.04)',
                 '0 20px 60px rgba(0,0,0,0.6)',
                 '0 4px 16px rgba(0,0,0,0.4)',
               ].join(', '),
@@ -375,19 +383,36 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
             <div
               style={{
                 padding:       '28px 32px 24px',
-                borderBottom:  '1px solid rgba(255,255,255,0.05)',
+                borderBottom:  '1px solid rgba(255,255,255,0.09)',
               }}
             >
+              {badge && (
+                <span
+                  className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full"
+                  style={{
+                    background:   'rgba(37,99,235,0.14)',
+                    border:       '1px solid rgba(37,99,235,0.3)',
+                    color:        '#93b4fd',
+                    fontSize:     '10.5px',
+                    fontWeight:   700,
+                    letterSpacing:'0.06em',
+                    textTransform:'uppercase',
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4b82f7' }} />
+                  {badge}
+                </span>
+              )}
               {mode === 'signin' ? (
                 <>
                   <p
                     className="font-black text-white leading-none"
                     style={{ fontSize: '22px', letterSpacing: '-0.025em', marginBottom: '7px' }}
                   >
-                    Welcome back
+                    {titleOverride ?? 'Welcome back'}
                   </p>
-                  <p style={{ color: '#3e3e6e', fontSize: '13.5px', lineHeight: 1.5 }}>
-                    Sign in to your Aiscern account to continue
+                  <p style={{ color: '#7a82ac', fontSize: '13.5px', lineHeight: 1.5 }}>
+                    {subtitleOverride ?? 'Sign in to your Aiscern account to continue'}
                   </p>
                 </>
               ) : (
@@ -396,17 +421,17 @@ export function AuthShell({ mode, children, extraFooter }: AuthShellProps) {
                     className="font-black text-white leading-none"
                     style={{ fontSize: '22px', letterSpacing: '-0.025em', marginBottom: '7px' }}
                   >
-                    Create your account
+                    {titleOverride ?? 'Create your account'}
                   </p>
-                  <p style={{ color: '#3e3e6e', fontSize: '13.5px', lineHeight: 1.5 }}>
-                    Free forever — no credit card needed
+                  <p style={{ color: '#7a82ac', fontSize: '13.5px', lineHeight: 1.5 }}>
+                    {subtitleOverride ?? 'Free forever — no credit card needed'}
                   </p>
                 </>
               )}
             </div>
 
             {/* Clerk form — card bg is transparent so this matches */}
-            <div style={{ background: '#06061a' }}>
+            <div style={{ background: '#080820' }}>
               {children}
             </div>
           </div>

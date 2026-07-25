@@ -8,6 +8,7 @@ interface AuthUser {
   email:       string | null
   displayName: string | null
   photoURL:    string | null
+  username:    string | null
 }
 interface AuthContextValue {
   user:    AuthUser | null
@@ -24,7 +25,7 @@ async function syncProfile(user: AuthUser) {
     await fetch('/api/profiles/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: user.uid, email: user.email, display_name: user.displayName }),
+      body: JSON.stringify({ uid: user.uid, email: user.email, display_name: user.displayName, username: user.username }),
     })
   } catch {}
 }
@@ -42,14 +43,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email:       user.primaryEmailAddress?.emailAddress ?? null,
     displayName: user.fullName ?? user.username ?? null,
     photoURL:    user.imageUrl ?? null,
+    username:    user.username ?? null,
   } : null
 
-  // Fast redirect — fires immediately when Clerk confirms sign-in on auth pages
+  // Fast redirect — fires immediately when Clerk confirms sign-in on auth pages.
+  // Reads redirect_url directly off window.location (not useSearchParams) so this
+  // provider, which wraps the whole app at the root layout, never forces every
+  // route into dynamic rendering — it only touches window inside an effect,
+  // which never runs during SSR anyway. This mirrors the same redirect_url
+  // logic the /login and /signup pages use themselves, so both mechanisms
+  // agree on where to send the user instead of racing to different targets.
   useEffect(() => {
     if (!isLoaded || !authUser || redirectedRef.current) return
     if (AUTH_PAGES.some(p => pathname.startsWith(p))) {
       redirectedRef.current = true
-      router.replace('/dashboard')
+      const raw    = new URLSearchParams(window.location.search).get('redirect_url') ?? ''
+      const target = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard'
+      router.replace(target)
     }
   }, [isLoaded, authUser?.uid, pathname]) // eslint-disable-line
 
