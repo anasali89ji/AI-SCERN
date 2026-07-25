@@ -251,29 +251,30 @@ export function AuthShell({ mode, children, extraFooter, titleOverride, subtitle
           borderRight:   '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 w-fit group">
+        {/* Logo — fixed-height row, image vertically centered against the
+            wordmark so the mark and text sit on the same optical baseline */}
+        <Link href="/" className="flex items-center gap-2.5 w-fit group h-8">
           <Image
             src="/logo.png"
             alt="Aiscern"
-            width={32}
-            height={20}
+            width={26}
+            height={26}
             priority
-            className="object-contain"
+            className="object-contain shrink-0"
             style={{
               filter:     'drop-shadow(0 0 10px rgba(245,100,0,0.5))',
               transition: 'filter 0.3s',
             }}
           />
           <span
-            className="text-[17px] font-black tracking-tight gradient-text"
+            className="text-[17px] font-black tracking-tight leading-none gradient-text"
           >
             Aiscern
           </span>
         </Link>
 
         {/* Centre — headline + mockup + features */}
-        <div style={{ marginTop: '-32px' }}>
+        <div style={{ marginTop: '24px' }}>
           <h2
             className="font-black text-white leading-[1.15] mb-3"
             style={{ fontSize: '26px', letterSpacing: '-0.02em' }}
@@ -350,13 +351,13 @@ export function AuthShell({ mode, children, extraFooter, titleOverride, subtitle
           <Image
             src="/logo.png"
             alt="Aiscern"
-            width={32}
-            height={20}
+            width={26}
+            height={26}
             priority
-            className="object-contain"
+            className="object-contain shrink-0"
             style={{ filter: 'drop-shadow(0 0 10px rgba(245,100,0,0.5))' }}
           />
-          <span className="text-[17px] font-black tracking-tight gradient-text">
+          <span className="text-[17px] font-black tracking-tight leading-none gradient-text">
             Aiscern
           </span>
         </Link>

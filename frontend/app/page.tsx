@@ -687,14 +687,11 @@ export default function HomePage() {
               ) : (
                 <>
                   <Link href="/detect/text"
-                    className="group relative overflow-hidden btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
+                    className="btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center shadow-lg shadow-primary/20">
                     Start Free Scan
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center gap-2 hover:border-primary/30">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber" />Create Free Account
+                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center hover:border-primary/30">
+                    Create Free Account
                   </Link>
                 </>
               )}
@@ -1041,13 +1038,11 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={user ? '/dashboard' : '/detect/text'}
-                  className="group relative overflow-hidden btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-primary/30">
-                  <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/8 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  className="btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center shadow-lg shadow-primary/20">
                   {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center gap-2 hover:border-primary/30">
-                  <Sparkles className="w-5 h-5 text-amber" />Create Free Account
+                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center hover:border-primary/30">
+                  Create Free Account
                 </Link>
               </div>
 

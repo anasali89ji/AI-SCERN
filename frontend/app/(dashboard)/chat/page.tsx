@@ -108,6 +108,46 @@ function loadChats(): Chat[] {
   } catch { return [] }
 }
 
+// ── Server sync ──────────────────────────────────────────────────────────
+// FIX: history used to live only in localStorage, which is why the same
+// account showed different ARIA chats on mobile vs. web — nothing tied a
+// chat to the account server-side. These helpers push/pull chats through
+// /api/chat/history so every signed-in device sees the same list.
+async function fetchServerChats(): Promise<Chat[]> {
+  try {
+    const res = await fetch('/api/chat/history')
+    if (!res.ok) return []
+    const data = await res.json()
+    return Array.isArray(data?.chats) ? data.chats : []
+  } catch { return [] }
+}
+
+function mergeChats(local: Chat[], server: Chat[]): Chat[] {
+  const byId = new Map<string, Chat>()
+  for (const c of local) byId.set(c.id, c)
+  for (const s of server) {
+    const existing = byId.get(s.id)
+    // Newer `updatedAt` wins — covers both "server has a chat this device
+    // never saw" and "another device updated a chat this device also has".
+    if (!existing || new Date(s.updatedAt).getTime() >= new Date(existing.updatedAt).getTime()) {
+      byId.set(s.id, s)
+    }
+  }
+  return [...byId.values()].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+}
+
+function syncChatToServer(chat: Chat) {
+  fetch('/api/chat/history', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ chat }),
+  }).catch(() => { /* best-effort — localStorage still has it as fallback */ })
+}
+
+function deleteChatFromServer(id: string) {
+  fetch(`/api/chat/history/${id}`, { method: 'DELETE' }).catch(() => {})
+}
+
 // ── Markdown renderer ───────────────────────────────────────────────────────
 function sanitizeHtml(html: string): string {
   return html
@@ -421,9 +461,18 @@ export default function ChatPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const saved = loadChats()
-    if (saved.length > 0) { setChats(saved); setActiveChatId(saved[0].id) }
-    setHydrated(true)
+    const local = loadChats()
+    if (local.length > 0) { setChats(local); setActiveChatId(local[0].id) }
+
+    // Reconcile with the server so the same account sees the same history
+    // on every device, not just whichever browser last wrote to localStorage.
+    fetchServerChats().then(server => {
+      if (server.length === 0) { setHydrated(true); return }
+      const merged = mergeChats(loadChats(), server)
+      setChats(merged)
+      setActiveChatId(prev => prev ?? merged[0]?.id ?? null)
+      setHydrated(true)
+    })
 
     // Handle hash-based chat selection from sidebar nav
     const checkHash = () => {
@@ -463,6 +512,22 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => { if (!hydrated) return; saveChats(chats) }, [chats, hydrated])
+
+  // Push to the server whenever a chat finishes changing — skipped while a
+  // message is still streaming so we don't fire a request per token, and
+  // skipped for empty chats so a freshly opened "New conversation" doesn't
+  // create server clutter before the user sends anything.
+  const lastSyncedRef = useRef<Record<string, string>>({})
+  useEffect(() => {
+    if (!hydrated) return
+    for (const chat of chats) {
+      if (chat.messages.length === 0) continue
+      if (chat.messages.some(m => m.isStreaming || m.isThinking)) continue
+      if (lastSyncedRef.current[chat.id] === chat.updatedAt) continue
+      lastSyncedRef.current[chat.id] = chat.updatedAt
+      syncChatToServer(chat)
+    }
+  }, [chats, hydrated])
   // Smart auto-scroll: only scroll when user is near bottom, or on new message
   const messagesAreaRef = useRef<HTMLDivElement>(null)
   const isNearBottom = useCallback(() => {
@@ -518,11 +583,13 @@ export default function ChatPage() {
       const remaining = chats.filter(c=>c.id!==id)
       setActiveChatId(remaining[0]?.id || null)
     }
+    deleteChatFromServer(id)
   },[activeChatId, chats])
 
   const clearAll = useCallback(()=>{
     if (!confirm('Delete all conversations? This cannot be undone.')) return
     setChats([]); setActiveChatId(null); localStorage.removeItem(STORAGE_KEY)
+    deleteChatFromServer('all')
   },[])
 
   const exportChat = useCallback(()=>{
