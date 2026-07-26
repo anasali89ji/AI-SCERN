@@ -296,13 +296,38 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
   const startTime = Date.now()
 
   try {
-    // Fetch image
-    const res = await fetch(imageUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      signal: AbortSignal.timeout(15000),
-    })
+    // Fetch image — many CDNs/WordPress installs 403 a bare fetch with no
+    // Referer or Accept header (hotlink protection), which used to make
+    // every one of those images fall through to the generic UNCERTAIN
+    // placeholder even though the image itself was perfectly analyzable.
+    // Send full browser-like headers, and retry once without Referer for
+    // the (rarer) sites that reject cross-origin referers instead.
+    let res: Response | null = null
+    let origin = ''
+    try { origin = new URL(imageUrl).origin } catch {}
 
-    if (!res.ok) {
+    const baseHeaders: Record<string, string> = {
+      'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      'Accept':          'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    }
+
+    try {
+      res = await fetch(imageUrl, {
+        headers: { ...baseHeaders, ...(origin ? { Referer: `${origin}/` } : {}) },
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) res = null
+    } catch { res = null }
+
+    if (!res) {
+      try {
+        res = await fetch(imageUrl, { headers: baseHeaders, signal: AbortSignal.timeout(15000) })
+        if (!res.ok) res = null
+      } catch { res = null }
+    }
+
+    if (!res) {
       return {
         url: imageUrl,
         aiScore: 0.5,

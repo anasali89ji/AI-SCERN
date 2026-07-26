@@ -28,7 +28,8 @@ import {
   BrainCircuit,
   Eye,
   ArrowRight,
-  Activity
+  Activity,
+  Download
 } from "lucide-react"
 import type { SiteScanResult, ScannedPage, ScannedImage, RemediationItem } from "@/lib/scanner/types"
 
@@ -71,7 +72,7 @@ export default function ScannerPage() {
         body: JSON.stringify({
           url: url.trim(),
           maxPages: 25,
-          maxImagesTotal: 20,
+          maxImagesTotal: 40,
           maxDepth: 2,
         }),
       })
@@ -81,7 +82,8 @@ export default function ScannerPage() {
 
       const data = await res.json()
       if (!data.success) {
-        setError(data.error || "Scan failed")
+        const msg = typeof data.error === "string" ? data.error : data.error?.message
+        setError(msg || "Scan failed")
       } else {
         setResult(data)
       }
@@ -92,6 +94,87 @@ export default function ScannerPage() {
       setLoading(false)
       setTimeout(() => setScanProgress(0), 500)
     }
+  }
+
+  async function handleDownloadReport() {
+    if (!result) return
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF({ unit: "pt", format: "a4" })
+    const pageW = doc.internal.pageSize.getWidth()
+    const margin = 40
+    let y = 50
+
+    const ensureRoom = (needed: number) => {
+      if (y + needed > 780) { doc.addPage(); y = 50 }
+    }
+    const heading = (text: string, size = 16) => {
+      ensureRoom(size + 14)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(size); doc.setTextColor(20, 20, 30)
+      doc.text(text, margin, y); y += size + 8
+    }
+    const body = (text: string, size = 10) => {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(size); doc.setTextColor(60, 60, 70)
+      const lines = doc.splitTextToSize(text, pageW - margin * 2)
+      ensureRoom(lines.length * (size + 3))
+      doc.text(lines, margin, y); y += lines.length * (size + 3) + 4
+    }
+    const kv = (label: string, value: string) => {
+      ensureRoom(16)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(40, 40, 50)
+      doc.text(`${label}:`, margin, y)
+      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
+      doc.text(value, margin + 130, y)
+      y += 16
+    }
+
+    heading("Aiscern — Website Trust Report", 18)
+    body(`Generated ${new Date().toLocaleString()}`, 9)
+    y += 6
+
+    heading("Summary", 13)
+    kv("Site scanned", result.origin)
+    kv("Pages scanned", String(result.pagesScanned))
+    kv("AI content", `${result.aiContentPercent}%`)
+    kv("Human content", `${result.humanContentPercent}%`)
+    kv("Uncertain content", `${result.uncertainContentPercent}%`)
+    kv("AI images", `${result.aiImagePercent}% (${result.aiImagesCount}/${result.totalImagesAnalyzed} analyzed)`)
+    kv("Trust score", `${Math.round((result.siteTrustScore.transparencyScore + result.siteTrustScore.linkTrustScore) / 2 * 100)}%`)
+    kv("Content originality", `${Math.round(result.contentOriginalityScore * 100)}%`)
+    y += 8
+
+    heading("Pages", 13)
+    for (const page of result.pages) {
+      ensureRoom(40)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(20, 20, 30)
+      doc.text(`[${page.verdict}] ${(page.aiScore * 100).toFixed(0)}%`, margin, y)
+      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
+      const urlLines = doc.splitTextToSize(page.url, pageW - margin * 2 - 90)
+      doc.text(urlLines, margin + 90, y)
+      y += Math.max(urlLines.length, 1) * 12 + 6
+    }
+    y += 8
+
+    heading(`Images (${result.images.length})`, 13)
+    for (const img of result.images) {
+      ensureRoom(28)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(20, 20, 30)
+      doc.text(`[${img.verdict}] ${(img.aiScore * 100).toFixed(0)}%`, margin, y)
+      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
+      const urlLines = doc.splitTextToSize(img.url, pageW - margin * 2 - 90)
+      doc.text(urlLines, margin + 90, y)
+      y += Math.max(urlLines.length, 1) * 12 + 6
+    }
+    y += 8
+
+    if (result.remediation.length > 0) {
+      heading("Remediation", 13)
+      for (const item of result.remediation) {
+        ensureRoom(30)
+        body(`• [${item.priority.toUpperCase()}] ${item.action} — ${item.reason}`, 9)
+      }
+    }
+
+    doc.save(`aiscern-report-${result.domain}-${Date.now()}.pdf`)
   }
 
   const tabs = [
@@ -299,9 +382,9 @@ export default function ScannerPage() {
               </div>
             </div>
 
-            {/* Integrity Seal */}
+            {/* Integrity Seal + Report */}
             <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-emerald-400" />
                   <span className="text-sm text-slate-500">Integrity Seal:</span>
@@ -309,14 +392,23 @@ export default function ScannerPage() {
                     {result.integritySeal.hash}
                   </code>
                 </div>
-                <a
-                  href={result.integritySeal.verificationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-                >
-                  Verify <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={result.integritySeal.verificationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+                  >
+                    Verify <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={handleDownloadReport}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-bg flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download PDF Report
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -635,7 +727,7 @@ function ImageCard({ image, expanded, onToggle }: { image: ScannedImage; expande
     <div className={`rounded-xl border ${borderClass} p-4`}>
       <div className="flex items-start gap-3">
         <div className="w-16 h-16 bg-[#0f0f17] rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-          <img src={image.url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} loading="lazy" />
+          <img src={`/api/image-proxy?url=${encodeURIComponent(image.url)}`} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} loading="lazy" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">

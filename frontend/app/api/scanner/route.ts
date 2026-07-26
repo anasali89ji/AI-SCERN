@@ -12,10 +12,15 @@ import { analyzeImagesBatch } from '@/lib/scanner/image-forensics'
 import { deepWordPressScan } from '@/lib/scanner/wordpress'
 import { buildSiteTrustScore } from '@/lib/scanner/trust'
 import { computeVoiceDiversityIndex } from '@/lib/scanner/stylometry'
+import { assertSafeUrl } from '@/lib/utils/ssrf-guard'
+import { siteScanGuard } from '@/lib/middleware/site-scan-guard'
+import { HTTPError, httpErrorResponse, injectGuardHeaders } from '@/lib/middleware/credit-guard'
 import type {
   SiteScanResult, ScannedPage, ScannedImage, SectionHeatmap,
   RemediationItem, ContentIntegritySeal, TimelineComparison,
 } from '@/lib/scanner/types'
+
+export const dynamic = 'force-dynamic'
 
 // Rate limiting (simple in-memory)
 const rateLimit = new Map<string, { count: number; resetAt: number }>()
@@ -183,13 +188,25 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
   try {
-    // Rate limit
+    // Rate limit (secondary — coarse per-IP burst guard on top of the
+    // per-account daily cap below)
     const ip = req.headers.get('x-forwarded-for') || 'unknown'
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { success: false, error: 'Rate limit exceeded. Max 5 scans per minute.' },
         { status: 429 }
       )
+    }
+
+    // Auth + credit guard — FIX: this route previously had no auth check
+    // and no daily limit at all. Free accounts now get exactly 5 Web
+    // Scanner scans/day; paid plans get their own higher caps.
+    let guard
+    try {
+      guard = await siteScanGuard(req)
+    } catch (err) {
+      if (err instanceof HTTPError) return httpErrorResponse(err)
+      return NextResponse.json({ success: false, error: { code: 'ERROR', message: 'Auth failed' } }, { status: 500 })
     }
 
     const body = await req.json().catch(() => ({}))
@@ -207,13 +224,22 @@ export async function POST(req: NextRequest) {
     if (!targetUrl.startsWith('http')) targetUrl = `https://${targetUrl}`
     targetUrl = targetUrl.replace(/\/$/, '')
 
+    try {
+      assertSafeUrl(targetUrl)
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: err instanceof Error ? err.message : 'This URL is not allowed.' },
+        { status: 400 }
+      )
+    }
+
     const domain = new URL(targetUrl).hostname
     const isHttps = targetUrl.startsWith('https://')
 
     // ── CRAWL ──
     const crawlResult = await crawlSite(targetUrl, {
       maxPages: body.maxPages || 30,
-      maxImagesTotal: body.maxImagesTotal || 20,
+      maxImagesTotal: body.maxImagesTotal || 40,
       maxDepth: body.maxDepth || 2,
       priorityBFS: true,
       includeImageAnalysis: true,
@@ -290,9 +316,9 @@ export async function POST(req: NextRequest) {
     }
 
     // ── IMAGE ANALYSIS ──
-    const uniqueImages = [...new Set(crawlResult.allImages.map(i => i.url))].slice(0, 20)
+    const uniqueImages = [...new Set(crawlResult.allImages.map(i => i.url))].slice(0, body.maxImagesTotal || 40)
     const scannedImages = uniqueImages.length > 0
-      ? await analyzeImagesBatch(uniqueImages, 5)
+      ? await analyzeImagesBatch(uniqueImages, 8)
       : []
 
     // ── TRUST SCORING ──
@@ -362,7 +388,11 @@ export async function POST(req: NextRequest) {
     // Generate integrity seal with full result
     result.integritySeal = generateIntegritySeal(result)
 
-    return NextResponse.json(result)
+    return injectGuardHeaders(NextResponse.json(result), {
+      userId: guard.userId, plan: guard.plan, dailyScans: guard.dailyScans,
+      dailyLimit: guard.dailyLimit, creditsRemaining: guard.unlimited ? 999_999 : Math.max(0, guard.dailyLimit - guard.dailyScans),
+      unlimited: guard.unlimited,
+    })
 
   } catch (error) {
     console.error('Scanner error:', error)

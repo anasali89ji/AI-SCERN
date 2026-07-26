@@ -91,12 +91,15 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   )
 }
 
-// ── Chat history helpers (reads same localStorage key as chat page) ─────────────
+// ── Chat history helpers ─────────────────────────────────────────────────────
+// Reads from the server (so previews match across devices, same fix as the
+// chat page itself) with the old localStorage key as an instant/offline
+// fallback.
 const CHAT_STORAGE_KEY = 'aiscern_chats_v2'
 
 interface ChatPreview { id: string; title: string; updatedAt: string }
 
-function loadChatPreviews(): ChatPreview[] {
+function loadLocalChatPreviews(): ChatPreview[] {
   try {
     const raw = localStorage.getItem(CHAT_STORAGE_KEY)
     if (!raw) return []
@@ -105,8 +108,27 @@ function loadChatPreviews(): ChatPreview[] {
     return parsed
       .filter((c: any) => c?.id && c?.title)
       .map((c: any) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt || '' }))
-      .slice(0, 8) // show max 8 recent chats
   } catch { return [] }
+}
+
+async function loadServerChatPreviews(): Promise<ChatPreview[]> {
+  try {
+    const res = await fetch('/api/chat/history')
+    if (!res.ok) return []
+    const data = await res.json()
+    if (!Array.isArray(data?.chats)) return []
+    return data.chats.map((c: any) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt || '' }))
+  } catch { return [] }
+}
+
+function mergePreviews(local: ChatPreview[], server: ChatPreview[]): ChatPreview[] {
+  const byId = new Map<string, ChatPreview>()
+  for (const c of local) byId.set(c.id, c)
+  for (const s of server) {
+    const existing = byId.get(s.id)
+    if (!existing || new Date(s.updatedAt).getTime() >= new Date(existing.updatedAt).getTime()) byId.set(s.id, s)
+  }
+  return [...byId.values()].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 }
 
 // ── Sidebar — extracted as module-level component (fixes BUG-02) ─────────────
@@ -122,6 +144,8 @@ interface SidebarProps {
 
 function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews, onChatSelect }: SidebarProps) {
   const [historyOpen, setHistoryOpen] = useState(true)
+  const ariaMode = pathname.startsWith('/chat')
+
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -132,21 +156,100 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
         {!collapsed && <span className="text-lg font-black gradient-text">Aiscern</span>}
       </Link>
 
-      {/* Nav groups */}
-      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-        {navGroups.map(group => (
-          <div key={group.label}>
+      {ariaMode ? (
+        /* ══════════════════════════════════════════════════════════════
+             ARIA MODE — the detection/verify/tools nav is intentionally
+             hidden here. This is ARIA's own space: a New Chat action and
+             its full conversation history, nothing else competing for
+             attention, plus one clear way back to the main dashboard.
+        ══════════════════════════════════════════════════════════════ */
+        <nav className="flex-1 px-3 py-4 flex flex-col min-h-0">
+          <Link href="/dashboard" onClick={onNavClick}
+            title={collapsed ? 'Back to Dashboard' : undefined}
+            className={`flex items-center gap-3 px-3 py-2.5 mb-3 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all ${collapsed ? 'justify-center' : ''}`}>
+            <ChevronLeft className="w-4 h-4 flex-shrink-0" />
+            {!collapsed && <span className="text-sm font-medium">Back to Dashboard</span>}
+          </Link>
+
+          <Link href="/chat?new=1" onClick={onNavClick}
+            title={collapsed ? 'New chat' : undefined}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-primary/15 text-primary border border-primary/25 hover:bg-primary/20 transition-all font-medium text-sm ${collapsed ? 'justify-center' : ''}`}>
+            <MessageSquare className="w-4 h-4 flex-shrink-0" />
+            {!collapsed && 'New chat'}
+          </Link>
+
+          {!collapsed && (
+            <div className="flex-1 min-h-0 flex flex-col mt-5">
+              <button
+                onClick={() => setHistoryOpen(h => !h)}
+                className="w-full flex items-center justify-between px-3 py-1.5 group"
+              >
+                <span className="text-xs font-semibold text-text-disabled uppercase tracking-widest">
+                  ARIA History{chatPreviews.length > 0 ? ` (${chatPreviews.length})` : ''}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-text-disabled transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
+              </button>
+              {historyOpen && (
+                <div className="space-y-0.5 mt-0.5 overflow-y-auto flex-1 min-h-0">
+                  {chatPreviews.length === 0 ? (
+                    <p className="px-3 py-2 text-xs text-text-disabled">No conversations yet — start one above.</p>
+                  ) : chatPreviews.map(chat => (
+                    <button key={chat.id}
+                      onClick={() => { onChatSelect(chat.id); onNavClick() }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
+                      <span className="text-xs truncate flex-1">{chat.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </nav>
+      ) : (
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {navGroups.map(group => (
+            <div key={group.label}>
+              {!collapsed && (
+                <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-1">
+                {group.items.map(item => {
+                  const Icon = iconMap[item.icon]
+                  if (!Icon) return null
+                  const active = pathname === item.href ||
+                    (item.href !== '/dashboard' && !item.href.includes('#') && pathname.startsWith(item.href))
+                  return (
+                    <Link key={item.href} href={item.href} onClick={onNavClick}
+                      prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
+                      title={collapsed ? item.label : undefined}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
+                        ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
+                        ${collapsed ? 'justify-center' : ''}`}>
+                      <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-primary' : ''}`} />
+                      {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Account section — always visible, icon-only when collapsed (fixes BUG-16) */}
+          <div>
             {!collapsed && (
               <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
-                {group.label}
+                Account
               </p>
             )}
             <div className="space-y-1">
-              {group.items.map(item => {
+              {ACCOUNT_ITEMS.map(item => {
                 const Icon = iconMap[item.icon]
                 if (!Icon) return null
-                const active = pathname === item.href ||
-                  (item.href !== '/dashboard' && !item.href.includes('#') && pathname.startsWith(item.href))
+                const active = pathname === item.href
                 return (
                   <Link key={item.href} href={item.href} onClick={onNavClick}
                     prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
@@ -154,68 +257,15 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
                       ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
                       ${collapsed ? 'justify-center' : ''}`}>
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-primary' : ''}`} />
+                    <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
                   </Link>
                 )
               })}
             </div>
           </div>
-        ))}
-
-        {/* ARIA Chat History — collapsible subsection */}
-        {!collapsed && chatPreviews.length > 0 && pathname.startsWith('/chat') && (
-          <div>
-            <button
-              onClick={() => setHistoryOpen(h => !h)}
-              className="w-full flex items-center justify-between px-3 py-1.5 group"
-            >
-              <span className="text-xs font-semibold text-text-disabled uppercase tracking-widest">Recent Chats</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-text-disabled transition-transform duration-200 ${historyOpen ? 'rotate-0' : '-rotate-90'}`} />
-            </button>
-            {historyOpen && (
-              <div className="space-y-0.5 mt-0.5">
-                {chatPreviews.map(chat => (
-                  <button key={chat.id}
-                    onClick={() => { onChatSelect(chat.id); onNavClick() }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-text-primary transition-all text-left"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
-                    <span className="text-xs truncate flex-1">{chat.title}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Account section — always visible, icon-only when collapsed (fixes BUG-16) */}
-        <div>
-          {!collapsed && (
-            <p className="text-xs font-semibold text-text-disabled uppercase tracking-widest px-3 mb-2">
-              Account
-            </p>
-          )}
-          <div className="space-y-1">
-            {ACCOUNT_ITEMS.map(item => {
-              const Icon = iconMap[item.icon]
-              if (!Icon) return null
-              const active = pathname === item.href
-              return (
-                <Link key={item.href} href={item.href} onClick={onNavClick}
-                  prefetch={['/chat','/scraper','/batch'].includes(item.href) ? false : undefined}
-                  title={collapsed ? item.label : undefined}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                    ${active ? 'bg-primary/15 text-primary border-l-2 border-primary' : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'}
-                    ${collapsed ? 'justify-center' : ''}`}>
-                  <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
-                  {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* User footer */}
       <div className="border-t border-border p-3">
@@ -373,11 +423,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
 
-  // Load chat previews from localStorage, refresh when on chat page
+  // Load chat previews — local cache first for instant paint, then
+  // reconciled with the server so the sidebar list matches other devices.
   useEffect(() => {
-    setChatPreviews(loadChatPreviews())
-    // Also refresh on storage changes (when chat page saves)
-    const onStorage = () => setChatPreviews(loadChatPreviews())
+    setChatPreviews(loadLocalChatPreviews())
+    loadServerChatPreviews().then(server => {
+      if (server.length > 0) setChatPreviews(mergePreviews(loadLocalChatPreviews(), server))
+    })
+    // Also refresh on storage changes (when chat page saves, in another tab)
+    const onStorage = () => setChatPreviews(loadLocalChatPreviews())
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [pathname])
