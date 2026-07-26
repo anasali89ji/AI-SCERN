@@ -30,6 +30,11 @@ export interface ScannedPage {
   perplexityScore: number
   aiArtifacts: AIArtifact[]
   sentenceScores: SentenceScore[]
+  // Cross-correlation (Module 3): combines this page's text aiScore with the
+  // average aiScore of the images embedded on it. Undefined if the page has
+  // no analyzed images (falls back to the text-only aiScore in the UI).
+  correlatedScore?: number
+  correlatedImageCount?: number
 }
 
 export interface DiscoveredLink {
@@ -84,6 +89,12 @@ export interface ScannedImage {
   thumbnail?: string // base64 thumbnail for display
   width?: number
   height?: number
+  // v2 real-pixel forensic signals (image-forensics.ts rewrite)
+  noiseScore?: number          // 0-1, AI probability from local noise variance analysis
+  colorScore?: number          // 0-1, AI probability from color smoothness/chromatic aberration
+  dimensionScore?: number      // 0-1, AI probability from resolution heuristics
+  isCommonAiResolution?: boolean
+  decodeFailed?: boolean       // true if pixel decode failed and we fell back to byte-level heuristics
 }
 
 export interface WordPressInfo {
