@@ -576,6 +576,15 @@ export default function ChatPage() {
     setChats(p=>[nc,...p]); setActiveChatId(id); setSidebarOpen(false); setInput(''); setAttachments([])
   },[])
 
+  // Sidebar "New chat" link navigates to /chat?new=1 — start fresh and
+  // strip the query param so refreshing doesn't spawn another empty chat.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('new') === '1') {
+      newChat()
+      window.history.replaceState(null, '', '/chat')
+    }
+  }, [newChat])
+
   const delChat = useCallback((id:string, e?: React.MouseEvent)=>{
     e?.stopPropagation()
     setChats(p=>p.filter(c=>c.id!==id))

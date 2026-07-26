@@ -237,29 +237,69 @@ export function parsePage(html: string, baseUrl: string, fetchMethod: 'direct' |
     } catch {}
   })
 
-  // Extract image URLs
+  // Extract image URLs — gather from every lazy-load pattern sites use, not
+  // just plain src, so a real photo doesn't get skipped just because a site
+  // lazy-loads via srcset/data-original/noscript.
   const imageUrls: string[] = []
-  $('img[src],img[data-src],img[data-lazy-src],source[srcset]').each((_, el) => {
-    if (imageUrls.length >= 20) return
+  const MAX_IMAGES_PER_PAGE = 40
+
+  function resolve(src: string): string | null {
+    src = src.trim()
+    if (!src) return null
+    if (src.startsWith('//')) src = `https:${src}`
+    else if (src.startsWith('/')) src = `${url.origin}${src}`
+    if (!src.startsWith('http')) return null
+    if (src.includes('tracking') || src.includes('pixel') || src.length >= 600) return null
+    return src
+  }
+
+  function bestFromSrcset(srcset: string): string | null {
+    // "url1 320w, url2 640w, url3 1024w" — take the highest-width candidate
+    const candidates = srcset.split(',').map(part => {
+      const [u, descriptor] = part.trim().split(/\s+/)
+      const width = descriptor && descriptor.endsWith('w') ? parseInt(descriptor) : 0
+      return { u, width: Number.isFinite(width) ? width : 0 }
+    }).filter(c => c.u)
+    if (!candidates.length) return null
+    candidates.sort((a, b) => b.width - a.width)
+    return candidates[0].u
+  }
+
+  $('img,source').each((_, el) => {
+    if (imageUrls.length >= MAX_IMAGES_PER_PAGE) return
     try {
-      let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || ''
-      if (src.startsWith('//')) src = `https:${src}`
-      else if (src.startsWith('/')) src = `${url.origin}${src}`
-      if (src.startsWith('http') && !src.includes('tracking') && !src.includes('pixel') && src.length < 600) {
-        imageUrls.push(src)
-      }
+      const $el = $(el)
+      const srcset = $el.attr('srcset') || $el.attr('data-srcset')
+      let src = $el.attr('src') || $el.attr('data-src') || $el.attr('data-lazy-src') ||
+                $el.attr('data-original') || $el.attr('data-original-src') || ''
+      if (srcset) { const best = bestFromSrcset(srcset); if (best) src = best }
+      const resolved = resolve(src)
+      if (resolved) imageUrls.push(resolved)
+    } catch {}
+  })
+
+  // Real images are sometimes only present in the <noscript> fallback of a
+  // lazy-loading <img>, invisible to the selectors above.
+  $('noscript').each((_, el) => {
+    if (imageUrls.length >= MAX_IMAGES_PER_PAGE) return
+    try {
+      const inner = cheerio.load($(el).html() || '')
+      inner('img[src]').each((__, imgEl) => {
+        if (imageUrls.length >= MAX_IMAGES_PER_PAGE) return
+        const resolved = resolve(inner(imgEl).attr('src') || '')
+        if (resolved) imageUrls.push(resolved)
+      })
     } catch {}
   })
 
   // Also check for background images in style attributes
   $('[style*="background"]').each((_, el) => {
-    if (imageUrls.length >= 20) return
+    if (imageUrls.length >= MAX_IMAGES_PER_PAGE) return
     const style = $(el).attr('style') || ''
     const match = style.match(/url\(["']?([^"')]+)["']?\)/)
     if (match?.[1]) {
-      let src = match[1]
-      if (src.startsWith('/')) src = `${url.origin}${src}`
-      if (src.startsWith('http') && src.length < 600) imageUrls.push(src)
+      const resolved = resolve(match[1].startsWith('/') ? `${url.origin}${match[1]}` : match[1])
+      if (resolved) imageUrls.push(resolved)
     }
   })
 
@@ -271,7 +311,7 @@ export function parsePage(html: string, baseUrl: string, fetchMethod: 'direct' |
     wordCount,
     contentType,
     links,
-    imageUrls: [...new Set(imageUrls)].slice(0, 20),
+    imageUrls: [...new Set(imageUrls)].slice(0, MAX_IMAGES_PER_PAGE),
     headings,
     metaKeywords,
     publishDate,

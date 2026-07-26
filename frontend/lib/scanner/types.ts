@@ -206,7 +206,7 @@ export interface CrawlOptions {
 
 export const DEFAULT_CRAWL_OPTS: CrawlOptions = {
   maxPages: 30,
-  maxImagesTotal: 20,
+  maxImagesTotal: 40,
   maxDepth: 2,
   priorityBFS: true,
   includeImageAnalysis: true,
