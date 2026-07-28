@@ -32,6 +32,7 @@ import {
   Download
 } from "lucide-react"
 import type { SiteScanResult, ScannedPage, ScannedImage, RemediationItem } from "@/lib/scanner/types"
+import UpgradeModal from "@/components/UpgradeModal"
 
 export default function ScannerPage() {
   const [url, setUrl] = useState("")
@@ -42,6 +43,7 @@ export default function ScannerPage() {
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const [scanProgress, setScanProgress] = useState(0)
+  const [upgradeInfo, setUpgradeInfo] = useState<{ reason: string } | null>(null)
   const progressRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -83,7 +85,11 @@ export default function ScannerPage() {
       const data = await res.json()
       if (!data.success) {
         const msg = typeof data.error === "string" ? data.error : data.error?.message
-        setError(msg || "Scan failed")
+        if (res.status === 402 || data.error?.upgrade_required) {
+          setUpgradeInfo({ reason: msg || "Scan limit reached." })
+        } else {
+          setError(msg || "Scan failed")
+        }
       } else {
         setResult(data)
       }
@@ -187,6 +193,14 @@ export default function ScannerPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24 space-y-6">
+      {upgradeInfo && (
+        <UpgradeModal
+          feature="the Web Scanner"
+          reason={upgradeInfo.reason}
+          onClose={() => setUpgradeInfo(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
 import { MobileNav } from '@/components/MobileNav'
+import CreditDisplay from '@/components/CreditDisplay'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
 
@@ -265,6 +266,13 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
             </div>
           </div>
         </nav>
+      )}
+
+      {/* Usage/credits (Module 5) — collapses away with the rest of the sidebar */}
+      {!collapsed && (
+        <div className="px-3 pb-3">
+          <CreditDisplay />
+        </div>
       )}
 
       {/* User footer */}

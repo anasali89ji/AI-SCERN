@@ -280,7 +280,13 @@ export async function POST(req: NextRequest) {
         url: page.url,
         title: page.title,
         description: page.description,
-        textContent: page.textContent.slice(0, 3000),
+        // Was slice(0, 3000) — that discarded the tail of any page over
+        // ~500 words, which fed directly into near-duplicate detection
+        // (analyzeDuplicity, below) and site trust scoring, both of which
+        // need the full page to compare accurately. 20k chars (~4-5k words)
+        // covers the overwhelming majority of real pages while still
+        // bounding response payload size for the rare very-long page.
+        textContent: page.textContent.slice(0, 20000),
         wordCount: page.wordCount,
         contentType: page.contentType,
         headings: page.headings,
@@ -321,6 +327,30 @@ export async function POST(req: NextRequest) {
       ? await analyzeImagesBatch(uniqueImages, 8)
       : []
 
+    // ── CROSS-CORRELATION (Module 3) ──
+    // Text and image AI scores were previously computed in total isolation —
+    // a page with clearly-AI text sitting next to clearly-AI images got no
+    // confidence boost, and a page with AI text but stock/human photography
+    // got no discount. Combine them per-page: pages with no analyzed images
+    // fall back to the text-only score (correlatedScore stays undefined and
+    // the UI/consumers should treat that as "use aiScore").
+    const imageScoreByUrl = new Map(scannedImages.map(img => [img.url, img.aiScore]))
+    for (const page of scannedPages) {
+      const pageImageScores = page.imageUrls
+        .map(u => imageScoreByUrl.get(u))
+        .filter((s): s is number => typeof s === 'number')
+
+      if (pageImageScores.length === 0) continue
+
+      const avgImageScore = pageImageScores.reduce((a, b) => a + b, 0) / pageImageScores.length
+      // Weight text more heavily (65/35) — text ensemble has more signal
+      // per-page than a handful of images, but strong agreement in either
+      // direction should still move the needle rather than being ignored.
+      const correlated = page.aiScore * 0.65 + avgImageScore * 0.35
+      page.correlatedScore = Math.round(correlated * 1000) / 1000
+      page.correlatedImageCount = pageImageScores.length
+    }
+
     // ── TRUST SCORING ──
     const siteTrust = buildSiteTrustScore(
       crawlResult.pages.map(p => ({
@@ -358,7 +388,7 @@ export async function POST(req: NextRequest) {
       domain,
       isWordPress: wpInfo.isWordPress,
       wordPressInfo: wpInfo,
-      discoveryMethod: 'crawl',
+      discoveryMethod: crawlResult.discoveryMethod,
       pagesScanned: scannedPages.length,
       maxPages: body.maxPages || 30,
       aiContentPercent,
@@ -381,7 +411,7 @@ export async function POST(req: NextRequest) {
       remediation: buildRemediation(scannedPages, scannedImages, wpInfo.plugins),
       integritySeal: generateIntegritySeal({} as SiteScanResult), // will be regenerated below
       processingTimeMs: Date.now() - startTime,
-      modelUsed: 'ensemble:linguistic+perplexity+stylometry+artifacts+ela+dct+exif',
+      modelUsed: 'ensemble:linguistic+perplexity+stylometry+artifacts+ela+noise+color+dimension+exif-v2',
       fetchStats: crawlResult.fetchStats,
     }
 

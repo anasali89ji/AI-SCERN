@@ -331,6 +331,51 @@ export interface CrawlResult {
   fetchStats: { direct: number; jina: number; cache: number; failed: number }
   isWordPress: boolean
   wordPressVersion?: string
+  discoveryMethod: 'sitemap' | 'crawl' | 'hybrid'
+}
+
+/**
+ * Fetch and parse /sitemap.xml (and, if present, up to 3 sub-sitemaps from a
+ * sitemap index) to discover pages up front instead of relying purely on
+ * BFS link-following, which misses pages with no inbound internal links
+ * (common for e-commerce/blog archives). Best-effort: any failure returns
+ * an empty list and the BFS crawl proceeds exactly as before.
+ */
+async function discoverFromSitemap(origin: string, maxUrls: number): Promise<string[]> {
+  const discovered: string[] = []
+
+  async function fetchXml(url: string): Promise<string | null> {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AiscernBot/1.0)' },
+        signal: AbortSignal.timeout(8000),
+      })
+      if (!res.ok) return null
+      return await res.text()
+    } catch { return null }
+  }
+
+  const rootXml = await fetchXml(`${origin}/sitemap.xml`)
+  if (!rootXml) return discovered
+
+  // Sitemap index (points to other sitemaps) vs a plain urlset
+  const isIndex = /<sitemapindex/i.test(rootXml)
+  const locMatches = [...rootXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1])
+
+  if (isIndex) {
+    // Fetch up to 3 sub-sitemaps (avoid unbounded fan-out on huge sites)
+    for (const sitemapUrl of locMatches.slice(0, 3)) {
+      const subXml = await fetchXml(sitemapUrl)
+      if (!subXml) continue
+      const subLocs = [...subXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1])
+      discovered.push(...subLocs)
+      if (discovered.length >= maxUrls) break
+    }
+  } else {
+    discovered.push(...locMatches)
+  }
+
+  return discovered.slice(0, maxUrls)
 }
 
 export async function crawlSite(
@@ -348,11 +393,28 @@ export async function crawlSite(
   const fetchStats = { direct: 0, jina: 0, cache: 0, failed: 0 }
   let isWordPress = false
   let wordPressVersion: string | undefined
+  let discoveryMethod: 'sitemap' | 'crawl' | 'hybrid' = 'crawl'
 
   // Priority queue: higher priority = scan first
   const queue: { url: string; depth: number; priority: number }[] = [
     { url: startUrl, depth: 0, priority: 100 }
   ]
+
+  // Seed additional URLs from sitemap.xml when available — these get a
+  // slightly lower priority than the homepage itself but are scanned before
+  // any BFS-discovered link, since sitemap URLs are author-declared canonical
+  // pages.
+  const sitemapUrls = await discoverFromSitemap(origin, opts.maxPages! * 2)
+  if (sitemapUrls.length > 0) {
+    discoveryMethod = 'hybrid'
+    for (const url of sitemapUrls) {
+      if (url === startUrl || queue.some(q => q.url === url)) continue
+      try {
+        if (new URL(url).hostname !== domain) continue // stay on-domain
+      } catch { continue }
+      queue.push({ url, depth: 1, priority: 90 })
+    }
+  }
 
   while (queue.length > 0 && pages.length < opts.maxPages!) {
     // Sort by priority (descending)
@@ -413,6 +475,7 @@ export async function crawlSite(
     fetchStats,
     isWordPress,
     wordPressVersion,
+    discoveryMethod,
   }
 }
 

@@ -1,10 +1,31 @@
 // ════════════════════════════════════════════════════════════════════════════
-// AISCERN — Free Image Forensics Engine
-// ELA, DCT analysis, EXIF heuristics, color fingerprints
-// Zero external API calls — pure pixel analysis
+// AISCERN — Free Image Forensics Engine v2
+// Real decoded-pixel ELA, noise-variance, color-distribution, and resolution
+// analysis (via `sharp`, already a project dependency) + EXIF heuristics.
+// Zero external API calls — pure pixel analysis, runs locally.
+//
+// v2 fixes the v1 bug where every signal was computed on raw *compressed*
+// JPEG bytes (`analyzePixels`/`simulateELA`) instead of decoded pixels —
+// that produced forensically meaningless, near-random scores. All new
+// analysis below decodes to RGBA first via sharp, then operates on real
+// pixel data. EXIF parsing is unchanged (it already worked on raw bytes,
+// which is correct — EXIF is a byte-level container format).
 // ════════════════════════════════════════════════════════════════════════════
 
+import sharp from 'sharp'
 import type { ScannedImage } from './types'
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5MB — skip larger images
+const DECODE_TIMEOUT_MS = 15_000
+
+// Common AI-generator output resolutions (DALL-E 3, Midjourney v6, SDXL, SD1.5)
+const COMMON_AI_RESOLUTIONS: Array<[number, number]> = [
+  [1024, 1024], [512, 512], [768, 768],
+  [512, 768], [768, 512],
+  [768, 1344], [1344, 768],
+  [896, 1152], [1152, 896],
+  [1024, 1792], [1792, 1024],
+]
 
 // Simple EXIF parser for JPEG (no external deps)
 function parseEXIF(buffer: Uint8Array): Record<string, string> {
@@ -164,128 +185,236 @@ function analyzeEXIF(exif: Record<string, string>): string[] {
   return flags
 }
 
+interface DecodedImage {
+  width: number
+  height: number
+  data: Buffer      // raw RGB (3 channels), row-major
+  channels: number
+  format: string
+}
+
 /**
- * Simple pixel-based analysis (works on raw buffer without sharp)
- * Analyzes color distribution, uniformity, and compression artifacts
+ * Decode an image buffer to raw RGB pixel data via sharp.
+ * Returns null if decoding fails (corrupt image, unsupported format, etc.) —
+ * callers fall back to EXIF-only scoring rather than crashing.
  */
-function analyzePixels(buffer: Uint8Array): {
-  colorUniformity: number
-  dctAnomaly: number
-  saturationMean: number
-  luminanceStd: number
-  hasPureBlack: boolean
-  hasPureWhite: boolean
-} {
-  // Simple analysis on first 64KB of image data
-  const sample = buffer.slice(0, Math.min(buffer.length, 65536))
+async function decodeImageToPixels(buffer: Uint8Array): Promise<DecodedImage | null> {
+  try {
+    const img = sharp(Buffer.from(buffer), { failOn: 'none' }).timeout({ seconds: 15 })
+    const metadata = await img.metadata()
+    // Downscale very large images before decoding raw pixels — forensic
+    // signals below operate on 8x8 blocks and don't need full resolution,
+    // and this keeps memory bounded for huge source images.
+    const resized = metadata.width && metadata.width > 1600
+      ? img.resize({ width: 1600, withoutEnlargement: true })
+      : img
 
-  // Skip JPEG header
-  let dataStart = 0
-  if (sample[0] === 0xFF && sample[1] === 0xD8) {
-    // Find SOS marker
-    for (let i = 2; i < sample.length - 1; i++) {
-      if (sample[i] === 0xFF && sample[i + 1] === 0xDA) {
-        dataStart = i + 2
-        break
-      }
+    const { data, info } = await resized
+      .raw()
+      .toColorspace('srgb')
+      .removeAlpha()
+      .toBuffer({ resolveWithObject: true })
+
+    return {
+      width: info.width,
+      height: metadata.height ?? info.height, // keep ORIGINAL height for resolution heuristics
+      data,
+      channels: info.channels,
+      format: metadata.format ?? 'unknown',
     }
-  }
-
-  const data = sample.slice(dataStart)
-  if (data.length < 100) {
-    return { colorUniformity: 0.5, dctAnomaly: 0.5, saturationMean: 0.5, luminanceStd: 0.5, hasPureBlack: false, hasPureWhite: false }
-  }
-
-  // Analyze byte distribution (proxy for color analysis)
-  const histogram = new Array(256).fill(0)
-  for (let i = 0; i < data.length; i++) {
-    histogram[data[i]]++
-  }
-
-  const total = data.length
-  const probs = histogram.map(c => c / total)
-
-  // Entropy (higher = more random/natural)
-  let entropy = 0
-  for (const p of probs) {
-    if (p > 0) entropy -= p * Math.log2(p)
-  }
-  const maxEntropy = Math.log2(256)
-  const normalizedEntropy = entropy / maxEntropy
-
-  // Color uniformity (AI often has narrower color distribution)
-  const nonZeroBins = histogram.filter(c => c > 0).length
-  const uniformity = 1 - (nonZeroBins / 256)
-
-  // DCT anomaly proxy: check for 8x8 block periodicity in byte patterns
-  let blockCorrelation = 0
-  const blockSize = 8
-  for (let offset = 0; offset < Math.min(64, data.length - blockSize * 8); offset++) {
-    let corr = 0
-    for (let i = 0; i < blockSize; i++) {
-      const a = data[offset + i]
-      const b = data[offset + i + blockSize]
-      corr += Math.abs(a - b)
-    }
-    blockCorrelation += corr / (blockSize * 255)
-  }
-  const dctAnomaly = Math.min(1, blockCorrelation / 64)
-
-  // Check for pure black/white (AI often clips these)
-  const hasPureBlack = histogram[0] > total * 0.001
-  const hasPureWhite = histogram[255] > total * 0.001
-
-  return {
-    colorUniformity: Math.round(uniformity * 1000) / 1000,
-    dctAnomaly: Math.round(dctAnomaly * 1000) / 1000,
-    saturationMean: Math.round((1 - normalizedEntropy) * 1000) / 1000,
-    luminanceStd: Math.round(normalizedEntropy * 1000) / 1000,
-    hasPureBlack,
-    hasPureWhite,
+  } catch {
+    return null
   }
 }
 
 /**
- * Error Level Analysis simulation
- * Re-compresses a portion of the image and measures difference
- * AI images show unnaturally uniform ELA
+ * Real Error Level Analysis:
+ * Re-encode the decoded pixels as JPEG at quality 90, decode that back,
+ * and measure the per-pixel absolute difference in 8x8 blocks.
+ * Real photos (already lossy, textured, noisy) show *varied* error levels
+ * across blocks. AI-generated images — smooth gradients, denoised output —
+ * tend to compress almost identically the second time, producing
+ * unnaturally *uniform* error levels.
  */
-function simulateELA(buffer: Uint8Array): { uniformity: number; score: number } {
-  // For JPEG: analyze quantization table consistency
-  // For other formats: analyze byte-level uniformity
+async function performELA(decoded: DecodedImage): Promise<{ uniformityScore: number; overallScore: number }> {
+  try {
+    const recompressedBuf = await sharp(decoded.data, {
+      raw: { width: decoded.width, height: decoded.height, channels: decoded.channels },
+    }).jpeg({ quality: 90 }).toBuffer()
 
-  const pixels = analyzePixels(buffer)
+    const { data: recompressed } = await sharp(recompressedBuf)
+      .raw()
+      .toBuffer({ resolveWithObject: true })
 
-  // AI images tend to have:
-  // - Low color uniformity (but not too low)
-  // - Moderate DCT anomaly
-  // - Missing pure blacks/whites
+    const blockSize = 8
+    const blocksX = Math.floor(decoded.width / blockSize)
+    const blocksY = Math.floor(decoded.height / blockSize)
+    if (blocksX < 2 || blocksY < 2) return { uniformityScore: 0.5, overallScore: 0.5 }
 
-  let aiScore = 0.5
+    const blockErrors: number[] = []
+    for (let by = 0; by < blocksY; by++) {
+      for (let bx = 0; bx < blocksX; bx++) {
+        let sum = 0
+        let count = 0
+        for (let y = 0; y < blockSize; y++) {
+          const row = (by * blockSize + y) * decoded.width * decoded.channels
+          for (let x = 0; x < blockSize; x++) {
+            const idx = row + (bx * blockSize + x) * decoded.channels
+            for (let c = 0; c < decoded.channels; c++) {
+              sum += Math.abs(decoded.data[idx + c] - recompressed[idx + c])
+              count++
+            }
+          }
+        }
+        blockErrors.push(sum / count)
+      }
+    }
 
-  if (pixels.colorUniformity > 0.3 && pixels.colorUniformity < 0.7) {
-    aiScore += 0.1
+    const mean = blockErrors.reduce((a, b) => a + b, 0) / blockErrors.length
+    const variance = blockErrors.reduce((a, b) => a + (b - mean) ** 2, 0) / blockErrors.length
+    const stdDev = Math.sqrt(variance)
+    // Coefficient of variation: low CV = uniform error levels = AI-suspicious
+    const cv = mean > 0.01 ? stdDev / mean : 0
+    const uniformityScore = Math.max(0, Math.min(1, 1 - cv / 1.5))
+
+    // Uniform error levels AND a low absolute mean error both push toward AI
+    let overallScore = uniformityScore * 0.7
+    if (mean < 3) overallScore += 0.2
+    overallScore = Math.max(0.03, Math.min(0.97, overallScore))
+
+    return {
+      uniformityScore: Math.round(uniformityScore * 1000) / 1000,
+      overallScore: Math.round(overallScore * 1000) / 1000,
+    }
+  } catch {
+    return { uniformityScore: 0.5, overallScore: 0.5 }
   }
-  if (!pixels.hasPureBlack && !pixels.hasPureWhite) {
-    aiScore += 0.15
-  }
-  if (pixels.dctAnomaly < 0.3) {
-    aiScore += 0.1
-  }
-  if (pixels.saturationMean > 0.6) {
-    aiScore += 0.1
+}
+
+/**
+ * Local noise-variance analysis over 8x8 blocks.
+ * Real camera sensors produce noise whose variance differs across the image
+ * (more in shadows/high-ISO regions, correlated across R/G/B via the sensor's
+ * Bayer pattern). AI generators tend to produce either "too clean" flat
+ * regions or noise that's statistically identical everywhere.
+ */
+function analyzeNoise(decoded: DecodedImage): { noiseVariance: number; blockUniformity: number; score: number } {
+  const { width, height, data, channels } = decoded
+  const blockSize = 8
+  const blocksX = Math.floor(width / blockSize)
+  const blocksY = Math.floor(height / blockSize)
+  if (blocksX < 2 || blocksY < 2) return { noiseVariance: 0.5, blockUniformity: 0.5, score: 0.5 }
+
+  const blockVariances: number[] = []
+  for (let by = 0; by < blocksY; by++) {
+    for (let bx = 0; bx < blocksX; bx++) {
+      // Grayscale-approximate local variance via simple horizontal Laplacian
+      // (high-frequency residual = noise + fine texture)
+      let sum = 0
+      let sumSq = 0
+      let n = 0
+      for (let y = 1; y < blockSize - 1; y++) {
+        const row = (by * blockSize + y) * width * channels
+        for (let x = 1; x < blockSize - 1; x++) {
+          const idx = row + (bx * blockSize + x) * channels
+          const idxL = row + (bx * blockSize + x - 1) * channels
+          const idxR = row + (bx * blockSize + x + 1) * channels
+          const gray = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]
+          const grayL = 0.299 * data[idxL] + 0.587 * data[idxL + 1] + 0.114 * data[idxL + 2]
+          const grayR = 0.299 * data[idxR] + 0.587 * data[idxR + 1] + 0.114 * data[idxR + 2]
+          const residual = gray - (grayL + grayR) / 2
+          sum += residual
+          sumSq += residual * residual
+          n++
+        }
+      }
+      const mean = sum / n
+      blockVariances.push(sumSq / n - mean * mean)
+    }
   }
 
-  // ELA uniformity: AI images have more uniform error levels
-  const uniformity = 1 - pixels.luminanceStd
-  if (uniformity > 0.7) {
-    aiScore += 0.15
-  }
+  const avgVariance = blockVariances.reduce((a, b) => a + b, 0) / blockVariances.length
+  const varOfVariances = blockVariances.reduce((a, b) => a + (b - avgVariance) ** 2, 0) / blockVariances.length
+  // How similar the noise level is *across* blocks — real photos vary a lot
+  // (edges/texture vs flat sky/wall); heavily denoised AI output is flatter.
+  const blockUniformity = Math.max(0, Math.min(1, 1 - Math.sqrt(varOfVariances) / (avgVariance + 1)))
+
+  let score = 0.3
+  if (avgVariance < 4) score += 0.3        // unnaturally clean / denoised
+  if (blockUniformity > 0.75) score += 0.3 // noise level too consistent across the frame
+  score = Math.max(0.03, Math.min(0.97, score))
 
   return {
-    uniformity: Math.round(uniformity * 1000) / 1000,
-    score: Math.round(Math.min(0.95, aiScore) * 1000) / 1000,
+    noiseVariance: Math.round(avgVariance * 1000) / 1000,
+    blockUniformity: Math.round(blockUniformity * 1000) / 1000,
+    score: Math.round(score * 1000) / 1000,
   }
+}
+
+/**
+ * Color-distribution analysis: smoothness of transitions + chromatic
+ * aberration proxy. Diffusion models tend to produce very smooth gradients
+ * and near-perfect channel alignment; real lenses introduce slight
+ * red/blue channel misalignment (chromatic aberration) especially at edges.
+ */
+function analyzeColorDistribution(decoded: DecodedImage): { smoothnessScore: number; chromaticAberration: number; score: number } {
+  const { width, height, data, channels } = decoded
+  if (channels < 3) return { smoothnessScore: 0.5, chromaticAberration: 0.5, score: 0.5 }
+
+  let gradientSum = 0
+  let aberrationSum = 0
+  let n = 0
+  const step = 4 // sample every 4th pixel for speed on large images
+  for (let y = 0; y < height - step; y += step) {
+    for (let x = 0; x < width - step; x += step) {
+      const idx = (y * width + x) * channels
+      const idxNext = (y * width + x + step) * channels
+
+      const rDiff = Math.abs(data[idxNext] - data[idx])
+      const gDiff = Math.abs(data[idxNext + 1] - data[idx + 1])
+      const bDiff = Math.abs(data[idxNext + 2] - data[idx + 2])
+      gradientSum += (rDiff + gDiff + bDiff) / 3
+
+      // Chromatic aberration proxy: divergence between R and B channel edges
+      aberrationSum += Math.abs(rDiff - bDiff)
+      n++
+    }
+  }
+
+  const avgGradient = gradientSum / Math.max(1, n)
+  const avgAberration = aberrationSum / Math.max(1, n)
+
+  // Smaller average gradient = smoother = more AI-suspicious
+  const smoothnessScore = Math.max(0, Math.min(1, 1 - avgGradient / 25))
+  // Lower chromatic aberration = more AI-suspicious (real lenses have some)
+  const chromaticAberration = Math.max(0, Math.min(1, avgAberration / 10))
+
+  let score = smoothnessScore * 0.6 + (1 - chromaticAberration) * 0.4
+  score = Math.max(0.03, Math.min(0.97, score))
+
+  return {
+    smoothnessScore: Math.round(smoothnessScore * 1000) / 1000,
+    chromaticAberration: Math.round(chromaticAberration * 1000) / 1000,
+    score: Math.round(score * 1000) / 1000,
+  }
+}
+
+/**
+ * Resolution heuristics: exact-match common AI generator output sizes are a
+ * meaningful (if weak on their own) signal.
+ */
+function analyzeDimensions(width: number, height: number): { isCommonAiResolution: boolean; score: number } {
+  const isCommonAiResolution = COMMON_AI_RESOLUTIONS.some(([w, h]) => w === width && h === height)
+  const aspectRatio = width / height
+  const suspiciousAspect = Math.abs(aspectRatio - 1) < 0.02
+    || Math.abs(aspectRatio - 16 / 9) < 0.02
+    || Math.abs(aspectRatio - 9 / 16) < 0.02
+
+  let score = 0.3
+  if (isCommonAiResolution) score = 0.75
+  else if (suspiciousAspect) score = 0.45
+
+  return { isCommonAiResolution, score }
 }
 
 /**
@@ -343,26 +472,25 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
     const arrayBuffer = await res.arrayBuffer()
     const buffer = new Uint8Array(arrayBuffer)
 
-    // Parse EXIF
+    if (buffer.byteLength > MAX_IMAGE_BYTES) {
+      return {
+        url: imageUrl,
+        aiScore: 0.5,
+        verdict: 'UNCERTAIN',
+        modelUsed: 'forensics-too-large',
+        exifFlags: ['Image exceeds 5MB — skipped pixel analysis'],
+        elaUniformity: 0.5,
+        dctAnomaly: 0.5,
+        colorFingerprint: 'skipped',
+        decodeFailed: true,
+      }
+    }
+
+    // Parse EXIF (byte-level container parsing — correct to do on raw bytes)
     const exif = parseEXIF(buffer)
     const exifFlags = analyzeEXIF(exif)
 
-    // Pixel analysis
-    const pixels = analyzePixels(buffer)
-
-    // ELA simulation
-    const ela = simulateELA(buffer)
-
-    // Color fingerprint
-    const colorFingerprint = [
-      `U:${pixels.colorUniformity.toFixed(2)}`,
-      `E:${pixels.saturationMean.toFixed(2)}`,
-      `B:${pixels.hasPureBlack ? 'Y' : 'N'}`,
-      `W:${pixels.hasPureWhite ? 'Y' : 'N'}`,
-    ].join('|')
-
-    // Composite scoring
-    // EXIF flags are the strongest signal
+    // EXIF-based score — strongest single signal when present
     let exifScore = 0.5
     if (exifFlags.some(f => f.includes('Stable Diffusion') || f.includes('Midjourney') || f.includes('DALL-E'))) {
       exifScore = 0.92
@@ -371,21 +499,60 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
     } else if (exifFlags.some(f => f.includes('generation parameters'))) {
       exifScore = 0.85
     } else if (exifFlags.some(f => f.includes('No camera EXIF'))) {
-      exifScore = 0.65
+      exifScore = 0.6
     } else if (exifFlags.some(f => f.includes('Contradictory'))) {
       exifScore = 0.75
     }
 
-    // Pixel-based score
-    const pixelScore = ela.score
+    // Decode to real pixels for ELA / noise / color / dimension analysis
+    const decoded = await Promise.race([
+      decodeImageToPixels(buffer),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), DECODE_TIMEOUT_MS)),
+    ])
 
-    // Combine: EXIF (40%) + ELA (30%) + DCT (20%) + Color (10%)
-    const aiScore = Math.min(0.97,
-      exifScore * 0.40 +
-      pixelScore * 0.30 +
-      (pixels.dctAnomaly > 0.5 ? 0.7 : 0.3) * 0.20 +
-      (pixels.colorUniformity > 0.5 ? 0.6 : 0.4) * 0.10
-    )
+    if (!decoded) {
+      // Decode failed (corrupt/unsupported format) — fall back to EXIF-only
+      // scoring rather than the old byte-level heuristics, which were
+      // forensically meaningless. Confidence is intentionally capped closer
+      // to 0.5 since we're missing 3 of our 4 signal families.
+      const aiScore = Math.max(0.05, Math.min(0.95, 0.3 + exifScore * 0.5))
+      return {
+        url: imageUrl,
+        aiScore: Math.round(aiScore * 1000) / 1000,
+        verdict: aiScore >= 0.65 ? 'AI' : aiScore <= 0.35 ? 'HUMAN' : 'UNCERTAIN',
+        modelUsed: 'exif-only-decode-failed',
+        exifFlags: [...exifFlags, 'Pixel decode failed — scored on EXIF only'],
+        elaUniformity: 0.5,
+        dctAnomaly: 0.5,
+        colorFingerprint: 'decode-failed',
+        decodeFailed: true,
+      }
+    }
+
+    const [ela, noise, color] = await Promise.all([
+      performELA(decoded),
+      Promise.resolve(analyzeNoise(decoded)),
+      Promise.resolve(analyzeColorDistribution(decoded)),
+    ])
+    const dimensions = analyzeDimensions(decoded.width, decoded.height)
+
+    const colorFingerprint = [
+      `ELA:${ela.overallScore.toFixed(2)}`,
+      `N:${noise.score.toFixed(2)}`,
+      `C:${color.score.toFixed(2)}`,
+      `D:${dimensions.isCommonAiResolution ? 'common' : 'atypical'}`,
+    ].join('|')
+
+    // Ensemble weights (rebalanced — EXIF false-positives were the biggest
+    // driver of bad verdicts in v1, so its weight is halved in favor of the
+    // three real pixel-analysis signals):
+    const aiScore = Math.min(0.97, Math.max(0.03,
+      exifScore * 0.20 +
+      ela.overallScore * 0.30 +
+      noise.score * 0.25 +
+      color.score * 0.15 +
+      dimensions.score * 0.10
+    ))
 
     const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' =
       aiScore >= 0.65 ? 'AI' : aiScore <= 0.35 ? 'HUMAN' : 'UNCERTAIN'
@@ -394,11 +561,17 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
       url: imageUrl,
       aiScore: Math.round(aiScore * 1000) / 1000,
       verdict,
-      modelUsed: 'onnx+ela+dct+exif',
+      modelUsed: 'ela+noise+color+dimension+exif-v2',
       exifFlags,
-      elaUniformity: ela.uniformity,
-      dctAnomaly: pixels.dctAnomaly,
+      elaUniformity: ela.uniformityScore,
+      dctAnomaly: noise.score, // retained field name for API/type compat; now carries the noise-analysis score
       colorFingerprint,
+      noiseScore: noise.score,
+      colorScore: color.score,
+      dimensionScore: dimensions.score,
+      isCommonAiResolution: dimensions.isCommonAiResolution,
+      width: decoded.width,
+      height: decoded.height,
     }
   } catch (err) {
     return {
