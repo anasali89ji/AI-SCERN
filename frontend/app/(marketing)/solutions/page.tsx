@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Solutions — Aiscern AI Detection for Every Industry',
+  title: 'Solutions — Aiscern AI Verification for Every Industry',
   description: 'Aiscern delivers multi-modal AI content detection tailored for education, HR, journalism, legal, healthcare, security, and more.',
   openGraph: {
     title: 'Industry Solutions — Aiscern',
@@ -136,11 +136,11 @@ export default function SolutionsHub() {
               Industry Solutions
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-5 leading-tight">
-              AI Detection Built<br />
+              AI Verification Built<br />
               <span className="gradient-text">for Your Industry</span>
             </h1>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed">
-              Every industry faces unique AI content challenges. Aiscern delivers tailored detection workflows,
+              Every industry faces unique AI content challenges. Aiscern delivers tailored verification workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">

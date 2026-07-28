@@ -7,6 +7,6 @@ export default function HowItWorksPage() {
 }
 
 export const metadata = {
-  title: 'How Aiscern Works — AI Detection Methodology',
-  description: 'Learn how Aiscern detects AI-generated text, images, audio, and video using ensemble models.',
+  title: 'How Aiscern Works — AI Verification Methodology',
+  description: 'Learn how Aiscern verifies AI-generated text, images, audio, and video using ensemble models.',
 }

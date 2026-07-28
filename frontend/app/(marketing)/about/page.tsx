@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, Users, MapPin, Briefcase } from 'lucide-react'
 
 export const metadata = {
-  title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform. Detect AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
+  title: 'About Aiscern — Free AI Content Verification',
+  description: 'Aiscern is a free multi-modal AI content verification platform. Verify AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
@@ -114,7 +114,7 @@ export default function AboutPage() {
             <Users className="w-3 h-3" /> About us
           </div>
           <h1 className="text-3xl sm:text-5xl font-black mb-4">
-            AI detection that&apos;s <span className="gradient-text">actually free</span>
+            AI verification that&apos;s <span className="gradient-text">actually free</span>
           </h1>
           <p className="text-text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
             Aiscern is a multi-modal AI content detection platform built to give everyone access to the tools they need to navigate a world full of synthetic media.

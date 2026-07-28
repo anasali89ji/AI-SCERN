@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, ArrowRight, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Aiscern AI Detection at Scale',
+  title: 'Enterprise — Aiscern AI Verification at Scale',
   description: 'Custom pricing, SLA guarantees, priority support, and private deployment options for enterprise teams. Contact our sales team.',
   openGraph: {
     title: 'Enterprise Solutions — Aiscern',
@@ -43,7 +43,7 @@ export default function EnterprisePage() {
               Enterprise
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-5 leading-tight">
-              AI Detection at<br /><span className="gradient-text">Enterprise Scale</span>
+              AI Verification at<br /><span className="gradient-text">Enterprise Scale</span>
             </h1>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.
