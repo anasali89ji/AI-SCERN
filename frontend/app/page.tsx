@@ -11,7 +11,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
-  Shield, Brain, Eye, FileText, Globe, Zap,
+  Shield, Brain, Eye, FileText, Globe, Zap, Bot,
   ArrowRight, CheckCircle, XCircle, HelpCircle,
   Image as ImageIcon, Video, Music, ChevronRight, Loader2,
   MessageSquare, Cpu, Lock, Database, Sparkles,
