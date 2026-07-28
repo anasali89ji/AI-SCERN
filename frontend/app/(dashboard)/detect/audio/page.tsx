@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { uploadToR2WithProgress } from "@/lib/storage/upload-with-progress"
+import { UsageLimitBanner } from "@/components/UsageLimitBanner"
 import {
   Mic,
   Upload,
@@ -197,6 +198,8 @@ export default function AudioDetectionPage() {
           </p>
         </div>
       </div>
+
+      <UsageLimitBanner tool="audio" />
 
       {/* Beta Notice */}
       <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4 flex items-start gap-3">

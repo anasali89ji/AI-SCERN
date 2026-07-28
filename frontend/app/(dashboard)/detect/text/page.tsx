@@ -10,6 +10,7 @@ import { useDetectSettings } from '@/hooks/useDetectSettings'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatVerdictConfidence, normalizeConfidence } from '@/lib/utils/helpers'
 import { incrementGlobalScanCount } from '@/components/SignupGate'
+import { UsageLimitBanner } from '@/components/UsageLimitBanner'
 import dynamic from 'next/dynamic'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
@@ -205,6 +206,8 @@ Analyzed: ${new Date().toLocaleString()}`
         </h1>
         <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
+
+      <div className="mb-4"><UsageLimitBanner tool="text" /></div>
 
       <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
         {/* Input Panel */}

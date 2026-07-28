@@ -13,6 +13,7 @@ import type { DetectionResult, Verdict } from '@/types'
 import { formatVerdictConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
 import dynamic from 'next/dynamic'
 import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
+import { UsageLimitBanner } from '@/components/UsageLimitBanner'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -224,6 +225,8 @@ Analyzed: ${new Date().toLocaleString()}`
         </h1>
         <p className="text-text-muted ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
+
+      <div className="mb-4"><UsageLimitBanner tool="image" /></div>
 
       <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
         {/* Upload Panel */}
