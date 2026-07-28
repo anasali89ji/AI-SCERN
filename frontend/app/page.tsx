@@ -16,7 +16,7 @@ import {
   Image as ImageIcon, Video, Music, ChevronRight, Loader2,
   MessageSquare, Cpu, Lock, Database, Sparkles,
   TrendingUp, Users, Menu, X, Search,
-  Activity, Layers, Star, ChevronDown, FlaskConical, GraduationCap,
+  Activity, Layers, ChevronDown, FlaskConical, GraduationCap,
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
@@ -24,6 +24,7 @@ import {
 // Static imports — no Suspense boundaries, no skeleton flash, no $RC JS dependency
 // dynamic() caused sections to show as skeleton placeholders when JS was slow
 import EnterpriseTrustBanner from '@/components/home/EnterpriseTrustBanner'
+import WhoWeServeSection from '@/components/home/WhoWeServeSection'
 import WhyChooseSection from '@/components/home/WhyChooseSection'
 import HowItWorksSection from '@/components/home/HowItWorksSection'
 import IndustrySolutionsSection from '@/components/home/IndustrySolutionsSection'
@@ -32,6 +33,8 @@ import SecuritySection from '@/components/home/SecuritySection'
 import InteractiveDemoSection from '@/components/home/InteractiveDemoSection'
 import StatisticsSection from '@/components/home/StatisticsSection'
 import TestimonialsSection from '@/components/home/TestimonialsSection'
+import FAQSection from '@/components/home/FAQSection'
+import FinalCTASection from '@/components/home/FinalCTASection'
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
 // ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
@@ -511,7 +514,7 @@ export default function HomePage() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
-            {[['#tools','Tools'],['#how','How It Works']].map(([href, label]) => (
+            {[['#trust','Trust'],['#features','Features'],['#how-it-works','How It Works'],['#solutions','Solutions'],['#technology','Technology'],['#security','Security'],['#demo','Demo']].map(([href, label]) => (
               <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
                 {label}
                 <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
@@ -521,12 +524,10 @@ export default function HomePage() {
               <MessageSquare className="w-3.5 h-3.5" />AI Chat
               <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-all duration-300 rounded-full" />
             </Link>
-            {[['/ reviews','Reviews',''],['/ blog','Blog',''],['/ pricing','Pricing','']].map(([href, label]) => (
-              <Link key={label} href={href.replace(/ /g,'')} className="relative hover:text-text-primary transition-colors duration-200 group">
-                {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
-              </Link>
-            ))}
+            <Link href="/pricing" className="relative hover:text-text-primary transition-colors duration-200 group">
+              Pricing
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
+            </Link>
           </div>
 
           {/* CTA */}
@@ -579,11 +580,14 @@ export default function HomePage() {
               onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setMobileNavOpen(false)}>
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
-                  { href: '#tools', label: 'Tools', Icon: Cpu },
+                  { href: '#trust', label: 'Trust', Icon: Shield },
+                  { href: '#features', label: 'Features', Icon: Cpu },
                   { href: '#how-it-works', label: 'How It Works', Icon: Activity },
+                  { href: '#solutions', label: 'Solutions', Icon: GraduationCap },
+                  { href: '#technology', label: 'Technology', Icon: Layers },
+                  { href: '#security', label: 'Security', Icon: Lock },
+                  { href: '#demo', label: 'Demo', Icon: Eye },
                   { href: user ? '/chat' : '/signup', label: 'AI Detection Assistant', Icon: MessageSquare },
-                  { href: '/reviews', label: 'Reviews', Icon: Star },
-                  { href: '/blog', label: 'Blog', Icon: FileText },
                   { href: '/pricing', label: 'Pricing', Icon: Zap },
                 ].map((link, i) => (
                   <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
@@ -711,6 +715,11 @@ export default function HomePage() {
         {/* ── ENTERPRISE TRUST BANNER ── */}
         <ErrorBoundary>
           <EnterpriseTrustBanner />
+        </ErrorBoundary>
+
+        {/* ── WHO WE SERVE ── */}
+        <ErrorBoundary>
+          <WhoWeServeSection />
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
@@ -844,6 +853,11 @@ export default function HomePage() {
           <TestimonialsSection />
         </ErrorBoundary>
 
+        {/* ── FAQ ── */}
+        <ErrorBoundary>
+          <FAQSection />
+        </ErrorBoundary>
+
         {/* ══ TRUST / FEATURES — bento grid ══ */}
         <section className="py-24 md:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
@@ -954,53 +968,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══ CTA ══ */}
-        <section className="py-24 sm:py-32 2xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.11) 0%, rgba(37,99,235,0.05) 40%, transparent 70%)' }} />
-          </div>
-          <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{ backgroundImage: `linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
-
-          <div className="max-w-3xl 2xl:max-w-4xl mx-auto text-center relative z-10">
-            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7 }}>
-              <div className="flex justify-center mb-8">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full blur-2xl opacity-60"
-                    style={{ background: 'radial-gradient(circle, rgba(245,100,0,0.5) 0%, transparent 70%)' }} />
-                  <Image src="/logo.png" alt="Aiscern" width={68} height={80}
-                    className="relative object-contain h-16 sm:h-20 2xl:h-24 w-auto drop-shadow-[0_0_28px_rgba(245,100,0,0.55)]" />
-                </div>
-              </div>
-
-              <h2 className="text-4xl sm:text-6xl 2xl:text-7xl font-black mb-6 leading-tight">
-                Start <span className="gradient-text">Verifying</span><br />with Aiscern
-              </h2>
-              <p className="text-text-muted text-lg sm:text-xl 2xl:text-2xl mb-10 max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
-                Run a free scan to see the platform in action, or talk to us about an enterprise rollout for your organization.
-              </p>
-
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link href={user ? '/dashboard' : '/detect/text'}
-                  className="btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center shadow-lg shadow-primary/20">
-                  {user ? 'Go to Dashboard' : 'Start Free Scan'}
-                </Link>
-                <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center hover:border-primary/30">
-                  Create Free Account
-                </Link>
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs 2xl:text-sm text-text-muted">
-                {['No credit card required', 'Free tier available', 'Enterprise plans on request'].map(t => (
-                  <div key={t} className="flex items-center gap-1.5">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald" />{t}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </section>
+        {/* ── FINAL CTA ── */}
+        <ErrorBoundary>
+          <FinalCTASection />
+        </ErrorBoundary>
 
       </main>
       <SiteFooter />
