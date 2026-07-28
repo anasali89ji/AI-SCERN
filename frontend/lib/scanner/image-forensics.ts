@@ -239,7 +239,7 @@ async function decodeImageToPixels(buffer: Uint8Array): Promise<DecodedImage | n
 async function performELA(decoded: DecodedImage): Promise<{ uniformityScore: number; overallScore: number }> {
   try {
     const recompressedBuf = await sharp(decoded.data, {
-      raw: { width: decoded.width, height: decoded.height, channels: decoded.channels },
+      raw: { width: decoded.width, height: decoded.height, channels: decoded.channels as 1 | 2 | 3 | 4 },
     }).jpeg({ quality: 90 }).toBuffer()
 
     const { data: recompressed } = await sharp(recompressedBuf)
