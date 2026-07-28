@@ -63,7 +63,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
             backgroundClip: 'text',
           }}
         >
-          Detect
+          Verify
         </span>
       </motion.h1>
 
@@ -112,7 +112,7 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
         </div>
 
         <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-text-secondary whitespace-nowrap">
-          with AI
+          with Confidence
         </span>
       </motion.div>
 

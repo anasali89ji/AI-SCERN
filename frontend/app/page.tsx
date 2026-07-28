@@ -16,21 +16,21 @@ import {
   Image as ImageIcon, Video, Music, ChevronRight, Loader2,
   MessageSquare, Cpu, Lock, Database, Sparkles,
   TrendingUp, Users, Menu, X, Search,
-  Scan, Bot,
-  Activity, Layers, Wand2, Star, ChevronDown, FlaskConical, GraduationCap,
+  Activity, Layers, Star, ChevronDown, FlaskConical, GraduationCap,
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
 // ─── Sections (SSR enabled — critical for render) ────────────────────────────
 // Static imports — no Suspense boundaries, no skeleton flash, no $RC JS dependency
 // dynamic() caused sections to show as skeleton placeholders when JS was slow
-import WhoNeedsSection from '@/components/home/WhoNeedsSection'
-import AIvsRealSection from '@/components/home/AIvsRealSection'
+import EnterpriseTrustBanner from '@/components/home/EnterpriseTrustBanner'
+import WhyChooseSection from '@/components/home/WhyChooseSection'
+import HowItWorksSection from '@/components/home/HowItWorksSection'
+import IndustrySolutionsSection from '@/components/home/IndustrySolutionsSection'
+import TechnologySection from '@/components/home/TechnologySection'
+import SecuritySection from '@/components/home/SecuritySection'
+// TODO(Section 9): replace with TestimonialsSection per redesign guide — not yet built
 import HomepageReviews from '@/components/home/HomepageReviews'
-
-// Aliases for backward compat with existing JSX usage
-const DynamicWhoNeedsSection = WhoNeedsSection
-const DynamicAIvsRealSection = AIvsRealSection
 const DynamicHomepageReviews = HomepageReviews
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
@@ -416,7 +416,6 @@ function HeroScrollIndicator() {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const HOW_IT_WORKS_ICONS = [Layers, Scan, Activity, Wand2]
 
 const TOOLS = [
   { href: '/detect/text',  icon: FileText,      label: 'Free AI Text Detector',           color: 'text-amber',     bg: 'from-amber/20 via-amber/8 to-transparent',          border: 'border-amber/25',     desc: 'Detect ChatGPT, Claude, Gemini & more',           accuracy: '~94%', accent: '#f59e0b' },
@@ -434,18 +433,11 @@ const STATS = [
   { value: 79, suffix: '%', label: 'Audio Accuracy (~)', icon: Zap      },
 ]
 
-const HOW_IT_WORKS = [
-  { n: '01', title: 'Upload or Paste',   desc: 'Drop any image, video, audio file or paste text / a URL' },
-  { n: '02', title: 'Ensemble Analysis', desc: 'Advanced multi-modal AI analyzes 20+ detection signals across all content types' },
-  { n: '03', title: 'Get Full Report',   desc: 'Confidence score, signal breakdown & sentence-level heatmap' },
-  { n: '04', title: 'Export & Share',    desc: 'Save history, share results, export PDF reports' },
-]
-
 const TRUST_FEATURES = [
   { icon: Database,   color: 'text-primary', bg: 'from-primary/18 to-transparent', border: 'border-primary/20', title: 'Benchmarked Datasets', desc: 'Models evaluated against curated public datasets spanning diverse AI-generated and authentic content from multiple sources.', large: true,  stat: '2.2', statSuffix: 'M+', statLabel: 'training samples', accent: '#2563eb' },
   { icon: Shield,     color: 'text-emerald', bg: 'from-emerald/18 to-transparent', border: 'border-emerald/20', title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.',                         large: false, stat: '8',   statSuffix: '+',  statLabel: 'papers cited',    accent: '#10b981' },
   { icon: TrendingUp, color: 'text-amber',   bg: 'from-amber/18 to-transparent',   border: 'border-amber/20',   title: 'Ensemble Models',       desc: 'Multi-model consensus using RoBERTa, ViT, and wav2vec2 — no single model makes the final call.',                        large: false, stat: '20',  statSuffix: '+',  statLabel: 'signals analyzed', accent: '#f59e0b' },
-  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/18 to-transparent',     border: 'border-cyan/20',    title: 'Free Tier Available',   desc: 'Start detecting AI content for free — no credit card required. Upgrade when you need more scans.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start',        accent: '#06b6d4' },
+  { icon: Zap,        color: 'text-cyan',    bg: 'from-cyan/18 to-transparent',     border: 'border-cyan/20',    title: 'Flexible Access',       desc: 'Start with a free scan to see the platform in action, then scale up through self-serve plans or an enterprise agreement.',                        large: false, stat: 'Free', statSuffix: '', statLabel: 'to start',        accent: '#06b6d4' },
 ]
 
 const PROFESSIONALS = [
@@ -588,7 +580,7 @@ export default function HomePage() {
               <div className="px-4 py-4 flex flex-col gap-1">
                 {[
                   { href: '#tools', label: 'Tools', Icon: Cpu },
-                  { href: '#how', label: 'How It Works', Icon: Activity },
+                  { href: '#how-it-works', label: 'How It Works', Icon: Activity },
                   { href: user ? '/chat' : '/signup', label: 'AI Detection Assistant', Icon: MessageSquare },
                   { href: '/reviews', label: 'Reviews', Icon: Star },
                   { href: '/blog', label: 'Blog', Icon: FileText },
@@ -649,8 +641,8 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
-              <span className="hidden sm:inline">Ensemble of 8+ detection models · Text, Image, Audio, Video</span>
-              <span className="sm:hidden">8+ models · Free tier available</span>
+              <span className="hidden sm:inline">Enterprise AI Verification Platform · Text, Image, Audio, Video</span>
+              <span className="sm:hidden">Enterprise AI Verification Platform</span>
             </motion.div>
 
             {/* H1 + Rotating modality animation */}
@@ -661,8 +653,8 @@ export default function HomePage() {
             {/* Subheadline */}
             <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <span className="sm:hidden">Ensemble-based AI detection. <strong className="text-text-primary">Free tier available.</strong> No account required.</span>
-              <span className="hidden sm:inline">Detect AI-generated <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong> &amp; <strong className="text-secondary">video</strong> using an ensemble of detection models. Free tier available — no account required for basic scans.</span>
+              <span className="sm:hidden">Enterprise AI Verification Platform for text, images, audio &amp; video.</span>
+              <span className="hidden sm:inline">Enterprise AI Verification Platform. Analyze <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong>, and <strong className="text-secondary">video</strong> from a single platform — built for organizations that cannot afford to trust blindly.</span>
             </motion.p>
 
             {/* CTAs */}
@@ -703,13 +695,22 @@ export default function HomePage() {
               <LiveDemo isLoggedIn={!!user} />
             </motion.div>
 
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 text-sm text-text-muted">
+              <span className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-primary" aria-hidden="true" />
+                Trusted by educators, journalists, and legal professionals
+              </span>
+              <span className="hidden md:inline text-border">|</span>
+              <span className="hidden md:inline">Pakistan &amp; Beyond</span>
+            </div>
+
             <HeroScrollIndicator />
           </div>
         </section>
 
-        {/* ── WHO NEEDS AISCERN ── */}
+        {/* ── ENTERPRISE TRUST BANNER ── */}
         <ErrorBoundary>
-          <DynamicWhoNeedsSection />
+          <EnterpriseTrustBanner />
         </ErrorBoundary>
 
         {/* ══ STATS BAR ══ */}
@@ -734,13 +735,33 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── AI VS REAL ── */}
+        {/* ── WHY CHOOSE AISCERN ── */}
         <ErrorBoundary>
-          <DynamicAIvsRealSection />
+          <WhyChooseSection />
+        </ErrorBoundary>
+
+        {/* ── HOW IT WORKS ── */}
+        <ErrorBoundary>
+          <HowItWorksSection />
+        </ErrorBoundary>
+
+        {/* ── INDUSTRY SOLUTIONS ── */}
+        <ErrorBoundary>
+          <IndustrySolutionsSection />
+        </ErrorBoundary>
+
+        {/* ── TECHNOLOGY ── */}
+        <ErrorBoundary>
+          <TechnologySection />
+        </ErrorBoundary>
+
+        {/* ── SECURITY ── */}
+        <ErrorBoundary>
+          <SecuritySection />
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
-        <section id="tools" className="cv-auto py-16 sm:py-28 2xl:py-32 3xl:py-40 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
+        <section id="tools" className="cv-auto py-24 md:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
 
@@ -768,7 +789,7 @@ export default function HomePage() {
                   transition={{ delay: i * 0.08, duration: 0.5 }}>
                   <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
                     <SpotlightCard color={`${tool.accent}28`}
-                      className={`group tool-card relative overflow-hidden rounded-2xl border ${tool.border} p-5 sm:p-6 2xl:p-7 h-full cursor-pointer transition-all duration-300 bg-surface`}>
+                      className={`group tool-card relative overflow-hidden rounded-[24px] border ${tool.border} p-6 md:p-8 h-full cursor-pointer transition-all duration-300 bg-surface`}>
                       {/* Accent gradient overlay */}
                       <div className="absolute inset-0 rounded-2xl pointer-events-none"
                         style={{ background: `linear-gradient(135deg, ${tool.accent}12 0%, ${tool.accent}05 40%, transparent 100%)` }} />
@@ -808,64 +829,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══ HOW IT WORKS ══ */}
-        <section id="how" className="cv-auto py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(15,15,23,0.5) 0%, rgba(8,8,13,1) 100%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-16 sm:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/8 text-blue-400 text-xs font-semibold mb-4">
-                <Activity className="w-3 h-3" /> Simple Process
-              </div>
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-4">
-                How It <span className="gradient-text">Works</span>
-              </h2>
-              <p className="text-text-muted text-base sm:text-lg">From upload to verdict in seconds.</p>
-            </motion.div>
-
-            <div className="relative">
-              {/* Animated vertical connector */}
-              <div className="absolute left-7 lg:left-1/2 top-0 bottom-0 w-px hidden sm:block overflow-hidden">
-                <motion.div className="h-full w-full"
-                  style={{ background: 'linear-gradient(180deg, rgba(37,99,235,0.8) 0%, rgba(37,99,235,0.4) 60%, transparent 100%)' }}
-                  initial={{ scaleY: 0, originY: 0 }} animate={{ scaleY: 1 }}
-                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }} />
-              </div>
-
-              <div className="space-y-10 sm:space-y-16">
-                {HOW_IT_WORKS.map((step, i) => {
-                  const StepIcon = HOW_IT_WORKS_ICONS[i]
-                  return (
-                    <motion.div key={i}
-                      initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.15 }}
-                      transition={{ duration: 0.6, delay: i * 0.1 }}
-                      className={`flex items-center gap-5 sm:gap-8 ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
-                      <div className="flex-1 hidden lg:block" />
-                      <div className="relative z-10 flex-shrink-0">
-                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.15))', border: '1px solid rgba(37,99,235,0.3)', boxShadow: '0 8px 32px rgba(37,99,235,0.12)' }}>
-                          <StepIcon className="w-6 h-6 text-primary" strokeWidth={1.7} />
-                          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] font-black text-white shadow-lg">
-                            {i + 1}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-1 max-w-md">
-                        <div className="text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">{step.n}</div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-text-primary mb-2">{step.title}</h3>
-                        <p className="text-sm sm:text-base text-text-muted leading-relaxed">{step.desc}</p>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ══ EARLY FEEDBACK ══ */}
         <section className="py-16 sm:py-24 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
@@ -900,7 +863,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ TRUST / FEATURES — bento grid ══ */}
-        <section className="py-16 sm:py-28 2xl:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
+        <section className="py-24 md:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
 
@@ -937,7 +900,7 @@ export default function HomePage() {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color={`${accentHex}22`}
-                    className={`group relative h-full p-6 sm:p-7 rounded-2xl bg-surface bg-gradient-to-br ${bg} transition-all duration-300 ${large ? 'bento-shimmer' : ''} overflow-hidden`}>
+                    className={`group relative h-full p-6 md:p-8 rounded-[24px] bg-surface bg-gradient-to-br ${bg} transition-all duration-300 ${large ? 'bento-shimmer' : ''} overflow-hidden`}>
                     {/* Accent border + top accent line */}
                     <div className="absolute inset-0 rounded-2xl pointer-events-none"
                       style={{ boxShadow: `inset 0 0 0 1px ${accentHex}28` }} />
@@ -1030,16 +993,16 @@ export default function HomePage() {
               </div>
 
               <h2 className="text-4xl sm:text-6xl 2xl:text-7xl font-black mb-6 leading-tight">
-                Start <span className="gradient-text">Detecting</span><br />AI Content Free
+                Start <span className="gradient-text">Verifying</span><br />with Aiscern
               </h2>
               <p className="text-text-muted text-lg sm:text-xl 2xl:text-2xl mb-10 max-w-xl 2xl:max-w-2xl mx-auto leading-relaxed">
-                Core features free — no credit card required. No account needed for basic scans.
+                Run a free scan to see the platform in action, or talk to us about an enterprise rollout for your organization.
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href={user ? '/dashboard' : '/detect/text'}
                   className="btn-primary px-8 py-4 text-base sm:text-lg font-bold flex items-center justify-center shadow-lg shadow-primary/20">
-                  {user ? 'Go to Dashboard' : 'Start Detecting AI Content Free'}
+                  {user ? 'Go to Dashboard' : 'Start Free Scan'}
                 </Link>
                 <Link href="/signup" className="btn-secondary px-8 py-4 text-base sm:text-lg flex items-center justify-center hover:border-primary/30">
                   Create Free Account
@@ -1047,7 +1010,7 @@ export default function HomePage() {
               </div>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-5 text-xs 2xl:text-sm text-text-muted">
-                {['No credit card required', 'Free tier always available', 'No account for basic scans'].map(t => (
+                {['No credit card required', 'Free tier available', 'Enterprise plans on request'].map(t => (
                   <div key={t} className="flex items-center gap-1.5">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald" />{t}
                   </div>
