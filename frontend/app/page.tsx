@@ -31,9 +31,7 @@ import TechnologySection from '@/components/home/TechnologySection'
 import SecuritySection from '@/components/home/SecuritySection'
 import InteractiveDemoSection from '@/components/home/InteractiveDemoSection'
 import StatisticsSection from '@/components/home/StatisticsSection'
-// TODO(Section 9): replace with TestimonialsSection per redesign guide — not yet built
-import HomepageReviews from '@/components/home/HomepageReviews'
-const DynamicHomepageReviews = HomepageReviews
+import TestimonialsSection from '@/components/home/TestimonialsSection'
 
 // ─── Canvas Particle Network ─────────────────────────────────────────────────
 // ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
@@ -841,38 +839,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══ EARLY FEEDBACK ══ */}
-        <section className="py-16 sm:py-24 2xl:py-32 px-4 sm:px-6 2xl:px-10 relative [overflow:clip]">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.04) 0%, transparent 60%)' }} />
-
-          <div className="max-w-5xl 2xl:max-w-[1200px] 3xl:max-w-[1400px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-12 sm:mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Star className="w-3 h-3" /> User Stories
-              </div>
-              <h2 className="text-2xl sm:text-4xl 2xl:text-5xl font-black mb-3">What Users <span className="gradient-text">Are Saying</span></h2>
-              <p className="text-sm 2xl:text-base text-text-muted max-w-lg 2xl:max-w-xl mx-auto leading-relaxed">
-                Real feedback from users across education, journalism, HR, and research.
-              </p>
-            </motion.div>
-
-            <ErrorBoundary>
-                <DynamicHomepageReviews />
-              </ErrorBoundary>
-
-            <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a href="mailto:contact@aiscern.com"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 bg-primary/8 text-sm font-semibold text-primary hover:bg-primary/15 transition-all duration-200">
-                Share Your Feedback
-              </a>
-              <Link href="/reviews" className="text-sm text-text-muted hover:text-text-primary transition-colors font-medium">
-                See all reviews →
-              </Link>
-            </div>
-          </div>
-        </section>
+        {/* ── TESTIMONIALS ── */}
+        <ErrorBoundary>
+          <TestimonialsSection />
+        </ErrorBoundary>
 
         {/* ══ TRUST / FEATURES — bento grid ══ */}
         <section className="py-24 md:py-32 px-4 sm:px-6 2xl:px-10 border-t border-border/15 relative [overflow:clip]">
