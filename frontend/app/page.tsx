@@ -29,6 +29,8 @@ import HowItWorksSection from '@/components/home/HowItWorksSection'
 import IndustrySolutionsSection from '@/components/home/IndustrySolutionsSection'
 import TechnologySection from '@/components/home/TechnologySection'
 import SecuritySection from '@/components/home/SecuritySection'
+import InteractiveDemoSection from '@/components/home/InteractiveDemoSection'
+import StatisticsSection from '@/components/home/StatisticsSection'
 // TODO(Section 9): replace with TestimonialsSection per redesign guide — not yet built
 import HomepageReviews from '@/components/home/HomepageReviews'
 const DynamicHomepageReviews = HomepageReviews
@@ -758,6 +760,16 @@ export default function HomePage() {
         {/* ── SECURITY ── */}
         <ErrorBoundary>
           <SecuritySection />
+        </ErrorBoundary>
+
+        {/* ── INTERACTIVE DEMO ── */}
+        <ErrorBoundary>
+          <InteractiveDemoSection />
+        </ErrorBoundary>
+
+        {/* ── STATISTICS ── */}
+        <ErrorBoundary>
+          <StatisticsSection />
         </ErrorBoundary>
 
         {/* ══ TOOLS GRID ══ */}
