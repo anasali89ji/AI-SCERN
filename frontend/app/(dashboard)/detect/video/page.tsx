@@ -299,6 +299,28 @@ function VideoDetectionPage() {
     a.download = `aiscern-video-${Date.now()}.txt`; a.click()
   }
 
+  // Full PDF report via MotherDuck-backed report endpoint. Falls back to the
+  // plain-text export above for anonymous scans / when generation fails.
+  const [reportLoading, setReportLoading] = useState(false)
+  const downloadPdfReport = async () => {
+    if (!scanId) { exportReport(); return }
+    setReportLoading(true)
+    try {
+      const res = await fetch(`/api/reports/scan/${scanId}`)
+      if (!res.ok) throw new Error(`Report generation failed (${res.status})`)
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `aiscern-report-${scanId.slice(0, 8)}.pdf`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      exportReport()
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
   const reset = () => {
     setFile(null); setPreview(null); setResult(null); setError(null)
     setPlaying(false); setProgress(0); setDuration(0); setCurrentTime(0)
@@ -576,8 +598,8 @@ function VideoDetectionPage() {
                 <span className="text-xs text-text-muted font-mono truncate">
                   {result.processing_time}ms
                 </span>
-                <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-                  <Download className="w-3.5 h-3.5" /> Export Report
+                <button onClick={downloadPdfReport} disabled={reportLoading} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0 disabled:opacity-60">
+                  {reportLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} {reportLoading ? 'Generating…' : 'Export Report'}
                 </button>
               </div>
             </motion.div>

@@ -183,6 +183,31 @@ Analyzed: ${new Date().toLocaleString()}`
     a.download = `aiscern-image-${Date.now()}.txt`; a.click()
   }
 
+  // Full PDF report (embeds the actual scanned image + signal breakdown +
+  // fingerprint) — only available once the scan has a scanId (i.e. the user
+  // is signed in and the row saved). Falls back to the plain-text export
+  // above for anonymous users / scans that never got a scanId.
+  const [reportLoading, setReportLoading] = useState(false)
+  const downloadPdfReport = async () => {
+    if (!scanId) { exportReport(); return }
+    setReportLoading(true)
+    try {
+      const res = await fetch(`/api/reports/scan/${scanId}`)
+      if (!res.ok) throw new Error(`Report generation failed (${res.status})`)
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `aiscern-report-${scanId.slice(0, 8)}.pdf`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      // Fall back to the plain-text report rather than leaving the user with nothing
+      exportReport()
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
   const shareResult = async () => {
     if (!scanId) return
     try {
@@ -431,8 +456,9 @@ Analyzed: ${new Date().toLocaleString()}`
                       Deep Forensic Analysis
                     </motion.a>
                   )}
-                  <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-                    <Download className="w-3.5 h-3.5" /> Export Report
+                  <button onClick={downloadPdfReport} disabled={reportLoading} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0 disabled:opacity-60">
+                    {reportLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    {reportLoading ? 'Generating…' : 'Export Report'}
                   </button>
                 </div>
               </div>
@@ -601,7 +627,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <Microscope className="w-4 h-4" /> Deep Forensic Analysis
               </a>
             )}
-            <button onClick={() => { setShowMobileResult(false); exportReport() }}
+            <button onClick={() => { setShowMobileResult(false); downloadPdfReport() }}
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-border/55 text-text-secondary text-sm font-medium">
               <Download className="w-4 h-4" /> Export Report
             </button>

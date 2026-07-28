@@ -323,6 +323,63 @@ export const supabaseKeepAlive = inngest.createFunction(
     return { kept_alive_at: new Date().toISOString() }
   })
 
+// ── 8. Scan completed → archive to MotherDuck (durable long-term store) ─────
+// Runs on the same 'scan/completed' event as onScanCompleted (Inngest allows
+// multiple functions per event). Copies the full scan row into MotherDuck so
+// it survives the user's Supabase data_retention_days purge — this is what
+// makes "I scanned this 3 years ago, help me find it again" possible, and
+// feeds enterprise PDF report generation (lib/reports/scan-report.ts) since
+// MotherDuck can query a user's whole scan history fast even at high volume.
+export const archiveScanToMotherDuck = inngest.createFunction(
+  { id: 'archive-scan-to-motherduck', name: 'Archive completed scan to MotherDuck',
+    triggers: [{ event: 'scan/completed' }],
+    retries: 3,
+  },
+  async ({ event, step }) => {
+    const { scan_id, user_id } = event.data
+    if (!scan_id || !user_id || user_id.startsWith('anon_')) return { skipped: true }
+
+    await step.run('archive-scan-row', async () => {
+      const { getSupabaseAdmin } = await import('@/lib/supabase/admin')
+      const { archiveScan } = await import('@/lib/motherduck/archive')
+
+      const sb = getSupabaseAdmin()
+      const { data: scan, error } = await sb
+        .from('scans')
+        .select('id, user_id, media_type, verdict, confidence_score, model_used, file_name, file_size, r2_key, file_hash, perceptual_hash, signals, metadata, processing_time, created_at')
+        .eq('id', scan_id)
+        .single()
+
+      if (error || !scan) return { archived: false, reason: 'scan_not_found' }
+
+      const ok = await archiveScan({
+        scan_id:          scan.id,
+        user_id:          scan.user_id,
+        media_type:       scan.media_type,
+        verdict:          scan.verdict,
+        confidence_score: scan.confidence_score,
+        model_used:       scan.model_used,
+        file_name:        scan.file_name,
+        file_size:        scan.file_size,
+        r2_key:           scan.r2_key,
+        file_hash:        scan.file_hash,
+        perceptual_hash:  scan.perceptual_hash,
+        signals:          scan.signals,
+        metadata:         scan.metadata,
+        processing_time:  scan.processing_time,
+        scanned_at:       scan.created_at,
+      })
+
+      if (ok) {
+        // Mark archived so the retention-purge cron (v18) can be updated to
+        // skip rows where archived_at IS NULL, once MotherDuck is confirmed live.
+        await sb.from('scans').update({ archived_at: new Date().toISOString() }).eq('id', scan_id)
+      }
+
+      return { archived: ok }
+    })
+  })
+
 // ── Forensic cascade (v2) ─────────────────────────────────────────────────────
 import { imageForensicCascade } from './forensic-cascade'
 export { imageForensicCascade }
@@ -337,4 +394,5 @@ export const INNGEST_FUNCTIONS = [
   vercelWarmup,
   supabaseKeepAlive,
   imageForensicCascade,
+  archiveScanToMotherDuck,
 ]

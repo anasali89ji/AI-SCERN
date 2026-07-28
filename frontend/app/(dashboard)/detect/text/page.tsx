@@ -175,6 +175,28 @@ Analyzed: ${new Date().toLocaleString()}`
     a.download = `aiscern-text-analysis-${Date.now()}.txt`; a.click()
   }
 
+  // Full PDF report (signal breakdown + fingerprint footer) via MotherDuck-backed
+  // report endpoint. Falls back to the plain-text export for anonymous scans.
+  const [reportLoading, setReportLoading] = useState(false)
+  const downloadPdfReport = async () => {
+    if (!scanId) { exportReport(); return }
+    setReportLoading(true)
+    try {
+      const res = await fetch(`/api/reports/scan/${scanId}`)
+      if (!res.ok) throw new Error(`Report generation failed (${res.status})`)
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `aiscern-report-${scanId.slice(0, 8)}.pdf`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch {
+      exportReport()
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
   const verdictStyles: Record<Verdict, string> = {
     AI: 'border-rose/30 bg-rose/5',
     HUMAN: 'border-emerald/30 bg-emerald/5',
@@ -519,10 +541,10 @@ Analyzed: ${new Date().toLocaleString()}`
                       <Copy className="w-3.5 h-3.5" />
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
-                    <button onClick={exportReport}
-                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
-                      <Download className="w-3.5 h-3.5" />
-                      Export
+                    <button onClick={downloadPdfReport} disabled={reportLoading}
+                      className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center disabled:opacity-60">
+                      {reportLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                      {reportLoading ? 'Generating…' : 'Export'}
                     </button>
                   </div>
                 </div>

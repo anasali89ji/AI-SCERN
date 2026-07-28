@@ -12,6 +12,8 @@ import { preprocessImage } from '@/lib/inference/preprocess-image'
 import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
 import { extractImageSignals, aggregateImageSignals, applyCalibration } from '@/lib/inference/signals/image-signals'
 import { getCalibrationStats } from '@/lib/inference/calibration-client'
+import { computePerceptualHash } from '@/lib/forensic/perceptual-hash'
+import { findByFingerprint } from '@/lib/motherduck/archive'
 
 export const dynamic = 'force-dynamic'
 // Vercel Hobby: 60s max. Pro/Enterprise: up to 300s.
@@ -85,6 +87,19 @@ export async function POST(req: NextRequest) {
 
     const hash   = contentHash(buffer.subarray(0, 65536))
     const cached = await getCachedDetection('image', hash)
+
+    // ── Perceptual fingerprint ("synth ID") — survives recompression/resize/crop,
+    // unlike `hash` above which only matches a byte-identical re-upload. Lets us
+    // recognize "this exact photo was scanned before" even years later, once
+    // MotherDuck has archived past scans past the Supabase retention window.
+    const phash = await computePerceptualHash(buffer)
+    let previousMatch: Awaited<ReturnType<typeof findByFingerprint>>[number] | null = null
+    if (phash && userId && !userId.startsWith('anon_')) {
+      try {
+        const matches = await findByFingerprint(phash.hex, { userId, sameUserOnly: true })
+        previousMatch = matches[0] ?? null
+      } catch { /* non-fatal — archive lookup should never block a scan */ }
+    }
     if (cached) {
       // Save scan to DB even on cache hit (user still did a scan)
       let scanId: string | null = null
@@ -102,6 +117,8 @@ export async function POST(req: NextRequest) {
             processing_time:  Date.now() - start,
             model_used:       cached.model_used,
             status:           'complete',
+            perceptual_hash:  phash?.hex ?? null,
+            phash_int:        phash ? phash.bigint.toString() : null,
             metadata:         { format: mimeType, size_kb: Math.round(fileSize / 1024), cached: true },
           }).select('id').single()
           scanId = sr?.id ?? null
@@ -109,6 +126,7 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({
         success: true, scan_id: scanId, cached: true,
+        previous_scan_match: previousMatch,
         result:  { ...cached, processing_time: Date.now() - start, file_name: fileName, file_size: fileSize },
       })
     }
@@ -147,6 +165,8 @@ export async function POST(req: NextRequest) {
             file_size:  fileSize,
             r2_key:     r2Key,
             status:     'processing',
+            perceptual_hash: phash?.hex ?? null,
+            phash_int:       phash ? phash.bigint.toString() : null,
             metadata:   { format: mimeType, size_kb: Math.round(fileSize / 1024), r2: !!r2Key },
           }).select('id').single()
           scanId = sr?.id ?? null
@@ -243,6 +263,8 @@ export async function POST(req: NextRequest) {
           model_used:       result.model_used,
           model_version:    result.model_version,
           status:           'complete',
+          perceptual_hash:  phash?.hex ?? null,
+          phash_int:        phash ? phash.bigint.toString() : null,
           metadata:         { 
             format: mimeType, 
             size_kb: Math.round(fileSize / 1024), 
@@ -364,6 +386,7 @@ export async function POST(req: NextRequest) {
       forensic_scan_id: forensicScanId,
       forensic_available: forensicAvailable,
       forensic_unavailable_reason: forensicUnavailableReason,
+      previous_scan_match: previousMatch,
       result:  {
         ...result,
         verdict: finalVerdict,
