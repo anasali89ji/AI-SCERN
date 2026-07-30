@@ -6,7 +6,7 @@ const nextConfig = {
   // sharp must be external — it uses native C++ bindings that cannot be bundled
   // by webpack. Without this, image detection crashes on Vercel with:
   //   "Error: Cannot find module 'sharp'"  or  "failed to fetch"
-  serverExternalPackages: ['sharp'],
+  serverExternalPackages: ['sharp', '@duckdb/node-api', '@duckdb/node-bindings'],
 
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
