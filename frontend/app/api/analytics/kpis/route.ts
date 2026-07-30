@@ -12,12 +12,10 @@
  * still catching up, blend in a live COUNT from Supabase `scans` if needed.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { verifyAdmin, isAdminError } from '@/lib/auth/verify-admin'
 import { queryMotherDuck } from '@/lib/motherduck/client'
 
 export const dynamic = 'force-dynamic'
-
-const ADMIN_IDS = new Set((process.env.ADMIN_USER_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean))
 
 interface KpiRow {
   total_scans_today: number
@@ -31,9 +29,8 @@ interface KpiRow {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ADMIN_IDS.has(userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await verifyAdmin()
+  if (isAdminError(admin)) return admin
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]

@@ -11,17 +11,14 @@
  * mirrored into scan_archive by lib/motherduck/archive.ts.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { verifyAdmin, isAdminError } from '@/lib/auth/verify-admin'
 import { queryMotherDuck } from '@/lib/motherduck/client'
 
 export const dynamic = 'force-dynamic'
 
-const ADMIN_IDS = new Set((process.env.ADMIN_USER_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean))
-
 export async function GET(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ADMIN_IDS.has(userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const admin = await verifyAdmin()
+  if (isAdminError(admin)) return admin
 
   const days = Math.max(1, Math.min(365, parseInt(req.nextUrl.searchParams.get('days') || '30', 10)))
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
