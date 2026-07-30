@@ -128,7 +128,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ scan
 
     const pdfBytes = await generateScanReportPDF(reportData)
 
-    return new NextResponse(new Blob([pdfBytes], { type: 'application/pdf' }), {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

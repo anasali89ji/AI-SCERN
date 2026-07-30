@@ -23,6 +23,7 @@
  * generation should never take down the live detect flow.
  */
 import { DuckDBInstance, DuckDBConnection } from '@duckdb/node-api'
+import type { DuckDBValue } from '@duckdb/node-api'
 
 const MOTHERDUCK_DATABASE = process.env.MOTHERDUCK_DATABASE || 'aiscern_archive'
 
@@ -122,7 +123,7 @@ export async function closeMotherDuckConnection(): Promise<void> {
  */
 export async function queryMotherDuck<T = Record<string, unknown>>(
   sql: string,
-  params: unknown[] = [],
+  params: DuckDBValue[] = [],
 ): Promise<T[] | null> {
   const conn = await getMotherDuckConnection()
   if (!conn) return null

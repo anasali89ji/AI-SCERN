@@ -7,6 +7,7 @@
  * live scan or blocks a response to the user.
  */
 import { getMotherDuckConnection } from './client'
+import type { DuckDBValue } from '@duckdb/node-api'
 
 export interface ArchivedScanInput {
   scan_id: string
@@ -100,7 +101,7 @@ export async function findByFingerprint(
     // if it ever needs to scale further, precompute phash_int at archive
     // time (mirroring scans.phash_int in Postgres) and index on that.
     const userFilter = sameUserOnly && opts.userId ? `AND user_id = $2` : ''
-    const params: unknown[] = [perceptualHashHex]
+    const params: DuckDBValue[] = [perceptualHashHex]
     if (sameUserOnly && opts.userId) params.push(opts.userId)
 
     const reader = await conn.runAndReadAll(
@@ -172,7 +173,7 @@ export async function getScanHistoryForReport(
 
   const limit = opts.limit ?? 500
   const filters: string[] = ['user_id = $1']
-  const params: unknown[] = [userId]
+  const params: DuckDBValue[] = [userId]
 
   if (opts.fromDate) { params.push(opts.fromDate); filters.push(`scanned_at >= $${params.length}`) }
   if (opts.toDate)   { params.push(opts.toDate);   filters.push(`scanned_at <= $${params.length}`) }

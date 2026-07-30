@@ -110,10 +110,10 @@ export async function computePerceptualHash(buffer: Buffer): Promise<PerceptualH
     const sorted = [...coeffs].sort((a, b) => a - b)
     const median = sorted[Math.floor(sorted.length / 2)]
 
-    let bits = 0n
+    let bits = BigInt(0)
     for (let i = 0; i < coeffs.length && i < 64; i++) {
-      bits <<= 1n
-      if (coeffs[i] > median) bits |= 1n
+      bits <<= BigInt(1)
+      if (coeffs[i] > median) bits |= BigInt(1)
     }
     // Pad to exactly 64 bits if coeffs.length < 64 (LOW_FREQ=8 -> 63 coeffs after dropping DC)
     const padBits = 64 - coeffs.length
@@ -134,9 +134,9 @@ export function hammingDistanceHex(hexA: string, hexB: string): number {
   const b = BigInt('0x' + hexB)
   let xor = a ^ b
   let count = 0
-  while (xor > 0n) {
-    count += Number(xor & 1n)
-    xor >>= 1n
+  while (xor > BigInt(0)) {
+    count += Number(xor & BigInt(1))
+    xor >>= BigInt(1)
   }
   return count
 }
