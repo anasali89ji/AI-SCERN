@@ -126,6 +126,7 @@ export async function findByFingerprint(
 }
 
 export interface ScanHistoryRow {
+  user_id: string
   scan_id: string
   media_type: string
   verdict: string | null
