@@ -4,8 +4,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { CheckCircle, Clock, AlertTriangle, Activity } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'System Status — Aiscern',
-  description: 'Current operational status for Aiscern AI detection services, API, and infrastructure.',
+  title: 'System Status',
+  description: 'Current operational status for Aiscern\u2019s enterprise AI verification services, API, and infrastructure.',
   openGraph: {
     title: 'System Status — Aiscern',
     url: 'https://aiscern.com/status',

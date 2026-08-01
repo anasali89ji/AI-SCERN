@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Dashboard',
-  description: 'Manage your detection history, view analytics, and access your Aiscern account.',
+  description: 'Manage your verification history, view analytics, and access your Aiscern account.',
   robots: { index: false, follow: false },
 }
 

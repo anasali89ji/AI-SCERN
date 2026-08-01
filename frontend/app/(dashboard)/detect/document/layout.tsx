@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'VerifyDoc — Scan PDFs, Word & PowerPoint for AI Images, AI Text & Plagiarism',
-  description: 'VerifyDoc scans PDF, DOCX and PPTX files end-to-end: every embedded image is checked for AI generation (with physical-consistency forensics), every paragraph is checked for AI writing, and the whole document is checked for originality risk — all in parallel.',
+  title: 'VerifyDoc — Enterprise Document AI & Originality Verification',
+  description: 'VerifyDoc is Aiscern\u2019s enterprise document verification tool: every embedded image is checked for AI generation, every paragraph for AI writing, and the whole document for originality risk — all in parallel.',
   keywords: [
-    'document ai detector', 'pdf ai detector', 'verify document', 'verifydoc',
-    'detect ai generated images in pdf', 'detect ai text in word document',
-    'plagiarism checker free', 'ai content checker document', 'powerpoint ai detector',
-    'docx ai detector', 'academic integrity checker', 'ai image and text detector',
+    'document ai verification', 'pdf ai verification', 'verify document', 'verifydoc',
+    'verify ai generated images in pdf', 'verify ai text in word document',
+    'enterprise document verification', 'ai content verification document', 'powerpoint ai detector',
+    'docx ai detector', 'academic integrity checker', 'ai image and text verification',
   ],
   alternates: {
     canonical: 'https://aiscern.com/detect/document',
@@ -33,7 +33,7 @@ const jsonLd = {
       '@id': 'https://aiscern.com/detect/document',
       'url': 'https://aiscern.com/detect/document',
       'name': 'VerifyDoc | Aiscern',
-      'description': 'Scan PDF, DOCX, and PPTX documents for AI-generated images, AI-written text, and originality/plagiarism risk — in parallel.',
+      'description': 'Enterprise verification for PDF, DOCX, and PPTX documents: AI-generated images, AI-written text, and originality/plagiarism risk — in parallel.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',

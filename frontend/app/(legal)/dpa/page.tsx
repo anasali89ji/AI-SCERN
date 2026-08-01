@@ -4,7 +4,7 @@ import { ArrowLeft, Download } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 
 export const metadata: Metadata = {
-  title: 'Data Processing Agreement (DPA) | Aiscern',
+  title: 'Data Processing Agreement (DPA) — Enterprise AI Verification Platform',
   description: 'Aiscern Data Processing Agreement for enterprise and education customers requiring GDPR/CCPA compliance documentation.',
 }
 

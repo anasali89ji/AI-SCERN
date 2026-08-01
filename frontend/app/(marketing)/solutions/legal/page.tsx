@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Scale, FileSearch, BarChart3, Shield, Brain, Lock, CheckCircle, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Legal & Compliance — Aiscern',
-  description: 'Verify authorship of legal documents, contracts, and evidence. Forensic-grade AI detection with exportable audit reports for legal proceedings.',
+  title: 'AI Trust Verification for Legal & Compliance',
+  description: 'Verify authorship of legal documents, contracts, and evidence with a forensic-grade enterprise AI trust verification platform and exportable audit reports.',
   openGraph: {
-    title: 'AI Detection for Legal & Compliance — Aiscern',
+    title: 'AI Trust Verification for Legal & Compliance — Aiscern',
     url: 'https://aiscern.com/solutions/legal',
     siteName: 'Aiscern',
   },

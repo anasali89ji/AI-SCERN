@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata: Metadata = {
-  title: 'Roadmap — Aiscern',
-  description: 'What we are building at Aiscern. Current status, next 3 months, and known limitations.',
+  title: 'Roadmap',
+  description: 'What we are building at Aiscern\u2019s enterprise AI trust verification platform. Current status, next 3 months, and known limitations.',
 }
 
 const CURRENT = [

@@ -3,11 +3,11 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { GraduationCap, FileSearch, AlertTriangle, BarChart3, Shield, Brain, Eye, Layers } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Education — Aiscern',
-  description: 'Detect AI-generated essays, assignments, and research papers. Purpose-built for teachers, professors, and academic institutions. Free tier available.',
+  title: 'AI Trust Verification for Education',
+  description: 'Verify AI-generated essays, assignments, and research papers with enterprise-grade AI trust verification. Purpose-built for teachers, professors, and academic institutions.',
   openGraph: {
-    title: 'AI Detection for Education — Aiscern',
-    description: 'Protect academic integrity with ensemble-based AI text detection. Built for educators and institutions.',
+    title: 'AI Trust Verification for Education — Aiscern',
+    description: 'Protect academic integrity with an enterprise AI trust verification platform for student writing. Built for educators and institutions.',
     url: 'https://aiscern.com/solutions/education',
     siteName: 'Aiscern',
     images: [{ url: 'https://aiscern.com/og-image.jpg' }],

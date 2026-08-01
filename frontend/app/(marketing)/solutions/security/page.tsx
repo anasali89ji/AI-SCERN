@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { ShieldCheck, AlertTriangle, Brain, Eye, Layers, Lock, BarChart3, FileSearch } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Cybersecurity — Aiscern',
-  description: 'Detect deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content. Built for trust & safety and cybersecurity teams.',
+  title: 'AI Trust Verification for Cybersecurity',
+  description: 'Verify deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content with an enterprise AI trust verification platform. Built for trust & safety and cybersecurity teams.',
   openGraph: {
-    title: 'AI Detection for Cybersecurity — Aiscern',
+    title: 'AI Trust Verification for Cybersecurity — Aiscern',
     url: 'https://aiscern.com/solutions/security',
     siteName: 'Aiscern',
   },

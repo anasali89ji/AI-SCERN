@@ -3,11 +3,11 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Users, FileSearch, BarChart3, Shield, Brain, Layers, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for HR & Recruiting — Aiscern',
-  description: 'Catch AI-generated cover letters, CVs, and work samples before they reach interview stage. Free tier for HR teams and recruiters.',
+  title: 'AI Trust Verification for HR & Recruiting',
+  description: 'Catch AI-generated cover letters, CVs, and work samples before they reach interview stage with enterprise-grade AI trust verification for HR teams and recruiters.',
   openGraph: {
-    title: 'AI Detection for HR & Recruiting — Aiscern',
-    description: 'Verify authenticity of job applications and work samples with ensemble AI detection.',
+    title: 'AI Trust Verification for HR & Recruiting — Aiscern',
+    description: 'Verify authenticity of job applications and work samples with an enterprise AI trust verification platform.',
     url: 'https://aiscern.com/solutions/hr',
     siteName: 'Aiscern',
   },

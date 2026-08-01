@@ -4,9 +4,9 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Lock, Eye, Server, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export const metadata = {
-  title: 'Security | Aiscern',
-  description: 'How Aiscern protects your data — encryption, data handling, retention policies, and responsible disclosure.',
-  openGraph: { title: 'Security | Aiscern', url: 'https://aiscern.com/security' },
+  title: 'Enterprise Security & Trust',
+  description: 'How Aiscern\u2019s enterprise AI trust verification platform protects your data — encryption, data handling, retention policies, and responsible disclosure.',
+  openGraph: { title: 'Enterprise Security & Trust | Aiscern', url: 'https://aiscern.com/security' },
 }
 
 const PRACTICES = [

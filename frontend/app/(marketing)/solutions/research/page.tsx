@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Microscope, Brain, FileSearch, Layers, BarChart3, Shield, CheckCircle, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Academic Research — Aiscern',
-  description: 'Validate authenticity of research papers, datasets, and experiment logs. Maintain scientific integrity with ensemble AI detection and API access.',
+  title: 'AI Trust Verification for Academic Research',
+  description: 'Validate authenticity of research papers, datasets, and experiment logs with an enterprise AI trust verification platform and API access. Maintain scientific integrity.',
   openGraph: {
-    title: 'AI Detection for Academic Research — Aiscern',
+    title: 'AI Trust Verification for Academic Research — Aiscern',
     url: 'https://aiscern.com/solutions/research',
     siteName: 'Aiscern',
   },

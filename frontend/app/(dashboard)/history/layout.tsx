@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Detection History',
-  description: 'View your past content detection results and analysis history.',
+  title: 'Verification History',
+  description: 'View your past content verification results and analysis history.',
   robots: { index: false, follow: false },
 }
 

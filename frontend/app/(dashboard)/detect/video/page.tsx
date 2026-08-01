@@ -344,7 +344,7 @@ function VideoDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-secondary" />
           </div>
-          Video Detection
+          Video Verification
         </h1>
         <p className="text-text-muted ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
@@ -635,7 +635,7 @@ function VideoDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Video Detector" />
+      <LazyReviewSuggestion toolName="Video Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

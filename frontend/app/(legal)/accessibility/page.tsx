@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 
 export const metadata: Metadata = {
-  title: 'Accessibility Statement | Aiscern',
+  title: 'Accessibility Statement — Enterprise AI Verification Platform',
   description: 'Aiscern accessibility statement. Our commitment to WCAG 2.1 Level AA compliance and how to report accessibility issues.',
 }
 

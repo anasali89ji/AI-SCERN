@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Pen, Shield, Brain, Eye, CheckCircle, FileSearch, BarChart3, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Content Creators — Aiscern',
-  description: 'Prove your work is human-made. Authenticate your writing, art, and media against AI detection. Built for YouTubers, bloggers, artists, and creators.',
+  title: 'AI Trust Verification for Content Creators',
+  description: 'Prove your work is human-made with enterprise-grade AI trust verification for writing, art, and media. Built for YouTubers, bloggers, artists, and creators.',
   openGraph: {
-    title: 'AI Detection for Content Creators — Aiscern',
+    title: 'AI Trust Verification for Content Creators — Aiscern',
     url: 'https://aiscern.com/solutions/content-creators',
     siteName: 'Aiscern',
   },

@@ -4,8 +4,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { Download, ExternalLink, Info } from 'lucide-react'
 
 export const metadata = {
-  title: 'Accuracy Benchmarks — Aiscern',
-  description: 'Aiscern detection accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
+  title: 'Accuracy Benchmarks',
+  description: 'Aiscern enterprise AI verification accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
   openGraph: { title: 'Accuracy Benchmarks — Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 

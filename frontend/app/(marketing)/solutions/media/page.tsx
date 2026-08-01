@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Newspaper, Eye, Video, FileSearch, Brain, Shield, AlertTriangle, Layers } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Media & Journalism — Aiscern',
-  description: 'Identify AI-generated text, synthetic images, and deepfake video in submitted media. Built for fact-checkers, journalists, and newsrooms.',
+  title: 'AI Trust Verification for Media & Journalism',
+  description: 'Verify AI-generated text, synthetic images, and deepfake video in submitted media with an enterprise AI trust verification platform. Built for fact-checkers, journalists, and newsrooms.',
   openGraph: {
-    title: 'AI Detection for Media & Journalism — Aiscern',
+    title: 'AI Trust Verification for Media & Journalism — Aiscern',
     url: 'https://aiscern.com/solutions/media',
     siteName: 'Aiscern',
   },

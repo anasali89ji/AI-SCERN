@@ -5,7 +5,7 @@ import { SiteNav } from '@/components/SiteNav'
 import { Tag, Calendar } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Changelog — Aiscern',
+  title: 'Changelog',
   description: 'Version history and release notes for Aiscern. Active development log.',
 }
 

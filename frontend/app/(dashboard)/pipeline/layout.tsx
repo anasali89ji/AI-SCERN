@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Pipeline',
-  description: 'Monitor and manage your Aiscern detection pipeline.',
+  description: 'Monitor and manage your Aiscern verification pipeline.',
   robots: { index: false, follow: false },
 }
 

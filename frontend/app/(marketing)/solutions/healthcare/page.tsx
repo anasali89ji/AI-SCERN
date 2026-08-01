@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Heart, FileSearch, Brain, Shield, Lock, Eye, BarChart3, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Healthcare — Aiscern',
-  description: 'Identify AI-generated medical literature, synthetic patient data, and fabricated imagery in clinical submissions. Free tier for healthcare professionals.',
+  title: 'AI Trust Verification for Healthcare',
+  description: 'Verify AI-generated medical literature, synthetic patient data, and fabricated imagery in clinical submissions with enterprise-grade AI trust verification.',
   openGraph: {
-    title: 'AI Detection for Healthcare — Aiscern',
+    title: 'AI Trust Verification for Healthcare — Aiscern',
     url: 'https://aiscern.com/solutions/healthcare',
     siteName: 'Aiscern',
   },

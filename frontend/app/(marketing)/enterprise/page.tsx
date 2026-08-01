@@ -5,11 +5,11 @@ import { SiteFooter } from '@/components/site-footer'
 import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, ArrowRight, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Aiscern AI Verification at Scale',
-  description: 'Custom pricing, SLA guarantees, priority support, and private deployment options for enterprise teams. Contact our sales team.',
+  title: 'Enterprise AI Trust & Content Verification at Scale',
+  description: 'Enterprise-grade AI trust and content verification: custom pricing, SLA guarantees, priority support, and private deployment options. Contact our sales team.',
   openGraph: {
-    title: 'Enterprise Solutions — Aiscern',
-    description: 'Aiscern Enterprise: custom limits, SLA, BAA/DPA support, and dedicated onboarding.',
+    title: 'Enterprise AI Trust & Content Verification — Aiscern',
+    description: 'Aiscern Enterprise: the digital trust verification platform with custom limits, SLA, BAA/DPA support, and dedicated onboarding.',
     url: 'https://aiscern.com/enterprise',
     siteName: 'Aiscern',
   },

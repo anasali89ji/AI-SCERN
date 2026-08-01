@@ -5,11 +5,11 @@ import { SiteFooter } from '@/components/site-footer'
 import { CheckCircle, XCircle, Minus, ArrowRight, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Aiscern vs GPTZero vs ZeroGPT — AI Detector Comparison',
-  description: 'Side-by-side comparison of Aiscern, GPTZero, ZeroGPT, Originality.ai, and other AI content detectors. Multi-modal, accuracy, pricing, and features.',
+  title: 'Aiscern vs GPTZero vs ZeroGPT — AI Verification Platform Comparison',
+  description: 'Side-by-side comparison of Aiscern\u2019s enterprise AI verification platform against GPTZero, ZeroGPT, Originality.ai, and other AI content detectors. Accuracy, pricing, and features.',
   openGraph: {
-    title: 'AI Detector Comparison — Aiscern vs Competitors',
-    description: 'Compare Aiscern with GPTZero, ZeroGPT, Originality.ai and more.',
+    title: 'AI Verification Platform Comparison — Aiscern vs Competitors',
+    description: 'Compare Aiscern\u2019s enterprise AI trust verification platform with GPTZero, ZeroGPT, Originality.ai and more.',
     url: 'https://aiscern.com/compare',
     siteName: 'Aiscern',
   },

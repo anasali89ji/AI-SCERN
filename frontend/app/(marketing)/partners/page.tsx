@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { Handshake, Code2, Building2, Globe, ArrowRight, CheckCircle, Mail, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Partner Program — Aiscern',
-  description: 'Integrate Aiscern AI detection into your platform. API access, white-label options, and reseller partnerships for technology providers.',
+  title: 'Partner Program',
+  description: 'Integrate Aiscern\u2019s enterprise AI trust verification platform into your product. API access, white-label options, and reseller partnerships for technology providers.',
   openGraph: {
     title: 'Partner Program — Aiscern',
     url: 'https://aiscern.com/partners',

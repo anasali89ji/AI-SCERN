@@ -5,11 +5,11 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Lock, Eye, Database, Server, CheckCircle, AlertTriangle, Globe } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Transparency & Data Privacy — Aiscern',
-  description: 'How Aiscern processes scans, handles data, complies with GDPR, and protects user privacy. Full transparency on retention policy and data handling.',
+  title: 'Transparency & Data Privacy',
+  description: 'How Aiscern\u2019s enterprise AI verification platform processes scans, handles data, complies with GDPR, and protects user privacy.',
   openGraph: {
     title: 'Transparency & Data Privacy — Aiscern',
-    description: 'Full transparency on how Aiscern handles your data, processes scans, and complies with GDPR.',
+    description: 'Full transparency on how Aiscern\u2019s enterprise AI trust verification platform handles your data, processes scans, and complies with GDPR.',
     url: 'https://aiscern.com/transparency',
     siteName: 'Aiscern',
   },

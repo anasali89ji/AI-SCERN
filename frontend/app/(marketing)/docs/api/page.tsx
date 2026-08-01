@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 export const metadata: Metadata = {
-  title: 'API Documentation | Aiscern AI Detection REST API',
-  description: 'Integrate AI content detection into your app. Free REST API for detecting AI-generated text, images, and audio. Video API coming soon.',
+  title: 'API Documentation — Enterprise AI Verification REST API',
+  description: 'Integrate enterprise AI trust and content verification into your app. REST API for verifying AI-generated text, images, and audio. Video API coming soon.',
   alternates: { canonical: 'https://aiscern.com/docs/api' },
 }
 

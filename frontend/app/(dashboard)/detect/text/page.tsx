@@ -224,7 +224,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-amber" />
           </div>
-          Text Detection
+          Text Verification
         </h1>
         <p className="text-text-muted ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
@@ -593,7 +593,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </motion.div>
       )}
 
-      <LazyReviewSuggestion toolName="AI Text Detector" />
+      <LazyReviewSuggestion toolName="AI Text Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

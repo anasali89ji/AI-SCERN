@@ -4,8 +4,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { ExternalLink, BookOpen } from 'lucide-react'
 
 export const metadata = {
-  title: 'Research Citations — Aiscern',
-  description: 'Academic papers, models, and datasets underpinning Aiscern\'s AI detection pipeline.',
+  title: 'Research Citations',
+  description: 'Academic papers, models, and datasets underpinning Aiscern\'s enterprise AI trust verification pipeline.',
   openGraph: { title: 'Research Citations — Aiscern', url: 'https://aiscern.com/research' },
 }
 

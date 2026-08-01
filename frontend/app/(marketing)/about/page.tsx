@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, Users, MapPin, Briefcase } from 'lucide-react'
 
 export const metadata = {
-  title: 'About Aiscern — Free AI Content Verification',
-  description: 'Aiscern is a free multi-modal AI content verification platform. Verify AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
+  title: 'About Us — Enterprise AI Trust Verification Platform',
+  description: 'Aiscern is an enterprise AI trust and content verification platform. Verify AI-generated text, images, audio, and video — built in Mandi Bahauddin, Pakistan.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 

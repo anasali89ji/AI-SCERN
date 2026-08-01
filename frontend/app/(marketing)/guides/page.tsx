@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { BookOpen, ArrowRight, FileText, Eye, Music, Video, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'User Guides — Aiscern',
-  description: 'Step-by-step guides on how to detect AI text, verify deepfake images, check audio for voice cloning, and more. Free resources for all users.',
+  title: 'User Guides',
+  description: 'Step-by-step guides on how to verify AI text, verify deepfake images, check audio for voice cloning, and more using Aiscern\u2019s enterprise AI verification platform.',
   openGraph: {
     title: 'User Guides — Aiscern',
     url: 'https://aiscern.com/guides',

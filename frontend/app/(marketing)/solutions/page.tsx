@@ -9,11 +9,11 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Solutions — Aiscern AI Verification for Every Industry',
-  description: 'Aiscern delivers multi-modal AI content detection tailored for education, HR, journalism, legal, healthcare, security, and more.',
+  title: 'Solutions — AI Trust & Content Verification for Every Industry',
+  description: 'Aiscern delivers enterprise AI trust and content verification tailored for education, HR, journalism, legal, healthcare, security, and more.',
   openGraph: {
-    title: 'Industry Solutions — Aiscern',
-    description: 'AI detection built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
+    title: 'Industry Solutions — Aiscern Enterprise Verification',
+    description: 'AI trust and content verification built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
     url: 'https://aiscern.com/solutions',
     siteName: 'Aiscern',
     images: [{ url: 'https://aiscern.com/og-image.jpg' }],

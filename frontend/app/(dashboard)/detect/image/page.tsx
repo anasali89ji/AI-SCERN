@@ -246,7 +246,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <ImageIcon className="w-6 h-6 text-primary" />
           </div>
-          Image Detection
+          Image Verification
         </h1>
         <p className="text-text-muted ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
@@ -518,7 +518,7 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
 
       <ErrorBoundary fallback={null}>
-        <LazyReviewSuggestion toolName="Image Detector" />
+        <LazyReviewSuggestion toolName="Image Verification" />
         {result && (
           <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
             <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

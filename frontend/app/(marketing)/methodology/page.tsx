@@ -4,9 +4,9 @@ import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical } from 'lucid
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
-  title: 'Detection Methodology | Aiscern',
-  description: 'How Aiscern detects AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret confidence scores.',
-  openGraph: { title: 'Detection Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
+  title: 'Verification Methodology',
+  description: 'How Aiscern verifies AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret confidence scores.',
+  openGraph: { title: 'Verification Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
 }
 
 const ACCURACY = [

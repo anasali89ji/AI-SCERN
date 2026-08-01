@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Megaphone, Eye, Brain, Layers, BarChart3, Shield, FileSearch, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Marketing & Brand — Aiscern',
-  description: 'Audit UGC, influencer deliverables, and agency content for AI generation. Protect your brand voice with ensemble-based detection.',
+  title: 'AI Trust Verification for Marketing & Brand',
+  description: 'Audit UGC, influencer deliverables, and agency content with enterprise-grade AI trust verification. Protect your brand voice.',
   openGraph: {
-    title: 'AI Detection for Marketing — Aiscern',
+    title: 'AI Trust Verification for Marketing — Aiscern',
     url: 'https://aiscern.com/solutions/marketing',
     siteName: 'Aiscern',
   },

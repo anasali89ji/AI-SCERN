@@ -192,7 +192,7 @@ export default function AudioDetectionPage() {
           <Mic className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Audio Detection</h1>
+          <h1 className="text-xl font-bold">Audio Verification</h1>
           <p className="text-sm text-slate-500">
             Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts
           </p>

@@ -33,22 +33,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const pct     = Math.round(scan.confidence_score * 100)
   const toolMap: Record<string, string> = { text: 'text', image: 'image', audio: 'audio', video: 'video' }
   const tool    = toolMap[scan.media_type] ?? 'text'
-  const ogTitle = encodeURIComponent(`${scan.verdict === 'AI' ? 'AI Detected' : scan.verdict === 'HUMAN' ? 'Human Verified' : 'Uncertain'} — ${pct}% confidence`)
+  const ogTitle = encodeURIComponent(`${scan.verdict === 'AI' ? 'AI Verified' : scan.verdict === 'HUMAN' ? 'Human Verified' : 'Uncertain'} — ${pct}% confidence`)
   const ogImg   = `https://aiscern.com/api/og?title=${ogTitle}&tool=${tool}`
 
   return {
     title:       `${scan.verdict}: ${pct}% confidence | Aiscern`,
-    description: `This ${scan.media_type} was detected as ${scan.verdict} with ${pct}% confidence by Aiscern AI detector.`,
+    description: `This ${scan.media_type} was verified as ${scan.verdict} with ${pct}% confidence by Aiscern's enterprise AI verification platform.`,
     openGraph: {
       title:       `${scan.verdict} — ${pct}% AI confidence`,
-      description: `Aiscern detected this ${scan.media_type} as ${scan.verdict}`,
+      description: `Aiscern verified this ${scan.media_type} as ${scan.verdict}`,
       url:         `https://aiscern.com/scan/${id}`,
       images:      [{ url: ogImg, width: 1200, height: 630, alt: `Aiscern scan — ${scan.verdict}` }],
     },
     twitter: {
       card:        'summary_large_image',
       title:       `${scan.verdict} — ${pct}% AI confidence`,
-      description: `Aiscern detected this ${scan.media_type} as ${scan.verdict}`,
+      description: `Aiscern verified this ${scan.media_type} as ${scan.verdict}`,
       images:      [ogImg],
     },
   }
