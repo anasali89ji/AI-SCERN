@@ -19,6 +19,7 @@ export default function LegalPage() {
       tagline="Forensic AI Verification for Legal Documents"
       description="Legal professionals need more than a score — they need a defensible audit trail. Aiscern delivers forensic-grade AI attestation with timestamped reports, confidence breakdowns, and model transparency for use in compliance and legal proceedings."
       heroIcon={<Scale className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/legal.jpg"
       accentColor="emerald"
       ctaLabel="Start Free Legal Account"
       problemTitle="AI Fabrication Risks in Legal Practice"

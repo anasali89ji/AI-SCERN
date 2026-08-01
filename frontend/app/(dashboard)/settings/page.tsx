@@ -111,39 +111,52 @@ export default function SettingsPage() {
 
   const SETTINGS_KEY = `aiscern_settings_${user?.uid}`
 
-  const loadSettings = useCallback(() => {
+  const applySettings = useCallback((s: Record<string, any>) => {
+    if (s.emailNotif       !== undefined) setEmailNotif(s.emailNotif)
+    if (s.batchAlerts      !== undefined) setBatchAlerts(s.batchAlerts)
+    if (s.weeklyReport     !== undefined) setWeeklyReport(s.weeklyReport)
+    if (s.autoSave         !== undefined) setAutoSave(s.autoSave)
+    if (s.upgradeAlerts    !== undefined) setUpgradeAlerts(s.upgradeAlerts)
+    if (s.highAccMode      !== undefined) setHighAccMode(s.highAccMode)
+    if (s.saveHistory      !== undefined) setSaveHistory(s.saveHistory)
+    if (s.autoDownload     !== undefined) setAutoDownload(s.autoDownload)
+    if (s.showConfidence   !== undefined) setShowConfidence(s.showConfidence)
+    if (s.showSignals      !== undefined) setShowSignals(s.showSignals)
+    if (s.defaultModality  !== undefined) setDefaultModality(s.defaultModality)
+    if (s.publicProfile    !== undefined) setPublicProfile(s.publicProfile)
+    if (s.shareAnon        !== undefined) setShareAnon(s.shareAnon)
+    if (s.analyticsOptOut  !== undefined) setAnalyticsOptOut(s.analyticsOptOut)
+    if (s.dataRetention    !== undefined) setDataRetention(s.dataRetention)
+    if (s.theme            !== undefined) setTheme(s.theme)
+    if (s.language         !== undefined) setLanguage(s.language)
+    if (s.compactView      !== undefined) setCompactView(s.compactView)
+    if (s.animationsOff    !== undefined) {
+      setAnimationsOff(s.animationsOff)
+      setReduceAnimations(s.animationsOff)
+      localStorage.setItem('aiscern_animations_off', String(s.animationsOff))
+    }
+  }, [setReduceAnimations])
+
+  const loadSettings = useCallback(async () => {
     if (!user?.uid) return
+    // Fast paint from the local cache while the real fetch is in flight.
     try {
-      const saved = localStorage.getItem(SETTINGS_KEY)
-      if (saved) {
-        const s = JSON.parse(saved)
-        if (s.emailNotif       !== undefined) setEmailNotif(s.emailNotif)
-        if (s.batchAlerts      !== undefined) setBatchAlerts(s.batchAlerts)
-        if (s.weeklyReport     !== undefined) setWeeklyReport(s.weeklyReport)
-        if (s.autoSave         !== undefined) setAutoSave(s.autoSave)
-        if (s.upgradeAlerts    !== undefined) setUpgradeAlerts(s.upgradeAlerts)
-        if (s.highAccMode      !== undefined) setHighAccMode(s.highAccMode)
-        if (s.saveHistory      !== undefined) setSaveHistory(s.saveHistory)
-        if (s.autoDownload     !== undefined) setAutoDownload(s.autoDownload)
-        if (s.showConfidence   !== undefined) setShowConfidence(s.showConfidence)
-        if (s.showSignals      !== undefined) setShowSignals(s.showSignals)
-        if (s.defaultModality  !== undefined) setDefaultModality(s.defaultModality)
-        if (s.publicProfile    !== undefined) setPublicProfile(s.publicProfile)
-        if (s.shareAnon        !== undefined) setShareAnon(s.shareAnon)
-        if (s.analyticsOptOut  !== undefined) setAnalyticsOptOut(s.analyticsOptOut)
-        if (s.dataRetention    !== undefined) setDataRetention(s.dataRetention)
-        if (s.theme            !== undefined) setTheme(s.theme)
-        if (s.language         !== undefined) setLanguage(s.language)
-        if (s.compactView      !== undefined) setCompactView(s.compactView)
-        if (s.animationsOff    !== undefined) {
-          setAnimationsOff(s.animationsOff)
-          setReduceAnimations(s.animationsOff)
-          localStorage.setItem('aiscern_animations_off', String(s.animationsOff))
-        }
-      }
+      const cached = localStorage.getItem(SETTINGS_KEY)
+      if (cached) applySettings(JSON.parse(cached))
     } catch {}
+
+    try {
+      const res = await fetch('/api/user/settings', { cache: 'no-store' })
+      if (res.ok) {
+        const { settings } = await res.json()
+        applySettings(settings)
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+      }
+    } catch {
+      // Offline or API unreachable — cached/local state above stands.
+    }
     setLoading(false)
-  }, [user?.uid, setReduceAnimations]) // eslint-disable-line
+  }, [user?.uid, applySettings]) // eslint-disable-line
 
   useEffect(() => { loadSettings() }, [loadSettings])
 
@@ -156,14 +169,20 @@ export default function SettingsPage() {
       publicProfile, shareAnon, analyticsOptOut, dataRetention,
       theme, language, compactView, animationsOff,
     }
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-    // Persist some to DB
-    await (supabase as any).from('profiles').update({
-      public_profile: publicProfile,
-      analytics_opt_out: analyticsOptOut,
-    }).eq('id', user.uid).catch(() => {})
-    setSaving(false)
-    toast.success('Settings saved')
+    try {
+      const res = await fetch('/api/user/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      if (!res.ok) throw new Error('Save failed')
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+      toast.success('Settings saved')
+    } catch {
+      toast.error('Failed to save settings — check your connection')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const copyApiKey = () => {

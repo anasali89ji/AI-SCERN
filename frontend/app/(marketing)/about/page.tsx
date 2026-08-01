@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import Link  from 'next/link'
+import Image from 'next/image'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, MapPin, Briefcase, ArrowRight } from 'lucide-react'
@@ -56,6 +57,7 @@ const TEAM = [
     location: 'Pakistan',
     skills:   'Full-Stack + AI/ML',
     initials: 'AA',
+    photo:    '/anas-ali.jpg',
   },
   {
     name:     'Temah',
@@ -64,6 +66,7 @@ const TEAM = [
     location: 'Remote',
     skills:   'Product Management',
     initials: 'T',
+    photo:    null as string | null,
   },
 ]
 
@@ -148,21 +151,46 @@ export default function AboutPage() {
           {/* Team */}
           <div className="mb-16">
             <h2 className="text-2xl font-semibold text-silver-900 mb-6">Team</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {TEAM.map(member => (
-                <div key={member.name} className="bg-surface border border-white/[0.06] rounded-xl p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full bg-accent/10 border-2 border-accent/20
-                                    flex items-center justify-center text-lg font-bold text-accent flex-shrink-0">
-                      {member.initials}
-                    </div>
+                <div
+                  key={member.name}
+                  className="group relative overflow-hidden rounded-2xl border border-white/[0.06]
+                             bg-depth-bg p-8 transition-colors duration-200 hover:border-accent/25"
+                >
+                  {/* Signature corner glow — single accent, quiet everywhere else */}
+                  <div
+                    className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full
+                               bg-accent/[0.08] blur-3xl transition-opacity duration-300
+                               group-hover:bg-accent/[0.14]"
+                    aria-hidden="true"
+                  />
+
+                  <div className="relative flex items-center gap-5 mb-5">
+                    {member.photo ? (
+                      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border-2 border-accent/20">
+                        <Image
+                          src={member.photo}
+                          alt={member.name}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                          priority
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-2xl bg-accent/10 border-2 border-accent/20
+                                      flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
+                        {member.initials}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-silver-900">{member.name}</p>
+                      <p className="font-semibold text-silver-900 text-lg">{member.name}</p>
                       <p className="text-sm text-accent">{member.role}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-silver-600 leading-relaxed mb-4">{member.bio}</p>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <p className="relative text-sm text-silver-600 leading-relaxed mb-4">{member.bio}</p>
+                  <div className="relative flex flex-wrap gap-2 text-xs">
                     <span className="flex items-center gap-1 text-silver-600">
                       <MapPin className="w-3 h-3" aria-hidden="true" /> {member.location}
                     </span>

@@ -19,6 +19,7 @@ export default function SecurityPage() {
       tagline="Stop Synthetic Threats Before They Land"
       description="AI-powered fraud — voice clone scams, deepfake identity verification bypass, and AI-crafted spear-phishing — is the fastest-growing attack surface. Aiscern gives security teams multi-modal attestation to stop synthetic content at every ingestion point."
       heroIcon={<ShieldCheck className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/security.jpg"
       accentColor="rose"
       ctaLabel="Start Free Security Account"
       problemTitle="Synthetic Content in the Threat Landscape"

@@ -21,6 +21,7 @@ export default function EducationPage() {
       tagline="Protect Academic Integrity at Scale"
       description="AI-generated essays are flooding classrooms. Aiscern gives educators a forensic-grade ensemble attestation system to identify AI-written assignments across text modalities — with explainable results, not just scores."
       heroIcon={<GraduationCap className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/educators.jpg"
       accentColor="primary"
       ctaLabel="Start Free Teacher Account"
       problemTitle="The Academic Integrity Crisis"

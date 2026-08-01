@@ -72,31 +72,31 @@ const GUIDES = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
-  primary: { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
-  blue:    { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
-  cyan:    { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
-  emerald: { bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', icon: 'text-[#2BEE34]', badge: 'text-[#2BEE34] bg-[#2BEE34]/10 border-[#2BEE34]/20' },
-  amber:   { bg: 'bg-[#FFB800]/10',   border: 'border-[#FFB800]/20',   icon: 'text-[#FFB800]',   badge: 'text-[#FFB800] bg-[#FFB800]/10 border-[#FFB800]/20'   },
-  rose:    { bg: 'bg-[#FF4444]/10',    border: 'border-[#FF4444]/20',    icon: 'text-[#FF4444]',    badge: 'text-[#FF4444] bg-[#FF4444]/10 border-[#FF4444]/20'     },
+  primary: { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
+  blue:    { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
+  cyan:    { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
+  emerald: { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
+  amber:   { bg: 'bg-warning/10',   border: 'border-warning/20',   icon: 'text-warning',   badge: 'text-warning bg-warning/10 border-warning/20'   },
+  rose:    { bg: 'bg-error/10',    border: 'border-error/20',    icon: 'text-error',    badge: 'text-error bg-error/10 border-error/20'     },
 }
 
 export default function GuidesPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-[#08080d] pt-16">
+      <main className="min-h-screen bg-surface-deep pt-16">
         {/* Hero */}
         <section className="pt-10 pb-12 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent mb-6">
               <BookOpen className="w-3.5 h-3.5" />
               User Guides
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-              How to Use<br /><span className="text-[#2BEE34]">Aiscern</span>
+              How to Use<br /><span className="text-accent">Aiscern</span>
             </h1>
-            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto">
               Step-by-step guides for every attestation modality. Learn how to get the most accurate results and interpret what the scores mean.
             </p>
           </div>
@@ -110,21 +110,21 @@ export default function GuidesPage() {
                 const GIcon = guide.icon
                 const c = colorMap[guide.color]
                 return (
-                  <div key={i} className="card border border-[#1E1E1E] rounded-xl p-6 flex flex-col gap-5">
+                  <div key={i} className="card border border-silver-300 rounded-xl p-6 flex flex-col gap-5">
                     <div className="flex items-start gap-4">
                       <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                         <GIcon className={`w-5 h-5 ${c.icon}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h2 className="font-bold text-white mb-1">{guide.title}</h2>
-                        <p className="text-sm text-[#6B6B6B] leading-relaxed">{guide.desc}</p>
+                        <p className="text-sm text-silver-600 leading-relaxed">{guide.desc}</p>
                       </div>
                     </div>
 
                     {/* Steps */}
                     <ol className="space-y-2">
                       {guide.steps.map((step, j) => (
-                        <li key={j} className="flex items-start gap-2.5 text-xs text-[#A3A3A3]">
+                        <li key={j} className="flex items-start gap-2.5 text-xs text-silver-700">
                           <span className={`w-5 h-5 rounded-full ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${c.icon}`}>
                             {j + 1}
                           </span>
@@ -142,9 +142,9 @@ export default function GuidesPage() {
             </div>
 
             {/* More Resources */}
-            <div className="mt-12 p-6 rounded-xl border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-center">
+            <div className="mt-12 p-6 rounded-xl border border-accent/20 bg-accent/5 text-center">
               <h2 className="text-lg font-bold text-white mb-2">Need more help?</h2>
-              <p className="text-sm text-[#6B6B6B] mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
+              <p className="text-sm text-silver-600 mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/faq" className="btn-secondary text-sm">FAQ</Link>
                 <Link href="/docs/api" className="btn-secondary text-sm">API Docs</Link>

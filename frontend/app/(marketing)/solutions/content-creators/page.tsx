@@ -19,6 +19,7 @@ export default function ContentCreatorsPage() {
       tagline="Prove Your Originality. Screen Your Submissions."
       description="Creators need to both defend their own authentic work and verify that contributions, ghostwritten content, and user submissions are genuinely human. Aiscern helps on both sides of the authenticity equation."
       heroIcon={<Pen className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/creators.jpg"
       accentColor="primary"
       ctaLabel="Start Free Creator Account"
       problemTitle="Authenticity Challenges for Creators"

@@ -63,8 +63,8 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
         {rows.map((row, i) => {
           const isEnsemble = row.model.startsWith('Ensemble')
           return (
-            <div key={i} className={`rounded-xl border p-4 ${isEnsemble ? 'bg-[#2BEE34]/5 border-[#2BEE34]/20' : 'bg-[#141414] border-[#1E1E1E]'}`}>
-              <p className={`text-sm font-medium mb-3 ${isEnsemble ? 'text-[#2BEE34]' : 'text-[#E5E5E5]'}`}>{row.model}</p>
+            <div key={i} className={`rounded-xl border p-4 ${isEnsemble ? 'bg-accent/5 border-accent/20' : 'bg-surface border-silver-300'}`}>
+              <p className={`text-sm font-medium mb-3 ${isEnsemble ? 'text-accent' : 'text-silver-800'}`}>{row.model}</p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
                   { label: 'AUC-ROC',   value: row.auc.toFixed(2), accent: isEnsemble },
@@ -73,9 +73,9 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
                   { label: 'F1',        value: row.f1.toFixed(3) },
                   { label: 'FPR',       value: `${(row.fpr*100).toFixed(1)}%`, warn: true },
                 ].map(m => (
-                  <div key={m.label} className="bg-[#0A0A0A] rounded-lg py-2 px-1">
-                    <p className={`text-sm font-bold tabular-nums ${m.warn ? 'text-[#FFB800]' : m.accent ? 'text-[#2BEE34]' : 'text-[#E5E5E5]'}`}>{m.value}</p>
-                    <p className="text-[9px] text-[#6B6B6B] uppercase tracking-wide mt-0.5">{m.label}</p>
+                  <div key={m.label} className="bg-depth-bg rounded-lg py-2 px-1">
+                    <p className={`text-sm font-bold tabular-nums ${m.warn ? 'text-warning' : m.accent ? 'text-accent' : 'text-silver-800'}`}>{m.value}</p>
+                    <p className="text-[9px] text-silver-600 uppercase tracking-wide mt-0.5">{m.label}</p>
                   </div>
                 ))}
               </div>
@@ -85,12 +85,12 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
       </div>
 
       {/* Tablet & up: table */}
-      <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#1E1E1E]">
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-silver-300">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
+          <tr className="border-b border-silver-300 bg-depth-bg">
             {['Model','AUC-ROC','Precision','Recall','F1','FPR'].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#6B6B6B] first:text-left text-center">
+              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-silver-600 first:text-left text-center">
                 {h}
               </th>
             ))}
@@ -102,22 +102,22 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
             return (
               <tr
                 key={i}
-                className={`border-b border-[#1E1E1E] last:border-0 transition-colors ${
+                className={`border-b border-silver-300 last:border-0 transition-colors ${
                   isEnsemble
-                    ? 'bg-[#2BEE34]/5 border-[#2BEE34]/10'
-                    : 'bg-[#141414] hover:bg-[#1A1A1A]'
+                    ? 'bg-accent/5 border-accent/10'
+                    : 'bg-surface hover:bg-surface-elevated'
                 }`}
               >
-                <td className={`px-4 py-3 font-medium ${isEnsemble ? 'text-[#2BEE34]' : 'text-[#E5E5E5]'}`}>
+                <td className={`px-4 py-3 font-medium ${isEnsemble ? 'text-accent' : 'text-silver-800'}`}>
                   {row.model}
                 </td>
-                <td className={`px-4 py-3 text-center tabular-nums ${isEnsemble ? 'text-[#2BEE34] font-bold' : 'text-[#E5E5E5]'}`}>
+                <td className={`px-4 py-3 text-center tabular-nums ${isEnsemble ? 'text-accent font-bold' : 'text-silver-800'}`}>
                   {row.auc.toFixed(2)}
                 </td>
-                <td className="px-4 py-3 text-center tabular-nums text-[#E5E5E5]">{(row.precision*100).toFixed(1)}%</td>
-                <td className="px-4 py-3 text-center tabular-nums text-[#E5E5E5]">{(row.recall*100).toFixed(1)}%</td>
-                <td className="px-4 py-3 text-center tabular-nums text-[#E5E5E5]">{row.f1.toFixed(3)}</td>
-                <td className="px-4 py-3 text-center tabular-nums text-[#FFB800]">{(row.fpr*100).toFixed(1)}%</td>
+                <td className="px-4 py-3 text-center tabular-nums text-silver-800">{(row.precision*100).toFixed(1)}%</td>
+                <td className="px-4 py-3 text-center tabular-nums text-silver-800">{(row.recall*100).toFixed(1)}%</td>
+                <td className="px-4 py-3 text-center tabular-nums text-silver-800">{row.f1.toFixed(3)}</td>
+                <td className="px-4 py-3 text-center tabular-nums text-warning">{(row.fpr*100).toFixed(1)}%</td>
               </tr>
             )
           })}
@@ -137,28 +137,28 @@ export default function BenchmarksPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
+    <div className="min-h-screen bg-surface text-silver-800">
       <SiteNav />
       <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
           <div className="text-center mb-10 sm:mb-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
               Transparency
             </p>
             <h1 className="text-[32px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-3 sm:mb-4">
               Accuracy Benchmarks
             </h1>
-            <p className="text-[#A3A3A3] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-silver-700 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               AUC-ROC, precision, recall, F1, and false-positive rates across all modalities.
               Measured on held-out test sets from public benchmark datasets.
             </p>
           </div>
 
           {/* Disclaimer */}
-          <div className="flex gap-3 p-4 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl mb-8 sm:mb-10 text-sm text-[#A3A3A3]">
-            <Info className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
+          <div className="flex gap-3 p-4 bg-surface-elevated border border-silver-400 rounded-xl mb-8 sm:mb-10 text-sm text-silver-700">
+            <Info className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
             <p>
               All figures are from held-out test sets — not cherry-picked. Results vary by content type, AI generator, compression level, and whether content has been edited after AI generation.
               Rows highlighted in green are the ensemble result (all signals combined).
@@ -169,7 +169,7 @@ export default function BenchmarksPage() {
           {sections.map(s => (
             <section key={s.label} className="mb-12">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#2BEE34]" />
+                <span className="w-2 h-2 rounded-full bg-accent" />
                 {s.label} Attestation
               </h2>
               <BenchTable rows={s.rows} />
@@ -179,20 +179,20 @@ export default function BenchmarksPage() {
           {/* Datasets */}
           <section className="mb-12">
             <h2 className="text-lg font-semibold text-white mb-4">Benchmark Datasets</h2>
-            <div className="overflow-x-auto rounded-xl border border-[#1E1E1E]">
+            <div className="overflow-x-auto rounded-xl border border-silver-300">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
+                  <tr className="border-b border-silver-300 bg-depth-bg">
                     {['Modality','Dataset','Size'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#6B6B6B]">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-silver-600">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {DATASETS.map((d, i) => (
-                    <tr key={i} className="border-b border-[#1E1E1E] last:border-0 bg-[#141414] hover:bg-[#1A1A1A] transition-colors">
+                    <tr key={i} className="border-b border-silver-300 last:border-0 bg-surface hover:bg-surface-elevated transition-colors">
                       <td className="px-4 py-3">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20 font-medium">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-medium">
                           {d.modality}
                         </span>
                       </td>
@@ -201,13 +201,13 @@ export default function BenchmarksPage() {
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#E5E5E5] hover:text-[#2BEE34] transition-colors flex items-center gap-1 group"
+                          className="text-silver-800 hover:text-accent transition-colors flex items-center gap-1 group"
                         >
                           {d.name}
-                          <ExternalLink className="w-3 h-3 text-[#6B6B6B] group-hover:text-[#2BEE34] transition-colors" />
+                          <ExternalLink className="w-3 h-3 text-silver-600 group-hover:text-accent transition-colors" />
                         </a>
                       </td>
-                      <td className="px-4 py-3 text-[#6B6B6B] tabular-nums text-xs">{d.size}</td>
+                      <td className="px-4 py-3 text-silver-600 tabular-nums text-xs">{d.size}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -219,13 +219,13 @@ export default function BenchmarksPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/methodology"
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
-                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm
+                         bg-accent hover:bg-accent-hover text-depth-bg font-semibold text-sm
                          transition-colors duration-150">
               Read Methodology <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/detect/text"
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
-                         border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                         border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
               Try Attestation
             </Link>

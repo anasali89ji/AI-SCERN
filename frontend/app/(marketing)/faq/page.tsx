@@ -47,21 +47,21 @@ const FAQ_SECTIONS = [
 function AccordionItem({ q, a, link }: { q: string; a: string; link: { label: string; href: string } | null }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-[#1E1E1E] last:border-0">
+    <div className="border-b border-silver-300 last:border-0">
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between gap-4 py-4 text-left group"
       >
-        <span className={`text-sm font-medium transition-colors duration-150 ${open ? 'text-white' : 'text-[#E5E5E5] group-hover:text-white'}`}>
+        <span className={`text-sm font-medium transition-colors duration-150 ${open ? 'text-white' : 'text-silver-800 group-hover:text-white'}`}>
           {q}
         </span>
-        <ChevronDown className={`w-4 h-4 flex-shrink-0 text-[#6B6B6B] transition-transform duration-200 ${open ? 'rotate-180 text-[#2BEE34]' : ''}`} />
+        <ChevronDown className={`w-4 h-4 flex-shrink-0 text-silver-600 transition-transform duration-200 ${open ? 'rotate-180 text-accent' : ''}`} />
       </button>
       {open && (
         <div className="pb-4 animate-slide-up">
-          <p className="text-sm text-[#A3A3A3] leading-relaxed">{a}</p>
+          <p className="text-sm text-silver-700 leading-relaxed">{a}</p>
           {link && (
-            <Link href={link.href} className="mt-2 text-xs text-[#2BEE34] hover:underline font-medium flex items-center gap-1">
+            <Link href={link.href} className="mt-2 text-xs text-accent hover:underline font-medium flex items-center gap-1">
               {link.label} <ArrowRight className="w-3 h-3" />
             </Link>
           )}
@@ -73,20 +73,20 @@ function AccordionItem({ q, a, link }: { q: string; a: string; link: { label: st
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
+    <div className="min-h-screen bg-surface text-silver-800">
       <SiteNav />
       <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
 
           {/* Header */}
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
               Support
             </p>
             <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
               Frequently Asked Questions
             </h1>
-            <p className="text-[#A3A3A3] text-lg">
+            <p className="text-silver-700 text-lg">
               Everything you need to know about Aiscern.
             </p>
           </div>
@@ -95,10 +95,10 @@ export default function FAQPage() {
           <div className="space-y-8">
             {FAQ_SECTIONS.map(section => (
               <div key={section.title}>
-                <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2BEE34] mb-4">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-4">
                   {section.title}
                 </h2>
-                <div className="bg-[#141414] border border-[#1E1E1E] rounded-xl px-5">
+                <div className="bg-surface border border-silver-300 rounded-xl px-5">
                   {section.items.map(item => (
                     <AccordionItem key={item.q} {...item} />
                   ))}
@@ -108,16 +108,16 @@ export default function FAQPage() {
           </div>
 
           {/* Contact CTA */}
-          <div className="mt-14 p-8 rounded-xl border border-[#1E1E1E] bg-[#0A0A0A] text-center">
-            <Mail className="w-8 h-8 text-[#2BEE34] mx-auto mb-4" />
+          <div className="mt-14 p-8 rounded-xl border border-silver-300 bg-depth-bg text-center">
+            <Mail className="w-8 h-8 text-accent mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-white mb-2">Still have questions?</h2>
-            <p className="text-sm text-[#A3A3A3] mb-5">
+            <p className="text-sm text-silver-700 mb-5">
               Our team usually responds within 48 hours.
             </p>
             <a
               href="mailto:hello@aiscern.com"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg
-                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm
+                         bg-accent hover:bg-accent-hover text-depth-bg font-semibold text-sm
                          transition-colors duration-150"
             >
               <Mail className="w-4 h-4" /> Email Support

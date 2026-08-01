@@ -44,20 +44,20 @@ const LIMITATIONS = [
 
 export default function MethodologyPage() {
   return (
-    <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
+    <div className="min-h-screen bg-surface text-silver-800">
       <SiteNav />
       <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
 
           {/* Header */}
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34] text-xs font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-accent text-xs font-semibold mb-4">
               <FlaskConical className="w-3 h-3" /> Transparency
             </div>
             <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
               Attestation Methodology
             </h1>
-            <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-silver-700 text-lg max-w-2xl mx-auto leading-relaxed">
               How Aiscern attests AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
             </p>
           </div>
@@ -66,38 +66,38 @@ export default function MethodologyPage() {
           <section className="mb-12">
             <div className="flex items-center justify-between gap-2 mb-5 flex-wrap">
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-[#2BEE34]" />
+                <BarChart3 className="w-5 h-5 text-accent" />
                 <h2 className="text-xl font-semibold text-white">Accuracy Benchmarks</h2>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs px-2.5 py-1 rounded-full border border-[#2A2A2A] bg-[#1A1A1A] text-[#6B6B6B] font-mono">v4.0.0</span>
-                <span className="text-xs px-2.5 py-1 rounded-full border border-[#2BEE34]/20 bg-[#2BEE34]/5 text-[#2BEE34] font-semibold">Last validated: April 2026</span>
+                <span className="text-xs px-2.5 py-1 rounded-full border border-silver-400 bg-surface-elevated text-silver-600 font-mono">v4.0.0</span>
+                <span className="text-xs px-2.5 py-1 rounded-full border border-accent/20 bg-accent/5 text-accent font-semibold">Last validated: April 2026</span>
               </div>
             </div>
-            <p className="text-sm text-[#A3A3A3] leading-relaxed mb-6">
+            <p className="text-sm text-silver-700 leading-relaxed mb-6">
               All figures are measured on held-out test sets from publicly available benchmark datasets.
               These are conservative, honest numbers — not cherry-picked accuracy on easy samples.
             </p>
             <div className="space-y-3">
               {ACCURACY.map(m => (
-                <div key={m.type} className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5">
+                <div key={m.type} className="bg-surface border border-silver-300 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-semibold text-white">{m.type} Attestation</span>
-                      <p className="text-xs text-[#6B6B6B] mt-0.5">{m.model}</p>
+                      <p className="text-xs text-silver-600 mt-0.5">{m.model}</p>
                     </div>
-                    <span className="text-2xl font-black text-[#2BEE34]">{m.score}%</span>
+                    <span className="text-2xl font-black text-accent">{m.score}%</span>
                   </div>
-                  <div className="h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
+                  <div className="h-2 bg-surface-elevated rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#2BEE34] rounded-full"
+                      className="h-full bg-accent rounded-full"
                       style={{ width: `${m.score}%` }}
                     />
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-[#6B6B6B] mt-3 leading-relaxed">
+            <p className="text-xs text-silver-600 mt-3 leading-relaxed">
               * Accuracy is the percentage of samples correctly classified on public benchmark datasets. Individual results may vary based on content type, compression, and AI generator used.
             </p>
           </section>
@@ -105,11 +105,11 @@ export default function MethodologyPage() {
           {/* Ensemble pipeline */}
           <section className="mb-12">
             <div className="flex items-center gap-2 mb-5">
-              <Cpu className="w-5 h-5 text-[#2BEE34]" />
+              <Cpu className="w-5 h-5 text-accent" />
               <h2 className="text-xl font-semibold text-white">Ensemble Pipeline</h2>
             </div>
-            <div className="bg-[#0A0A0A] border border-[#1E1E1E] rounded-xl p-6 mb-4">
-              <p className="text-sm text-[#A3A3A3] leading-relaxed">
+            <div className="bg-depth-bg border border-silver-300 rounded-xl p-6 mb-4">
+              <p className="text-sm text-silver-700 leading-relaxed">
                 Aiscern runs every examination through multiple independent forensic signals. Rather than relying on a single model,
                 results are combined using a weighted voting mechanism — models with higher validated accuracy on that modality
                 receive more weight in the final verdict. This ensemble approach reduces false positives and improves robustness
@@ -121,11 +121,11 @@ export default function MethodologyPage() {
             <h3 className="text-sm font-semibold text-white mb-3">Text Forensic Signals</h3>
             <div className="space-y-2 mb-6">
               {SIGNALS_TEXT.map(s => (
-                <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
-                  <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
+                <div key={s.name} className="flex gap-3 p-4 bg-surface border border-silver-300 rounded-xl">
+                  <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-white">{s.name}</span>
-                    <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
+                    <p className="text-xs text-silver-700 mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
               ))}
@@ -135,11 +135,11 @@ export default function MethodologyPage() {
             <h3 className="text-sm font-semibold text-white mb-3">Image Forensic Signals</h3>
             <div className="space-y-2">
               {SIGNALS_IMAGE.map(s => (
-                <div key={s.name} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
-                  <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />
+                <div key={s.name} className="flex gap-3 p-4 bg-surface border border-silver-300 rounded-xl">
+                  <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-white">{s.name}</span>
-                    <p className="text-xs text-[#A3A3A3] mt-0.5 leading-relaxed">{s.desc}</p>
+                    <p className="text-xs text-silver-700 mt-0.5 leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
               ))}
@@ -151,14 +151,14 @@ export default function MethodologyPage() {
             <h2 className="text-xl font-semibold text-white mb-5">How to Interpret Integrity Ratings</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { range: '0 – 39%',  label: 'Likely Authentic', color: 'text-[#2BEE34]', border: 'border-[#2BEE34]/20', bg: 'bg-[#2BEE34]/5',  desc: 'Strong signals of human authorship. Low probability of AI generation.' },
-                { range: '40 – 69%', label: 'Uncertain',       color: 'text-[#FFB800]', border: 'border-[#FFB800]/20', bg: 'bg-[#FFB800]/5',  desc: 'Mixed signals. Use additional context and human judgment before acting.' },
-                { range: '70 – 100%',label: 'Likely Synthesized', color: 'text-[#FF4444]', border: 'border-[#FF4444]/20', bg: 'bg-[#FF4444]/5',  desc: 'Strong signals of AI generation. High-confidence ensemble verdict.' },
+                { range: '0 – 39%',  label: 'Likely Authentic', color: 'text-accent', border: 'border-accent/20', bg: 'bg-accent/5',  desc: 'Strong signals of human authorship. Low probability of AI generation.' },
+                { range: '40 – 69%', label: 'Uncertain',       color: 'text-warning', border: 'border-warning/20', bg: 'bg-warning/5',  desc: 'Mixed signals. Use additional context and human judgment before acting.' },
+                { range: '70 – 100%',label: 'Likely Synthesized', color: 'text-error', border: 'border-error/20', bg: 'bg-error/5',  desc: 'Strong signals of AI generation. High-confidence ensemble verdict.' },
               ].map(c => (
                 <div key={c.range} className={`rounded-xl border ${c.border} ${c.bg} p-5`}>
                   <div className={`text-lg font-black ${c.color} mb-1`}>{c.range}</div>
                   <div className="text-sm font-semibold text-white mb-2">{c.label}</div>
-                  <p className="text-xs text-[#A3A3A3] leading-relaxed">{c.desc}</p>
+                  <p className="text-xs text-silver-700 leading-relaxed">{c.desc}</p>
                 </div>
               ))}
             </div>
@@ -167,19 +167,19 @@ export default function MethodologyPage() {
           {/* Known limitations */}
           <section className="mb-12">
             <div className="flex items-center gap-2 mb-5">
-              <AlertTriangle className="w-5 h-5 text-[#FFB800]" />
+              <AlertTriangle className="w-5 h-5 text-warning" />
               <h2 className="text-xl font-semibold text-white">Known Limitations</h2>
             </div>
-            <div className="bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-xl p-5 mb-4">
-              <p className="text-sm text-[#A3A3A3] leading-relaxed">
+            <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 mb-4">
+              <p className="text-sm text-silver-700 leading-relaxed">
                 AI attestation is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
               </p>
             </div>
             <div className="space-y-2">
               {LIMITATIONS.map((l, i) => (
-                <div key={i} className="flex gap-3 p-4 bg-[#141414] border border-[#1E1E1E] rounded-xl">
-                  <AlertTriangle className="w-4 h-4 text-[#FFB800] flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-[#A3A3A3] leading-relaxed">{l}</p>
+                <div key={i} className="flex gap-3 p-4 bg-surface border border-silver-300 rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-silver-700 leading-relaxed">{l}</p>
                 </div>
               ))}
             </div>
@@ -189,13 +189,13 @@ export default function MethodologyPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/benchmarks"
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
-                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-semibold text-sm
+                         bg-accent hover:bg-accent-hover text-depth-bg font-semibold text-sm
                          transition-colors duration-150">
               View Full Benchmarks <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/detect/text"
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
-                         border border-[#2A2A2A] text-[#E5E5E5] hover:border-[#2BEE34] hover:text-[#2BEE34]
+                         border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
               Try Attestation
             </Link>

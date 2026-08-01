@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import Link from 'next/link'
+import Link  from 'next/link'
+import Image from 'next/image'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import { ArrowRight, CheckCircle, ChevronDown, Zap } from 'lucide-react'
@@ -31,6 +32,9 @@ export interface SolutionPageProps {
   tagline: string
   description: string
   heroIcon: ReactNode
+  /** Optional photo from /public/trust — when present, replaces the abstract
+      icon badge with a real photo for that industry's hero. */
+  heroImage?: string
   accentColor: 'primary' | 'blue' | 'cyan' | 'amber' | 'emerald' | 'rose'
   ctaLabel: string
   problemTitle: string
@@ -110,7 +114,7 @@ function FAQ({ faqs }: { faqs: SolutionFAQ[] }) {
 
 export function SolutionPage(props: SolutionPageProps) {
   const {
-    industry, tagline, description, heroIcon, accentColor, ctaLabel,
+    industry, tagline, description, heroIcon, heroImage, accentColor, ctaLabel,
     problemTitle, painPoints, features, useCases, faqs,
     testimonialQuote, testimonialAuthor, testimonialRole,
   } = props
@@ -169,14 +173,30 @@ export function SolutionPage(props: SolutionPageProps) {
                 </div>
                 <p className="mt-4 text-xs text-silver-600">No credit card required · Free tier always available</p>
               </div>
-              {/* Abstract geometric illustration */}
+              {/* Industry photo (when available) — falls back to the abstract icon badge */}
               <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 lg:w-64 lg:h-64">
-                <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
-                  <span className={c.icon}>{heroIcon}</span>
-                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
-                    <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                {heroImage ? (
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} overflow-hidden`}>
+                    <Image
+                      src={heroImage}
+                      alt={`${industry} professional using Aiscern`}
+                      fill
+                      sizes="(max-width: 1024px) 192px, 256px"
+                      className="object-cover"
+                      priority
+                    />
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
+                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
+                    <span className={c.icon}>{heroIcon}</span>
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
+                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

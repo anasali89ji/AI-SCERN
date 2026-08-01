@@ -19,6 +19,7 @@ export default function HealthcarePage() {
       tagline="Ensure Clinical Accuracy in an AI-Generated World"
       description="Fabricated research, synthetic patient records, and AI-generated clinical notes are threats to patient safety and scientific integrity. Aiscern helps healthcare organizations verify the authenticity of submitted medical content."
       heroIcon={<Heart className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/healthcare.jpg"
       accentColor="rose"
       ctaLabel="Start Free Healthcare Account"
       problemTitle="AI Fabrication Risks in Healthcare"

@@ -19,6 +19,7 @@ export default function MarketingPage() {
       tagline="Verify Your Content Is Genuinely Human"
       description="Brand authenticity depends on genuine human creativity. Aiscern helps marketing teams verify that UGC campaigns, influencer deliverables, and agency content reflect real human effort — not AI-generated filler."
       heroIcon={<Megaphone className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/marketing.jpg"
       accentColor="amber"
       ctaLabel="Start Free Marketing Account"
       problemTitle="The Brand Authenticity Problem"

@@ -19,6 +19,7 @@ export default function MediaPage() {
       tagline="Defend the Truth Against Synthetic Media"
       description="Deepfakes, AI-generated press releases, and synthetic imagery are weaponized against journalism every day. Aiscern gives newsrooms a multi-modal attestation layer across text, image, audio, and video."
       heroIcon={<Newspaper className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroImage="/trust/journalists.jpg"
       accentColor="amber"
       ctaLabel="Start Free Journalist Account"
       problemTitle="The Synthetic Media Threat to Journalism"

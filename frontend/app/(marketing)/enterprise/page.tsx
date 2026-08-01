@@ -35,19 +35,19 @@ export default function EnterprisePage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-[#08080d] pt-16">
+      <main className="min-h-screen bg-surface-deep pt-16">
         {/* Hero */}
         <section className="pt-10 pb-14 md:py-28 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)] pointer-events-none" />
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2BEE34]/10 border border-[#2BEE34]/20 text-xs font-semibold text-[#2BEE34] mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent mb-6">
               <Building2 className="w-3.5 h-3.5" />
               Enterprise
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
-              AI Attestation at<br /><span className="text-[#2BEE34]">Enterprise Scale</span>
+              AI Attestation at<br /><span className="text-accent">Enterprise Scale</span>
             </h1>
-            <p className="text-base sm:text-lg text-[#A3A3A3] max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -60,19 +60,19 @@ export default function EnterprisePage() {
         </section>
 
         {/* Features */}
-        <section className="py-16 border-t border-[#1E1E1E]/20">
+        <section className="py-16 border-t border-silver-300/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <h2 className="text-2xl md:text-3xl font-black text-white text-center mb-10">What Enterprise Includes</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {FEATURES.map((f, i) => {
                 const FIcon = f.icon
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-[#1E1E1E]">
-                    <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center mb-4">
-                      <FIcon className="w-5 h-5 text-[#2BEE34]" />
+                  <div key={i} className="card p-5 rounded-xl border border-silver-300">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+                      <FIcon className="w-5 h-5 text-accent" />
                     </div>
                     <h3 className="font-semibold text-white text-sm mb-2">{f.title}</h3>
-                    <p className="text-xs text-[#6B6B6B] leading-relaxed">{f.desc}</p>
+                    <p className="text-xs text-silver-600 leading-relaxed">{f.desc}</p>
                   </div>
                 )
               })}
@@ -86,13 +86,13 @@ export default function EnterprisePage() {
             <h2 className="text-2xl font-black text-white text-center mb-8">Plan Overview</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {PLANS.map((plan, i) => (
-                <div key={i} className={`p-6 rounded-xl border ${plan.highlight ? 'border-[#2BEE34]/30 bg-[#2BEE34]/5' : 'border-[#1E1E1E] bg-[#141414]'}`}>
+                <div key={i} className={`p-6 rounded-xl border ${plan.highlight ? 'border-accent/30 bg-accent/5' : 'border-silver-300 bg-surface'}`}>
                   <div className="text-sm font-bold text-white mb-1">{plan.label}</div>
                   <div className="text-xl font-black text-white mb-4">{plan.price}</div>
-                  <ul className="space-y-2 text-xs text-[#6B6B6B]">
+                  <ul className="space-y-2 text-xs text-silver-600">
                     {[plan.scans, plan.api, plan.support].map((item, j) => (
                       <li key={j} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-[#2BEE34] flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-accent flex-shrink-0" />
                         {item}
                       </li>
                     ))}
@@ -101,7 +101,7 @@ export default function EnterprisePage() {
               ))}
             </div>
             <p className="text-center mt-6">
-              <Link href="/pricing" className="text-sm text-[#2BEE34] hover:underline">See full feature comparison on pricing page →</Link>
+              <Link href="/pricing" className="text-sm text-accent hover:underline">See full feature comparison on pricing page →</Link>
             </p>
           </div>
         </section>
@@ -109,9 +109,9 @@ export default function EnterprisePage() {
         {/* Contact Form */}
         <section className="py-16 md:py-20">
           <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="card border border-[#1E1E1E] rounded-xl p-8">
+            <div className="card border border-silver-300 rounded-xl p-8">
               <h2 className="text-xl font-black text-white mb-2">Talk to Sales</h2>
-              <p className="text-sm text-[#6B6B6B] mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
+              <p className="text-sm text-silver-600 mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
               <EnterpriseContactForm />
             </div>
           </div>

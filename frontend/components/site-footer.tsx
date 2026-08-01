@@ -22,23 +22,31 @@ const COMPANY_COL = [
   { label: 'Benchmarks',  href: '/benchmarks'  },
   { label: 'Pricing',     href: '/pricing'     },
   { label: 'Enterprise',  href: '/enterprise'  },
-  { label: 'Blog',        href: '/blog'        },
-  { label: 'Reviews',     href: '/reviews'     },
+  { label: 'Partners',    href: '/partners'    },
+  { label: 'Contact',     href: '/contact'     },
 ]
 
-const DEVELOPERS_COL = [
-  { label: 'API Docs',        href: '/docs/api'       },
-  { label: 'Getting Started', href: '/docs/quickstart' },
-  { label: 'FAQ',             href: '/faq'             },
-  { label: 'Status',          href: '/status'          },
-  { label: 'Changelog',       href: '/changelog'       },
+const RESOURCES_COL = [
+  { label: 'API Docs',     href: '/docs/api'     },
+  { label: 'How It Works', href: '/how-it-works' },
+  { label: 'Compare',      href: '/compare'      },
+  { label: 'Guides',       href: '/guides'       },
+  { label: 'FAQ',          href: '/faq'          },
+  { label: 'Blog',         href: '/blog'         },
+  { label: 'Reviews',      href: '/reviews'      },
+  { label: 'Research',     href: '/research'     },
 ]
 
 const LEGAL_COL = [
-  { label: 'Privacy Policy',   href: '/privacy' },
-  { label: 'Terms of Service', href: '/terms'   },
-  { label: 'Cookie Policy',    href: '/cookies' },
-  { label: 'GDPR',             href: '/gdpr'    },
+  { label: 'Privacy Policy',   href: '/privacy'       },
+  { label: 'Terms of Service', href: '/terms'         },
+  { label: 'DPA',              href: '/dpa'           },
+  { label: 'Accessibility',    href: '/accessibility' },
+  { label: 'Transparency',     href: '/transparency'  },
+  { label: 'Security',         href: '/security'      },
+  { label: 'Roadmap',          href: '/roadmap'       },
+  { label: 'Changelog',        href: '/changelog'     },
+  { label: 'Status',           href: '/status'        },
 ]
 
 // NOTE: Deliberately not using the "SOC 2 Type II • GDPR Compliant • ISO 27001" trust
@@ -156,9 +164,9 @@ export function SiteFooter() {
             {COMPANY_COL.map(l => <FooterLink key={l.href} {...l} />)}
           </FooterCol>
 
-          {/* Developers */}
-          <FooterCol title="Developers">
-            {DEVELOPERS_COL.map(l => <FooterLink key={l.href} {...l} />)}
+          {/* Resources */}
+          <FooterCol title="Resources">
+            {RESOURCES_COL.map(l => <FooterLink key={l.href} {...l} />)}
           </FooterCol>
 
           {/* Newsletter */}

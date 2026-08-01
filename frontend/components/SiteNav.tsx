@@ -28,7 +28,7 @@ const SOLUTIONS = [
   { href: '/solutions/healthcare', label: 'Healthcare',         icon: Heart,         desc: 'Medical content integrity'  },
   { href: '/solutions/marketing',  label: 'Marketing & Brand',  icon: Megaphone,     desc: 'Protect brand authenticity' },
   { href: '/solutions/research',   label: 'Research',           icon: Microscope,    desc: 'Dataset validation'         },
-  { href: '/solutions/creators',   label: 'Content Creators',   icon: Pen,           desc: 'Prove human authorship'     },
+  { href: '/solutions/content-creators', label: 'Content Creators',   icon: Pen,           desc: 'Prove human authorship'     },
 ]
 
 const TOOLS = [
