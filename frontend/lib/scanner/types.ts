@@ -213,6 +213,14 @@ export interface CrawlOptions {
   includeSubPageText?: boolean
   scanImages?: boolean
   respectRobots?: boolean
+  // Deep-crawl mode (Module 2/6): the /api/scanner route resolves this into
+  // concrete maxPages/maxImagesTotal/maxDepth/maxTextLength values (see
+  // DEEP_CRAWL_OPTS below) before calling crawlSite() — crawlSite() itself
+  // only reads the resolved numeric fields, not this flag.
+  deepCrawl?: boolean
+  // Per-page text cap applied when building ScannedPage.textContent (used by
+  // /api/scanner, not by crawlSite/parsePage).
+  maxTextLength?: number
 }
 
 export const DEFAULT_CRAWL_OPTS: CrawlOptions = {
@@ -224,4 +232,20 @@ export const DEFAULT_CRAWL_OPTS: CrawlOptions = {
   includeSubPageText: true,
   scanImages: true,
   respectRobots: true,
+  maxTextLength: 20000,
+}
+
+// Deep-crawl mode defaults (Module 2/6) — used when a request opts into
+// `deepCrawl: true`. Substantially higher limits; still bounded so a single
+// scan can't run away indefinitely.
+export const DEEP_CRAWL_OPTS: CrawlOptions = {
+  maxPages: 150,
+  maxImagesTotal: 200,
+  maxDepth: 6,
+  priorityBFS: true,
+  includeImageAnalysis: true,
+  includeSubPageText: true,
+  scanImages: true,
+  respectRobots: true,
+  maxTextLength: 50000,
 }

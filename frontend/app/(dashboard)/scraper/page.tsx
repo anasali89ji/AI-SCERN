@@ -36,6 +36,7 @@ import UpgradeModal from "@/components/UpgradeModal"
 
 export default function ScannerPage() {
   const [url, setUrl] = useState("")
+  const [deepCrawl, setDeepCrawl] = useState(false)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SiteScanResult | null>(null)
   const [error, setError] = useState("")
@@ -73,9 +74,7 @@ export default function ScannerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: url.trim(),
-          maxPages: 25,
-          maxImagesTotal: 40,
-          maxDepth: 2,
+          deepCrawl,
         }),
       })
 
@@ -237,6 +236,31 @@ export default function ScannerPage() {
             {loading ? "Scanning..." : "Deep Scan"}
           </button>
         </div>
+
+        {/* Deep Forensic Crawl toggle */}
+        <label className="mt-3 flex items-center gap-2.5 cursor-pointer select-none w-fit">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={deepCrawl}
+            onClick={() => setDeepCrawl(v => !v)}
+            className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
+              deepCrawl ? "bg-primary" : "bg-white/10"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                deepCrawl ? "translate-x-4" : ""
+              }`}
+            />
+          </button>
+          <span className="text-xs text-slate-400">
+            Deep Forensic Crawl
+            <span className="text-slate-600 ml-1.5">
+              {deepCrawl ? "up to 150 pages / 200 images — ~3-5 min" : "up to 25 pages / 40 images — ~30 sec"}
+            </span>
+          </span>
+        </label>
 
         {/* Progress Bar */}
         <AnimatePresence>

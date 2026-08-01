@@ -11,10 +11,12 @@ import { analyzeDuplicity } from '@/lib/scanner/duplicity'
 import { analyzeImagesBatch } from '@/lib/scanner/image-forensics'
 import { deepWordPressScan } from '@/lib/scanner/wordpress'
 import { buildSiteTrustScore } from '@/lib/scanner/trust'
-import { computeVoiceDiversityIndex } from '@/lib/scanner/stylometry'
+import { computeVoiceDiversityIndex, analyzeStylometry } from '@/lib/scanner/stylometry'
 import { assertSafeUrl } from '@/lib/utils/ssrf-guard'
 import { siteScanGuard } from '@/lib/middleware/site-scan-guard'
 import { HTTPError, httpErrorResponse, injectGuardHeaders } from '@/lib/middleware/credit-guard'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { DEFAULT_CRAWL_OPTS, DEEP_CRAWL_OPTS } from '@/lib/scanner/types'
 import type {
   SiteScanResult, ScannedPage, ScannedImage, SectionHeatmap,
   RemediationItem, ContentIntegritySeal, TimelineComparison,
@@ -237,10 +239,17 @@ export async function POST(req: NextRequest) {
     const isHttps = targetUrl.startsWith('https://')
 
     // ── CRAWL ──
+    // deepCrawl (Module 2/6): explicit body.maxPages/maxImagesTotal/maxDepth
+    // still win if the caller sets them; otherwise deepCrawl:true resolves to
+    // the higher DEEP_CRAWL_OPTS defaults instead of the normal shallow ones.
+    const isDeepCrawl = body.deepCrawl === true
+    const crawlDefaults = isDeepCrawl ? DEEP_CRAWL_OPTS : DEFAULT_CRAWL_OPTS
+    const maxTextLength = body.maxTextLength || crawlDefaults.maxTextLength || 20000
+
     const crawlResult = await crawlSite(targetUrl, {
-      maxPages: body.maxPages || 30,
-      maxImagesTotal: body.maxImagesTotal || 40,
-      maxDepth: body.maxDepth || 2,
+      maxPages: body.maxPages || crawlDefaults.maxPages,
+      maxImagesTotal: body.maxImagesTotal || crawlDefaults.maxImagesTotal,
+      maxDepth: body.maxDepth || crawlDefaults.maxDepth,
       priorityBFS: true,
       includeImageAnalysis: true,
       scanImages: true,
@@ -257,10 +266,7 @@ export async function POST(req: NextRequest) {
     const wpInfo = deepWordPressScan(crawlResult.pages[0]?.rawHtml || '', targetUrl)
 
     // ── TEXT ANALYSIS (Phase 1: stylometry for all pages) ──
-    const allStylometries = crawlResult.pages.map(p => {
-      const { analyzeStylometry } = require('@/lib/scanner/stylometry')
-      return analyzeStylometry(p.textContent)
-    })
+    const allStylometries = crawlResult.pages.map(p => analyzeStylometry(p.textContent))
 
     // ── TEXT ANALYSIS (Phase 2: full ensemble per page) ──
     const scannedPages: ScannedPage[] = []
@@ -286,7 +292,7 @@ export async function POST(req: NextRequest) {
         // need the full page to compare accurately. 20k chars (~4-5k words)
         // covers the overwhelming majority of real pages while still
         // bounding response payload size for the rare very-long page.
-        textContent: page.textContent.slice(0, 20000),
+        textContent: page.textContent.slice(0, maxTextLength),
         wordCount: page.wordCount,
         contentType: page.contentType,
         headings: page.headings,
@@ -390,7 +396,7 @@ export async function POST(req: NextRequest) {
       wordPressInfo: wpInfo,
       discoveryMethod: crawlResult.discoveryMethod,
       pagesScanned: scannedPages.length,
-      maxPages: body.maxPages || 30,
+      maxPages: body.maxPages || crawlDefaults.maxPages || 30,
       aiContentPercent,
       aiImagePercent,
       humanContentPercent,
@@ -417,6 +423,37 @@ export async function POST(req: NextRequest) {
 
     // Generate integrity seal with full result
     result.integritySeal = generateIntegritySeal(result)
+
+    // ── PERSIST TO HISTORY (Module 4 Fix5) ──
+    // Web Scanner results were never written to `scans`, so completed site
+    // scans never showed up in /history like every other detect route does.
+    // Mirrors the insert shape used by app/api/detect/text/route.ts.
+    // Fire-and-forget: a persistence failure shouldn't fail the response the
+    // user is waiting on for their scan results.
+    try {
+      const { error: insertErr } = await getSupabaseAdmin().from('scans').insert({
+        user_id:          guard.userId,
+        media_type:       'text', // scans_media_type_check only allows text/image/audio/video/document — matches the convention in detect/web and detect/site routes; scan type itself lives in metadata + model_used below
+        content_preview:  `${domain} — ${result.pagesScanned} pages`,
+        verdict:          result.aiContentPercent >= 50 ? 'AI' : result.humanContentPercent >= 50 ? 'HUMAN' : 'UNCERTAIN',
+        confidence_score: Math.max(result.aiContentPercent, result.humanContentPercent) / 100,
+        processing_time:  result.processingTimeMs,
+        model_used:       result.modelUsed,
+        status:           'complete',
+        metadata: {
+          domain,
+          pages_scanned:      result.pagesScanned,
+          images_analyzed:    result.totalImagesAnalyzed,
+          ai_image_percent:   result.aiImagePercent,
+          is_wordpress:       result.isWordPress,
+          deep_crawl:         isDeepCrawl,
+          discovery_method:   result.discoveryMethod,
+        },
+      })
+      if (insertErr) console.error('[scanner] scan insert error:', insertErr.message, insertErr.code)
+    } catch (e) {
+      console.error('[scanner] scan insert threw:', e)
+    }
 
     return injectGuardHeaders(NextResponse.json(result), {
       userId: guard.userId, plan: guard.plan, dailyScans: guard.dailyScans,

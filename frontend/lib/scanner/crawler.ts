@@ -378,6 +378,45 @@ async function discoverFromSitemap(origin: string, maxUrls: number): Promise<str
   return discovered.slice(0, maxUrls)
 }
 
+// Fetches /robots.txt and returns the Disallow paths that apply to '*' (and,
+// if present, to our own AiscernBot UA — a more specific block always wins
+// over the wildcard block for that same path prefix). Module 2 gap fix:
+// CrawlOptions.respectRobots existed and defaulted to true but nothing in
+// crawlSite() ever read it — every crawl ignored robots.txt entirely.
+async function fetchRobotsDisallowed(origin: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${origin}/robots.txt`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AiscernBot/1.0)' },
+      signal: AbortSignal.timeout(6000),
+    })
+    if (!res.ok) return []
+    const text = await res.text()
+
+    const disallowed: string[] = []
+    let currentGroupApplies = false
+    for (const rawLine of text.split('\n')) {
+      const line = rawLine.split('#')[0].trim()
+      if (!line) continue
+      const [rawKey, ...rest] = line.split(':')
+      const key = rawKey.trim().toLowerCase()
+      const value = rest.join(':').trim()
+
+      if (key === 'user-agent') {
+        currentGroupApplies = value === '*' || /aiscern/i.test(value)
+      } else if (key === 'disallow' && currentGroupApplies && value) {
+        disallowed.push(value)
+      }
+    }
+    return disallowed
+  } catch {
+    return [] // fail open — an unreachable robots.txt shouldn't block a scan
+  }
+}
+
+function isDisallowedByRobots(pathname: string, disallowedPaths: string[]): boolean {
+  return disallowedPaths.some(rule => pathname.startsWith(rule))
+}
+
 export async function crawlSite(
   startUrl: string,
   options: typeof DEFAULT_CRAWL_OPTS = DEFAULT_CRAWL_OPTS
@@ -400,6 +439,11 @@ export async function crawlSite(
     { url: startUrl, depth: 0, priority: 100 }
   ]
 
+  // robots.txt (Module 2 gap fix — see fetchRobotsDisallowed above)
+  const disallowedPaths = opts.respectRobots !== false
+    ? await fetchRobotsDisallowed(origin)
+    : []
+
   // Seed additional URLs from sitemap.xml when available — these get a
   // slightly lower priority than the homepage itself but are scanned before
   // any BFS-discovered link, since sitemap URLs are author-declared canonical
@@ -410,7 +454,9 @@ export async function crawlSite(
     for (const url of sitemapUrls) {
       if (url === startUrl || queue.some(q => q.url === url)) continue
       try {
-        if (new URL(url).hostname !== domain) continue // stay on-domain
+        const u = new URL(url)
+        if (u.hostname !== domain) continue // stay on-domain
+        if (isDisallowedByRobots(u.pathname, disallowedPaths)) continue
       } catch { continue }
       queue.push({ url, depth: 1, priority: 90 })
     }
@@ -456,7 +502,8 @@ export async function crawlSite(
           // Skip common non-content paths
           const path = new URL(l.url).pathname.toLowerCase()
           return !SKIP_PATHS.test(path) &&
-            !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path)
+            !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path) &&
+            !isDisallowedByRobots(path, disallowedPaths)
         })
 
       for (const link of internalLinks) {
