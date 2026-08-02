@@ -247,12 +247,12 @@ def _lossless_no_exif_score(img_array: np.ndarray, img_pil: Any) -> float:
         h, w = img_array.shape[:2]
         large = (h * w) > (512 * 512)
         if fmt in ("PNG", "WEBP") and not has_exif and large:
-            return 0.55  # weak prior nudge only — was 0.82
+            return 0.40  # Fix #5 (v4.5.0): was 0.55, then 0.82 originally
         if fmt in ("PNG", "WEBP") and not has_exif:
-            return 0.42  # was 0.60
+            return 0.32  # Fix #5: was 0.42, then 0.60 originally
     except Exception:
         pass
-    return 0.40  # neutral-to-low; real photos often lose EXIF via web processing
+    return 0.30  # Fix #5: was 0.40, then 0.40 originally (neutral-to-low prior)
 
 
 # ── Main Layer 9 function ─────────────────────────────────────────────────────
@@ -281,9 +281,11 @@ def analyze_ai_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any
 
         # Weighted fusion — format signal is now a MINOR prior, not a primary
         # driver (Module 2 fix: was 0.24, tied for the largest weight in this
-        # layer; a PNG-without-EXIF real photo could satisfy most of L9's
-        # score through this single non-content signal alone).
-        weights = {"sat": 0.24, "freq": 0.26, "pal": 0.22, "edge": 0.20, "fmt": 0.08}
+        # layer; Fix #5 v4.5.0 further cut it 0.08 -> 0.04 and redistributed
+        # the freed weight to the content-based signals, since a PNG-without-
+        # EXIF real photo should not be able to satisfy most of L9's score
+        # through this single non-content signal alone).
+        weights = {"sat": 0.28, "freq": 0.28, "pal": 0.24, "edge": 0.16, "fmt": 0.04}
         score = (
             sig_sat  * weights["sat"]  +
             sig_freq * weights["freq"] +

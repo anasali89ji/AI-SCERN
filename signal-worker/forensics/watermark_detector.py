@@ -4,13 +4,12 @@ SynthID (wavelet-based), Imagen, Stable Signature, frequency anomaly detection.
 """
 import numpy as np
 import cv2
-from PIL import Image
 from typing import Dict, Any
 
 
-def detect_watermarks(image_path: str) -> Dict[str, Any]:
-    img = Image.open(image_path)
-    img_array = np.array(img)
+def detect_watermarks(img_array: np.ndarray) -> Dict[str, Any]:
+    """Fix #6 (v4.5.0): accepts img_array (RGB) instead of image_path — avoids
+    a redundant disk read; image_engine.py already has the decoded array."""
 
     results = {
         "synthid_detected": False,

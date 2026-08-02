@@ -397,6 +397,11 @@ function analyzeEdgePattern(img: DecodedImage): ImageBrainSignal {
 // ── SIGNAL 7: COMPRESSION SIGNATURE ──────────────────────────────────────────
 
 function analyzeCompressionSignature(rawBuf: Buffer, fileSize: number): ImageBrainSignal {
+  // Fix #1 (v4.5.0): PNG/WebP-without-EXIF is NOT strong AI evidence — it is
+  // also the signature of screenshots, WhatsApp/Telegram forwards, website
+  // downloads, and Photoshop/Canva exports. This signal is now a weak prior
+  // only: weight cut 0.07 -> 0.03, format score capped at 0.65 (never above
+  // "inconclusive"), and it is gated so it can only ever act as a nudge.
   const isJPEG = rawBuf[0] === 0xFF && rawBuf[1] === 0xD8
   const isPNG  = rawBuf[0] === 0x89 && rawBuf[1] === 0x50
   const isWebP = rawBuf[8] === 0x57 && rawBuf[9] === 0x45
@@ -406,15 +411,31 @@ function analyzeCompressionSignature(rawBuf: Buffer, fileSize: number): ImageBra
       if (rawBuf[i] === 0xFF && rawBuf[i + 1] === 0xE1) { hasEXIF = true; break }
     }
   }
-  const sizeMB    = fileSize / (1024 * 1024)
-  const sizeScore = sizeMB < 0.04 ? 0.82 : sizeMB < 0.12 ? 0.62 : sizeMB < 0.40 ? 0.38 : 0.18
-  const compScore = isJPEG ? ((isJPEG && !hasEXIF) ? 0.72 : 0.12)
-                  : isPNG  ? 0.78
-                  : isWebP ? 0.60 : 0.50
+
+  const sizeMB = fileSize / (1024 * 1024)
+  const sizeKB = fileSize / 1024
+
+  // Format nudge: NEVER strong evidence alone.
+  let formatNudge = 0.35
+  if (isJPEG && hasEXIF) {
+    formatNudge = 0.15 // Weak real indicator
+  } else if (isJPEG && !hasEXIF) {
+    formatNudge = 0.40 // Re-encoded JPEG
+  } else if (isPNG || isWebP) {
+    // Large PNGs/WebPs from web/camera pipelines are extremely common;
+    // tiny PNGs (more consistent with raw AI-generator output) are somewhat
+    // more suspicious, but still capped well below "strong AI".
+    formatNudge = sizeKB < 20 ? 0.55 : sizeKB < 100 ? 0.40 : 0.30
+  }
+
+  // Size score: extremely small files are mildly suspicious (AI generators
+  // sometimes output tiny files), but this alone is also weak evidence.
+  const sizeScore = sizeMB < 0.02 ? 0.75 : sizeMB < 0.08 ? 0.55 : sizeMB < 0.30 ? 0.35 : 0.18
+
   return { name: 'Compression & Metadata Signature', category: 'compression',
-    score: clamp(compScore * 0.50 + sizeScore * 0.28 + ((isPNG || isWebP) && !hasEXIF ? 0.72 : 0.20) * 0.22, 0, 1),
-    weight: 0.07, rawValue: fileSize,
-    evidence: `${isJPEG ? 'JPEG' : isPNG ? 'PNG' : isWebP ? 'WebP' : 'Unknown'} | EXIF=${hasEXIF ? 'YES' : 'NO (AI signal)'} | size=${sizeMB.toFixed(2)}MB` }
+    score: clamp(formatNudge * 0.55 + sizeScore * 0.45, 0, 0.65),
+    weight: 0.03, rawValue: fileSize,
+    evidence: `${isJPEG ? 'JPEG' : isPNG ? 'PNG' : isWebP ? 'WebP' : 'Unknown'} | EXIF=${hasEXIF ? 'YES' : 'NO'} | size=${sizeKB.toFixed(0)}KB | nudge=${formatNudge.toFixed(2)} (weak prior only)` }
 }
 
 // ── SIGNAL 8: GRADIENT FIELD SMOOTHNESS ──────────────────────────────────────
@@ -866,8 +887,7 @@ function detectGeneratorFingerprints(
   const chanDiff  = Math.abs(rS.mean - gS.mean) + Math.abs(gS.mean - bS.mean)
   const warmCast  = samples.filter(({ r, b }) => r > b + 18).length / samples.length
 
-  // Candidate confidence per rule capped at 0.60 (a single match nudges, never decides).
-  const CAP = 0.60
+  // Candidate confidence per rule is capped well below "strong AI" (see tiers below).
   let newMatches = 0
 
   // Midjourney v5/v6/v7
@@ -916,22 +936,38 @@ function detectGeneratorFingerprints(
   // PLUS any hue-ring generator hints passed in (a genuinely separate signal).
   const totalMatches = newMatches + hueHints.length
 
+  // Fix #2 (v4.5.0): all tiers lowered. A real outdoor photo with a clear
+  // blue sky can easily trigger 2 coincidental "matches" (Gemini blue +
+  // Grok/Midjourney blue-shift hints), which previously scored 0.74 — nearly
+  // "strong AI". Caps: 1-match 0.40 (was 0.60), 2-match 0.55 (was 0.74),
+  // 3-match 0.72 (new tier), 4+-match 0.88.
   let fingerScore: number
   if (totalMatches === 0) {
     // No fingerprint match. Fall back to a mild nudge from the already-
     // independently-computed saturation/texture signals, same as before.
-    fingerScore = (satSig.score > 0.68 || texSig.score > 0.72) ? 0.55 : 0.40
+    fingerScore = (satSig.score > 0.68 || texSig.score > 0.72) ? 0.45 : 0.32
   } else if (totalMatches === 1) {
-    fingerScore = CAP // single coincidental match — capped, cannot alone tip the verdict
+    fingerScore = 0.40 // single coincidental match — very weak
   } else if (totalMatches === 2) {
-    fingerScore = 0.74 // two independent agreements — meaningful but still cautious
+    fingerScore = 0.55 // two agreements — moderate but cautious
+  } else if (totalMatches === 3) {
+    fingerScore = 0.72 // three independent agreements — meaningful
   } else {
-    fingerScore = 0.88 // three or more independent agreements — genuinely strong signal
+    fingerScore = 0.88 // four or more — genuinely strong signal
+  }
+
+  // Landscape / blue-sky guard: clear-sky scenes naturally reproduce the
+  // blue-dominant, low-saturation-variance color statistics that several
+  // rules above key on. If this looks like a plain blue-sky scene, require
+  // 3+ independent matches before treating it as meaningful corroboration.
+  const isLikelyLandscape = blueShift > 0.35 && hueHints.some(h => h.includes('Gemini') || h.includes('Midjourney') || h.includes('Grok'))
+  if (isLikelyLandscape && totalMatches < 3) {
+    fingerScore = Math.min(fingerScore, 0.48)
   }
 
   return {
     signal: { name: 'AI Generator Fingerprint', category: 'generator',
-      score: clamp(fingerScore, 0.18, 0.95), weight: 0.08, rawValue: blueShift,
+      score: clamp(fingerScore, 0.18, 0.92), weight: 0.08, rawValue: blueShift,
       evidence: hints.length > 0
         ? `Detected (${totalMatches} corroborating match${totalMatches === 1 ? '' : 'es'}): ${hints.join('; ')}`
         : 'No specific generator matched — general AI statistics present' },
@@ -984,13 +1020,17 @@ export async function analyzeImageWithBrain(
   // Step 3: Weighted ensemble + confidence boost
   const totalW  = allSignals.reduce((s, sig) => s + sig.weight, 0) || 1
   const rawSc   = allSignals.reduce((s, sig) => s + sig.score * sig.weight, 0) / totalW
-  const highAI  = allSignals.filter(s => s.score > 0.75).length
-  const highHu  = allSignals.filter(s => s.score < 0.25).length
-  // Thresholds restored to the original 16-signal calibration. Bilateral
-  // Symmetry and Horizon Consistency are now hard-capped at 0.74 (see their
-  // definitions above) so they structurally cannot register as "strong AI"
-  // (>0.75) or "strong human" (<0.25) votes — the effective voting pool for
-  // this tally is still the original 16 well-calibrated signals.
+  // Fix #10 (v4.5.0): Bilateral Symmetry and Horizon Line Consistency are
+  // structurally capped below 0.75 (see their definitions above), so in
+  // practice they never register as "strong AI"/"strong human" votes. They
+  // are now explicitly excluded from the boost tally so future recalibration
+  // of their caps can never silently distort this count.
+  const WEAK_SIGNALS = ['Bilateral Symmetry', 'Horizon Line Consistency']
+  const boostSignals = allSignals.filter(s => !WEAK_SIGNALS.includes(s.name))
+  const highAI  = boostSignals.filter(s => s.score > 0.75).length
+  const highHu  = boostSignals.filter(s => s.score < 0.25).length
+  // Thresholds restored to the original 16-signal calibration — the voting
+  // pool for this tally is the original 16 well-calibrated signals.
   const boost   = highAI >= 8 ? 0.10 : highAI >= 5 ? 0.06 : highHu >= 8 ? -0.10 : highHu >= 5 ? -0.06 : 0
 
   // ── Artistic / Fantasy AI Override ────────────────────────────────────────
@@ -1040,3 +1080,87 @@ export async function analyzeImageWithBrain(
 // haven't been updated yet still call it, but returns a Promise they must await.
 // All new code should call the async version directly.
 export { analyzeImageWithBrain as analyzeImageWithBrainAsync }
+
+// ── FIX #13 (v4.5.0): FRONTEND-BACKEND CROSS-VALIDATION BRIDGE ─────────────
+// The frontend Brain and the backend signal-worker run independently and can
+// contradict each other with no reconciliation. This is a narrow, additive
+// diagnostic layer — it does NOT replace the tuned ensemble weighting in
+// hf-analyze.ts. It only nudges the score in a small number of well-defined
+// conflict/corroboration patterns and always reports what it did via
+// `conflictNotes`, so a caller can log/display why an adjustment happened.
+export interface CrossValidationResult {
+  finalScore:    number
+  finalVerdict:  'AI' | 'HUMAN' | 'UNCERTAIN'
+  confidence:    number
+  conflictNotes: string[]
+}
+
+// Minimal shape of the backend response this bridge reads from. Deliberately
+// loose/optional — the backend response is large and evolving, and this
+// bridge must degrade gracefully (falling back to neutral 0.5s) if any field
+// is missing rather than throwing.
+export interface BackendCrossValidationInput {
+  layers?: { layer?: number; layerSuspicionScore?: number }[]
+  forensics?: { composite_cv_score?: number }
+  synthid?: { detected?: boolean; confidence?: number }
+}
+
+export function crossValidateBrainAndBackend(
+  brainResult:   ImageBrainResult,
+  backendResult: BackendCrossValidationInput | null | undefined,
+): CrossValidationResult {
+  const notes: string[] = []
+  let score = brainResult.score
+  let confidence = 0.5
+
+  if (!backendResult) {
+    return { finalScore: score, finalVerdict: brainResult.verdict, confidence, conflictNotes: notes }
+  }
+
+  const findLayer = (n: number) =>
+    backendResult.layers?.find(l => l.layer === n)?.layerSuspicionScore ?? 0.5
+
+  const l7Score  = findLayer(7)   // DIRE approximation
+  const l9Score  = findLayer(9)   // Modern AI Fingerprint
+  const l12Score = findLayer(12)  // BDIS (Bayer pattern)
+  const synthidDetected = backendResult.synthid?.detected ?? false
+  const synthidConf     = backendResult.synthid?.confidence ?? 0
+
+  // Conflict Case 1: Brain says AI (often a format-prior false positive), but
+  // backend DIRE strongly indicates REAL. This is the #1 false-positive
+  // pattern (screenshots/forwards/re-exports triggering Brain's format nudge).
+  if (brainResult.verdict === 'AI' && l7Score < 0.30) {
+    notes.push('Brain flagged AI but backend DIRE strongly indicates REAL (likely format-prior false positive)')
+    score = Math.max(0.35, score * 0.65)
+    confidence = 0.4
+  }
+
+  // Conflict Case 2: Brain says HUMAN, but backend physics layers or SynthID
+  // show strong AI evidence Brain's pixel-statistic signals missed.
+  if (brainResult.verdict === 'HUMAN' && (l9Score > 0.80 || l12Score > 0.75 || synthidDetected)) {
+    notes.push('Brain missed AI signals caught by backend physics layers')
+    score = Math.min(0.75, Math.max(score, 0.60))
+    confidence = 0.7
+  }
+
+  // Corroboration: both sides agree → higher confidence, small consistent nudge.
+  if (brainResult.verdict === 'AI' && l7Score > 0.50 && l9Score > 0.60) {
+    score = Math.min(0.95, score * 1.08)
+    confidence = 0.92
+    notes.push('Strong corroboration: brain + backend physics layers agree on AI')
+  }
+  if (brainResult.verdict === 'HUMAN' && l7Score < 0.25 && l12Score < 0.40) {
+    score = Math.max(0.08, score * 0.85)
+    confidence = 0.88
+    notes.push('Strong corroboration: brain + backend physics layers agree on REAL')
+  }
+
+  // SynthID override: a high-confidence watermark match is near-definitive.
+  if (synthidDetected && synthidConf > 0.70) {
+    score = Math.max(score, 0.85)
+    notes.push('SynthID watermark detected — overriding to AI')
+  }
+
+  const verdict: 'AI' | 'HUMAN' | 'UNCERTAIN' = score > 0.55 ? 'AI' : score < 0.36 ? 'HUMAN' : 'UNCERTAIN'
+  return { finalScore: score, finalVerdict: verdict, confidence, conflictNotes: notes }
+}
