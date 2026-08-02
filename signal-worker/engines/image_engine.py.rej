@@ -1,0 +1,126 @@
+diff a/signal-worker/engines/image_engine.py b/signal-worker/engines/image_engine.py	(rejected hunks)
+@@ -229,8 +229,12 @@ def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
+ 
+ # ── v3 Forensic layer runners ─────────────────────────────────────────────────
+ 
+-def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
+-    """Run all v3 forensic modules CONCURRENTLY on a local file path.
++def _run_v3_forensics(img_array: "np.ndarray", temp_path: str) -> Dict[str, Any]:
++    """Run all v3 forensic modules CONCURRENTLY.
++    Fix #6 (v4.5.0): most modules now operate on the already-decoded
++    img_array instead of independently re-reading the same file from disk
++    (was 9x redundant disk I/O per request). Only metadata analysis still
++    needs the file path (EXIF must be read from the original file bytes).
+     Was: serial execution ~4-8s total
+     Now: parallel ThreadPoolExecutor ~1-2s (wall-clock bounded by slowest module)
+     """
+@@ -238,7 +242,7 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
+     from forensics.frequency_analysis import frequency_domain_analysis
+     from forensics.noise_analysis import noise_coherence_analysis
+     from forensics.texture_color_analysis import texture_analysis, color_analysis, illumination_consistency
+-    from forensics.face_deepfake import face_specific_analysis
++    from forensics.object_deepfake import object_specific_analysis
+     from forensics.watermark_detector import detect_watermarks
+     from forensics.text_artifact_detector import detect_text_artifacts
+     from concurrent.futures import ThreadPoolExecutor, as_completed
+@@ -250,19 +254,19 @@ def _run_v3_forensics(temp_path: str) -> Dict[str, Any]:
+             logger.warning("[ImageEngine][v3] %s failed: %s", fn.__name__, e)
+             return fallback or {}
+ 
+-    # Submit all 9 tasks to a thread pool — they all read the same file
+-    # but do independent CPU work, so GIL is released during numpy/cv2 ops
++    # Submit all 9 tasks to a thread pool — only metadata still reads from
++    # disk; everything else operates on the shared in-memory img_array.
+     with ThreadPoolExecutor(max_workers=6) as pool:
+         futures = {
+             "metadata":     pool.submit(safe, analyze_metadata,           temp_path, fallback={"score": 0.5}),
+-            "frequency":    pool.submit(safe, frequency_domain_analysis,  temp_path, fallback={"high_freq_suppression": 0.5}),
+-            "noise":        pool.submit(safe, noise_coherence_analysis,   temp_path, fallback={"noise_uniformity_score": 0.5}),
+-            "texture":      pool.submit(safe, texture_analysis,           temp_path, fallback={"texture_smoothness_score": 0.5}),
+-            "color":        pool.submit(safe, color_analysis,             temp_path, fallback={}),
+-            "illumination": pool.submit(safe, illumination_consistency,   temp_path, fallback={"illumination_variance": 500}),
+-            "face":         pool.submit(safe, face_specific_analysis,     temp_path, fallback={"faces_detected": False, "deepfake_score": 0.5}),
+-            "watermarks":   pool.submit(safe, detect_watermarks,          temp_path, fallback={"overall_watermark_score": 0.0}),
+-            "text_art":     pool.submit(safe, detect_text_artifacts,      temp_path, fallback={"artifact_score": 0.0}),
++            "frequency":    pool.submit(safe, frequency_domain_analysis,  img_array, fallback={"high_freq_suppression": 0.5}),
++            "noise":        pool.submit(safe, noise_coherence_analysis,   img_array, fallback={"noise_uniformity_score": 0.5}),
++            "texture":      pool.submit(safe, texture_analysis,           img_array, fallback={"texture_smoothness_score": 0.5}),
++            "color":        pool.submit(safe, color_analysis,             img_array, fallback={}),
++            "illumination": pool.submit(safe, illumination_consistency,   img_array, fallback={"illumination_variance": 500}),
++            "face":         pool.submit(safe, object_specific_analysis,   img_array, fallback={"faces_detected": False, "deepfake_score": 0.5}),
++            "watermarks":   pool.submit(safe, detect_watermarks,          img_array, fallback={"overall_watermark_score": 0.0}),
++            "text_art":     pool.submit(safe, detect_text_artifacts,      img_array, fallback={"artifact_score": 0.0}),
+         }
+         results = {k: f.result() for k, f in futures.items()}
+ 
+@@ -450,7 +454,14 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
+     }
+ 
+     for layer in v2_layers:
+-        if layer.get("status") == "failure":
++        # Fix #4/#9 (v4.5.0): skip layers that explicitly opted out via
++        # status="not_applicable" (e.g. SSWDP on a product photo with no
++        # skin/translucent material) — including their neutral score=0.5 in
++        # the weighted average dilutes strong signals from layers that DO
++        # have something to say about this image. "failure" was already
++        # skipped; "not_applicable" is a distinct, deliberate signal from the
++        # analyzer itself (not an error) and must be skipped too.
++        if layer.get("status") in ("failure", "not_applicable"):
+             continue
+         layer_num = layer.get("layer", 0)
+         # Use layerSuspicionScore directly — it already aggregates all evidence
+@@ -460,6 +471,18 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
+         # boosted L1 from 0.90 → 0.97 and triggered any_very_high override.
+         base_score = float(layer.get("layerSuspicionScore", 0.5))
+         w = LAYER_WEIGHTS.get(layer_num, 1.0)
++
++        # Fix #9 (v4.5.0): dynamic weight adjustment. A layer that came back
++        # with status="success" but landed exactly on the neutral midpoint
++        # (e.g. a scene-dependent physical-consistency layer whose own
++        # internal logic decided to return 0.5 without formally marking
++        # itself not_applicable) still shouldn't get full voting weight —
++        # it's not actively wrong, but it's also not informative. Reduce its
++        # weight rather than skip it outright, since a true borderline 0.5
++        # from a fully-applicable layer is still worth partial weight.
++        if abs(base_score - 0.5) < 0.05:
++            w *= 0.3
++
+         layer_scores.append((base_score, w))
+         layer_by_num[layer_num] = base_score
+ 
+@@ -516,9 +539,14 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
+     dire_check_fired = (dire_penalty < 1.0)
+ 
+     if dire_check_fired:
+-        # Quadratic penalty: L7=0.04 → factor=0.009, L7=0.36 → factor=0.735
+-        # Reliably brings real-image fused scores below 0.55 classification boundary
+-        fused = float(fused * (dire_penalty ** 2))
++        # Fix #11 (v4.5.0): linear penalty instead of quadratic.
++        # Quadratic was too aggressive for edge-case real photos near the
++        # threshold: L7=0.36 → penalty=0.86 → quadratic factor=0.74 (fused
++        # cut by 26% even though L7 was only mildly below the real-photo
++        # ceiling). Linear: L7=0.04 → factor=0.095, L7=0.36 → factor=0.86 —
++        # still strongly suppresses clear-real cases (low L7) while being
++        # gentler near the boundary.
++        fused = float(fused * dire_penalty)
+ 
+     # ── Override rules (v4.5) ─────────────────────────────────────────────────
+     # Thresholds tightened to eliminate two classes of false positives:
+@@ -659,7 +687,7 @@ async def analyze_image_from_url(
+         layers.extend(physical.get("layer_reports", []))
+ 
+         # v3 forensics
+-        v3 = _run_v3_forensics(temp_path)
++        v3 = _run_v3_forensics(img_array, temp_path)
+ 
+         # Optional GPU layers
+         l5 = _run_l5_inversion(image_url) if include_gpu_layers else {"available": False, "reason": "not_requested"}
+@@ -760,7 +788,7 @@ def analyze_image_from_bytes(
+             f_phys    = pool.submit(_run_physical_layers, img_array, pil_img)
+             f_synthid = pool.submit(_run_synthid, img_array,
+                                     "jpeg" not in content_type.lower())
+-            f_v3      = pool.submit(_run_v3_forensics, temp_path)
++            f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
+ 
+             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
+                        f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),

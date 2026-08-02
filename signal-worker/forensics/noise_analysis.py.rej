@@ -1,0 +1,39 @@
+diff a/signal-worker/forensics/noise_analysis.py b/signal-worker/forensics/noise_analysis.py	(rejected hunks)
+@@ -9,16 +9,19 @@ from scipy.stats import pearsonr
+ from typing import Dict, Any, Optional
+ 
+ 
+-def extract_noise_residual(image_path: str, sigma: float = 3.0) -> np.ndarray:
+-    img = cv2.imread(image_path)
+-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32)
++def extract_noise_residual(img_array: np.ndarray, sigma: float = 3.0) -> np.ndarray:
++    """Fix #6 (v4.5.0): accepts img_array instead of image_path."""
++    if img_array.ndim == 3:
++        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY).astype(np.float32)
++    else:
++        gray = img_array.astype(np.float32)
+     denoised = gaussian_filter(gray, sigma=sigma)
+     residual = gray - denoised
+     return residual
+ 
+ 
+-def noise_coherence_analysis(image_path: str) -> Dict[str, Any]:
+-    residual = extract_noise_residual(image_path)
++def noise_coherence_analysis(img_array: np.ndarray) -> Dict[str, Any]:
++    residual = extract_noise_residual(img_array)
+     h, w = residual.shape
+ 
+     patch_size = 64
+@@ -47,10 +50,10 @@ def noise_coherence_analysis(image_path: str) -> Dict[str, Any]:
+ 
+ 
+ def prnu_fingerprint_correlation(
+-    image_path: str,
++    img_array: np.ndarray,
+     reference_prnu: Optional[np.ndarray] = None
+ ) -> Dict[str, Any]:
+-    residual = extract_noise_residual(image_path)
++    residual = extract_noise_residual(img_array)
+     if reference_prnu is not None:
+         r1 = residual.flatten()[:len(reference_prnu.flatten())]
+         r2 = reference_prnu.flatten()[:len(r1)]
