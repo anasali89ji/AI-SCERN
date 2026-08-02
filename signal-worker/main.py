@@ -15,6 +15,7 @@ Routes:
 """
 
 import asyncio
+import gc
 import os
 import signal
 import logging
@@ -187,6 +188,20 @@ ALLOWED_IMAGE_MIMES = {
 # ── Memory pressure threshold ─────────────────────────────────────────────────
 OOM_RSS_THRESHOLD_MB = int(os.getenv("OOM_RSS_THRESHOLD_MB", 850))
 
+# ── Worker self-recycling (v4.5.0) ────────────────────────────────────────────
+# Root cause fixed here: RSS was observed climbing ~150-200MB per image request
+# even with idle-model eviction firing every time (the evicted model wasn't the
+# leak source — something per-request wasn't fully released between calls).
+# Rather than chase the exact leaking reference right now, workers recycle
+# themselves before they get big enough for the OS OOM-killer to SIGKILL them
+# mid-request, which is what was producing the DO "no_healthy_upstream" /
+# "upstream_reset_before_response_started" errors: the killed workers were
+# stuck in an infinite crash loop (dying ~10s after boot, before any traffic).
+# Tune both to your instance size — defaults assume professional-s (4GB/2vCPU).
+MAX_REQUESTS_PER_WORKER  = int(os.getenv("MAX_REQUESTS_PER_WORKER", 40))
+RECYCLE_RSS_THRESHOLD_MB = int(os.getenv("RECYCLE_RSS_THRESHOLD_MB", 3000))
+_worker_request_count = 0
+
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
@@ -241,7 +256,36 @@ async def memory_pressure_middleware(request: Request, call_next):
                 mem["rss_mb"], OOM_RSS_THRESHOLD_MB, len(evicted), evicted,
             )
             _inc("oom_evictions", len(evicted))
-    return await call_next(request)
+
+    response = await call_next(request)
+
+    # Post-request cleanup + self-recycle check. Runs on every request
+    # (cheap when there's nothing to collect), regardless of the pre-request
+    # eviction path above — that path only fires past OOM_RSS_THRESHOLD_MB and
+    # only evicts *models*; this covers the per-request leak that isn't
+    # model-cache related.
+    gc.collect()
+
+    global _worker_request_count
+    _worker_request_count += 1
+    mem_after = get_memory_usage()
+
+    if (_worker_request_count >= MAX_REQUESTS_PER_WORKER
+            or mem_after["rss_mb"] > RECYCLE_RSS_THRESHOLD_MB):
+        logger.warning(
+            "[RECYCLE] worker pid=%d requests=%d RSS=%.1fMB — scheduling "
+            "graceful self-restart (limits: %d reqs / %dMB RSS). Response for "
+            "this request is unaffected; the parent process supervisor "
+            "restarts this worker after it exits.",
+            os.getpid(), _worker_request_count, mem_after["rss_mb"],
+            MAX_REQUESTS_PER_WORKER, RECYCLE_RSS_THRESHOLD_MB,
+        )
+        # Delay so this response finishes sending before the process exits.
+        asyncio.get_event_loop().call_later(
+            1.0, lambda: os.kill(os.getpid(), signal.SIGTERM)
+        )
+
+    return response
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────

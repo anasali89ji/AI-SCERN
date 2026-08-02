@@ -103,3 +103,15 @@ services:
         value: "300"
       - key: MODEL_EVICTION_INTERVAL
         value: "60"
+
+      # Worker self-recycling (v4.5.0) — mitigates an unresolved per-request
+      # memory leak (RSS climbs steadily across requests regardless of model
+      # eviction) that was OOM-killing workers mid-boot under sustained
+      # /analyze/image traffic. A worker restarts itself gracefully (SIGTERM,
+      # same path DO uses on deploy) once it hits either limit; the parent
+      # process supervisor immediately respawns it. Tune RECYCLE_RSS_THRESHOLD_MB
+      # down if you move to a smaller instance size than professional-s (4GB).
+      - key: MAX_REQUESTS_PER_WORKER
+        value: "40"
+      - key: RECYCLE_RSS_THRESHOLD_MB
+        value: "3000"
