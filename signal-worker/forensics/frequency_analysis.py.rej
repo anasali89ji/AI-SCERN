@@ -1,0 +1,28 @@
+diff a/signal-worker/forensics/frequency_analysis.py b/signal-worker/forensics/frequency_analysis.py	(rejected hunks)
+@@ -8,12 +8,20 @@ from scipy.stats import kurtosis, skew
+ from typing import Dict, Any
+ 
+ 
+-def frequency_domain_analysis(image_path: str) -> Dict[str, Any]:
+-    img = cv2.imread(image_path)
+-    if img is None:
+-        return {"error": "cannot_read_image"}
+-
+-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
++def frequency_domain_analysis(img_array: np.ndarray) -> Dict[str, Any]:
++    """
++    Fix #6 (v4.5.0): accepts an already-decoded img_array (RGB, uint8)
++    instead of re-reading the image from disk. image_engine.py already has
++    the decoded array in memory — every v3 forensic module independently
++    re-reading the same file was 9x redundant disk I/O per request.
++    """
++    if img_array is None or img_array.size == 0:
++        return {"error": "empty_image_array"}
++
++    if img_array.ndim == 3:
++        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
++    else:
++        gray = img_array
+     h, w = gray.shape
+ 
+     f = np.fft.fft2(gray)

@@ -1,0 +1,21 @@
+diff a/signal-worker/forensics/text_artifact_detector.py b/signal-worker/forensics/text_artifact_detector.py	(rejected hunks)
+@@ -14,7 +14,8 @@ except ImportError:
+     TESSERACT_AVAILABLE = False
+ 
+ 
+-def detect_text_artifacts(image_path: str) -> Dict[str, Any]:
++def detect_text_artifacts(img_array: np.ndarray) -> Dict[str, Any]:
++    """Fix #6 (v4.5.0): accepts img_array (RGB) instead of image_path."""
+     if not TESSERACT_AVAILABLE:
+         return {
+             "text_detected": False,
+@@ -25,8 +26,7 @@ def detect_text_artifacts(image_path: str) -> Dict[str, Any]:
+             "note": "pytesseract not available"
+         }
+ 
+-    img = cv2.imread(image_path)
+-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
++    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY) if img_array.ndim == 3 else img_array
+ 
+     data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT)
+ 

@@ -1,0 +1,55 @@
+diff a/frontend/lib/inference/hf-analyze.ts b/frontend/lib/inference/hf-analyze.ts	(rejected hunks)
+@@ -31,7 +31,7 @@ import {
+   geminiAvailable,
+ } from './gemini-analyzer'
+ import { analyzeTextWithBrain }  from '@/lib/inference/text-detection-brain'
+-import { analyzeImageWithBrain } from '@/lib/inference/image-detection-brain'
++import { analyzeImageWithBrain, crossValidateBrainAndBackend } from '@/lib/inference/image-detection-brain'
+ import { scoreToVerdict }        from '@/lib/accuracy/log-predictions'
+ 
+ export interface DetectionSignal {
+@@ -685,6 +685,12 @@ interface PythonCVResult {
+   // noise stats, frequency domain, SynthID) with v3 forensics — this is
+   // strictly more complete than composite_cv_score alone (which is v3-only).
+   composite_score?: { v2_composite: number; v3_composite: number; fused_score: number }
++  // Fix #13: the worker's /analyze/image response already includes these
++  // (see signal-worker/engines/image_engine.py analyze_image_from_bytes),
++  // but they weren't typed/consumed here before. Optional + defensive:
++  // the cross-validation bridge degrades gracefully if either is missing.
++  layers?:  { layer?: number; layerSuspicionScore?: number }[]
++  synthid?: { detected?: boolean; confidence?: number }
+ }
+ 
+ async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promise<PythonCVResult | null> {
+@@ -1006,6 +1012,21 @@ if (generatorVote.name && aiScore > 0.45) {
+   }
+ }
+ 
++// ── Fix #13: Frontend-Backend Cross-Validation Bridge ──────────────────────
++// Narrow, additive check for a small set of known conflict/corroboration
++// patterns between Brain and the backend physics layers (DIRE/L7, AI
++// Fingerprint/L9, BDIS/L12, SynthID). Does not replace the tuned ensemble
++// weighting above — only nudges aiScore when the bridge actually detects
++// one of its known patterns, and always records why via conflictNotes.
++const crossValidation = crossValidateBrainAndBackend(brainResult, cvWorkerResult ?? null)
++let imgCrossValidationNotes: string[] = []
++if (crossValidation.conflictNotes.length > 0) {
++  imgCrossValidationNotes = crossValidation.conflictNotes
++  // Blend rather than fully override — keeps this a bounded nudge, not a
++  // second competing scoring system.
++  aiScore = (aiScore + crossValidation.finalScore) / 2
++}
++
+ const calibratedImgScore = calibrateScore(aiScore)
+ const editSig  = imgSignals.find(s => s.name === 'Edit Signature')
+ const isEdited = editSig && editSig.score > 0.65 && calibratedImgScore < 0.52 && calibratedImgScore > 0.30
+@@ -1060,7 +1081,8 @@ return {
+       description: `${engineDesc}. Brain verdict: ${brainResult.verdict} (${Math.round(brainResult.score * 100)}%). ` +
+         (generatorVote.name ? `Generator: ${generatorVote.name} (${generatorVote.sources.join('+')} agree). ` : (brainResult.generatorHints.length ? `Generator: ${brainResult.generatorHints.join('; ')}. ` : '')) +
+         `Top: ${brainResult.findings[0] ?? 'pixel pattern analysis'}` +
+-        (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : ''),
++        (geminiSigs.length ? ` | Gemini: ${geminiSigs.slice(0, 2).join(', ')}` : '') +
++        (imgCrossValidationNotes.length ? ` | Cross-check: ${imgCrossValidationNotes.join('; ')}` : ''),
+       weight:  50,
+       value:   Math.round(brainResult.score * 1000) / 1000,
+       flagged: brainResult.score > 0.60,
