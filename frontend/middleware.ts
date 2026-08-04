@@ -39,21 +39,27 @@ async function checkMaintenanceMode(req: Request): Promise<{
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!url || !key) return null
+    if (!url || !key) {
+      console.error('[MAINTENANCE] Missing Supabase credentials')
+      return null
+    }
 
     const db = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
 
-    const { data } = await db
+    const { data, error } = await db
       .from('site_settings')
       .select('key, value')
       .in('key', ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips'])
 
-    if (!data) return null
+    if (error) {
+      console.error('[MAINTENANCE] DB error:', error.message)
+      return null
+    }
 
     const settings: Record<string, string> = {}
-    for (const row of data) {
+    for (const row of data || []) {
       settings[row.key] = row.value
     }
 
@@ -68,7 +74,8 @@ async function checkMaintenanceMode(req: Request): Promise<{
       duration: settings.maintenance_duration || '',
       allowed_ips,
     }
-  } catch {
+  } catch (err) {
+    console.error('[MAINTENANCE] Unexpected error:', err)
     return null
   }
 }
@@ -76,17 +83,22 @@ async function checkMaintenanceMode(req: Request): Promise<{
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl
 
+  // ── Maintenance Mode Check ────────────────────────────────────────────────
   if (!isExempt(pathname)) {
     const maintenance = await checkMaintenanceMode(req)
+    
     if (maintenance?.enabled) {
       const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
         || req.headers.get('x-real-ip')
         || 'unknown'
 
-      const isAllowed = maintenance.allowed_ips.length === 0
-        || maintenance.allowed_ips.includes(clientIp)
+      // FIXED: Only allow IPs explicitly in the list + localhost
+      // Empty list = NO ONE gets through (except localhost)
+      const isAllowed = maintenance.allowed_ips.includes(clientIp)
         || clientIp === '127.0.0.1'
         || clientIp === '::1'
+
+      console.log(`[MAINTENANCE] IP: ${clientIp}, Allowed: ${isAllowed}, List: ${JSON.stringify(maintenance.allowed_ips)}`)
 
       if (!isAllowed) {
         const url = new URL('/maintenance', req.url)
@@ -97,6 +109,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
   }
 
+  // ── Auth guard ────────────────────────────────────────────────────────────
   if (isProtected(req)) {
     const { userId } = await auth()
     if (!userId) {
@@ -111,6 +124,6 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|map)).*)',
+    '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|map)).*)',
   ],
 }
