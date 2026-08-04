@@ -16,6 +16,7 @@ Routes:
 
 import asyncio
 import gc
+import json
 import os
 import signal
 import logging
@@ -24,7 +25,7 @@ import datetime
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -321,10 +322,22 @@ async def health() -> Dict[str, Any]:
 
 
 @app.post("/analyze/image")
-async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+async def analyze_image_upload(
+    file: UploadFile = File(...),
+    brain_result: str = Form(None),
+) -> Dict[str, Any]:
     """
     Full image analysis via file upload (multipart/form-data).
     Runs v2 layers (L1–L4, SynthID) + v3 forensic cascade all in parallel.
+
+    brain_result (v4.6, optional): JSON string of the Vercel-side Brain's
+    score (see hf-analyze.ts callPythonCVWorker) — { "score": 0.0-1.0, ... }.
+    When present, image_engine._fuse_scores() folds it in as a third
+    top-level pillar alongside the L1-L14 physics layers and v3 forensics,
+    so the caller gets back ONE already-unified score instead of having to
+    blend Brain against this worker's result itself. Malformed/missing JSON
+    degrades gracefully to the pre-unification 2-pillar fusion — never a
+    hard failure, this field is purely additive.
     """
     # MIME allowlist (P3): reject obvious non-images early, before reading bytes
     if not file.content_type or file.content_type.lower() not in ALLOWED_IMAGE_MIMES:
@@ -339,15 +352,29 @@ async def analyze_image_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     if len(contents) > max_mb * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"Image must be under {max_mb}MB")
 
+    parsed_brain = None
+    if brain_result:
+        try:
+            parsed_brain = json.loads(brain_result)
+            if not isinstance(parsed_brain, dict):
+                parsed_brain = None
+        except (ValueError, TypeError):
+            logger.warning("[analyze/image] brain_result field present but not valid JSON — ignoring, falling back to non-unified fusion")
+            parsed_brain = None
+
     import asyncio
+    import functools
     from engines.image_engine import analyze_image_from_bytes
 
     t0 = time.time()
     _inc("requests_total"); _inc("requests_image")
     loop   = asyncio.get_event_loop()
     result = await loop.run_in_executor(
-        None, analyze_image_from_bytes, contents, file.content_type,
-        f"upload_{int(time.time())}",
+        None,
+        functools.partial(
+            analyze_image_from_bytes, contents, file.content_type,
+            f"upload_{int(time.time())}", brain_result=parsed_brain,
+        ),
     )
     _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
 

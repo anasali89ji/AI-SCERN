@@ -402,7 +402,12 @@ def _maybe_attach_generator_attribution(fused: Dict[str, Any], gfe_attr: Dict[st
         fused["override_reason"]   = "ai_generation_suspected_low_specificity"
 
 
-def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _fuse_scores(
+    v2_layers: list,
+    v3_forensics: Dict[str, Any],
+    synthid: Optional[Dict[str, Any]] = None,
+    brain: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """
     Unified score fusion v4.3 — rebuilt to fix systematic under-scoring of
     hyperrealistic AI images (DALL-E 3, ChatGPT Image, Midjourney V6, Gemini).
@@ -419,6 +424,18 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     2. v3 forensics composite uses fixed signals (see _run_v3_forensics).
        Previously weighted at 60% of the final score; reduced to 40% because
        several signals were actively wrong (dragging scores toward "real").
+
+    1b. (Unification, v4.6) `brain` — the Vercel-side Brain's 18-signal
+       heuristic score (image-detection-brain.ts), passed in from the caller
+       as an optional pre-computed float. When present, it becomes a THIRD
+       top-level pillar alongside v2_composite and v3_cv (see fused_raw
+       below) instead of being blended separately in JS via a 5-branch
+       availability-weighted ensemble. This is the single source of truth
+       for Brain+Engine fusion — hf-analyze.ts no longer runs its own
+       Brain-vs-CV arithmetic once this worker has folded Brain in here.
+       Brain's own pixel-decode/calibration is untouched — this only changes
+       WHERE its score gets combined with everything else, not HOW it's
+       computed.
 
     3. Override rules — these short-circuit soft fusion:
        - If ANY layer ≥ 0.92 → hard floor of 0.82 on final score.
@@ -501,8 +518,27 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     # ── v3 forensics ──────────────────────────────────────────────────────────
     v3_cv = float(v3_forensics.get("composite_cv_score", 0.5))
 
-    # ── Raw fusion: 60% layers + 40% v3 ──────────────────────────────────────
-    fused_raw = v2_composite * 0.60 + v3_cv * 0.40
+    # ── Brain unification (v4.6) ──────────────────────────────────────────────
+    # `brain` is the Vercel-side 18-signal heuristic score, sent over from
+    # hf-analyze.ts as part of the same request that carries the image bytes.
+    # Validated defensively — a malformed/missing brain payload must never
+    # break analysis, it just falls back to the pre-unification 2-pillar split.
+    brain_score: Optional[float] = None
+    if isinstance(brain, dict):
+        _b = brain.get("score")
+        if isinstance(_b, (int, float)) and 0.0 <= float(_b) <= 1.0:
+            brain_score = float(_b)
+
+    # ── Raw fusion ─────────────────────────────────────────────────────────
+    # With brain: 45% v2 layers (L1-L14 physics) + 30% v3 forensics + 25% Brain
+    #   — Brain is itself an 18-signal aggregate (comparable in stature to the
+    #   whole v2/v3 pillars, not a single weak feature), hence its own
+    #   top-level slice rather than folding it into layer_scores as one vote.
+    # Without brain (unchanged v4.5 behavior): 60% v2 layers + 40% v3.
+    if brain_score is not None:
+        fused_raw = v2_composite * 0.45 + v3_cv * 0.30 + brain_score * 0.25
+    else:
+        fused_raw = v2_composite * 0.60 + v3_cv * 0.40
 
     # ── Sigmoid stretch in ambiguous zone ─────────────────────────────────────
     # Maps [0, 1] through a steepened sigmoid centred at 0.5.
@@ -633,6 +669,8 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     return {
         "v2_composite":    round(v2_composite, 4),
         "v3_composite":    round(v3_cv, 4),
+        "brain_composite": round(brain_score, 4) if brain_score is not None else None,
+        "brain_included":  brain_score is not None,
         "fused_raw":       round(fused_raw, 4),
         "fused_score":     round(fused, 4),
         "override_floor":  round(floor, 4),
@@ -746,6 +784,7 @@ def analyze_image_from_bytes(
     image_bytes: bytes,
     content_type: str,
     job_id: str = "",
+    brain_result: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Full image analysis from raw bytes (file upload path).
@@ -754,6 +793,12 @@ def analyze_image_from_bytes(
     
     Was: serial execution ~6-12s
     Now: parallel execution ~2-4s (all layers run concurrently)
+
+    brain_result (v4.6): optional pre-computed score from the Vercel-side
+    Brain (image-detection-brain.ts), forwarded by main.py's /analyze/image
+    handler when the caller sends it. See _fuse_scores() for how it's used —
+    None here just means "unification not available for this request",
+    never a hard failure.
     """
     import io
     import numpy as np
@@ -827,7 +872,7 @@ def analyze_image_from_bytes(
                 status=_lr.get("status", "unknown"),
             )
 
-        fused   = _fuse_scores(layers, v3, synthid)
+        fused   = _fuse_scores(layers, v3, synthid, brain=brain_result)
         gfe_layer = next((l for l in layers if l.get("layer") == 10), {})
         gfe_attr  = gfe_layer.get("generative_attribution", {})
         _maybe_attach_generator_attribution(fused, gfe_attr)

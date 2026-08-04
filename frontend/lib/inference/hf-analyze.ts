@@ -31,7 +31,7 @@ import {
   geminiAvailable,
 } from './gemini-analyzer'
 import { analyzeTextWithBrain }  from '@/lib/inference/text-detection-brain'
-import { analyzeImageWithBrain, crossValidateBrainAndBackend } from '@/lib/inference/image-detection-brain'
+import { analyzeImageWithBrain, crossValidateBrainAndBackend, type ImageBrainResult } from '@/lib/inference/image-detection-brain'
 import { scoreToVerdict }        from '@/lib/accuracy/log-predictions'
 
 export interface DetectionSignal {
@@ -684,7 +684,11 @@ interface PythonCVResult {
   // The worker computes a fuller fusion of its v2 layers (pixel integrity,
   // noise stats, frequency domain, SynthID) with v3 forensics — this is
   // strictly more complete than composite_cv_score alone (which is v3-only).
-  composite_score?: { v2_composite: number; v3_composite: number; fused_score: number }
+  // v4.6: brain_included tells the caller whether the worker actually folded
+  // in the Brain score it was sent (vs. silently falling back to the old
+  // 2-pillar fusion because brain_result was missing/malformed) — lets
+  // analyzeImage() know whether it's safe to skip its own Brain weighting.
+  composite_score?: { v2_composite: number; v3_composite: number; brain_composite: number | null; brain_included: boolean; fused_score: number }
   // Fix #13: the worker's /analyze/image response already includes these
   // (see signal-worker/engines/image_engine.py analyze_image_from_bytes),
   // but they weren't typed/consumed here before. Optional + defensive:
@@ -693,11 +697,24 @@ interface PythonCVResult {
   synthid?: { detected?: boolean; confidence?: number }
 }
 
-async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promise<PythonCVResult | null> {
+async function callPythonCVWorker(
+  imageBuffer: Buffer,
+  mimeType: string,
+  brainResult?: ImageBrainResult | null,
+): Promise<PythonCVResult | null> {
   if (!PYTHON_WORKER_URL) return null
   try {
     const form = new FormData()
     form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.jpg')
+    // v4.6 unification: send Brain's score along so the worker can fold it
+    // into ITS fusion as a third pillar (see image_engine.py _fuse_scores)
+    // instead of hf-analyze.ts blending Brain against cvScore separately.
+    // Purely additive — only the numeric score is needed for fusion, so a
+    // minimal payload keeps the request small; worker degrades gracefully
+    // if this field is missing/malformed.
+    if (brainResult && typeof brainResult.score === 'number') {
+      form.append('brain_result', JSON.stringify({ score: brainResult.score, verdict: brainResult.verdict }))
+    }
     const res = await fetch(`${PYTHON_WORKER_URL}/analyze/image`, {
       method: 'POST', body: form,
       signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
@@ -725,7 +742,10 @@ async function callPythonCVWorker(imageBuffer: Buffer, mimeType: string): Promis
 const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length, mimeType)
 
 // ── Python CV Worker (25% weight C.1 new scheme) — parallel ───────────────
-const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime)
+// v4.6: brainResult is passed through so the worker can unify it into its
+// own fusion (see callPythonCVWorker) instead of this file blending Brain
+// against cvScore separately further down.
+const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime, brainResult)
 
 // ── LLM Vision Analysis — Gemini only (dual-key fallback), Grok disabled ───
 // DECISION: Grok is intentionally disabled — makes zero API calls, regardless
@@ -874,6 +894,15 @@ const cvAvailable = cvScore !== null
 const hfAvailable = mlScore !== null
 const llmAvailable = llmScore !== null
 
+// v4.6 unification: true only when the DO worker actually confirms it folded
+// Brain into its own fusion (see image_engine.py _fuse_scores brain param).
+// If true, cvScore below is ALREADY Brain+CV combined — adding
+// brainResult.score again on top would double-count Brain. If false (older
+// worker version deployed, or the brain_result field failed validation
+// worker-side), fall back to the pre-unification separate-terms math so
+// nothing breaks on a partial rollout.
+const brainUnified = cvAvailable && cvWorkerResult?.composite_score?.brain_included === true
+
 // MODULE 5 — Failure Visibility. Reuses the availability flags the ensemble
 // branching below already computes — no new detection logic, just surfacing
 // what was already being decided silently.
@@ -881,30 +910,59 @@ const imgDegradedSignals: string[] = [
   ...(!cvAvailable  ? [PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
   ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
   ...(!llmAvailable ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
+  ...(cvAvailable && !brainUnified ? ['brain-cv-not-unified-legacy-blend'] : []),
 ]
 
 if (cvAvailable && hfAvailable && llmAvailable) {
-  // Full ensemble: Brain(31%) + CV(22%) + HF(18%) + Pixel(9%) + LLM(20%)
+  // Full ensemble. Unified: BrainCV(53%) + HF(18%) + Pixel(9%) + LLM(20%)
+  //          Legacy (unfolded): Brain(31%) + CV(22%) + HF(18%) + Pixel(9%) + LLM(20%)
   llmWeightUsed = 0.20
-  aiScore    = brainResult.score * 0.31 + cvScore * 0.22 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain31%+CV22%+HF18%+Pixel9%+LLM20%)`
-  engineDesc = `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%)`
+  aiScore    = brainUnified
+    ? cvScore * 0.53 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
+    : brainResult.score * 0.31 + cvScore * 0.22 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
+  modelUsed  = brainUnified
+    ? `Aiscern-ImageEngine-v8.2(BrainCV53%+HF18%+Pixel9%+LLM20%)`
+    : `Aiscern-ImageEngine-v8.1(Brain31%+CV22%+HF18%+Pixel9%+LLM20%)`
+  engineDesc = brainUnified
+    ? `Brain+CV unified (53%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%)`
+    : `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%) — legacy blend, worker didn't unify`
 } else if (cvAvailable && hfAvailable) {
-  // No LLM: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
-  aiScore    = brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain37%+CV28%+HF20%+Pixel15%)`
-  engineDesc = `Brain (37%) + CV-Worker (28%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM`
+  // No LLM. Unified: BrainCV(65%) + HF(20%) + Pixel(15%)
+  //   Legacy: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
+  aiScore    = brainUnified
+    ? cvScore * 0.65 + mlScore * 0.20 + imgSignalScore * 0.15
+    : brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
+  modelUsed  = brainUnified
+    ? `Aiscern-ImageEngine-v8.2(BrainCV65%+HF20%+Pixel15%)`
+    : `Aiscern-ImageEngine-v8.1(Brain37%+CV28%+HF20%+Pixel15%)`
+  engineDesc = brainUnified
+    ? `Brain+CV unified (65%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM`
+    : `Brain (37%) + CV-Worker (28%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM, legacy blend`
 } else if (cvAvailable && llmAvailable) {
-  // No HF: Brain(38%) + CV(29%) + Pixel(13%) + LLM(20%)
+  // No HF. Unified: BrainCV(67%) + Pixel(13%) + LLM(20%)
+  //   Legacy: Brain(38%) + CV(29%) + Pixel(13%) + LLM(20%)
   llmWeightUsed = 0.20
-  aiScore    = brainResult.score * 0.38 + cvScore * 0.29 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain38%+CV29%+Pixel13%+LLM20%)`
-  engineDesc = `Brain (38%) + CV-Worker (29%) + Pixel (13%) + LLM (20%) — HF cold-starting`
+  aiScore    = brainUnified
+    ? cvScore * 0.67 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
+    : brainResult.score * 0.38 + cvScore * 0.29 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
+  modelUsed  = brainUnified
+    ? `Aiscern-ImageEngine-v8.2(BrainCV67%+Pixel13%+LLM20%)`
+    : `Aiscern-ImageEngine-v8.1(Brain38%+CV29%+Pixel13%+LLM20%)`
+  engineDesc = brainUnified
+    ? `Brain+CV unified (67%) + Pixel (13%) + LLM (20%) — HF cold-starting`
+    : `Brain (38%) + CV-Worker (29%) + Pixel (13%) + LLM (20%) — HF cold-starting, legacy blend`
 } else if (cvAvailable) {
-  // CV + Brain + Pixel only
-  aiScore    = brainResult.score * 0.47 + cvScore * 0.38 + imgSignalScore * 0.15
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain47%+CV38%+Pixel15%)`
-  engineDesc = `Brain (47%) + CV-Worker (38%) + Pixel (15%) — no LLM or HF`
+  // CV + Brain + Pixel only. Unified: BrainCV(85%) + Pixel(15%)
+  //   Legacy: Brain(47%) + CV(38%) + Pixel(15%)
+  aiScore    = brainUnified
+    ? cvScore * 0.85 + imgSignalScore * 0.15
+    : brainResult.score * 0.47 + cvScore * 0.38 + imgSignalScore * 0.15
+  modelUsed  = brainUnified
+    ? `Aiscern-ImageEngine-v8.2(BrainCV85%+Pixel15%)`
+    : `Aiscern-ImageEngine-v8.1(Brain47%+CV38%+Pixel15%)`
+  engineDesc = brainUnified
+    ? `Brain+CV unified (85%) + Pixel (15%) — no LLM or HF`
+    : `Brain (47%) + CV-Worker (38%) + Pixel (15%) — no LLM or HF, legacy blend`
 } else if (hfAvailable && llmAvailable) {
   // No CV: Brain(40%) + HF(22%) + Pixel(18%) + LLM(20%)
   llmWeightUsed = 0.20
@@ -1018,13 +1076,22 @@ if (generatorVote.name && aiScore > 0.45) {
 // Fingerprint/L9, BDIS/L12, SynthID). Does not replace the tuned ensemble
 // weighting above — only nudges aiScore when the bridge actually detects
 // one of its known patterns, and always records why via conflictNotes.
-const crossValidation = crossValidateBrainAndBackend(brainResult, cvWorkerResult ?? null)
+//
+// v4.6: skipped when brainUnified — the worker already folded Brain into its
+// own fusion (see image_engine.py _fuse_scores), so aiScore's cvScore
+// component already reflects Brain's input. Running this bridge on top would
+// be reconciling Brain against a score that already contains Brain, which
+// isn't a meaningful independent check anymore. Kept for the legacy
+// (non-unified) path so nothing regresses on a partial rollout.
 let imgCrossValidationNotes: string[] = []
-if (crossValidation.conflictNotes.length > 0) {
-  imgCrossValidationNotes = crossValidation.conflictNotes
-  // Blend rather than fully override — keeps this a bounded nudge, not a
-  // second competing scoring system.
-  aiScore = (aiScore + crossValidation.finalScore) / 2
+if (!brainUnified) {
+  const crossValidation = crossValidateBrainAndBackend(brainResult, cvWorkerResult ?? null)
+  if (crossValidation.conflictNotes.length > 0) {
+    imgCrossValidationNotes = crossValidation.conflictNotes
+    // Blend rather than fully override — keeps this a bounded nudge, not a
+    // second competing scoring system.
+    aiScore = (aiScore + crossValidation.finalScore) / 2
+  }
 }
 
 const calibratedImgScore = calibrateScore(aiScore)
