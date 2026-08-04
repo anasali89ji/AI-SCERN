@@ -527,8 +527,16 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
     #   AI generators    : L7 = 0.47–0.62  (all clearly above 0.42)
     #
     # When L7 < 0.42, apply a QUADRATIC PENALTY to the fused score and cancel
-    # any override floors — prevents false positives where many noisy signals
-    # agree on "AI" but the fundamental diffusion reconstruction test says "real".
+    # the override floors below EXCEPT the literal-EXIF-tag override — prevents
+    # false positives where many noisy signals agree on "AI" but the
+    # fundamental diffusion reconstruction test says "real". (v4.5.1: this
+    # comment previously claimed ALL override floors were cancelled, but only
+    # four_layer_consensus actually checked dire_check_fired — generator_detected
+    # and single_layer_very_high_confidence silently ignored it and could still
+    # force-floor a DIRE-confirmed-real image to 0.82-0.87. Now fixed to match
+    # this comment's original intent, with the EXIF-tag override left as a
+    # deliberate exception since a literal AI-tool tag is stronger ground truth
+    # than any pixel-domain heuristic.)
     l7_score = next(
         (float(l.get("layerSuspicionScore", 0.5))
          for l in v2_layers if l.get("layer") == 7),
@@ -577,17 +585,29 @@ def _fuse_scores(v2_layers: list, v3_forensics: Dict[str, Any], synthid: Optiona
         # Literal AI software tag in EXIF — certain
         floor = 0.97
         override_reason = "ai_software_tag_in_exif"
-    elif synthid_detected and synthid_conf >= 0.75 and content_corroboration:
+    elif synthid_detected and synthid_conf >= 0.75 and content_corroboration and not dire_check_fired:
         # Module 1 fix: previously gated on fused_raw >= 0.58, but fused_raw
         # blends in L9 which is partly driven by a pure format prior
         # (PNG + no EXIF), so a real screenshot/webphoto could satisfy this
         # gate with zero genuine generator signal. Now requires BOTH a high
         # SynthID track confidence (raised 0.65 -> 0.75) AND independent
         # corroboration from at least one purely content-based forensic layer.
+        # Fix (v4.5.1): also gated on `not dire_check_fired` — SynthID Track C
+        # is known to overreach on natural textures (grass/hair, see Fix #2
+        # comment above); when DIRE's diffusion-reconstruction test says the
+        # image is clearly real, this override must not be able to out-vote
+        # it. Previously this branch force-floored to 0.87 regardless of
+        # dire_check_fired, silently defeating the DIRE penalty applied to
+        # `fused` a few lines above and reintroducing the exact false-positive
+        # class Fix #11 was meant to eliminate.
         floor = 0.87
         override_reason = f"generator_detected:{synthid.get('generator_hint','ai')}"
-    elif any_very_high and fused_raw >= 0.60:
-        # Single layer genuinely at 0.92+ with broad agreement
+    elif any_very_high and fused_raw >= 0.60 and not dire_check_fired:
+        # Single layer genuinely at 0.92+ with broad agreement.
+        # Fix (v4.5.1): gated on `not dire_check_fired` for the same reason as
+        # generator_detected above — a single layer spiking to 0.92+ (e.g. an
+        # evidence-node quirk) should not be able to override a clear DIRE
+        # real-photo signal.
         floor = 0.82
         override_reason = "single_layer_very_high_confidence"
     elif high_count >= 4 and fused_raw >= 0.58:
