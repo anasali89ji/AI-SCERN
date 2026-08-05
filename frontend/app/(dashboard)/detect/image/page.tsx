@@ -340,7 +340,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                  {loading ? 'Scanning…' : 'Detect'}
+                  {loading ? 'Verifying…' : 'Verify'}
                 </button>
               </div>
             </div>

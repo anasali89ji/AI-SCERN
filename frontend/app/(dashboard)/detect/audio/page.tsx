@@ -283,7 +283,7 @@ export default function AudioDetectionPage() {
             className="px-6 py-3 rounded-xl bg-primary text-bg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <Zap className="w-4 h-4" />
-            Start Analysis
+            Verify Audio
           </button>
         </motion.div>
       )}

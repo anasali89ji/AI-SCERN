@@ -199,7 +199,7 @@ function VerifyDocPage() {
                 <X className="w-4 h-4" />
               </button>
               <button onClick={handleScan} className="btn-primary px-5 py-2 text-sm font-semibold rounded-xl">
-                Scan document
+                Verify document
               </button>
             </>
           )}

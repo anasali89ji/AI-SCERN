@@ -370,7 +370,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading || charCount < 50}
                   className="btn-primary py-2 px-5 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {loading ? 'Analyzing…' : 'Detect'}
+                  {loading ? 'Verifying…' : 'Verify'}
                 </button>
               </div>
             </div>

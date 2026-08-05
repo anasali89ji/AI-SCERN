@@ -466,7 +466,7 @@ function VideoDetectionPage() {
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
-                  {loading ? loadingLabel.split('…')[0] + '…' : 'Analyze Video'}
+                  {loading ? loadingLabel.split('…')[0] + '…' : 'Verify Video'}
                 </button>
               </div>
             </div>
