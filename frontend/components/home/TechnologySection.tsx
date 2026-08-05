@@ -5,22 +5,22 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 const LAYERS = [
-  { title: 'Input', desc: 'Accepts text, images, audio, and video in any common format.', border: 'border-l-primary' },
-  { title: 'Preprocessing', desc: 'Normalizes, resizes, and extracts raw signals for analysis.', border: 'border-l-secondary' },
-  { title: 'Multi-model Analysis', desc: 'Ensemble of specialized models inspects content in parallel.', border: 'border-l-cyan' },
-  { title: 'Forensic Detection', desc: 'Pixel-level, spectral, and linguistic forensics hunt for synthetic artifacts.', border: 'border-l-primary' },
-  { title: 'Consistency Engine', desc: 'Cross-references signals to resolve conflicts and reduce false positives.', border: 'border-l-secondary' },
-  { title: 'Risk Scoring', desc: 'Aggregates all signals into an explainable confidence score.', border: 'border-l-emerald' },
-  { title: 'Report Generation', desc: 'Produces human-readable reports with evidence and reasoning.', border: 'border-l-emerald' },
+  { title: 'Universal Input', desc: 'Accepts text, images, audio, and video in any common format. No preprocessing required.', border: 'border-l-primary' },
+  { title: 'Signal Extraction', desc: 'Normalizes, resizes, and extracts raw forensic signals invisible to the human eye.', border: 'border-l-secondary' },
+  { title: 'Multi-Model Ensemble', desc: 'Specialized AI detection models inspect content in parallel — no single point of failure.', border: 'border-l-cyan' },
+  { title: 'Deepfake Forensics', desc: 'Pixel-level, spectral, and linguistic forensics hunt for synthetic artifacts across every modality.', border: 'border-l-primary' },
+  { title: 'Cross-Model Validation', desc: 'Results are cross-referenced to resolve conflicts, reduce false positives, and boost trust verification accuracy.', border: 'border-l-secondary' },
+  { title: 'Trust Scoring', desc: 'Aggregates all signals into an explainable authenticity score with clear reasoning.', border: 'border-l-emerald' },
+  { title: 'Audit-Ready Reports', desc: 'Produces human-readable trust verification reports with evidence, reasoning, and confidence breakdowns.', border: 'border-l-emerald' },
 ]
 
 export default function TechnologySection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section id="technology" aria-label="AI detection technology" className="relative py-24 md:py-32 [overflow:clip]">
+    <section id="technology" aria-label="AI trust verification technology" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-3xl mx-auto px-6">
-        <SectionHeader headline="Powered by multi-layer AI forensic analysis." />
+        <SectionHeader headline="Built so you don't have to trust a single algorithm." />
 
         <div className="relative">
           {/* Vertical connector */}

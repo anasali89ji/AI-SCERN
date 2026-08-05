@@ -6,19 +6,19 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 const STEPS = [
-  { icon: Upload, title: 'Upload', description: 'Upload any text, image, audio, or video.' },
-  { icon: Cpu, title: 'Analyze', description: 'Multiple detection engines inspect authenticity signals simultaneously.' },
-  { icon: Eye, title: 'Review', description: 'Receive confidence scores, explanations, and visual insights.' },
-  { icon: ArrowRight, title: 'Act', description: 'Download reports, share results, or integrate through API.' },
+  { icon: Upload, title: 'Upload', description: 'Drop in any text, image, audio, or video file — no format conversion needed.' },
+  { icon: Cpu, title: 'Analyze', description: 'Multiple AI detection engines run in parallel, cross-checking for synthetic artifacts across every modality.' },
+  { icon: Eye, title: 'Review', description: 'Get a clear authenticity verdict with forensic evidence, confidence scores, and visual breakdowns.' },
+  { icon: ArrowRight, title: 'Act', description: 'Export audit-ready trust verification reports, share results, or integrate via API into your workflow.' },
 ]
 
 export default function HowItWorksSection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section id="how-it-works" aria-label="How it works" className="relative py-24 md:py-32 [overflow:clip]">
+    <section id="how-it-works" aria-label="How trust verification works" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-[1440px] mx-auto px-6">
-        <SectionHeader headline="Verify content in four simple steps." />
+        <SectionHeader headline="From suspicion to certainty in under 30 seconds." />
 
         <div className="relative">
           {/* Desktop connector line */}

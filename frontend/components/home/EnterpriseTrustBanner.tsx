@@ -15,13 +15,13 @@ const CARDS = [
   {
     title: 'Academic Integrity',
     icon: GraduationCap,
-    features: ['Essay Detection', 'Research Verification', 'Assignment Review'],
+    features: ['Essay & Thesis Detection', 'Research Verification', 'Assignment Bulk Review'],
     floatDelay: '0.5s',
   },
   {
     title: 'Media Verification',
     icon: Globe,
-    features: ['Deepfake Images', 'AI Voice Detection', 'Synthetic Video Analysis'],
+    features: ['Deepfake Image Detection', 'AI Voice Analysis', 'Synthetic Video Forensics'],
     floatDelay: '1s',
   },
   {
@@ -46,7 +46,7 @@ export default function EnterpriseTrustBanner() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section id="trust" aria-label="Enterprise trust" className="relative py-24 md:py-32 [overflow:clip]">
+    <section id="trust" aria-label="Enterprise trust verification" className="relative py-24 md:py-32 [overflow:clip]">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="hero-mesh-1 absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] opacity-30"
@@ -57,8 +57,8 @@ export default function EnterpriseTrustBanner() {
 
       <div className="max-w-[1440px] mx-auto px-6 relative">
         <SectionHeader
-          headline="Trusted by professionals who verify digital authenticity."
-          subheadline="Whether you're screening AI-written assignments, verifying media, reviewing legal evidence, or evaluating recruitment documents, Aiscern provides one unified verification platform."
+          headline="Trusted by professionals who verify digital authenticity every day."
+          subheadline="Whether you're screening AI-written assignments, verifying media for publication, reviewing legal evidence, or evaluating recruitment documents — Aiscern provides one unified trust verification platform."
         />
 
         <motion.div

@@ -9,29 +9,29 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 const INDUSTRIES = [
   {
     title: 'Higher Education',
-    problem: 'Students submit AI-generated essays. Academic integrity erodes class by class.',
-    solution: 'Aiscern scans assignments in bulk, flags synthetic text, and provides audit-ready reports.',
+    problem: 'AI-written theses are passing review boards. Academic integrity erodes degree by degree.',
+    solution: 'Aiscern scans assignments in bulk, flags AI-generated text, and produces audit-ready trust verification reports for examination offices.',
     href: '/solutions/education',
     bg: 'radial-gradient(circle at 90% 10%, rgba(124,58,237,0.05), transparent 50%)',
   },
   {
     title: 'Human Resources',
-    problem: 'AI-polished CVs and cover letters mask the real candidate behind perfect prose.',
-    solution: 'Screen written applications and video transcripts for synthetic content before hiring.',
+    problem: 'Candidates are outsourcing their personality to ChatGPT. AI-polished CVs mask the real applicant.',
+    solution: 'Screen written applications and video transcripts for synthetic content before you hire — know who actually wrote the application.',
     href: '/solutions/hr',
     bg: 'radial-gradient(circle at 10% 90%, rgba(37,99,235,0.05), transparent 50%)',
   },
   {
     title: 'Media & Journalism',
-    problem: 'Breaking news cycles leave no time to verify sources. Deepfakes spread faster than truth.',
-    solution: 'Verify images, audio, and video before publication with shareable authenticity reports.',
+    problem: 'You have 10 minutes to publish. A deepfake doesn't need more than 5 to go viral.',
+    solution: 'Verify images, audio, and video before publication with shareable content authenticity reports that stand up to scrutiny.',
     href: '/solutions/media',
     bg: 'radial-gradient(circle at 50% 50%, rgba(6,182,212,0.03), transparent 70%)',
   },
   {
     title: 'Legal & Compliance',
-    problem: 'Deepfake evidence and AI-drafted contracts enter proceedings undetected.',
-    solution: 'Support authenticity review of digital evidence with forensic-grade detection reports.',
+    problem: 'Deepfake evidence and AI-drafted contracts are entering proceedings undetected — jeopardizing case outcomes.',
+    solution: 'Support digital evidence review with forensic-grade AI content detection and trust verification reports admissible in legal contexts.',
     href: '/solutions/legal',
     bg: 'radial-gradient(circle at 90% 90%, rgba(16,185,129,0.05), transparent 50%)',
   },
@@ -51,9 +51,9 @@ export default function IndustrySolutionsSection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section id="solutions" aria-label="Industry solutions" className="relative py-24 md:py-32 [overflow:clip]">
+    <section id="solutions" aria-label="Industry trust verification solutions" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-[1440px] mx-auto px-6">
-        <SectionHeader headline="Built for every industry affected by generative AI." />
+        <SectionHeader headline="Built for every industry fighting AI-generated deception." />
 
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"

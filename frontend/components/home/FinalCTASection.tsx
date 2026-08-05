@@ -16,7 +16,7 @@ export default function FinalCTASection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section aria-label="Get started" className="relative py-24 md:py-32 lg:py-40 [overflow:clip]">
+    <section aria-label="Get started with trust verification" className="relative py-24 md:py-32 lg:py-40 [overflow:clip]">
       {/* Mesh gradients, reused from hero */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="hero-mesh-1 absolute top-1/4 left-1/3 w-[600px] h-[600px] rounded-full"
@@ -50,10 +50,10 @@ export default function FinalCTASection() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary mb-4">
-            Start verifying digital authenticity today.
+            Stop guessing. Start verifying digital authenticity.
           </h2>
           <p className="text-lg md:text-xl text-text-muted max-w-xl mx-auto mb-10 leading-relaxed">
-            Protect your organization from AI-generated misinformation with one unified platform.
+            Protect your organization from AI-generated misinformation, deepfakes, and synthetic media with one unified trust verification platform.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -61,13 +61,13 @@ export default function FinalCTASection() {
               href="/signup"
               className="magnetic-btn rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white px-8 py-4 font-semibold"
             >
-              Start Free
+              Start Free Trust Verification
             </Link>
             <Link
               href="/enterprise"
               className="rounded-xl border border-border bg-surface text-text-primary px-8 py-4 font-semibold hover:bg-surface-active transition-colors"
             >
-              Book Demo
+              Book Enterprise Demo
             </Link>
           </div>
         </motion.div>

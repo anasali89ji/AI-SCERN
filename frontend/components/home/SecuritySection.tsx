@@ -6,19 +6,19 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 const SECURITY_FEATURES = [
-  { title: 'Encrypted Processing', icon: Lock },
-  { title: 'Secure Storage', icon: Database },
-  { title: 'Automatic File Deletion', icon: Trash2 },
-  { title: 'No Training on Customer Files', icon: ShieldCheck },
-  { title: 'Access Controls', icon: KeyRound },
-  { title: 'GDPR-ready Architecture', icon: Globe },
+  { title: 'End-to-End Encryption', desc: 'All uploads are encrypted in transit and at rest using industry-standard protocols.', icon: Lock },
+  { title: 'Isolated Secure Storage', desc: 'Files are stored in isolated Cloudflare R2 buckets with strict access controls.', icon: Database },
+  { title: 'Automatic File Deletion', desc: 'Content is purged automatically after analysis. We do not retain your data.', icon: Trash2 },
+  { title: 'No Training on Your Content', desc: 'Your files are never used to train or improve our AI detection models.', icon: ShieldCheck },
+  { title: 'Role-Based Access Controls', desc: 'Enterprise teams get granular permissions, audit logs, and SSO integration.', icon: KeyRound },
+  { title: 'GDPR-Ready Architecture', desc: 'Built to pass compliance audits — not just checkbox exercises.', icon: Globe },
 ]
 
 export default function SecuritySection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section id="security" aria-label="Security and privacy" className="relative py-24 md:py-32 [overflow:clip]">
+    <section id="security" aria-label="Security and privacy for trust verification" className="relative py-24 md:py-32 [overflow:clip]">
       {/* Subtle watermark, CSS only */}
       <Shield
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] text-text-primary opacity-[0.03] pointer-events-none"
@@ -27,7 +27,7 @@ export default function SecuritySection() {
       />
 
       <div className="max-w-[1440px] mx-auto px-6 relative">
-        <SectionHeader headline="Enterprise-grade privacy and security." />
+        <SectionHeader headline="Your files are not our training data." subheadline="Enterprise-grade security and privacy built into every scan." />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {SECURITY_FEATURES.map((feature, i) => {
