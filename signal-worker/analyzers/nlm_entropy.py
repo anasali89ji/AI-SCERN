@@ -134,7 +134,9 @@ def analyze_nlm_entropy(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any]:
     Parameters
     ----------
     img_array : np.ndarray  shape (H, W, 3) uint8
-    img_pil   : PIL.Image   (unused, kept for consistent engine signature)
+    img_pil   : PIL.Image   used to check format for the lossless-only gate
+               on Signal 3 (see below) — no longer just "unused, kept for
+               consistent engine signature".
 
     Returns
     -------
@@ -143,6 +145,8 @@ def analyze_nlm_entropy(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any]:
     from utils.evidence_builder import build_layer_report
 
     try:
+        is_lossless = (getattr(img_pil, "format", None) or "").upper() not in ("JPEG", "JPG")
+
         # ── Resize to max 512px for speed ────────────────────────────────────
         _h, _w = img_array.shape[:2]
         if max(_h, _w) > 512:
@@ -160,21 +164,44 @@ def analyze_nlm_entropy(img_array: np.ndarray, img_pil: Any) -> Dict[str, Any]:
         sig_entropy = float(np.clip(1.0 - ent_var / 0.5, 0, 1))
 
         # Signal 2 — Laplacian kurtosis deviation from 3.0
+        # Fix (v4.6.1): the /10.0 normalization saturated to 1.0 for almost
+        # any JPEG-compressed image — DCT quantization alone (unrelated to
+        # AI-ness) produces kurtosis deviations of ~10-38 on ordinary real
+        # photos (measured empirically), pinning this signal at max suspicion
+        # regardless of actual content. Widened to /45.0 based on that
+        # observed real-photo range, so the signal has room to actually vary
+        # instead of saturating immediately on any compressed input.
         lap_kurt = _laplacian_kurtosis(residuals)
         kurt_dev = abs(lap_kurt - 3.0)
-        # High deviation in either direction → suspicion; normalise to [0,1]
-        sig_kurtosis = float(np.clip(kurt_dev / 10.0, 0, 1))
+        sig_kurtosis = float(np.clip(kurt_dev / 45.0, 0, 1))
 
-        # Signal 3 — inter-channel correlation (high → suspicion)
-        icc = _inter_channel_corr(residuals)
-        sig_icc = float(np.clip(icc, 0, 1))
+        # Signal 3 — inter-channel residual correlation (high → suspicion)
+        # Fix (v4.6.1): JPEG 4:2:0 chroma subsampling couples R/G/B through
+        # the YCbCr decode, making ANY JPEG score high on this signal
+        # regardless of origin — the exact same artifact already documented
+        # and gated in synthid_local.py's Track B2 (dalle3_inter_channel_corr).
+        # Measured empirically here too: real JPEGs scored icc=0.78-0.99,
+        # actually HIGHER than the AI PNG samples (0.35-0.69) — inverted from
+        # this signal's design assumption. Gated to lossless-only, same as
+        # the established fix elsewhere in this codebase.
+        if is_lossless:
+            icc = _inter_channel_corr(residuals)
+            sig_icc = float(np.clip(icc, 0, 1))
+        else:
+            icc = None
+            sig_icc = 0.5  # JPEG: indeterminate — neutral, not a vote either way
 
-        score = 0.40 * sig_entropy + 0.30 * sig_kurtosis + 0.30 * sig_icc
+        if is_lossless:
+            score = 0.40 * sig_entropy + 0.30 * sig_kurtosis + 0.30 * sig_icc
+        else:
+            # Redistribute Signal 3's weight to the two signals that remain
+            # meaningful on JPEG input, rather than diluting with a neutral 0.5.
+            score = 0.55 * sig_entropy + 0.45 * sig_kurtosis
 
         evidence = [
             f"noise_entropy_variance={ent_var:.4f} (suspicion={sig_entropy:.2f})",
             f"laplacian_kurtosis={lap_kurt:.4f} dev={kurt_dev:.4f} (suspicion={sig_kurtosis:.2f})",
-            f"inter_channel_corr={icc:.4f} (suspicion={sig_icc:.2f})",
+            f"inter_channel_corr={'n/a (JPEG, indeterminate)' if icc is None else f'{icc:.4f}'} (suspicion={sig_icc:.2f})",
         ]
 
         return build_layer_report(8, "NLM Noise Entropy Tensor", evidence, "success", 0, score=round(score, 4))
