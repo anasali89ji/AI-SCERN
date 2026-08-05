@@ -1,7 +1,7 @@
 """
-Aiscern Detection Worker — Text Engine v4.2.0
-CPU-only text AI-detection using perplexity, burstiness,
-stylometry, and repetition analysis.
+Aiscern Detection Worker — Text Engine v4.3.0
+CPU-only text AI-detection using perplexity, burstiness, stylometry,
+repetition, AI phrase fingerprinting, and informality-marker analysis.
 
 Designed for DigitalOcean basic-xs (1GB RAM).
 All ML models are lazy-loaded on first use.
@@ -310,6 +310,196 @@ def _compute_repetition(text: str) -> Dict[str, Any]:
     }
 
 
+# ── AI Phrase Fingerprint ────────────────────────────────────────────────────
+
+def _compute_ai_phrase_fingerprint(text: str) -> Dict[str, Any]:
+    """
+    Lexicon-based detector for stock phrases and constructions strongly
+    associated with instruction-tuned LLM output (ChatGPT/Claude/Gemini-era
+    "AI-isms"). Distinct from stylometry's narrow logical-connector rate
+    (however/therefore/etc.) -- this targets the broader vocabulary and
+    hedging/framing constructions that show up disproportionately in LLM
+    output regardless of topic: stock openers ("in today's world", "in the
+    realm of"), stock closers ("in conclusion", "overall,"), hedge-framing
+    ("it's important to note/consider that"), and a set of individual words
+    that are heavily over-represented in LLM output relative to general
+    human corpora ("delve", "tapestry", "boundaries", "navigate",
+    "landscape", "underscore", "holistic", "robust", "seamless",
+    "cutting-edge", "paradigm", "foster", "leverage", "multifaceted").
+
+    Density-based scoring (occurrences per 1000 words), same pattern as
+    _compute_repetition's repetition_density. Thresholds are reasoned
+    estimates from known community/practitioner consensus on LLM phrase
+    over-representation, not fit against a labeled corpus in this sandbox --
+    same caveat as the image-side calibration work: revisit once real
+    labeled human/AI text samples are available to validate the exact
+    density cutoffs.
+    """
+    words = tokenise_words(text)
+    if len(words) < 30:
+        return {
+            "score": 0.5,
+            "confidence": 0.15,
+            "details": {"reason": "too_few_words"},
+        }
+
+    lower = text.lower()
+    word_count = len(words)
+
+    # Multi-word stock constructions (phrase-level, checked first so their
+    # constituent words aren't double-counted by the single-word lexicon).
+    STOCK_PHRASES = [
+        r"it'?s important to note", r"it'?s important to consider",
+        r"it is important to note", r"it is worth noting",
+        r"in today'?s (?:world|society|fast-paced|digital)",
+        r"in the realm of", r"in the world of",
+        r"navigate the (?:complex|complexities|world|landscape)",
+        r"plays a crucial role", r"plays a vital role", r"plays a significant role",
+        r"underscore(?:s)? the importance", r"highlight(?:s)? the importance",
+        r"a testament to", r"stands as a testament",
+        r"paradigm shift", r"game[- ]chang(?:er|ing)",
+        r"unlock(?:s|ing)? the (?:potential|power)",
+        r"delve (?:into|deeper)", r"let'?s dive into",
+        r"foster(?:s|ing)? a (?:culture|sense|deeper)",
+        r"in (?:conclusion|summary)", r"to sum(?:marize| up)",
+        r"on the other hand,", r"that being said,",
+        r"as an ai (?:language model|assistant)",
+        r"i hope this helps", r"i'?d be happy to",
+        r"holistic approach", r"multifaceted (?:issue|nature|approach)",
+        r"rich tapestry", r"tapestry of",
+    ]
+    # Single suspicious words (weighted lower individually -- these are only
+    # mildly suspicious on their own, phrases above carry more signal).
+    SIGNATURE_WORDS = [
+        "delve", "tapestry", "boundaries", "landscape", "underscore",
+        "underscores", "holistic", "seamless", "cutting-edge", "paradigm",
+        "leverage", "leveraging", "multifaceted", "robust", "myriad",
+        "intricate", "invaluable", "pivotal", "bolster", "bolstering",
+        "showcasing", "showcase", "elevate", "elevating", "embark",
+        "embarking", "meticulous", "meticulously",
+    ]
+
+    phrase_hits = 0
+    for pat in STOCK_PHRASES:
+        phrase_hits += len(re.findall(pat, lower))
+
+    word_hits = 0
+    for w in SIGNATURE_WORDS:
+        word_hits += len(re.findall(r"\b" + re.escape(w) + r"\b", lower))
+
+    # Phrases weighted 3x a bare word hit -- multi-word constructions are
+    # much less likely to occur incidentally in ordinary human writing.
+    weighted_hits = phrase_hits * 3 + word_hits
+    density_per_1k = (weighted_hits / word_count) * 1000
+
+    if density_per_1k > 12:
+        score = 0.90
+    elif density_per_1k > 7:
+        score = 0.75
+    elif density_per_1k > 3:
+        score = 0.60
+    elif density_per_1k > 1:
+        score = 0.50
+    else:
+        score = 0.30
+
+    confidence = min(0.85, 0.35 + word_count / 800)
+
+    return {
+        "score": round(score, 4),
+        "confidence": round(confidence, 4),
+        "details": {
+            "phrase_hits": phrase_hits,
+            "signature_word_hits": word_hits,
+            "density_per_1000_words": round(density_per_1k, 2),
+        },
+    }
+
+
+# ── Human Informality Markers ────────────────────────────────────────────────
+
+def _compute_informality_markers(text: str) -> Dict[str, Any]:
+    """
+    Inverse signal: measures density of markers strongly associated with
+    unedited human writing that instruction-tuned LLM output systematically
+    under-produces -- contractions ("don't", "it's", "I'm"), first-person
+    casual register ("I think", "honestly", "tbh", "imo"), sentence
+    fragments/conjunction-led sentences ("And ...", "But ...", "So ..." at
+    sentence start), and informal interjections/emphasis ("really", "just",
+    "actually", "literally", ellipses, exclamation marks outside quotes).
+
+    Low informality density -> higher AI suspicion. This is deliberately the
+    mirror image of _compute_ai_phrase_fingerprint rather than a duplicate:
+    that layer looks for presence of LLM-favored constructions, this one
+    looks for ABSENCE of human-favored ones -- a genuinely different failure
+    mode (heavily edited/formal human writing can dodge the phrase
+    fingerprint but still won't fake informal register if it's actually
+    AI-generated, and vice versa).
+    """
+    words = tokenise_words(text)
+    sentences = split_sentences(text)
+    if len(words) < 30:
+        return {
+            "score": 0.5,
+            "confidence": 0.15,
+            "details": {"reason": "too_few_words"},
+        }
+
+    lower = text.lower()
+    word_count = len(words)
+
+    # Restricted to 're/'ve/'ll/'d/'m -- 's and 't (it's, don't, that's) are
+    # common in formal/AI writing too and were producing false informality
+    # signal when they happened to fall inside an AI-signature phrase itself
+    # (e.g. "it's important to note" -- an AI-phrase-lexicon hit that also
+    # contains a bare contraction). The remaining set is more distinctly
+    # conversational ("I'm", "we've", "they'll", "I'd").
+    contractions = len(re.findall(
+        r"\b\w+'(?:re|ve|ll|d|m)\b", lower
+    ))
+    casual_markers = len(re.findall(
+        r"\b(?:honestly|tbh|imo|imho|gonna|wanna|kinda|sorta|yeah|"
+        r"literally|actually|basically|like i said|i guess|i mean)\b",
+        lower
+    ))
+    conjunction_starts = sum(
+        1 for s in sentences
+        if re.match(r"^(?:and|but|so|because|plus)\b", s.strip().lower())
+    )
+    exclamations = lower.count("!")
+    ellipses = len(re.findall(r"\.\.\.|\u2026", text))
+
+    total_informal = contractions + casual_markers + conjunction_starts + exclamations + ellipses
+    density_per_1k = (total_informal / word_count) * 1000
+
+    # Low density -> AI-like (formal/edited); high density -> human-like.
+    if density_per_1k < 2:
+        score = 0.75
+    elif density_per_1k < 5:
+        score = 0.60
+    elif density_per_1k < 12:
+        score = 0.45
+    elif density_per_1k < 25:
+        score = 0.30
+    else:
+        score = 0.20
+
+    confidence = min(0.75, 0.30 + len(sentences) / 120)
+
+    return {
+        "score": round(score, 4),
+        "confidence": round(confidence, 4),
+        "details": {
+            "contractions": contractions,
+            "casual_markers": casual_markers,
+            "conjunction_led_sentences": conjunction_starts,
+            "exclamations": exclamations,
+            "ellipses": ellipses,
+            "density_per_1000_words": round(density_per_1k, 2),
+        },
+    }
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def _empty_result(reason: str) -> Dict[str, Any]:
@@ -331,6 +521,8 @@ def analyze_text(
             "burstiness": True,
             "stylometry": True,
             "repetition": True,
+            "ai_phrase_fingerprint": True,
+            "informality_markers": True,
             "factual": False,
         }
 
@@ -393,6 +585,18 @@ def analyze_text(
         except Exception as e:
             engines["repetition"] = _empty_result(str(e))
 
+    if options.get("ai_phrase_fingerprint", True):
+        try:
+            engines["ai_phrase_fingerprint"] = _compute_ai_phrase_fingerprint(clean)
+        except Exception as e:
+            engines["ai_phrase_fingerprint"] = _empty_result(str(e))
+
+    if options.get("informality_markers", True):
+        try:
+            engines["informality_markers"] = _compute_informality_markers(clean)
+        except Exception as e:
+            engines["informality_markers"] = _empty_result(str(e))
+
     # Factual engine is a stub
     if options.get("factual", False):
         engines["factual"] = {
@@ -402,11 +606,17 @@ def analyze_text(
         }
 
     # Composite score — confidence-weighted average
+    # Rebalanced (v4.3) to accommodate the two new layers below. Perplexity
+    # stays dominant when available (it's the only layer with genuine
+    # model-based signal); the two new layers get meaningful but modest
+    # weight pending real-corpus validation of their density thresholds.
     weights = {
-        "perplexity": 0.40,
-        "burstiness": 0.25,
-        "stylometry": 0.20,
-        "repetition": 0.15,
+        "perplexity": 0.32,
+        "burstiness": 0.18,
+        "stylometry": 0.15,
+        "repetition": 0.12,
+        "ai_phrase_fingerprint": 0.13,
+        "informality_markers": 0.10,
     }
 
     total_weight = 0.0
