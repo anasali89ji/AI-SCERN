@@ -23,7 +23,7 @@ const INDUSTRIES = [
   },
   {
     title: 'Media & Journalism',
-    problem: 'You have 10 minutes to publish. A deepfake doesn't need more than 5 to go viral.',
+    problem: "You have 10 minutes to publish. A deepfake doesn't need more than 5 to go viral.",
     solution: 'Verify images, audio, and video before publication with shareable content authenticity reports that stand up to scrutiny.',
     href: '/solutions/media',
     bg: 'radial-gradient(circle at 50% 50%, rgba(6,182,212,0.03), transparent 70%)',
