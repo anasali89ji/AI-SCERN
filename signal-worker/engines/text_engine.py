@@ -1,7 +1,9 @@
 """
-Aiscern Detection Worker — Text Engine v4.3.0
+Aiscern Detection Worker — Text Engine v4.4.0
 CPU-only text AI-detection using perplexity, burstiness, stylometry,
-repetition, AI phrase fingerprinting, and informality-marker analysis.
+repetition, AI phrase fingerprinting, informality-marker analysis,
+Unicode/homoglyph forensics, humanizer-artifact detection, and
+plagiarism-risk signal.
 
 Designed for DigitalOcean basic-xs (1GB RAM).
 All ML models are lazy-loaded on first use.
@@ -500,6 +502,234 @@ def _compute_informality_markers(text: str) -> Dict[str, Any]:
     }
 
 
+# ── Unicode Forensics (humanizer/evasion-tool detection) ────────────────────
+
+# Zero-width / invisible characters that never appear from normal human
+# typing -- their presence in submitted text is essentially always the
+# product of deliberate injection. Some AI-detector-evasion ("humanizer")
+# tools use exactly this trick: scattering zero-width characters through
+# text to break the tokenization patterns some detectors rely on, without
+# changing how the text visibly reads. This check is a genuinely novel
+# signal for this pipeline -- none of the existing engines look at the raw
+# character stream, only at word/sentence-level statistics.
+_INVISIBLE_CHARS = {
+    "\u200b": "zero_width_space",
+    "\u200c": "zero_width_non_joiner",
+    "\u200d": "zero_width_joiner",
+    "\u2060": "word_joiner",
+    "\ufeff": "zero_width_no_break_space",
+    "\u00ad": "soft_hyphen",
+    "\u180e": "mongolian_vowel_separator",
+}
+# Unicode Tag block (U+E0000-U+E007F) -- normally used for regional
+# language subtags but has been documented as an ASCII-steganography
+# channel (each tag character maps to an invisible copy of a printable
+# ASCII character). Any presence at all is essentially certain to be
+# deliberate; this text never appears in ordinary writing.
+_TAG_BLOCK_RANGE = (0xE0000, 0xE007F)
+
+# Cyrillic/Greek characters that are visually near-identical to Latin
+# letters ("confusables") -- a classic homoglyph-substitution trick used to
+# defeat exact-string and tokenization-based filters/detectors while the
+# text still *looks* like normal English to a human reader.
+_HOMOGLYPH_MAP = {
+    "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p",
+    "\u0441": "c", "\u0445": "x", "\u0443": "y", "\u0456": "i",
+    "\u0455": "s", "\u0458": "j", "\u04bb": "h", "\u0501": "d",
+    "\u03bf": "o", "\u03b1": "a", "\u03b9": "i", "\u0399": "I",
+    "\u0410": "A", "\u0412": "B", "\u0415": "E", "\u041a": "K",
+    "\u041c": "M", "\u041d": "H", "\u041e": "O", "\u0420": "P",
+    "\u0421": "C", "\u0422": "T", "\u0425": "X",
+}
+
+
+def _compute_unicode_forensics(text: str) -> Dict[str, Any]:
+    """
+    Scans the raw character stream (not tokenized words) for two classes of
+    artifact that indicate deliberate manipulation rather than natural
+    typing or plain AI generation: (1) invisible/zero-width characters, and
+    (2) homoglyph substitution -- non-Latin characters that are visually
+    indistinguishable from Latin letters, mixed into otherwise-ASCII words.
+
+    Both are near-zero-false-positive signals: legitimate human writing
+    essentially never contains zero-width characters, and a genuinely
+    multilingual document uses non-Latin scripts as whole words, not single
+    characters spliced into an otherwise-ASCII word. Presence of either is
+    strong evidence of deliberate evasion tooling; absence says nothing
+    either way (most AI text and most human text are equally "clean" on
+    this axis), so this layer is scored asymmetrically -- it only pushes
+    the composite when it finds something.
+    """
+    if not text:
+        return {"score": 0.5, "confidence": 0.0, "details": {"reason": "empty_text"}}
+
+    invisible_hits: Dict[str, int] = {}
+    for ch, name in _INVISIBLE_CHARS.items():
+        c = text.count(ch)
+        if c:
+            invisible_hits[name] = c
+
+    tag_block_hits = sum(
+        1 for ch in text if _TAG_BLOCK_RANGE[0] <= ord(ch) <= _TAG_BLOCK_RANGE[1]
+    )
+
+    # Homoglyph words: split on whitespace (not tokenise_words, which would
+    # already discard non-Latin characters) and flag any "word" that mixes
+    # ASCII Latin letters with one of the confusable non-Latin characters.
+    homoglyph_words = []
+    for raw_word in text.split():
+        stripped = raw_word.strip(".,!?;:\"'()[]")
+        if not stripped:
+            continue
+        has_ascii_letter = any(c.isascii() and c.isalpha() for c in stripped)
+        confusables_in_word = [c for c in stripped if c in _HOMOGLYPH_MAP]
+        if has_ascii_letter and confusables_in_word:
+            homoglyph_words.append(stripped)
+
+    total_invisible = sum(invisible_hits.values()) + tag_block_hits
+    total_homoglyph = len(homoglyph_words)
+
+    if total_invisible > 0 or total_homoglyph > 0:
+        # Any presence at all is a strong tell -- scale mildly with volume
+        # but even a single hit is already highly suspicious.
+        severity = total_invisible * 2 + total_homoglyph
+        score = min(0.90 + min(severity, 10) * 0.01, 0.98)
+        confidence = 0.90
+    else:
+        score = 0.5
+        confidence = 0.15
+
+    return {
+        "score": round(score, 4),
+        "confidence": round(confidence, 4),
+        "details": {
+            "invisible_chars_found": invisible_hits,
+            "unicode_tag_block_chars": tag_block_hits,
+            "homoglyph_word_count": total_homoglyph,
+            "homoglyph_word_examples": homoglyph_words[:5],
+        },
+    }
+
+
+# ── Humanizer Artifact Detection ─────────────────────────────────────────────
+
+# A short list of very common English words used as a rarity baseline below.
+# Deliberately small (function words + the most frequent content words) --
+# this is a coarse proxy, not a real frequency dictionary; good enough to
+# flag words that clearly stand out, not to rank subtle differences.
+_COMMON_WORDS = frozenset("""
+the be to of and a in that have i it for not on with he as you do at this
+but his by from they we say her she or an will my one all would there
+their what so up out if about who get which go me when make can like time
+no just him know take people into year your good some could them see other
+than then now look only come its over think also back after use two how
+our work first well way even new want because any these give day most us
+""".split())
+
+
+def _compute_humanizer_artifacts(text: str) -> Dict[str, Any]:
+    """
+    Targets two specific mechanical artifacts left by paraphrase/"humanizer"
+    tools that try to spoof AI-detector-friendly statistics rather than
+    genuinely rewrite content:
+
+    1. Burstiness-spoofing via mechanical sentence-length alternation.
+       Humanizers often try to fake human-like sentence-length variance by
+       mechanically alternating short and long sentences (short-long-short-
+       long...). Genuine human variance is irregular -- bursty and largely
+       unpredictable sentence-to-sentence. A mechanical zigzag shows up as
+       STRONG NEGATIVE lag-1 autocorrelation in the sentence-length
+       sequence, which natural writing essentially never produces this
+       cleanly. This is a different failure mode from _compute_burstiness
+       (which only measures overall variance/CV, blind to whether that
+       variance is randomly distributed or artificially patterned).
+
+    2. Lexical incongruity from thesaurus-swap substitution. Word-level
+       paraphrase tools often swap a common word for a rare/elevated
+       synonym without adjusting for register, producing a sentence that's
+       otherwise plain (short common words) but contains one conspicuously
+       long/uncommon word. Flagged via: words >=9 characters not in the
+       common-word baseline, specifically counted when they appear in an
+       otherwise-simple sentence (average word length of the rest of the
+       sentence <5 chars) -- the incongruity, not just rare-word presence
+       alone, is the signal.
+    """
+    sentences = split_sentences(text)
+    words = tokenise_words(text)
+
+    if len(sentences) < 5 or len(words) < 40:
+        return {
+            "score": 0.5,
+            "confidence": 0.15,
+            "details": {"reason": "too_short_for_reliable_signal"},
+        }
+
+    # --- Signal 1: sentence-length autocorrelation ---
+    lengths = [len(s.split()) for s in sentences]
+    mean_len = sum(lengths) / len(lengths)
+    var = sum((l - mean_len) ** 2 for l in lengths) / len(lengths)
+    if var > 0:
+        numerator = sum(
+            (lengths[i] - mean_len) * (lengths[i + 1] - mean_len)
+            for i in range(len(lengths) - 1)
+        )
+        denominator = sum((l - mean_len) ** 2 for l in lengths[:-1])
+        autocorr = numerator / denominator if denominator > 0 else 0.0
+    else:
+        autocorr = 0.0
+
+    # Strong negative autocorrelation (mechanical zigzag) is the tell.
+    if autocorr < -0.55:
+        autocorr_score = 0.85
+    elif autocorr < -0.35:
+        autocorr_score = 0.65
+    else:
+        autocorr_score = 0.35
+
+    # --- Signal 2: lexical incongruity (thesaurus-swap artifact) ---
+    incongruous_hits = 0
+    for s in sentences:
+        s_words = re.findall(r"\b[a-zA-Z']{2,}\b", s.lower())
+        if len(s_words) < 4:
+            continue
+        rare = [w for w in s_words if len(w) >= 9 and w not in _COMMON_WORDS]
+        if not rare:
+            continue
+        others = [w for w in s_words if w not in rare]
+        if not others:
+            continue
+        other_avg_len = sum(len(w) for w in others) / len(others)
+        # The rest of the sentence reads plain/simple, but it contains a
+        # conspicuously long word -- classic swap-artifact shape.
+        if other_avg_len < 5.0 and max(len(w) for w in rare) >= 9:
+            incongruous_hits += 1
+
+    incongruity_rate = incongruous_hits / len(sentences)
+    if incongruity_rate > 0.25:
+        incongruity_score = 0.80
+    elif incongruity_rate > 0.12:
+        incongruity_score = 0.60
+    elif incongruity_rate > 0.05:
+        incongruity_score = 0.50
+    else:
+        incongruity_score = 0.35
+
+    score = round(autocorr_score * 0.55 + incongruity_score * 0.45, 4)
+    confidence = min(0.75, 0.30 + len(sentences) / 100)
+
+    return {
+        "score": round(score, 4),
+        "confidence": round(confidence, 4),
+        "details": {
+            "sentence_length_autocorrelation": round(autocorr, 4),
+            "autocorr_subscore": autocorr_score,
+            "incongruous_sentence_count": incongruous_hits,
+            "incongruity_rate": round(incongruity_rate, 4),
+            "incongruity_subscore": incongruity_score,
+        },
+    }
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def _empty_result(reason: str) -> Dict[str, Any]:
@@ -523,6 +753,9 @@ def analyze_text(
             "repetition": True,
             "ai_phrase_fingerprint": True,
             "informality_markers": True,
+            "unicode_forensics": True,
+            "humanizer_artifacts": True,
+            "plagiarism_risk": True,
             "factual": False,
         }
 
@@ -530,6 +763,48 @@ def analyze_text(
     preprocessed = preprocess(text)
 
     if preprocessed["word_count"] < 10:
+        # Bug fix (v4.4): tokenise_words() requires 2+ CONSECUTIVE letters,
+        # which zero-width-character injection defeats by design (a
+        # zero-width space between every letter means no token is ever 2
+        # letters long, so word_count reads ~0 regardless of actual visible
+        # content length). Without this check, text deliberately obfuscated
+        # with invisible characters -- exactly what unicode_forensics exists
+        # to catch -- was silently swallowed by this gate before any engine,
+        # including unicode_forensics itself, ever ran on it. Run a raw-text
+        # Unicode check before accepting the short-circuit; if it fires,
+        # this isn't actually short text, it's evasion-obfuscated text, and
+        # deserves a real (if necessarily partial) result instead of a
+        # generic "too short" bounce.
+        try:
+            uf_precheck = _compute_unicode_forensics(text)
+        except Exception:
+            uf_precheck = None
+
+        if uf_precheck and uf_precheck["score"] > 0.5:
+            elapsed_ms = int((time.time() - start) * 1000)
+            return {
+                "jobId": job_id,
+                "status": "success",
+                "processingTimeMs": elapsed_ms,
+                "engines": {"unicode_forensics": uf_precheck},
+                "composite_score": uf_precheck["score"],
+                "confidence": uf_precheck["confidence"],
+                "degraded": True,
+                "degraded_reason": "obfuscated_text_only_unicode_forensics_ran",
+                "message": (
+                    "This text contains invisible/homoglyph characters that "
+                    "defeat normal word tokenization, so most detection "
+                    "engines could not run meaningfully on it. The character-"
+                    "level obfuscation itself is a strong signal, surfaced "
+                    "here directly."
+                ),
+                "text_stats": preprocessed and {
+                    "word_count": preprocessed["word_count"],
+                    "original_length": preprocessed["original_length"],
+                },
+                "version": VERSION,
+            }
+
         return {
             "jobId": job_id,
             "status": "error",
@@ -597,6 +872,48 @@ def analyze_text(
         except Exception as e:
             engines["informality_markers"] = _empty_result(str(e))
 
+    if options.get("unicode_forensics", True):
+        try:
+            # Deliberately runs on the RAW input `text`, not `clean` --
+            # clean_text()'s printable-character filter strips characters
+            # above U+FFFF (including the Unicode Tag block used for ASCII
+            # steganography), which would hide exactly the artifact this
+            # layer is designed to catch if it ran on the preprocessed copy.
+            engines["unicode_forensics"] = _compute_unicode_forensics(text)
+        except Exception as e:
+            engines["unicode_forensics"] = _empty_result(str(e))
+
+    if options.get("humanizer_artifacts", True):
+        try:
+            engines["humanizer_artifacts"] = _compute_humanizer_artifacts(clean)
+        except Exception as e:
+            engines["humanizer_artifacts"] = _empty_result(str(e))
+
+    if options.get("plagiarism_risk", True):
+        try:
+            from engines.plagiarism_engine import analyze_plagiarism_risk
+            plag = analyze_plagiarism_risk(clean)
+            # Map plagiarism_engine's 0-100 risk_score onto this pipeline's
+            # 0-1 score/confidence convention so it can sit alongside the
+            # other engines in the weighted composite. Originality risk
+            # isn't the same axis as "AI-generated" -- a plagiarized human
+            # essay isn't AI-written -- so this is deliberately kept at
+            # modest weight below; it's included because a text that trips
+            # BOTH high plagiarism risk AND high AI-signal is a materially
+            # different (and worse) finding than either alone, and the
+            # platform had zero visibility into plagiarism risk for plain
+            # text submissions before this (previously wired to document
+            # uploads only).
+            engines["plagiarism_risk"] = {
+                "score": round(plag.get("risk_score", 0) / 100.0, 4) if plag.get("status") == "ok" else 0.5,
+                "confidence": 0.5 if plag.get("status") == "ok" else 0.0,
+                "risk_level": plag.get("risk_level"),
+                "simhash_fingerprint": plag.get("simhash_fingerprint"),
+                "details": plag.get("signals", {}),
+            }
+        except Exception as e:
+            engines["plagiarism_risk"] = _empty_result(str(e))
+
     # Factual engine is a stub
     if options.get("factual", False):
         engines["factual"] = {
@@ -606,23 +923,51 @@ def analyze_text(
         }
 
     # Composite score — confidence-weighted average
-    # Rebalanced (v4.3) to accommodate the two new layers below. Perplexity
-    # stays dominant when available (it's the only layer with genuine
-    # model-based signal); the two new layers get meaningful but modest
-    # weight pending real-corpus validation of their density thresholds.
+    # Rebalanced (v4.4) for the three new forensic layers below. perplexity
+    # stays the dominant single signal when available. unicode_forensics
+    # and humanizer_artifacts are new, more specialized signals -- given
+    # meaningful weight since when they DO fire (especially
+    # unicode_forensics) they're extremely high-precision, and their
+    # confidence-weighting naturally keeps them quiet the rest of the time.
+    # plagiarism_risk is measuring a related-but-different axis (originality,
+    # not AI-generation) so it's deliberately kept low-weight -- included
+    # for correlation value, not as a primary AI-detection signal.
     weights = {
-        "perplexity": 0.32,
-        "burstiness": 0.18,
-        "stylometry": 0.15,
-        "repetition": 0.12,
-        "ai_phrase_fingerprint": 0.13,
-        "informality_markers": 0.10,
+        "perplexity": 0.25,
+        "burstiness": 0.14,
+        "stylometry": 0.115,
+        "repetition": 0.09,
+        "ai_phrase_fingerprint": 0.10,
+        "informality_markers": 0.075,
+        "unicode_forensics": 0.08,
+        "humanizer_artifacts": 0.10,
+        "plagiarism_risk": 0.05,
     }
 
     total_weight = 0.0
     weighted_sum = 0.0
+    # Cross-layer gate (v4.4): humanizer_artifacts' autocorrelation check
+    # specifically detects mechanical short/long sentence-length alternation
+    # -- a pattern that _compute_burstiness's own coefficient-of-variation
+    # metric cannot distinguish from genuine human variance (a high CV is a
+    # high CV whether it's randomly bursty or artificially zigzagged). A
+    # humanizer tool exploiting exactly this blind spot will make burstiness
+    # score confidently WRONG (reads as "very human") at the same time
+    # humanizer_artifacts is correctly flagging it. When that specific
+    # conflict is detected, burstiness's vote is discounted rather than
+    # left to cancel out a signal that has direct evidence it's being
+    # gamed. Same architectural pattern as image_engine.py's DIRE gate
+    # overriding other layers when it has strong contradicting evidence.
+    burstiness_discount = 1.0
+    ha = engines.get("humanizer_artifacts", {})
+    ha_autocorr = ha.get("details", {}).get("sentence_length_autocorrelation")
+    if isinstance(ha_autocorr, (int, float)) and ha_autocorr < -0.55:
+        burstiness_discount = 0.35
+
     for key, w in weights.items():
         if key in engines:
+            if key == "burstiness":
+                w = w * burstiness_discount
             eff_w = w * engines[key].get("confidence", 0.0)
             weighted_sum += engines[key].get("score", 0.5) * eff_w
             total_weight  += eff_w
