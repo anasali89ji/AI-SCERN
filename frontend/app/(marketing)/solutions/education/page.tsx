@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: 'Protect academic integrity with an enterprise AI trust verification platform for student writing. Built for educators and institutions.',
     url: 'https://aiscern.com/solutions/education',
     siteName: 'Aiscern',
-    images: [{ url: 'https://aiscern.com/og-image.jpg' }],
+    images: [{ url: 'https://aiscern.com/og-image.png', width: 1200, height: 630 }],
   },
 }
 

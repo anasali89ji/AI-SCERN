@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     description: 'AI trust and content verification built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
     url: 'https://aiscern.com/solutions',
     siteName: 'Aiscern',
-    images: [{ url: 'https://aiscern.com/og-image.jpg' }],
+    images: [{ url: 'https://aiscern.com/og-image.png', width: 1200, height: 630 }],
   },
 }
 
