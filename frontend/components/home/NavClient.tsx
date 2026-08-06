@@ -60,7 +60,7 @@ export default function NavClient() {
     >
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Enterprise AI Verification Platform">
           <span className="font-black text-xl gradient-text">Aiscern</span>
         </Link>
 

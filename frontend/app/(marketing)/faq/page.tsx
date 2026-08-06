@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChevronDown, HelpCircle, Mail } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/SiteNav'
@@ -120,26 +120,22 @@ function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; 
         <span className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">{q}</span>
         <ChevronDown className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="pb-5">
-              <p className="text-sm text-text-muted leading-relaxed mb-3">{a}</p>
-              {link && (
-                <Link href={link.href} className="text-xs text-primary hover:underline font-medium">
-                  {link.label} →
-                </Link>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+        className="overflow-hidden"
+        aria-hidden={!open}
+      >
+        <div className="pb-5">
+          <p className="text-sm text-text-muted leading-relaxed mb-3">{a}</p>
+          {link && (
+            <Link href={link.href} className="text-xs text-primary hover:underline font-medium">
+              {link.label} →
+            </Link>
+          )}
+        </div>
+      </motion.div>
     </div>
   )
 }

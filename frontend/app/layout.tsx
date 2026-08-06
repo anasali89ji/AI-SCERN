@@ -117,6 +117,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             description: 'Enterprise AI trust and content verification platform for text, image, audio, video, and document authenticity.',
             url: 'https://aiscern.com',
+            sameAs: [
+              'https://twitter.com/aiscern',
+              'https://linkedin.com/company/aiscern',
+              'https://github.com/anasali89ji/AI-SCERN',
+            ],
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.5',

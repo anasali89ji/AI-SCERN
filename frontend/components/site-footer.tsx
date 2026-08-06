@@ -5,12 +5,12 @@ import Image from 'next/image'
 import { Mail, ArrowRight, ExternalLink, Zap, Headphones, Shield } from 'lucide-react'
 
 const PLATFORM_LINKS = [
-  { label: 'Text Detector',  href: '/detect/text',  title: 'Free AI Text Detector' },
-  { label: 'Image Detector', href: '/detect/image', title: 'Deepfake Image Detector' },
-  { label: 'Audio Detector', href: '/detect/audio', title: 'AI Audio & Voice Clone Detector' },
-  { label: 'Video Detector', href: '/detect/video', title: 'Free Deepfake Video Detector' },
-  { label: 'AI Assistant',   href: '/chat',         title: 'AI Detection Assistant' },
-  { label: 'Batch Analyser', href: '/batch',        title: 'Batch AI Content Analyser' },
+  { label: 'Text Verification',  href: '/detect/text',  title: 'AI Text Verification' },
+  { label: 'Image Verification', href: '/detect/image', title: 'AI Image Verification' },
+  { label: 'Audio Verification', href: '/detect/audio', title: 'AI Voice & Audio Verification' },
+  { label: 'Video Verification', href: '/detect/video', title: 'AI Video Verification' },
+  { label: 'AI Assistant',       href: '/chat',         title: 'AI Verification Assistant' },
+  { label: 'Batch Analyser',     href: '/batch',        title: 'Batch AI Content Verification' },
 ]
 
 const COMPANY_LINKS = [
@@ -77,14 +77,14 @@ export function SiteFooter() {
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <Image src="/logo.png" alt="Aiscern AI Detection Platform Logo"
+              <Image src="/logo.png" alt="Aiscern Enterprise AI Verification Platform Logo"
                 width={31} height={36}
                 className="object-contain h-8 w-auto drop-shadow-[0_0_10px_rgba(245,100,0,0.45)]" />
               <span className="font-black text-xl gradient-text">Aiscern</span>
             </div>
 
             <p className="text-text-muted text-sm leading-relaxed mb-4">
-              Multi-modal AI content detection. Ensemble-based analysis across text, image, audio, and video. Free tier available.
+              Enterprise AI trust and content verification. Ensemble-based analysis across text, image, audio, and video. Free tier available.
             </p>
 
             <p className="text-xs text-text-muted">

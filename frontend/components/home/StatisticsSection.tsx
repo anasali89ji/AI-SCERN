@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 function useCountUp(target: number, shouldReduceMotion: boolean) {
-  const [count, setCount] = useState(shouldReduceMotion ? target : 0)
+  const [count, setCount] = useState(target)
   const [started, setStarted] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
 
@@ -41,17 +41,17 @@ function useCountUp(target: number, shouldReduceMotion: boolean) {
 }
 
 const STATS: { value: string; label: string; numeric?: number }[] = [
-  { value: '< 3', label: 'seconds — average AI content detection scan time' },
-  { value: '4', label: 'modalities covered — text, image, audio, video', numeric: 4 },
-  { value: 'REST + Webhook', label: 'enterprise API integrations for automated trust verification' },
-  { value: '24/7', label: 'continuous deepfake detection pipeline uptime' },
+  { value: '< 3', label: 'seconds — average scan time' },
+  { value: '4', label: 'modalities — detection categories', numeric: 4 },
+  { value: 'REST + Webhook', label: 'enterprise API integrations' },
+  { value: '24/7', label: 'continuous monitoring uptime' },
 ]
 
 export default function StatisticsSection() {
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <section aria-label="Trust verification platform statistics" className="relative py-24 md:py-32 [overflow:clip]">
+    <section aria-label="Platform statistics" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-[1440px] mx-auto px-6">
         <div className="grid grid-cols-2 lg:flex lg:justify-between gap-8 lg:gap-6">
           {STATS.map((stat, i) => (
