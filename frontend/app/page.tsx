@@ -302,7 +302,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald" />
             </span>
-            <span className="text-sm font-bold text-text-primary">Live AI Content Detector</span>
+            <span className="text-sm font-bold text-text-primary">Live AI Verification</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald/10 text-emerald font-semibold border border-emerald/20">Free</span>
           </div>
           <div className="flex gap-2">
@@ -315,14 +315,14 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)}
-          placeholder="Paste any text for instant AI content detection… (min 50 characters)"
+          placeholder="Paste any text to verify if it's AI-generated… (min 50 characters)"
           className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
           <button onClick={analyze} disabled={loading || text.length < 50}
             className="btn-primary px-5 py-2 text-sm disabled:opacity-40 flex items-center gap-2 min-h-[36px]">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-            {loading ? 'Scanning…' : 'Detect AI Content'}
+            {loading ? 'Scanning…' : 'Verify Content'}
           </button>
         </div>
         <AnimatePresence>
@@ -350,7 +350,7 @@ function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
                   <p className="text-xs text-text-muted">✓ Free · Sign in to save trust verification reports</p>
                   <Link href="/detect/text" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
-                    Full AI text detector <ArrowRight className="w-3 h-3" />
+                    Full AI text verification <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
@@ -645,8 +645,8 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
-              <span className="hidden sm:inline">AI-Generated Content Detection · Deepfake Detection · Trust Verification</span>
-              <span className="sm:hidden">Trust Verification Platform</span>
+              <span className="hidden sm:inline">Enterprise AI Verification Platform · Text, Image, Audio, Video</span>
+              <span className="sm:hidden">Enterprise AI Verification Platform</span>
             </motion.div>
 
             {/* H1 + Rotating modality animation */}
@@ -657,8 +657,8 @@ export default function HomePage() {
             {/* Subheadline */}
             <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <span className="sm:hidden">AI content detection and deepfake detection for text, images, audio &amp; video.</span>
-              <span className="hidden sm:inline">Aiscern detects AI-generated content, deepfakes, and synthetic media across <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong>, and <strong className="text-secondary">video</strong> — so your team never acts on a lie.</span>
+              <span className="sm:hidden">Enterprise AI Verification Platform for text, images, audio &amp; video.</span>
+              <span className="hidden sm:inline">Enterprise AI Verification Platform. Verify <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong>, and <strong className="text-secondary">video</strong> from a single platform — built for organizations that cannot afford to trust blindly.</span>
             </motion.p>
 
             {/* CTAs */}
@@ -684,7 +684,7 @@ export default function HomePage() {
                 <>
                   <Link href="/detect/text"
                     className="btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center shadow-lg shadow-primary/20">
-                    Scan for AI Content — Free
+                    Verify Content — Free
                   </Link>
                   <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center hover:border-primary/30">
                     Create Free Account
@@ -788,13 +788,13 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-14 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
-                <Cpu className="w-3 h-3" /> AI Content Detection Suite
+                <Cpu className="w-3 h-3" /> Enterprise Verification Suite
               </div>
               <h2 className="text-3xl sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-4">
                 Trust Verification <span className="gradient-text">Tools</span>
               </h2>
               <p className="text-text-muted text-base sm:text-lg 2xl:text-xl max-w-2xl 2xl:max-w-3xl mx-auto leading-relaxed">
-                Multi-modal AI content detection covering text, images, audio, and video. Every scan delivers forensic-grade authenticity scores in seconds.
+                Multi-modal enterprise AI verification covering text, images, audio, and video. Every scan delivers forensic-grade authenticity scores in seconds.
               </p>
               <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
                 style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
@@ -838,7 +838,7 @@ export default function HomePage() {
                       <p className="text-sm 2xl:text-base text-text-muted leading-relaxed">{tool.desc}</p>
 
                       <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-text-muted group-hover:text-primary transition-colors duration-200">
-                        Detect Now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+                        Verify Now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
                     </SpotlightCard>
                   </Link>
@@ -867,10 +867,10 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
               className="text-center mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
-                <Shield className="w-3 h-3" /> Accuracy & Benchmarks
+                <Shield className="w-3 h-3" /> Trust & Accuracy
               </div>
               <h2 className="text-3xl sm:text-5xl 2xl:text-6xl font-black text-text-primary">
-                Built for forensic accuracy. <span className="gradient-text">Benchmarked on public AI detection datasets.</span>
+                Built for forensic accuracy. <span className="gradient-text">Benchmarked on public verification datasets.</span>
               </h2>
             </motion.div>
 
@@ -944,7 +944,7 @@ export default function HomePage() {
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">How trust verification works</span>
               </div>
               <p className="text-sm text-text-muted leading-relaxed">
-                Every scan runs multiple independent AI detection models in parallel. Results are cross-validated into a single confidence score with forensic evidence — a clear AI or Human verdict in seconds.
+                Every scan runs multiple independent AI verification models in parallel. Results are cross-validated into a single confidence score with forensic evidence — a clear AI or Human verdict in seconds.
               </p>
             </motion.div>
           </div>
