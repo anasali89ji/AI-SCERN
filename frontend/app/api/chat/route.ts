@@ -1,21 +1,35 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
-// Inline fallback for aria-rag (avoids runtime require() issues in serverless)
-type KBChunk = any
-interface RAGResult {
-  contextChunks: KBChunk[]
-  bypassNIM: boolean
-  directAnswer: string | null
-  topScore: number
+// BUGFIX (2026-08): chat/route.ts previously shadowed real ARIA KB retrieval with an
+// inline no-op stub (`retrieveARIAKnowledge` always returning empty results). The stub
+// was a build-fix for `require()` issues in serverless, but was never swapped back out,
+// so ARIA never actually consulted the knowledge base in production.
+//
+// The module the stub was meant to stand in for (`lib/rag/aria-rag.ts`) has since been
+// rewritten as a self-contained "vector-less" keyword RAG engine with its own knowledge
+// base, `retrieveContext()`, and `buildSystemPrompt()` — none of which match the old
+// chunk/bypassNIM/directAnswer shape the stub emulated, and its `buildSystemPrompt` name
+// collides with this file's own `buildSystemPrompt()` below. `aria-rag-compat.ts` and
+// `aria-knowledge.json` are dead code (nothing imports the compat wrapper or the JSON KB)
+// and are left untouched here rather than deleted, to keep this patch narrowly scoped.
+//
+// Fix: import the real retrieval function under an alias, and adapt its
+// `RetrievedContext` shape into the plain KB-context string this file already knows how
+// to fold into `contextParts` (see formatKBContext below). The old high-confidence
+// "bypass NIM entirely" fast path relied on fields (`bypassNIM`, `directAnswer`,
+// `topScore`) that don't exist on `RetrievedContext`, so it's removed rather than
+// papered over — see the `RAG DIRECT BYPASS` block further down for the corresponding
+// removal.
+import { retrieveContext as retrieveARIAKnowledge } from '@/lib/rag/aria-rag'
+
+function formatKBContext(context: ReturnType<typeof retrieveARIAKnowledge>): string {
+  if (!context.entries.length) return ''
+  return (
+    `[AISCERN KNOWLEDGE BASE — ground truth, confidence ${(context.confidence * 100).toFixed(0)}%]\n` +
+    context.entries.map(e => `• ${e.content}`).join('\n')
+  )
 }
-const retrieveARIAKnowledge = async (_query: string, _history?: {role: string; content: string}[]): Promise<RAGResult> => ({
-  contextChunks: [] as KBChunk[],
-  bypassNIM: false,
-  directAnswer: null,
-  topScore: 0,
-})
-const formatKBContext = (_chunks: KBChunk[]) => ''
 export const maxDuration = 55
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -710,25 +724,19 @@ export async function POST(req: NextRequest) {
       console.warn('[chat] graph RAG context failed, continuing without it:', err)
     }
 
-    // ── ARIA KB RAG — retrieve static knowledge (A.1) ────────────────────────
-    // Run in parallel with intent detection / tool calls (both are already done).
-    // retrieval is < 5ms for keyword path, < 4s for embedding path (4s timeout).
-    const historyForRAG = history.map((m: ChatMessage) => ({
-      role:    m.role as string,
-      content: typeof m.content === 'string' ? m.content : '',
-    }))
-    let ragResult: Awaited<ReturnType<typeof retrieveARIAKnowledge>>
+    // ── ARIA KB RAG — retrieve static knowledge (keyword-scored, synchronous, <5ms) ──
+    let ragResult: ReturnType<typeof retrieveARIAKnowledge>
     try {
-      ragResult = await retrieveARIAKnowledge(lastUserMsg, historyForRAG)
+      ragResult = retrieveARIAKnowledge(lastUserMsg)
     } catch (err) {
       console.warn('[chat] KB RAG retrieval failed, continuing without it:', err)
-      ragResult = { contextChunks: [], bypassNIM: false, directAnswer: null, topScore: 0 } as Awaited<ReturnType<typeof retrieveARIAKnowledge>>
+      ragResult = { entries: [], confidence: 0, source: 'knowledge_base' }
     }
 
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
     // 1. KB knowledge first (most factual, grounding ARIA's persona and Aiscern facts)
-    const kbContext = formatKBContext(ragResult.contextChunks)
+    const kbContext = formatKBContext(ragResult)
     if (kbContext) contextParts.push(kbContext)
     // 2. Conversation graph (history-based)
     if (graphContext) contextParts.push(graphContext)
@@ -851,45 +859,13 @@ export async function POST(req: NextRequest) {
         : (m.content?.[0]?.text || String(m.content) || ''),
     }))
 
-    // ── RAG DIRECT BYPASS (A.1.2) — answer from KB, skip NIM entirely ─────────
-    // Fires only for high-confidence FAQ matches (score >= 0.80) when no tool
-    // calls were needed (no image attached, no text analysis, no pipeline stats).
-    // This eliminates the 30-90s NIM cold-start delay for the most common queries
-    // (founder info, pricing, accuracy, file formats, contact, etc.).
-    if (
-      ragResult.bypassNIM &&
-      ragResult.directAnswer &&
-      toolEvents.length === 0 &&
-      imageAttachments.length === 0
-    ) {
-      const enc    = new TextEncoder()
-      const answer = ragResult.directAnswer
-      const bypass = new ReadableStream({
-        start(controller) {
-          const s = (obj: Record<string, unknown>) =>
-            controller.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`))
-          // Stream in 6-char chunks to get the same smooth appearance as NIM
-          let i = 0
-          const tick = () => {
-            if (i >= answer.length) { s({ type: 'done' }); controller.close(); return }
-            const chunk = answer.slice(i, i + 6); i += 6
-            s({ type: 'text', text: chunk })
-            // Use setImmediate-like approach with tiny setTimeout for non-blocking chunks
-            setTimeout(tick, 12)
-          }
-          tick()
-        },
-      })
-      return new Response(bypass, {
-        headers: {
-          'Content-Type':  'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection':    'keep-alive',
-          'X-Accel-Buffering': 'no',
-          'X-ARIA-Source': 'kb-direct',
-        },
-      })
-    }
+    // NOTE: the old "RAG DIRECT BYPASS" fast path (skip NIM entirely on a
+    // high-confidence KB match) is intentionally removed here — it depended on
+    // `bypassNIM`/`directAnswer`/`topScore` fields that don't exist on the current
+    // `RetrievedContext` shape (see the top-of-file note). Re-introducing a bypass
+    // is real product work (deciding what counts as "confident enough", whether a
+    // single KB entry's `content` is safe to stream verbatim as a chat answer) and
+    // belongs in a follow-up change, not folded into this bug fix.
 
     // ── STREAM RESPONSE ───────────────────────────────────────────────────────
     const encoder = new TextEncoder()
