@@ -22,6 +22,8 @@ import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 // papered over — see the `RAG DIRECT BYPASS` block further down for the corresponding
 // removal.
 import { retrieveContext as retrieveARIAKnowledge } from '@/lib/rag/aria-rag'
+import { truncateToTokenBudget } from '@/lib/aria/context-window'
+import { countTokens } from '@/lib/aria/tokenizer'
 
 function formatKBContext(context: ReturnType<typeof retrieveARIAKnowledge>): string {
   if (!context.entries.length) return ''
@@ -841,23 +843,23 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent, needsImageCapability, needsAudioCapability)
 
-    // FIX 3.4 — Truncate conversation history to last 12 messages to prevent context overflow
-    const MAX_HISTORY = 12
-    const truncatedMessages = messages.length > MAX_HISTORY
-      ? [
-          messages[0],
-          { role: 'assistant', content: `[Earlier conversation context: ${messages.length - MAX_HISTORY} messages summarized — user has been discussing AI detection topics]` },
-          ...messages.slice(-(MAX_HISTORY - 2)),
-        ]
-      : messages
-
-    // Build conversation — include history for multi-turn awareness
-    const apiMessages = truncatedMessages.map((m: ChatMessage) => ({
+    // ── TOKENIZATION + CONTEXT WINDOW MANAGEMENT ───────────────────────────────
+    // Replaces the old fixed "last 12 messages" slice (FIX 3.4) with a token-
+    // budget-aware sliding window — see lib/aria/context-window.ts for why.
+    const flatMessages = messages.map((m: ChatMessage) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
       content: typeof m.content === 'string'
         ? m.content
         : (m.content?.[0]?.text || String(m.content) || ''),
     }))
+    const windowResult = truncateToTokenBudget(systemPrompt, flatMessages)
+    const apiMessages = windowResult.messages
+    if (windowResult.truncated) {
+      console.info(
+        `[chat] context window truncated: dropped ${windowResult.droppedMessageCount} message(s), ` +
+        `~${windowResult.totalPromptTokens} prompt tokens (system ${windowResult.systemPromptTokens} + history ${windowResult.messagesTokens})`
+      )
+    }
 
     // NOTE: the old "RAG DIRECT BYPASS" fast path (skip NIM entirely on a
     // high-confidence KB match) is intentionally removed here — it depended on
@@ -1040,6 +1042,7 @@ export async function POST(req: NextRequest) {
             ])
 
           let inThinkBlock = false  // stateful DeepSeek <think> stripper
+          let completionText = ''   // accumulated for token-usage reporting only — not stored/persisted here
           while (true) {
             let done: boolean, value: Uint8Array | undefined
             try {
@@ -1087,10 +1090,28 @@ export async function POST(req: NextRequest) {
                     break
                   }
                 }
-                if (chunk) send({ type: 'text', text: chunk })
+                if (chunk) { send({ type: 'text', text: chunk }); completionText += chunk }
               } catch (_) {}
             }
           }
+
+          // ── TOKEN USAGE (prompt-side counted up-front in windowResult; completion
+          // side counted here from the accumulated stream). This is a client-side
+          // estimate (see tokenizer.ts) — not wired to Supabase persistence yet;
+          // that's the natural next step once this is confirmed useful (needs a
+          // `chat_token_usage` migration — see supabase/migrations/ for a draft).
+          const completionTokens = countTokens(completionText)
+          send({
+            type: 'usage',
+            promptTokens: windowResult.totalPromptTokens,
+            completionTokens,
+            totalTokens: windowResult.totalPromptTokens + completionTokens,
+          })
+          console.info(
+            `[chat] tokens — prompt: ${windowResult.totalPromptTokens} ` +
+            `(system ${windowResult.systemPromptTokens} + history ${windowResult.messagesTokens}), ` +
+            `completion: ${completionTokens}`
+          )
 
           send({ type: 'done' })
         } catch (e: unknown) {
