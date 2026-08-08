@@ -34,6 +34,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { z } from 'zod'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
+import { webSearchFallback } from '@/lib/rag/aria-rag'
 
 export interface ToolContext {
   /** NVIDIA NIM API key, used by the vision-fallback path in detect_image. */
@@ -318,3 +319,35 @@ ariaTools.register({
     }
   },
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL: web_search — DuckDuckGo HTML-scrape fallback (Track 2, Item 7)
+//
+// Reuses lib/rag/aria-rag.ts's existing webSearchFallback(), which was
+// already written but never called from anywhere (dead code, same as
+// aria-knowledge.json/aria-rag-compat.ts were before the RAG-wiring patch).
+//
+// KNOWN FRAGILITY, not hidden: this scrapes DuckDuckGo's HTML lite page
+// (https://html.duckduckgo.com/html/) rather than calling an official search
+// API — there's no API key configured anywhere in this project for a real
+// search provider (Bing/Google/Brave/Serper/Tavily etc.). HTML scraping
+// means: (a) it breaks silently if DuckDuckGo changes their markup — the
+// regex match on `class="result__snippet"` has no fallback if that class
+// name changes, it just returns no results; (b) scraping search engines at
+// volume is against most of their ToS; (c) failures are invisible — no error
+// surfaces to the user or logs, it just returns ''. That silent-failure
+// behavior is intentional here (matches the degrade-gracefully pattern every
+// other tool in this file follows — one fewer contextParts entry, not a
+// broken response) but it does mean this is NOT a robust "web search tool"
+// in the sense of a dedicated search API integration. If reliability matters,
+// swap the fetch inside webSearchFallback() for a real search API — that's a
+// cost/vendor decision for you, not something to pick silently on your behalf.
+ariaTools.register({
+  name: 'web_search',
+  description: 'Best-effort web search for current/factual information not covered by the Aiscern knowledge base. Fragile (HTML scrape, no API key) — treat results as optional enrichment, not a guaranteed source.',
+  paramsSchema: z.object({ query: z.string() }),
+  handler: async (params): Promise<string> => {
+    return webSearchFallback(params.query)
+  },
+})
+

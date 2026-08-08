@@ -534,6 +534,34 @@ export async function POST(req: NextRequest) {
       ragResult = { entries: [], confidence: 0, source: 'knowledge_base' }
     }
 
+    // ── WEB SEARCH FALLBACK (Track 2, Item 7) — only when the KB genuinely
+    // doesn't have a good match (retrieveContext() returns exactly 0.3 as its
+    // "nothing relevant, here's the top-3 anyway" fallback confidence — see
+    // aria-rag.ts). Gated to substantive, non-greeting messages with no image
+    // attached, to avoid an ~8s external HTTP round-trip on every low-signal
+    // turn. Best-effort: see the fragility note in lib/aria/tools.ts — a
+    // failure here just means one fewer contextParts entry, never a broken
+    // response.
+    // Intentionally NOT pushed to toolEvents: that array drives both a
+    // 'tool_result' SSE card in the UI (built for structured verdict/
+    // confidence results, not loose search snippets) and the heavy-vs-fast
+    // model selection below — a search snippet doesn't need the 70B tier's
+    // forensic reasoning. It only affects contextParts.
+    let webSearchContext = ''
+    if (
+      ragResult.confidence <= 0.3 &&
+      intent.wantsHelpWith !== 'greeting' &&
+      imageAttachments.length === 0 &&
+      lastUserMsg.trim().length >= 12
+    ) {
+      try {
+        const snippets = await ariaTools.run<string>('web_search', { query: lastUserMsg }, toolCtx)
+        if (snippets) webSearchContext = `[WEB SEARCH — best-effort, may be incomplete]\n${snippets}`
+      } catch (err) {
+        console.warn('[chat] web search fallback failed, continuing without it:', err)
+      }
+    }
+
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
     // 1. KB knowledge first (most factual, grounding ARIA's persona and Aiscern facts)
@@ -541,6 +569,8 @@ export async function POST(req: NextRequest) {
     if (kbContext) contextParts.push(kbContext)
     // 2. Conversation graph (history-based)
     if (graphContext) contextParts.push(graphContext)
+    // 3. Web search — only present when triggered above
+    if (webSearchContext) contextParts.push(webSearchContext)
     const toolEvents: Array<{ tool: string; result: Record<string, unknown> }> = []
 
     // 1. Image → Vision Engine analysis
