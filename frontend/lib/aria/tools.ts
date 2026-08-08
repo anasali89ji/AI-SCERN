@@ -51,6 +51,21 @@ export interface ToolDefinition<TParams = any, TResult = any> {
   description: string
   paramsSchema: z.ZodType<TParams>
   handler: (params: TParams, ctx: ToolContext) => Promise<TResult>
+  /**
+   * Whether this tool is safe to expose to the LLM for function calling
+   * (Track 2, Item "full LLM-driven function calling" — see
+   * lib/aria/function-calling.ts). Defaults to false — a tool is exposed
+   * only when its params are things a MODEL can plausibly author.
+   *
+   * detect_image is deliberately NOT exposed: its params include raw
+   * base64 image bytes and a data URL — the model has no way to generate
+   * those, they only exist because chat/route.ts's pre-routing pulled them
+   * out of the request's attachments. Exposing it would mean the model
+   * either hallucinates a value (breaks) or the schema silently strips
+   * those fields (breaks differently). Pre-routing remains the only path
+   * that calls detect_image.
+   */
+  exposeToLLM?: boolean
 }
 
 class ToolRegistry {
@@ -69,6 +84,13 @@ class ToolRegistry {
 
   list(): ToolDefinition[] {
     return [...this.tools.values()]
+  }
+
+  /** Tools safe to expose to the LLM for function calling — see the
+   *  exposeToLLM doc comment on ToolDefinition for why this isn't just
+   *  `list()`. */
+  listForLLM(): ToolDefinition[] {
+    return this.list().filter(t => t.exposeToLLM === true)
   }
 
   /** Validate params against the tool's schema, then run its handler. */
@@ -92,6 +114,7 @@ ariaTools.register({
   name: 'get_pipeline_stats',
   description: "Current Aiscern training-data pipeline throughput and composition, for questions about scale/dataset size/how the detection engine stays current.",
   paramsSchema: z.object({}),
+  exposeToLLM: true,
   handler: async (_params, ctx): Promise<Record<string, any>> => {
     if (!ctx.cfToken) {
       return {
@@ -301,8 +324,9 @@ RECOMMENDATION: [What the user should do with this information]`
 // ─────────────────────────────────────────────────────────────────────────────
 ariaTools.register({
   name: 'detect_text',
-  description: 'AI-generation/plagiarism forensic analysis of a block of text.',
-  paramsSchema: z.object({ text: z.string() }),
+  description: 'AI-generation/plagiarism forensic analysis of a block of text. Pass the text to analyze verbatim.',
+  paramsSchema: z.object({ text: z.string().describe('The text content to analyze for AI-generation likelihood.') }),
+  exposeToLLM: true,
   handler: async (params, ctx): Promise<Record<string, any> | null> => {
     try {
       const r = await fetch(`${ctx.baseUrl}/api/detect/text`, {
@@ -345,7 +369,8 @@ ariaTools.register({
 ariaTools.register({
   name: 'web_search',
   description: 'Best-effort web search for current/factual information not covered by the Aiscern knowledge base. Fragile (HTML scrape, no API key) — treat results as optional enrichment, not a guaranteed source.',
-  paramsSchema: z.object({ query: z.string() }),
+  paramsSchema: z.object({ query: z.string().describe('The search query.') }),
+  exposeToLLM: true,
   handler: async (params): Promise<string> => {
     return webSearchFallback(params.query)
   },

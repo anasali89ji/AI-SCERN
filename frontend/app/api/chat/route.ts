@@ -704,6 +704,63 @@ export async function POST(req: NextRequest) {
     // single KB entry's `content` is safe to stream verbatim as a chat answer) and
     // belongs in a follow-up change, not folded into this bug fix.
 
+    // ── LLM-DRIVEN FUNCTION CALLING (Track 2, final item) ──────────────────────
+    // SHIPPED DARK behind this flag — built from NVIDIA's docs without a live
+    // API key to test against in the build environment. Do not enable in
+    // production without testing in a lower environment first. See the
+    // file-level comment in lib/aria/function-calling.ts for what shaped this
+    // design (model choice, why non-streaming tool-exec + artificial chunking
+    // for the final answer instead of parsing NIM's streaming tool-call format).
+    // When this flag is off (default), execution falls through to the
+    // existing regex-pre-routing path below, completely unchanged.
+    if (process.env.ARIA_FUNCTION_CALLING_ENABLED === 'true') {
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        async start(controller) {
+          const send = (obj: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+          try {
+            const { runAgenticLoop } = await import('@/lib/aria/function-calling')
+            const loopResult = await runAgenticLoop(
+              apiKey,
+              systemPrompt,
+              apiMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+              toolCtx,
+            )
+            console.info(
+              `[chat] function-calling loop: model=${loopResult.modelUsed} rounds=${loopResult.rounds} ` +
+              `tools=[${loopResult.toolCallsExecuted.map(t => `${t.name}:${t.ok ? 'ok' : 'FAIL'}`).join(', ')}]`
+            )
+            // Artificial chunking — see file-level note in function-calling.ts
+            // for why this isn't a real token stream from NIM.
+            const text = loopResult.finalText
+            let i = 0
+            const tick = () => {
+              if (i >= text.length) { send({ type: 'done' }); controller.close(); return }
+              send({ type: 'text', text: text.slice(i, i + 6) })
+              i += 6
+              setTimeout(tick, 12)
+            }
+            tick()
+          } catch (err) {
+            console.error('[chat] function-calling loop failed:', err)
+            send({ type: 'error', message: 'ARIA had trouble processing that with tool calling enabled.' })
+            send({ type: 'done' })
+            controller.close()
+          }
+        },
+      })
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          'Content-Type':  'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection':    'keep-alive',
+          'X-Accel-Buffering': 'no',
+          'X-ARIA-Mode':   'function-calling',
+        },
+      })
+    }
+
     // ── STREAM RESPONSE ───────────────────────────────────────────────────────
     const encoder = new TextEncoder()
     const stream  = new ReadableStream({
