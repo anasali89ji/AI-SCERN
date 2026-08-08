@@ -22,11 +22,12 @@ import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 // papered over — see the `RAG DIRECT BYPASS` block further down for the corresponding
 // removal.
 import { ariaTools, type ToolContext, type ImageAnalysisResult } from '@/lib/aria/tools'
-import { retrieveContext as retrieveARIAKnowledge } from '@/lib/rag/aria-rag'
+import { hybridRetrieve } from '@/lib/rag/hybrid-rag'
+import type { RetrievedContext } from '@/lib/rag/aria-rag'
 import { truncateToTokenBudget } from '@/lib/aria/context-window'
 import { countTokens } from '@/lib/aria/tokenizer'
 
-function formatKBContext(context: ReturnType<typeof retrieveARIAKnowledge>): string {
+function formatKBContext(context: RetrievedContext): string {
   if (!context.entries.length) return ''
   return (
     `[AISCERN KNOWLEDGE BASE — ground truth, confidence ${(context.confidence * 100).toFixed(0)}%]\n` +
@@ -525,10 +526,15 @@ export async function POST(req: NextRequest) {
       console.warn('[chat] graph RAG context failed, continuing without it:', err)
     }
 
-    // ── ARIA KB RAG — retrieve static knowledge (keyword-scored, synchronous, <5ms) ──
-    let ragResult: ReturnType<typeof retrieveARIAKnowledge>
+    // ── ARIA KB RAG — hybrid keyword + semantic retrieval (Track 2, Item 6) ──
+    // hybridRetrieve() runs the instant keyword pass and a bounded (2.5s max)
+    // semantic search against the separate vector-RAG Supabase project in
+    // parallel — see lib/rag/hybrid-rag.ts. If that project isn't configured
+    // (env vars unset) or isn't seeded yet, this degrades to exactly the
+    // keyword-only behavior from before.
+    let ragResult: RetrievedContext
     try {
-      ragResult = retrieveARIAKnowledge(lastUserMsg)
+      ragResult = await hybridRetrieve(lastUserMsg)
     } catch (err) {
       console.warn('[chat] KB RAG retrieval failed, continuing without it:', err)
       ragResult = { entries: [], confidence: 0, source: 'knowledge_base' }

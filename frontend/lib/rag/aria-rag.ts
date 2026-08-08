@@ -22,7 +22,7 @@ export interface RetrievedContext {
 // COMPREHENSIVE KNOWLEDGE BASE — AI Detection Industry
 // ════════════════════════════════════════════════════════════════════════════
 
-const KNOWLEDGE_BASE: KnowledgeEntry[] = [
+export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   // ── AISCERN Platform ──
   {
     id: "aiscern-overview",
