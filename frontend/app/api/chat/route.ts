@@ -21,6 +21,7 @@ import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
 // `topScore`) that don't exist on `RetrievedContext`, so it's removed rather than
 // papered over — see the `RAG DIRECT BYPASS` block further down for the corresponding
 // removal.
+import { ariaTools, type ToolContext, type ImageAnalysisResult } from '@/lib/aria/tools'
 import { retrieveContext as retrieveARIAKnowledge } from '@/lib/rag/aria-rag'
 import { truncateToTokenBudget } from '@/lib/aria/context-window'
 import { countTokens } from '@/lib/aria/tokenizer'
@@ -48,62 +49,17 @@ const CHAT_FALLBACK  = 'meta/llama-3.3-70b-instruct'           // fallback — d
 // forensic detection results) keeps the common case fast without touching
 // quality where it counts.
 const FAST_MODEL      = 'meta/llama-3.1-8b-instruct'
-const VISION_MODEL   = 'meta/llama-3.2-90b-vision-instruct'
-const VISION_FALLBACK = 'meta/llama-3.2-11b-vision-instruct'
 
-// ─── Cloudflare D1 (internal — shown as "Aiscern Pipeline" to users) ─────────
-const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || ''
-const D1_DB      = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
+// PIPELINE STATS, VISION, and TEXT tool logic (previously fetchPipelineStats,
+// analyzeImageForensic/analyzeImage, analyzeText — defined inline here) moved
+// to lib/aria/tools.ts as registered ToolRegistry entries. See that file for
+// the "why a registry, and why this isn't LLM function-calling yet" rationale.
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PIPELINE STATS  — referred to as "Aiscern Pipeline" externally
-// ─────────────────────────────────────────────────────────────────────────────
-async function fetchPipelineStats(cfToken: string): Promise<Record<string, any>> {
-  try {
-    const q = (sql: string) => fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfToken}` },
-        body: JSON.stringify({ sql }), signal: AbortSignal.timeout(8000) }
-    ).then(r => r.json())
-
-    const [ov, ty] = await Promise.all([
-      q('SELECT total_scraped, total_pushed, last_scrape_at, last_push_at FROM pipeline_state WHERE id=1'),
-      q('SELECT media_type, COUNT(*) as count FROM dataset_items GROUP BY media_type'),
-    ])
-
-    const s     = ov.result?.[0]?.results?.[0] || {}
-    const byType = (ty.result?.[0]?.results || []) as Array<Record<string, unknown>>
-
-    return {
-      total_samples:   s.total_scraped   ?? 0,
-      published:       s.total_pushed    ?? 0,
-      pending:         (s.total_scraped ?? 0) - (s.total_pushed ?? 0),
-      last_updated:    s.last_scrape_at  ?? 'unknown',
-      last_published:  s.last_push_at    ?? 'unknown',
-      publish_rate:    Math.round(((s.total_pushed ?? 0) / Math.max(s.total_scraped ?? 1, 1)) * 100),
-      by_modality:     Object.fromEntries(byType.map(r => [r.media_type, r.count])),
-      sources:         104,
-      daily_capacity:  '~2,450,000 samples/day',
-      pipeline:        'Aiscern Neural Pipeline v3',
-    }
-  } catch {
-    return {
-      total_samples: 2_200_000, published: 2_200_000, pending: 0,
-      last_updated: 'recently', publish_rate: 88, sources: 104,
-      by_modality: { text: 441000, image: 83000, audio: 59000, video: 1500 },
-      daily_capacity: '~2,450,000 samples/day',
-      pipeline: 'Aiscern Neural Pipeline v3', note: '(cached)'
-    }
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VISION ANALYSIS — referred to as "Aiscern Vision Engine" externally
-// ─────────────────────────────────────────────────────────────────────────────
-// IMAGE ANALYSIS — 9-Agent Forensic Pipeline (Aiscern Vision Engine)
-// When imageUrl is provided: routes directly to runSemanticRAG (all 9 agents).
-// When only base64 is provided: attempts R2 upload first, then falls back to
-// NVIDIA vision model as a single-prompt check.
+// ARIA CAPABILITY PROMPTS — injected into the system prompt when relevant.
+// The actual analysis logic these describe now lives in lib/aria/tools.ts
+// (detect_image) — audio has no tool behind it yet, see that file's note.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Aria's forensic capability context (injected into system prompt)
@@ -134,164 +90,6 @@ When a user shares audio for analysis, you have access to a 4-layer audio forens
 When presenting results: explain which specific artifacts were found (e.g., "The prosody agent detected unnaturally uniform speaking rate with absent breathing sounds — consistent with ElevenLabs TTS"). Always state which TTS system was attributed if AI is detected.
 `
 
-async function analyzeImageForensic(
-  imageBase64: string,
-  mediaType:   string,
-  imageUrl:    string | null,
-  userContext: string,
-  apiKey:      string,
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
-
-  // ── Path A: direct URL → 9-agent forensic RAG ────────────────────────────
-  if (imageUrl) {
-    try {
-      const { layerReport, agents, generatorAttribution, detectionState } = await runSemanticRAG(imageUrl)
-
-      const generatorAgent = agents.find(
-        a => a.agentName === 'GeneratorFingerprintAgent' || a.agentName === 'GENERATOR_FINGERPRINT'
-      ) as (typeof agents[number] & Record<string, unknown>) | undefined
-
-      const generatorMatch = (generatorAgent?.topGeneratorMatch as string | null) ?? generatorAttribution ?? 'Unknown'
-      const generatorConf  = (generatorAgent?.generatorConfidence as number | null) ?? 0
-      const isAI           = layerReport.layerSuspicionScore > 0.65
-      const confidence_pct = Math.round(
-        (isAI ? layerReport.layerSuspicionScore : 1 - layerReport.layerSuspicionScore) * 100
-      )
-
-      // Collect top evidence from the highest-suspicion agents
-      const keyFindings = agents
-        .filter(a => a.agentSuspicionScore > 0.5 && a.modelUsed !== 'failed')
-        .sort((a, b) => b.agentSuspicionScore - a.agentSuspicionScore)
-        .flatMap(a => a.evidence.filter(e => e.status === 'anomalous').slice(0, 2))
-        .map(e => e.detail)
-        .slice(0, 6)
-
-      const analysis = isAI
-        ? `Forensic analysis indicates AI generation. Generator attributed to: ${generatorMatch} (${Math.round(generatorConf * 100)}% confidence). Key artifacts: ${keyFindings.join('; ')}.`
-        : `Image appears to be a real photograph (${detectionState}). ${keyFindings.join('; ')}.`
-
-      return {
-        verdict:       isAI ? 'AI-Generated' : 'Likely Authentic',
-        confidence_pct,
-        analysis,
-        details: {
-          layer6Score:          layerReport.layerSuspicionScore,
-          generatorAttribution: generatorMatch,
-          generatorConfidence:  generatorConf,
-          detectionState,
-          agentScores:          Object.fromEntries(agents.map(a => [a.agentName, a.agentSuspicionScore])),
-          processingMs:         layerReport.processingTimeMs,
-          keyFindings,
-        },
-      }
-    } catch (err) {
-      console.warn('[analyzeImageForensic] Semantic RAG failed, falling back to NVIDIA vision:', err)
-      // fall through to base64 / NVIDIA path
-    }
-  }
-
-  // ── Path B: base64 → NVIDIA vision fallback ───────────────────────────────
-  const prompt = `You are an expert digital forensics analyst specializing in AI-generated image detection and deepfake identification.
-
-Perform a thorough authenticity analysis of this image:
-
-EXAMINE:
-1. AI generation signatures — diffusion artifacts, overly smooth textures, symmetric perfection, unnatural bokeh
-2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity
-3. Physical plausibility — lighting direction, shadow consistency, object proportions
-4. Fine detail stress-test — fingers, text, teeth, background objects (AI consistently fails here)
-5. Metadata consistency — if EXIF patterns suggest generation
-
-User context: ${userContext || 'General authenticity check requested.'}
-
-RESPOND WITH EXACTLY THIS STRUCTURE:
-VERDICT: [AI-Generated | Likely Authentic | Deepfake | Manipulated Photo | Uncertain]
-CONFIDENCE: [0-99]%
-KEY_FINDINGS:
-- [finding 1]
-- [finding 2]
-- [finding 3]
-ANALYSIS: [2-3 sentence technical summary of what you observed]
-RECOMMENDATION: [What the user should do with this information]`
-
-  const tryModel = async (model: string) => {
-    const r = await fetch(`${NVIDIA_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: [
-          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: 'text', text: prompt },
-        ]}],
-        max_tokens: 1400, temperature: 0.15, stream: false,
-      }),
-      signal: AbortSignal.timeout(50000),
-    })
-    if (!r.ok) throw new Error(`vision ${r.status}: ${(await r.text()).slice(0, 150)}`)
-    return r.json()
-  }
-
-  try {
-    // Type the NVIDIA chat completion response shape directly
-    interface NvidiaChoice { message: { content: string } }
-    interface NvidiaResponse { choices?: NvidiaChoice[] }
-    let d: NvidiaResponse
-    try { d = await tryModel(VISION_MODEL) as NvidiaResponse }
-    catch { d = await tryModel(VISION_FALLBACK) as NvidiaResponse }
-
-    const text: string = d.choices?.[0]?.message?.content || ''
-    const isAI     = /ai.generated|deepfake|manipulated|not (authentic|real|genuine)/i.test(text)
-    const confM    = text.match(/CONFIDENCE:\s*(\d{1,3})\s*%/i)
-    const conf     = confM ? Math.min(99, parseInt(confM[1])) : (isAI ? 78 : 25)
-    const verdictM = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
-    const verdict  = verdictM?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
-    const findingsM = text.match(/KEY_FINDINGS:([\s\S]*?)(?:ANALYSIS:|$)/i)
-    const findings  = findingsM?.[1]?.trim().split('\n').map((l: string) => l.replace(/^-\s*/, '').trim()).filter(Boolean) || []
-    const analysisM = text.match(/ANALYSIS:\s*([\s\S]*?)(?:RECOMMENDATION:|$)/i)
-    const recM      = text.match(/RECOMMENDATION:\s*([\s\S]*?)$/i)
-
-    return {
-      verdict,
-      confidence_pct: conf,
-      analysis: analysisM?.[1]?.trim() || text,
-      details: {
-        key_findings:   findings,
-        recommendation: recM?.[1]?.trim() || '',
-        raw:            text,
-        pipeline:       'nvidia_vision_fallback',
-      },
-    }
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${msg}`, details: {} }
-  }
-}
-
-// Keep the old analyzeImage export alias for any remaining callers during migration
-async function analyzeImage(
-  imageBase64: string, mediaType: string, userContext: string, apiKey: string
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
-  return analyzeImageForensic(imageBase64, mediaType, null, userContext, apiKey)
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TEXT ANALYSIS — calls /api/detect/text (referred to as "Aiscern Text Engine")
-// ─────────────────────────────────────────────────────────────────────────────
-async function analyzeText(text: string, baseUrl: string): Promise<Record<string, any> | null> {
-  try {
-    const r = await fetch(`${baseUrl}/api/detect/text`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '' },
-      body: JSON.stringify({ text }),
-      signal: AbortSignal.timeout(35000),
-    })
-    if (!r.ok) return null
-    const d = await r.json()
-    return d.success ? d.data : null
-  } catch { return null }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INTENT ENGINE — understands what the user wants before calling the LLM
@@ -689,6 +487,7 @@ export async function POST(req: NextRequest) {
     const apiKeyFallback = process.env.NVIDIA_API_KEY_FALLBACK || process.env.NVIDIA_API_KEY_2 || ''
     const cfToken = process.env.CLOUDFLARE_API_TOKEN || ''
     const baseUrl = req.nextUrl.origin
+    const toolCtx: ToolContext = { apiKey, baseUrl, cfToken }
 
     if (!apiKey && !apiKeyFallback) {
       const encoder = new TextEncoder()
@@ -751,7 +550,7 @@ export async function POST(req: NextRequest) {
         // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
         // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
         const dataUrl = `data:${img.type};base64,${img.data}`
-        const result = await analyzeImageForensic(img.data, img.type, dataUrl, lastUserMsg, apiKey)
+        const result = await ariaTools.run<ImageAnalysisResult>('detect_image', { imageBase64: img.data, mediaType: img.type, imageUrl: dataUrl, userContext: lastUserMsg }, toolCtx)
 
         toolEvents.push({ tool: 'detect_image', result: {
           verdict:        result.verdict,
@@ -786,7 +585,7 @@ export async function POST(req: NextRequest) {
     // 2. Pipeline stats
     if (intent.wantsPipelineStats && cfToken) {
       try {
-        const stats = await fetchPipelineStats(cfToken)
+        const stats = await ariaTools.run<Record<string, any>>('get_pipeline_stats', {}, toolCtx)
         toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
         contextParts.push(
           `[Aiscern PIPELINE STATUS]\n` +
@@ -807,7 +606,7 @@ export async function POST(req: NextRequest) {
     // 3. Text analysis
     if (intent.wantsTextAnalysis && intent.extractedText && intent.extractedText.length >= 50) {
       try {
-        const result = await analyzeText(intent.extractedText, baseUrl)
+        const result = await ariaTools.run<Record<string, any> | null>('detect_text', { text: intent.extractedText }, toolCtx)
         if (result) {
           toolEvents.push({ tool: 'detect_text', result: {
             verdict:        result.verdict,
