@@ -31,8 +31,8 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
               onClick={() => setActive(m)}
               className={
                 isActive
-                  ? 'px-3.5 py-1.5 rounded-full text-xs font-semibold border border-accent/30 bg-accent/10 text-accent transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
-                  : 'px-3.5 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08] text-silver-600 hover:text-silver-800 hover:border-white/[0.16] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
+                  ? 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-accent/30 bg-accent/10 text-accent transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
+                  : 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-white/[0.08] text-silver-600 hover:text-silver-800 hover:border-white/[0.16] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
               }
             >
               {m}

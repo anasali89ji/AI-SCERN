@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Heart, FileSearch, Brain, Shield, Lock, Eye, BarChart3, AlertTriangle } from 'lucide-react'
+import { Heart, FileSearch, Brain, Shield, Lock, Eye, BarChart3, TriangleAlert } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Healthcare — Aiscern',

@@ -15,7 +15,7 @@ export default function UnauthorizedPage() {
           Contact <a href="mailto:contact@aiscern.com" className="text-[#2BEE34] hover:underline">contact@aiscern.com</a> to request access.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/admin" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#1E1E1E] text-[#6B6B6B] hover:text-white hover:border-[#2BEE34]/50 transition-all text-sm font-medium">
+          <Link href="/admin" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#333333] text-[#6B6B6B] hover:text-white hover:border-[#2BEE34]/50 transition-all text-sm font-medium">
             <ArrowLeft className="w-4 h-4" />Back to Dashboard
           </Link>
           <Link href="/" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl btn-primary text-sm font-medium">

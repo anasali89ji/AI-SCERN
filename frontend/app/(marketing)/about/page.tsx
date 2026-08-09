@@ -117,7 +117,7 @@ export default function AboutPage() {
           {/* Timeline */}
           <div className="mb-16">
             <h2 className="text-2xl font-semibold text-silver-900 mb-8">Timeline</h2>
-            <div className="relative pl-6 border-l border-white/10 space-y-8">
+            <div className="relative pl-6 border-l border-white/20 space-y-8">
               {TIMELINE.map(item => (
                 <div key={item.title} className="relative">
                   <span className="absolute -left-[29px] top-1 w-3 h-3 rounded-full bg-accent" aria-hidden="true" />

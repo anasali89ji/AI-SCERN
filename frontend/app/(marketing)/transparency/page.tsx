@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Shield, Lock, Eye, Database, Server, CheckCircle, AlertTriangle, Globe } from 'lucide-react'
+import { Shield, Lock, Eye, Database, Server, CircleCheck, TriangleAlert, Globe } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Transparency & Data Privacy — Aiscern',
@@ -122,8 +122,8 @@ export default function TransparencyPage() {
               {[
                 { icon: Shield, label: 'No Data Sold — Ever' },
                 { icon: Lock, label: 'GDPR Compliant' },
-                { icon: CheckCircle, label: 'Open Source Models' },
-                { icon: AlertTriangle, label: 'SOC 2 In Progress' },
+                { icon: CircleCheck, label: 'Open Source Models' },
+                { icon: TriangleAlert, label: 'SOC 2 In Progress' },
               ].map((badge, i) => {
                 const BIcon = badge.icon
                 return (
@@ -154,7 +154,7 @@ export default function TransparencyPage() {
                   <ul className="space-y-3">
                     {section.items.map((item, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-silver-700 leading-relaxed">
-                        <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                        <CircleCheck className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                         {item}
                       </li>
                     ))}

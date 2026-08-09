@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/components/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import {
-  FileText, Image, Mic, Video, Globe, ChevronRight,
+  FileType2, Image, Mic, Video, Globe, ChevronRight,
   X, Sparkles, User, Zap, Check
 } from 'lucide-react'
 
@@ -12,7 +12,7 @@ const STEPS = ['welcome','modalities','username','ready'] as const
 type Step = typeof STEPS[number]
 
 const MODALITY_OPTIONS = [
-  { id:'text',  icon: FileText, label:'Text',   sub:'Attest AI-written articles & essays' },
+  { id:'text',  icon: FileType2, label:'Text',   sub:'Attest AI-written articles & essays' },
   { id:'image', icon: Image,    label:'Image',  sub:'Spot AI-generated photos & art' },
   { id:'audio', icon: Mic,      label:'Audio',  sub:'Identify synthetic voices' },
   { id:'video', icon: Video,    label:'Video',  sub:'Find deepfakes in videos' },
@@ -166,7 +166,7 @@ export function OnboardingWizard() {
                   onChange={e => checkUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
                   placeholder="yourname"
                   maxLength={30}
-                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#2563eb] transition-colors"
+                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-[16px] sm:text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#2563eb] transition-colors"
                 />
                 {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-[#2563eb] animate-spin" />}
                 {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2BEE34]" />}

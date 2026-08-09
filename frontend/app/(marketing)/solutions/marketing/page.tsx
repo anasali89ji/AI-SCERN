@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Megaphone, Eye, Brain, Layers, BarChart3, Shield, FileSearch, CheckCircle } from 'lucide-react'
+import { Megaphone, Eye, Brain, Layers, BarChart3, Shield, FileSearch, CircleCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Marketing & Brand — Aiscern',
@@ -35,7 +35,7 @@ export default function MarketingPage() {
         { icon: <Layers className="w-5 h-5" />, title: 'Bulk Content Audits', desc: 'Examine entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Influencer Content Review', desc: 'Analyze deliverable packages from influencer partners before approving payment or publishing.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
+        { icon: <CircleCheck className="w-5 h-5" />, title: 'Audit Reports', desc: 'Generate documentation for content authenticity audits, FTC compliance records, and agency performance reviews.' },
       ]}
       useCases={[
         { title: 'UGC Campaign Verification', desc: 'A consumer brand running a "real customer stories" campaign scans all 2,000 written submissions through Aiscern before featuring them, ensuring only genuine customer voices appear in campaign materials.' },

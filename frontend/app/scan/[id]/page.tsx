@@ -1,8 +1,8 @@
 import Link        from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  Shield, CheckCircle2, AlertTriangle, HelpCircle,
-  Clock, ArrowLeft, ExternalLink, BarChart3,
+  Shield, CheckCircle2, TriangleAlert, CircleHelp,
+  Clock, ArrowLeft, SquareArrowOutUpRight, BarChart3,
 } from 'lucide-react'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
@@ -49,9 +49,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 function verdictCfg(v: string) {
-  if (v === 'AI')    return { label: 'AI Generated',  icon: AlertTriangle, text: 'text-[#FF4444]', bg: 'bg-[#FF4444]/5',  border: 'border-[#FF4444]/20', bar: 'bg-[#FF4444]' }
+  if (v === 'AI')    return { label: 'AI Generated',  icon: TriangleAlert, text: 'text-[#FF4444]', bg: 'bg-[#FF4444]/5',  border: 'border-[#FF4444]/20', bar: 'bg-[#FF4444]' }
   if (v === 'HUMAN') return { label: 'Human Written', icon: CheckCircle2,  text: 'text-[#2BEE34]', bg: 'bg-[#2BEE34]/5',  border: 'border-[#2BEE34]/20', bar: 'bg-[#2BEE34]' }
-  return                    { label: 'Uncertain',     icon: HelpCircle,    text: 'text-[#FFB800]', bg: 'bg-[#FFB800]/5',  border: 'border-[#FFB800]/20', bar: 'bg-[#FFB800]' }
+  return                    { label: 'Uncertain',     icon: CircleHelp,    text: 'text-[#FFB800]', bg: 'bg-[#FFB800]/5',  border: 'border-[#FFB800]/20', bar: 'bg-[#FFB800]' }
 }
 
 function formatDate(ts: string) {
@@ -71,7 +71,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-[#141414] text-[#E5E5E5]">
       {/* Simple header */}
-      <header className="border-b border-[#1E1E1E] bg-[#0A0A0A]">
+      <header className="border-b border-[#333333] bg-[#0A0A0A]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="font-black text-white hover:text-[#2BEE34] transition-colors text-lg">
             Aiscern
@@ -105,7 +105,7 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Meta */}
-        <div className="rounded-xl border border-[#1E1E1E] bg-[#141414] p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-[#333333] bg-[#141414] p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
             { label: 'Media type', value: scan.media_type.charAt(0).toUpperCase() + scan.media_type.slice(1) },
             { label: 'Model',      value: scan.model_used ?? 'Ensemble' },
@@ -126,8 +126,8 @@ export default async function ScanResultPage({ params }: { params: Promise<{ id:
 
         {/* Signal breakdown */}
         {signals.length > 0 && (
-          <div className="rounded-xl border border-[#1E1E1E] bg-[#141414] overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-[#1E1E1E] bg-[#0A0A0A]">
+          <div className="rounded-xl border border-[#333333] bg-[#141414] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-[#333333] bg-[#0A0A0A]">
               <BarChart3 className="w-4 h-4 text-[#2BEE34]" />
               <h2 className="text-sm font-semibold text-white">Signal Breakdown</h2>
             </div>

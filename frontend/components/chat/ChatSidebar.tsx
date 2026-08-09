@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Plus, Trash2, MessageSquare } from 'lucide-react'
+import { X, Plus, Trash, MessageSquare } from 'lucide-react'
 import { Chat } from './useChatStore'
 
 interface Props {
@@ -72,7 +72,7 @@ export function ChatSidebar({ open, onClose, chats, activeId, onSelect, onNew, o
                 className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all"
                 aria-label="Delete chat"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash className="w-3.5 h-3.5" />
               </button>
             </button>
           ))}
@@ -84,7 +84,7 @@ export function ChatSidebar({ open, onClose, chats, activeId, onSelect, onNew, o
               onClick={onDeleteAll}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash className="w-3.5 h-3.5" />
               Clear all conversations
             </button>
           </div>

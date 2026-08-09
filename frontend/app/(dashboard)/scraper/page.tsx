@@ -1,9 +1,9 @@
 'use client'
 import { useState } from 'react'
 import {
-  Globe, Search, AlertTriangle, CheckCircle, HelpCircle,
-  Loader2, ExternalLink, Link2, ChevronDown, Database, Info,
-  Monitor, FileText, BookOpen, Zap, Shield,
+  Globe, Search, TriangleAlert, CircleCheck, CircleHelp,
+  LoaderCircle, SquareArrowOutUpRight, Link2, ChevronDown, Database, Info,
+  Monitor, FileType2, BookOpen, Zap, Shield,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
@@ -33,9 +33,9 @@ const verdictBg = (v: string) =>
   v === 'AI' ? 'bg-[#FF4444]/15 border-[#FF4444]/30' : v === 'HUMAN' ? 'bg-[#2BEE34]/15 border-[#2BEE34]/30' : 'bg-[#FFB800]/15 border-[#FFB800]/30'
 
 function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
-  if (v === 'AI')    return <AlertTriangle className={`${cls} text-[#FF4444]`} />
-  if (v === 'HUMAN') return <CheckCircle   className={`${cls} text-[#2BEE34]`} />
-  return               <HelpCircle       className={`${cls} text-[#FFB800]`} />
+  if (v === 'AI')    return <TriangleAlert className={`${cls} text-[#FF4444]`} />
+  if (v === 'HUMAN') return <CircleCheck   className={`${cls} text-[#2BEE34]`} />
+  return               <CircleHelp       className={`${cls} text-[#FFB800]`} />
 }
 
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
@@ -144,14 +144,14 @@ export default function ScraperPage() {
                 onChange={e => setUrl(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleScrape()}
                 placeholder="https://example.com/article"
-                className="w-full bg-[#141414] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30 transition-colors"
+                className="w-full bg-[#141414] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-[16px] sm:text-sm text-white placeholder:text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30 transition-colors"
               />
             </div>
             <button
               onClick={() => handleScrape()} disabled={loading || !url.trim()}
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
               {loading ? 'Examining…' : 'Attest Site'}
             </button>
           </div>
@@ -178,7 +178,7 @@ export default function ScraperPage() {
               <span className="text-[10px] text-[#6B6B6B] font-medium">Try:</span>
               {EXAMPLES.map(ex => (
                 <button key={ex.url} onClick={() => handleScrape(ex.url)}
-                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#2BEE34] hover:bg-[#1A8F1F]/15 border border-[#1E1E1E] hover:border-white/[0.12] transition-colors">
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#2BEE34] hover:bg-[#1A8F1F]/15 border border-[#333333] hover:border-white/[0.12] transition-colors">
                   {ex.label}
                 </button>
               ))}
@@ -189,7 +189,7 @@ export default function ScraperPage() {
         {/* Error */}
         {error && (
           <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FF4444]/5 border border-[#FF4444]/20">
-            <AlertTriangle className="w-4 h-4 text-[#FF4444] shrink-0 mt-0.5" />
+            <TriangleAlert className="w-4 h-4 text-[#FF4444] shrink-0 mt-0.5" />
             <p className="text-sm text-[#FF4444]">{error}</p>
           </div>
         )}
@@ -198,14 +198,14 @@ export default function ScraperPage() {
         {loading && (
           <div className="space-y-4 animate-pulse">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="md:col-span-2 bg-[#141414] border border-[#1E1E1E] rounded-xl overflow-hidden">
+              <div className="md:col-span-2 bg-[#141414] border border-[#333333] rounded-xl overflow-hidden">
                 <div className="w-full h-44 bg-white/[0.04] rounded-t-2xl" />
                 <div className="p-3 space-y-2">
                   <div className="h-3 bg-white/[0.04] rounded w-3/4" />
                   <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
                 </div>
               </div>
-              <div className="md:col-span-3 bg-[#141414] border border-[#1E1E1E] rounded-xl p-5 space-y-4">
+              <div className="md:col-span-3 bg-[#141414] border border-[#333333] rounded-xl p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-5">
                   <div className="w-16 h-16 sm:w-[100px] sm:h-[100px] rounded-full bg-white/[0.04] shrink-0" />
                   <div className="flex-1 space-y-2 pt-2">
@@ -222,14 +222,14 @@ export default function ScraperPage() {
                 <div className="h-3 bg-white/[0.04] rounded w-3/4" />
               </div>
             </div>
-            <div className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-5 space-y-3">
+            <div className="bg-[#141414] border border-[#333333] rounded-xl p-5 space-y-3">
               <div className="h-4 bg-white/[0.04] rounded w-36" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[0,1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-lg bg-white/[0.04]" />)}
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-[#6B6B6B] py-1">
-              <Loader2 className="w-4 h-4 animate-spin text-[#2BEE34]/60" />
+              <LoaderCircle className="w-4 h-4 animate-spin text-[#2BEE34]/60" />
               <span>Fetching page · extracting content · running Gemini RAG analysis…</span>
             </div>
           </div>
@@ -298,7 +298,7 @@ export default function ScraperPage() {
                     <p className="text-xs font-semibold text-white truncate">{result.title}</p>
                     <a href={result.url} target="_blank" rel="noreferrer"
                       className="text-[10px] text-[#2BEE34] hover:underline flex items-center gap-1 mt-0.5">
-                      <ExternalLink className="w-3 h-3" />{result.domain}
+                      <SquareArrowOutUpRight className="w-3 h-3" />{result.domain}
                     </a>
                     {result.description && (
                       <p className="text-[10px] text-[#6B6B6B] mt-1.5 line-clamp-2">{result.description}</p>
@@ -313,7 +313,7 @@ export default function ScraperPage() {
                     <div className="flex-1 min-w-0 space-y-2">
                       {/* Badges */}
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#E5E5E5] border border-[#1E1E1E]">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#E5E5E5] border border-[#333333]">
                           {result.content_type.toUpperCase()}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -349,7 +349,7 @@ export default function ScraperPage() {
                   </div>
 
                   {/* Summary */}
-                  <div className="mt-4 pt-3 border-t border-[#1E1E1E] space-y-2">
+                  <div className="mt-4 pt-3 border-t border-[#333333] space-y-2">
                     <p className="text-xs text-[#E5E5E5] leading-relaxed">{result.summary}</p>
                     {result.reasoning && (
                       <p className="text-[10px] text-[#6B6B6B] leading-relaxed italic">"{result.reasoning}"</p>
@@ -398,7 +398,7 @@ export default function ScraperPage() {
                   </h3>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                     {result.sub_pages.map((sp, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141414] border border-[#1E1E1E] hover:border-white/[0.12] transition-colors">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141414] border border-[#333333] hover:border-white/[0.12] transition-colors">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-[#FF4444]' : sp.verdict === 'HUMAN' ? 'bg-[#2BEE34]' : 'bg-[#FFB800]'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-[#E5E5E5] truncate">{sp.title}</p>
@@ -421,11 +421,11 @@ export default function ScraperPage() {
               {result.headings && result.headings.length > 0 && (
                 <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
                   <h3 className="text-xs font-bold text-[#A3A3A3] uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" />Page Structure
+                    <FileType2 className="w-3.5 h-3.5" />Page Structure
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {result.headings.map((h, i) => (
-                      <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#E5E5E5] border border-[#1E1E1E]">
+                      <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#E5E5E5] border border-[#333333]">
                         {h.slice(0, 60)}
                       </span>
                     ))}

@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Menu, X, ChevronDown, Search,
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
-  Heart, Megaphone, Microscope, Pen, ArrowLeft,
-  FileText, Image as ImageIcon, Music, Video, MessageSquare, Database,
+  Heart, Megaphone, Microscope, Pencil, ArrowLeft,
+  FileType2, Image as ImageIcon, Music, Video, MessageSquare, Database,
   Zap,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -28,11 +28,11 @@ const SOLUTIONS = [
   { href: '/solutions/healthcare', label: 'Healthcare',         icon: Heart,         desc: 'Medical content integrity'  },
   { href: '/solutions/marketing',  label: 'Marketing & Brand',  icon: Megaphone,     desc: 'Protect brand authenticity' },
   { href: '/solutions/research',   label: 'Research',           icon: Microscope,    desc: 'Dataset validation'         },
-  { href: '/solutions/content-creators', label: 'Content Creators',   icon: Pen,           desc: 'Prove human authorship'     },
+  { href: '/solutions/content-creators', label: 'Content Creators',   icon: Pencil,           desc: 'Prove human authorship'     },
 ]
 
 const TOOLS = [
-  { href: '/detect/text',  label: 'Text Attestation',  icon: FileText,      desc: 'ChatGPT, Claude & more'  },
+  { href: '/detect/text',  label: 'Text Attestation',  icon: FileType2,      desc: 'ChatGPT, Claude & more'  },
   { href: '/detect/image', label: 'Image Attestation', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
   { href: '/detect/audio', label: 'Audio Attestation', icon: Music,         desc: 'Voice cloning & TTS'     },
   { href: '/detect/video', label: 'Video Attestation', icon: Video,         desc: 'Frame-level analysis'    },
@@ -119,7 +119,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
                 onChange={e => { setQuery(e.target.value); setActiveIndex(0) }}
                 placeholder="Search pages, tools, solutions..."
                 aria-label="Search pages, tools, and solutions"
-                className="flex-1 bg-transparent py-3.5 text-sm text-silver-900 placeholder:text-silver-600 focus:outline-none"
+                className="flex-1 bg-transparent py-3.5 text-[16px] sm:text-sm text-silver-900 placeholder:text-silver-600 focus:outline-none"
               />
               <kbd className="hidden sm:inline text-[10px] text-silver-600 border border-white/[0.08] rounded px-1.5 py-0.5">Esc</kbd>
             </div>
@@ -222,7 +222,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
         'fixed top-0 left-0 right-0 z-50 h-16 transition-transform duration-300',
         hidden ? '-translate-y-full' : 'translate-y-0',
         scrolled
-          ? 'bg-depth-bg/80 border-b border-white/5 backdrop-blur-xl'
+          ? 'bg-depth-bg/80 border-b border-white/15 backdrop-blur-xl'
           : 'bg-transparent border-b border-transparent',
       )}
     >
@@ -484,7 +484,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:hidden border-t border-white/5 bg-depth-bg overflow-hidden"
+            className="lg:hidden border-t border-white/15 bg-depth-bg overflow-hidden"
           >
           <motion.div
             className="px-4 py-4 space-y-1 max-h-[80dvh] overflow-y-auto"
@@ -576,7 +576,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
             {!user && (
               <motion.div
                 variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
-                className="pt-3 mt-2 border-t border-white/5 flex flex-col gap-2"
+                className="pt-3 mt-2 border-t border-white/15 flex flex-col gap-2"
               >
                 <Link
                   href="/login"

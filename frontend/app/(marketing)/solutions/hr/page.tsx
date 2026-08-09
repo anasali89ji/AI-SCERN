@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Users, FileSearch, BarChart3, Shield, Brain, Layers, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Users, FileSearch, BarChart3, Shield, Brain, Layers, TriangleAlert, CircleCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for HR & Recruiting — Aiscern',
@@ -35,7 +35,7 @@ export default function HRPage() {
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Upload', desc: 'Drop a folder of applications and screen all cover letters in minutes. Results dashboard shows risk scores at a glance.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Work Sample Analysis', desc: 'Analyze longer documents like project write-ups, case study responses, and code documentation for AI generation.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Every result shows a confidence breakdown — not just a binary flag. Decide your own threshold for follow-up questioning.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trails', desc: 'Exportable PDF reports with attestation timestamp and model breakdown — defensible records for HR documentation.' },
+        { icon: <CircleCheck className="w-5 h-5" />, title: 'Audit Trails', desc: 'Exportable PDF reports with attestation timestamp and model breakdown — defensible records for HR documentation.' },
         { icon: <Shield className="w-5 h-5" />, title: 'Privacy First', desc: 'Candidate data is processed ephemerally. We never train on your submissions. Full data handling details at /transparency.' },
       ]}
       useCases={[

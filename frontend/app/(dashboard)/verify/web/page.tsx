@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Globe, Shield, AlertTriangle, CheckCircle, Loader2, ArrowRight, Lock, ExternalLink } from 'lucide-react'
+import { Globe, Shield, TriangleAlert, CircleCheck, LoaderCircle, ArrowRight, Lock, SquareArrowOutUpRight } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
@@ -78,7 +78,7 @@ function WebVerificationContent() {
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
               placeholder="https://example.com/article"
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-white/[0.08] text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-white/[0.08] text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all text-[16px] sm:text-sm"
             />
           </div>
           <button
@@ -86,14 +86,14 @@ function WebVerificationContent() {
             disabled={!isValidUrl(url) || loading}
             className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-semibold text-sm transition-all flex items-center gap-2"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+            {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
             <span className="hidden sm:inline">Verify</span>
           </button>
         </div>
 
         {error && (
           <div className="mt-4 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <TriangleAlert className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
         )}
@@ -126,7 +126,7 @@ function WebVerificationContent() {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 transition-colors"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <SquareArrowOutUpRight className="w-3.5 h-3.5" />
               Open URL
             </a>
           </div>
@@ -135,9 +135,9 @@ function WebVerificationContent() {
             {result.signals?.map((signal, i) => (
               <div key={i} className="flex items-start gap-3 text-sm text-slate-300 bg-slate-950/50 rounded-lg p-3 border border-white/[0.04]">
                 {signal.flagged ? (
-                  <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <TriangleAlert className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                 ) : (
-                  <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <CircleCheck className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
                 )}
                 <span>{signal.description || signal.name}</span>
               </div>

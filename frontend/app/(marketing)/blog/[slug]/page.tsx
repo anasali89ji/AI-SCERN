@@ -88,13 +88,13 @@ function renderMarkdown(md: string): string {
   const result = md
     // Headings
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-silver-900 mt-8 mb-3">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-semibold text-silver-900 mt-10 mb-4 pb-2 border-b border-white/5">$1</h2>')
+    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-semibold text-silver-900 mt-10 mb-4 pb-2 border-b border-white/15">$1</h2>')
     .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-semibold text-silver-900 mt-10 mb-4">$1</h1>')
     // Bold / italic
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-silver-900">$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em class="italic">$1</em>')
     // Inline code
-    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-white/5 text-xs font-mono text-accent">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-white/15 text-xs font-mono text-accent">$1</code>')
     // Unordered list items
     .replace(/^[-*] (.+)$/gm, '<li class="ml-5 list-disc text-silver-600 leading-relaxed mb-1">$1</li>')
     // Ordered list items
@@ -144,7 +144,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </h1>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-silver-600 mb-8 pb-6 border-b border-white/5">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-silver-600 mb-8 pb-6 border-b border-white/15">
           <span className="flex items-center gap-1.5">
             <User className="w-3 h-3" /> {post.author}
           </span>
@@ -170,10 +170,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Tags */}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-white/5">
+          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-white/15">
             {post.tags.map(tag => (
               <span key={tag}
-                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-white/5 text-silver-600">
+                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-white/15 text-silver-600">
                 {tag}
               </span>
             ))}

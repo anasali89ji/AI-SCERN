@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Handshake, Code2, Building2, Globe, ArrowRight, CheckCircle, Mail, Zap } from 'lucide-react'
+import { Handshake, Code2, Building2, Globe, ArrowRight, CircleCheck, Mail, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Partner Program — Aiscern',
@@ -77,7 +77,7 @@ export default function PartnersPage() {
                     <ul className="space-y-2">
                       {pt.benefits.map((b, j) => (
                         <li key={j} className="flex items-center gap-2 text-xs text-silver-700">
-                          <CheckCircle className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                          <CircleCheck className="w-3.5 h-3.5 text-accent flex-shrink-0" />
                           {b}
                         </li>
                       ))}

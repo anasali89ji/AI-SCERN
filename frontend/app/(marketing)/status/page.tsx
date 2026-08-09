@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { CheckCircle, Clock, AlertTriangle, Activity } from 'lucide-react'
+import { CircleCheck, Clock, TriangleAlert, Activity } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'System Status — Aiscern',
@@ -42,9 +42,9 @@ export default function StatusPage() {
                 : 'bg-warning/10 border border-warning/20 text-warning'
             }`}>
               {allOperational ? (
-                <><CheckCircle className="w-4 h-4" /> All Systems Operational</>
+                <><CircleCheck className="w-4 h-4" /> All Systems Operational</>
               ) : (
-                <><AlertTriangle className="w-4 h-4" /> Service Degradation Detected</>
+                <><TriangleAlert className="w-4 h-4" /> Service Degradation Detected</>
               )}
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">System Status</h1>

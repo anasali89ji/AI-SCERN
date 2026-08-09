@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
 import {
-  Coins, CheckCircle2, Zap, Loader2, CreditCard,
+  Coins, CheckCircle2, Zap, LoaderCircle, CreditCard,
   RefreshCw, ArrowRight, Info,
 } from 'lucide-react'
 
@@ -123,7 +123,7 @@ function CreditsContent() {
                 className={`relative rounded-xl border p-6 flex flex-col transition-all duration-200 ${
                   isPopular
                     ? 'border-[#2BEE34] bg-[#2BEE34]/[0.04] shadow-[0_0_30px_rgba(43,238,52,0.12)]'
-                    : 'border-[#1E1E1E] bg-[#141414] hover:border-[#2A2A2A]'
+                    : 'border-[#333333] bg-[#141414] hover:border-[#454545]'
                 }`}
               >
                 {isPopular && (
@@ -171,7 +171,7 @@ function CreditsContent() {
                   }`}
                 >
                   {isActive
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing…</>
+                    ? <><LoaderCircle className="w-4 h-4 animate-spin" /> Processing…</>
                     : <><CreditCard className="w-4 h-4" /> Buy via XPay</>}
                 </button>
               </div>
@@ -191,7 +191,7 @@ function CreditsContent() {
       </div>
 
       {/* Enterprise */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-xl border border-[#1E1E1E] bg-[#0A0A0A]">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-xl border border-[#333333] bg-[#0A0A0A]">
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-white mb-0.5">Need bulk credits or custom limits?</p>
           <p className="text-sm text-[#A3A3A3]">Enterprise plans with invoiced billing and dedicated support available.</p>
@@ -210,7 +210,7 @@ export default function CreditsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center p-20">
-        <Loader2 className="w-8 h-8 text-[#2BEE34] animate-spin" />
+        <LoaderCircle className="w-8 h-8 text-[#2BEE34] animate-spin" />
       </div>
     }>
       <CreditsContent />

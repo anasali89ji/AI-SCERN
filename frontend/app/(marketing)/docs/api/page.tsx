@@ -38,7 +38,7 @@ const { verdict, confidence } = await response.json()`,
 export default function ApiDocsPage() {
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      <div className="border-b border-[#1E1E1E] px-6 py-4">
+      <div className="border-b border-[#333333] px-6 py-4">
         <Link href="/" className="text-xl font-black text-[#2BEE34]">Aiscern</Link>
       </div>
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
@@ -81,12 +81,12 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">Rate Limits</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-[#1E1E1E]">
+              <thead><tr className="border-b border-[#333333]">
                 {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-[#6B6B6B] text-xs">{h}</th>)}
               </tr></thead>
               <tbody>
                 {[['Free', 'Unlimited', '60 req/min']].map(([plan, credits, limit]) => (
-                  <tr key={plan} className="border-b border-[#1E1E1E]">
+                  <tr key={plan} className="border-b border-[#333333]">
                     <td className="py-2 px-3 text-white font-semibold">{plan}</td>
                     <td className="py-2 px-3 text-[#A3A3A3]">{credits}</td>
                     <td className="py-2 px-3 text-[#A3A3A3]">{limit}</td>

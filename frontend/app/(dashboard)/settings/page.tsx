@@ -3,9 +3,9 @@ import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
-  Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
-  Moon, Sun, Monitor, FileText, Zap, Eye, EyeOff,
+  Bell, Shield, Save, LoaderCircle, Trash, Sliders, Key, Palette,
+  Globe, Download, TriangleAlert, Copy, Check, Lock, Smartphone,
+  Moon, Sun, Monitor, FileType2, Zap, Eye, EyeOff,
   RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
   ChevronRight, Star, BrainCircuit
 } from 'lucide-react'
@@ -35,7 +35,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
   icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-[#1E1E1E] last:border-0 gap-3 sm:gap-4">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-[#333333] last:border-0 gap-3 sm:gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
           <Icon className="w-4 h-4 text-[#2BEE34]" />
@@ -58,7 +58,7 @@ function SettingRow({ icon: Icon, label, description, action, badge }: {
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-[#1E1E1E]">
+      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-[#333333]">
         <Icon className="w-4 h-4 text-[#2BEE34]" /> {title}
       </h2>
       {children}
@@ -207,7 +207,7 @@ export default function SettingsPage() {
 
   if (loading) return (
     <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
-      <Loader2 className="w-6 h-6 animate-spin text-[#2BEE34]" />
+      <LoaderCircle className="w-6 h-6 animate-spin text-[#2BEE34]" />
     </div>
   )
 
@@ -220,7 +220,7 @@ export default function SettingsPage() {
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#0A0A0A] bg-[#2BEE34] hover:bg-[#1A8F1F] disabled:opacity-60 transition-all">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>
       </div>
@@ -230,7 +230,7 @@ export default function SettingsPage() {
         <SettingRow icon={Mail}       label="Email notifications" description="Attestation summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
         <SettingRow icon={Bell}       label="Bulk attestation alerts"   description="Notify when bulk attestation results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
         <SettingRow icon={Star}       label="Upgrade alerts"      description="Get notified of plan changes from admin"         action={<Toggle checked={upgradeAlerts}  onChange={() => setUpgradeAlerts(v => !v)} />} />
-        <SettingRow icon={FileText}   label="Weekly report"       description="Weekly digest of your attestation activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
+        <SettingRow icon={FileType2}   label="Weekly report"       description="Weekly digest of your attestation activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
         <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every attestation result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
       </Section>
 
@@ -244,7 +244,7 @@ export default function SettingsPage() {
         <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the attestation tool"
           action={
             <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
+              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
@@ -257,7 +257,7 @@ export default function SettingsPage() {
             <div className="flex gap-1">
               {(['dark','light','system'] as const).map(t => (
                 <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-[#2BEE34]/40 text-[#2BEE34]' : 'border-[#1E1E1E] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-[#2BEE34]/40 text-[#2BEE34]' : 'border-[#333333] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
                   {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
@@ -267,7 +267,7 @@ export default function SettingsPage() {
         <SettingRow icon={Languages} label="Language" description="Interface display language"
           action={
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
+              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               <option value="en">English</option>
               <option value="ur">اردو (Urdu)</option>
               <option value="ar">العربية (Arabic)</option>
@@ -292,7 +292,7 @@ export default function SettingsPage() {
         <SettingRow icon={Clock}       label="Data retention" description="How long to keep attestation history"
           action={
             <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
+              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>
@@ -329,18 +329,18 @@ export default function SettingsPage() {
       <Section title="Data & Storage" icon={Database}>
         <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
           action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#1E1E1E] text-[#A3A3A3] hover:bg-[#141414] hover:text-white transition-colors">
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#333333] text-[#A3A3A3] hover:bg-[#141414] hover:text-white transition-colors">
               <Download className="w-3 h-3" /> Export
             </button>
           } />
-        <SettingRow icon={Trash2} label="Clear attestation history" description="Delete all saved attestation results permanently"
+        <SettingRow icon={Trash} label="Clear attestation history" description="Delete all saved attestation results permanently"
           action={
             <button onClick={async () => {
               if (!user?.uid) return
               await (supabase as any).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
             }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FF4444]/30 text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors">
-              <Trash2 className="w-3 h-3" /> Clear
+              <Trash className="w-3 h-3" /> Clear
             </button>
           } />
       </Section>
@@ -348,7 +348,7 @@ export default function SettingsPage() {
       {/* Danger zone */}
       <div>
         <h2 className="font-bold text-[#FF4444] flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-4 h-4" /> Danger Zone
+          <TriangleAlert className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
           <div className="flex items-center justify-between">
@@ -358,7 +358,7 @@ export default function SettingsPage() {
             </div>
             <button onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FF4444]/30 text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors">
-              <Trash2 className="w-3 h-3" /> Delete
+              <Trash className="w-3 h-3" /> Delete
             </button>
           </div>
         ) : (
@@ -366,12 +366,12 @@ export default function SettingsPage() {
             <p className="text-sm text-[#FF4444] font-semibold">Are you absolutely sure? This cannot be undone.</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-xl border border-[#1E1E1E] text-xs text-[#6B6B6B] hover:text-white">
+                className="flex-1 py-2 rounded-xl border border-[#333333] text-xs text-[#6B6B6B] hover:text-white">
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
                 className="flex-1 py-2 rounded-xl bg-[#FF4444] text-white text-xs font-bold hover:bg-[#D93636] disabled:opacity-50">
-                {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
+                {deleting ? <LoaderCircle className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>
           </div>

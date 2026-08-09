@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { BookOpen, ArrowRight, FileText, Eye, Music, Video, Zap } from 'lucide-react'
+import { BookOpen, ArrowRight, FileType2, Eye, Music, Video, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'User Guides — Aiscern',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 const GUIDES = [
   {
-    icon: FileText,
+    icon: FileType2,
     color: 'primary',
     title: 'How to Attest AI-Generated Text',
     desc: 'A step-by-step guide to identifying AI-written content using Aiscern\'s text attestation ensemble. Covers paste, upload, URL examination, and interpreting integrity ratings.',

@@ -3,7 +3,7 @@ import Link  from 'next/link'
 import Image from 'next/image'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { ArrowRight, CheckCircle, ChevronDown, Zap } from 'lucide-react'
+import { ArrowRight, CircleCheck, ChevronDown, Zap } from 'lucide-react'
 
 
 export interface SolutionFAQ {
@@ -185,15 +185,15 @@ export function SolutionPage(props: SolutionPageProps) {
                       className="object-cover"
                       priority
                     />
-                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
-                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                      <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>
                 ) : (
                   <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
                     <span className={c.icon}>{heroIcon}</span>
-                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center">
-                      <CheckCircle className={`w-4 h-4 ${c.icon}`} />
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                      <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>
                 )}
@@ -203,7 +203,7 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* The Problem */}
-        <section className="py-12 md:py-20 border-t border-white/5">
+        <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">{problemTitle}</h2>
@@ -211,7 +211,7 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
             <div className="grid sm:grid-cols-2 gap-4 md:gap-5">
               {painPoints.map((p, i) => (
-                <div key={i} className="bg-surface border border-white/5 p-5 rounded-xl">
+                <div key={i} className="bg-surface border border-white/15 p-5 rounded-xl">
                   <h3 className="font-semibold text-silver-900 mb-2 text-sm">{p.title}</h3>
                   <p className="text-sm text-silver-600 leading-relaxed">{p.desc}</p>
                 </div>
@@ -221,7 +221,7 @@ export function SolutionPage(props: SolutionPageProps) {
         </section>
 
         {/* How Aiscern Solves It */}
-        <section className="py-12 md:py-20 bg-surface-elevated border-y border-white/5">
+        <section className="py-12 md:py-20 bg-surface-elevated border-y border-white/15">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
@@ -232,7 +232,7 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {features.map((f, i) => (
-                <div key={i} className="bg-surface p-5 rounded-xl border border-white/5 hover:border-white/10 transition-colors duration-300">
+                <div key={i} className="bg-surface p-5 rounded-xl border border-white/15 hover:border-white/20 transition-colors duration-300">
                   <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4 ${c.icon}`}>
                     {f.icon}
                   </div>
@@ -243,7 +243,7 @@ export function SolutionPage(props: SolutionPageProps) {
             </div>
 
             {/* Accuracy disclaimer */}
-            <p className="mt-6 text-xs text-silver-600 text-center border border-white/5 rounded-lg p-3 max-w-xl mx-auto">
+            <p className="mt-6 text-xs text-silver-600 text-center border border-white/15 rounded-lg p-3 max-w-xl mx-auto">
               Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
               <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">See full benchmarks →</Link>
             </p>
@@ -256,7 +256,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 md:mb-10 text-center">Real-World Use Cases</h2>
             <div className="grid sm:grid-cols-3 gap-4 md:gap-6">
               {useCases.map((uc, i) => (
-                <div key={i} className="relative p-6 rounded-xl border border-white/5 bg-surface">
+                <div key={i} className="relative p-6 rounded-xl border border-white/15 bg-surface">
                   <div className={`text-4xl font-bold mb-3 ${c.icon} opacity-30`}>0{i + 1}</div>
                   <h3 className="font-semibold text-silver-900 mb-2">{uc.title}</h3>
                   <p className="text-sm text-silver-600 leading-relaxed">{uc.desc}</p>
@@ -268,7 +268,7 @@ export function SolutionPage(props: SolutionPageProps) {
 
         {/* Testimonial */}
         {testimonialQuote && (
-          <section className="py-10 md:py-12 bg-surface-elevated border-y border-white/5">
+          <section className="py-10 md:py-12 bg-surface-elevated border-y border-white/15">
             <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
               <blockquote className="text-base md:text-lg text-silver-600 italic leading-relaxed mb-4">
                 &ldquo;{testimonialQuote}&rdquo;
@@ -294,14 +294,14 @@ export function SolutionPage(props: SolutionPageProps) {
             <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="bg-surface border border-white/5 rounded-xl p-5 md:p-6">
+            <div className="bg-surface border border-white/15 rounded-xl p-5 md:p-6">
               <FAQ faqs={faqs} />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-12 md:py-20 border-t border-white/5">
+        <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-4">
               Ready to attest content in {industry.toLowerCase()}?

@@ -13,7 +13,7 @@ const LAST_UPDATED = 'June 7, 2026'
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-[#08080d] flex flex-col">
-      <header className="border-b border-[#1E1E1E] bg-[#141414] sticky top-0 z-10">
+      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
@@ -148,7 +148,7 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#1E1E1E]">{title}</h2>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
       <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )

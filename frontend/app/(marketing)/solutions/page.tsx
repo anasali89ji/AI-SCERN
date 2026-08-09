@@ -5,7 +5,7 @@ import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import {
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
-  Heart, Megaphone, Microscope, Pen, ArrowRight, Zap,
+  Heart, Megaphone, Microscope, Pencil, ArrowRight, Zap,
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -105,7 +105,7 @@ const SOLUTIONS: Solution[] = [
   },
   {
     href: '/solutions/content-creators',
-    icon: Pen,
+    icon: Pencil,
     color: 'primary',
     title: 'Content Creators',
     tagline: 'Prove your originality',
@@ -157,7 +157,7 @@ export default function SolutionsHub() {
         </section>
 
         {/* Solutions Bento Grid */}
-        <section className="py-12 md:py-16 border-t border-white/5">
+        <section className="py-12 md:py-16 border-t border-white/15">
           <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {SOLUTIONS.map((sol) => {
@@ -165,7 +165,7 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group flex flex-col gap-4 p-6 rounded-xl border border-white/5 bg-surface hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lift transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-accent/50">
+                    className="group flex flex-col gap-4 p-6 rounded-xl border border-white/15 bg-surface hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lift transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-accent/50">
                     <Icon className={`w-6 h-6 ${c.text}`} />
                     <div className="flex-1">
                       <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>
@@ -183,7 +183,7 @@ export default function SolutionsHub() {
         </section>
 
         {/* Bottom CTA */}
-        <section className="py-16 md:py-20 border-t border-white/5">
+        <section className="py-16 md:py-20 border-t border-white/15">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-3xl font-semibold text-silver-900 mb-4">
               Don&apos;t see your industry?

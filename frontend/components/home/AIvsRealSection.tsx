@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { XCircle, CheckCircle2, FileText, ImageIcon, Music, Video } from 'lucide-react'
+import { CircleX, CheckCircle2, FileType2, ImageIcon, Music, Video } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 type Tab = 'text' | 'image' | 'audio' | 'video'
 
-const TABS: { key: Tab; label: string; icon: typeof FileText }[] = [
-  { key: 'text',  label: 'Text',  icon: FileText  },
+const TABS: { key: Tab; label: string; icon: typeof FileType2 }[] = [
+  { key: 'text',  label: 'Text',  icon: FileType2  },
   { key: 'image', label: 'Image', icon: ImageIcon },
   { key: 'audio', label: 'Audio', icon: Music     },
   { key: 'video', label: 'Video', icon: Video     },
@@ -51,7 +51,7 @@ function Waveform({ bars, color }: { bars: number[]; color: string }) {
 function VerdictLabel({ isAI }: { isAI: boolean }) {
   return isAI ? (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400">
-      <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> AI Generated
+      <CircleX className="w-3.5 h-3.5" aria-hidden="true" /> AI Generated
     </span>
   ) : (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">

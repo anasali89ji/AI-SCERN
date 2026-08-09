@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Command } from 'cmdk'
 import { useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Clock, FileText, ImageIcon, Music, Video,
+  LayoutDashboard, Clock, FileType2, ImageIcon, Music, Video,
   Layers, Coins, Search, MessageSquare,
 } from 'lucide-react'
 import type { Scan } from '@/types'
@@ -13,8 +13,8 @@ interface CommandPaletteProps {
   onOpenChange: (open: boolean) => void
 }
 
-const MODALITY_ICON: Record<string, typeof FileText> = {
-  text: FileText, image: ImageIcon, audio: Music, video: Video,
+const MODALITY_ICON: Record<string, typeof FileType2> = {
+  text: FileType2, image: ImageIcon, audio: Music, video: Video,
 }
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
@@ -46,15 +46,15 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       {/* Backdrop */}
       <div className="fixed inset-0 bg-surface-deep/80" onClick={() => onOpenChange(false)} aria-hidden />
 
-      <div className="relative w-full max-w-lg bg-surface-elevated border border-white/5 rounded-xl shadow-deep overflow-hidden">
-        <div className="flex items-center gap-2.5 px-4 border-b border-white/5 bg-surface-deep">
+      <div className="relative w-full max-w-lg bg-surface-elevated border border-white/15 rounded-xl shadow-deep overflow-hidden">
+        <div className="flex items-center gap-2.5 px-4 border-b border-white/15 bg-surface-deep">
           <Search className="w-4 h-4 text-silver-600 flex-shrink-0" />
           <Command.Input
             autoFocus
             placeholder="Search or jump to…"
             className="w-full bg-transparent border-0 outline-none py-3.5 text-sm text-silver-900 placeholder:text-silver-600"
           />
-          <kbd className="hidden sm:inline text-[10px] font-semibold text-silver-600 bg-surface border border-white/10 px-1.5 py-0.5 rounded">
+          <kbd className="hidden sm:inline text-[10px] font-semibold text-silver-600 bg-surface border border-white/20 px-1.5 py-0.5 rounded">
             Esc
           </kbd>
         </div>
@@ -82,7 +82,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <Command.Group heading="Actions" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-silver-600">
             <Command.Item onSelect={() => go('/detect/text')}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-silver-800 cursor-pointer data-[selected=true]:bg-white/5 data-[selected=true]:text-silver-900">
-              <FileText className="w-4 h-4 text-silver-600" /> New Text Detection
+              <FileType2 className="w-4 h-4 text-silver-600" /> New Text Detection
             </Command.Item>
             <Command.Item onSelect={() => go('/batch')}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-silver-800 cursor-pointer data-[selected=true]:bg-white/5 data-[selected=true]:text-silver-900">
@@ -97,7 +97,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           {recent.length > 0 && (
             <Command.Group heading="Recent" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-silver-600">
               {recent.map(scan => {
-                const Icon = MODALITY_ICON[scan.media_type] ?? FileText
+                const Icon = MODALITY_ICON[scan.media_type] ?? FileType2
                 const label = scan.file_name || scan.content_preview?.slice(0, 40) || `${scan.media_type} scan`
                 return (
                   <Command.Item key={scan.id} onSelect={() => go(`/history?scan=${scan.id}`)}

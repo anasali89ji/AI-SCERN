@@ -2,14 +2,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import {
-  Brain, FileText, BarChart3, AlertTriangle, CheckCircle,
-  HelpCircle, Image as ImageIcon, Video, Music, Sparkles,
+  Brain, FileType2, BarChart3, TriangleAlert, CircleCheck,
+  CircleHelp, Image as ImageIcon, Video, Music, Sparkles,
   Layers, RefreshCw, Bot, Shield, ArrowRight,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,   label: 'Text',  desc: 'Attest AI writing'      },
+  { href: '/detect/text',  icon: FileType2,   label: 'Text',  desc: 'Attest AI writing'      },
   { href: '/detect/image', icon: ImageIcon,  label: 'Image', desc: 'Deepfake attestation'      },
   { href: '/detect/audio', icon: Music,      label: 'Audio', desc: 'Voice clone attestation'   },
   { href: '/detect/video', icon: Video,      label: 'Video', desc: 'Deepfake video attestation' },
@@ -25,9 +25,9 @@ function verdictColors(verdict: string) {
 
 function VerdictIcon({ verdict }: { verdict: string }) {
   const c = verdictColors(verdict)
-  if (verdict === 'AI')    return <AlertTriangle className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
-  if (verdict === 'HUMAN') return <CheckCircle   className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
-  return                          <HelpCircle    className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
+  if (verdict === 'AI')    return <TriangleAlert className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
+  if (verdict === 'HUMAN') return <CircleCheck   className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
+  return                          <CircleHelp    className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
@@ -54,7 +54,7 @@ function normalizeConf(c: number | null | undefined) {
 }
 
 function MediaIcon({ type }: { type: string }) {
-  const icons: Record<string, any> = { text: FileText, image: ImageIcon, audio: Music, video: Video }
+  const icons: Record<string, any> = { text: FileType2, image: ImageIcon, audio: Music, video: Video }
   const Icon = icons[type] ?? Brain
   return <Icon className="w-3.5 h-3.5 flex-shrink-0 text-[#6B6B6B]" />
 }
@@ -123,8 +123,8 @@ export default function DashboardPage() {
 
   const STAT_CARDS = [
     { label: 'Total Scans',   value: loading ? '—' : totalScans.toLocaleString(), icon: Brain         },
-    { label: 'Synthesized',   value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle },
-    { label: 'Human Rate',    value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle   },
+    { label: 'Synthesized',   value: loading ? '—' : `${aiPct}%`,                 icon: TriangleAlert },
+    { label: 'Human Rate',    value: loading ? '—' : `${humanPct}%`,              icon: CircleCheck   },
     { label: 'Avg Confidence',value: loading ? '—' : `${avgConf}%`,               icon: BarChart3     },
   ]
 
@@ -158,8 +158,8 @@ export default function DashboardPage() {
         {STAT_CARDS.map(s => (
           <div key={s.label}
             className="flex items-center gap-3 p-4 sm:p-5 rounded-xl
-                       bg-[#141414] border border-[#1E1E1E]
-                       hover:border-[#2A2A2A] transition-all duration-200"
+                       bg-[#141414] border border-[#333333]
+                       hover:border-[#454545] transition-all duration-200"
           >
             <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
               <s.icon className="w-5 h-5 text-[#2BEE34]" strokeWidth={1.8} />
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                 <Link href="/detect/text"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
                              bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-xs font-bold transition-colors">
-                  <FileText className="w-3.5 h-3.5" /> Try Text Attestation
+                  <FileType2 className="w-3.5 h-3.5" /> Try Text Attestation
                 </Link>
                 <Link href="/detect/image"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
@@ -209,7 +209,7 @@ export default function DashboardPage() {
           {TOOLS.map(t => (
             <Link key={t.href} href={t.href}
               className="flex flex-col items-center gap-2.5 p-4 rounded-xl
-                         bg-[#141414] border border-[#1E1E1E]
+                         bg-[#141414] border border-[#333333]
                          hover:border-[#2BEE34]/30 hover:-translate-y-px
                          transition-all duration-200 text-center group"
             >
@@ -229,7 +229,7 @@ export default function DashboardPage() {
 
       {/* Verdict balance bar */}
       {totalScans > 0 && (
-        <div className="p-5 rounded-xl bg-[#141414] border border-[#1E1E1E]">
+        <div className="p-5 rounded-xl bg-[#141414] border border-[#333333]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-white">Attestation Balance</h2>
             <span className="text-xs text-[#6B6B6B]">{totalScans.toLocaleString()} scans</span>
@@ -273,8 +273,8 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : fetchError ? (
-          <div className="p-8 rounded-xl bg-[#141414] border border-[#1E1E1E] text-center">
-            <AlertTriangle className="w-8 h-8 text-[#FFB800] mx-auto mb-3" />
+          <div className="p-8 rounded-xl bg-[#141414] border border-[#333333] text-center">
+            <TriangleAlert className="w-8 h-8 text-[#FFB800] mx-auto mb-3" />
             <p className="text-[#A3A3A3] text-sm font-medium mb-1">Couldn't load attestation history</p>
             <p className="text-[#6B6B6B] text-xs mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}
@@ -285,14 +285,14 @@ export default function DashboardPage() {
             </button>
           </div>
         ) : scans.length === 0 ? (
-          <div className="p-10 rounded-xl bg-[#141414] border border-[#1E1E1E] text-center">
+          <div className="p-10 rounded-xl bg-[#141414] border border-[#333333] text-center">
             <Shield className="w-10 h-10 text-[#3A3A3A] mx-auto mb-3" />
             <p className="text-[#A3A3A3] text-sm font-medium mb-1">No scans yet</p>
             <p className="text-[#6B6B6B] text-xs mb-5">Pick a tool above to run your first attestation</p>
             <Link href="/detect/text"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
                          bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-sm font-semibold transition-colors">
-              <FileText className="w-4 h-4" /> Try Text Attestation
+              <FileType2 className="w-4 h-4" /> Try Text Attestation
             </Link>
           </div>
         ) : (
@@ -300,8 +300,8 @@ export default function DashboardPage() {
             {scans.map(scan => (
               <div key={scan.id}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl
-                           bg-[#141414] border border-[#1E1E1E]
-                           hover:border-[#2A2A2A] transition-all duration-200"
+                           bg-[#141414] border border-[#333333]
+                           hover:border-[#454545] transition-all duration-200"
               >
                 <MediaIcon type={scan.media_type} />
                 <div className="flex-1 min-w-0">

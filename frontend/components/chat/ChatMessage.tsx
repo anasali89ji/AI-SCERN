@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, AlertTriangle } from 'lucide-react'
+import { Copy, Check, TriangleAlert } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
 interface Props {
@@ -36,7 +36,7 @@ export function ChatMessage({ message }: Props) {
       >
         {!isUser && message.isError && (
           <div className="flex items-center gap-2 mb-2 text-red-400 font-medium">
-            <AlertTriangle className="w-4 h-4" />
+            <TriangleAlert className="w-4 h-4" />
             System Error
           </div>
         )}

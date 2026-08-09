@@ -3,14 +3,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
-  LayoutDashboard, FileText, Image as ImageIcon, Clock,
+  LayoutDashboard, FileType2, Image as ImageIcon, Clock,
   MoreHorizontal, Video, Music, Layers, MessageSquare,
   User, Settings, X, Globe, Coins,
 } from 'lucide-react'
 
 const PRIMARY_NAV = [
   { href: '/dashboard',    icon: LayoutDashboard, label: 'Home'    },
-  { href: '/detect/text',  icon: FileText,        label: 'Text'    },
+  { href: '/detect/text',  icon: FileType2,        label: 'Text'    },
   { href: '/detect/image', icon: ImageIcon,       label: 'Image'   },
   { href: '/history',      icon: Clock,           label: 'History' },
 ]
@@ -55,7 +55,7 @@ export function MobileNav() {
           />
 
           {/* Sheet */}
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#141414] border-t border-[#1E1E1E] rounded-t-xl animate-slide-up"
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#141414] border-t border-[#333333] rounded-t-xl animate-slide-up"
             style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
 
             {/* Drag handle */}
@@ -103,7 +103,7 @@ export function MobileNav() {
 
       {/* Bottom tab bar */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#141414] border-t border-[#1E1E1E]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#141414] border-t border-[#333333]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-label="Mobile navigation"
       >

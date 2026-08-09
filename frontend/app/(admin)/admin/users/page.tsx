@@ -2,10 +2,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { RoleGuard } from '@/components/dashboard/RoleGuard'
 import {
-  Search, Ban, CheckCircle, ShieldOff, ShieldCheck,
+  Search, Ban, CircleCheck, ShieldOff, ShieldCheck,
   RefreshCw, ChevronLeft, ChevronRight, Crown, UserX,
   RotateCcw, ChevronDown, Star, ArrowUpCircle, Clock,
-  XCircle, CheckCircle2, Users, Inbox,
+  CircleX, CheckCircle2, Users, Inbox,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ function StatusBadge({ user }: { user: User }) {
 function RequestStatusBadge({ status }: { status: string }) {
   if (status === 'pending')  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFB800]/10 text-[#FFB800] border border-[#FFB800]/20"><Clock className="w-2.5 h-2.5" />Pending</span>
   if (status === 'approved') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20"><CheckCircle2 className="w-2.5 h-2.5" />Approved</span>
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/20"><XCircle className="w-2.5 h-2.5" />Rejected</span>
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/20"><CircleX className="w-2.5 h-2.5" />Rejected</span>
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ export default function UsersAdmin() {
           </div>
           <button
             onClick={tab === 'users' ? fetchUsers : fetchRequests}
-            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/[0.08]/80 transition-colors"
+            className="flex items-center gap-2 min-h-11 text-xs text-slate-500 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/[0.08]/80 transition-colors"
           >
             <RefreshCw className="w-3 h-3" /> Refresh
           </button>
@@ -240,7 +240,7 @@ export default function UsersAdmin() {
                 <input
                   value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
                   placeholder="Search by email…"
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-[#0f0f17] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
+                  className="w-full pl-8 pr-3 py-2 text-[16px] sm:text-xs bg-[#0f0f17] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                 />
               </div>
               {['all', 'active', 'free', 'pro', 'banned', 'revoked'].map(f => (
@@ -330,7 +330,7 @@ export default function UsersAdmin() {
                               onClick={() => setModal({ userId: u.id, action: 'unban', email: u.email })}
                               className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20 hover:bg-[#2BEE34]/20 transition-colors"
                             >
-                              <CheckCircle className="w-2.5 h-2.5" /> Unban
+                              <CircleCheck className="w-2.5 h-2.5" /> Unban
                             </button>
                           )}
                           {u.dashboard_access ? (
@@ -402,7 +402,7 @@ export default function UsersAdmin() {
                 >
                   {s === 'pending'  && <Clock className="w-3 h-3" />}
                   {s === 'approved' && <CheckCircle2 className="w-3 h-3" />}
-                  {s === 'rejected' && <XCircle className="w-3 h-3" />}
+                  {s === 'rejected' && <CircleX className="w-3 h-3" />}
                   {s === 'all'      && <Inbox className="w-3 h-3" />}
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                   {s === 'pending' && pendingCount > 0 && (
@@ -485,7 +485,7 @@ export default function UsersAdmin() {
                               onClick={() => { setReviewModal({ request: r, action: 'reject' }); setReviewNote(''); setReviewExpiry('') }}
                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/20 hover:bg-[#FF4444]/20 transition-colors"
                             >
-                              <XCircle className="w-3 h-3" /> Reject
+                              <CircleX className="w-3 h-3" /> Reject
                             </button>
                           </div>
                         ) : (
@@ -538,7 +538,7 @@ export default function UsersAdmin() {
                 {modal.action === 'set_plan'    && <Star       className="w-5 h-5 text-blue-400" />}
                 {modal.action === 'reset_daily' && <RotateCcw  className="w-5 h-5 text-slate-400" />}
                 {modal.action === 'ban'         && <Ban        className="w-5 h-5 text-rose-400" />}
-                {modal.action === 'unban'       && <CheckCircle className="w-5 h-5 text-emerald-400" />}
+                {modal.action === 'unban'       && <CircleCheck className="w-5 h-5 text-emerald-400" />}
                 {modal.action === 'revoke'      && <ShieldOff  className="w-5 h-5 text-amber-400" />}
                 {modal.action === 'restore'     && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
               </div>
@@ -573,7 +573,7 @@ export default function UsersAdmin() {
                   <input type="number" min="1" max="3650"
                     value={expiryDays} onChange={e => setExpiryDays(e.target.value)}
                     placeholder="e.g. 30 (optional)"
-                    className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
+                    className="w-full px-3 py-2 text-[16px] sm:text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                   />
                 </div>
               </div>
@@ -584,7 +584,7 @@ export default function UsersAdmin() {
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">Reason (optional)</label>
                 <textarea value={reason} onChange={e => setReason(e.target.value)}
                   rows={2} placeholder="e.g. TOS violation"
-                  className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
+                  className="w-full px-3 py-2 text-[16px] sm:text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
                 />
               </div>
             )}
@@ -630,7 +630,7 @@ export default function UsersAdmin() {
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${reviewModal.action === 'approve' ? 'bg-[#2BEE34]/10' : 'bg-[#FF4444]/10'}`}>
                 {reviewModal.action === 'approve'
                   ? <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  : <XCircle className="w-5 h-5 text-rose-400" />}
+                  : <CircleX className="w-5 h-5 text-rose-400" />}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-slate-100">
@@ -667,7 +667,7 @@ export default function UsersAdmin() {
                 <input type="number" min="1" max="3650"
                   value={reviewExpiry} onChange={e => setReviewExpiry(e.target.value)}
                   placeholder="e.g. 365 (optional)"
-                  className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
+                  className="w-full px-3 py-2 text-[16px] sm:text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500"
                 />
               </div>
             )}
@@ -682,7 +682,7 @@ export default function UsersAdmin() {
                 placeholder={reviewModal.action === 'approve'
                   ? 'e.g. Welcome to Pro! Enjoy the full platform.'
                   : 'e.g. Please reapply after 30 days.'}
-                className="w-full px-3 py-2 text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
+                className="w-full px-3 py-2 text-[16px] sm:text-xs bg-[#08080d] border border-white/[0.08] rounded-lg focus:outline-none focus:border-blue-500/30 text-slate-100 placeholder:text-slate-500 resize-none"
               />
             </div>
 

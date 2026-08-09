@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Crown, X, CheckCircle } from 'lucide-react'
+import { Crown, X, CircleCheck } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 interface Notification {
@@ -50,7 +50,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
         <div className="grid grid-cols-2 gap-2 mb-6">
           {perks.map(perk => (
             <div key={perk} className="flex items-center gap-2 px-3 py-2 bg-[#ffffff06] border border-[#ffffff0c] rounded-xl">
-              <CheckCircle className="w-3.5 h-3.5 text-[#2BEE34] flex-shrink-0" />
+              <CircleCheck className="w-3.5 h-3.5 text-[#2BEE34] flex-shrink-0" />
               <span className="text-xs text-[#94a3b8]">{perk}</span>
             </div>
           ))}

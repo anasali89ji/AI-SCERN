@@ -2,7 +2,7 @@
 import { RoleGuard } from '@/components/dashboard/RoleGuard'
 import { StatCard }  from '@/components/dashboard/StatCard'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Scan, TrendingUp, AlertTriangle, Activity } from 'lucide-react'
+import { Scan, TrendingUp, TriangleAlert, Activity } from 'lucide-react'
 
 const C = { primary:'#0ea5e9', secondary:'#6366f1', success:'#10b981', warning:'#f59e0b', danger:'#ef4444', muted:'#94a3b8' }
 const line30 = Array.from({length:30},(_,i)=>({d:`${i+1}`,text:Math.floor(Math.random()*500+200),image:Math.floor(Math.random()*300+100),audio:Math.floor(Math.random()*150+50),video:Math.floor(Math.random()*80+20)}))
@@ -18,7 +18,7 @@ export default function DetectionAnalytics() {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard title="Scans Today"     value="14,280" delta="12%" positive icon={Scan}          color={C.primary}   />
           <StatCard title="This Month"      value="312k"   delta="18%" positive icon={TrendingUp}    color={C.secondary} />
-          <StatCard title="False Pos. Rate" value="3.2%"   delta="0.4%" positive={false} icon={AlertTriangle} color={C.warning} />
+          <StatCard title="False Pos. Rate" value="3.2%"   delta="0.4%" positive={false} icon={TriangleAlert} color={C.warning} />
           <StatCard title="Avg Response"    value="1.4s"   delta="0.1s" positive icon={Activity}    color={C.success}   />
         </div>
         <div className="grid lg:grid-cols-3 gap-6">

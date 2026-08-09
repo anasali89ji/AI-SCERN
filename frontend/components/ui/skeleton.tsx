@@ -25,7 +25,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('bg-[#141414] border border-[#1E1E1E] rounded-xl p-6 space-y-4', className)}>
+    <div className={cn('bg-[#141414] border border-[#333333] rounded-xl p-6 space-y-4', className)}>
       <div className="flex items-center gap-3">
         <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
         <div className="flex-1 space-y-2">

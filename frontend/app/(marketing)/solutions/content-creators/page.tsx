@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Pen, Shield, Brain, Eye, CheckCircle, FileSearch, BarChart3, Lock } from 'lucide-react'
+import { Pencil, Shield, Brain, Eye, CircleCheck, FileSearch, BarChart3, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Content Creators — Aiscern',
@@ -18,7 +18,7 @@ export default function ContentCreatorsPage() {
       industry="Content Creators"
       tagline="Prove Your Originality. Screen Your Submissions."
       description="Creators need to both defend their own authentic work and verify that contributions, ghostwritten content, and user submissions are genuinely human. Aiscern helps on both sides of the authenticity equation."
-      heroIcon={<Pen className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
+      heroIcon={<Pencil className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
       heroImage="/trust/creators.jpg"
       accentColor="primary"
       ctaLabel="Start Free Creator Account"
@@ -33,7 +33,7 @@ export default function ContentCreatorsPage() {
         { icon: <Shield className="w-5 h-5" />, title: 'Self-Verification', desc: 'Run your own content through attestation before publishing to see how it scores — and address any AI-pattern concerns proactively.' },
         { icon: <Brain className="w-5 h-5" />, title: 'Contributor Screening', desc: 'Examine submissions from ghostwriters, freelancers, and UGC contributors before publishing under your brand.' },
         { icon: <Eye className="w-5 h-5" />, title: 'Visual Content Authentication', desc: 'Verify that commissioned artwork, photography, and graphics are not AI-generated when originality matters.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Authenticity Reports', desc: 'Generate human-authorship reports that can be shared with platforms, sponsors, or audiences as proof of genuine creation.' },
+        { icon: <CircleCheck className="w-5 h-5" />, title: 'Authenticity Reports', desc: 'Generate human-authorship reports that can be shared with platforms, sponsors, or audiences as proof of genuine creation.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Analysis', desc: 'See exactly which parts of content score in AI ranges — helpful for editing human-written drafts that may have unintentional AI-pattern language.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Historical Attestation Records', desc: 'Signed-in users can access attestation history — a record of your authenticated work over time.' },
       ]}

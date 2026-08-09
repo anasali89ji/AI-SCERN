@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Database, Zap, RefreshCw, Loader2, CheckCircle, Clock, TrendingUp, Radio, BarChart3 } from 'lucide-react'
+import { Database, Zap, RefreshCw, LoaderCircle, CircleCheck, Clock, TrendingUp, Radio, BarChart3 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 
@@ -91,13 +91,13 @@ export default function PipelinePage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#1E1E1E] text-[#6B6B6B] hover:text-white text-sm transition-all">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#333333] text-[#6B6B6B] hover:text-white text-sm transition-all">
+            {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             Refresh
           </button>
           <button onClick={triggerPush} disabled={pushing}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2BEE34] text-white text-sm font-semibold hover:bg-[#1A8F1F] transition-all disabled:opacity-60">
-            {pushing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {pushing ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             {pushing ? 'Pushing…' : 'Push to HuggingFace'}
           </button>
         </div>
@@ -111,7 +111,7 @@ export default function PipelinePage() {
 
       {/* Stats Grid */}
       {loading && !stats ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[#2BEE34]" /></div>
+        <div className="flex justify-center py-12"><LoaderCircle className="w-8 h-8 animate-spin text-[#2BEE34]" /></div>
       ) : stats ? (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -121,7 +121,7 @@ export default function PipelinePage() {
               { label: 'Pending Push',  value: fmt(stats.pending_push),  icon: Clock,    color: stats.pending_push > 5000 ? 'text-[#FFB800]' : 'text-white', sub: 'Waiting to push' },
               { label: 'Push Rate',     value: `${stats.push_rate}%`,    icon: TrendingUp, color: 'text-[#A3A3A3]', sub: 'Scraped → HF' },
             ].map(({ label, value, icon: Icon, color, sub }) => (
-              <div key={label} className="bg-surface border border-[#1E1E1E] rounded-xl p-4">
+              <div key={label} className="bg-surface border border-[#333333] rounded-xl p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-[#6B6B6B] uppercase tracking-wider mb-1">{label}</p>
@@ -136,7 +136,7 @@ export default function PipelinePage() {
 
           {/* By Media Type */}
           {byType.length > 0 && (
-            <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+            <div className="bg-surface border border-[#333333] rounded-xl p-5">
               <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" /> Breakdown by Type
               </h3>
@@ -155,7 +155,7 @@ export default function PipelinePage() {
           )}
 
           {/* Workers */}
-          <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+          <div className="bg-surface border border-[#333333] rounded-xl p-5">
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Radio className="w-4 h-4" /> Workers
             </h3>
@@ -184,15 +184,15 @@ export default function PipelinePage() {
 
           {/* Recent Pushes */}
           {pushLog.length > 0 && (
-            <div className="bg-surface border border-[#1E1E1E] rounded-xl p-5">
+            <div className="bg-surface border border-[#333333] rounded-xl p-5">
               <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2BEE34]" /> Recent Pushes to HuggingFace
+                <CircleCheck className="w-4 h-4 text-[#2BEE34]" /> Recent Pushes to HuggingFace
               </h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {pushLog.map((p, i) => (
                   <div key={i} className="flex items-center justify-between p-3 bg-background/60 rounded-xl text-sm">
                     <div className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
+                      <CircleCheck className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-white">{fmt(p.item_count)} items</p>
                         <p className="text-xs text-[#6B6B6B] font-mono">{p.commit_id?.slice(0, 12)}…</p>

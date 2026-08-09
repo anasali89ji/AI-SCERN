@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { X, Star, CheckCircle2, EyeOff, Loader2 } from 'lucide-react'
+import { X, Star, CheckCircle2, EyeOff, LoaderCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import Link from 'next/link'
 
@@ -79,17 +79,17 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
       <div className="absolute inset-0 bg-[#0A0A0A]/80" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-lg bg-[#141414] border border-[#1E1E1E] rounded-t-2xl sm:rounded-xl
+      <div className="relative w-full sm:max-w-lg bg-[#141414] border border-[#333333] rounded-t-2xl sm:rounded-xl
                       shadow-[0_8px_40px_rgba(0,0,0,0.8)] max-h-[92dvh] overflow-y-auto animate-slide-up">
 
         {/* Header */}
-        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-[#1E1E1E] bg-[#141414] z-10">
+        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-[#333333] bg-[#141414] z-10">
           <div>
             <h2 className="text-base font-bold text-white">Write a Review</h2>
             <p className="text-xs text-[#6B6B6B] mt-0.5">Share your honest experience with Aiscern</p>
           </div>
           <button ref={focusRef} onClick={onClose} aria-label="Close"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6B6B] hover:text-white hover:bg-[#1A1A1A] transition-all">
+            className="w-11 h-11 rounded-lg flex items-center justify-center text-[#6B6B6B] hover:text-white hover:bg-[#1A1A1A] transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -141,7 +141,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                   Tool Used
                 </label>
                 <select id="review-tool" value={tool} onChange={e => setTool(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-[#E5E5E5]
+                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-[16px] sm:text-sm text-[#E5E5E5]
                              focus:border-[#2BEE34] focus:outline-none transition-colors">
                   {TOOLS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -154,7 +154,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 </label>
                 <input id="review-title" type="text" value={title}
                   onChange={e => setTitle(e.target.value)} maxLength={100} placeholder="Summarize your experience…"
-                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-[#E5E5E5]
+                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-[16px] sm:text-sm text-[#E5E5E5]
                              placeholder-[#6B6B6B] focus:border-[#2BEE34] focus:outline-none transition-colors" />
               </div>
 
@@ -165,7 +165,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 </label>
                 <textarea id="review-body" value={body} onChange={e => setBody(e.target.value)}
                   rows={4} maxLength={1500} placeholder="Tell us what you used it for, what worked, and what could improve…"
-                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-[#E5E5E5]
+                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-[16px] sm:text-sm text-[#E5E5E5]
                              placeholder-[#6B6B6B] resize-none focus:border-[#2BEE34] focus:outline-none transition-colors" />
                 <p className="text-[10px] text-[#6B6B6B] mt-1">{body.length}/1500 · {Math.max(0, 30 - body.length)} more needed</p>
               </div>
@@ -188,7 +188,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 {!isAnonymous && (
                   <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
                     placeholder="Display name (e.g. Dr. Sarah M.)" maxLength={60}
-                    className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-[#E5E5E5]
+                    className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-[16px] sm:text-sm text-[#E5E5E5]
                                placeholder-[#6B6B6B] focus:border-[#2BEE34] focus:outline-none transition-colors" />
                 )}
               </div>
@@ -203,7 +203,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-lg
                            bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] font-bold text-sm
                            transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit Review'}
+                {submitting ? <><LoaderCircle className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit Review'}
               </button>
               <p className="text-[10px] text-[#6B6B6B] text-center">
                 All reviews are published unfiltered — 1 star to 5 stars.

@@ -18,11 +18,11 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block mb-8 rounded-xl border border-white/5 bg-surface
-                 hover:border-white/10 hover:shadow-lift
+      className="group block mb-8 rounded-xl border border-white/15 bg-surface
+                 hover:border-white/20 hover:shadow-lift
                  transition-all duration-300 ease-out overflow-hidden focus-visible:ring-2 focus-visible:ring-accent/50"
     >
-      <div className="h-48 sm:h-64 bg-surface-deep border-b border-white/5 flex items-end p-6">
+      <div className="h-48 sm:h-64 bg-surface-deep border-b border-white/15 flex items-end p-6">
         <div className="flex-1 min-w-0">
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 mb-3 inline-block">
             {post.category}
@@ -48,11 +48,11 @@ function PostCard({ post }: { post: BlogPostMeta }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block rounded-xl border border-white/5 bg-surface
-                 hover:border-white/10 hover:shadow-lift
+      className="group block rounded-xl border border-white/15 bg-surface
+                 hover:border-white/20 hover:shadow-lift
                  transition-all duration-300 ease-out overflow-hidden focus-visible:ring-2 focus-visible:ring-accent/50"
     >
-      <div className="h-32 bg-surface-deep border-b border-white/5 flex items-end p-4">
+      <div className="h-32 bg-surface-deep border-b border-white/15 flex items-end p-4">
         <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
           {post.category}
         </span>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { ExternalLink, ArrowRight, Info } from 'lucide-react'
+import { SquareArrowOutUpRight, ArrowRight, Info } from 'lucide-react'
 
 export const metadata = {
   title: 'Accuracy Benchmarks — Aiscern',
@@ -204,7 +204,7 @@ export default function BenchmarksPage() {
                           className="text-silver-800 hover:text-accent transition-colors flex items-center gap-1 group"
                         >
                           {d.name}
-                          <ExternalLink className="w-3 h-3 text-silver-600 group-hover:text-accent transition-colors" />
+                          <SquareArrowOutUpRight className="w-3 h-3 text-silver-600 group-hover:text-accent transition-colors" />
                         </a>
                       </td>
                       <td className="px-4 py-3 text-silver-600 tabular-nums text-xs">{d.size}</td>

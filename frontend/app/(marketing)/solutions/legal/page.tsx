@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Scale, FileSearch, BarChart3, Shield, Brain, Lock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Scale, FileSearch, BarChart3, Shield, Brain, Lock, CircleCheck, TriangleAlert } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Legal & Compliance — Aiscern',
@@ -33,7 +33,7 @@ export default function LegalPage() {
         { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble attests AI text across legal drafting styles with ≥96% AUC.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Document-Level Analysis', desc: 'Analyze full legal documents including briefs, contracts, affidavits, and compliance filings.' },
         { icon: <Lock className="w-5 h-5" />, title: 'Forensic PDF Reports', desc: 'Timestamped, attestation-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every attestation generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
+        { icon: <CircleCheck className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every attestation generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },
         { icon: <Shield className="w-5 h-5" />, title: 'Data Security', desc: 'Enterprise plans support private deployment options and enhanced data handling for privileged legal material.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Sentence-Level Audit', desc: 'Pinpoint which sections of a document are AI-flagged — not just a document-level score — for targeted human review.' },
       ]}

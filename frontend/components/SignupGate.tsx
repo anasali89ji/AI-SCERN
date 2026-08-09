@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Zap, Shield, CheckCircle, ArrowRight } from 'lucide-react'
+import { Zap, Shield, CircleCheck, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 const SCAN_LIMIT = 3
@@ -104,7 +104,7 @@ export function SignupGate() {
             <ul className="space-y-2.5 bg-[#1A1A1A] rounded-xl p-4">
               {PERKS.map(p => (
                 <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
-                  <CheckCircle className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
+                  <CircleCheck className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                   {p}
                 </li>
               ))}

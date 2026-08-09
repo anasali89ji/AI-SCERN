@@ -4,13 +4,13 @@ import Link from 'next/link'
 import { useRef, useState, useCallback } from 'react'
 import {
   Newspaper, GraduationCap, Users, Scale, ShieldCheck,
-  HeartPulse, Megaphone, Microscope, Pen,
+  HeartPulse, Megaphone, Microscope, Pencil,
 } from 'lucide-react'
 
 const WHO_NEEDS = [
   {
     role: 'Content Creators',
-    icon: Pen,
+    icon: Pencil,
     large: true,
     value: 'Protect your brand from synthetic media. Prove your content is human-authored to platforms and clients — free, in seconds.',
     stat: 'Free',

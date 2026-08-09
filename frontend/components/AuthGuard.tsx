@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth-provider'
-import { Loader2, Zap, Shield, CheckCircle2, Lock, ArrowRight } from 'lucide-react'
+import { LoaderCircle, Zap, Shield, CheckCircle2, Lock, ArrowRight } from 'lucide-react'
 
 const PERKS = [
   'Save your complete scan history',
@@ -27,7 +27,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-[#141414] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <span className="text-2xl font-black text-white">Aiscern</span>
-          <Loader2 className="w-6 h-6 text-[#2BEE34] animate-spin" />
+          <LoaderCircle className="w-6 h-6 text-[#2BEE34] animate-spin" />
         </div>
       </div>
     )
@@ -44,7 +44,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         {/* Moss accent top bar */}
         <div className="h-1 w-full bg-[#2BEE34] rounded-t-xl" />
 
-        <div className="bg-[#0A0A0A] border border-[#1E1E1E] border-t-0 rounded-b-xl p-7 space-y-6">
+        <div className="bg-[#0A0A0A] border border-[#333333] border-t-0 rounded-b-xl p-7 space-y-6">
 
           {/* Brand */}
           <div className="text-center">
@@ -62,7 +62,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Perks list */}
-          <ul className="space-y-2.5 bg-[#141414] border border-[#1E1E1E] rounded-xl p-4">
+          <ul className="space-y-2.5 bg-[#141414] border border-[#333333] rounded-xl p-4">
             {PERKS.map(p => (
               <li key={p} className="flex items-center gap-2.5 text-sm text-[#A3A3A3]">
                 <CheckCircle2 className="w-4 h-4 text-[#2BEE34] flex-shrink-0" strokeWidth={2.5} />

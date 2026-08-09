@@ -1,6 +1,6 @@
 'use client'
 import { Component, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { TriangleAlert, RefreshCw } from 'lucide-react'
 
 interface Props  { children: ReactNode; fallback?: ReactNode }
 interface State  { hasError: boolean; error?: Error }
@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center">
           <div className="w-14 h-14 rounded-xl bg-[#FF4444]/10 border border-[#FF4444]/20
                           flex items-center justify-center mb-4">
-            <AlertTriangle className="w-7 h-7 text-[#FF4444]" />
+            <TriangleAlert className="w-7 h-7 text-[#FF4444]" />
           </div>
           <h3 className="text-lg font-bold text-white mb-2">Something went wrong</h3>
           <p className="text-[#A3A3A3] text-sm mb-6 max-w-sm leading-relaxed">

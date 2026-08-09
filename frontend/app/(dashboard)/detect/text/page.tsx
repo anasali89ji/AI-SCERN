@@ -3,7 +3,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
-import { FileText, Send, RotateCcw, AlertTriangle, CheckCircle, HelpCircle, Loader2, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share2, Info, Database } from 'lucide-react'
+import { FileType2, Send, RotateCcw, TriangleAlert, CircleCheck, CircleHelp, LoaderCircle, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share, Info, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
@@ -71,10 +71,10 @@ function ResultDetails({
         <div className="flex items-start gap-3 min-w-0">
           <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${verdictStyles[result.verdict]}`}>
             {result.verdict === 'AI'
-              ? <AlertTriangle className="w-5 h-5 sm:w-7 sm:h-7 text-error" />
+              ? <TriangleAlert className="w-5 h-5 sm:w-7 sm:h-7 text-error" />
               : result.verdict === 'HUMAN'
-              ? <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
-              : <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-warning" />}
+              ? <CircleCheck className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
+              : <CircleHelp className="w-5 h-5 sm:w-7 sm:h-7 text-warning" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
@@ -367,7 +367,7 @@ Analyzed: ${new Date().toLocaleString()}`
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-            <FileText className="w-6 h-6 text-warning" />
+            <FileType2 className="w-6 h-6 text-warning" />
           </div>
           Text Attestation
         </h1>
@@ -399,7 +399,7 @@ Analyzed: ${new Date().toLocaleString()}`
               onBlur={() => setFocusMode(false)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleDetect() } }}
               placeholder="Paste or type any text here to analyze for AI generation patterns…"
-              className="input-field min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-sm relative z-50"
+              className="input-field min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-[16px] sm:text-sm relative z-50"
             />
             <p className="text-[11px] text-silver-600 mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
 
@@ -408,7 +408,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <button
                 onClick={() => setPdfMode(false)}
                 className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${!pdfMode ? 'bg-warning/15 text-warning border border-warning/30' : 'text-silver-600 hover:text-silver-700'}`}>
-                <FileText className="w-3.5 h-3.5" /> Text Input
+                <FileType2 className="w-3.5 h-3.5" /> Text Input
               </button>
               <button
                 onClick={() => setPdfMode(true)}
@@ -437,7 +437,7 @@ Analyzed: ${new Date().toLocaleString()}`
                     ${pdfFile ? 'border-accent/30 bg-accent/5' : 'border-silver-300 hover:border-accent/30 hover:bg-accent-hover/5'}`}>
                   {pdfLoading ? (
                     <div className="flex flex-col items-center gap-2 w-full px-6">
-                      <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                      <LoaderCircle className="w-8 h-8 text-accent animate-spin" />
                       <p className="text-sm font-medium text-white">Extracting text from PDF…</p>
                       <p className="text-xs text-silver-600">Running {pdfFile && pdfFile.size > 1024*1024*5 ? 'multi-page' : ''} analysis — this takes 10–30 seconds</p>
                       <div className="w-full max-w-xs bg-surface rounded-full h-1.5 mt-1 overflow-hidden">
@@ -517,7 +517,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </button>
                 <button onClick={handleDetect} disabled={loading || charCount < 50}
                   className="btn-primary py-2 px-5 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   {loading ? 'Examining…' : 'Attest'}
                 </button>
               </div>
@@ -530,7 +530,7 @@ Analyzed: ${new Date().toLocaleString()}`
           {error && (
             <div className="card border-error/30 bg-error/5">
               <div className="flex items-center gap-2 text-error text-sm">
-                <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+                <TriangleAlert className="w-4 h-4 shrink-0" /> {error}
               </div>
             </div>
           )}
@@ -543,7 +543,7 @@ Analyzed: ${new Date().toLocaleString()}`
               <div className="card flex flex-col items-center justify-center py-16 gap-4">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full border-2 border-accent/20 flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-accent" />
+                    <FileType2 className="w-8 h-8 text-accent" />
                   </div>
                   
                 </div>
@@ -576,7 +576,7 @@ Analyzed: ${new Date().toLocaleString()}`
             {!result && !loading && (
               <div className="card flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-20 h-20 rounded-xl bg-warning/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-10 h-10 text-warning" />
+                  <FileType2 className="w-10 h-10 text-warning" />
                 </div>
                 <h3 className="font-semibold text-white mb-2">Ready to Analyze</h3>
                 <p className="text-silver-600 text-sm max-w-xs">
@@ -618,7 +618,7 @@ Analyzed: ${new Date().toLocaleString()}`
           {scanId && (
             <button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-silver-600 hover:text-white transition-colors border border-silver-300 rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
-              <Share2 className="w-3 h-3" /> Share result
+              <Share className="w-3 h-3" /> Share result
             </button>
           )}
         </div>

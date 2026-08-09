@@ -7,7 +7,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/SiteNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
-  Shield, FileText, Zap,
+  Shield, FileType2, Zap,
   ArrowRight,
   Image as ImageIcon, Video, Music,
   MessageSquare, Database, TrendingUp,
@@ -61,7 +61,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,      label: 'Text Attestation',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
+  { href: '/detect/text',  icon: FileType2,      label: 'Text Attestation',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
   { href: '/detect/image', icon: ImageIcon,     label: 'Image Attestation',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
   { href: '/detect/audio', icon: Music,         label: 'Audio Attestation',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
   { href: '/detect/video', icon: Video,         label: 'Video Attestation',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react'
+import { ArrowLeft, CircleCheck, AlertCircle, Clock } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ const LAST_REVIEWED = 'May 17, 2026'
 export default function AccessibilityPage() {
   return (
     <div className="min-h-screen bg-[#08080d] flex flex-col">
-      <header className="border-b border-[#1E1E1E] bg-[#141414] sticky top-0 z-10">
+      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
@@ -149,7 +149,7 @@ export default function AccessibilityPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#1E1E1E]">{title}</h2>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
       <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )
@@ -157,8 +157,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border border-[#1E1E1E] bg-[#141414]/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />}
+    <div className="flex items-start gap-3 p-3 rounded-lg border border-[#333333] bg-[#141414]/50">
+      {icon === 'pass' && <CircleCheck className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />}
       {icon === 'warn' && <Clock className="w-4 h-4 text-[#FFB800] flex-shrink-0 mt-0.5" />}
       {icon === 'fail' && <AlertCircle className="w-4 h-4 text-[#FF4444] flex-shrink-0 mt-0.5" />}
       <div>

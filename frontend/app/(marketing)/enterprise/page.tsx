@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, Mail } from 'lucide-react'
+import { Building2, Shield, Zap, Layers, Lock, Users, CircleCheck, Mail } from 'lucide-react'
 import { EnterpriseContactForm } from '@/components/EnterpriseContactForm'
 
 export const metadata: Metadata = {
@@ -92,7 +92,7 @@ export default function EnterprisePage() {
                   <ul className="space-y-2 text-xs text-silver-600">
                     {[plan.scans, plan.api, plan.support].map((item, j) => (
                       <li key={j} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                        <CircleCheck className="w-3.5 h-3.5 text-accent flex-shrink-0" />
                         {item}
                       </li>
                     ))}

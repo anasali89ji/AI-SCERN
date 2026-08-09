@@ -5,8 +5,8 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import {
-  Video, Upload, X, AlertTriangle,
-  Loader2, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share2, Database } from 'lucide-react'
+  Video, Upload, X, TriangleAlert,
+  LoaderCircle, RotateCcw, Play, Pause, Download, Info, Scan, Eye, Share, Database } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
@@ -572,7 +572,7 @@ function VideoDetectionPage() {
                 </button>
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
+                  {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
                   {loading ? loadingLabel.split('…')[0] + '…' : 'Analyze Video'}
                 </button>
               </div>
@@ -581,7 +581,7 @@ function VideoDetectionPage() {
 
           {error && (
             <div className="card border-error/30 bg-error/5 flex items-center gap-2 text-error text-sm py-3">
-              <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+              <TriangleAlert className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
 
@@ -639,7 +639,7 @@ function VideoDetectionPage() {
           {scanId && (
             <button onClick={shareResult}
               className="flex items-center gap-1.5 text-xs text-silver-600 hover:text-white transition-colors border border-silver-300 rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
-              <Share2 className="w-3 h-3" /> Share result
+              <Share className="w-3 h-3" /> Share result
             </button>
           )}
         </div>

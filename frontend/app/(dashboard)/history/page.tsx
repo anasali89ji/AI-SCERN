@@ -1,7 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
+import { Clock, Search, Filter, Download, Trash, Eye, Image as ImgIcon, Video, Mic, FileType2, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
@@ -10,7 +10,7 @@ import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
 
 // ── FIX B.5: Swipe-to-delete row wrapper (mobile only) ──────────────────────
 // On touch devices, swipe left > 72px reveals a full-height delete button.
-// On desktop, the existing hover-reveal Trash2 button is used instead.
+// On desktop, the existing hover-reveal Trash button is used instead.
 function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; children: React.ReactNode }) {
   const startX  = useRef(0)
   const offsetX = useRef(0)
@@ -48,7 +48,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
         <div className="absolute right-0 top-0 h-full flex">
           <button onClick={reset} className="px-3 bg-[#141414] text-[#6B6B6B] text-xs">Cancel</button>
           <button onClick={onDelete} className="px-4 bg-[#FF4444] text-white font-bold flex items-center gap-1.5 text-sm">
-            <Trash2 className="w-4 h-4" /> Delete
+            <Trash className="w-4 h-4" /> Delete
           </button>
         </div>
       )}
@@ -60,7 +60,7 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
   )
 }
 
-const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
+const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileType2, url: Globe }
 const mediaColors = {
   image: 'text-[#2BEE34] bg-[#2BEE34]/10',
   video: 'text-[#A3A3A3] bg-[#1A1A1A]',
@@ -273,7 +273,7 @@ export default function HistoryPage() {
               <Filter className="w-3.5 h-3.5 text-[#6B6B6B] shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#333333] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
@@ -285,7 +285,7 @@ export default function HistoryPage() {
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#1E1E1E] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#333333] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
@@ -294,7 +294,7 @@ export default function HistoryPage() {
             {/* Sort */}
             <div className="ml-auto">
               <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-xs bg-[#141414] border border-[#1E1E1E] rounded-lg px-2.5 py-1.5 text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30">
+                className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2.5 py-1.5 text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="confidence">By confidence</option>
@@ -320,7 +320,7 @@ export default function HistoryPage() {
             )}
             {scans.length > 0 && (
               <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#FF4444] hover:border-[#FF4444]/30">
-                <Trash2 className="w-3.5 h-3.5" /> Clear All
+                <Trash className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
           </div>
@@ -346,7 +346,7 @@ export default function HistoryPage() {
             <div className="space-y-2">
               
                 {paginated.map((scan, i) => {
-                  const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileText
+                  const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileType2
                   const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-[#6B6B6B] bg-[#141414]'
                   const conf = normalizeConf(scan.confidence_score)
                   return (
@@ -390,7 +390,7 @@ export default function HistoryPage() {
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
                             className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors disabled:opacity-50">
-                            <Trash2 className="w-4 h-4" />
+                            <Trash className="w-4 h-4" />
                           </button>
                         </div>
                       </div>

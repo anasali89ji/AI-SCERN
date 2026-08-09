@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { ExternalLink, BookOpen } from 'lucide-react'
+import { SquareArrowOutUpRight, BookOpen } from 'lucide-react'
 
 export const metadata = {
   title: 'Research Citations — Aiscern',
@@ -84,7 +84,7 @@ export default function ResearchPage() {
 
           {/* Benchmarks — CSS bar charts, no chart library */}
           <section className="mb-16">
-            <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/5">
+            <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/15">
               Ensemble Accuracy Benchmarks
             </h2>
             <div className="space-y-5">
@@ -108,14 +108,14 @@ export default function ResearchPage() {
           <div className="space-y-16">
             {PAPERS.map((section) => (
               <section key={section.category}>
-                <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/5">{section.category}</h2>
+                <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/15">{section.category}</h2>
                 <div className="space-y-4">
                   {section.entries.map((paper, i) => (
-                    <div key={i} className="rounded-xl border border-white/5 bg-surface p-8 hover:border-white/10 transition-colors duration-300">
+                    <div key={i} className="rounded-xl border border-white/15 bg-surface p-8 hover:border-white/20 transition-colors duration-300">
                       <a href={paper.url} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-start gap-1.5 font-semibold text-silver-900 hover:text-accent transition-colors duration-300 group focus-visible:ring-2 focus-visible:ring-accent/50 rounded">
                         <span>{paper.title}</span>
-                        <ExternalLink className="h-3.5 w-3.5 mt-1 flex-shrink-0 opacity-60 group-hover:opacity-100" />
+                        <SquareArrowOutUpRight className="h-3.5 w-3.5 mt-1 flex-shrink-0 opacity-60 group-hover:opacity-100" />
                       </a>
                       <p className="text-sm text-silver-600 mt-1">{paper.authors} · <span className="text-accent text-xs font-mono">{paper.venue}</span></p>
                       <p className="text-sm text-silver-600 mt-3 line-clamp-3">{paper.description}</p>
@@ -126,7 +126,7 @@ export default function ResearchPage() {
             ))}
           </div>
 
-          <div className="mt-16 rounded-xl border border-white/5 bg-surface p-6 text-sm text-silver-600">
+          <div className="mt-16 rounded-xl border border-white/15 bg-surface p-6 text-sm text-silver-600">
             <p className="font-medium text-silver-900 mb-1">Missing a citation?</p>
             <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">research@aiscern.com</a> and we will add it promptly.</p>
             <p className="mt-3">Also see: <Link href="/benchmarks" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Benchmarks</Link> · <Link href="/methodology" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Methodology</Link></p>

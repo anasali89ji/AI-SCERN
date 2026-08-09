@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Microscope, Brain, FileSearch, Layers, BarChart3, Shield, CheckCircle, Lock } from 'lucide-react'
+import { Microscope, Brain, FileSearch, Layers, BarChart3, Shield, CircleCheck, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Academic Research — Aiscern',
@@ -34,7 +34,7 @@ export default function ResearchPage() {
         { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Heatmap', desc: 'Identify which specific paragraphs and sections are AI-flagged — crucial for peer reviewers assessing partial AI use.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Journal Submission Screening', desc: 'Process entire submission batches. API integration available for journal management systems (OJS, ScholarOne, Editorial Manager).' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Statistical Confidence Reporting', desc: 'Detailed confidence intervals and model breakdown — the kind of methodological transparency academic contexts demand.' },
-        { icon: <CheckCircle className="w-5 h-5" />, title: 'Audit Trail for IRB', desc: 'Timestamped reports with attestation IDs for institutional review board documentation and research integrity committees.' },
+        { icon: <CircleCheck className="w-5 h-5" />, title: 'Audit Trail for IRB', desc: 'Timestamped reports with attestation IDs for institutional review board documentation and research integrity committees.' },
         { icon: <Lock className="w-5 h-5" />, title: 'Data Privacy for Research', desc: 'Submitted manuscripts are processed ephemerally. We do not train on your research content or retain it beyond the session.' },
       ]}
       useCases={[

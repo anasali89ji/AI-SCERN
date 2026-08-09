@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Image as ImageIcon, Video, Music, FileText,
+  LayoutDashboard, Image as ImageIcon, Video, Music, FileType2,
   Globe, Layers, Clock, User, Settings, ChevronLeft, ChevronRight,
   Menu, LogOut, ChevronDown, MessageSquare, Star,
   Coins, Search, Bell, ChevronRight as ChevronRightSmall,
@@ -41,7 +41,7 @@ const NAV_GROUPS = [
     label: 'Detect',
     items: [
       { href: '/dashboard',    icon: LayoutDashboard, label: 'Overview'  },
-      { href: '/detect/text',  icon: FileText,        label: 'Text'      },
+      { href: '/detect/text',  icon: FileType2,        label: 'Text'      },
       { href: '/detect/image', icon: ImageIcon,       label: 'Image'     },
       { href: '/detect/audio', icon: Music,           label: 'Audio'     },
       { href: '/detect/video', icon: Video,           label: 'Video'     },
@@ -114,7 +114,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
     <div className="flex flex-col h-full">
       {/* Logo */}
       <Link href="/"
-        className={`flex items-center gap-3 px-4 h-16 border-b border-white/5 hover:text-silver-900 transition-colors duration-300 flex-shrink-0 ${collapsed ? 'justify-center' : ''}`}>
+        className={`flex items-center gap-3 px-4 h-16 border-b border-white/15 hover:text-silver-900 transition-colors duration-300 flex-shrink-0 ${collapsed ? 'justify-center' : ''}`}>
         <span className={`font-black text-silver-900 tracking-tight ${collapsed ? 'text-lg' : 'text-xl'} hover:text-accent transition-colors duration-300`}>
           {collapsed ? 'A' : 'Aiscern'}
         </span>
@@ -149,7 +149,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
                     {/* Rail-mode tooltip (Module 6.1) */}
                     {collapsed && (
                       <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-40
-                                       whitespace-nowrap bg-surface-elevated border border-white/5 text-silver-900 text-xs
+                                       whitespace-nowrap bg-surface-elevated border border-white/15 text-silver-900 text-xs
                                        px-2 py-1 rounded-md opacity-0 group-hover/navitem:opacity-100
                                        transition-opacity duration-300">
                         {item.label}
@@ -187,7 +187,7 @@ function Sidebar({ user, signOut, collapsed, pathname, onNavClick, chatPreviews,
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-white/5 p-2 flex-shrink-0">
+      <div className="border-t border-white/15 p-2 flex-shrink-0">
         {!collapsed ? (
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors duration-300">
             <UserAvatar user={user} size={8} />
@@ -246,10 +246,10 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-64 z-50
-                        bg-surface border border-white/5 rounded-xl
+                        bg-surface border border-white/15 rounded-xl
                         shadow-deep overflow-hidden animate-slide-up">
           {/* Profile header */}
-          <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5 bg-surface-deep">
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-white/15 bg-surface-deep">
             <UserAvatar user={user} size={11} />
             <div className="min-w-0 flex-1">
               <p className="font-bold text-silver-900 truncate text-sm">{name}</p>
@@ -269,7 +269,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
               </Link>
             ))}
           </div>
-          <div className="p-1.5 border-t border-white/5">
+          <div className="p-1.5 border-t border-white/15">
             <button onClick={() => { setOpen(false); signOut() }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 transition-colors duration-300 text-sm text-silver-600 hover:text-rose-400 w-full">
               <LogOut className="w-4 h-4 flex-shrink-0" />
@@ -317,8 +317,8 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-surface border border-white/5 rounded-xl shadow-deep overflow-hidden animate-slide-up">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-surface border border-white/15 rounded-xl shadow-deep overflow-hidden animate-slide-up">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/15">
             <span className="text-sm font-semibold text-silver-900">Notifications</span>
             {items.length > 0 && (
               <button onClick={markAllRead} className="text-xs text-accent hover:text-accent-hover transition-colors duration-300">
@@ -330,7 +330,7 @@ function NotificationBell() {
             {items.length === 0 ? (
               <p className="text-sm text-silver-600 text-center py-8">You&apos;re all caught up.</p>
             ) : items.map(n => (
-              <div key={n.id} className="px-4 py-3 border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-colors duration-300">
+              <div key={n.id} className="px-4 py-3 border-b border-white/15 last:border-b-0 hover:bg-white/5 transition-colors duration-300">
                 <p className="text-sm font-medium text-silver-900">{n.title}</p>
                 <p className="text-xs text-silver-600 mt-0.5 line-clamp-2">{n.message}</p>
               </div>
@@ -431,7 +431,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop sidebar — CSS width transition, no Framer */}
         <aside
           style={{ width: collapsed ? 72 : 260 }}
-          className="hidden lg:flex flex-col bg-surface border-r border-white/5 relative flex-shrink-0 transition-[width] duration-300 ease-out"
+          className="hidden lg:flex flex-col bg-surface border-r border-white/15 relative flex-shrink-0 transition-[width] duration-300 ease-out"
         >
           <Sidebar
             user={user} signOut={signOut} collapsed={collapsed} pathname={pathname}
@@ -439,7 +439,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
           {/* Collapse toggle */}
           <button onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-white/10
+            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-white/20
                        flex items-center justify-center text-silver-600
                        hover:text-accent hover:border-accent/40 transition-all duration-300 z-10">
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
@@ -452,7 +452,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Backdrop */}
             <div className="absolute inset-0 bg-surface-deep/80" onClick={() => setMobileOpen(false)} />
             {/* Drawer */}
-            <aside className="relative w-72 bg-surface border-r border-white/5 flex flex-col animate-slide-up">
+            <aside className="relative w-72 bg-surface border-r border-white/15 flex flex-col animate-slide-up">
               <Sidebar
                 user={user} signOut={signOut} collapsed={false} pathname={pathname}
                 onNavClick={() => setMobileOpen(false)} chatPreviews={chatPreviews} onChatSelect={handleChatSelect}
@@ -464,7 +464,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top header */}
-          <header className="h-14 sm:h-16 border-b border-white/5 flex items-center justify-between gap-3
+          <header className="h-14 sm:h-16 border-b border-white/15 flex items-center justify-between gap-3
                              px-3 sm:px-4 lg:px-6 bg-surface flex-shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
@@ -483,10 +483,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {/* Global search trigger (Cmd+K) */}
               <button onClick={() => setPaletteOpen(true)}
-                className="hidden sm:flex items-center gap-2 bg-surface-deep border border-white/5 rounded-lg px-3 py-1.5 text-silver-600 text-sm hover:border-white/10 hover:text-silver-800 transition-all duration-300">
+                className="hidden sm:flex items-center gap-2 bg-surface-deep border border-white/15 rounded-lg px-3 py-1.5 text-silver-600 text-sm hover:border-white/20 hover:text-silver-800 transition-all duration-300">
                 <Search className="w-3.5 h-3.5" />
                 <span>Search</span>
-                <kbd className="ml-1 text-[10px] font-semibold text-silver-600 bg-surface border border-white/10 px-1.5 py-0.5 rounded">⌘K</kbd>
+                <kbd className="ml-1 text-[10px] font-semibold text-silver-600 bg-surface border border-white/20 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
               <button onClick={() => setPaletteOpen(true)} aria-label="Search"
                 className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg text-silver-600 hover:text-silver-900 hover:bg-white/5 transition-all duration-300">

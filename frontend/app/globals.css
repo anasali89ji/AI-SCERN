@@ -219,12 +219,12 @@
 
   /* ── Cards ───────────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-[#141414] border border-[#1E1E1E] rounded-xl p-6
+    @apply bg-[#141414] border border-[#333333] rounded-xl p-6
            transition-all duration-200;
   }
 
   .card-hover {
-    @apply card hover:border-[#2A2A2A] hover:shadow-[0_0_20px_rgba(43,238,52,0.08)];
+    @apply card hover:border-[#454545] hover:shadow-[0_0_20px_rgba(43,238,52,0.08)];
   }
 
   .card-elevated {
@@ -261,16 +261,16 @@
 
   /* ── Tables ──────────────────────────────────────────────────────────────── */
   .table-container {
-    @apply bg-[#141414] border border-[#1E1E1E] rounded-xl overflow-hidden;
+    @apply bg-[#141414] border border-[#333333] rounded-xl overflow-hidden;
   }
 
   .table-header {
-    @apply bg-[#0A0A0A] border-b border-[#1E1E1E] px-4 py-3
+    @apply bg-[#0A0A0A] border-b border-[#333333] px-4 py-3
            text-xs font-medium uppercase tracking-wider text-[#A3A3A3];
   }
 
   .table-row {
-    @apply border-b border-[#1E1E1E] px-4 py-3 text-sm text-[#E5E5E5]
+    @apply border-b border-[#333333] px-4 py-3 text-sm text-[#E5E5E5]
            hover:bg-[#1A1A1A] transition-colors duration-100;
   }
 
@@ -326,7 +326,7 @@
 
   /* ── Divider ─────────────────────────────────────────────────────────────── */
   .divider {
-    @apply border-t border-[#1E1E1E];
+    @apply border-t border-[#333333];
   }
 
   /* ── Link ────────────────────────────────────────────────────────────────── */

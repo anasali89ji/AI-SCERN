@@ -11,7 +11,7 @@ export default function ScraperLoading() {
         </div>
 
         {/* Input card */}
-        <div className="bg-[#141414] border border-[#1E1E1E] rounded-xl p-4 sm:p-5">
+        <div className="bg-[#141414] border border-[#333333] rounded-xl p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 h-10 rounded-xl bg-white/[0.04]" />
             <div className="h-10 w-28 rounded-xl bg-white/[0.04]" />

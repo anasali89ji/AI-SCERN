@@ -37,7 +37,7 @@ export function MethodologySection() {
               {STEPS.map(step => (
                 <div key={step.n} className="relative">
                   <div
-                    className="absolute -left-[52px] top-0 w-9 h-9 rounded-full bg-surface border border-white/10
+                    className="absolute -left-[52px] top-0 w-9 h-9 rounded-full bg-surface border border-white/20
                                flex items-center justify-center z-10"
                     aria-hidden="true"
                   >

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { SiteFooter } from '@/components/site-footer'
-import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical, ArrowRight } from 'lucide-react'
+import { CheckCircle2, TriangleAlert, BarChart3, Cpu, FlaskConical, ArrowRight } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
@@ -167,7 +167,7 @@ export default function MethodologyPage() {
           {/* Known limitations */}
           <section className="mb-12">
             <div className="flex items-center gap-2 mb-5">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+              <TriangleAlert className="w-5 h-5 text-warning" />
               <h2 className="text-xl font-semibold text-white">Known Limitations</h2>
             </div>
             <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 mb-4">
@@ -178,7 +178,7 @@ export default function MethodologyPage() {
             <div className="space-y-2">
               {LIMITATIONS.map((l, i) => (
                 <div key={i} className="flex gap-3 p-4 bg-surface border border-silver-300 rounded-xl">
-                  <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                  <TriangleAlert className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-silver-700 leading-relaxed">{l}</p>
                 </div>
               ))}

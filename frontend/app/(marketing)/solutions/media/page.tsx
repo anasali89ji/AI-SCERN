@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { Newspaper, Eye, Video, FileSearch, Brain, Shield, AlertTriangle, Layers } from 'lucide-react'
+import { Newspaper, Eye, Video, FileSearch, Brain, Shield, TriangleAlert, Layers } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Media & Journalism — Aiscern',
@@ -33,7 +33,7 @@ export default function MediaPage() {
         { icon: <Brain className="w-5 h-5" />, title: 'AI Text Attestation', desc: 'Ensemble RoBERTa + Binoculars analysis on press releases, reports, and submitted articles with ≥96% AUC.' },
         { icon: <Eye className="w-5 h-5" />, title: 'Deepfake Image Attestation', desc: 'ViT-based classifier with pixel-level integrity analysis. Attests GAN-generated and diffusion model images.' },
         { icon: <Video className="w-5 h-5" />, title: 'Video Deepfake Attestation', desc: 'Frame-level analysis combined with NVIDIA NIM deepfake models for facial manipulation attestation.' },
-        { icon: <AlertTriangle className="w-5 h-5" />, title: 'Audio Clone Attestation', desc: 'wav2vec2-based voice analysis against ASVspoof benchmarks — flags synthetic speech with 92% recall.' },
+        { icon: <TriangleAlert className="w-5 h-5" />, title: 'Audio Clone Attestation', desc: 'wav2vec2-based voice analysis against ASVspoof benchmarks — flags synthetic speech with 92% recall.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Forensic Reports', desc: 'Exportable reports with model confidence breakdown, attestation ID, and timestamp for editorial documentation.' },
         { icon: <Shield className="w-5 h-5" />, title: 'API for Newsroom Workflows', desc: 'Integrate attestation directly into CMS submission pipelines. Auto-flag content before it reaches editorial review.' },
       ]}

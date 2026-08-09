@@ -14,7 +14,7 @@ const VERSION = '1.0'
 export default function DpaPage() {
   return (
     <div className="min-h-screen bg-[#08080d] flex flex-col">
-      <header className="border-b border-[#1E1E1E] bg-[#141414] sticky top-0 z-10">
+      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
@@ -131,7 +131,7 @@ export default function DpaPage() {
                   {/* Mobile card fallback */}
                   <div className="sm:hidden space-y-3 mt-3">
                     {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
-                      <div key={name} className="rounded-xl border border-[#1E1E1E] p-4 text-sm">
+                      <div key={name} className="rounded-xl border border-[#333333] p-4 text-sm">
                         <p className="font-medium text-white mb-2">{name}</p>
                         <dl className="space-y-1 text-[#A3A3A3]">
                           <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Purpose</dt><dd>{purpose}</dd></div>
@@ -142,10 +142,10 @@ export default function DpaPage() {
                     ))}
                   </div>
                   {/* Table for sm+ */}
-                  <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#1E1E1E] mt-3">
+                  <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#333333] mt-3">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-[#1E1E1E] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
+                        <tr className="border-b border-[#333333] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
                           <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
                           <th className="px-4 py-3 text-left font-medium">Purpose</th>
                           <th className="px-4 py-3 text-left font-medium">Data Location</th>
@@ -154,7 +154,7 @@ export default function DpaPage() {
                       </thead>
                       <tbody className="text-[#A3A3A3]">
                         {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
-                          <tr key={name} className="border-b border-[#1E1E1E] last:border-0 hover:bg-muted/20">
+                          <tr key={name} className="border-b border-[#333333] last:border-0 hover:bg-muted/20">
                             <td className="px-4 py-3 font-medium text-white">{name}</td>
                             <td className="px-4 py-3">{purpose}</td>
                             <td className="px-4 py-3">{location}</td>
@@ -269,7 +269,7 @@ export default function DpaPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#1E1E1E]">{title}</h2>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
       <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )

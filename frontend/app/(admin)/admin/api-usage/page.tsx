@@ -2,7 +2,7 @@
 import { RoleGuard } from '@/components/dashboard/RoleGuard'
 import { StatCard }  from '@/components/dashboard/StatCard'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Code2, Users, AlertTriangle } from 'lucide-react'
+import { Code2, Users, TriangleAlert } from 'lucide-react'
 
 const C = { primary:'#0ea5e9', secondary:'#6366f1', success:'#10b981', warning:'#f59e0b', danger:'#ef4444' }
 const daily = Array.from({length:30},(_,i)=>({d:`${i+1}`,calls:Math.floor(Math.random()*5000+2000),errors:Math.floor(Math.random()*80+20)}))
@@ -19,7 +19,7 @@ export default function ApiUsage() {
           <StatCard title="API Calls Today"    value="34,240" delta="8%"   positive icon={Code2}         color={C.primary}   />
           <StatCard title="This Month"         value="842k"   delta="21%"  positive icon={Code2}         color={C.secondary} />
           <StatCard title="Unique API Users"   value="284"    delta="14%"  positive icon={Users}         color={C.success}   />
-          <StatCard title="Error Rate"         value="2.3%"   delta="0.2%" positive={false} icon={AlertTriangle} color={C.danger} />
+          <StatCard title="Error Rate"         value="2.3%"   delta="0.2%" positive={false} icon={TriangleAlert} color={C.danger} />
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-surface/60 p-5">

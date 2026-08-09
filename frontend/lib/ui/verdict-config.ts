@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react'
+import { TriangleAlert, CircleCheck, CircleHelp } from 'lucide-react'
 import type { Verdict } from '@/types'
 
 // `hex` is intentionally kept as a literal value — it feeds inline `style`/SVG
@@ -7,7 +7,7 @@ import type { Verdict } from '@/types'
 // color exception (Module 10.2 audit) — everything else here uses tokens.
 export const verdictConfig = {
   AI: {
-    icon:   AlertTriangle,
+    icon:   TriangleAlert,
     color:  'text-error',
     border: 'border-error/30',
     bg:     'bg-error/5',
@@ -15,7 +15,7 @@ export const verdictConfig = {
     label:  'SYNTHESIZED',
   },
   HUMAN: {
-    icon:   CheckCircle,
+    icon:   CircleCheck,
     color:  'text-accent',
     border: 'border-accent/30',
     bg:     'bg-accent/5',
@@ -23,7 +23,7 @@ export const verdictConfig = {
     label:  'AUTHENTIC',
   },
   UNCERTAIN: {
-    icon:   HelpCircle,
+    icon:   CircleHelp,
     color:  'text-warning',
     border: 'border-warning/30',
     bg:     'bg-warning/5',

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { Star, ThumbsUp, CheckCircle2, PenLine, Filter, ChevronLeft, ChevronRight, EyeOff, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Star, ThumbsUp, CheckCircle2, PenLine, Filter, ChevronLeft, ChevronRight, EyeOff, LoaderCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
 import { SiteNav } from '@/components/SiteNav'
@@ -262,7 +262,7 @@ export default function ReviewsPage() {
         {/* Reviews grid */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-accent animate-spin" />
+            <LoaderCircle className="w-8 h-8 text-accent animate-spin" />
           </div>
         ) : reviews.length === 0 ? (
           <div className="text-center py-24">

@@ -83,7 +83,7 @@ export function CookieConsent() {
       role="dialog"
       aria-modal="false"
       aria-label="Cookie consent"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1E1E1E] bg-[#141414]"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#333333] bg-[#141414]"
     >
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -100,7 +100,7 @@ export function CookieConsent() {
 
             {/* Expanded preferences */}
             {expanded && (
-              <div className="mt-3 space-y-2 rounded-lg border border-[#1E1E1E] p-3 bg-[#1A1A1A]">
+              <div className="mt-3 space-y-2 rounded-lg border border-[#333333] p-3 bg-[#1A1A1A]">
                 {/* Necessary — always on */}
                 <label className="flex items-center justify-between gap-2 text-xs">
                   <span>

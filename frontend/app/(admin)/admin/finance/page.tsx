@@ -40,7 +40,7 @@ export default function Finance() {
           <p className="text-sm text-slate-500 mb-6">Re-authentication required for financial data.</p>
           <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleAuth()}
             placeholder="Enter PIN (demo: 0000)"
-            className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-100 mb-4 focus:outline-none focus:border-blue-500/30 text-center tracking-widest" />
+            className="w-full bg-[#08080d] border border-white/[0.08] rounded-xl px-4 py-3 text-[16px] sm:text-sm text-slate-100 mb-4 focus:outline-none focus:border-blue-500/30 text-center tracking-widest" />
           <button onClick={handleAuth} className="w-full btn-primary py-3 text-sm">Authenticate</button>
         </div>
       </div>

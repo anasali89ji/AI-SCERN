@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Brain, Loader2, XCircle, CheckCircle2, HelpCircle, ArrowRight,
+  Brain, LoaderCircle, CircleX, CheckCircle2, CircleHelp, ArrowRight,
 } from 'lucide-react'
 import { formatConfidence } from '@/lib/utils/helpers'
 
@@ -114,7 +114,7 @@ export function LiveDemo() {
             onBlur={() => setFocused(false)}
             placeholder="Paste text, upload an image, or drop a file..."
             className="w-full min-h-[160px] bg-depth-bg border border-white/[0.08] rounded-lg
-                       px-4 py-3 text-sm text-silver-800 placeholder-silver-600
+                       px-4 py-3 text-[16px] sm:text-sm text-silver-800 placeholder-silver-600
                        resize-none focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
                        transition-all duration-200"
           />
@@ -133,7 +133,7 @@ export function LiveDemo() {
                        flex items-center justify-center gap-2 min-h-[44px] overflow-hidden
                        transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Brain className="w-4 h-4" aria-hidden="true" />}
+            {loading ? <LoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Brain className="w-4 h-4" aria-hidden="true" />}
             {loading ? 'Analyzing...' : 'Attest Free'}
             {loading && (
               <span className="absolute bottom-0 left-0 h-0.5 bg-depth-bg/20 w-full" aria-hidden="true">
@@ -150,9 +150,9 @@ export function LiveDemo() {
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  {isAI    ? <XCircle      className={`w-5 h-5 ${vColor} shrink-0`} aria-hidden="true" />
+                  {isAI    ? <CircleX      className={`w-5 h-5 ${vColor} shrink-0`} aria-hidden="true" />
                  : isHuman ? <CheckCircle2 className={`w-5 h-5 ${vColor} shrink-0`} aria-hidden="true" />
-                 :           <HelpCircle   className={`w-5 h-5 ${vColor} shrink-0`} aria-hidden="true" />}
+                 :           <CircleHelp   className={`w-5 h-5 ${vColor} shrink-0`} aria-hidden="true" />}
                   <span className={`font-bold text-base ${vColor}`}>
                     {isAI ? 'AI Generated' : isHuman ? 'Human Written' : 'Uncertain'}
                   </span>

@@ -2,7 +2,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
-import { Layers, Upload, X, Play, Pause, CheckCircle, AlertTriangle, HelpCircle, Loader2, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
+import { Layers, Upload, X, Play, Pause, CircleCheck, TriangleAlert, CircleHelp, LoaderCircle, BarChart3, Download, RotateCcw, Clock } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { formatFileSize } from '@/lib/utils/helpers'
 import { ReviewSuggestion } from '@/components/ReviewSuggestion'
@@ -267,7 +267,7 @@ export default function BatchPage() {
 
       {/* Drop Zone */}
       <div {...getRootProps()} className={`card border-2 border-dashed cursor-pointer transition-all mb-5 py-8 flex flex-col items-center gap-3
-        ${isDragActive ? 'border-[#2BEE34] bg-[#1A1A1A] scale-[1.01]' : 'border-[#1E1E1E] hover:border-[#2BEE34]/50'}`}>
+        ${isDragActive ? 'border-[#2BEE34] bg-[#1A1A1A] scale-[1.01]' : 'border-[#333333] hover:border-[#2BEE34]/50'}`}>
         <input {...getInputProps()} />
         <div className="w-14 h-14 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
           <Upload className={`w-7 h-7 ${isDragActive ? 'text-[#A3A3A3]' : 'text-[#6B6B6B]'}`} />
@@ -367,7 +367,7 @@ export default function BatchPage() {
                   <Download className="w-4 h-4" /> CSV
                 </button>
                 <button onClick={exportPdfReport} disabled={exportingPdf} className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50">
-                  {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF Report
+                  {exportingPdf ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF Report
                 </button>
               </div>
             )}
@@ -376,7 +376,7 @@ export default function BatchPage() {
           {/* Cross-tool correlation alert */}
           {correlation && (
             <div className="p-4 rounded-xl border border-[#FF4444]/30 bg-[#FF4444]/5 flex items-start gap-3 mb-2">
-              <AlertTriangle className="w-5 h-5 text-[#FF4444] shrink-0 mt-0.5" />
+              <TriangleAlert className="w-5 h-5 text-[#FF4444] shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-[#FF4444]">Correlated Synthesis Pattern Detected</p>
                 <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
@@ -413,11 +413,11 @@ export default function BatchPage() {
 
                   {/* Status icon */}
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-[#1E1E1E]" />}
-                    {bf.status === 'processing' && <Loader2 className="w-5 h-5 text-[#2BEE34] animate-spin" />}
-                    {bf.status === 'done' && bf.verdict === 'AI'        && <AlertTriangle className="w-5 h-5 text-[#FF4444]" />}
-                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CheckCircle className="w-5 h-5 text-[#2BEE34]" />}
-                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <HelpCircle className="w-5 h-5 text-[#FFB800]" />}
+                    {bf.status === 'queued'     && <div className="w-3 h-3 rounded-full border-2 border-[#333333]" />}
+                    {bf.status === 'processing' && <LoaderCircle className="w-5 h-5 text-[#2BEE34] animate-spin" />}
+                    {bf.status === 'done' && bf.verdict === 'AI'        && <TriangleAlert className="w-5 h-5 text-[#FF4444]" />}
+                    {bf.status === 'done' && bf.verdict === 'HUMAN'     && <CircleCheck className="w-5 h-5 text-[#2BEE34]" />}
+                    {bf.status === 'done' && bf.verdict === 'UNCERTAIN' && <CircleHelp className="w-5 h-5 text-[#FFB800]" />}
                     {bf.status === 'error' && <X className="w-5 h-5 text-[#FFB800]" />}
                   </div>
 

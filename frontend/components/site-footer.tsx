@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import {
-  Mail, Github, Twitter, ArrowRight, CheckCircle2, Loader2,
+  Mail, Github, Twitter, ArrowRight, CheckCircle2, LoaderCircle,
   Shield, Zap,
 } from 'lucide-react'
 
@@ -79,7 +79,7 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="border-t border-white/5 bg-depth-bg">
+    <footer className="border-t border-white/15 bg-depth-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
 
         {/* Top grid — no viewport-entrance animation; footer is always below-fold */}
@@ -198,19 +198,19 @@ export function SiteFooter() {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full bg-transparent text-sm text-silver-800 placeholder-silver-600 focus:outline-none"
+                    className="w-full bg-transparent text-[16px] sm:text-sm text-silver-800 placeholder-silver-600 focus:outline-none"
                   />
                   <button
                     type="submit"
                     disabled={sending}
                     aria-label="Subscribe"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md shrink-0
+                    className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-1.5 rounded-md shrink-0
                                bg-accent hover:bg-accent-hover text-depth-bg text-xs font-semibold
                                transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed
                                focus-visible:ring-2 focus-visible:ring-accent/50"
                   >
                     {sending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                      <LoaderCircle className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                     ) : (
                       <>Subscribe <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></>
                     )}
@@ -222,7 +222,7 @@ export function SiteFooter() {
         </div>
 
         {/* Bottom row */}
-        <div className="border-t border-white/5 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="border-t border-white/15 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-silver-600">
             © {new Date().getFullYear()} Aiscern. All rights reserved.
           </p>

@@ -11,9 +11,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams }  from 'next/navigation'
 import {
-  Shield, AlertTriangle, CheckCircle, HelpCircle,
+  Shield, TriangleAlert, CircleCheck, CircleHelp,
   Eye, Zap, Activity, Globe, Cpu, Layers, Clock,
-  ChevronDown, ChevronUp, RefreshCw, Copy, ExternalLink,
+  ChevronDown, ChevronUp, RefreshCw, Copy, SquareArrowOutUpRight,
 } from 'lucide-react'
 import type {
   ForensicScanRecord, LayerReport, SemanticAgentReport,
@@ -72,7 +72,7 @@ function StatusBadge({ status }: { status: 'anomalous' | 'normal' | 'inconclusiv
 
 function EvidenceRow({ ev }: { ev: EvidenceNode }) {
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-[#1E1E1E] last:border-0">
+    <div className="flex items-start gap-3 py-2 border-b border-[#333333] last:border-0">
       <div className="mt-0.5 flex-shrink-0">
         <StatusBadge status={ev.status} />
       </div>
@@ -141,7 +141,7 @@ function LayerCard({ report }: { report: LayerReport }) {
           </div>
 
           {expanded && report.evidence.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-[#1E1E1E]">
+            <div className="mt-3 pt-3 border-t border-[#333333]">
               {report.evidence.map((ev, i) => <EvidenceRow key={i} ev={ev} />)}
             </div>
           )}
@@ -201,7 +201,7 @@ function AgentCard({ agent }: { agent: SemanticAgentReport }) {
           </div>
 
           {expanded && anomalies.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-[#1E1E1E] space-y-1">
+            <div className="mt-2 pt-2 border-t border-[#333333] space-y-1">
               {anomalies.slice(0, 4).map((ev, i) => (
                 <p key={i} className="text-xs text-[#A3A3A3] leading-relaxed">
                   <span className="text-[#FF4444] font-mono">{ev.artifactType}:</span> {ev.detail}
@@ -276,10 +276,10 @@ function VerdictBanner({ verdict }: { verdict: FinalVerdict }) {
 
   const label   = isAI ? 'AI Generated' : isHuman ? 'Human Created' : 'Uncertain'
   const color   = isAI ? 'text-red-300' : isHuman ? 'text-green-300' : 'text-yellow-300'
-  const Icon    = isAI ? AlertTriangle : isHuman ? CheckCircle : HelpCircle
+  const Icon    = isAI ? TriangleAlert : isHuman ? CircleCheck : CircleHelp
 
   return (
-    <div className={`bg-[#141414] border border-[#1E1E1E] rounded-xl p-6`}>
+    <div className={`bg-[#141414] border border-[#333333] rounded-xl p-6`}>
       <div className="flex items-center gap-4 mb-4">
         <div className={`${color} flex-shrink-0`}>
           <Icon size={40} strokeWidth={1.5} />
@@ -442,7 +442,7 @@ export default function ForensicScanPage() {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
         <div className="text-center">
-          <AlertTriangle className="mx-auto mb-4 text-[#FF4444]" size={40} />
+          <TriangleAlert className="mx-auto mb-4 text-[#FF4444]" size={40} />
           <p className="text-red-300 text-lg font-semibold">{error}</p>
           <p className="text-[#6B6B6B] text-sm mt-2">Scan ID: {scanId}</p>
         </div>
@@ -455,7 +455,7 @@ export default function ForensicScanPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Header */}
-      <div className="border-b border-[#1E1E1E] bg-white/[0.02]">
+      <div className="border-b border-[#333333] bg-white/[0.02]">
         <div className="max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 2xl:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Shield className="text-blue-400" size={20} />
@@ -578,7 +578,7 @@ export default function ForensicScanPage() {
 
             {/* Metadata footer */}
             <section>
-              <div className="flex flex-wrap gap-4 text-xs text-white/25 font-mono border-t border-[#1E1E1E] pt-4">
+              <div className="flex flex-wrap gap-4 text-xs text-white/25 font-mono border-t border-[#333333] pt-4">
                 <span>ID: {scan?.id}</span>
                 {scan?.processingTimeMs && <span>Time: {scan.processingTimeMs}ms</span>}
                 {scan?.createdAt && <span>Created: {new Date(scan.createdAt).toLocaleString()}</span>}

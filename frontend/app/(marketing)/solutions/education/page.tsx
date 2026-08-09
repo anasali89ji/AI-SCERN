@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { GraduationCap, FileSearch, AlertTriangle, BarChart3, Shield, Brain, Eye, Layers } from 'lucide-react'
+import { GraduationCap, FileSearch, TriangleAlert, BarChart3, Shield, Brain, Eye, Layers } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Education — Aiscern',

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SolutionPage } from '@/components/SolutionPage'
-import { ShieldCheck, AlertTriangle, Brain, Eye, Layers, Lock, BarChart3, FileSearch } from 'lucide-react'
+import { ShieldCheck, TriangleAlert, Brain, Eye, Layers, Lock, BarChart3, FileSearch } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Attestation for Cybersecurity — Aiscern',
@@ -32,7 +32,7 @@ export default function SecurityPage() {
       features={[
         { icon: <Brain className="w-5 h-5" />, title: 'AI Text Attestation', desc: 'Identify AI-generated phishing, social engineering, and synthetic content in ingested text streams.' },
         { icon: <Eye className="w-5 h-5" />, title: 'Image Forensics', desc: 'Attest synthetic identity photos, AI-generated profile images, and fabricated document imagery.' },
-        { icon: <AlertTriangle className="w-5 h-5" />, title: 'Voice Clone Attestation', desc: 'wav2vec2 spectral analysis flags AI-synthesized speech against ASVspoof benchmark datasets.' },
+        { icon: <TriangleAlert className="w-5 h-5" />, title: 'Voice Clone Attestation', desc: 'wav2vec2 spectral analysis flags AI-synthesized speech against ASVspoof benchmark datasets.' },
         { icon: <Lock className="w-5 h-5" />, title: 'API Integration', desc: 'High-throughput REST API designed for security platform integration. Sub-2-second text attestation for real-time screening.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Processing', desc: 'Run bulk scans across ingested content queues. Prioritize high-risk items with confidence-score filtering.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'SIEM-Ready Reporting', desc: 'Attestation results include structured JSON output compatible with SIEM ingestion and SOC dashboards.' },

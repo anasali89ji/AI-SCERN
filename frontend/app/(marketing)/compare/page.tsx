@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { CheckCircle, XCircle, Minus, ArrowRight, Zap } from 'lucide-react'
+import { CircleCheck, CircleX, Minus, ArrowRight, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Aiscern vs GPTZero vs ZeroGPT — AI Detector Comparison',
@@ -44,8 +44,8 @@ const ROWS: CompareRow[] = [
 ]
 
 function Cell({ value }: { value: CellValue }) {
-  if (value === 'yes') return <CheckCircle className="w-5 h-5 text-accent mx-auto" />
-  if (value === 'no')  return <XCircle className="w-5 h-5 text-rose-400/60 mx-auto" />
+  if (value === 'yes') return <CircleCheck className="w-5 h-5 text-accent mx-auto" />
+  if (value === 'no')  return <CircleX className="w-5 h-5 text-rose-400/60 mx-auto" />
   if (value === 'partial') return <Minus className="w-5 h-5 text-warning mx-auto" />
   return <span className="text-xs text-silver-700">{value}</span>
 }
