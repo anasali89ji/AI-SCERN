@@ -83,7 +83,7 @@ const RELEASES: {
 
 const TYPE_CONFIG: Record<ChangeType, { label: string; style: string }> = {
   new:         { label: 'New',         style: 'bg-accent/10 text-accent border border-accent/20' },
-  improvement: { label: 'Improved',    style: 'bg-accent/10 text-accent border border-emerald-500/25' },
+  improvement: { label: 'Improved',    style: 'bg-accent/10 text-accent border border-accent/25' },
   fix:         { label: 'Fix',         style: 'bg-warning/10 text-warning border border-amber-500/25' },
   infra:       { label: 'Infra',       style: 'bg-surface text-silver-600 border border-silver-300' },
 }
@@ -121,7 +121,7 @@ export default function ChangelogPage() {
                     <Calendar className="w-3 h-3" /> {release.date}
                   </div>
                   {i === 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-emerald-500/25 uppercase tracking-wider">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/25 uppercase tracking-wider">
                       Latest
                     </span>
                   )}

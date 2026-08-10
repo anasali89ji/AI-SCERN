@@ -42,20 +42,20 @@ const SECURITY_PILLARS = [
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
+    <div className="min-h-screen bg-surface-deep text-silver-800">
       <SiteNav />
 
       <main className="pt-32 pb-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-6">
               <Shield className="w-3.5 h-3.5" />
               Trust & Safety
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
               Security is not a feature. It is the foundation.
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-silver-600 max-w-2xl mx-auto leading-relaxed">
               AI-SCERN is built on a zero-trust architecture designed for enterprises handling sensitive media. Every byte is protected.
             </p>
           </div>
@@ -64,25 +64,25 @@ export default function SecurityPage() {
             {SECURITY_PILLARS.map((pillar) => (
               <div
                 key={pillar.title}
-                className="group rounded-2xl border border-white/[0.06] bg-slate-900/40 p-6 hover:bg-slate-900/60 hover:border-white/[0.12] transition-all duration-300"
+                className="group rounded-2xl border border-white/[0.06] bg-surface-elevated/40 p-6 hover:bg-surface-elevated/60 hover:border-white/[0.12] transition-all duration-300"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  <pillar.icon className="w-5 h-5 text-emerald-400" />
+                <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <pillar.icon className="w-5 h-5 text-accent" />
                 </div>
                 <h3 className="text-base font-semibold text-white mb-2">{pillar.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{pillar.desc}</p>
+                <p className="text-sm text-silver-600 leading-relaxed">{pillar.desc}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-16 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-slate-900 to-slate-900/50 p-8 sm:p-12 text-center">
+          <div className="mt-16 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-surface-elevated to-surface-elevated/50 p-8 sm:p-12 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">Need a security review?</h2>
-            <p className="text-slate-400 mb-6 max-w-lg mx-auto">
+            <p className="text-silver-600 mb-6 max-w-lg mx-auto">
               Our security team is available for custom compliance reviews, penetration testing coordination, and architecture consultations.
             </p>
             <a
               href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-[#0A0A0A] font-semibold text-sm transition-colors"
             >
               Contact Security Team
             </a>

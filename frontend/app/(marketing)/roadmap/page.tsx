@@ -52,7 +52,7 @@ const ROADMAP = [
 
 export default function RoadmapPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
+    <div className="min-h-screen bg-surface-deep text-silver-800">
       <SiteNav />
 
       <main className="pt-32 pb-20 px-4 sm:px-6">
@@ -63,7 +63,7 @@ export default function RoadmapPage() {
               Public Roadmap
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-4">What we are building</h1>
-            <p className="text-lg text-slate-400">
+            <p className="text-lg text-silver-600">
               Transparent priorities. No vaporware.
             </p>
           </div>
@@ -74,13 +74,13 @@ export default function RoadmapPage() {
             <div className="space-y-12">
               {ROADMAP.map((group) => (
                 <div key={group.quarter} className="relative pl-12 sm:pl-20">
-                  <div className="absolute left-2.5 sm:left-[26px] top-1.5 w-3 h-3 rounded-full border-2 border-slate-800 bg-slate-700" />
+                  <div className="absolute left-2.5 sm:left-[26px] top-1.5 w-3 h-3 rounded-full border-2 border-silver-300 bg-silver-500" />
 
                   <div className="flex items-center gap-3 mb-4">
                     <h2 className="text-xl font-bold text-white">{group.quarter}</h2>
                     <span className={`
                       inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-                      ${group.status === 'in-progress' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}
+                      ${group.status === 'in-progress' ? 'bg-accent/10 text-accent border border-accent/20' : ''}
                       ${group.status === 'planned' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : ''}
                       ${group.status === 'research' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}
                     `}>
@@ -95,9 +95,9 @@ export default function RoadmapPage() {
                     {group.items.map((item) => (
                       <div
                         key={item}
-                        className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.04] bg-slate-900/30 text-sm text-slate-300 hover:bg-slate-900/50 transition-colors"
+                        className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.04] bg-surface-elevated/30 text-sm text-silver-700 hover:bg-surface-elevated/50 transition-colors"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500 mt-1.5 flex-shrink-0" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-silver-600 mt-1.5 flex-shrink-0" />
                         {item}
                       </div>
                     ))}
