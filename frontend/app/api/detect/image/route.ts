@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeImage }              from '@/lib/inference/hf-analyze'
+import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
 import { checkRateLimitDB } from '@/lib/ratelimit-db'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
@@ -14,6 +15,7 @@ import { extractImageSignals, aggregateImageSignals, applyCalibration } from '@/
 import { getCalibrationStats } from '@/lib/inference/calibration-client'
 import { computePerceptualHash } from '@/lib/forensic/perceptual-hash'
 import { findByFingerprint } from '@/lib/motherduck/archive'
+import { checkProbingPattern } from '@/lib/ratelimit/probe-fingerprint'
 
 export const dynamic = 'force-dynamic'
 // Vercel Hobby: 60s max. Pro/Enterprise: up to 300s.
@@ -88,6 +90,25 @@ export async function POST(req: NextRequest) {
     const hash   = contentHash(buffer.subarray(0, 65536))
     const cached = await getCachedDetection('image', hash)
 
+    // Anti-probing: flag boundary-mapping patterns (near-duplicate files,
+    // scripted timing, header reuse) without hard-blocking — fires an
+    // internal signal only, never surfaced to the caller.
+    checkProbingPattern({
+      ip:          ip,
+      contentHash: hash,
+      userAgent:   req.headers.get('user-agent'),
+      acceptLang:  req.headers.get('accept-language'),
+    }).then(probe => {
+      if (probe.suspicious) {
+        console.warn(`[probe-detect] ip=${ip} score=${probe.score} reasons=${probe.reasons.join('; ')}`)
+        // TODO: pipe into your alerting (e.g. a Supabase `probe_alerts` table
+        // or Slack webhook) once you decide the response — throttle harder,
+        // require auth, or just watch. Deliberately not auto-banning here:
+        // false positives (QA scripts, legitimate batch users) are common
+        // enough that a human should be in the loop before blocking.
+      }
+    }).catch(() => { /* fail open, never block the real request on this */ })
+
     // ── Perceptual fingerprint ("synth ID") — survives recompression/resize/crop,
     // unlike `hash` above which only matches a byte-identical re-upload. Lets us
     // recognize "this exact photo was scanned before" even years later, once
@@ -127,7 +148,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true, scan_id: scanId, cached: true,
         previous_scan_match: previousMatch,
-        result:  { ...cached, processing_time: Date.now() - start, file_name: fileName, file_size: fileSize },
+        result:  sanitizeDetectionResultForClient({
+          ...cached, processing_time: Date.now() - start, file_name: fileName, file_size: fileSize,
+        }),
       })
     }
 
@@ -387,7 +410,7 @@ export async function POST(req: NextRequest) {
       forensic_available: forensicAvailable,
       forensic_unavailable_reason: forensicUnavailableReason,
       previous_scan_match: previousMatch,
-      result:  {
+      result:  sanitizeDetectionResultForClient({
         ...result,
         verdict: finalVerdict,
         confidence: finalConfidence,
@@ -401,7 +424,7 @@ export async function POST(req: NextRequest) {
           neighbour_count: ragResult.neighbour_count,
           ai_ratio: ragResult.ai_ratio,
         } : undefined,
-      },
+      }),
     })
   } catch (err) {
     console.error('[detect/image]', err)
