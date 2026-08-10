@@ -448,8 +448,8 @@ export default function BatchPage() {
 
                   {/* Remove */}
                   {bf.status === 'queued' && (
-                    <button onClick={() => removeFile(bf.id)}
-                      className="text-[#6B6B6B] hover:text-[#FF4444] p-1 rounded hover:bg-[#FF4444]/10 transition-colors shrink-0">
+                    <button onClick={() => removeFile(bf.id)} aria-label="Remove file"
+                      className="text-[#6B6B6B] hover:text-[#FF4444] w-9 h-9 -m-1.5 flex items-center justify-center rounded-lg hover:bg-[#FF4444]/10 transition-colors shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   )}

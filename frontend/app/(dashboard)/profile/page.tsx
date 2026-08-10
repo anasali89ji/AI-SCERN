@@ -334,8 +334,7 @@ export default function ProfilePage() {
               {editing ? (
                 <>
                   <button onClick={handleSave} disabled={saving}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:bg-[#1A8F1F] transition-colors disabled:opacity-60"
-                    style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)' }}>
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2BEE34] text-[#0A0A0A] text-sm font-semibold hover:bg-[#1A8F1F] active:bg-[#147A18] transition-colors disabled:opacity-60">
                     {saving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
                   <button onClick={() => setEditing(false)}

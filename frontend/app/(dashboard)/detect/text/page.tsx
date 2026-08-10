@@ -399,7 +399,7 @@ Analyzed: ${new Date().toLocaleString()}`
               onBlur={() => setFocusMode(false)}
               onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleDetect() } }}
               placeholder="Paste or type any text here to analyze for AI generation patterns…"
-              className="input-field min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-[16px] sm:text-sm relative z-50"
+              className="input min-h-[180px] sm:min-h-[260px] h-56 resize-none font-mono text-[16px] sm:text-sm relative z-50"
             />
             <p className="text-[11px] text-silver-600 mt-1 text-right">⌘ / Ctrl + Enter to analyze</p>
 

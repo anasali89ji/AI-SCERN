@@ -259,7 +259,7 @@ export default function HistoryPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
             <input type="text" placeholder="Search by filename or content…" value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="input-field pl-9 py-2" />
+              className="input pl-9 py-2" />
             {search && (
               <button onClick={() => setSearch('')} aria-label="Clear search"
                 className="absolute right-0.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-[#6B6B6B] hover:text-white">

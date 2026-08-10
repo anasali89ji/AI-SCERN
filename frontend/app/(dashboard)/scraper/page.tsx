@@ -450,8 +450,8 @@ export default function ScraperPage() {
                         className="text-[#2BEE34] hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
-                      <button onClick={() => handleScrape(link.url)} title="Attest this page"
-                        className="text-[#6B6B6B] hover:text-white transition-colors shrink-0 ml-1">
+                      <button onClick={() => handleScrape(link.url)} title="Attest this page" aria-label="Attest this page"
+                        className="text-[#6B6B6B] hover:text-white transition-colors shrink-0 ml-1 p-2 -m-2 rounded-lg hover:bg-white/[0.06]">
                         <Zap className="w-3.5 h-3.5" />
                       </button>
                     </div>
