@@ -53,7 +53,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
   )
 })
 
-export default function HomepageReviews() {
+export default function TestimonialsSection() {
   const [reviews, setReviews] = useState<Review[]>(FALLBACK)
 
   useEffect(() => {

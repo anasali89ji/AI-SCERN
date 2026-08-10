@@ -83,7 +83,7 @@ const WHO_NEEDS = [
   },
 ]
 
-export default function WhoNeedsSection() {
+export default function WhoWeServeSection() {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 

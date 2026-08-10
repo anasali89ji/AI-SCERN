@@ -45,7 +45,7 @@ function CountUpValue({ target, suffix = '' }: { target: number; suffix?: string
   return <span ref={ref} className="tabular-nums">{count.toLocaleString()}{suffix}</span>
 }
 
-export function StatsRibbon({ stats = DEFAULT_STATS }: { stats?: Stat[] }) {
+export function StatisticsSection({ stats = DEFAULT_STATS }: { stats?: Stat[] }) {
   return (
     <section className="bg-surface-elevated border-y border-white/15">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20">

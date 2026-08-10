@@ -15,22 +15,22 @@ import {
   ScanLine,
 } from 'lucide-react'
 
-import HomepageReviews from '@/components/home/HomepageReviews'
-import WhoNeedsSection from '@/components/home/WhoNeedsSection'
+import TestimonialsSection from '@/components/home/TestimonialsSection'
+import WhoWeServeSection from '@/components/home/WhoWeServeSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import ComparisonSection from '@/components/home/ComparisonSection'
 import { FAQSection } from '@/components/home/FAQSection'
-import { MethodologySection } from '@/components/home/MethodologySection'
-import { CTASection } from '@/components/home/CTASection'
+import { HowItWorksSection } from '@/components/home/HowItWorksSection'
+import { FinalCTASection } from '@/components/home/FinalCTASection'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { MagneticButton } from '@/components/MagneticButton'
 import { LiveDemo } from '@/components/home/LiveDemo'
-import { StatsRibbon } from '@/components/home/StatsRibbon'
+import { StatisticsSection } from '@/components/home/StatisticsSection'
 
 // ─── CountUp ──────────────────────────────────────────────────────────────────
 // NOTE: kept here — still used by the Trust Features section below (out of
-// Module 2's scope, which only covers Hero/LiveDemo/StatsRibbon). Not migrated
-// to StatsRibbon's rAF-based CountUpValue in this pass to avoid touching a
+// Module 2's scope, which only covers Hero/LiveDemo/StatisticsSection). Not migrated
+// to StatisticsSection's rAF-based CountUpValue in this pass to avoid touching a
 // section not part of this module.
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount]       = useState(0)
@@ -183,7 +183,7 @@ export default function HomePage() {
 
         {/* ── WHO NEEDS AISCERN ── */}
         <ErrorBoundary>
-          <WhoNeedsSection />
+          <WhoWeServeSection />
         </ErrorBoundary>
 
         {/* ── AI VS REAL ── */}
@@ -192,7 +192,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ STATS RIBBON ══ */}
-        <StatsRibbon />
+        <StatisticsSection />
 
         {/* ══ TOOLS GRID ══ */}
         <section id="tools" className="py-14 sm:py-28 lg:py-32 px-4 sm:px-6">
@@ -265,7 +265,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ METHODOLOGY (Module 3.3) — replaces the old static How It Works block ══ */}
-        <MethodologySection />
+        <HowItWorksSection />
 
         {/* ══ REVIEWS ══ */}
         <section className="py-14 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
@@ -281,7 +281,7 @@ export default function HomePage() {
                 Real feedback from educators, journalists, HR teams, and researchers.
               </p>
             </div>
-            <ErrorBoundary><HomepageReviews /></ErrorBoundary>
+            <ErrorBoundary><TestimonialsSection /></ErrorBoundary>
             <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="mailto:contact@aiscern.com"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/[0.08]
@@ -376,7 +376,7 @@ export default function HomePage() {
         </ErrorBoundary>
 
         {/* ══ CTA (Module 3.5) ══ */}
-        <CTASection />
+        <FinalCTASection />
 
       </main>
       <SiteFooter />

@@ -11,7 +11,7 @@ const STEPS = [
   { n: '04', title: 'Forensic Report',    desc: 'A verdict with a full signal-by-signal breakdown, in under 3 seconds.',    icon: FileBarChart },
 ]
 
-export function MethodologySection() {
+export function HowItWorksSection() {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 80%', 'end 60%'] })
 

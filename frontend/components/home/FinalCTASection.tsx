@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider'
 
 const REASSURANCES = ['No credit card required', 'Free tier always available', 'No account for basic examinations']
 
-export function CTASection() {
+export function FinalCTASection() {
   const { user } = useAuth()
 
   return (
