@@ -5,6 +5,7 @@ import { Star, ThumbsUp, CheckCircle, PenLine, Filter, ChevronLeft, ChevronRight
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 // Lazy-load the modal — heavy framer-motion dialog, only needed on user action
 const ReviewModal = lazy(() => import('@/components/ReviewModal').then(m => ({ default: m.ReviewModal })))
@@ -152,6 +153,7 @@ export default function ReviewsPage() {
       <SiteNav />
 
       <main className="pt-20 sm:pt-24 pb-20 px-4 sm:px-6 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

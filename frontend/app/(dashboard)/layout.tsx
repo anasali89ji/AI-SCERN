@@ -16,6 +16,7 @@ import { MobileNav } from '@/components/MobileNav'
 import CreditDisplay from '@/components/CreditDisplay'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 // ── Lazy-loaded modals — not needed until after first render ──────────────────
 const OnboardingWizard = dynamic(
@@ -514,6 +515,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
               {/* pb clears the MobileNav (4rem) + safe area on mobile; desktop has no nav */}
               <div className="min-h-full pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+                <div className="px-3 sm:px-4 lg:px-6 2xl:px-8 pt-3">
+                  <Breadcrumbs />
+                </div>
                 {children}
               </div>
             </main>

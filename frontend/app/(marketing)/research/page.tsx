@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import { ExternalLink, BookOpen } from 'lucide-react'
 
@@ -61,6 +62,7 @@ export default function ResearchPage() {
     <>
       <SiteNav />
       <main className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 2xl:px-8 py-16 sm:py-24 2xl:py-32">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="h-7 w-7 text-primary" />

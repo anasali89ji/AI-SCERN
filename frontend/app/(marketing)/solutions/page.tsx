@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import {
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
@@ -126,6 +127,7 @@ export default function SolutionsHub() {
     <>
       <SiteNav />
       <main className="min-h-screen bg-background pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Hero */}
         <section className="relative py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">

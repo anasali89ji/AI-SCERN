@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import { ArrowRight, CheckCircle, ChevronDown, Zap, Check, X } from 'lucide-react'
 
@@ -163,6 +164,7 @@ export function SolutionPage(props: SolutionPageProps) {
     <>
       <SiteNav />
       <main className="min-h-screen bg-background pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
 
         {/* JSON-LD Schema */}
         <script

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { SiteFooter } from '@/components/site-footer'
 import { CheckCircle2, AlertTriangle, BarChart3, Cpu, FlaskConical } from 'lucide-react'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 export const metadata = {
   title: 'Verification Methodology',
@@ -48,6 +49,7 @@ export default function MethodologyPage() {
       <SiteNav />
 
       <main className="pt-24 pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 2xl:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Header */}
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">

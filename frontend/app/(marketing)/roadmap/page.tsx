@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CheckCircle, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 export const metadata: Metadata = {
   title: 'Roadmap',
@@ -43,6 +44,7 @@ export default function RoadmapPage() {
       <SiteNav />
 
       <main className="pt-28 pb-24 px-4 sm:px-6 2xl:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
 
           {/* Header */}

@@ -4,6 +4,7 @@ import { Clock, Calendar, User, Tag } from 'lucide-react'
 import { SiteFooter }                from '@/components/site-footer'
 import { getPostBySlug, getAllSlugs } from '@/lib/blog'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 // ── Static params for build-time generation ───────────────────────────────────
 export async function generateStaticParams() {
@@ -131,6 +132,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <SiteNav backHref="/blog" backLabel="Blog" />
 
       <main className="pt-24 pb-20 max-w-3xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Category badge */}
         <div className="flex items-center gap-2 mb-4">
           <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">

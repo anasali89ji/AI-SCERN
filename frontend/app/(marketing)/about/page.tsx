@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { SiteNav }    from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, Users, MapPin, Briefcase } from 'lucide-react'
 
@@ -108,6 +109,7 @@ export default function AboutPage() {
       <SiteNav />
 
       <main className="pt-16 sm:pt-24 pb-12 sm:pb-20 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-3 sm:px-4 2xl:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">

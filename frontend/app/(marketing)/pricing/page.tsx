@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { SiteFooter } from '@/components/site-footer'
 import { useAuth } from '@/components/auth-provider'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 const TIERS = [
   {
@@ -127,6 +128,7 @@ export default function PricingPage() {
     <>
       <SiteNav />
       <main className="mx-auto max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
 
         {/* Header */}
         <div className="text-center mb-12">

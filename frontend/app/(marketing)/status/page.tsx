@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import { CheckCircle, Clock, AlertTriangle, Activity } from 'lucide-react'
 
@@ -33,6 +34,7 @@ export default function StatusPage() {
     <>
       <SiteNav />
       <main className="min-h-screen bg-background pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Hero */}
         <section className="py-16 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10 text-center">

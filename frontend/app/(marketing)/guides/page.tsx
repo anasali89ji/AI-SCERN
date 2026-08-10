@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SiteFooter } from '@/components/site-footer'
 import { BookOpen, ArrowRight, FileText, Eye, Music, Video, Zap } from 'lucide-react'
 
@@ -84,6 +85,7 @@ export default function GuidesPage() {
     <>
       <SiteNav />
       <main className="min-h-screen bg-background pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">

@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 
 import Link from 'next/link'
 import { Shield } from 'lucide-react'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 const CODE = {
   curl: `curl -X POST https://aiscern.com/api/v1/detect/text \\
@@ -42,6 +43,7 @@ export default function ApiDocsPage() {
         <Link href="/" className="text-xl font-black gradient-text">Aiscern</Link>
       </div>
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
+        <Breadcrumbs />
         <div>
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
           <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
