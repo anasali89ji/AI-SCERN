@@ -6,6 +6,7 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
 import { getR2Buffer, r2Available }  from '@/lib/storage/r2'
+import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
 import { analyzeAudio as runForensicPipeline } from '@/lib/forensic/audio/pipeline'
 import { logModelPredictions }       from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG }         from '@/lib/rag/detection-rag'
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({
         success: true, scan_id: scanId, cached: true,
-        result:  { ...cached, processing_time: Date.now() - start, file_name: fileName },
+        result:  sanitizeDetectionResultForClient({ ...cached, processing_time: Date.now() - start, file_name: fileName }),
       })
     }
 
@@ -209,12 +210,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true, scan_id: scanId,
-      result:  { ...finalResult, processing_time: processingTime, file_name: fileName, forensic: forensicSummary, rag_stats: ragResult ? {
+      result:  sanitizeDetectionResultForClient({ ...finalResult, processing_time: processingTime, file_name: fileName, forensic: forensicSummary, rag_stats: ragResult ? {
         rag_applied: ragResult.rag_applied,
         retrieval_confidence: ragResult.retrieval_confidence,
         neighbour_count: ragResult.neighbour_count,
         ai_ratio: ragResult.ai_ratio,
-      } : undefined },
+      } : undefined }),
     })
   } catch (err) {
     console.error('[detect/audio]', err)
