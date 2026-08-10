@@ -27,6 +27,14 @@ function SignUpContent() {
     if (isLoaded && isSignedIn) {
       setRedirecting(true)
       router.replace(redirectUrl)
+
+      // Same safety net as login/page.tsx — see comment there.
+      const fallback = setTimeout(() => {
+        if (window.location.pathname !== redirectUrl) {
+          window.location.href = redirectUrl
+        }
+      }, 2000)
+      return () => clearTimeout(fallback)
     }
   }, [isLoaded, isSignedIn, router, redirectUrl])
 

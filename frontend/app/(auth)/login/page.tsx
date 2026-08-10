@@ -25,6 +25,25 @@ function LoginContent() {
     if (isLoaded && isSignedIn) {
       setRedirecting(true)
       router.replace(redirectUrl)
+
+      // Safety net for the "Continue button spins forever after password
+      // reset" report: once Clerk has actually flipped isSignedIn, the
+      // session is live — client-side router.replace() SHOULD take over
+      // immediately. But this component sits inside Clerk's own
+      // multi-step <SignIn/> tree, and on the password-reset path
+      // specifically (email code -> new password -> complete) there have
+      // been cases where the just-created session doesn't propagate to
+      // this render in time for the Next.js client router to actually
+      // navigate, leaving the (still Clerk-rendered) Continue button
+      // spinning over a screen that never moves. If we're still sat here
+      // 2s after isSignedIn flipped true, force a hard navigation instead
+      // of trusting the client router.
+      const fallback = setTimeout(() => {
+        if (window.location.pathname !== redirectUrl) {
+          window.location.href = redirectUrl
+        }
+      }, 2000)
+      return () => clearTimeout(fallback)
     }
   }, [isLoaded, isSignedIn, router, redirectUrl])
 
