@@ -24,6 +24,13 @@ const MAINTENANCE_EXEMPT = [
   '/_next',
   '/favicon',
   '/api/webhook',
+  // Without these, enabling maintenance mode locks the admin out of the
+  // one panel that can turn it back off again -- the only way back in
+  // would be being on an allowed IP or localhost. Admin auth is already
+  // enforced separately below (isProtected), so exempting these from the
+  // maintenance gate doesn't open anything up.
+  '/admin',
+  '/api/admin',
 ]
 
 function isExempt(pathname: string): boolean {
