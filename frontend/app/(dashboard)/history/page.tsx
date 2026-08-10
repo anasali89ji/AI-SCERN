@@ -81,7 +81,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
       <div className="card w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-white">Attestation Details</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
+          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -261,7 +261,8 @@ export default function HistoryPage() {
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               className="input-field pl-9 py-2" />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-white">
+              <button onClick={() => setSearch('')} aria-label="Clear search"
+                className="absolute right-0.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-[#6B6B6B] hover:text-white">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}

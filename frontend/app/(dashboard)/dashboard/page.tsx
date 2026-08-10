@@ -253,7 +253,7 @@ export default function DashboardPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">Recent Scans</p>
           <div className="flex items-center gap-2">
             <button onClick={loadDashboard} title="Refresh"
-              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg
                          text-[#6B6B6B] hover:text-[#A3A3A3] hover:bg-[#1A1A1A] transition-all">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>

@@ -315,10 +315,12 @@ export default function SettingsPage() {
               <code className="text-[10px] text-[#6B6B6B] font-mono">
                 {showKey ? `aiscern_${user?.uid?.slice(0,16)}...` : '••••••••••••••••'}
               </code>
-              <button onClick={() => setShowKey(v => !v)} className="text-[#6B6B6B] hover:text-white transition-colors">
+              <button onClick={() => setShowKey(v => !v)} aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                className="w-9 h-9 -m-1.5 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
-              <button onClick={copyApiKey} className="text-[#6B6B6B] hover:text-white transition-colors">
+              <button onClick={copyApiKey} aria-label="Copy API key"
+                className="w-9 h-9 -m-1.5 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
                 {copied ? <Check className="w-3.5 h-3.5 text-[#2BEE34]" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
