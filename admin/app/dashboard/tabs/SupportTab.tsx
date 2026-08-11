@@ -1,110 +1,70 @@
 'use client'
 import { useState } from 'react'
 import useSWR from 'swr'
-import { Headphones, RefreshCw, ChevronRight } from 'lucide-react'
+import { HelpCircle, RefreshCw, MessageSquare, Clock, CheckCircle } from 'lucide-react'
+import DataTable from '../components/DataTable'
 import Modal from '../components/Modal'
 import { api } from '@/lib/api-client'
 import { ShimmerCard } from '../components/ShimmerBlock'
 
-interface Ticket {
-  id: string; email: string; subject: string; message: string
-  status: string; priority: string; category: string
-  assigned_to?: string; created_at: string; updated_at: string
-}
-
-const COLUMNS: Ticket['status'][] = ['open', 'in_progress', 'resolved', 'closed']
-const COL_LABEL: Record<string, string> = { open: 'Open', in_progress: 'In Progress', resolved: 'Resolved', closed: 'Closed' }
+interface Ticket { id: string; email: string; subject: string; message: string; priority: string; status: string; category: string; created_at: string; profiles?: { email: string; display_name: string } }
 
 export default function SupportTab() {
-  const { data, isLoading, error, mutate } = useSWR<Ticket[]>('/support-tickets', (p: string) => api<Ticket[]>(p))
-  const [selected, setSelected] = useState<Ticket | null>(null)
-  const [updating, setUpdating] = useState(false)
+  const [status, setStatus] = useState('all')
+  const [page, setPage] = useState(1)
+  const [modal, setModal] = useState<Ticket | null>(null)
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
 
-  const updateStatus = async (id: string, status: string) => {
-    setUpdating(true)
-    try { await api(`/support-tickets/${id}`, 'PATCH', { status }); await mutate() }
+  const { data, isLoading, error, mutate } = useSWR<{ tickets: Ticket[]; pages: number }>(`/support-tickets?status=${status}&page=${page}`, (url: string) => api<{ tickets: Ticket[]; pages: number }>(url))
+
+  const updateTicket = async (id: string, updates: any) => {
+    try { await api(`/support-tickets/${id}`, 'PATCH', updates); await mutate(); setModal(null); setReply('') }
     catch (e) { alert(`Failed: ${e instanceof Error ? e.message : 'error'}`) }
-    finally { setUpdating(false); setSelected(null) }
   }
 
-  const PRIORITY_COLOR: Record<string, string> = {
-    urgent: 'badge-urgent', high: 'badge-high', medium: 'badge-medium', low: 'badge-low'
-  }
+  const priorityColor = (p: string) => ({ urgent: 'text-rose-400', high: 'text-amber-400', medium: 'text-blue-400', low: 'text-text-muted' }[p] || 'text-text-muted')
+  const statusColor = (s: string) => ({ open: 'bg-amber-500/10 text-amber-400 border-amber-500/20', resolved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', closed: 'bg-text-muted/10 text-text-muted border-text-muted/20' }[s] || '')
+
+  const columns = [
+    { key: 'email', header: 'User', render: (t: Ticket) => <div><p className="text-text-primary text-xs font-medium">{t.profiles?.email || t.email}</p><p className="text-[10px] text-text-disabled">{t.profiles?.display_name || '—'}</p></div> },
+    { key: 'subject', header: 'Subject', render: (t: Ticket) => <p className="text-xs text-text-primary max-w-[200px] truncate">{t.subject}</p> },
+    { key: 'priority', header: 'Priority', render: (t: Ticket) => <span className={`text-xs font-bold uppercase ${priorityColor(t.priority)}`}>{t.priority}</span> },
+    { key: 'status', header: 'Status', render: (t: Ticket) => <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${statusColor(t.status)}`}>{t.status}</span> },
+    { key: 'category', header: 'Category', render: (t: Ticket) => <span className="text-xs text-text-muted">{t.category}</span> },
+    { key: 'created', header: 'Created', render: (t: Ticket) => <span className="text-xs text-text-muted">{new Date(t.created_at).toLocaleDateString()}</span> },
+    { key: 'actions', header: '', render: (t: Ticket) => <button onClick={() => setModal(t)} className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10"><MessageSquare className="w-3.5 h-3.5" /></button> },
+  ]
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-          <Headphones className="w-5 h-5 text-primary" /> Support Tickets
-        </h2>
-        <button onClick={() => mutate()} aria-label="Refresh" className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary transition-colors">
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><HelpCircle className="w-5 h-5 text-primary" /> Support Tickets</h2>
+        <div className="flex items-center gap-2">
+          {['all', 'open', 'resolved', 'closed'].map(s => <button key={s} onClick={() => { setStatus(s); setPage(1) }} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${status === s ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>{s}</button>)}
+          <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
+        </div>
       </div>
+      {error ? <div className="text-center py-10 text-sm text-rose-400">Failed to load tickets</div>
+        : isLoading ? <div className="space-y-2">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} h="h-12" />)}</div>
+        : <DataTable columns={columns} data={data?.tickets ?? []} keyFn={t => t.id} page={page} totalPages={data?.pages} onPage={setPage} caption="Support tickets" emptyMessage="No tickets found" />}
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {Array(4).fill(0).map((_, i) => <ShimmerCard key={i} h="h-64" />)}
-        </div>
-      ) : error ? (
-        <div className="text-center py-10 text-sm text-rose-400">Failed to load tickets</div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {COLUMNS.map(col => {
-            const tickets = (data ?? []).filter(t => t.status === col)
-            return (
-              <div key={col} className="rounded-xl border border-border" style={{ background: '#0c0c14' }}>
-                <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
-                  <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">{COL_LABEL[col]}</span>
-                  <span className="text-xs text-text-disabled bg-surface-hover px-1.5 py-0.5 rounded-md">{tickets.length}</span>
-                </div>
-                <div className="p-2 space-y-2 min-h-[200px]">
-                  {tickets.map(ticket => (
-                    <button key={ticket.id} onClick={() => setSelected(ticket)}
-                      className="w-full text-left rounded-xl border border-border p-3 hover:border-primary/40 transition-all"
-                      style={{ background: '#0f0f17' }}>
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <span className={`badge ${PRIORITY_COLOR[ticket.priority] ?? 'badge-medium'}`}>{ticket.priority}</span>
-                        <ChevronRight className="w-3 h-3 text-text-disabled flex-shrink-0 mt-0.5" />
-                      </div>
-                      <p className="text-xs font-semibold text-text-primary line-clamp-1 mb-0.5">{ticket.subject}</p>
-                      <p className="text-[10px] text-text-muted">{ticket.email}</p>
-                      <p className="text-[10px] text-text-disabled mt-1">{new Date(ticket.created_at).toLocaleDateString()}</p>
-                    </button>
-                  ))}
-                  {tickets.length === 0 && (
-                    <div className="flex items-center justify-center h-20 text-xs text-text-disabled">No tickets</div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {selected && (
-        <Modal open title={selected.subject} onClose={() => setSelected(null)} size="lg">
+      {modal && (
+        <Modal open onClose={() => setModal(null)} title={`Ticket: ${modal.subject}`} size="lg">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`badge ${PRIORITY_COLOR[selected.priority] ?? 'badge-medium'}`}>{selected.priority}</span>
-              <span className={`badge badge-${selected.status.replace('_', '-')}`}>{selected.status.replace('_', ' ')}</span>
-              <span className="badge badge-free">{selected.category}</span>
+            <div className="flex items-center gap-3 text-xs text-text-muted">
+              <span className={`font-bold uppercase ${priorityColor(modal.priority)}`}>{modal.priority}</span>
+              <span>{modal.email}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(modal.created_at).toLocaleString()}</span>
             </div>
-            <div className="text-xs text-text-muted">From: <span className="text-text-secondary font-medium">{selected.email}</span></div>
-            <div className="rounded-xl p-4 text-sm text-text-secondary whitespace-pre-wrap" style={{ background: '#141420', border: '1px solid #1c1c2e' }}>
-              {selected.message}
-            </div>
+            <div className="p-3 rounded-xl bg-surface border border-border"><p className="text-sm text-text-primary whitespace-pre-wrap">{modal.message}</p></div>
             <div>
-              <p className="text-xs font-semibold text-text-secondary mb-2">Update Status</p>
-              <div className="flex flex-wrap gap-2">
-                {COLUMNS.map(s => (
-                  <button key={s} onClick={() => updateStatus(selected.id, s)} disabled={updating || selected.status === s}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40
-                      ${selected.status === s ? 'bg-primary text-white' : 'bg-surface border border-border text-text-muted hover:text-text-primary'}`}>
-                    {COL_LABEL[s]}
-                  </button>
-                ))}
-              </div>
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">Reply</label>
+              <textarea rows={4} value={reply} onChange={e => setReply(e.target.value)} className="w-full px-3 py-2.5 rounded-xl text-sm bg-surface border border-border text-text-primary outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => updateTicket(modal.id, { status: 'resolved', reply })} disabled={sending} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">{sending ? 'Sending…' : 'Resolve & Reply'}</button>
+              <button onClick={() => updateTicket(modal.id, { status: 'closed', reply })} disabled={sending} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-text-primary bg-surface border border-border hover:bg-surface/80">Close</button>
             </div>
           </div>
         </Modal>

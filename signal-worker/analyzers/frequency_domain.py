@@ -89,16 +89,21 @@ def fft_peaks_suspicion(img_array: np.ndarray, target_regions: list) -> tuple[fl
 
 # ── Wavelet Subband Energy ────────────────────────────────────────────────────
 
-# Natural image energy ratio baselines (measured on large diverse dataset)
-# LH/HL/HH subbands contain high-frequency detail that AI models suppress.
-NATURAL_HF_ENERGY_RATIO = 0.055  # natural images
-AI_HF_ENERGY_RATIO      = 0.032  # diffusion models suppress HF
+# NOTE (Fix #12, v4.5.0): the fixed NATURAL_HF_ENERGY_RATIO / AI_HF_ENERGY_RATIO
+# baselines were removed — wavelet_energy_suspicion() now computes an adaptive
+# baseline per-image from edge density instead of a single hardcoded constant.
 
 def wavelet_energy_suspicion(img_array: np.ndarray) -> tuple[float, str, float]:
     """
     Run 2D DWT (Haar) on grayscale image.
     Measure energy ratio in LH/HL/HH subbands vs LL.
     Diffusion models suppress high-frequency content → lower ratio.
+
+    Fix #12 (v4.5.0): the natural HF-energy baseline is now adaptive based on
+    edge density instead of a single hardcoded constant — different image
+    categories (busy/textured scenes vs. smooth/flat ones) have genuinely
+    different natural HF ratios, and a fixed 0.055 baseline over-flagged
+    naturally smooth real photos while under-flagging busy AI images.
 
     Returns (suspicion_score, detail, hf_ratio).
     """
@@ -110,6 +115,17 @@ def wavelet_energy_suspicion(img_array: np.ndarray) -> tuple[float, str, float]:
     pil_g = PILImage.fromarray((gray * 255).astype(np.uint8))
     pil_g = pil_g.resize((256, 256), PILImage.LANCZOS)
     gray  = np.array(pil_g, dtype=np.float32) / 255.0
+
+    # Compute edge density for the adaptive baseline
+    import cv2 as _cv2
+    edges = _cv2.Canny((gray * 255).astype(np.uint8), 50, 150)
+    edge_density = float(np.sum(edges > 0) / edges.size)
+
+    # Adaptive baseline: more edges = naturally higher HF energy expected.
+    # At edge_density=0 this reduces to 0.035 (flat/smooth baseline); the old
+    # fixed 0.055 sat roughly mid-range and mis-served both extremes.
+    natural_hf_baseline = 0.035 + edge_density * 0.08
+    ai_hf_threshold      = natural_hf_baseline * 0.75
 
     # Multi-level 2D DWT
     total_hf_energy = 0.0
@@ -128,19 +144,20 @@ def wavelet_energy_suspicion(img_array: np.ndarray) -> tuple[float, str, float]:
 
     hf_ratio = total_hf_energy / (total_energy + 1e-8)
 
-    if hf_ratio < AI_HF_ENERGY_RATIO * 0.9:
+    if hf_ratio < ai_hf_threshold:
         score  = 0.85
-        detail = (f"Wavelet HF energy ratio={hf_ratio:.4f} is significantly below natural baseline "
-                  f"({NATURAL_HF_ENERGY_RATIO:.4f}). Diffusion models suppress high-frequency detail.")
-    elif hf_ratio < NATURAL_HF_ENERGY_RATIO * 0.85:
+        detail = (f"Wavelet HF energy ratio={hf_ratio:.4f} is significantly below the "
+                  f"adaptive natural baseline ({natural_hf_baseline:.4f}, edge_density={edge_density:.3f}). "
+                  f"Diffusion models suppress high-frequency detail.")
+    elif hf_ratio < natural_hf_baseline * 0.90:
         score  = 0.62
-        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — below natural baseline, moderate AI signal"
-    elif hf_ratio < NATURAL_HF_ENERGY_RATIO * 1.15:
+        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — below adaptive baseline ({natural_hf_baseline:.4f}), moderate AI signal"
+    elif hf_ratio < natural_hf_baseline * 1.20:
         score  = 0.25
-        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — within natural image range"
+        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — within adaptive natural range ({natural_hf_baseline:.4f})"
     else:
         score  = 0.10
-        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — above natural baseline (strong real image signal)"
+        detail = f"Wavelet HF energy ratio={hf_ratio:.4f} — above adaptive baseline ({natural_hf_baseline:.4f}, strong real image signal)"
 
     return score, detail, hf_ratio
 
@@ -153,6 +170,14 @@ def analyze_frequency_domain(
     target_regions: list,
 ) -> dict:
     start = time.time()
+    # Resize to max 512px for speed
+    _h, _w = img_array.shape[:2]
+    if max(_h, _w) > 512:
+        from PIL import Image as _PILf
+        _s = 512 / max(_h, _w)
+        _nh, _nw = max(8, int(_h * _s)), max(8, int(_w * _s))
+        _pil_t = _PILf.fromarray(img_array).resize((_nw, _nh), _PILf.LANCZOS)
+        img_array = np.array(_pil_t, dtype=np.uint8)
     evidence = []
 
     # FFT spectral peaks
@@ -276,4 +301,3 @@ def spectral_flatness_test(img_array: np.ndarray) -> tuple[float, str, float]:
     # Normalize residual: >2.5 is anomalous for natural images
     score = min(1.0, residual / 2.5)
     return score, f"1/f residual={residual:.3f} (slope={coeffs[0]:.2f})", residual
-

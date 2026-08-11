@@ -4,20 +4,30 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import {
   Mail, Shield, BarChart3, Calendar, Edit3, Save, X,
-  LoaderCircle, Check, FileType2, Image as ImageIcon, Music, Video,
-  Brain, User, Zap, Crown, ChevronRight, RefreshCw
+  Loader2, Check, FileText, Image as ImageIcon, Music, Video,
+  Brain, User, Zap, Camera, Crown, ChevronRight, RefreshCw
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 
 // ── Avatar ────────────────────────────────────────────────────
-function Avatar({ name, size = 96 }: { name: string; size?: number }) {
+function Avatar({ name, size = 96, imageUrl }: { name: string; size?: number; imageUrl?: string | null }) {
   const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt="Profile"
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover ring-4 ring-primary/30 shadow-xl shadow-primary/20"
+      />
+    )
+  }
   return (
     <div
       style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', width: size, height: size, fontSize: size * 0.32 }}
-      className="rounded-full flex items-center justify-center font-black text-white ring-1 ring-[#2BEE34]/30">
+      className="rounded-full flex items-center justify-center font-black text-white ring-4 ring-primary/30 shadow-xl shadow-primary/20">
       {initials}
     </div>
   )
@@ -27,12 +37,12 @@ function StatCard({ icon: Icon, label, value, color }: {
   icon: React.ElementType; label: string; value: number | string; color: string
 }) {
   return (
-    <div className="bg-surface border border-[#333333] rounded-xl p-5 flex flex-col gap-2">
+    <div className="bg-surface border border-border/55 rounded-2xl p-5 flex flex-col gap-2">
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${color}`}>
         <Icon className="w-4 h-4" />
       </div>
-      <p className="text-2xl font-black text-white tabular-nums">{value}</p>
-      <p className="text-xs text-[#6B6B6B]">{label}</p>
+      <p className="text-2xl font-black text-text-primary tabular-nums">{value}</p>
+      <p className="text-xs text-text-muted">{label}</p>
     </div>
   )
 }
@@ -51,16 +61,16 @@ function UsageBar({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">{label}</p>
-          {sublabel && <p className="text-[11px] text-[#6B6B6B]">{sublabel}</p>}
+        <div>
+          <p className="text-sm font-semibold text-text-primary">{label}</p>
+          {sublabel && <p className="text-[11px] text-text-muted">{sublabel}</p>}
         </div>
         <div className="text-right flex-shrink-0">
-          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-[#FFB800]' : 'text-white'}`}>
+          <p className={`text-sm font-bold tabular-nums ${warn ? 'text-amber-400' : 'text-text-primary'}`}>
             {unlimited ? 'Unlimited' : `${left} left`}
           </p>
           {!unlimited && (
-            <p className="text-[10px] text-[#6B6B6B]">{used.toLocaleString()} / {total.toLocaleString()} used</p>
+            <p className="text-[10px] text-text-disabled">{used.toLocaleString()} / {total.toLocaleString()} used</p>
           )}
         </div>
       </div>
@@ -78,9 +88,9 @@ function UsageBar({
         </div>
       )}
       {warn && !unlimited && (
-        <p className="text-[11px] text-[#FFB800]">
+        <p className="text-[11px] text-amber-400">
           {pct >= 100 ? '⚠ Limit reached' : `⚠ ${100 - pct}% remaining`}
-          {' '}— <a href="/pricing" className="underline hover:text-[#FFB800]">Upgrade your plan</a>
+          {' '}— <a href="/pricing" className="underline hover:text-amber-300">Upgrade your plan</a>
         </p>
       )}
     </div>
@@ -94,6 +104,15 @@ interface CreditsData {
   scans_today: number; daily_limit: number; daily_pct: number
   scans_month: number; scans_total: number
   plan_updated_at: string | null
+  credit_period_start: string | null
+  credit_period_end: string | null
+}
+
+function formatResetDate(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function CreditsCard({ userId }: { userId: string }) {
@@ -115,15 +134,15 @@ function CreditsCard({ userId }: { userId: string }) {
   const planColor = planColors[data?.plan ?? 'free'] ?? '#2563eb'
 
   return (
-    <div className="bg-surface border border-[#333333] rounded-xl p-4 sm:p-6">
+    <div className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="font-bold text-white flex items-center gap-2">
-          <Zap className="w-4 h-4 text-[#2BEE34]" /> Credits &amp; Usage
+        <h2 className="font-bold text-text-primary flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" /> Credits &amp; Usage
         </h2>
         <button
           onClick={() => setRefresh(r => r + 1)}
           aria-label="Refresh credits"
-          className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-white hover:bg-[#141414] transition-colors">
+          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -135,7 +154,7 @@ function CreditsCard({ userId }: { userId: string }) {
           ))}
         </div>
       ) : !data ? (
-        <p className="text-sm text-[#6B6B6B] text-center py-4">Failed to load credits</p>
+        <p className="text-sm text-text-muted text-center py-4">Failed to load credits</p>
       ) : (
         <div className="space-y-5">
           {/* Plan badge */}
@@ -159,11 +178,15 @@ function CreditsCard({ userId }: { userId: string }) {
             )}
           </div>
 
-          {/* Credits balance */}
+          {/* Credits balance — the user's real, billable monthly quota */}
           {data.credits_total > 0 && (
             <UsageBar
-              label="Attestation Credits"
-              sublabel="Resets with your plan · used for audio & video"
+              label="Scan Credits"
+              sublabel={
+                data.credit_period_end
+                  ? `Resets ${formatResetDate(data.credit_period_end)}`
+                  : 'Resets with your plan'
+              }
               used={data.credits_used}
               total={data.credits_total}
               unlimited={false}
@@ -171,27 +194,28 @@ function CreditsCard({ userId }: { userId: string }) {
             />
           )}
 
-          {/* Daily scans */}
+          {/* Daily scans — secondary anti-abuse throttle for paid plans,
+              primary limit for free users (no credit balance) */}
           <UsageBar
-            label="Daily Scans"
+            label={data.is_paid ? 'Daily Activity (abuse protection)' : 'Daily Scans'}
             sublabel={`Resets at midnight · ${data.daily_limit === -1 ? 'Unlimited' : data.daily_limit + '/day'}`}
             used={data.scans_today}
             total={data.daily_limit}
             unlimited={data.daily_limit === -1}
-            color="#06b6d4"
+            color={data.is_paid ? '#64748b' : '#06b6d4'}
           />
 
           {/* Monthly / total stats row */}
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="rounded-xl p-3 text-center"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xl font-black text-white tabular-nums">{data.scans_month.toLocaleString()}</p>
-              <p className="text-[11px] text-[#6B6B6B] mt-0.5">Scans this month</p>
+              <p className="text-xl font-black text-text-primary tabular-nums">{data.scans_month.toLocaleString()}</p>
+              <p className="text-[11px] text-text-muted mt-0.5">Scans this month</p>
             </div>
             <div className="rounded-xl p-3 text-center"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xl font-black text-white tabular-nums">{data.scans_total.toLocaleString()}</p>
-              <p className="text-[11px] text-[#6B6B6B] mt-0.5">Total scans ever</p>
+              <p className="text-xl font-black text-text-primary tabular-nums">{data.scans_total.toLocaleString()}</p>
+              <p className="text-[11px] text-text-muted mt-0.5">Total scans ever</p>
             </div>
           </div>
 
@@ -199,15 +223,15 @@ function CreditsCard({ userId }: { userId: string }) {
           {data.credits_total > 0 && (
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
               style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)' }}>
-              <span className="text-xs text-[#6B6B6B]">Current balance</span>
-              <span className="text-sm font-black text-[#2BEE34] tabular-nums">
+              <span className="text-xs text-text-muted">Current balance</span>
+              <span className="text-sm font-black text-primary tabular-nums">
                 {data.credits_balance.toLocaleString()} credits
               </span>
             </div>
           )}
 
           {data.plan_updated_at && (
-            <p className="text-[10px] text-[#6B6B6B] text-right">
+            <p className="text-[10px] text-text-disabled text-right">
               Plan updated {new Date(data.plan_updated_at).toLocaleDateString()}
             </p>
           )}
@@ -232,6 +256,25 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState('')
   const [username,    setUsername]    = useState('')
   const [bio,         setBio]         = useState('')
+
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+
+  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !clerkUser) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    setAvatarUploading(true)
+    try {
+      await clerkUser.setProfileImage({ file })
+      toast.success('Profile picture updated')
+    } catch {
+      toast.error('Failed to update profile picture')
+    } finally {
+      setAvatarUploading(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }, [clerkUser])
 
   const [uStatus,      setUStatus] = useState<'idle'|'checking'|'available'|'taken'>('idle')
   const [suggestions,  setSugg]    = useState<string[]>([])
@@ -313,7 +356,7 @@ export default function ProfilePage() {
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto space-y-6">
 
       {/* ── Profile Card ──────────────────────────────────────── */}
-      <div className="bg-surface border border-[#333333] rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border/55 rounded-3xl overflow-hidden">
         {/* Banner */}
         <div className="h-28 sm:h-32 relative overflow-hidden"
           style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.3), rgba(6,182,212,0.15))' }}>
@@ -326,25 +369,38 @@ export default function ProfilePage() {
         <div className="px-4 sm:px-6 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 -mt-10 sm:-mt-14">
             <div className="relative group">
-              <Avatar name={displayName || user?.displayName || user?.email || 'U'} size={88} />
-              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#2BEE34] border-2 border-surface" />
+              <Avatar name={displayName || user?.displayName || user?.email || 'U'} size={88} imageUrl={clerkUser?.imageUrl} />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarUploading}
+                aria-label="Change profile picture"
+                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-wait"
+              >
+                {avatarUploading
+                  ? <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  : <Camera className="w-5 h-5 text-white" />}
+              </button>
+              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-surface" />
             </div>
 
             <div className="flex gap-2 sm:mb-2">
               {editing ? (
                 <>
                   <button onClick={handleSave} disabled={saving}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2BEE34] text-[#0A0A0A] text-sm font-semibold hover:bg-[#1A8F1F] active:bg-[#147A18] transition-colors disabled:opacity-60">
-                    {saving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-60"
+                    style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)' }}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                   </button>
                   <button onClick={() => setEditing(false)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#333333] text-sm text-[#6B6B6B] hover:bg-[#141414] transition-all">
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/55 text-sm text-text-muted hover:bg-surface-hover transition-all">
                     <X className="w-4 h-4" /> Cancel
                   </button>
                 </>
               ) : (
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#333333] text-sm font-semibold text-[#A3A3A3] hover:bg-[#141414] hover:border-[#2BEE34]/40 transition-all">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/55 text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:border-primary/40 transition-all">
                   <Edit3 className="w-4 h-4" /> Edit Profile
                 </button>
               )}
@@ -354,52 +410,52 @@ export default function ProfilePage() {
           <div className="mt-4 space-y-3">
             {editing ? (
               <div className="space-y-3 max-w-sm">
-                <div className="space-y-1">
-                  <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Display Name</label>
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Display Name</label>
                   <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                    className="w-full bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-[16px] sm:text-sm text-white focus:outline-none focus:border-[#2BEE34]/50"
+                    className="w-full bg-surface-active border border-border/55 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
                     placeholder="Your full name" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Username</label>
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Username</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] text-sm">@</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">@</span>
                     <input value={username} onChange={e => checkUsername(e.target.value)}
-                      className="w-full bg-[#141414] border border-[#333333] rounded-xl pl-7 pr-9 py-2 text-[16px] sm:text-sm text-white focus:outline-none focus:border-[#2BEE34]/50"
+                      className="w-full bg-surface-active border border-border/55 rounded-xl pl-7 pr-9 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
                       placeholder="yourname" maxLength={30} />
-                    {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-[#333333] border-t-primary animate-spin" />}
-                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#2BEE34]" />}
-                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#FF4444]" />}
+                    {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-border border-t-primary animate-spin" />}
+                    {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald-400" />}
+                    {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-400" />}
                   </div>
                   {uStatus === 'taken' && suggestions.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <span className="text-[11px] text-[#6B6B6B]">Try:</span>
+                      <span className="text-[11px] text-text-muted">Try:</span>
                       {suggestions.map(s => (
                         <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
-                          className="text-[11px] px-2 py-0.5 rounded-md bg-[#2BEE34]/10 text-[#2BEE34] border border-[#2BEE34]/20 hover:bg-[#2BEE34]/20">
+                          className="text-[11px] px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20">
                           @{s}
                         </button>
                       ))}
                     </div>
                   )}
-                  {uStatus === 'available' && username && <p className="text-[11px] text-[#2BEE34] mt-1">@{username} is available</p>}
+                  {uStatus === 'available' && username && <p className="text-[11px] text-emerald-400 mt-1">@{username} is available</p>}
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] text-[#6B6B6B] uppercase tracking-widest mb-1 block">Bio</label>
+                <div>
+                  <label className="text-[11px] text-text-muted uppercase tracking-widest mb-1 block">Bio</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2}
-                    className="w-full bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-[16px] sm:text-sm text-white focus:outline-none focus:border-[#2BEE34]/50 resize-none"
+                    className="w-full bg-surface-active border border-border/55 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary resize-none"
                     placeholder="A short bio (optional)" maxLength={160} />
-                  <p className="text-[10px] text-[#6B6B6B] text-right mt-0.5">{bio.length}/160</p>
+                  <p className="text-[10px] text-text-muted text-right mt-0.5">{bio.length}/160</p>
                 </div>
               </div>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-black text-white">
+                <h1 className="text-xl sm:text-2xl font-black text-text-primary">
                   {displayName || user?.displayName || user?.email?.split('@')[0]}
                 </h1>
-                {profile?.username && <p className="text-sm text-[#6B6B6B]">@{profile.username as string}</p>}
-                {profile?.bio      && <p className="text-sm text-[#A3A3A3]">{profile.bio as string}</p>}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#6B6B6B]">
+                {profile?.username && <p className="text-sm text-text-muted">@{profile.username as string}</p>}
+                {profile?.bio      && <p className="text-sm text-text-secondary">{profile.bio as string}</p>}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
                   <span className="flex items-center gap-1.5 min-w-0">
                     <Mail className="w-4 h-4 shrink-0" />
                     <span className="truncate max-w-[200px] sm:max-w-none">{user?.email}</span>
@@ -407,7 +463,7 @@ export default function ProfilePage() {
                   <span className="flex items-center gap-1.5 shrink-0">
                     <Calendar className="w-4 h-4" />Joined {joinedAt}
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#2BEE34] shrink-0">
+                  <span className="flex items-center gap-1.5 text-emerald-400 shrink-0">
                     <Shield className="w-4 h-4" />Verified
                   </span>
                 </div>
@@ -418,13 +474,13 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2 mt-2">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                 isPaid
-                  ? 'bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20'
-                  : 'bg-[#2BEE34]/10 text-[#2BEE34] border-[#2BEE34]/20'}`}>
+                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                  : 'bg-primary/10 text-primary border-primary/20'}`}>
                 {isPaid ? <Crown className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
                 {planLabel} Plan
               </span>
               {!isPaid && (
-                <a href="/pricing" className="text-xs text-[#6B6B6B] hover:text-white transition-colors flex items-center gap-1">
+                <a href="/pricing" className="text-xs text-text-muted hover:text-primary transition-colors flex items-center gap-1">
                   Upgrade <ChevronRight className="w-3 h-3" />
                 </a>
               )}
@@ -436,51 +492,51 @@ export default function ProfilePage() {
       {/* ── Credits & Usage (live from /api/user/credits) ──────── */}
       {user?.uid && <CreditsCard userId={user.uid} />}
 
-      {/* ── Attestation Stats ───────────────────────────────────── */}
-      <div className="card p-4">
-        <h2 className="text-sm font-semibold text-[#6B6B6B] uppercase tracking-widest mb-3 px-1">
-          Attestation Stats
+      {/* ── Detection Stats ───────────────────────────────────── */}
+      <div>
+        <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3 px-1">
+          Detection Stats
         </h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {Array(8).fill(0).map((_, i) => (
-              <div key={i} className="bg-surface border border-[#333333] rounded-xl h-20 sm:h-24 animate-pulse" />
+              <div key={i} className="bg-surface border border-border/55 rounded-2xl h-20 sm:h-24 animate-pulse" />
             ))}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-              <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Shield}    label="Synthesized"    value={stats?.ai_detected    ?? 0} color="bg-[#FF4444]/10 text-[#FF4444]" />
-              <StatCard icon={User}      label="Authentic"      value={stats?.human_detected ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-[#FFB800]/10 text-[#FFB800]" />
+              <StatCard icon={Brain}     label="Total Scans"    value={stats?.total_scans    ?? 0} color="bg-primary/10 text-primary" />
+              <StatCard icon={Shield}    label="AI Detected"    value={stats?.ai_detected    ?? 0} color="bg-rose-500/10 text-rose-400" />
+              <StatCard icon={User}      label="Human Detected" value={stats?.human_detected ?? 0} color="bg-emerald-500/10 text-emerald-400" />
+              <StatCard icon={BarChart3} label="Avg Confidence" value={`${stats?.avg_confidence ?? 0}%`} color="bg-amber-500/10 text-amber-400" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard icon={FileType2}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-[#FFB800]/10 text-[#FFB800]" />
-              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
-              <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-[#2BEE34]/10 text-[#2BEE34]" />
+              <StatCard icon={FileText}  label="Text"  value={stats?.text_scans  ?? 0} color="bg-amber-500/10 text-amber-400" />
+              <StatCard icon={ImageIcon} label="Image" value={stats?.image_scans ?? 0} color="bg-primary/10 text-primary" />
+              <StatCard icon={Music}     label="Audio" value={stats?.audio_scans ?? 0} color="bg-cyan-500/10 text-cyan-400" />
+              <StatCard icon={Video}     label="Video" value={stats?.video_scans ?? 0} color="bg-blue-500/10 text-blue-400" />
             </div>
           </>
         )}
       </div>
 
       {/* ── Account Details ───────────────────────────────────── */}
-      <div className="bg-surface border border-[#333333] rounded-xl p-4 sm:p-6 space-y-3">
-        <h2 className="font-bold text-white flex items-center gap-2 mb-1">
-          <Shield className="w-5 h-5 text-[#2BEE34]" /> Account Details
+      <div className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6 space-y-3">
+        <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1">
+          <Shield className="w-5 h-5 text-primary" /> Account Details
         </h2>
         {([
           ['Email address',  user?.email,                               ''],
           ['Username',       profile?.username ? `@${profile.username}` : '—', ''],
           ['Display name',   displayName || '—',                        ''],
           ['Joined',         joinedAt,                                  ''],
-          ['Plan',           planLabel,                                 isPaid ? 'text-[#FFB800]' : 'text-[#2BEE34]'],
-          ['Status',         'Active',                                  'text-[#2BEE34]'],
+          ['Plan',           planLabel,                                 isPaid ? 'text-yellow-400' : 'text-primary'],
+          ['Status',         'Active',                                  'text-emerald-400'],
         ] as [string, string | undefined, string][]).map(([label, value, cls]) => (
-          <div key={label} className="flex justify-between items-center gap-4 py-2.5 border-b border-[#333333] last:border-0 text-sm min-w-0">
-            <span className="text-[#6B6B6B] shrink-0">{label}</span>
-            <span className={`font-medium text-white truncate text-right min-w-0 ${cls}`}>{value ?? '—'}</span>
+          <div key={label} className="flex justify-between items-center gap-4 py-2.5 border-b border-border/50 last:border-0 text-sm min-w-0">
+            <span className="text-text-muted shrink-0">{label}</span>
+            <span className={`font-medium text-text-primary truncate text-right min-w-0 ${cls}`}>{value ?? '—'}</span>
           </div>
         ))}
       </div>

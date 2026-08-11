@@ -1,36 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession, COOKIE_NAME } from './auth'
 
-let _adminDb: SupabaseClient | null = null
+const PERMISSIONS: Record<string, string[]> = {
+  admin: ['users:read', 'users:write', 'scans:read', 'settings:read', 'settings:write'],
+  moderator: ['users:read', 'scans:read', 'content:moderate'],
+  super_admin: ['*'],
+}
 
-export function getAdminDb(): SupabaseClient {
-  if (_adminDb) return _adminDb
+export function getAdminDb() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing Supabase credentials')
-  _adminDb = createClient(url, key, { auth: { persistSession: false } })
-  return _adminDb
+  if (!url || !key) throw new Error('Supabase admin credentials missing')
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
-export async function requireAdmin(req: NextRequest): Promise<{ ip: string } | NextResponse> {
+export async function requireAdmin(
+  req: NextRequest,
+  requiredPermission?: string
+): Promise<{ adminId: string; ip: string } | NextResponse> {
   const token = req.cookies.get(COOKIE_NAME)?.value
-  const valid = await verifyAdminSession(token)
-  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  return { ip }
-}
+  const isValid = await verifyAdminSession(token)
 
-export async function logAdminAction(
-  action: string,
-  targetId: string | null,
-  ip: string,
-  metadata?: Record<string, unknown>
-): Promise<void> {
-  try {
-    await getAdminDb().from('admin_audit_log').insert({
-      action, admin_ip: ip,
-      metadata: { ...metadata, target_id: targetId },
-    })
-  } catch { /* non-fatal */ }
+  if (!isValid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Extract adminId from token payload
+  let adminId = 'legacy'
+  if (token) {
+    const parts = token.split(':')
+    if (parts.length >= 4) {
+      adminId = parts[parts.length - 1] || 'legacy'
+    }
+  }
+
+  // Check permissions if required
+  if (requiredPermission && requiredPermission !== '*') {
+    const db = getAdminDb()
+    const { data: admin } = await db.from('admin_users').select('role').eq('id', adminId).single()
+    const role = admin?.role || 'admin'
+    const allowed = PERMISSIONS[role] || []
+    if (!allowed.includes('*') && !allowed.includes(requiredPermission)) {
+      return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 })
+    }
+  }
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown'
+  return { adminId, ip }
 }

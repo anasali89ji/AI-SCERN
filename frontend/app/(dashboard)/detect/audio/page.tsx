@@ -1,503 +1,482 @@
-'use client'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { MobileResultSheet } from '@/components/MobileResultSheet'
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { toUserError } from '@/lib/utils/user-errors'
-import { useDropzone } from 'react-dropzone'
-import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
-import { Mic, Upload, X, TriangleAlert, LoaderCircle, RotateCcw, Play, Pause, Download, Share, Info, Database } from 'lucide-react'
-import { useAuth } from '@/components/auth-provider'
-import type { DetectionResult, Verdict } from '@/types'
-import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
-import dynamic from 'next/dynamic'
-import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
-import { ConfidenceRing } from '@/components/ConfidenceRing'
+"use client"
 
-// ── Post-scan components — loaded only after a result arrives ─────────────────
-const LazyReviewSuggestion = dynamic(
-  () => import('@/components/ReviewSuggestion').then(m => ({ default: m.ReviewSuggestion })),
-  { ssr: false }
-)
-const LazyFeedbackBar = dynamic(
-  () => import('@/components/FeedbackBar').then(m => ({ default: m.FeedbackBar })),
-  { ssr: false }
-)
-import { SignupGate, incrementGlobalScanCount } from '@/components/SignupGate'
+import { useState, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { uploadToR2WithProgress } from "@/lib/storage/upload-with-progress"
+import { UsageLimitBanner } from "@/components/UsageLimitBanner"
+import {
+  Mic,
+  Upload,
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  Volume2,
+  Waves,
+  Activity,
+  FileAudio,
+  Zap,
+  Clock,
+  BarChart3,
+  Sparkles,
+  ArrowRight,
+  Play,
+  Pause,
+  RotateCcw,
+  ShieldCheck,
+  BrainCircuit
+} from "lucide-react"
 
-
-
-const verdictConfig = {
-  AI:        { ...baseVerdictConfig.AI,        label: 'SYNTHESIZED VOICE' },
-  HUMAN:     { ...baseVerdictConfig.HUMAN,     label: 'AUTHENTIC HUMAN VOICE' },
-  UNCERTAIN: { ...baseVerdictConfig.UNCERTAIN },
+interface AudioSignal {
+  name: string
+  category: string
+  description: string
+  weight: number
+  value: number
+  flagged: boolean
 }
 
-const WAVE_HEIGHTS = Array.from({ length: 40 }, (_, i) => 6 + Math.sin(i * 0.8) * 14 + Math.cos(i * 0.3) * 10)
-const WAVE_DURATIONS = Array.from({ length: 40 }, (_, i) => 0.45 + (i % 7) * 0.08)
-
-function WaveformVisualizer({ playing, progress = 0 }: { playing: boolean; progress?: number }) {
-
-  return (
-    <div className="flex items-center justify-center gap-0.5 h-14 relative overflow-hidden rounded-xl">
-      {/* Progress overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: `linear-gradient(to right, transparent ${progress * 100}%, rgba(0,0,0,0.4) ${progress * 100}%)` }} />
-      {Array.from({ length: 40 }).map((_, i) => (
-        <div key={i} className="w-1 rounded-full shrink-0 bg-accent/60"
-          style={{ height: `${20 + Math.sin(i * 0.8) * 15 + Math.cos(i * 0.4) * 10}px` }} />
-      ))}
-    </div>
-  )
+interface AudioResult {
+  verdict: "AI" | "HUMAN" | "UNCERTAIN"
+  confidence: number
+  model_used: string
+  processing_time?: number
+  summary: string
+  signals: AudioSignal[]
+  segment_scores?: { start_sec: number; end_sec: number; label: string; ai_score: number }[]
+  degraded_signals?: string[]
+  file_name?: string
 }
 
-function formatDuration(secs: number) {
-  const m = Math.floor(secs / 60); const s = Math.floor(secs % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-function ResultDetails({
-  result, cfg, displayName, file, exportReport,
-}: {
-  result: DetectionResult
-  cfg: NonNullable<ReturnType<typeof getCfg>>
-  displayName: string | null
-  file: File | null
-  exportReport: () => void
-}) {
-  return (
-    <div className="space-y-4 w-full min-w-0">
-      <div className={`card border ${cfg.border} ${cfg.bg} w-full min-w-0`}>
-        {displayName && (
-          <div className="mb-3 text-xs font-medium text-silver-600">
-            Hey <span className="text-white font-semibold">{displayName}</span>, here's what we found
-            {file ? <> for <span className="text-white font-medium">"{file.name}"</span></> : null}:
-          </div>
-        )}
-        <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-          <ConfidenceRing
-            confidence={result.confidence <= 1 ? result.confidence * 100 : result.confidence}
-            color={cfg.hex}
-            size={64}
-            strokeWidth={5}
-          />
-          <div className="flex-1 min-w-0">
-            <h3 className={`text-base sm:text-xl font-black ${cfg.color} mb-1 leading-tight`}>
-              {displayName
-                ? result.verdict === 'AI' ? `${displayName}, this audio is AI Generated`
-                  : result.verdict === 'HUMAN' ? `${displayName}, this is an Authentic Human Voice`
-                  : `${displayName}, this audio is Uncertain`
-                : cfg.label}
-            </h3>
-            <p className="text-silver-600 text-sm leading-relaxed">{result.summary}</p>
-          </div>
-        </div>
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-xs text-silver-600 mb-2 gap-2">
-            <span className="shrink-0">Confidence</span>
-            <span className={`font-black text-base sm:text-xl ${cfg.color} tabular-nums shrink-0`}>{formatConfidence(result.confidence)}</span>
-          </div>
-          <div className="h-2.5 sm:h-3 bg-surface-elevated rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.confidence <= 1 ? Math.round(result.confidence * 100) : Math.round(result.confidence)}%`, backgroundColor: cfg.hex }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-accent" />
-          Audio Signals ({result.signals.length})
-        </h3>
-        <div className="space-y-2.5 max-h-[280px] sm:max-h-none overflow-y-auto sm:overflow-visible pr-0.5 sm:pr-0">
-          {result.signals.map((s, i) => (
-            <div key={i} className="flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-surface/50 border border-silver-300 min-w-0">
-              <div className={`w-2 h-2 rounded-full shrink-0 ${s.flagged ? 'bg-error' : 'bg-accent'}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between mb-1 gap-2">
-                  <span className="text-xs sm:text-sm text-silver-700 font-medium truncate">{s.name}</span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${s.flagged ? 'bg-error/15 text-error' : 'bg-accent/15 text-accent'}`}>{s.weight}%</span>
-                </div>
-                <p className="text-xs text-silver-600 truncate">{s.description}</p>
-                <div className="h-1 bg-surface-elevated rounded-full mt-1.5 overflow-hidden">
-                  <div className={`h-full rounded-full ${s.flagged ? 'bg-error' : 'bg-accent'}`} style={{ width: `${Math.round((s.value ?? s.weight ?? 0) <= 1 ? (s.value ?? s.weight ?? 0) * 100 : (s.value ?? s.weight ?? 0))}%` }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Segment timeline */}
-      {result.segment_scores && result.segment_scores.length > 0 && (
-        <div className="card">
-          <h3 className="font-semibold text-white mb-3 flex items-center gap-2 text-sm">
-            <span className="w-2 h-2 rounded-full bg-accent" />
-            Audio Segment Analysis
-          </h3>
-          <div className="space-y-1.5">
-            {result.segment_scores.map((seg: any, i: number) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-xs text-silver-600 w-16 shrink-0 font-mono">
-                  {seg.start_sec}s – {seg.end_sec}s
-                </span>
-                <div className="flex-1 h-2 bg-surface-elevated rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${seg.ai_score > 0.62 ? 'bg-error' : seg.ai_score > 0.38 ? 'bg-warning' : 'bg-accent'}`}
-                    style={{ width: `${Math.round(seg.ai_score * 100)}%` }}
-                  />
-                </div>
-                <span className={`text-xs font-bold w-10 text-right ${seg.ai_score > 0.62 ? 'text-error' : seg.ai_score > 0.38 ? 'text-warning' : 'text-accent'}`}>
-                  {Math.round(seg.ai_score * 100)}%
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-4 mt-2 text-xs text-silver-600">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-error" />AI-synthetic</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning" />Uncertain</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" />Authentic</span>
-          </div>
-        </div>
-      )}
-
-      <div className="card py-3 px-4 flex items-center justify-between gap-2 flex-wrap">
-        <span className="text-xs text-silver-600 font-mono truncate">{result.processing_time}ms</span>
-        <button onClick={exportReport} className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-          <Download className="w-3.5 h-3.5" /> Export Report
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function getCfg(v: Verdict) { return verdictConfig[v] }
-
-function AudioDetectionPage() {
-  const { user: currentUser } = useAuth()
-  const displayName: string | null =
-    currentUser?.displayName?.split(' ')[0] ||
-    currentUser?.email?.split('@')[0] ||
-    null
+export default function AudioDetectionPage() {
   const [file, setFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [_uploadProgress, setUploadProgress] = useState(0)
-  const [result, setResult] = useState<DetectionResult | null>(null)
-  const [showMobileResult, setShowMobileResult] = useState(false)
-  const [scanId, setScanId] = useState<string | null>(null)
-
-  const shareResult = async () => {
-    if (!scanId) return
-    try {
-      await fetch(`/api/scan/${scanId}/share`, { method: 'POST' })
-      await navigator.clipboard.writeText(`${window.location.origin}/scan/${scanId}`)
-      alert('Share link copied to clipboard!')
-    } catch { alert('Could not copy link. Try again.') }
-  }
-  const [error, setError] = useState<string | null>(null)
-  const [playing, setPlaying] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [result, setResult] = useState<AudioResult | null>(null)
+  const [error, setError] = useState("")
   const [progress, setProgress] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [currentStage, setCurrentStage] = useState("")
+  const progressRef = useRef<NodeJS.Timeout | null>(null)
+  const stageRef = useRef<NodeJS.Timeout | null>(null)
+
+  const stages = [
+    "Reading audio stream...",
+    "Extracting spectral features...",
+    "Analyzing harmonic structure...",
+    "Running ensemble models...",
+    "Cross-referencing forensic database...",
+    "Generating verdict...",
+  ]
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    const onTime = () => { setCurrentTime(audio.currentTime); setProgress(audio.currentTime / (audio.duration || 1)) }
-    const onLoad = () => setDuration(audio.duration)
-    const onEnd  = () => { setPlaying(false); setProgress(0) }
-    audio.addEventListener('timeupdate', onTime)
-    audio.addEventListener('loadedmetadata', onLoad)
-    audio.addEventListener('ended', onEnd)
-    return () => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onLoad); audio.removeEventListener('ended', onEnd) }
-  }, [file])
-
-  const onDrop = useCallback((accepted: File[]) => {
-    const f = accepted[0]; if (!f) return
-    setFile(f); setResult(null); setError(null); setProgress(0); setCurrentTime(0); setDuration(0); setPlaying(false)
-    if (audioRef.current) { audioRef.current.src = URL.createObjectURL(f) }
+    return () => {
+      if (progressRef.current) clearInterval(progressRef.current)
+      if (stageRef.current) clearInterval(stageRef.current)
+    }
   }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'] },
-    maxSize: 50 * 1024 * 1024, multiple: false,
-    onDropRejected: () => setError('Invalid file. Use MP3, WAV, OGG, M4A, FLAC or AAC under 50MB.')
-  })
+  function startAnalysisAnimation() {
+    setProgress(0)
+    setCurrentStage(stages[0])
 
-  const togglePlay = () => {
-    if (!audioRef.current) return
-    if (playing) { audioRef.current.pause(); setPlaying(false) }
-    else { audioRef.current.play(); setPlaying(true) }
+    progressRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) return prev
+        return prev + Math.random() * 6
+      })
+    }, 500)
+
+    let stageIndex = 0
+    stageRef.current = setInterval(() => {
+      stageIndex = (stageIndex + 1) % stages.length
+      setCurrentStage(stages[stageIndex])
+    }, 1800)
   }
 
-  const seekTo = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || !duration) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const pct = (e.clientX - rect.left) / rect.width
-    audioRef.current.currentTime = pct * duration
-    setProgress(pct)
+  function stopAnalysisAnimation() {
+    if (progressRef.current) clearInterval(progressRef.current)
+    if (stageRef.current) clearInterval(stageRef.current)
+    setProgress(100)
   }
 
-  const handleDetect = async () => {
+  async function handleAnalyze() {
     if (!file) return
-    setLoading(true); setError(null); setResult(null)
+    setIsAnalyzing(true)
+    setError("")
+    setResult(null)
+    startAnalysisAnimation()
+
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'mp3'
       let r2Key: string | null = null
 
-      // Try R2 presigned upload first
+      // Try R2 presigned upload first (bypasses Vercel's 4.5MB request body
+      // limit — audio files routinely exceed that, which is what was causing
+      // "Failed to fetch" on anything longer than a few seconds of audio).
       try {
-        const presignRes = await fetch('/api/upload', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, mimeType: file.type || `audio/${ext}`, fileSize: file.size, mediaType: 'audio' }),
+        const presignCtrl = new AbortController()
+        const presignTimer = setTimeout(() => presignCtrl.abort(), 5000)
+        const presignRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size, mediaType: "audio" }),
+          signal: presignCtrl.signal,
         })
+        clearTimeout(presignTimer)
         const presignData = await presignRes.json()
         if (presignData.success && presignData.uploadUrl) {
-          setUploadProgress(0)
-          await uploadToR2WithProgress(presignData.uploadUrl, file, setUploadProgress)
+          await uploadToR2WithProgress(presignData.uploadUrl, file, () => {})
           r2Key = presignData.key
         }
-      } catch { /* fallback to direct upload */ }
+      } catch { /* fallback to direct upload — R2 slow or unavailable */ }
 
       let res: Response
       if (r2Key) {
-        res = await fetch('/api/detect/audio', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ r2Key, fileName: file.name, fileSize: file.size, format: ext }),
+        res = await fetch("/api/detect/audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ r2Key, fileName: file.name, fileSize: file.size, format: file.name.split(".").pop() }),
         })
       } else {
-        const formData = new FormData(); formData.append('file', file)
-        res = await fetch('/api/detect/audio', { method: 'POST', body: formData })
+        const formData = new FormData()
+        formData.append("file", file)
+        res = await fetch("/api/detect/audio", {
+          method: "POST",
+          body: formData,
+        })
+      }
+
+      stopAnalysisAnimation()
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error?.message || err.error || `Server error ${res.status}`)
       }
 
       const data = await res.json()
-      if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
-      setResult(data.result); setShowMobileResult(true)
-      setScanId(data.scan_id ?? null)
-      window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
-      incrementGlobalScanCount()
-      window.dispatchEvent(new Event('aiscern:scan'))
-      // FIX: removed duplicate supabase.from('scans').insert() — API route already saves
-    } catch (e: unknown) { setError(e instanceof Error ? toUserError(undefined, e.message) : toUserError()) }
-    finally { setLoading(false) }
+      if (data.success) {
+        setResult(data.result)
+      } else {
+        throw new Error(data.error?.message || data.error || "Analysis failed")
+      }
+    } catch (err: any) {
+      stopAnalysisAnimation()
+      setError(err.message || "Network error")
+    } finally {
+      setIsAnalyzing(false)
+      setTimeout(() => setProgress(0), 800)
+    }
   }
 
-  const exportReport = () => {
-    if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Attestation Engine\nAnalyzed: ${new Date().toLocaleString()}`
-    const blob = new Blob([text], { type: 'text/plain' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
-    a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const dropped = e.dataTransfer.files[0]
+    if (dropped && dropped.type.startsWith("audio/")) {
+      setFile(dropped)
+      setResult(null)
+      setError("")
+    }
   }
 
-  const reset = () => { setFile(null); setResult(null); setError(null); setPlaying(false); setProgress(0); setDuration(0); setCurrentTime(0) }
-  const cfg = result ? verdictConfig[result.verdict as Verdict] : null
+  function getVerdictColor(v: string) {
+    return v === "AI" ? "text-rose-400" : v === "HUMAN" ? "text-emerald-400" : "text-amber-400"
+  }
+
+  function getVerdictBg(v: string) {
+    return v === "AI" ? "bg-rose-500/10 border-rose-500/30" : v === "HUMAN" ? "bg-emerald-500/10 border-emerald-500/30" : "bg-amber-500/10 border-amber-500/30"
+  }
 
   return (
-    <>
-    {/* Screen reader announcement of analysis results */}
-    <div aria-live="polite" aria-atomic="true" className="sr-only">
-      {result && `Analysis complete. Verdict: ${verdictConfig[result.verdict as Verdict]?.label ?? result.verdict}. Confidence: ${formatConfidence(result.confidence)}.`}
-    </div>
-    <SignupGate />
-    <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
-      <audio ref={audioRef} className="hidden" />
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-            <Mic className="w-6 h-6 text-accent" />
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-24 space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Mic className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold">Audio Verification</h1>
+          <p className="text-sm text-slate-500">
+            Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts
+          </p>
+        </div>
+      </div>
+
+      <UsageLimitBanner tool="audio" />
+
+      {/* Beta Notice */}
+      <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm text-amber-400 font-medium">Beta — under active development.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Audio detection is newer than our text and image models and is still being refined. Results may be less reliable — treat them as a starting signal, not a final verdict.
+          </p>
+        </div>
+      </div>
+
+      {/* Upload Area */}
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="rounded-2xl border-2 border-dashed border-white/[0.07] bg-[#0f0f17] p-8 text-center hover:border-primary/30 transition-colors"
+      >
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) {
+              setFile(f)
+              setResult(null)
+              setError("")
+            }
+          }}
+          className="hidden"
+          id="audio-upload"
+        />
+        <label htmlFor="audio-upload" className="cursor-pointer block">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-6 h-6 text-primary" />
           </div>
-          Audio Attestation
-        </h1>
-        <p className="text-silver-600 ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
+          <p className="text-sm font-medium text-slate-300">Drop an audio file or click to browse</p>
+          <p className="text-xs text-slate-600 mt-1">WAV, MP3, OGG, FLAC — up to 50 MB</p>
+        </label>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
-        <div className="space-y-4">
-          {!file ? (
-            typeof window !== 'undefined' && 'ontouchstart' in window ? (
-              // FIX B.4: Mobile tap-to-upload (no drag zone on touch devices)
-              <label className="flex flex-col items-center gap-3 card border-2 border-dashed border-accent/30 bg-accent/5 rounded-xl py-10 cursor-pointer  transition-transform min-h-[180px] justify-center">
-                <div className="w-16 h-16 rounded-xl bg-accent/15 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-accent" />
+      {/* File Info */}
+      <AnimatePresence>
+        {file && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <FileAudio className="w-5 h-5 text-primary" />
                 </div>
-                <div className="text-center">
-                  <p className="font-bold text-accent text-base">Tap to Choose Audio File</p>
-                  <p className="text-xs text-silver-600 mt-1">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
-                </div>
-                <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onDrop([f]) }} />
-              </label>
-            ) : (
-            <div {...getRootProps()}
-              className={`card border-2 border-dashed cursor-pointer transition-all duration-200 min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center gap-4
-                ${isDragActive ? 'border-accent bg-accent/5 ' : 'border-silver-300 hover:border-accent/50 hover:bg-surface/30'}`}>
-              <input {...getInputProps()} />
-              <div className="w-20 h-20 rounded-xl bg-accent/10 flex items-center justify-center">
-                <Upload className={`w-10 h-10 ${isDragActive ? 'text-accent' : 'text-silver-600'}`} />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-white mb-1">{isDragActive ? 'Drop audio here' : 'Drag & drop audio file'}</p>
-                <p className="text-sm text-silver-600">or click to browse</p>
-                <p className="text-xs text-silver-600 mt-2">MP3 · WAV · OGG · M4A · FLAC · AAC · Max 50MB</p>
-              </div>
-              <WaveformVisualizer playing={false} />
-            </div>
-            )
-          ) : (
-            <div className="card space-y-4">
-              <div className="p-4 rounded-xl bg-surface border border-silver-300">
-                <WaveformVisualizer playing={playing} progress={progress} />
-
-                {/* Seek bar */}
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-xs text-silver-600 w-10 shrink-0 tabular-nums">{formatDuration(currentTime)}</span>
-                  <div className="flex-1 h-1.5 bg-surface-elevated rounded-full cursor-pointer overflow-hidden relative" onClick={seekTo}>
-                    <div className="h-full bg-accent rounded-full transition-all pointer-events-none" style={{ width: `${progress * 100}%` }} />
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={0.1}
-                      value={progress * 100}
-                      onChange={e => {
-                        const pct = Number(e.target.value) / 100
-                        if (audioRef.current && duration) { audioRef.current.currentTime = pct * duration }
-                        setProgress(pct)
-                      }}
-                      aria-label="Seek audio position"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
-                  <span className="text-xs text-silver-600 w-10 shrink-0 tabular-nums text-right">{formatDuration(duration)}</span>
-                </div>
-
-                <div className="flex items-center gap-3 mt-3">
-                  <button onClick={togglePlay}
-                    className="w-10 h-10 rounded-full bg-accent hover:bg-accent-hover flex items-center justify-center transition-colors shrink-0">
-                    {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-silver-700 font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-silver-600">
-                      {formatFileSize(file.size)}
-                      {duration > 0 && ` · ${formatDuration(duration)}`}
-                    </p>
-                  </div>
-                  <button onClick={reset}
-              title="Attest Another" className="text-silver-600 hover:text-error p-2 rounded-lg hover:bg-error/10 transition-colors shrink-0">
-                    <X className="w-4 h-4" />
-                  </button>
+                <div>
+                  <p className="text-sm font-medium text-slate-200">{file.name}</p>
+                  <p className="text-xs text-slate-600">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
+              <button
+                onClick={() => { setFile(null); setResult(null); setError("") }}
+                className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              <div className="flex gap-3">
-                <button onClick={reset} className="btn-ghost flex-1 py-2.5 text-sm flex items-center justify-center gap-2">
-                  <RotateCcw className="w-4 h-4" /> New File
-                </button>
-                <button onClick={handleDetect} disabled={loading}
-                  className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                  {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
-                  {loading ? 'Examining…' : 'Attest'}
-                </button>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="card border-error/30 bg-error/5 flex items-center gap-2 text-error text-sm py-3">
-              <TriangleAlert className="w-4 h-4 shrink-0" /> {error}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          {result && cfg ? (
-            <div className="hidden lg:block">
-              <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} />
-            </div>
-          ) : loading ? (
-            <div className="card flex flex-col items-center justify-center py-16 text-center gap-4">
-              {/* Module 7.3: fake waveform animation during analysis — CSS bars, staggered pulse */}
-              <div className="flex items-end justify-center gap-1 h-16">
-                {Array.from({ length: 24 }).map((_, i) => (
-                  <div key={i}
-                    className="w-1.5 rounded-full bg-accent/50 animate-pulse-slow"
-                    style={{
-                      height: `${20 + Math.sin(i * 0.7) * 16 + Math.cos(i * 0.35) * 12}px`,
-                      animationDelay: `${(i % 8) * 0.1}s`,
-                    }} />
-                ))}
-              </div>
-              <p className="text-sm text-silver-600">Analyzing audio…</p>
-            </div>
-          ) : !loading && (
-            <div className="card flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4 ">
-                <Mic className="w-10 h-10 text-accent" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Upload Audio</h3>
-              <p className="text-silver-600 text-sm max-w-xs">Drop a voice recording to examine for TTS synthesis and voice cloning artifacts</p>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-silver-600 w-full max-w-xs">
-                {['Prosody analysis', 'Spectral fingerprint', 'TTS artifact examination', 'Voice cloning'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 shrink-0" />{f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-    <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
-      
-      <LazyReviewSuggestion toolName="Audio Attestation" />
-      {result && (
-        <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
-          <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
-          {scanId && (
-            <button onClick={shareResult}
-              className="flex items-center gap-1.5 text-xs text-silver-600 hover:text-white transition-colors border border-silver-300 rounded-lg px-3 py-1.5 hover:border-white/[0.12]">
-              <Share className="w-3 h-3" /> Share result
-            </button>
-          )}
-        </div>
+      {/* Analyze Button */}
+      {file && !isAnalyzing && !result && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center"
+        >
+          <button
+            onClick={handleAnalyze}
+            className="px-6 py-3 rounded-xl bg-primary text-bg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <Zap className="w-4 h-4" />
+            Verify Audio
+          </button>
+        </motion.div>
       )}
-      {result && (
-        <details className="card mt-2 mx-4 mb-4">
-          <summary className="cursor-pointer text-sm font-semibold text-silver-700 flex items-center gap-2">
-            <Info className="w-4 h-4 text-accent" />
-            Forensic Engines &amp; Datasets
-          </summary>
-          <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-              {[
-                { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
-                { name: 'Deepfake Audio Detection', desc: 'morisaki deepfake audio dataset', url: 'https://huggingface.co/datasets/morisaki/deepfake-audio-detection' },
-                { name: 'MelodyMachine V2', desc: 'Deepfake audio detection dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
-              ].map(d => (
-                <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
-                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
-                  <Database className="w-3.5 h-3.5 text-accent mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-silver-700 font-medium group-hover:text-white transition-colors">{d.name}</p>
-                    <p>{d.desc}</p>
-                  </div>
-                </a>
+
+      {/* ========== LOADING / ANALYZING STATE ========== */}
+      <AnimatePresence>
+        {isAnalyzing && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-8 text-center space-y-6"
+          >
+            {/* Animated Waveform */}
+            <div className="flex items-center justify-center gap-1 h-16">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-1.5 rounded-full bg-gradient-to-t from-primary to-cyan-400"
+                  animate={{
+                    height: [12, 40 + Math.random() * 24, 12],
+                    opacity: [0.4, 1, 0.4],
+                  }}
+                  transition={{
+                    duration: 0.8 + Math.random() * 0.6,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    delay: i * 0.05,
+                  }}
+                />
               ))}
             </div>
-          </div>
-        </details>
-      )}
+
+            {/* Stage Text */}
+            <div className="space-y-2">
+              <motion.div
+                key={currentStage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="text-sm font-medium text-primary flex items-center justify-center gap-2"
+              >
+                <Activity className="w-4 h-4 animate-pulse" />
+                {currentStage}
+              </motion.div>
+              <p className="text-xs text-slate-600">This may take 15–45 seconds depending on file length</p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="max-w-sm mx-auto space-y-1">
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>Analyzing</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="h-2 bg-[#141420] rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            </div>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {["Spectral Analysis", "Prosody Mapping", "TTS Artifact Hunt", "Formant Tracking"].map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[10px] px-2 py-1 rounded-full bg-white/5 text-slate-500 border border-white/5"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-400 text-sm flex items-start gap-2"
+          >
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ========== RESULTS ========== */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-5"
+          >
+            {/* Verdict Card */}
+            <div className={`rounded-2xl border ${getVerdictBg(result.verdict)} p-6 text-center`}>
+              <div className={`text-5xl font-black ${getVerdictColor(result.verdict)} mb-2`}>
+                {result.verdict}
+              </div>
+              <div className="text-sm text-slate-500">
+                Confidence: <span className="font-medium text-slate-300">{(result.confidence * 100).toFixed(1)}%</span>
+              </div>
+              <div className="text-xs text-slate-600 mt-1">
+                Model: {result.model_used}{result.processing_time ? ` · ${result.processing_time}ms` : ""}
+              </div>
+              {result.summary && (
+                <p className="text-sm text-slate-400 mt-3">{result.summary}</p>
+              )}
+            </div>
+
+            {/* Degraded signal notice — be honest when fewer signals ran than usual */}
+            {!!result.degraded_signals?.length && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-400">
+                  This result used fewer signals than usual ({result.degraded_signals.join(", ")}).
+                </p>
+              </div>
+            )}
+
+            {/* Detection Signals */}
+            {!!result.signals?.length && (
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Detection Signals ({result.signals.length})
+                </h3>
+                <div className="space-y-2.5">
+                  {result.signals.map((s, i) => (
+                    <div key={`${s.name}-${i}`} className="flex items-center gap-2.5 p-3 rounded-xl bg-[#141420] border border-white/5">
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.flagged ? "bg-rose-500" : "bg-emerald-500"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-300 font-medium truncate">{s.name}</span>
+                          <span className={`text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full ${s.flagged ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                            {s.weight}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">{s.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Segment Timeline */}
+            {!!result.segment_scores?.length && (
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Timeline
+                </h3>
+                <div className="space-y-2">
+                  {result.segment_scores.map((seg, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 w-20 shrink-0">{seg.start_sec}s–{seg.end_sec}s</span>
+                      <div className="flex-1 h-1.5 bg-[#141420] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${seg.ai_score > 0.6 ? "bg-rose-500" : seg.ai_score < 0.4 ? "bg-emerald-500" : "bg-amber-500"}`}
+                          style={{ width: `${seg.ai_score * 100}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-medium w-10 text-right ${seg.ai_score > 0.6 ? "text-rose-400" : seg.ai_score < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>
+                        {(seg.ai_score * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reset */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => { setFile(null); setResult(null); setError("") }}
+                className="px-4 py-2 rounded-xl border border-white/[0.07] text-slate-400 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Analyze Another File
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-    {/* FIX B.3: MobileResultSheet */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
-      {result && cfg && (
-        <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} />
-      )}
-    </MobileResultSheet>
-    </>
   )
-}
-export default function AudioDetectionPageWrapper() {
-  return <ErrorBoundary><AudioDetectionPage /></ErrorBoundary>
 }

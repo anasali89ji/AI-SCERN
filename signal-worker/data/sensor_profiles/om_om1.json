@@ -1,0 +1,28 @@
+{
+  "name": "OM System OM-1",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2022,
+  "spectral_peaks": {
+    "R": 607,
+    "G": 542,
+    "B": 458
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.93,
+      "b_g": 0.966
+    },
+    "tungsten": {
+      "r_g": 1.158,
+      "b_g": 0.603
+    },
+    "tl84": {
+      "r_g": 0.985,
+      "b_g": 0.888
+    },
+    "f11": {
+      "r_g": 0.946,
+      "b_g": 0.945
+    }
+  }
+}

@@ -4,23 +4,23 @@ import { ArrowLeft } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Aiscern AI Attestation',
-  description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI attestation tools.',
+  title: 'Privacy Policy — Enterprise AI Verification Platform',
+  description: 'Aiscern privacy policy. We do not sell your data, display ads, or require personal information to use our AI verification tools.',
 }
 
 const LAST_UPDATED = 'June 7, 2026'
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#08080d] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Nav */}
-      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
+      <header className="border-b border-border bg-surface sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
-            <span className="font-black text-[#2BEE34]">Aiscern</span>
+            <span className="font-black gradient-text">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-white transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -28,16 +28,16 @@ export default function PrivacyPage() {
 
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-white mb-3">Privacy Policy</h1>
-          <p className="text-[#6B6B6B]">Last updated: {LAST_UPDATED}</p>
+          <h1 className="text-4xl font-black text-text-primary mb-3">Privacy Policy</h1>
+          <p className="text-text-muted">Last updated: {LAST_UPDATED}</p>
         </div>
 
         <div className="prose-aiscern space-y-8">
           <Section title="1. Introduction">
             <p>
               Welcome to Aiscern, a sole proprietorship operated by Anas Ali (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;). This Privacy Policy explains how we collect,
-              use, disclose, and safeguard your information when you use our AI content attestation platform at{' '}
-              <a href="https://aiscern.com" className="text-[#2BEE34] hover:underline">aiscern.com</a>.
+              use, disclose, and safeguard your information when you use our AI content detection platform at{' '}
+              <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>.
             </p>
             <p>
               By using Aiscern, you agree to the collection and use of information as described in this policy. If you do not
@@ -49,14 +49,14 @@ export default function PrivacyPage() {
             <SubSection title="2.1 Information You Provide">
               <ul>
                 <li><strong>Account data:</strong> Email address, username, and password when you register</li>
-                <li><strong>Content you submit:</strong> Text, images, audio, or video files you upload for attestation analysis</li>
+                <li><strong>Content you submit:</strong> Text, images, audio, or video files you upload for detection analysis</li>
                 <li><strong>Chat messages:</strong> Conversations with our AI assistant</li>
                 <li><strong>Profile information:</strong> Any optional details you choose to add</li>
               </ul>
             </SubSection>
             <SubSection title="2.2 Automatically Collected Data">
               <ul>
-                <li><strong>Usage data:</strong> Pages visited, features used, attestation history, timestamps</li>
+                <li><strong>Usage data:</strong> Pages visited, features used, detection history, timestamps</li>
                 <li><strong>Device information:</strong> Browser type, operating system, screen resolution</li>
                 <li><strong>IP address:</strong> For security, rate limiting, and fraud prevention</li>
                 <li><strong>Cookies:</strong> Authentication tokens and session management (see Section 7)</li>
@@ -66,11 +66,11 @@ export default function PrivacyPage() {
 
           <Section title="3. How We Use Your Information">
             <ul>
-              <li>Providing and improving the Aiscern attestation service</li>
-              <li>Processing your submitted content through AI models to generate attestation results</li>
+              <li>Providing and improving the Aiscern detection service</li>
+              <li>Processing your submitted content through AI models to generate detection results</li>
               <li>Maintaining your account and authentication</li>
-              <li>Storing your attestation history for your reference</li>
-              <li>Improving our AI models and attestation accuracy using anonymized, aggregated data</li>
+              <li>Storing your scan history for your reference</li>
+              <li>Improving our AI models and detection accuracy using anonymized, aggregated data</li>
               <li>Responding to support requests</li>
               <li>Sending service-related notifications (no marketing without consent)</li>
               <li>Detecting and preventing fraud, abuse, or security threats</li>
@@ -79,38 +79,38 @@ export default function PrivacyPage() {
 
           <Section title="4. Content You Submit">
             <p>
-              Files you upload for analysis are processed by our AI models and results are returned to you. We store attestation
-              results in your attestation history. Uploaded files may be temporarily cached for processing purposes and are not
+              Files you upload for analysis are processed by our AI models and results are returned to you. We store detection
+              results in your scan history. Uploaded files may be temporarily cached for processing purposes and are not
               permanently stored beyond what is necessary for the service.
             </p>
             <p>
               <strong>We do not sell, share, or use your submitted content</strong> for any purpose other than providing the
-              attestation service to you.
+              detection service to you.
             </p>
           </Section>
 
           <Section title="5. Data Sharing & Third Parties">
             <p>We use the following third-party sub-processors that may process your data. Each is bound by their own privacy policy and data processing terms:</p>
             <ul>
-              <li><strong>Clerk (clerk.com):</strong> User authentication, session management, and identity. Clerk never shares your data with third parties for advertising. <a href="https://clerk.com/privacy" className="text-[#2BEE34] hover:underline">Clerk Privacy Policy</a></li>
-              <li><strong>Supabase (supabase.com):</strong> Database storage and API. Data hosted on AWS infrastructure (EU/US). <a href="https://supabase.com/privacy" className="text-[#2BEE34] hover:underline">Supabase Privacy Policy</a></li>
-              <li><strong>Vercel (vercel.com):</strong> Application hosting, serverless functions, and edge delivery. <a href="https://vercel.com/legal/privacy-policy" className="text-[#2BEE34] hover:underline">Vercel Privacy Policy</a></li>
-              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio attestation. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-[#2BEE34] hover:underline">Hugging Face Privacy Policy</a></li>
-              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image attestation. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-[#2BEE34] hover:underline">Google AI Terms</a></li>
-              <li><strong>Cloudflare (cloudflare.com):</strong> CDN, edge workers, R2 file storage, and D1 database. <a href="https://www.cloudflare.com/privacypolicy/" className="text-[#2BEE34] hover:underline">Cloudflare Privacy Policy</a></li>
-              <li><strong>Upstash (upstash.com):</strong> Redis-based rate limiting. Only request counts and IP hashes are stored, not content. <a href="https://upstash.com/privacy" className="text-[#2BEE34] hover:underline">Upstash Privacy Policy</a></li>
+              <li><strong>Clerk (clerk.com):</strong> User authentication, session management, and identity. Clerk never shares your data with third parties for advertising. <a href="https://clerk.com/privacy" className="text-primary hover:underline">Clerk Privacy Policy</a></li>
+              <li><strong>Supabase (supabase.com):</strong> Database storage and API. Data hosted on AWS infrastructure (EU/US). <a href="https://supabase.com/privacy" className="text-primary hover:underline">Supabase Privacy Policy</a></li>
+              <li><strong>Vercel (vercel.com):</strong> Application hosting, serverless functions, and edge delivery. <a href="https://vercel.com/legal/privacy-policy" className="text-primary hover:underline">Vercel Privacy Policy</a></li>
+              <li><strong>Hugging Face (huggingface.co):</strong> AI model inference for text and audio detection. Inference API requests are not used to train Hugging Face models. <a href="https://huggingface.co/privacy" className="text-primary hover:underline">Hugging Face Privacy Policy</a></li>
+              <li><strong>Google Gemini API (ai.google.dev):</strong> Gemini 2.0 Flash is used as an ensemble head for text and image detection. Google does not use Gemini API inputs to train its models. <a href="https://ai.google.dev/terms" className="text-primary hover:underline">Google AI Terms</a></li>
+              <li><strong>Cloudflare (cloudflare.com):</strong> CDN, edge workers, R2 file storage, and D1 database. <a href="https://www.cloudflare.com/privacypolicy/" className="text-primary hover:underline">Cloudflare Privacy Policy</a></li>
+              <li><strong>Upstash (upstash.com):</strong> Redis-based rate limiting. Only request counts and IP hashes are stored, not content. <a href="https://upstash.com/privacy" className="text-primary hover:underline">Upstash Privacy Policy</a></li>
             </ul>
             <p>
               We do not sell your personal data to third parties. We do not share your data with advertisers.
               A full Data Processing Agreement (DPA) listing all sub-processors is available at{' '}
-              <a href="/dpa" className="text-[#2BEE34] hover:underline">aiscern.com/dpa</a>.
+              <a href="/dpa" className="text-primary hover:underline">aiscern.com/dpa</a>.
             </p>
           </Section>
 
           <Section title="6. Data Retention">
             <ul>
               <li><strong>Account data:</strong> Retained until you delete your account</li>
-              <li><strong>Attestation history:</strong> Retained for 12 months, then automatically deleted</li>
+              <li><strong>Scan history:</strong> Retained for 12 months, then automatically deleted</li>
               <li><strong>Uploaded files:</strong> Deleted within 24 hours of processing. This applies equally to files uploaded through Batch Analysis — all batch-uploaded files follow the same 24-hour deletion policy as individual uploads.</li>
               <li><strong>Chat logs:</strong> Retained for 30 days for quality and abuse monitoring, then deleted</li>
             </ul>
@@ -118,11 +118,11 @@ export default function PrivacyPage() {
 
           <Section title="7. Shareable Result Links">
             <p>
-              Aiscern allows you to generate a shareable link for any attestation result. These links remain active for
+              Aiscern allows you to generate a shareable link for any detection result. These links remain active for
               <strong> 30 days</strong> from the time of creation, after which they expire automatically.
             </p>
             <p>
-              Shareable links contain only the attestation verdict, confidence score, and associated metadata (modality, timestamp,
+              Shareable links contain only the detection verdict, confidence score, and associated metadata (modality, timestamp,
               model version). <strong>They never expose the original uploaded file.</strong> Anyone with the link can view the
               summary result — treat shared links accordingly.
             </p>
@@ -168,11 +168,11 @@ export default function PrivacyPage() {
               <li><strong>Access:</strong> Request a copy of your personal data</li>
               <li><strong>Correction:</strong> Update inaccurate personal data</li>
               <li><strong>Deletion:</strong> Request deletion of your account and associated data</li>
-              <li><strong>Portability:</strong> Export your attestation history in JSON format</li>
+              <li><strong>Portability:</strong> Export your scan history in JSON format</li>
               <li><strong>Objection:</strong> Object to processing of your data</li>
             </ul>
             <p>
-              To exercise these rights, contact us at <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.
+              To exercise these rights, contact us at <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -185,7 +185,7 @@ export default function PrivacyPage() {
               By creating an account you confirm you meet the minimum age requirement for your jurisdiction.
               If we discover that a child below the minimum age has provided personal data, we will delete it immediately.
               If you believe a child has registered, contact us at{' '}
-              <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.
+              <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -201,8 +201,8 @@ export default function PrivacyPage() {
                 <li><strong>Right to object</strong> — object to processing based on legitimate interests</li>
                 <li><strong>Right to withdraw consent</strong> — at any time, without affecting prior processing</li>
               </ul>
-              <p>Legal basis for processing: contract performance (attestation results), legitimate interest (fraud prevention), and consent (analytics cookies).</p>
-              <p>Data transfers to the US (Vercel, Supabase US regions) rely on Standard Contractual Clauses (SCCs). You may request a copy of the applicable SCCs at <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.</p>
+              <p>Legal basis for processing: contract performance (scan results), legitimate interest (fraud prevention), and consent (analytics cookies).</p>
+              <p>Data transfers to the US (Vercel, Supabase US regions) rely on Standard Contractual Clauses (SCCs). You may request a copy of the applicable SCCs at <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.</p>
             </SubSection>
             <SubSection title="California Users (CCPA/CPRA)">
               <ul>
@@ -212,7 +212,7 @@ export default function PrivacyPage() {
                 <li><strong>Right to non-discrimination</strong> — exercising privacy rights will not affect service quality</li>
                 <li><strong>Right to correct</strong> — correct inaccurate personal information</li>
               </ul>
-              <p>To exercise any California rights, contact <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>. We will respond within 45 days.</p>
+              <p>To exercise any California rights, contact <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>. We will respond within 45 days.</p>
             </SubSection>
           </Section>
 
@@ -228,9 +228,9 @@ export default function PrivacyPage() {
               For privacy-related questions or requests, contact:<br />
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong> — Data Controller<br />
               Business address: Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a><br />
-              DPA requests: <a href="/dpa" className="text-[#2BEE34] hover:underline">aiscern.com/dpa</a><br />
-              Website: <a href="https://aiscern.com" className="text-[#2BEE34] hover:underline">aiscern.com</a>
+              Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
+              DPA requests: <a href="/dpa" className="text-primary hover:underline">aiscern.com/dpa</a><br />
+              Website: <a href="https://aiscern.com" className="text-primary hover:underline">aiscern.com</a>
             </p>
           </Section>
         </div>
@@ -244,8 +244,8 @@ export default function PrivacyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
-      <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">{title}</h2>
+      <div className="space-y-3 text-text-secondary text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
@@ -253,8 +253,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <h3 className="text-base font-semibold text-white mb-2">{title}</h3>
-      <div className="text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
+      <h3 className="text-base font-semibold text-text-primary mb-2">{title}</h3>
+      <div className="text-text-secondary text-sm leading-relaxed">{children}</div>
     </div>
   )
 }

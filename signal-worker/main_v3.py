@@ -18,7 +18,7 @@ from forensics.metadata_analyzer import analyze_metadata
 from forensics.frequency_analysis import frequency_domain_analysis
 from forensics.noise_analysis import noise_coherence_analysis
 from forensics.texture_color_analysis import texture_analysis, color_analysis, illumination_consistency
-from forensics.face_deepfake import face_specific_analysis
+from forensics.object_deepfake import object_specific_analysis
 from forensics.watermark_detector import detect_watermarks
 from forensics.text_artifact_detector import detect_text_artifacts
 
@@ -31,11 +31,15 @@ app_v3 = FastAPI(
     description="6-layer cascade forensic image analysis pipeline"
 )
 
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "https://aiscern.com,https://www.aiscern.com,http://localhost:3000")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app_v3.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
 
 
@@ -57,20 +61,31 @@ async def analyze_image(file: UploadFile = File(...)) -> Dict[str, Any]:
         f.write(contents)
 
     try:
-        # Layer 1: Metadata forensics
+        # Fix #6 (v4.5.0): decode the image ONCE into an in-memory array and
+        # pass that to every analyzer, instead of each analyzer re-reading
+        # temp_path from disk independently (this legacy standalone app
+        # mirrors the same optimization applied to image_engine.py).
+        import cv2
+        img_bgr = cv2.imread(temp_path)
+        if img_bgr is None:
+            raise HTTPException(status_code=400, detail="Could not decode image")
+        img_array = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+        # Layer 1: Metadata forensics (still needs the file path — EXIF must
+        # be read from the original file bytes)
         metadata = analyze_metadata(temp_path)
 
         # Layer 2: CV forensics
-        frequency = frequency_domain_analysis(temp_path)
-        noise = noise_coherence_analysis(temp_path)
-        texture = texture_analysis(temp_path)
-        color = color_analysis(temp_path)
-        illumination = illumination_consistency(temp_path)
+        frequency = frequency_domain_analysis(img_array)
+        noise = noise_coherence_analysis(img_array)
+        texture = texture_analysis(img_array)
+        color = color_analysis(img_array)
+        illumination = illumination_consistency(img_array)
 
         # Layer 5: Specialized detectors
-        face = face_specific_analysis(temp_path)
-        watermarks = detect_watermarks(temp_path)
-        text_artifacts = detect_text_artifacts(temp_path)
+        face = object_specific_analysis(img_array)
+        watermarks = detect_watermarks(img_array)
+        text_artifacts = detect_text_artifacts(img_array)
 
         # Composite CV score (0 = human, 1 = AI)
         cv_signals = {

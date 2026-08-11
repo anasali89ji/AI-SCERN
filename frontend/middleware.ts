@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse }            from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 // ── Route matchers ────────────────────────────────────────────────────────────
 const isProtected = createRouteMatcher([
@@ -74,11 +75,103 @@ function isAdminUser(userId: string, metadata: Record<string, unknown>): boolean
   return ADMIN_ROLES.has(role)
 }
 
-// ── Main middleware ───────────────────────────────────────────────────────────
+const MAINTENANCE_EXEMPT = [
+  '/maintenance',
+  '/api/maintenance',
+  '/api/auth',
+  '/login',
+  '/signup',
+  '/_next',
+  '/favicon',
+  '/api/webhook',
+]
+
+function isExempt(pathname: string): boolean {
+  return MAINTENANCE_EXEMPT.some(p => pathname.startsWith(p))
+}
+
+async function checkMaintenanceMode(req: Request): Promise<{
+  enabled: boolean
+  message: string
+  duration: string
+  allowed_ips: string[]
+} | null> {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) {
+      console.error('[MAINTENANCE] Missing Supabase credentials')
+      return null
+    }
+
+    const db = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+
+    const { data, error } = await db
+      .from('site_settings')
+      .select('key, value')
+      .in('key', ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips'])
+
+    if (error) {
+      console.error('[MAINTENANCE] DB error:', error.message)
+      return null
+    }
+
+    const settings: Record<string, string> = {}
+    for (const row of data || []) {
+      settings[row.key] = row.value
+    }
+
+    const allowed_ips: string[] = []
+    try {
+      allowed_ips.push(...JSON.parse(settings.maintenance_allowed_ips || '[]'))
+    } catch { /* ignore */ }
+
+    return {
+      enabled: settings.maintenance_enabled === 'true',
+      message: settings.maintenance_message || 'We are currently performing scheduled maintenance. Please check back soon.',
+      duration: settings.maintenance_duration || '',
+      allowed_ips,
+    }
+  } catch (err) {
+    console.error('[MAINTENANCE] Unexpected error:', err)
+    return null
+  }
+}
+
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  const { pathname } = req.nextUrl
+
   // OPTIONS preflight — handle before auth
   const preflight = handlePreflight(req)
   if (preflight) return applyCors(req, preflight)
+
+  // ── Maintenance Mode Check ────────────────────────────────────────────────
+  if (!isExempt(pathname)) {
+    const maintenance = await checkMaintenanceMode(req)
+    
+    if (maintenance?.enabled) {
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+        || req.headers.get('x-real-ip')
+        || 'unknown'
+
+      // FIXED: Only allow IPs explicitly in the list + localhost
+      // Empty list = NO ONE gets through (except localhost)
+      const isAllowed = maintenance.allowed_ips.includes(clientIp)
+        || clientIp === '127.0.0.1'
+        || clientIp === '::1'
+
+      console.log(`[MAINTENANCE] IP: ${clientIp}, Allowed: ${isAllowed}, List: ${JSON.stringify(maintenance.allowed_ips)}`)
+
+      if (!isAllowed) {
+        const url = new URL('/maintenance', req.url)
+        if (maintenance.message) url.searchParams.set('msg', encodeURIComponent(maintenance.message))
+        if (maintenance.duration) url.searchParams.set('dur', encodeURIComponent(maintenance.duration))
+        return NextResponse.redirect(url)
+      }
+    }
+  }
 
   // Admin route guard — requires auth + admin role (server-side, not client-side)
   if (isAdminRoute(req)) {
@@ -95,7 +188,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return applyCors(req, NextResponse.next())
   }
 
-  // Standard auth guard
+  // ── Auth guard ────────────────────────────────────────────────────────────
   if (isProtected(req)) {
     const { userId } = await auth()
     if (!userId) {

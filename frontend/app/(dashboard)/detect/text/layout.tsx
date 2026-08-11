@@ -1,28 +1,28 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Free AI Text Detector — Detect ChatGPT, Claude, Gemini Writing',
-  description: 'Instantly detect AI-generated text from ChatGPT, Claude, Gemini, GPT-4 and 50+ AI models. Sentence-level heatmap, 94%+ accuracy. Free — no credit card required. Trusted by editors, teachers & researchers.',
+  title: 'AI Text Verification — ChatGPT, Claude, Gemini Writing Detection',
+  description: 'Enterprise AI text verification for ChatGPT, Claude, Gemini, GPT-4 and 50+ AI models. Sentence-level heatmap, 94%+ accuracy. Trusted by editors, teachers & researchers.',
   keywords: [
-    'ai text detector','chatgpt detector','detect chatgpt','is this ai generated',
-    'ai writing detector free','gpt detector','claude detector','gemini detector',
-    'ai content checker','chatgpt checker','ai generated text detector',
+    'ai text verification','chatgpt detector','verify chatgpt text','is this ai generated',
+    'ai writing verification','gpt detector','claude detector','gemini detector',
+    'ai content verification','chatgpt checker','ai generated text verification',
     'ai essay detector','ai paraphrase detector','turnitin alternative free',
-    'detect ai writing','ai or human text','copyleaks alternative',
+    'enterprise text verification','ai or human text','copyleaks alternative',
   ],
   alternates: {
     canonical: 'https://aiscern.com/detect/text',
   },
   openGraph: {
-    title: 'Free AI Text Detector — Detect ChatGPT, Claude & Gemini | Aiscern',
-    description: 'Paste any text and instantly know if it was written by AI. Detects ChatGPT, Claude, Gemini, GPT-4. 94%+ accuracy. Free.',
+    title: 'AI Text Verification — ChatGPT, Claude & Gemini Detection | Aiscern',
+    description: 'Paste any text and get an enterprise-grade verification verdict on ChatGPT, Claude, Gemini, GPT-4 authorship. 94%+ accuracy.',
     url: 'https://aiscern.com/detect/text',
-    images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Text+Detector&tool=Text&color=%237c3aed', width: 1200, height: 630 }],
+    images: [{ url: 'https://aiscern.com/api/og?title=AI+Text+Verification&tool=Text&color=%237c3aed', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free AI Text Detector — Detect ChatGPT, Claude & Gemini',
-    description: 'Paste text and instantly detect if it was written by AI. 94%+ accuracy. Free.',
+    title: 'AI Text Verification — ChatGPT, Claude & Gemini Detection',
+    description: 'Paste text and get an enterprise-grade AI verification verdict. 94%+ accuracy.',
   },
 }
 
@@ -33,14 +33,14 @@ const jsonLd = {
       '@type': 'WebPage',
       '@id': 'https://aiscern.com/detect/text',
       'url': 'https://aiscern.com/detect/text',
-      'name': 'AI Text Detector | Aiscern',
-      'description': 'Detect ChatGPT, Claude, Gemini and other AI-written text with 94%+ accuracy.',
+      'name': 'AI Text Verification | Aiscern',
+      'description': 'Verify ChatGPT, Claude, Gemini and other AI-written text with 94%+ accuracy using enterprise-grade AI text verification.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',
         'itemListElement': [
           { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://aiscern.com' },
-          { '@type': 'ListItem', 'position': 2, 'name': 'AI Text Detector', 'item': 'https://aiscern.com/detect/text' }
+          { '@type': 'ListItem', 'position': 2, 'name': 'AI Text Verification', 'item': 'https://aiscern.com/detect/text' }
         ]
       }
     },
@@ -49,26 +49,26 @@ const jsonLd = {
       'mainEntity': [
                   {
                     "@type": "Question",
-                    "name": "How do I detect ChatGPT writing?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Paste the text into Aiscern's AI text detector and click Detect. The tool uses a RoBERTa ensemble to identify ChatGPT, Claude, Gemini and other AI writing with 94%+ accuracy." }
+                    "name": "How do I verify ChatGPT writing?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Paste the text into Aiscern's AI text verification tool and click Analyze. The tool uses a RoBERTa ensemble to verify ChatGPT, Claude, Gemini and other AI writing with 94%+ accuracy." }
                   },
                   {
                     "@type": "Question",
-                    "name": "Is the AI text detector free?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern's AI text detector is completely free with no credit card required and no scan limits." }
+                    "name": "Is the AI text verification tool free?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Aiscern offers a free tier for the AI text verification tool with no credit card required, plus enterprise plans for higher volume and SLA-backed usage." }
                   },
                   {
                     "@type": "Question",
                     "name": "Can it detect paraphrased AI text?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern analyzes linguistic patterns including burstiness, perplexity and style fingerprinting to detect AI text even when paraphrased or lightly edited." }
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern analyzes linguistic patterns including burstiness, perplexity and style fingerprinting to verify AI text even when paraphrased or lightly edited." }
                   }
       ]
     }
   ,
     {
     "@type": "HowTo",
-    "name": "How to detect AI-generated text",
-    "description": "Use Aiscern's free AI text detector to check if text was written by ChatGPT, Claude, Gemini, or another AI.",
+    "name": "How to verify AI-generated text",
+    "description": "Use Aiscern's AI text verification tool to check if text was written by ChatGPT, Claude, Gemini, or another AI.",
     "step": [
         {
             "@type": "HowToStep",
@@ -77,7 +77,7 @@ const jsonLd = {
         },
         {
             "@type": "HowToStep",
-            "name": "Run AI detection",
+            "name": "Run AI verification",
             "text": "Click Analyze. Aiscern runs the text through a RoBERTa ensemble and 7 linguistic signal extractors."
         },
         {

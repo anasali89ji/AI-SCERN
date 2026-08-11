@@ -1,17 +1,17 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { SquareArrowOutUpRight, BookOpen } from 'lucide-react'
+import { ExternalLink, BookOpen } from 'lucide-react'
 
 export const metadata = {
-  title: 'Research Citations — Aiscern',
-  description: 'Academic papers, models, and datasets underpinning Aiscern\'s AI attestation pipeline.',
+  title: 'Research Citations',
+  description: 'Academic papers, models, and datasets underpinning Aiscern\'s enterprise AI trust verification pipeline.',
   openGraph: { title: 'Research Citations — Aiscern', url: 'https://aiscern.com/research' },
 }
 
 const PAPERS = [
   {
-    category: 'Text Attestation',
+    category: 'Text Detection',
     entries: [
       { title: 'Binoculars: Zero-Shot Detection of LLM-Generated Text', authors: 'Hans et al.', venue: 'ICML 2024', url: 'https://arxiv.org/abs/2401.12070', description: 'Cross-perplexity scoring between two observer LLMs — the core of our text detection signal.' },
       { title: 'RoBERTa: A Robustly Optimized BERT Pretraining Approach', authors: 'Liu et al.', venue: 'arXiv 2019', url: 'https://arxiv.org/abs/1907.11692', description: 'Backbone for the openai-detector fine-tune used in our text ensemble.' },
@@ -21,7 +21,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Image Attestation',
+    category: 'Image Detection',
     entries: [
       { title: 'An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale (ViT)', authors: 'Dosovitskiy et al.', venue: 'ICLR 2021', url: 'https://arxiv.org/abs/2010.11929', description: 'Foundation architecture for our image detection classifier.' },
       { title: 'Learning Transferable Visual Models From Natural Language Supervision (CLIP)', authors: 'Radford et al. (OpenAI)', venue: 'ICML 2021', url: 'https://arxiv.org/abs/2103.00020', description: 'Embedding model for our image RAG pipeline and similarity-based retrieval.' },
@@ -30,7 +30,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Audio Attestation',
+    category: 'Audio Detection',
     entries: [
       { title: 'wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations', authors: 'Baevski et al.', venue: 'NeurIPS 2020', url: 'https://arxiv.org/abs/2006.11477', description: 'Foundation model for our audio deepfake detection fine-tune.' },
       { title: 'ASVspoof 2021: Towards Spoofed and Deepfake Speech Detection in the Wild', authors: 'Yamagishi et al.', venue: 'ASVspoof 2021', url: 'https://arxiv.org/abs/2109.00535', description: 'Primary evaluation dataset and challenge protocol for our audio models.' },
@@ -39,7 +39,7 @@ const PAPERS = [
     ]
   },
   {
-    category: 'Video / Deepfake Attestation',
+    category: 'Video / Deepfake Detection',
     entries: [
       { title: 'FaceForensics++: Learning to Detect Manipulated Facial Images', authors: 'Rössler et al.', venue: 'ICCV 2019', url: 'https://arxiv.org/abs/1901.08971', description: 'Primary training and evaluation dataset for face manipulation detection.' },
       { title: 'Towards Generalizable Detection of Face Forgery via Vision Transformer', authors: 'Zheng et al.', venue: 'arXiv 2021', url: 'https://arxiv.org/abs/2107.14083', description: 'ViT-based frame-level deepfake detector used in our video ensemble.' },
@@ -56,81 +56,50 @@ const PAPERS = [
   },
 ]
 
-// Real benchmark figures already asserted elsewhere on the site (FAQ JSON-LD) —
-// not the spec's placeholder numbers. Ensemble AUC per modality.
-const BENCHMARKS = [
-  { label: 'Text (ensemble AUC)', value: 94 },
-  { label: 'Image (ensemble AUC)', value: 98 },
-  { label: 'Audio (ensemble AUC)', value: 91 },
-  { label: 'Video (ensemble AUC)', value: 89 },
-]
-
 export default function ResearchPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-surface-deep pt-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 2xl:px-8 pt-8 pb-16 sm:py-24 2xl:py-32">
-          <div className="mb-10 sm:mb-16">
-            <div className="flex items-center gap-3 mb-4">
-              <BookOpen className="h-7 w-7 text-accent" />
-              <h1 className="text-headline text-silver-900">Research Citations</h1>
-            </div>
-            <p className="text-lead text-silver-600 max-w-2xl">
-              Every model, method, and dataset underpinning Aiscern is grounded in peer-reviewed research.
-              We cite all work we build on — transparency is a core part of how we operate.
-            </p>
+      <main className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 2xl:px-8 py-16 sm:py-24 2xl:py-32">
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <BookOpen className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold tracking-tight">Research Citations</h1>
           </div>
+          <p className="text-muted-foreground max-w-2xl">
+            Every model, method, and dataset underpinning Aiscern is grounded in peer-reviewed research.
+            We cite all work we build on — transparency is a core part of how we operate.
+          </p>
+        </div>
 
-          {/* Benchmarks — CSS bar charts, no chart library */}
-          <section className="mb-16">
-            <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/15">
-              Ensemble Accuracy Benchmarks
-            </h2>
-            <div className="space-y-5">
-              {BENCHMARKS.map((b) => (
-                <div key={b.label} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
-                  <span className="sm:w-48 sm:flex-shrink-0 text-sm text-silver-600">{b.label}</span>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 sm:w-auto h-2 rounded-full bg-white/10 overflow-hidden" role="img" aria-label={`${b.label}: ${b.value}%`}>
-                      <div className="h-full rounded-full bg-accent" style={{ width: `${b.value}%` }} />
+        <div className="space-y-12">
+          {PAPERS.map((section) => (
+            <section key={section.category}>
+              <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border">{section.category}</h2>
+              <div className="space-y-4">
+                {section.entries.map((paper, i) => (
+                  <div key={i} className="rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <a href={paper.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 font-medium text-foreground hover:text-primary transition-colors group">
+                          <span>{paper.title}</span>
+                          <ExternalLink className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 opacity-60 group-hover:opacity-100" />
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-0.5">{paper.authors} · <span className="italic">{paper.venue}</span></p>
+                        <p className="text-sm text-muted-foreground mt-2">{paper.description}</p>
+                      </div>
                     </div>
-                    <span className="w-12 flex-shrink-0 text-right text-sm font-semibold text-silver-900">{b.value}%</span>
                   </div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-xs text-silver-600">
-              Measured against held-out evaluation sets per modality. Full methodology on the <Link href="/methodology" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">methodology page</Link>.
-            </p>
-          </section>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
 
-          <div className="space-y-16">
-            {PAPERS.map((section) => (
-              <section key={section.category}>
-                <h2 className="text-lg font-semibold text-silver-900 mb-6 pb-2 border-b border-white/15">{section.category}</h2>
-                <div className="space-y-4">
-                  {section.entries.map((paper, i) => (
-                    <div key={i} className="rounded-xl border border-white/15 bg-surface p-8 hover:border-white/20 transition-colors duration-300">
-                      <a href={paper.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-start gap-1.5 font-semibold text-silver-900 hover:text-accent transition-colors duration-300 group focus-visible:ring-2 focus-visible:ring-accent/50 rounded">
-                        <span>{paper.title}</span>
-                        <SquareArrowOutUpRight className="h-3.5 w-3.5 mt-1 flex-shrink-0 opacity-60 group-hover:opacity-100" />
-                      </a>
-                      <p className="text-sm text-silver-600 mt-1">{paper.authors} · <span className="text-accent text-xs font-mono">{paper.venue}</span></p>
-                      <p className="text-sm text-silver-600 mt-3 line-clamp-3">{paper.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-
-          <div className="mt-16 rounded-xl border border-white/15 bg-surface p-6 text-sm text-silver-600">
-            <p className="font-medium text-silver-900 mb-1">Missing a citation?</p>
-            <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">research@aiscern.com</a> and we will add it promptly.</p>
-            <p className="mt-3">Also see: <Link href="/benchmarks" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Benchmarks</Link> · <Link href="/methodology" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Methodology</Link></p>
-          </div>
+        <div className="mt-12 rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">Missing a citation?</p>
+          <p>If you believe we are using your work without attribution, please contact <a href="mailto:research@aiscern.com" className="text-primary underline underline-offset-2">research@aiscern.com</a> and we will add it promptly.</p>
+          <p className="mt-3">Also see: <Link href="/benchmarks" className="underline underline-offset-2 hover:text-foreground">Benchmarks</Link> · <Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link></p>
         </div>
       </main>
       <SiteFooter />

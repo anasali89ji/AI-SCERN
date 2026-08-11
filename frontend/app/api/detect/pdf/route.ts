@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { analyzeText } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
 
 export const dynamic    = 'force-dynamic'
 
@@ -80,7 +81,7 @@ function extractParagraphs(text: string): { text: string; start: number }[] {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  const rl = await checkRateLimitDB('video', ip)
+  const rl = await checkRateLimitDB('pdf', ip)
   if (rl.limited) {
     return NextResponse.json(
       { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests. Try again in a minute.' } },
@@ -186,7 +187,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        data: {
+        data: sanitizeDetectionResultForClient({
           ...result,
           processing_time:  processingTime,
           char_count:       fullText.length,
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
           source_type:      sourceType,
           full_text_length: fullText.length,
           paragraph_scores: [],
-        }
+        }),
       })
     }
 

@@ -1,5 +1,0 @@
--e 
-# Vercel (removed)
-.vercel
-!.vercel/project.json
-tsconfig.tsbuildinfo

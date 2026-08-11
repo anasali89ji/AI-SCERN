@@ -1,102 +1,40 @@
 'use client'
 import { useState } from 'react'
 import useSWR from 'swr'
-import { Key, RefreshCw, Trash2, Search } from 'lucide-react'
+import { KeyRound, RefreshCw, Trash2, Copy, Check } from 'lucide-react'
 import DataTable from '../components/DataTable'
-import Modal from '../components/Modal'
 import { api } from '@/lib/api-client'
 import { ShimmerCard } from '../components/ShimmerBlock'
 
-interface ApiKey {
-  id: string; user_id: string; name?: string; key_prefix: string
-  permissions: string[]; rate_limit: number; last_used_at?: string
-  expires_at?: string; revoked_at?: string; created_at: string
-  user_email?: string
-}
+interface ApiKey { id: string; user_email: string; name: string; key_prefix: string; permissions: string[]; rate_limit: number; last_used_at: string; expires_at: string; revoked_at: string; created_at: string; usage_count: number }
 
 export default function ApiKeysTab() {
-  const [search, setSearch] = useState('')
-  const [toRevoke, setToRevoke] = useState<ApiKey | null>(null)
-  const [revoking, setRevoking] = useState(false)
   const { data, isLoading, error, mutate } = useSWR<ApiKey[]>('/api-keys', (p: string) => api<ApiKey[]>(p))
+  const [copied, setCopied] = useState('')
 
-  const revoke = async () => {
-    if (!toRevoke) return
-    setRevoking(true)
-    try { await api(`/api-keys/${toRevoke.id}`, 'DELETE'); await mutate() }
-    catch (e) { alert(`Failed: ${e instanceof Error ? e.message : 'error'}`) }
-    finally { setRevoking(false); setToRevoke(null) }
-  }
-
-  const filtered = (data ?? []).filter(k =>
-    !search || k.user_email?.includes(search) || k.key_prefix.includes(search)
-  )
+  const copyPrefix = (prefix: string) => { navigator.clipboard.writeText(prefix); setCopied(prefix); setTimeout(() => setCopied(''), 2000) }
+  const revoke = async (id: string) => { if (!confirm('Revoke this API key?')) return; try { await api(`/api-keys/${id}`, 'PATCH', { revoked_at: new Date().toISOString() }); await mutate() } catch (e) { alert('Failed') } }
 
   const columns = [
-    { key: 'key_prefix', header: 'Key', render: (k: ApiKey) => (
-      <div>
-        <code className="text-xs text-primary font-mono">{k.key_prefix}…</code>
-        {k.name && <p className="text-[10px] text-text-muted">{k.name}</p>}
-      </div>
-    )},
-    { key: 'user_email', header: 'User', render: (k: ApiKey) => <span className="text-xs text-text-secondary">{k.user_email ?? k.user_id.slice(0, 8) + '…'}</span> },
-    { key: 'permissions', header: 'Permissions', render: (k: ApiKey) => (
-      <div className="flex gap-1 flex-wrap">{k.permissions.map(p => <span key={p} className="badge badge-info text-[9px]">{p}</span>)}</div>
-    )},
-    { key: 'rate_limit', header: 'Rate Limit', render: (k: ApiKey) => <span className="text-xs tabular-nums">{k.rate_limit}/hr</span> },
-    { key: 'last_used_at', header: 'Last Used', render: (k: ApiKey) => (
-      <span className="text-xs text-text-muted">{k.last_used_at ? new Date(k.last_used_at).toLocaleDateString() : 'Never'}</span>
-    )},
-    { key: 'status', header: 'Status', render: (k: ApiKey) => (
-      <span className={`badge ${k.revoked_at ? 'badge-banned' : 'badge-active'}`}>{k.revoked_at ? 'Revoked' : 'Active'}</span>
-    )},
-    { key: 'actions', header: '', render: (k: ApiKey) => !k.revoked_at ? (
-      <button onClick={() => setToRevoke(k)} aria-label={`Revoke key ${k.key_prefix}`}
-        className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-400/10 transition-colors">
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
-    ) : null },
+    { key: 'name', header: 'Name', render: (k: ApiKey) => <p className="text-text-primary text-xs font-medium">{k.name}</p> },
+    { key: 'user', header: 'User', render: (k: ApiKey) => <p className="text-xs text-text-muted">{k.user_email}</p> },
+    { key: 'prefix', header: 'Key', render: (k: ApiKey) => <div className="flex items-center gap-2"><code className="text-[10px] font-mono bg-surface px-2 py-1 rounded border border-border">{k.key_prefix}...</code><button onClick={() => copyPrefix(k.key_prefix)} className="p-1 rounded text-text-muted hover:text-primary">{copied === k.key_prefix ? <Check className="w-3 h-3 text-emerald-400"/> : <Copy className="w-3 h-3"/>}</button></div> },
+    { key: 'permissions', header: 'Permissions', render: (k: ApiKey) => <div className="flex flex-wrap gap-1">{k.permissions.map(p => <span key={p} className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-surface border border-border text-text-muted">{p}</span>)}</div> },
+    { key: 'rate', header: 'Rate Limit', render: (k: ApiKey) => <span className="text-xs text-text-muted">{k.rate_limit}/min</span> },
+    { key: 'usage', header: 'Usage', render: (k: ApiKey) => <span className="text-xs text-text-muted">{k.usage_count || 0}</span> },
+    { key: 'status', header: 'Status', render: (k: ApiKey) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${k.revoked_at ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : k.expires_at && new Date(k.expires_at) < new Date() ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>{k.revoked_at ? 'Revoked' : k.expires_at && new Date(k.expires_at) < new Date() ? 'Expired' : 'Active'}</span> },
+    { key: 'actions', header: '', render: (k: ApiKey) => <button onClick={() => revoke(k.id)} className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-400/10"><Trash2 className="w-3.5 h-3.5" /></button> },
   ]
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-          <Key className="w-5 h-5 text-primary" /> API Keys
-        </h2>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled" />
-            <input type="search" placeholder="Search by email or prefix…" value={search}
-              onChange={e => setSearch(e.target.value)} aria-label="Search API keys"
-              className="pl-9 pr-4 py-2 rounded-xl text-sm bg-surface border border-border text-text-primary
-                placeholder-text-disabled outline-none focus:ring-2 focus:ring-primary/50 transition-all w-52" />
-          </div>
-          <button onClick={() => mutate()} aria-label="Refresh" className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary transition-colors">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2"><KeyRound className="w-5 h-5 text-primary" /> API Keys</h2>
+        <button onClick={() => mutate()} className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-text-primary"><RefreshCw className="w-3.5 h-3.5" /></button>
       </div>
-
-      {isLoading ? (
-        <div className="space-y-2">{Array(5).fill(0).map((_, i) => <ShimmerCard key={i} h="h-12" />)}</div>
-      ) : error ? (
-        <div className="text-center py-10 text-sm text-rose-400">Failed to load API keys</div>
-      ) : (
-        <DataTable columns={columns} data={filtered} keyFn={k => k.id} caption="API keys table" emptyMessage="No API keys found" />
-      )}
-
-      {toRevoke && (
-        <Modal open title="Revoke API Key" onClose={() => setToRevoke(null)} size="sm">
-          <div className="space-y-4">
-            <p className="text-sm text-text-secondary">Revoke key <code className="text-primary">{toRevoke.key_prefix}…</code>? This cannot be undone.</p>
-            <button onClick={revoke} disabled={revoking}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-colors">
-              {revoking ? 'Revoking…' : 'Confirm Revoke'}
-            </button>
-          </div>
-        </Modal>
-      )}
+      {error ? <div className="text-center py-10 text-sm text-rose-400">Failed to load API keys</div>
+        : isLoading ? <div className="space-y-2">{Array(6).fill(0).map((_, i) => <ShimmerCard key={i} h="h-12" />)}</div>
+        : <DataTable columns={columns} data={data ?? []} keyFn={k => k.id} caption="API Keys" emptyMessage="No API keys found" />}
     </div>
   )
 }

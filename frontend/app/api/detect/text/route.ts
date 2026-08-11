@@ -5,11 +5,15 @@ import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { fireScanCompleted }                           from '@/lib/inngest/send-scan-event'
 import { sanitizeText } from '@/lib/utils/sanitize'
+import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { logModelPredictions } from '@/lib/accuracy/log-predictions'
 import { queryDetectionRAG } from '@/lib/rag/detection-rag'
 
 export const dynamic = 'force-dynamic'
+// Text pipeline (Brain + 6 HF models + optional Gemini) can take 20–35s.
+// Without this, Vercel kills at default 10s → "failed to fetch"
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
@@ -60,7 +64,7 @@ export async function POST(req: NextRequest) {
     if (cached) {
       return NextResponse.json({
         success: true, scan_id: null, cached: true,
-        result:  { ...cached, processing_time: Date.now() - start },
+        result:  sanitizeDetectionResultForClient({ ...cached, processing_time: Date.now() - start }),
       })
     }
 
@@ -142,8 +146,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       scan_id: scanId,
-      result:  { 
-        ...result, 
+      result:  sanitizeDetectionResultForClient({
+        ...result,
         verdict: finalVerdict,
         confidence: finalConfidence,
         processing_time: processingTime,
@@ -153,7 +157,7 @@ export async function POST(req: NextRequest) {
           neighbour_count: ragResult.neighbour_count,
           ai_ratio: ragResult.ai_ratio,
         } : undefined,
-      },
+      }),
     })
   } catch (err) {
     return NextResponse.json(

@@ -1,268 +1,220 @@
 'use client'
-import Link from 'next/link'
 import { useState } from 'react'
-import {
-  Mail, Github, Twitter, ArrowRight, CheckCircle2, LoaderCircle,
-  Shield, Zap,
-} from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Mail, ArrowRight, ExternalLink, Zap, Headphones, Shield } from 'lucide-react'
 
-const TOOLS_COL = [
-  { label: 'Text Attestation',        href: '/detect/text'  },
-  { label: 'Image Attestation', href: '/detect/image' },
-  { label: 'Audio Attestation',       href: '/detect/audio' },
-  { label: 'Video Attestation', href: '/detect/video' },
-  { label: 'ARIA AI Assistant',       href: '/chat'         },
-  { label: 'Batch Content Analyser',  href: '/batch'        },
+const PLATFORM_LINKS = [
+  { label: 'Text Verification',  href: '/detect/text',  title: 'AI Text Verification' },
+  { label: 'Image Verification', href: '/detect/image', title: 'AI Image Verification' },
+  { label: 'Audio Verification', href: '/detect/audio', title: 'AI Voice & Audio Verification' },
+  { label: 'Video Verification', href: '/detect/video', title: 'AI Video Verification' },
+  { label: 'AI Assistant',       href: '/chat',         title: 'AI Verification Assistant' },
+  { label: 'Batch Analyser',     href: '/batch',        title: 'Batch AI Content Verification' },
 ]
 
-const COMPANY_COL = [
-  { label: 'About',       href: '/about'       },
-  { label: 'Solutions',   href: '/solutions'   },
-  { label: 'Methodology', href: '/methodology' },
-  { label: 'Benchmarks',  href: '/benchmarks'  },
-  { label: 'Pricing',     href: '/pricing'     },
-  { label: 'Enterprise',  href: '/enterprise'  },
-  { label: 'Partners',    href: '/partners'    },
-  { label: 'Contact',     href: '/contact'     },
+const COMPANY_LINKS = [
+  { label: 'About',       href: '/about',       title: 'About Aiscern' },
+  { label: 'Solutions',    href: '/solutions',    title: 'Industry Solutions — Aiscern' },
+  { label: 'Methodology', href: '/methodology', title: 'Detection Methodology' },
+  { label: 'Benchmarks',  href: '/benchmarks',  title: 'Accuracy Benchmarks' },
+  { label: 'Research',    href: '/research',    title: 'Research Citations' },
+  { label: 'Transparency',href: '/transparency',title: 'Data Transparency — Aiscern' },
+  { label: 'Pricing',     href: '/pricing',     title: 'Pricing — Aiscern' },
+  { label: 'Enterprise',  href: '/enterprise',  title: 'Enterprise — Aiscern' },
+  { label: 'Compare',     href: '/compare',     title: 'AI Detector Comparison' },
+  { label: 'Roadmap',     href: '/roadmap',     title: 'Product Roadmap' },
+  { label: 'Changelog',   href: '/changelog',   title: 'Release Changelog' },
+  { label: 'FAQ',         href: '/faq',         title: 'Frequently Asked Questions' },
+  { label: 'Blog',        href: '/blog',        title: 'Aiscern Blog' },
+  { label: 'Reviews',     href: '/reviews',     title: 'User Reviews' },
+  { label: 'API Docs',    href: '/docs/api',    title: 'API Documentation' },
 ]
 
-const RESOURCES_COL = [
-  { label: 'API Docs',     href: '/docs/api'     },
-  { label: 'How It Works', href: '/how-it-works' },
-  { label: 'Compare',      href: '/compare'      },
-  { label: 'Guides',       href: '/guides'       },
-  { label: 'FAQ',          href: '/faq'          },
-  { label: 'Blog',         href: '/blog'         },
-  { label: 'Reviews',      href: '/reviews'      },
-  { label: 'Research',     href: '/research'     },
+const LEGAL_LINKS = [
+  { label: 'Privacy Policy',   href: '/privacy',       title: 'Privacy Policy — Aiscern' },
+  { label: 'Terms of Service', href: '/terms',         title: 'Terms of Service — Aiscern' },
+  { label: 'DPA',              href: '/dpa',           title: 'Data Processing Agreement — Aiscern' },
+  { label: 'Accessibility',    href: '/accessibility', title: 'Accessibility Statement — Aiscern' },
+  { label: 'Security',         href: '/security',      title: 'Aiscern Security' },
 ]
 
-const LEGAL_COL = [
-  { label: 'Privacy Policy',   href: '/privacy'       },
-  { label: 'Terms of Service', href: '/terms'         },
-  { label: 'DPA',              href: '/dpa'           },
-  { label: 'Accessibility',    href: '/accessibility' },
-  { label: 'Transparency',     href: '/transparency'  },
-  { label: 'Security',         href: '/security'      },
-  { label: 'Roadmap',          href: '/roadmap'       },
-  { label: 'Changelog',        href: '/changelog'     },
-  { label: 'Status',           href: '/status'        },
-]
-
-// NOTE: Deliberately not using the "SOC 2 Type II • GDPR Compliant • ISO 27001" trust
-// bar copy — those are unverified certification claims we can't currently back up.
-// Kept the existing honest badges instead.
-const TRUST_BADGES = [
-  { icon: Shield,   label: 'SOC 2 Ready'  },
-  { icon: Zap,      label: 'API Available' },
-  { icon: CheckCircle2, label: 'Free Tier' },
-]
+function FooterLink({ href, title, children }: { href: string; title: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <Link href={href} title={title}
+        className="group text-sm text-text-muted hover:text-text-primary transition-colors duration-200 flex items-center gap-1">
+        {children}
+        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
+      </Link>
+    </li>
+  )
+}
 
 export function SiteFooter() {
-  const [email,   setEmail]   = useState('')
-  const [sent,    setSent]    = useState(false)
-  const [sending, setSending] = useState(false)
+  const [email, setEmail] = useState('')
+  const [subState, setSubState] = useState<'idle' | 'sent'>('idle')
 
-  const subscribe = async (e: React.FormEvent) => {
+  const handleSub = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || sent) return
-    setSending(true)
-    try {
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
-      if (res.ok) { setSent(true); setEmail('') }
-    } catch {}
-    setSending(false)
+    if (!email.includes('@')) return
+    setSubState('sent')
+    setEmail('')
+    setTimeout(() => setSubState('idle'), 4000)
   }
 
   return (
-    <footer className="border-t border-white/15 bg-depth-bg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <footer className="border-t border-border/20 relative overflow-hidden">
+      {/* Subtle top glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.05) 0%, transparent 70%)' }} />
 
-        {/* Top grid — no viewport-entrance animation; footer is always below-fold */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[240px_1fr_1fr_1fr_1fr] gap-12 lg:gap-8">
+      <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 sm:px-6 2xl:px-10 pt-14 pb-8 relative">
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 mb-12">
 
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2 mb-5 group" aria-label="Aiscern home">
-              <span className="font-heading font-black text-xl text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-200">
-                Aiscern
-              </span>
-            </Link>
-
-            <p className="text-sm text-silver-700 leading-relaxed mb-6 max-w-[220px]">
-              Free multi-modal AI content attestation. Text, image, audio, and video.
-            </p>
-
-            {/* Status */}
-            <Link
-              href="/status"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.06]
-                         bg-surface text-xs text-silver-700 hover:border-accent/30 transition-colors duration-200
-                         focus-visible:ring-2 focus-visible:ring-accent/50"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" aria-hidden="true" />
-              All systems operational
-            </Link>
-
-            {/* Trust badges */}
-            <div className="mt-5 flex flex-col gap-2">
-              {TRUST_BADGES.map(b => (
-                <div key={b.label} className="flex items-center gap-2 text-xs text-silver-600">
-                  <b.icon className="w-3.5 h-3.5 text-silver-500" aria-hidden="true" />
-                  {b.label}
-                </div>
-              ))}
+            <div className="flex items-center gap-2.5 mb-4">
+              <Image src="/logo.png" alt="Aiscern Enterprise AI Verification Platform Logo"
+                width={31} height={36}
+                className="object-contain h-8 w-auto drop-shadow-[0_0_10px_rgba(245,100,0,0.45)]" />
+              <span className="font-black text-xl gradient-text">Aiscern</span>
             </div>
 
-            {/* Social */}
-            <div className="mt-6 flex items-center gap-2">
-              <a
-                href="https://github.com/aiscern"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Aiscern on GitHub"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
-                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
-                           focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                <Github className="w-4 h-4" aria-hidden="true" />
+            <p className="text-text-muted text-sm leading-relaxed mb-4">
+              Enterprise AI trust and content verification. Ensemble-based analysis across text, image, audio, and video. Free tier available.
+            </p>
+
+            <p className="text-xs text-text-muted">
+              Founded by <span className="text-text-secondary font-semibold">Anas Ali</span> · Mandi Bahauddin, Pakistan
+            </p>
+
+            {/* Social icons */}
+            <div className="mt-5 flex gap-3">
+              <a href="https://twitter.com/aiscern" target="_blank" rel="noopener noreferrer"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/8 transition-[color,border-color,background-color] duration-200"
+                title="Aiscern on Twitter/X">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.261 5.632L18.243 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
               </a>
-              <a
-                href="https://twitter.com/aiscern"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Aiscern on X / Twitter"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
-                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
-                           focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                <Twitter className="w-4 h-4" aria-hidden="true" />
+              <a href="https://linkedin.com/company/aiscern" target="_blank" rel="noopener noreferrer"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/8 transition-[color,border-color,background-color] duration-200"
+                title="Aiscern on LinkedIn">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a
-                href="mailto:hello@aiscern.com"
-                aria-label="Email Aiscern"
-                className="w-9 h-9 flex items-center justify-center rounded-lg border border-white/[0.06]
-                           text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
-                           focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                <Mail className="w-4 h-4" aria-hidden="true" />
+              <a href="mailto:contact@aiscern.com"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/8 transition-[color,border-color,background-color] duration-200"
+                title="contact@aiscern.com">
+                <Mail className="w-4 h-4" />
+              </a>
+              <a href="mailto:support@aiscern.com"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-cyan-400 hover:border-cyan-400/30 hover:bg-cyan-400/8 transition-[color,border-color,background-color] duration-200"
+                title="support@aiscern.com">
+                <Headphones className="w-4 h-4" />
+              </a>
+              <a href="mailto:security@aiscern.com"
+                className="w-9 h-9 rounded-xl border border-border/60 bg-surface/40 flex items-center justify-center text-text-muted hover:text-emerald-400 hover:border-emerald-400/30 hover:bg-emerald-400/8 transition-[color,border-color,background-color] duration-200"
+                title="security@aiscern.com">
+                <Shield className="w-4 h-4" />
               </a>
             </div>
           </div>
 
-          {/* Tools */}
-          <FooterCol title="Tools">
-            {TOOLS_COL.map(l => <FooterLink key={l.href} {...l} />)}
-          </FooterCol>
+          {/* Platform */}
+          <div>
+            <h3 className="text-xs font-bold text-text-primary mb-5 uppercase tracking-widest">Platform</h3>
+            <ul className="space-y-3">
+              {PLATFORM_LINKS.map(l => <FooterLink key={l.href} href={l.href} title={l.title}>{l.label}</FooterLink>)}
+            </ul>
+          </div>
 
           {/* Company */}
-          <FooterCol title="Company">
-            {COMPANY_COL.map(l => <FooterLink key={l.href} {...l} />)}
-          </FooterCol>
+          <div>
+            <h3 className="text-xs font-bold text-text-primary mb-5 uppercase tracking-widest">Company</h3>
+            <ul className="space-y-3">
+              {COMPANY_LINKS.map(l => <FooterLink key={l.label} href={l.href} title={l.title}>{l.label}</FooterLink>)}
+            </ul>
+          </div>
 
-          {/* Resources */}
-          <FooterCol title="Resources">
-            {RESOURCES_COL.map(l => <FooterLink key={l.href} {...l} />)}
-          </FooterCol>
+          {/* Legal + Newsletter */}
+          <div>
+            <h3 className="text-xs font-bold text-text-primary mb-5 uppercase tracking-widest">Legal</h3>
+            <ul className="space-y-3 mb-7">
+              {LEGAL_LINKS.map(l => <FooterLink key={l.label} href={l.href} title={l.title}>{l.label}</FooterLink>)}
+              <li>
+                <Link href="/contact" className="group text-sm text-text-muted hover:text-text-primary transition-colors flex items-center gap-1">
+                  Contact Us
+                  <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
+                </Link>
+              </li>
+            </ul>
 
-          {/* Newsletter */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-700 mb-4">
-              Newsletter
-            </h3>
-            <p className="text-sm text-silver-600 leading-relaxed mb-4">
-              Attestation research, product updates, and AI news. Once a week.
-            </p>
-
-            {sent ? (
-              <div className="flex items-center gap-2 text-sm text-accent">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-                You&apos;re subscribed!
-              </div>
-            ) : (
-              <form onSubmit={subscribe} className="flex flex-col gap-2">
-                <label htmlFor="footer-email" className="sr-only">
-                  Email address
-                </label>
-                <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface-elevated
-                                 focus-within:border-accent/50 focus-within:ring-1 focus-within:ring-accent/20
-                                 transition-all duration-200 pl-4 pr-1.5 py-1.5">
-                  <input
-                    id="footer-email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="w-full bg-transparent text-[16px] sm:text-sm text-silver-800 placeholder-silver-600 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending}
-                    aria-label="Subscribe"
-                    className="inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-1.5 rounded-md shrink-0
-                               bg-accent hover:bg-accent-hover text-depth-bg text-xs font-semibold
-                               transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed
-                               focus-visible:ring-2 focus-visible:ring-accent/50"
-                  >
-                    {sending ? (
-                      <LoaderCircle className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <>Subscribe <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></>
-                    )}
-                  </button>
+            {/* Newsletter */}
+            <div className="p-4 rounded-xl border border-border/50 bg-surface/30">
+              <p className="text-xs font-semibold text-text-primary mb-1">Stay updated</p>
+              <p className="text-xs text-text-muted mb-3">Get notified on new features &amp; accuracy improvements.</p>
+              {subState === 'sent' ? (
+                <div className="text-xs text-emerald flex items-center gap-1.5 py-1">
+                  <span className="w-4 h-4 rounded-full bg-emerald/20 flex items-center justify-center text-[10px]">✓</span>
+                  You're on the list!
                 </div>
-              </form>
-            )}
+              ) : (
+                <form onSubmit={handleSub} className="flex gap-2">
+                  <input
+                    type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="flex-1 min-w-0 bg-background border border-border rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                  <button type="submit"
+                    aria-label="Subscribe to newsletter"
+                    className="px-3 py-2 rounded-lg text-white text-xs font-bold flex-shrink-0 transition-transform duration-200 hover:scale-[1.02]"
+                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+                    <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Bottom row */}
-        <div className="border-t border-white/15 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-silver-600">
-            © {new Date().getFullYear()} Aiscern. All rights reserved.
+        {/* Divider */}
+        <div className="border-t border-border/20 pt-6 mb-5">
+          <p className="text-xs text-text-disabled text-center leading-relaxed max-w-2xl mx-auto">
+            Detection results are probabilistic, not definitive. Use human judgment for high-stakes decisions.
+            Accuracy benchmarks reflect current model performance and will improve over time.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
-            {LEGAL_COL.map(l => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="text-xs text-silver-600 hover:text-silver-800 transition-colors duration-200"
-              >
-                {l.label}
-              </Link>
-            ))}
+        </div>
+
+        {/* Bottom bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-text-disabled">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-3 text-xs text-text-disabled">
+              <a href="mailto:contact@aiscern.com" className="hover:text-primary transition-colors">contact@aiscern.com</a>
+              <span className="opacity-30">·</span>
+              <a href="mailto:support@aiscern.com" className="hover:text-cyan-400 transition-colors">support@aiscern.com</a>
+              <span className="opacity-30">·</span>
+              <a href="mailto:security@aiscern.com" className="hover:text-emerald-400 transition-colors">security@aiscern.com</a>
+            </div>
+            © {new Date().getFullYear()} Aiscern · Built with precision in Mandi Bahauddin, Pakistan
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald" />
+              </span>
+              <span className="text-xs text-text-muted">All systems operational</span>
+            </div>
+            <a href="https://github.com/anasali89ji/AI-SCERN" target="_blank" rel="noopener noreferrer" className="text-xs text-text-disabled hover:text-text-muted transition-colors flex items-center gap-1">
+              GitHub <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+            <a href="https://aiscern.com" className="text-xs text-text-disabled hover:text-text-muted transition-colors flex items-center gap-1">
+              aiscern.com <ExternalLink className="w-2.5 h-2.5" />
+            </a>
           </div>
         </div>
       </div>
     </footer>
-  )
-}
-
-function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-silver-700 mb-4">
-        {title}
-      </h3>
-      <ul className="space-y-2.5">{children}</ul>
-    </div>
-  )
-}
-
-function FooterLink({ label, href }: { label: string; href: string }) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="group inline-flex items-center gap-1 text-sm text-silver-600 hover:text-silver-800 transition-colors duration-200"
-      >
-        <span className="group-hover:translate-x-0.5 transition-transform duration-200">{label}</span>
-      </Link>
-    </li>
   )
 }

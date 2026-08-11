@@ -1,185 +1,129 @@
 'use client'
 import { useState } from 'react'
 import {
-  BarChart3, Users, Database, Flag, AlertTriangle, FileText,
-  Settings, TrendingUp, DollarSign, Headphones, Key,
-  Megaphone, Activity, ChevronLeft, ChevronRight, LogOut,
-  Radio, Menu, X
+  LayoutDashboard, BarChart3, Megaphone, Users, Settings, Shield,
+  Activity, KeyRound, Flag, AlertTriangle, FileText, Zap, LogOut,
+  ChevronLeft, ChevronRight, Bell, ScanLine, Webhook, Gauge,
+  Database, UserCog, Palette, Wrench, Crown, HelpCircle, Receipt,
+  TrendingUp, HeartPulse, GitBranch
 } from 'lucide-react'
 
 export type TabId =
   | 'overview' | 'analytics' | 'marketing' | 'revenue'
   | 'users' | 'support' | 'apikeys' | 'pipeline'
-  | 'flags' | 'announcements' | 'health' | 'errors' | 'audit' | 'settings'
+  | 'flags' | 'announcements' | 'notifications' | 'health'
+  | 'costsummary' | 'errors' | 'audit' | 'settings'
+  | 'scans' | 'content-moderation' | 'webhooks' | 'rate-limits'
+  | 'backup' | 'admin-users' | 'branding' | 'maintenance'
 
-interface NavItem { id: TabId; label: string; icon: React.ElementType; group: string }
+interface SidebarProps { active: TabId; onSelect: (t: TabId) => void; onLogout: () => void }
 
-const NAV: NavItem[] = [
-  { id: 'overview',      label: 'Overview',        icon: BarChart3,     group: 'OVERVIEW' },
-  { id: 'analytics',     label: 'Analytics',       icon: TrendingUp,    group: 'OVERVIEW' },
-  { id: 'marketing',     label: 'Marketing',       icon: Radio,         group: 'OVERVIEW' },
-  { id: 'revenue',       label: 'Revenue',         icon: DollarSign,    group: 'OVERVIEW' },
-  { id: 'users',         label: 'Users',           icon: Users,         group: 'OPERATIONS' },
-  { id: 'support',       label: 'Support Tickets', icon: Headphones,    group: 'OPERATIONS' },
-  { id: 'apikeys',       label: 'API Keys',        icon: Key,           group: 'OPERATIONS' },
-  { id: 'pipeline',      label: 'Pipeline',        icon: Database,      group: 'OPERATIONS' },
-  { id: 'flags',         label: 'Feature Flags',   icon: Flag,          group: 'SYSTEM' },
-  { id: 'announcements', label: 'Announcements',   icon: Megaphone,     group: 'SYSTEM' },
-  { id: 'health',        label: 'Health Monitor',  icon: Activity,      group: 'SYSTEM' },
-  { id: 'errors',        label: 'Error Logs',      icon: AlertTriangle, group: 'SYSTEM' },
-  { id: 'audit',         label: 'Audit Log',       icon: FileText,      group: 'SYSTEM' },
-  { id: 'settings',      label: 'Settings',        icon: Settings,      group: 'SYSTEM' },
+const SECTIONS: { label: string; items: { id: TabId; label: string; icon: any }[] }[] = [
+  {
+    label: 'Dashboard',
+    items: [
+      { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+      { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'scans', label: 'Live Scans', icon: ScanLine },
+      { id: 'health', label: 'Health', icon: HeartPulse },
+    ],
+  },
+  {
+    label: 'Users & Content',
+    items: [
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'support', label: 'Support', icon: HelpCircle },
+      { id: 'content-moderation', label: 'Moderation', icon: Shield },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { id: 'announcements', label: 'Announcements', icon: Megaphone },
+      { id: 'notifications', label: 'Notifications', icon: Bell },
+    ],
+  },
+  {
+    label: 'Revenue & Growth',
+    items: [
+      { id: 'revenue', label: 'Revenue', icon: Receipt },
+      { id: 'marketing', label: 'Marketing', icon: TrendingUp },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { id: 'pipeline', label: 'Pipeline', icon: GitBranch },
+      { id: 'costsummary', label: 'Cost Summary', icon: Zap },
+      { id: 'apikeys', label: 'API Keys', icon: KeyRound },
+      { id: 'flags', label: 'Feature Flags', icon: Flag },
+      { id: 'webhooks', label: 'Webhooks', icon: Webhook },
+      { id: 'rate-limits', label: 'Rate Limits', icon: Gauge },
+    ],
+  },
+  {
+    label: 'Security & Logs',
+    items: [
+      { id: 'errors', label: 'Errors', icon: AlertTriangle },
+      { id: 'audit', label: 'Audit Log', icon: FileText },
+    ],
+  },
+  {
+    label: 'Administration',
+    items: [
+      { id: 'settings', label: 'Settings', icon: Settings },
+      { id: 'branding', label: 'Branding', icon: Palette },
+      { id: 'maintenance', label: 'Maintenance', icon: Wrench },
+      { id: 'admin-users', label: 'Admin Users', icon: UserCog },
+      { id: 'backup', label: 'Backup', icon: Database },
+    ],
+  },
 ]
 
-interface Props {
-  active: TabId
-  onSelect: (id: TabId) => void
-  onLogout: () => void
-}
+export default function Sidebar({ active, onSelect, onLogout }: SidebarProps) {
+  const [collapsed, setCollapsed] = useState(false)
 
-function Logo({ size = 28, collapsed = false }: { size?: number; collapsed?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo.png"
-        alt="Aiscern logo"
-        width={size}
-        height={size}
-        style={{ width: size, height: size, borderRadius: 8, flexShrink: 0 }}
-      />
-      {!collapsed && (
-        <div>
-          <div className="text-sm font-black gradient-text-cool">Aiscern</div>
-          <div className="text-[10px] text-text-disabled font-semibold tracking-widest uppercase">Admin</div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default function Sidebar({ active, onSelect, onLogout }: Props) {
-  const [collapsed, setCollapsed]   = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const groups = ['OVERVIEW', 'OPERATIONS', 'SYSTEM']
-
-  const NavContent = ({ onItemClick }: { onItemClick?: () => void }) => (
-    <div className="flex flex-col h-full">
-      {/* Logo row */}
-      <div className="px-4 py-5 border-b border-border">
-        <Logo size={28} collapsed={collapsed} />
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Admin navigation">
-        {groups.map(group => {
-          const items = NAV.filter(n => n.group === group)
-          return (
-            <div key={group}>
-              {!collapsed && (
-                <p className="text-[10px] font-bold text-text-disabled tracking-widest uppercase px-3 mb-2">
-                  {group}
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {items.map(item => {
-                  const Icon = item.icon
-                  const isActive = active === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => { onSelect(item.id); onItemClick?.() }}
-                      aria-label={item.label}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                        transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50
-                        ${collapsed ? 'justify-center' : ''}
-                        ${isActive
-                          ? 'nav-active text-primary'
-                          : 'text-text-muted hover:bg-surface-hover hover:text-text-secondary'}`}
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.label}</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="border-t border-border px-3 py-3 space-y-1">
+    <aside className={`flex flex-col h-screen bg-[#0a0a12] border-r border-[#1c1c2e] transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+      <div className="flex items-center justify-between p-4 border-b border-[#1c1c2e]">
         {!collapsed && (
-          <div className="px-3 py-2 text-[10px] text-text-disabled flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot flex-shrink-0" />
-            <span>Session active</span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
+              <Crown className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-bold text-white">Aiscern Admin</span>
           </div>
         )}
-        <button
-          onClick={onLogout}
-          aria-label="Logout"
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-            text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-all
-            focus:outline-none focus:ring-2 focus:ring-rose-500/50
-            ${collapsed ? 'justify-center' : ''}`}
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+        <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 rounded-lg text-text-muted hover:text-white transition-colors">
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-2">
+        {SECTIONS.map(section => (
+          <div key={section.label} className="mb-2">
+            {!collapsed && <p className="px-4 py-1 text-[10px] font-bold uppercase text-text-disabled tracking-wider">{section.label}</p>}
+            {section.items.map(item => {
+              const Icon = item.icon
+              const isActive = active === item.id
+              return (
+                <button key={item.id} onClick={() => onSelect(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-all ${isActive ? 'text-white bg-primary/10 border-r-2 border-r-primary' : 'text-text-muted hover:text-text-primary hover:bg-surface/50'}`}>
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-[#1c1c2e]">
+        <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-400 hover:bg-rose-400/10 rounded-lg transition-all">
+          <LogOut className="w-4 h-4" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
-    </div>
-  )
-
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <aside
-        className={`hidden lg:flex flex-col flex-shrink-0 bg-surface border-r border-border
-          transition-all duration-300 relative ${collapsed ? 'w-[72px]' : 'w-[260px]'}`}
-      >
-        <NavContent />
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-surface border border-border
-            flex items-center justify-center text-text-disabled
-            hover:text-text-secondary hover:border-primary/50 transition-all z-10"
-        >
-          {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-        </button>
-      </aside>
-
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open navigation"
-        className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 rounded-xl bg-surface border border-border
-          flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
-      >
-        <Menu className="w-4 h-4" />
-      </button>
-
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="relative w-[260px] bg-surface border-r border-border flex flex-col">
-            <button
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close navigation"
-              className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <NavContent onItemClick={() => setMobileOpen(false)} />
-          </aside>
-        </div>
-      )}
-    </>
+    </aside>
   )
 }

@@ -5,6 +5,7 @@ import { Clock, Search, Filter, Download, Trash, Eye, Image as ImgIcon, Video, M
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
+import { UsageAnalytics } from '@/components/history/UsageAnalytics'
 
 
 
@@ -150,6 +151,7 @@ export default function HistoryPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [selectedScan, setSelectedScan] = useState<Scan | null>(null)
   const [page, setPage] = useState(1)
+  const [activeTab, setActiveTab] = useState<'list' | 'analytics'>('list')
   const PAGE_SIZE = 20
 
   const loadScans = useCallback(async (showRefresh = false) => {
@@ -252,6 +254,21 @@ export default function HistoryPage() {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex items-center gap-1 mb-5 border-b border-border/55">
+          {(['list', 'analytics'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === tab ? 'border-primary text-text-primary' : 'border-transparent text-text-muted hover:text-text-secondary'
+              }`}>
+              {tab === 'list' ? 'Scan List' : 'Analytics'}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'analytics' && <UsageAnalytics />}
+
+        {activeTab === 'list' && <>
         {/* Filters */}
         <div className="card mb-5 space-y-3">
           {/* Search */}
@@ -411,6 +428,7 @@ export default function HistoryPage() {
             )}
           </>
         )}
+        </>}
             <ScrollToTop />
     </div>
     </>

@@ -8,26 +8,21 @@ export async function GET(req: NextRequest) {
   if (auth instanceof NextResponse) return auth
 
   const { searchParams } = new URL(req.url)
-  const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-  const action = searchParams.get('action') ?? ''
-  const limit  = 50
-  const offset = (page - 1) * limit
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
+  const limit = 20
 
   const db = getAdminDb()
-  let q = db
+  const { data, count, error } = await db
     .from('admin_audit_log')
-    .select('id, action, admin_ip, metadata, created_at', { count: 'exact' })
+    .select('*')
     .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
+    .range((page - 1) * limit, page * limit - 1)
 
-  if (action) q = q.eq('action', action)
-
-  const { data, count, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({
-    entries: data ?? [],
-    total:   count ?? 0,
-    pages:   Math.ceil((count ?? 0) / limit),
+    logs: data || [],
+    total: count || 0,
+    pages: Math.ceil((count || 0) / limit),
   })
 }

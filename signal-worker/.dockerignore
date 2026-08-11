@@ -1,0 +1,45 @@
+# AI-SCERN Detection Worker — Docker build context exclusions
+# Prevents .git/, caches, local dev files, and secrets from being copied
+# into the image (smaller image, faster builds, no secret leakage).
+
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Tests (not needed in the runtime image)
+tests/
+
+# Local env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Editor / OS cruft
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docs / misc
+*.md
+README*
+CHANGELOG*
+
+# Local model caches / artifacts
+*.log
+.cache/

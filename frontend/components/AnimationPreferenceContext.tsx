@@ -1,11 +1,11 @@
 /**
- * AnimationPreferenceContext — ported from main
+ * AnimationPreferenceContext — F.2 / Module A.4
  *
  * Read by StreamingMessage (chat), framer-motion animated components,
  * and any component that should skip transitions when the user enables
  * "Reduce animations" in Settings.
  *
- * Source of truth: local settings cache (aiscern_settings_<uid>).
+ * Source of truth: user_settings.animations_off (DB-persisted).
  * Falls back to `prefers-reduced-motion` for unauthenticated users.
  */
 'use client'
@@ -31,7 +31,7 @@ export function AnimationPreferenceProvider({ children }: { children: ReactNode 
     const listener = (e: MediaQueryListEvent) => { if (e.matches) setReduceAnimations(true) }
     mq.addEventListener('change', listener)
 
-    // 2. Override with persisted user preference (loaded by settings page)
+    // 2. Override with DB-persisted user preference (loaded by settings page)
     const cached = localStorage.getItem('aiscern_animations_off')
     if (cached === 'true')  setReduceAnimations(true)
     if (cached === 'false') setReduceAnimations(false)

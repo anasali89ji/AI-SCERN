@@ -1,0 +1,117 @@
+# AI-SCERN Detection Worker — DigitalOcean App Platform Spec
+# Deploy: doctl apps create --spec signal-worker/app.yaml
+# Docs: https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+
+name: aiscern-detection-worker
+
+services:
+  - name: detection-worker
+    source_dir: /signal-worker
+
+    github:
+      repo: anasali89ji/AI-SCERN
+      branch: main
+      deploy_on_push: true
+
+    dockerfile_path: signal-worker/Dockerfile
+
+    # run_command intentionally omitted: when set, DO App Platform uses it
+    # INSTEAD OF the Dockerfile's CMD, which would silently bypass the
+    # gunicorn + uvicorn-worker setup (graceful shutdown, worker recycling,
+    # max-requests rotation) and fall back to a bare `python main.py`.
+
+    environment_slug: python
+
+    # Sizing:
+    #  basic-xxs = $5/mo,  512MB RAM — may OOM on heavy requests
+    #  basic-xs  = $12/mo, 1GB RAM   — recommended for CPU text + image
+    #  basic-s   = $24/mo, 2GB RAM   — if loading distilgpt2 + opencv in same request
+    instance_count: 1
+    instance_size_slug: professional-s  # $50/mo: 4GB RAM | 2 vCPUs (user's current plan)
+
+    http_port: 8080
+    routes:
+      - path: /
+
+    # Health check — must return 200 quickly; /health does not load any models
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 5
+      failure_threshold: 3
+      success_threshold: 1
+
+    envs:
+      - key: PORT
+        value: "8080"
+
+      - key: LOG_LEVEL
+        value: "INFO"
+
+      - key: ALLOWED_ORIGINS
+        value: "https://aiscern.com,https://www.aiscern.com"
+
+      # Hardware — set to "true" only on GPU-enabled droplets
+      - key: GPU_ENABLED
+        value: "false"
+
+      # DO App Platform uses ephemeral /tmp — safe for model caches
+      - key: MODEL_CACHE_DIR
+        value: "/tmp/aiscern-models"
+
+      # OCR — tessdata is installed by the Dockerfile
+      - key: TESSDATA_PREFIX
+        value: "/usr/share/tesseract-ocr/4.00/tessdata"
+
+      # Request limits
+      - key: MAX_IMAGE_SIZE_MB
+        value: "10"
+      - key: MAX_TEXT_LENGTH
+        value: "10000"
+
+      # Secrets — set these in the DO App Platform dashboard, NOT here
+      - key: DATABASE_URL
+        type: SECRET
+        value: ${DATABASE_URL}
+
+      - key: REDIS_URL
+        type: SECRET
+        value: ${REDIS_URL}
+
+      - key: OPENAI_API_KEY
+        type: SECRET
+        value: ${OPENAI_API_KEY}
+
+      # ── P5 additions ────────────────────────────────────────────────────────
+
+      # Rate limiting — sliding window per client IP
+      # 60 req/60s is generous for prod; tighten to 20/60 if abuse observed
+      - key: RATE_LIMIT_REQUESTS
+        value: "60"
+      - key: RATE_LIMIT_WINDOW_S
+        value: "60"
+
+      # Admin endpoints — set a strong random secret in DO dashboard
+      # Empty string = unauthenticated (DO App-level network auth assumed)
+      - key: ADMIN_API_KEY
+        type: SECRET
+        value: ${ADMIN_API_KEY}
+
+      # Model eviction (P3)
+      - key: MODEL_IDLE_TTL_SECONDS
+        value: "300"
+      - key: MODEL_EVICTION_INTERVAL
+        value: "60"
+
+      # Worker self-recycling (v4.5.0) — mitigates an unresolved per-request
+      # memory leak (RSS climbs steadily across requests regardless of model
+      # eviction) that was OOM-killing workers mid-boot under sustained
+      # /analyze/image traffic. A worker restarts itself gracefully (SIGTERM,
+      # same path DO uses on deploy) once it hits either limit; the parent
+      # process supervisor immediately respawns it. Tune RECYCLE_RSS_THRESHOLD_MB
+      # down if you move to a smaller instance size than professional-s (4GB).
+      - key: MAX_REQUESTS_PER_WORKER
+        value: "40"
+      - key: RECYCLE_RSS_THRESHOLD_MB
+        value: "3000"

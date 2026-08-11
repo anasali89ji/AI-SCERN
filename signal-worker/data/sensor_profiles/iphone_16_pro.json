@@ -1,0 +1,28 @@
+{
+  "name": "Apple iPhone 16 Pro",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2024,
+  "spectral_peaks": {
+    "R": 603,
+    "G": 540,
+    "B": 460
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.94,
+      "b_g": 0.959
+    },
+    "tungsten": {
+      "r_g": 1.166,
+      "b_g": 0.596
+    },
+    "tl84": {
+      "r_g": 0.995,
+      "b_g": 0.881
+    },
+    "f11": {
+      "r_g": 0.957,
+      "b_g": 0.938
+    }
+  }
+}

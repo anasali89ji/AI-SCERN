@@ -41,18 +41,28 @@ def build_layer_report(
     elapsed_ms:  int,
     score:       Optional[float] = None,
 ) -> dict:
-    """Build a LayerReport. Score is computed from evidence if not provided."""
+    """
+    Build a LayerReport. Score is computed from evidence if not provided.
+
+    IMPORTANT (fixed v4.6.1): this used to invert `confidence` for
+    status=="normal" evidence nodes (`1.0 - c`), assuming confidence meant
+    "certainty the stated classification is correct". That doesn't match how
+    any analyzer using this default path actually builds evidence:
+    pixel_integrity (L1), dct_compression (L2), noise_stats (L3), and
+    frequency_domain (L4) all set confidence to an ALREADY suspicion-oriented
+    score (0=real, 1=AI-like), with status derived FROM that same score via
+    thresholding (anomalous if >0.65, normal if <0.30). So a strongly
+    real-looking signal (e.g. confidence=0.15, status="normal") was being
+    inverted to 0.85 — exactly backwards — silently dragging every image's
+    L1-L4 composite upward regardless of actual content. L9, L10, and L11-14
+    all pass an explicit score= and never exercise this default path, so
+    nothing relies on the old inversion behavior — this is a single-point fix.
+    """
     if score is None and evidence:
-        # Weighted average: anomalous nodes contribute their confidence as AI signal
-        scores = []
-        for ev in evidence:
-            c = ev.get("confidence", 0.5)
-            if ev.get("status") == "anomalous":
-                scores.append(c)
-            elif ev.get("status") == "normal":
-                scores.append(1.0 - c)
-            else:
-                scores.append(0.5)
+        # Direct average of the already suspicion-oriented confidence values.
+        # No status-based inversion — status is a label derived from the
+        # score, not an independent signal to re-apply on top of it.
+        scores = [float(ev.get("confidence", 0.5)) for ev in evidence]
         computed = sum(scores) / len(scores) if scores else 0.5
     else:
         computed = score if score is not None else 0.5

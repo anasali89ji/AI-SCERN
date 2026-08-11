@@ -1,25 +1,11 @@
-/**
- * Aiscern — Structured Logger
- * Provides consistent log format across all API routes.
- * In production: sends to Vercel logs + optionally Supabase error_logs table.
- */
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-
-interface LogEntry {
-  level:   LogLevel
-  service: string
-  message: string
-  data?:   Record<string, unknown>
-  userId?: string
-  ip?:     string
-  error?:  Error | unknown
-}
-
-function formatLog(entry: LogEntry): string {
-  const ts = new Date().toISOString()
-  const data = entry.data ? JSON.stringify(entry.data) : ''
-  return `[${ts}] [${entry.level.toUpperCase()}] [${entry.service}] ${entry.message}${data ? ' ' + data : ''}`
+function log(level: LogLevel, msg: string, meta?: Record<string, unknown>) {
+  const entry = { level, service: 'aiscern-api', msg, ...meta, time: new Date().toISOString() };
+  const line = JSON.stringify(entry);
+  if (level === 'error') console.error(line);
+  else if (level === 'warn') console.warn(line);
+  else console.log(line);
 }
 
 export const logger = {

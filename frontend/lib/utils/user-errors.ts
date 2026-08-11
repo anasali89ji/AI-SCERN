@@ -22,12 +22,33 @@ const USER_FRIENDLY_ERRORS: Record<string, string> = {
   CREDIT_LIMIT:             "You've reached your daily scan limit. It resets at midnight UTC.",
 }
 
+// Raw browser/runtime error strings that must never be shown to users verbatim —
+// they're diagnostic noise, not something a user can act on, and in practice the
+// most common cause is the serverless function being killed mid-request (e.g. a
+// slow analysis pipeline hitting the platform's execution time limit), which reads
+// to the browser as a bare network failure. Matched case-insensitively as substrings
+// since exact wording varies slightly by browser.
+const RAW_ERROR_PATTERNS: { match: string; message: string }[] = [
+  { match: 'failed to fetch',        message: 'The analysis took too long to complete and the connection was dropped. Please try again — smaller files usually process faster.' },
+  { match: 'load failed',            message: 'The analysis took too long to complete and the connection was dropped. Please try again — smaller files usually process faster.' },
+  { match: 'networkerror',           message: 'Network error. Please check your connection and try again.' },
+  { match: 'the user aborted a request', message: 'The request was cancelled. Please try again.' },
+  { match: 'timeout',                message: 'The request timed out. Please try again.' },
+]
+
 /**
  * Returns a user-friendly error string for a given internal code.
  * Falls back to `fallback` if provided, or a generic message.
  */
 export function toUserError(code?: string, fallback?: string): string {
   if (code && USER_FRIENDLY_ERRORS[code]) return USER_FRIENDLY_ERRORS[code]
-  if (fallback && fallback.length < 120) return fallback   // short API messages are safe to show
+
+  if (fallback) {
+    const lower = fallback.toLowerCase()
+    const rawMatch = RAW_ERROR_PATTERNS.find(p => lower.includes(p.match))
+    if (rawMatch) return rawMatch.message
+    if (fallback.length < 120) return fallback   // short, non-raw API messages are safe to show
+  }
+
   return 'An unexpected error occurred. Please try again.'
 }

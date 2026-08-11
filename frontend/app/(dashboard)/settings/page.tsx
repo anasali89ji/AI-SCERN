@@ -1,193 +1,297 @@
 'use client'
-import { ScrollToTop } from '@/components/ScrollToTop'
-import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { ScrollToTop }    from '@/components/ScrollToTop'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion }         from 'framer-motion'
 import {
-  Bell, Shield, Save, LoaderCircle, Trash, Sliders, Key, Palette,
-  Globe, Download, TriangleAlert, Copy, Check, Lock, Smartphone,
-  Moon, Sun, Monitor, FileType2, Zap, Eye, EyeOff,
+  Bell, Shield, Save, Loader2, Trash2, Sliders, Key, Palette,
+  Globe, Download, AlertTriangle, Copy, Check, Lock, Smartphone,
+  Moon, Sun, Monitor, FileText, Zap, Eye, EyeOff,
   RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
-  ChevronRight, Star, BrainCircuit
+  ChevronRight, Star, BrainCircuit, Plus, XCircle, Camera, User,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useAuth } from '@/components/auth-provider'
-import { toast } from 'sonner'
-import { useClerk } from '@clerk/nextjs'
+import { createClient }  from '@/lib/supabase/client'
+import { useAuth }       from '@/components/auth-provider'
+import { toast }         from 'sonner'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useAnimationPref } from '@/components/AnimationPreferenceContext'
-
-
+import type { UserSettings } from '@/lib/settings/types'
 
 // ── Toggle ───────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button onClick={onChange} disabled={disabled}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-[#2BEE34]' : 'bg-border'}`}>
-      <div
-        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-        style={{ transform: checked ? 'translateX(20px)' : 'translateX(0)' }}
-      />
+      className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-40 ${checked ? 'bg-primary' : 'bg-border'}`}>
+      <motion.div animate={{ x: checked ? 22 : 2 }} transition={{ type:'spring', stiffness:500, damping:30 }}
+        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm" />
     </button>
   )
 }
 
 // ── Setting Row ───────────────────────────────────────────────────────────────
 function SettingRow({ icon: Icon, label, description, action, badge }: {
-  icon: any; label: string; description?: string; action: React.ReactNode; badge?: string
+  icon: React.ElementType; label: string; description?: string; action: React.ReactNode; badge?: string
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-[#333333] last:border-0 gap-3 sm:gap-4">
+    <div className="flex items-center justify-between py-4 border-b border-border/30 last:border-0 gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon className="w-4 h-4 text-[#2BEE34]" />
+        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon className="w-4 h-4 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-white">{label}</span>
-            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFB800]/15 text-[#FFB800] border border-[#FFB800]/20 font-bold">{badge}</span>}
+            <span className="text-sm font-semibold text-text-primary">{label}</span>
+            {badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 font-bold">{badge}</span>}
           </div>
-          {description && <p className="text-xs text-[#6B6B6B] mt-0.5 leading-relaxed">{description}</p>}
+          {description && <p className="text-xs text-text-muted mt-0.5 leading-relaxed">{description}</p>}
         </div>
       </div>
-      {/* pl-11 on mobile aligns the action under the label text (matches icon width + gap), not under the icon itself */}
-      <div className="flex-shrink-0 pl-11 sm:pl-0">{action}</div>
+      <div className="flex-shrink-0">{action}</div>
     </div>
   )
 }
 
 // ── Section ───────────────────────────────────────────────────────────────────
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="space-y-4">
-      <h2 className="font-bold text-white flex items-center gap-2 mb-1 pb-3 border-b border-[#333333]">
-        <Icon className="w-4 h-4 text-[#2BEE34]" /> {title}
+    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
+      className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
+      <h2 className="font-bold text-text-primary flex items-center gap-2 mb-1 pb-3 border-b border-border/30">
+        <Icon className="w-4 h-4 text-primary" /> {title}
       </h2>
       {children}
+    </motion.div>
+  )
+}
+
+// ── API Key row ────────────────────────────────────────────────────────────────
+interface ApiKeyRecord { id: string; name: string; is_active: boolean; calls_today: number; daily_limit: number; last_used_at: string | null; created_at: string }
+
+function ApiKeySection({ userId }: { userId: string }) {
+  const [keys,       setKeys]       = useState<ApiKeyRecord[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [creating,   setCreating]   = useState(false)
+  const [newKeyName, setNewKeyName] = useState('')
+  const [revealedKey,setRevealedKey]= useState<string | null>(null)
+  const [copied,     setCopied]     = useState(false)
+  const [revoking,   setRevoking]   = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const res = await fetch('/api/user/api-keys').catch(() => null)
+    if (res?.ok) { const j = await res.json(); setKeys(j.data ?? []) }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { void load() }, [load])
+
+  const createKey = async () => {
+    if (!newKeyName.trim()) return
+    setCreating(true)
+    const res = await fetch('/api/user/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newKeyName.trim() }),
+    })
+    if (res.ok) {
+      const j = await res.json()
+      setRevealedKey(j.data.key)   // shown once
+      setNewKeyName('')
+      await load()
+      toast.success('API key created — copy it now, it won\'t be shown again')
+    } else {
+      const e = await res.json().catch(() => ({}))
+      toast.error(e.error ?? 'Failed to create key')
+    }
+    setCreating(false)
+  }
+
+  const revokeKey = async (id: string) => {
+    setRevoking(id)
+    const res = await fetch(`/api/user/api-keys/${id}`, { method: 'DELETE' })
+    if (res.ok) { await load(); toast.success('Key revoked') }
+    else toast.error('Failed to revoke key')
+    setRevoking(null)
+  }
+
+  const copyKey = (key: string) => {
+    navigator.clipboard.writeText(key).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+
+  if (loading) return <div className="py-4 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
+
+  return (
+    <div className="space-y-4">
+      {/* One-time reveal */}
+      {revealedKey && (
+        <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 space-y-2">
+          <p className="text-xs text-emerald-400 font-semibold">⚠ Copy your API key now — it won't be shown again</p>
+          <div className="flex items-center gap-2">
+            <code className="text-[11px] text-emerald-300 font-mono bg-black/30 px-2 py-1 rounded flex-1 break-all">{revealedKey}</code>
+            <button onClick={() => copyKey(revealedKey)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+          <button onClick={() => setRevealedKey(null)} className="text-xs text-text-muted hover:text-text-secondary">Dismiss</button>
+        </div>
+      )}
+
+      {/* Existing keys */}
+      {keys.filter(k => k.is_active).map(k => (
+        <div key={k.id} className="flex items-center justify-between gap-3 py-2 border-b border-border/20 last:border-0">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-text-primary truncate">{k.name}</p>
+            <p className="text-[11px] text-text-muted mt-0.5">
+              {k.calls_today}/{k.daily_limit} calls today
+              {k.last_used_at ? ` · last used ${new Date(k.last_used_at).toLocaleDateString()}` : ' · never used'}
+            </p>
+          </div>
+          <button onClick={() => revokeKey(k.id)} disabled={revoking === k.id}
+            className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/50 px-2 py-1 rounded-lg transition-colors disabled:opacity-50">
+            {revoking === k.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />} Revoke
+          </button>
+        </div>
+      ))}
+
+      {keys.filter(k => k.is_active).length === 0 && !revealedKey && (
+        <p className="text-xs text-text-muted py-2">No active API keys. Create one below to use the API.</p>
+      )}
+
+      {/* Create new key */}
+      {keys.filter(k => k.is_active).length < 5 && (
+        <div className="flex gap-2 pt-1">
+          <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') void createKey() }}
+            placeholder="Key name (e.g. Production)"
+            className="flex-1 text-xs bg-surface-active border border-border/55 rounded-lg px-3 py-2 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary" />
+          <button onClick={createKey} disabled={creating || !newKeyName.trim()}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-primary/15 border border-primary/30 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50">
+            {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Create
+          </button>
+        </div>
+      )}
+      <p className="text-[11px] text-text-muted">
+        Use your key with <code className="bg-surface-active px-1 py-0.5 rounded text-primary">X-API-Key: &lt;key&gt;</code> on <code className="bg-surface-active px-1 py-0.5 rounded text-primary">/api/v1/detect/{'{'}text|image|audio{'}'}</code>.
+        {' '}<a href="/docs/api" className="text-primary hover:underline">API docs →</a>
+      </p>
     </div>
   )
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
-  const { user, signOut }  = useAuth()
+  const { user, signOut }   = useAuth()
   const { openUserProfile } = useClerk()
+  const { user: clerkUser } = useUser()
+  const avatarInputRef      = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const supabase            = createClient()
   const { setReduceAnimations } = useAnimationPref()
 
-  // ── Notification settings ──────────────────────────────────────────────────
-  const [emailNotif,       setEmailNotif]       = useState(true)
-  const [batchAlerts,      setBatchAlerts]      = useState(true)
-  const [weeklyReport,     setWeeklyReport]     = useState(false)
-  const [autoSave,         setAutoSave]         = useState(true)
-  const [upgradeAlerts,    setUpgradeAlerts]    = useState(true)
+  const [s, setS] = useState<UserSettings>({
+    email_notif: true, batch_alerts: true, weekly_report: false, auto_save: true, upgrade_alerts: true,
+    high_acc_mode: false, save_history: true, auto_download_pdf: false, show_confidence: true,
+    show_signals: true, default_modality: 'text',
+    public_profile: false, share_anon: true, analytics_opt_out: false, data_retention_days: 90,
+    theme: 'dark', language: 'en', compact_view: false, animations_off: false,
+  })
 
-  // ── Attestation settings ─────────────────────────────────────────────────────
-  const [highAccMode,      setHighAccMode]      = useState(false)
-  const [saveHistory,      setSaveHistory]      = useState(true)
-  const [autoDownload,     setAutoDownload]     = useState(false)
-  const [showConfidence,   setShowConfidence]   = useState(true)
-  const [showSignals,      setShowSignals]      = useState(true)
-  const [defaultModality,  setDefaultModality]  = useState('text')
+  const [loading,       setLoading]      = useState(true)
+  const [saving,        setSaving]       = useState(false)
+  const [deleting,      setDeleting]     = useState(false)
+  const [confirmDelete, setConfirmDelete]= useState(false)
+  const dirtyRef = useRef(false)
 
-  // ── Privacy settings ───────────────────────────────────────────────────────
-  const [publicProfile,    setPublicProfile]    = useState(false)
-  const [shareAnon,        setShareAnon]        = useState(true)
-  const [cookieConsent,    setCookieConsent]    = useState(true)
-  const [analyticsOptOut,  setAnalyticsOptOut]  = useState(false)
-  const [dataRetention,    setDataRetention]    = useState('90')
+  // ── Load from DB on mount, fallback to localStorage cache ─────────────────
+  const loadSettings = useCallback(async () => {
+    if (!user?.uid) return
+    try {
+      // 1. Apply localStorage cache immediately for instant UI hydration
+      const cached = localStorage.getItem(`aiscern_settings_cache_${user.uid}`)
+      if (cached) setS(prev => ({ ...prev, ...JSON.parse(cached) }))
 
-  // ── Interface settings ─────────────────────────────────────────────────────
-  const [theme,            setTheme]            = useState<'dark'|'light'|'system'>('dark')
-  const [language,         setLanguage]         = useState('en')
-  const [compactView,      setCompactView]      = useState(false)
-  const [animationsOff,    setAnimationsOff]    = useState(false)
+      // 2. Fetch DB (source of truth) and overwrite
+      const res = await fetch('/api/user/settings')
+      if (res.ok) {
+        const { settings } = await res.json()
+        setS(settings)
+        localStorage.setItem(`aiscern_settings_cache_${user.uid}`, JSON.stringify(settings))
+        // Sync animation pref immediately after load
+        setReduceAnimations(settings.animations_off)
+        localStorage.setItem('aiscern_animations_off', String(settings.animations_off))
+      }
+    } catch { /* use localStorage cache */ } finally {
+      setLoading(false)
+    }
+  }, [user?.uid, setReduceAnimations])
 
-  // ── Security ───────────────────────────────────────────────────────────────
-  const [copied,           setCopied]           = useState(false)
-  const [showKey,          setShowKey]          = useState(false)
+  useEffect(() => { void loadSettings() }, [loadSettings])
 
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  // ── Debounced auto-save (fires 800ms after last change) ───────────────────
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const patchSettings = useCallback(async (patch: Partial<UserSettings>) => {
+    setS(prev => ({ ...prev, ...patch }))
+    dirtyRef.current = true
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      if (!dirtyRef.current) return
+      try {
+        await fetch('/api/user/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        })
+        dirtyRef.current = false
+      } catch { /* silent — Save All button is fallback */ }
+    }, 800)
 
-  const SETTINGS_KEY = `aiscern_settings_${user?.uid}`
-
-  const applySettings = useCallback((s: Record<string, any>) => {
-    if (s.emailNotif       !== undefined) setEmailNotif(s.emailNotif)
-    if (s.batchAlerts      !== undefined) setBatchAlerts(s.batchAlerts)
-    if (s.weeklyReport     !== undefined) setWeeklyReport(s.weeklyReport)
-    if (s.autoSave         !== undefined) setAutoSave(s.autoSave)
-    if (s.upgradeAlerts    !== undefined) setUpgradeAlerts(s.upgradeAlerts)
-    if (s.highAccMode      !== undefined) setHighAccMode(s.highAccMode)
-    if (s.saveHistory      !== undefined) setSaveHistory(s.saveHistory)
-    if (s.autoDownload     !== undefined) setAutoDownload(s.autoDownload)
-    if (s.showConfidence   !== undefined) setShowConfidence(s.showConfidence)
-    if (s.showSignals      !== undefined) setShowSignals(s.showSignals)
-    if (s.defaultModality  !== undefined) setDefaultModality(s.defaultModality)
-    if (s.publicProfile    !== undefined) setPublicProfile(s.publicProfile)
-    if (s.shareAnon        !== undefined) setShareAnon(s.shareAnon)
-    if (s.analyticsOptOut  !== undefined) setAnalyticsOptOut(s.analyticsOptOut)
-    if (s.dataRetention    !== undefined) setDataRetention(s.dataRetention)
-    if (s.theme            !== undefined) setTheme(s.theme)
-    if (s.language         !== undefined) setLanguage(s.language)
-    if (s.compactView      !== undefined) setCompactView(s.compactView)
-    if (s.animationsOff    !== undefined) {
-      setAnimationsOff(s.animationsOff)
-      setReduceAnimations(s.animationsOff)
-      localStorage.setItem('aiscern_animations_off', String(s.animationsOff))
+    // Side-effects for settings that need immediate client action
+    if ('animations_off' in patch) {
+      setReduceAnimations(!!patch.animations_off)
+      localStorage.setItem('aiscern_animations_off', String(!!patch.animations_off))
+    }
+    if ('theme' in patch) {
+      const root = document.documentElement
+      root.classList.remove('dark', 'light')
+      if (patch.theme === 'system') {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark')
+        else root.classList.add('light')
+      } else {
+        root.classList.add(patch.theme!)
+      }
     }
   }, [setReduceAnimations])
 
-  const loadSettings = useCallback(async () => {
-    if (!user?.uid) return
-    // Fast paint from the local cache while the real fetch is in flight.
-    try {
-      const cached = localStorage.getItem(SETTINGS_KEY)
-      if (cached) applySettings(JSON.parse(cached))
-    } catch {}
-
-    try {
-      const res = await fetch('/api/user/settings', { cache: 'no-store' })
-      if (res.ok) {
-        const { settings } = await res.json()
-        applySettings(settings)
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-      }
-    } catch {
-      // Offline or API unreachable — cached/local state above stands.
-    }
-    setLoading(false)
-  }, [user?.uid, applySettings]) // eslint-disable-line
-
-  useEffect(() => { loadSettings() }, [loadSettings])
-
+  // ── Save All (explicit button) ────────────────────────────────────────────
   const handleSave = async () => {
     if (!user?.uid) return
     setSaving(true)
-    const settings = {
-      emailNotif, batchAlerts, weeklyReport, autoSave, upgradeAlerts,
-      highAccMode, saveHistory, autoDownload, showConfidence, showSignals, defaultModality,
-      publicProfile, shareAnon, analyticsOptOut, dataRetention,
-      theme, language, compactView, animationsOff,
-    }
     try {
       const res = await fetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(s),
       })
-      if (!res.ok) throw new Error('Save failed')
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-      toast.success('Settings saved')
-    } catch {
-      toast.error('Failed to save settings — check your connection')
-    } finally {
-      setSaving(false)
-    }
+      if (res.ok) {
+        localStorage.setItem(`aiscern_settings_cache_${user.uid}`, JSON.stringify(s))
+        dirtyRef.current = false
+        toast.success('Settings saved')
+      } else {
+        const e = await res.json().catch(() => ({}))
+        toast.error(e.error ?? 'Failed to save settings')
+      }
+    } catch { toast.error('Network error — try again') }
+    setSaving(false)
   }
 
-  const copyApiKey = () => {
-    navigator.clipboard.writeText(`aiscern_${user?.uid?.slice(0,16)}...`)
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  const tog = (k: keyof UserSettings) => patchSettings({ [k]: !s[k] } as Partial<UserSettings>)
+  const sel = <K extends keyof UserSettings>(k: K, v: UserSettings[K]) => patchSettings({ [k]: v } as Partial<UserSettings>)
+
+  const exportData = async () => {
+    if (!user?.uid) return
+    const { data: scans } = await (supabase as ReturnType<typeof createClient>).from('scans').select('*').eq('user_id', user.uid)
+    const blob = new Blob([JSON.stringify({ scans, settings: s, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aiscern-data.json'; a.click()
+    toast.success('Data exported')
   }
 
   const deleteAccount = async () => {
@@ -197,188 +301,232 @@ export default function SettingsPage() {
     await signOut()
   }
 
-  const exportData = async () => {
-    if (!user?.uid) return
-    const { data: scans } = await (supabase as any).from('scans').select('*').eq('user_id', user.uid)
-    const blob = new Blob([JSON.stringify({ scans, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aiscern-data.json'; a.click()
-    toast.success('Data exported')
-  }
+  // ── Avatar upload ────────────────────────────────────────────────────────
+  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !clerkUser) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    setAvatarUploading(true)
+    try {
+      await clerkUser.setProfileImage({ file })
+      toast.success('Profile picture updated')
+    } catch {
+      toast.error('Failed to update profile picture')
+    } finally {
+      setAvatarUploading(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }, [clerkUser])
 
   if (loading) return (
     <div className="p-4 sm:p-8 flex items-center justify-center min-h-64">
-      <LoaderCircle className="w-6 h-6 animate-spin text-[#2BEE34]" />
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
     </div>
   )
 
+  const avatarUrl = clerkUser?.imageUrl
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 2xl:p-10 max-w-2xl 2xl:max-w-3xl mx-auto space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black text-white">Settings</h1>
-          <p className="text-sm text-[#6B6B6B] mt-0.5">Customize your Aiscern experience</p>
+
+      {/* Page header — stacks on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-black text-text-primary">Settings</h1>
+          <p className="text-sm text-text-muted mt-0.5">Customize your Aiscern experience</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#0A0A0A] bg-[#2BEE34] hover:bg-[#1A8F1F] disabled:opacity-60 transition-all">
-          {saving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 disabled:opacity-60 transition-colors w-full sm:w-auto">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save All
         </button>
       </div>
 
+      {/* Profile picture */}
+      <div className="bg-surface border border-border/55 rounded-2xl p-4 sm:p-6">
+        <h2 className="font-bold text-text-primary flex items-center gap-2 mb-4 pb-3 border-b border-border/30">
+          <User className="w-4 h-4 text-primary" /> Profile
+        </h2>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-border overflow-hidden flex items-center justify-center">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                : <User className="w-8 h-8 text-primary/60" />
+              }
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-primary border-2 border-surface flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
+              aria-label="Change profile picture"
+            >
+              {avatarUploading
+                ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                : <Camera className="w-3.5 h-3.5 text-white" />
+              }
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+          </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <p className="font-semibold text-text-primary truncate">{clerkUser?.fullName || user?.email?.split('@')[0] || 'Your Name'}</p>
+            <p className="text-xs text-text-muted mt-0.5 truncate">{user?.email}</p>
+            <p className="text-xs text-text-disabled mt-2">JPG, PNG or WEBP · max 5MB</p>
+            <button onClick={() => avatarInputRef.current?.click()} disabled={avatarUploading}
+              className="mt-2 text-xs text-primary font-semibold hover:underline disabled:opacity-50">
+              {avatarUploading ? 'Uploading…' : 'Change profile picture'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Notifications */}
       <Section title="Notifications" icon={Bell}>
-        <SettingRow icon={Mail}       label="Email notifications" description="Attestation summaries and account updates via email" action={<Toggle checked={emailNotif}     onChange={() => setEmailNotif(v => !v)} />} />
-        <SettingRow icon={Bell}       label="Bulk attestation alerts"   description="Notify when bulk attestation results are ready"         action={<Toggle checked={batchAlerts}    onChange={() => setBatchAlerts(v => !v)} />} />
-        <SettingRow icon={Star}       label="Upgrade alerts"      description="Get notified of plan changes from admin"         action={<Toggle checked={upgradeAlerts}  onChange={() => setUpgradeAlerts(v => !v)} />} />
-        <SettingRow icon={FileType2}   label="Weekly report"       description="Weekly digest of your attestation activity"       action={<Toggle checked={weeklyReport}   onChange={() => setWeeklyReport(v => !v)} />} />
-        <SettingRow icon={RefreshCw}  label="Auto-save results"   description="Save every attestation result to history automatically" action={<Toggle checked={autoSave}       onChange={() => setAutoSave(v => !v)} />} />
+        <SettingRow icon={Mail}      label="Email notifications" description="Scan summaries and account updates via email"         action={<Toggle checked={s.email_notif}    onChange={() => tog('email_notif')} />} />
+        <SettingRow icon={Bell}      label="Batch scan alerts"   description="Notify when bulk scan results are ready"              action={<Toggle checked={s.batch_alerts}   onChange={() => tog('batch_alerts')} />} />
+        <SettingRow icon={Star}      label="Upgrade alerts"      description="Get notified of plan changes from admin"              action={<Toggle checked={s.upgrade_alerts} onChange={() => tog('upgrade_alerts')} />} />
+        <SettingRow icon={FileText}  label="Weekly report"       description="Weekly digest of your detection activity"            action={<Toggle checked={s.weekly_report}  onChange={() => tog('weekly_report')} />} />
+        <SettingRow icon={RefreshCw} label="Auto-save results"   description="Save every scan result to history automatically"     action={<Toggle checked={s.auto_save}      onChange={() => tog('auto_save')} />} />
       </Section>
 
-      {/* Attestation */}
-      <Section title="Attestation Preferences" icon={BrainCircuit}>
-        <SettingRow icon={Zap}    label="High-accuracy mode"   description="Use slower but more precise ensemble analysis" badge="PRO"  action={<Toggle checked={highAccMode}    onChange={() => setHighAccMode(v => !v)} />} />
-        <SettingRow icon={Database} label="Save attestation history"  description="Keep all attestation results in your history tab"             action={<Toggle checked={saveHistory}    onChange={() => setSaveHistory(v => !v)} />} />
-        <SettingRow icon={Download} label="Auto-download PDF"  description="Automatically download PDF report after each attestation"     action={<Toggle checked={autoDownload}   onChange={() => setAutoDownload(v => !v)} />} />
-        <SettingRow icon={Sliders}  label="Show confidence %"  description="Display confidence scores on all results"              action={<Toggle checked={showConfidence} onChange={() => setShowConfidence(v => !v)} />} />
-        <SettingRow icon={Eye}      label="Show signal details" description="Show individual forensic signals on results"          action={<Toggle checked={showSignals}    onChange={() => setShowSignals(v => !v)} />} />
-        <SettingRow icon={ToggleLeft} label="Default modality" description="Pre-select this tab when opening the attestation tool"
+      {/* Detection */}
+      <Section title="Detection Preferences" icon={BrainCircuit}>
+        <SettingRow icon={Zap}       label="High-accuracy mode"  description="Forces the full CV+Brain+HF ensemble even on fast-path eligible images (slower, ~2× credits)" badge="PRO"
+          action={<Toggle checked={s.high_acc_mode}   onChange={() => tog('high_acc_mode')} />} />
+        <SettingRow icon={Database}  label="Save scan history"   description="Keep all scan results in your history tab"            action={<Toggle checked={s.save_history}   onChange={() => tog('save_history')} />} />
+        <SettingRow icon={Download}  label="Auto-download PDF"   description="Automatically download PDF report after each scan"   action={<Toggle checked={s.auto_download_pdf} onChange={() => tog('auto_download_pdf')} />} />
+        <SettingRow icon={Sliders}   label="Show confidence %"   description="Display confidence scores on all results"            action={<Toggle checked={s.show_confidence} onChange={() => tog('show_confidence')} />} />
+        <SettingRow icon={Eye}       label="Show signal details" description="Show individual detection signals on results"         action={<Toggle checked={s.show_signals}   onChange={() => tog('show_signals')} />} />
+        <SettingRow icon={ToggleLeft} label="Default modality"   description="Pre-select this tab when opening the detector"
           action={
-            <select value={defaultModality} onChange={e => setDefaultModality(e.target.value)}
-              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
-              {['text','image','audio','video','url'].map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
+            <select value={s.default_modality} onChange={e => sel('default_modality', e.target.value as UserSettings['default_modality'])}
+              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
+              {(['text','image','audio','video','url'] as const).map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
             </select>
           } />
       </Section>
 
       {/* Interface */}
       <Section title="Interface" icon={Palette}>
-        <SettingRow icon={Moon} label="Theme" description="Choose your preferred color scheme"
+        <SettingRow icon={Moon} label="Theme" description="Changes the site color scheme immediately"
           action={
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               {(['dark','light','system'] as const).map(t => (
-                <button key={t} onClick={() => setTheme(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme===t ? 'bg-[#2BEE34]/15 border-[#2BEE34]/40 text-[#2BEE34]' : 'border-[#333333] text-[#6B6B6B] hover:text-[#A3A3A3]'}`}>
-                  {t==='dark'?<Moon className="w-3 h-3 inline mr-1"/>:t==='light'?<Sun className="w-3 h-3 inline mr-1"/>:<Monitor className="w-3 h-3 inline mr-1"/>}
+                <button key={t} onClick={() => sel('theme', t)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${s.theme===t ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/55 text-text-muted hover:text-text-secondary'}`}>
+                  {t==='dark' ? <Moon className="w-3 h-3 inline mr-1"/> : t==='light' ? <Sun className="w-3 h-3 inline mr-1"/> : <Monitor className="w-3 h-3 inline mr-1"/>}
                   {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
               ))}
             </div>
           } />
-        <SettingRow icon={Languages} label="Language" description="Interface display language"
+        <SettingRow icon={Languages} label="Language" description="Interface language (English only for now — more coming soon)"
           action={
-            <select value={language} onChange={e => setLanguage(e.target.value)}
-              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
+            <select value={s.language} onChange={e => sel('language', e.target.value as UserSettings['language'])}
+              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
               <option value="en">English</option>
-              <option value="ur">اردو (Urdu)</option>
-              <option value="ar">العربية (Arabic)</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
+              <option value="ur" disabled>اردو (Urdu) — soon</option>
+              <option value="ar" disabled>العربية (Arabic) — soon</option>
+              <option value="es" disabled>Español — soon</option>
+              <option value="fr" disabled>Français — soon</option>
             </select>
           } />
-        <SettingRow icon={Monitor}     label="Compact view"      description="Reduce padding for a denser layout"          action={<Toggle checked={compactView}    onChange={() => setCompactView(v => !v)} />} />
-        <SettingRow icon={Zap}         label="Reduce animations" description="Disable motion effects for accessibility"    action={<Toggle checked={animationsOff}  onChange={() => setAnimationsOff(v => {
-            const next = !v
-            setReduceAnimations(next)
-            localStorage.setItem('aiscern_animations_off', String(next))
-            return next
-          })} />} />
+        <SettingRow icon={Monitor} label="Compact view"      description="Reduce padding for a denser layout"           action={<Toggle checked={s.compact_view}    onChange={() => tog('compact_view')} />} />
+        <SettingRow icon={Zap}    label="Reduce animations"  description="Disable motion effects — applies to streaming text, page transitions, and tool cards"
+          action={<Toggle checked={s.animations_off}  onChange={() => tog('animations_off')} />} />
       </Section>
 
       {/* Privacy */}
       <Section title="Privacy" icon={Shield}>
-        <SettingRow icon={Globe}       label="Public profile"      description="Allow others to see your username and stats"      action={<Toggle checked={publicProfile}   onChange={() => setPublicProfile(v => !v)} />} />
-        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized attestation results to improve accuracy" action={<Toggle checked={shareAnon}      onChange={() => setShareAnon(v => !v)} />} />
-        <SettingRow icon={Eye}         label="Opt out of analytics" description="Disable usage analytics collection"              action={<Toggle checked={analyticsOptOut} onChange={() => setAnalyticsOptOut(v => !v)} />} />
-        <SettingRow icon={Clock}       label="Data retention" description="How long to keep attestation history"
+        <SettingRow icon={Globe}        label="Public profile"              description="Allow others to see your username and stats"       action={<Toggle checked={s.public_profile}   onChange={() => tog('public_profile')} />} />
+        <SettingRow icon={BrainCircuit} label="Contribute to model training" description="Share anonymized scan results to improve accuracy" action={<Toggle checked={s.share_anon}       onChange={() => tog('share_anon')} />} />
+        <SettingRow icon={Eye}          label="Opt out of analytics"        description="Disable usage analytics collection"                action={<Toggle checked={s.analytics_opt_out} onChange={() => tog('analytics_opt_out')} />} />
+        <SettingRow icon={Clock}        label="Data retention" description="How long to keep scan history (enforced nightly)"
           action={
-            <select value={dataRetention} onChange={e => setDataRetention(e.target.value)}
-              className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#2BEE34]/50">
+            <select value={String(s.data_retention_days)} onChange={e => sel('data_retention_days', Number(e.target.value) as UserSettings['data_retention_days'])}
+              className="text-xs bg-surface-active border border-border/55 rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-primary">
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="365">1 year</option>
-              <option value="forever">Forever</option>
+              <option value="-1">Forever</option>
             </select>
           } />
       </Section>
 
-      {/* Security */}
+      {/* Security & API */}
       <Section title="Security & API" icon={Lock}>
-        <SettingRow icon={Smartphone} label="Manage 2FA & password"  description="Update security settings via Clerk"
+        <SettingRow icon={Smartphone} label="Manage 2FA & password" description="Update security settings via Clerk"
           action={
-            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-[#2BEE34] font-semibold hover:underline">
+            <button onClick={() => openUserProfile()} className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline">
               Manage <ChevronRight className="w-3 h-3" />
             </button>
           } />
-        <SettingRow icon={Key} label="API key (beta)" description="For programmatic access — Team/Enterprise only"
-          action={
-            <div className="flex items-center gap-2">
-              <code className="text-[10px] text-[#6B6B6B] font-mono">
-                {showKey ? `aiscern_${user?.uid?.slice(0,16)}...` : '••••••••••••••••'}
-              </code>
-              <button onClick={() => setShowKey(v => !v)} aria-label={showKey ? 'Hide API key' : 'Show API key'}
-                className="w-9 h-9 -m-1.5 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-              <button onClick={copyApiKey} aria-label="Copy API key"
-                className="w-9 h-9 -m-1.5 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors">
-                {copied ? <Check className="w-3.5 h-3.5 text-[#2BEE34]" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+        <div className="pt-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0"><Key className="w-4 h-4 text-primary" /></div>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">API Keys</p>
+              <p className="text-xs text-text-muted mt-0.5">For programmatic access via the REST API — up to 5 active keys</p>
             </div>
-          } />
+          </div>
+          {user?.uid && <ApiKeySection userId={user.uid} />}
+        </div>
       </Section>
 
       {/* Data */}
       <Section title="Data & Storage" icon={Database}>
-        <SettingRow icon={Download} label="Export your data" description="Download all your scans as a JSON file"
+        <SettingRow icon={Download} label="Export your data" description="Download all your scans + settings as JSON"
           action={
-            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#333333] text-[#A3A3A3] hover:bg-[#141414] hover:text-white transition-colors">
+            <button onClick={exportData} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border/55 text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
               <Download className="w-3 h-3" /> Export
             </button>
           } />
-        <SettingRow icon={Trash} label="Clear attestation history" description="Delete all saved attestation results permanently"
+        <SettingRow icon={Trash2} label="Clear scan history" description="Delete all saved detection results permanently"
           action={
             <button onClick={async () => {
               if (!user?.uid) return
-              await (supabase as any).from('scans').delete().eq('user_id', user.uid)
+              await (supabase as ReturnType<typeof createClient>).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
-            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FF4444]/30 text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors">
-              <Trash className="w-3 h-3" /> Clear
+            }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              <Trash2 className="w-3 h-3" /> Clear
             </button>
           } />
       </Section>
 
       {/* Danger zone */}
-      <div>
-        <h2 className="font-bold text-[#FF4444] flex items-center gap-2 mb-4">
-          <TriangleAlert className="w-4 h-4" /> Danger Zone
+      <motion.div className="bg-rose-950/20 border border-rose-500/20 rounded-2xl p-4 sm:p-6">
+        <h2 className="font-bold text-rose-400 flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-4 h-4" /> Danger Zone
         </h2>
         {!confirmDelete ? (
           <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">Delete account</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Delete account</p>
+              <p className="text-xs text-text-muted mt-0.5">Permanently delete your account and all data. Cannot be undone.</p>
             </div>
             <button onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FF4444]/30 text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors">
-              <Trash className="w-3 h-3" /> Delete
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-colors">
+              <Trash2 className="w-3 h-3" /> Delete
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-[#FF4444] font-semibold">Are you absolutely sure? This cannot be undone.</p>
+            <p className="text-sm text-rose-300 font-semibold">Are you absolutely sure? This cannot be undone.</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-xl border border-[#333333] text-xs text-[#6B6B6B] hover:text-white">
+                className="flex-1 py-2 rounded-xl border border-border/55 text-xs text-text-muted hover:text-text-primary">
                 Cancel
               </button>
               <button onClick={deleteAccount} disabled={deleting}
-                className="flex-1 py-2 rounded-xl bg-[#FF4444] text-white text-xs font-bold hover:bg-[#D93636] disabled:opacity-50">
-                {deleting ? <LoaderCircle className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
+                className="flex-1 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50">
+                {deleting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Yes, delete my account'}
               </button>
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       <ScrollToTop />
     </div>

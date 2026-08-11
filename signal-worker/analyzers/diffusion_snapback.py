@@ -23,28 +23,27 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# ── Model cache ───────────────────────────────────────────────────────────────
-_pipe_cache = None
 
-def _load_img2img_pipeline():
-    global _pipe_cache
-    if _pipe_cache is not None:
-        return _pipe_cache
-
+def _build_img2img_pipeline():
+    """
+    Actually build (not cache) the SD 1.5 img2img pipeline. Called by
+    utils.model_cache.get_model() on a cache miss — see the matching note
+    in diffusion_inversion.py (BUG-5): this used to be a separate, never-
+    evicted module-level global with no lock and no VRAM-pressure eviction.
+    """
     try:
         import torch
         from diffusers import StableDiffusionImg2ImgPipeline, DDIMScheduler
     except ImportError:
         raise RuntimeError("diffusers and torch required: pip install diffusers transformers accelerate torch")
 
-    device = 'cuda' if __import__('torch').cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if device == 'cpu':
         raise RuntimeError("L5b requires GPU (CPU too slow for 4-pass snap-back within 90s timeout)")
 
     logger.info("[L5b] Loading SD 1.5 img2img pipeline...")
     t0 = time.time()
 
-    import torch
     pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
         'runwayml/stable-diffusion-v1-5',
         torch_dtype=torch.float16,
@@ -62,8 +61,13 @@ def _load_img2img_pipeline():
         pass
 
     logger.info(f"[L5b] Pipeline loaded in {time.time()-t0:.1f}s")
-    _pipe_cache = pipe
     return pipe
+
+
+def _load_img2img_pipeline():
+    """Get (loading + caching if needed) the SD 1.5 img2img pipeline."""
+    from utils.model_cache import get_model
+    return get_model("diffusion_snapback:sd15_img2img", _build_img2img_pipeline)
 
 
 def diffusion_snapback_score(image_url: str) -> dict:

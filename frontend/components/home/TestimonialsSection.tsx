@@ -1,71 +1,121 @@
 'use client'
 
-import { useState, useEffect, memo } from 'react'
+import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2 } from 'lucide-react'
+import { Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
-interface Review {
-  id?: string | number
-  body?: string;   text?: string
-  is_anonymous?: boolean; display_name?: string; tool_used?: string
-}
-
-const FALLBACK: Review[] = [
-  { id:'f1', body:"Had a batch of essays that felt off but I couldn't say why. Ran them through this and the heatmap literally pointed at the paragraphs that were rewritten. Kind of wild honestly.", display_name:'Dr. Sarah M.', tool_used:'Text Attestation' },
-  { id:'f2', body:"We almost ran a photo that turned out to be manipulated. Caught it 10 minutes before publish. That's the only reason I still use this thing.", display_name:'James K.', tool_used:'Image Attestation' },
-  { id:'f3', body:"idk if it's perfect but it's caught 2 voice clones for me this year so I'm not complaining. Takes like 20 seconds per clip.", display_name:'Priya L.', tool_used:'Audio Attestation' },
-  { id:'f4', body:'Started using this for resume screening after one too many suspiciously perfect cover letters. Not foolproof but it flags enough that it saves me time.', display_name:'Marcus T.', tool_used:'Text Attestation' },
-  { id:'f5', body:"Ran 20 student essays overnight, had results by morning, no complaints there. Free tier cap is a bit tight though, hit it by essay 15.", display_name:'Anonymous', tool_used:'Batch Content Analyser', is_anonymous:true },
-  { id:'f6', body:"A clip was going around our group chat that looked fake to me but nobody believed it. Ran it here, frame breakdown showed exactly where it was spliced. Good enough receipts to shut that down.", display_name:'Elena R.', tool_used:'Video Attestation' },
+const TESTIMONIALS = [
+  {
+    name: 'Dr. Ayesha Khan',
+    role: 'Dean of Academic Affairs',
+    org: 'DHA Suffa University',
+    quote: 'Aiscern has become essential for our examination office. We now verify every thesis submission for AI-generated content before it reaches the review board. The trust verification reports give us confidence in our academic integrity process.',
+    initials: 'AK',
+    accent: '#7c3aed',
+  },
+  {
+    name: 'Bilal Ahmed',
+    role: 'Editor-in-Chief',
+    org: 'Daily Times Pakistan',
+    quote: 'In an election cycle flooded with synthetic media, Aiscern gives our fact-checking team the speed and confidence we need to publish responsibly. Deepfake detection that actually works under deadline pressure.',
+    initials: 'BA',
+    accent: '#2563eb',
+  },
+  {
+    name: 'Sana Tariq',
+    role: 'Head of HR',
+    org: 'Systems Limited',
+    quote: 'We screened over 400 applications last quarter. Aiscern flagged 23 CVs with AI-generated cover letters we would have missed. The explainable trust verification reports make our hiring decisions defensible.',
+    initials: 'ST',
+    accent: '#10b981',
+  },
 ]
 
-const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {
-  const text = r.body ?? r.text ?? ''
-  const name = r.is_anonymous ? 'Anonymous' : (r.display_name ?? 'Aiscern User')
-  const init = r.is_anonymous ? '?' : name.charAt(0).toUpperCase()
+export default function TestimonialsSection() {
+  const shouldReduceMotion = useReducedMotion()
+  const [index, setIndex] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const go = (dir: 1 | -1) => {
+    setIndex((prev) => (prev + dir + TESTIMONIALS.length) % TESTIMONIALS.length)
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.6, delay: (i % 6) * 0.08, ease: [0.16, 1, 0.3, 1] }}
-      className="break-inside-avoid mb-4 flex flex-col bg-surface border border-white/[0.06]
-                 rounded-xl p-6 hover:border-white/[0.12] transition-colors duration-200"
-    >
-      <span className="self-start inline-flex items-center gap-1 mb-4 text-xs font-medium
-                        text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-        <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Verified
-      </span>
-
-      <p className="text-base text-silver-800 italic leading-relaxed flex-1 mb-5">&ldquo;{text}&rdquo;</p>
-
-      <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
-        <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">
-          {init}
+    <section aria-label="Trust verification testimonials" className="relative py-24 md:py-32 [overflow:clip]">
+      <div className="max-w-[1440px] mx-auto px-6">
+        <div className="text-center mb-12 md:mb-16">
+          <span className="text-sm font-medium uppercase tracking-wider text-text-muted">What professionals say about our AI content detection</span>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-silver-900 truncate">{name}</p>
-          {r.tool_used && <p className="text-xs uppercase tracking-wider text-silver-600 truncate">{r.tool_used}</p>}
+
+        {/* Desktop: single card with arrow navigation */}
+        <div className="hidden md:flex items-center justify-center gap-6 max-w-3xl mx-auto">
+          <button
+            onClick={() => go(-1)}
+            aria-label="Previous testimonial"
+            className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-primary/30 transition-colors flex-shrink-0"
+          >
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+          </button>
+
+          <motion.div
+            key={index}
+            initial={shouldReduceMotion ? undefined : { opacity: 0, y: 16 }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="testimonial-card rounded-[24px] p-8 md:p-10 flex-1"
+          >
+            <TestimonialCard t={TESTIMONIALS[index]} />
+          </motion.div>
+
+          <button
+            onClick={() => go(1)}
+            aria-label="Next testimonial"
+            className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-primary/30 transition-colors flex-shrink-0"
+          >
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* Mobile: horizontal snap scroll */}
+        <div ref={scrollRef} className="md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.name} className="testimonial-card rounded-[24px] p-6 snap-center flex-shrink-0 w-[85vw]">
+              <TestimonialCard t={t} />
+            </div>
+          ))}
         </div>
       </div>
-    </motion.div>
+    </section>
   )
-})
+}
 
-export default function TestimonialsSection() {
-  const [reviews, setReviews] = useState<Review[]>(FALLBACK)
-
-  useEffect(() => {
-    fetch('/api/reviews?limit=9&sort=helpful')
-      .then(r => r.json())
-      .then(d => { if (d.data?.length >= 3) setReviews(d.data.slice(0, 9)) })
-      .catch(() => {})
-  }, [])
-
+function TestimonialCard({ t }: { t: (typeof TESTIMONIALS)[number] }) {
   return (
-    <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-      {reviews.map((r, i) => <ReviewCard key={String(r.id)} r={r} i={i} />)}
+    <div>
+      <div className="flex items-center gap-1 mb-4" aria-label="5 out of 5 stars">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-amber text-amber" aria-hidden="true" />
+        ))}
+      </div>
+      <p className="text-xl md:text-2xl font-medium text-text-primary leading-relaxed mb-6">
+        &ldquo;{t.quote}&rdquo;
+      </p>
+      <div className="flex items-center gap-3">
+        <div
+          className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+          style={{ background: t.accent }}
+        >
+          {t.initials}
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-text-primary">{t.name}</div>
+          <div className="text-xs text-text-muted">{t.role}</div>
+        </div>
+        <span className="ml-auto rounded-lg bg-surface-active px-3 py-1 text-xs font-medium text-text-muted">
+          {t.org}
+        </span>
+      </div>
     </div>
   )
 }

@@ -1,81 +1,75 @@
 'use client'
-import nextDynamic from 'next/dynamic'
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import Sidebar, { type TabId } from './components/Sidebar'
+import { useState, Suspense, lazy } from 'react'
+import Sidebar, { TabId } from './components/Sidebar'
 import Topbar from './components/Topbar'
 import ErrorBoundary from './components/ErrorBoundary'
-import { ShimmerCard } from './components/ShimmerBlock'
 
-const TabLoader = () => (
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6">
-    {Array(8).fill(0).map((_, i) => <ShimmerCard key={i} />)}
-  </div>
-)
+const OverviewTab = lazy(() => import('./tabs/OverviewTab'))
+const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab'))
+const MarketingTab = lazy(() => import('./tabs/MarketingTab'))
+const RevenueTab = lazy(() => import('./tabs/RevenueTab'))
+const UsersTab = lazy(() => import('./tabs/UsersTab'))
+const SupportTab = lazy(() => import('./tabs/SupportTab'))
+const ApiKeysTab = lazy(() => import('./tabs/ApiKeysTab'))
+const PipelineTab = lazy(() => import('./tabs/PipelineTab'))
+const FlagsTab = lazy(() => import('./tabs/FlagsTab'))
+const AnnouncementsTab = lazy(() => import('./tabs/AnnouncementsTab'))
+const NotificationsTab = lazy(() => import('./tabs/NotificationsTab'))
+const HealthTab = lazy(() => import('./tabs/HealthTab'))
+const PipelineCostSummaryTab = lazy(() => import('./tabs/PipelineCostSummaryTab'))
+const ErrorsTab = lazy(() => import('./tabs/ErrorsTab'))
+const AuditTab = lazy(() => import('./tabs/AuditTab'))
+const SettingsTab = lazy(() => import('./tabs/SettingsTab'))
+const ScansTab = lazy(() => import('./tabs/ScansTab'))
+const ContentModerationTab = lazy(() => import('./tabs/ContentModerationTab'))
+const WebhooksTab = lazy(() => import('./tabs/WebhooksTab'))
+const RateLimitsTab = lazy(() => import('./tabs/RateLimitsTab'))
+const BackupTab = lazy(() => import('./tabs/BackupTab'))
+const AdminUsersTab = lazy(() => import('./tabs/AdminUsersTab'))
+const BrandingTab = lazy(() => import('./tabs/BrandingTab'))
+const MaintenanceTab = lazy(() => import('./tabs/MaintenanceTab'))
 
-const OverviewTab      = nextDynamic(() => import('./tabs/OverviewTab'),      { ssr: false, loading: TabLoader })
-const AnalyticsTab     = nextDynamic(() => import('./tabs/AnalyticsTab'),     { ssr: false, loading: TabLoader })
-const MarketingTab     = nextDynamic(() => import('./tabs/MarketingTab'),     { ssr: false, loading: TabLoader })
-const RevenueTab       = nextDynamic(() => import('./tabs/RevenueTab'),       { ssr: false, loading: TabLoader })
-const UsersTab         = nextDynamic(() => import('./tabs/UsersTab'),         { ssr: false, loading: TabLoader })
-const SupportTab       = nextDynamic(() => import('./tabs/SupportTab'),       { ssr: false, loading: TabLoader })
-const ApiKeysTab       = nextDynamic(() => import('./tabs/ApiKeysTab'),       { ssr: false, loading: TabLoader })
-const PipelineTab      = nextDynamic(() => import('./tabs/PipelineTab'),      { ssr: false, loading: TabLoader })
-const FlagsTab         = nextDynamic(() => import('./tabs/FlagsTab'),         { ssr: false, loading: TabLoader })
-const AnnouncementsTab = nextDynamic(() => import('./tabs/AnnouncementsTab'), { ssr: false, loading: TabLoader })
-const HealthTab        = nextDynamic(() => import('./tabs/HealthTab'),        { ssr: false, loading: TabLoader })
-const ErrorsTab        = nextDynamic(() => import('./tabs/ErrorsTab'),        { ssr: false, loading: TabLoader })
-const AuditTab         = nextDynamic(() => import('./tabs/AuditTab'),         { ssr: false, loading: TabLoader })
-const SettingsTab      = nextDynamic(() => import('./tabs/SettingsTab'),      { ssr: false, loading: TabLoader })
-
-const TAB_MAP: Record<TabId, React.ComponentType> = {
-  overview:      OverviewTab,
-  analytics:     AnalyticsTab,
-  marketing:     MarketingTab,
-  revenue:       RevenueTab,
-  users:         UsersTab,
-  support:       SupportTab,
-  apikeys:       ApiKeysTab,
-  pipeline:      PipelineTab,
-  flags:         FlagsTab,
-  announcements: AnnouncementsTab,
-  health:        HealthTab,
-  errors:        ErrorsTab,
-  audit:         AuditTab,
-  settings:      SettingsTab,
+const TABS: Record<TabId, React.ComponentType> = {
+  overview: OverviewTab, analytics: AnalyticsTab, marketing: MarketingTab, revenue: RevenueTab,
+  users: UsersTab, support: SupportTab, apikeys: ApiKeysTab, pipeline: PipelineTab,
+  flags: FlagsTab, announcements: AnnouncementsTab, notifications: NotificationsTab, health: HealthTab,
+  costsummary: PipelineCostSummaryTab, errors: ErrorsTab, audit: AuditTab, settings: SettingsTab,
+  scans: ScansTab, 'content-moderation': ContentModerationTab, webhooks: WebhooksTab,
+  'rate-limits': RateLimitsTab, backup: BackupTab, 'admin-users': AdminUsersTab,
+  branding: BrandingTab, maintenance: MaintenanceTab,
 }
 
-const TAB_LABELS: Record<TabId, string> = {
-  overview: 'Overview', analytics: 'Analytics', marketing: 'Marketing', revenue: 'Revenue',
-  users: 'Users', support: 'Support Tickets', apikeys: 'API Keys', pipeline: 'Pipeline',
-  flags: 'Feature Flags', announcements: 'Announcements', health: 'Health Monitor',
-  errors: 'Error Logs', audit: 'Audit Log', settings: 'Settings',
+function TabFallback() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 w-48 bg-surface rounded-lg" />
+      <div className="grid grid-cols-4 gap-4">
+        {Array(4).fill(0).map((_, i) => <div key={i} className="h-24 bg-surface rounded-xl border border-border" />)}
+      </div>
+      <div className="h-64 bg-surface rounded-xl border border-border" />
+    </div>
+  )
 }
 
 export default function DashboardPage() {
-  const [tab, setTab] = useState<TabId>('overview')
-  const router        = useRouter()
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
+  const ActiveComponent = TABS[activeTab]
 
-  const logout = useCallback(async () => {
+  const handleLogout = async () => {
     await fetch('/api/auth', { method: 'DELETE' })
-    router.push('/')
-  }, [router])
-
-  const TabComponent = TAB_MAP[tab]
+    window.location.reload()
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar active={tab} onSelect={setTab} onLogout={logout} />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar activeTab={tab} />
-        <main id="main-content" className="flex-1 overflow-y-auto p-6" tabIndex={-1}>
-          <a href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50
-              focus:px-4 focus:py-2 focus:rounded-xl focus:bg-primary focus:text-white focus:text-sm focus:font-semibold">
-            Skip to content
-          </a>
-          <ErrorBoundary tabName={TAB_LABELS[tab]}>
-            <TabComponent />
+    <div className="flex h-screen bg-[#0a0a12] text-white overflow-hidden">
+      <Sidebar active={activeTab} onSelect={setActiveTab} onLogout={handleLogout} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar activeTab={activeTab} />
+        <main className="flex-1 overflow-y-auto p-6">
+          <ErrorBoundary tabName={activeTab}>
+            <Suspense fallback={<TabFallback />}>
+              <ActiveComponent />
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>

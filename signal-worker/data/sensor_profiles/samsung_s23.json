@@ -1,0 +1,28 @@
+{
+  "name": "Samsung Galaxy S23",
+  "sensor_type": "STACKED_CMOS",
+  "year": 2023,
+  "spectral_peaks": {
+    "R": 598,
+    "G": 536,
+    "B": 464
+  },
+  "gray_locus": {
+    "d65": {
+      "r_g": 0.948,
+      "b_g": 0.952
+    },
+    "tungsten": {
+      "r_g": 1.173,
+      "b_g": 0.589
+    },
+    "tl84": {
+      "r_g": 1.003,
+      "b_g": 0.874
+    },
+    "f11": {
+      "r_g": 0.965,
+      "b_g": 0.931
+    }
+  }
+}

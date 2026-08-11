@@ -1,91 +1,83 @@
 import { checkRateLimit } from '@/lib/ratelimit'
 import { runSemanticRAG } from '@/lib/forensic/layers/semantic-rag'
 import { buildGraphRAGContext } from '@/lib/rag/graph-rag'
-export const maxDuration = 60
+// BUGFIX (2026-08): chat/route.ts previously shadowed real ARIA KB retrieval with an
+// inline no-op stub (`retrieveARIAKnowledge` always returning empty results). The stub
+// was a build-fix for `require()` issues in serverless, but was never swapped back out,
+// so ARIA never actually consulted the knowledge base in production.
+//
+// The module the stub was meant to stand in for (`lib/rag/aria-rag.ts`) has since been
+// rewritten as a self-contained "vector-less" keyword RAG engine with its own knowledge
+// base, `retrieveContext()`, and `buildSystemPrompt()` — none of which match the old
+// chunk/bypassNIM/directAnswer shape the stub emulated, and its `buildSystemPrompt` name
+// collides with this file's own `buildSystemPrompt()` below. `aria-rag-compat.ts` and
+// `aria-knowledge.json` are dead code (nothing imports the compat wrapper or the JSON KB)
+// and are left untouched here rather than deleted, to keep this patch narrowly scoped.
+//
+// Fix: import the real retrieval function under an alias, and adapt its
+// `RetrievedContext` shape into the plain KB-context string this file already knows how
+// to fold into `contextParts` (see formatKBContext below). The old high-confidence
+// "bypass NIM entirely" fast path relied on fields (`bypassNIM`, `directAnswer`,
+// `topScore`) that don't exist on `RetrievedContext`, so it's removed rather than
+// papered over — see the `RAG DIRECT BYPASS` block further down for the corresponding
+// removal.
+import { ariaTools, type ToolContext, type ImageAnalysisResult } from '@/lib/aria/tools'
+import { hybridRetrieve } from '@/lib/rag/hybrid-rag'
+import type { RetrievedContext } from '@/lib/rag/aria-rag'
+import { truncateToTokenBudget } from '@/lib/aria/context-window'
+import { countTokens } from '@/lib/aria/tokenizer'
 
-import { NextRequest } from 'next/server'
+function formatKBContext(context: RetrievedContext): string {
+  if (!context.entries.length) return ''
+  return (
+    `[AISCERN KNOWLEDGE BASE — ground truth, confidence ${(context.confidence * 100).toFixed(0)}%]\n` +
+    context.entries.map(e => `• ${e.content}`).join('\n')
+  )
+}
+export const maxDuration = 55
+
+import { NextRequest, NextResponse } from 'next/server'
 export const dynamic    = 'force-dynamic'
 
 // ─── Model config (internal — never exposed to users) ─────────────────────────
 const NVIDIA_BASE    = 'https://integrate.api.nvidia.com/v1'
-const CHAT_MODEL     = 'nvidia/llama-3.1-nemotron-70b-instruct'  // primary
-const CHAT_FALLBACK  = 'meta/llama-3.3-70b-instruct'           // fallback
-const VISION_MODEL   = 'meta/llama-3.2-90b-vision-instruct'
-const VISION_FALLBACK = 'meta/llama-3.2-11b-vision-instruct'
+const CHAT_MODEL     = 'nvidia/llama-3.1-nemotron-70b-instruct'  // primary — detection reasoning
+const CHAT_FALLBACK  = 'meta/llama-3.3-70b-instruct'           // fallback — detection reasoning
+// Low-latency fix: a much smaller/faster model for ordinary conversation
+// (greetings, general Q&A, follow-ups) -- the vast majority of chat turns.
+// 70B models are noticeably slower on both prefill and decode; reserving
+// them for cases where nuanced interpretation actually matters (explaining
+// forensic detection results) keeps the common case fast without touching
+// quality where it counts.
+const FAST_MODEL      = 'meta/llama-3.1-8b-instruct'
 
-// ─── Cloudflare D1 (internal — shown as "Aiscern Pipeline" to users) ─────────
-const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || ''
-const D1_DB      = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
+// PIPELINE STATS, VISION, and TEXT tool logic (previously fetchPipelineStats,
+// analyzeImageForensic/analyzeImage, analyzeText — defined inline here) moved
+// to lib/aria/tools.ts as registered ToolRegistry entries. See that file for
+// the "why a registry, and why this isn't LLM function-calling yet" rationale.
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PIPELINE STATS  — referred to as "Aiscern Pipeline" externally
-// ─────────────────────────────────────────────────────────────────────────────
-async function fetchPipelineStats(cfToken: string): Promise<Record<string, any>> {
-  try {
-    const q = (sql: string) => fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/d1/database/${D1_DB}/query`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfToken}` },
-        body: JSON.stringify({ sql }), signal: AbortSignal.timeout(8000) }
-    ).then(r => r.json())
-
-    const [ov, ty] = await Promise.all([
-      q('SELECT total_scraped, total_pushed, last_scrape_at, last_push_at FROM pipeline_state WHERE id=1'),
-      q('SELECT media_type, COUNT(*) as count FROM dataset_items GROUP BY media_type'),
-    ])
-
-    const s     = ov.result?.[0]?.results?.[0] || {}
-    const byType = (ty.result?.[0]?.results || []) as Array<Record<string, unknown>>
-
-    return {
-      total_samples:   s.total_scraped   ?? 0,
-      published:       s.total_pushed    ?? 0,
-      pending:         (s.total_scraped ?? 0) - (s.total_pushed ?? 0),
-      last_updated:    s.last_scrape_at  ?? 'unknown',
-      last_published:  s.last_push_at    ?? 'unknown',
-      publish_rate:    Math.round(((s.total_pushed ?? 0) / Math.max(s.total_scraped ?? 1, 1)) * 100),
-      by_modality:     Object.fromEntries(byType.map(r => [r.media_type, r.count])),
-      sources:         104,
-      daily_capacity:  '~2,450,000 samples/day',
-      pipeline:        'Aiscern Neural Pipeline v3',
-    }
-  } catch {
-    return {
-      total_samples: 2_200_000, published: 2_200_000, pending: 0,
-      last_updated: 'recently', publish_rate: 88, sources: 104,
-      by_modality: { text: 441000, image: 83000, audio: 59000, video: 1500 },
-      daily_capacity: '~2,450,000 samples/day',
-      pipeline: 'Aiscern Neural Pipeline v3', note: '(cached)'
-    }
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VISION ANALYSIS — referred to as "Aiscern Vision Engine" externally
-// ─────────────────────────────────────────────────────────────────────────────
-// IMAGE ANALYSIS — 9-Agent Forensic Pipeline (Aiscern Vision Engine)
-// When imageUrl is provided: routes directly to runSemanticRAG (all 9 agents).
-// When only base64 is provided: attempts R2 upload first, then falls back to
-// NVIDIA vision model as a single-prompt check.
+// ARIA CAPABILITY PROMPTS — injected into the system prompt when relevant.
+// The actual analysis logic these describe now lives in lib/aria/tools.ts
+// (detect_image) — audio has no tool behind it yet, see that file's note.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Aria's forensic capability context (injected into system prompt)
 const ARIA_FORENSIC_CAPABILITY = `
-When a user shares an image for analysis, you have access to a 9-layer forensic pipeline that runs:
-- Generator Fingerprint Agent (highest weight): identifies which AI model created the image — Gemini/Imagen 3, Grok/Aurora, DALL-E 3, GPT-4o, Midjourney v6/niji, SDXL, Flux, Adobe Firefly, Ideogram, Leonardo AI, or a real photograph.
-- Facial Forensics Agent: eyes, nose, ears, mouth, skin texture with generator-specific tells.
-- Physics & Lighting Agent: shadow consistency, specular highlights, depth-of-field, reflection logic.
-- Background & Edge Agent: hair boundaries, text/signage coherence, crowd faces, architecture perspective.
-- Anatomical Integrity Agent: finger count, joint anatomy, clothing drape physics.
-- Semantic Logic Agent: scene coherence, scale consistency, temporal consistency, text coherence.
-- Micro-Texture Agent: fabric weave, skin pores, metal anisotropy, wood grain, water caustics.
-- Geometric Integrity Agent: vanishing point consistency, shadow geometry, occlusion logic.
-- Color Science Agent: RGB channel statistics, generator color fingerprints, gamut anomalies.
+When a user shares an image for analysis, you have access to Aiscern's multi-layer forensic image analysis pipeline that runs a broad set of complementary detection layers:
+- Pixel Forensic Layer: 16-signal pixel-level analysis — saturation uniformity, texture noise floor, frequency artifacts, gradient fields, palette clustering, hue ring analysis, neural-upsampling periodicity, and generator fingerprint patterns.
+- Computer Vision Forensic Layer: 6-layer spatial analysis — metadata integrity, frequency-domain fingerprinting, noise coherence, texture/color forensics, illumination consistency, and face-specific deepfake indicators.
+- Deep Learning Ensemble: Multiple specialized classification models trained on large-scale datasets of AI-generated and authentic content across different generator types (diffusion models, GANs, hybrid systems).
+- Optical Signal Analysis: Low-level camera signal extraction — compression artifacts, JPEG ghost detection, CFA interpolation patterns, and edit-signature detection.
+- LLM Vision (secondary tiebreaker): A vision-capable language model providing a structured forensic review as a final tiebreaker when the other layers produce a borderline result.
 
 When presenting results:
-- ALWAYS state which generator was attributed (e.g., "This image was attributed to Gemini/Imagen 3 with 87% confidence").
-- Mention specific artifacts found (e.g., "The Facial agent detected iris symmetry inconsistency and lip border sharpness typical of Gemini/Imagen 3").
-- Always state the overall AI probability and confidence level.
-- Before starting analysis, tell the user: "I'm running a forensic scan using the Aiscern 9-agent pipeline..." — never silently analyze.
+- ALWAYS state which type of artifacts were found with specific evidence (e.g., "The pixel forensic layer detected iris symmetry inconsistency and uniform skin noise typical of diffusion-model generators").
+- Mention the confidence level and what it means in practical terms.
+- If a generator type was identified, state it clearly.
+- Before starting analysis, tell the user: "I'm running a forensic scan using Aiscern's multi-layer detection pipeline..." — never silently analyze.
+- NEVER mention specific model names, API providers, datasets, or internal systems (e.g., do not say "Gemini", "HuggingFace", "ViT", "Brain", "signal-worker", etc.).
 `
 
 // Aria's audio forensic capability context
@@ -99,163 +91,6 @@ When a user shares audio for analysis, you have access to a 4-layer audio forens
 When presenting results: explain which specific artifacts were found (e.g., "The prosody agent detected unnaturally uniform speaking rate with absent breathing sounds — consistent with ElevenLabs TTS"). Always state which TTS system was attributed if AI is detected.
 `
 
-async function analyzeImageForensic(
-  imageBase64: string,
-  mediaType:   string,
-  imageUrl:    string | null,
-  userContext: string,
-  apiKey:      string,
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
-
-  // ── Path A: direct URL → 9-agent forensic RAG ────────────────────────────
-  if (imageUrl) {
-    try {
-      const { layerReport, agents, generatorAttribution, detectionState } = await runSemanticRAG(imageUrl)
-
-      const generatorAgent = agents.find(
-        a => a.agentName === 'GeneratorFingerprintAgent' || a.agentName === 'GENERATOR_FINGERPRINT'
-      ) as (typeof agents[number] & Record<string, unknown>) | undefined
-
-      const generatorMatch = (generatorAgent?.topGeneratorMatch as string | null) ?? generatorAttribution ?? 'Unknown'
-      const generatorConf  = (generatorAgent?.generatorConfidence as number | null) ?? 0
-      const isAI           = layerReport.layerSuspicionScore > 0.65
-      const confidence_pct = Math.round(
-        (isAI ? layerReport.layerSuspicionScore : 1 - layerReport.layerSuspicionScore) * 100
-      )
-
-      // Collect top evidence from the highest-suspicion agents
-      const keyFindings = agents
-        .filter(a => a.agentSuspicionScore > 0.5 && a.modelUsed !== 'failed')
-        .sort((a, b) => b.agentSuspicionScore - a.agentSuspicionScore)
-        .flatMap(a => a.evidence.filter(e => e.status === 'anomalous').slice(0, 2))
-        .map(e => e.detail)
-        .slice(0, 6)
-
-      const analysis = isAI
-        ? `Forensic analysis indicates AI generation. Generator attributed to: ${generatorMatch} (${Math.round(generatorConf * 100)}% confidence). Key artifacts: ${keyFindings.join('; ')}.`
-        : `Image appears to be a real photograph (${detectionState}). ${keyFindings.join('; ')}.`
-
-      return {
-        verdict:       isAI ? 'AI-Generated' : 'Likely Authentic',
-        confidence_pct,
-        analysis,
-        details: {
-          layer6Score:          layerReport.layerSuspicionScore,
-          generatorAttribution: generatorMatch,
-          generatorConfidence:  generatorConf,
-          detectionState,
-          agentScores:          Object.fromEntries(agents.map(a => [a.agentName, a.agentSuspicionScore])),
-          processingMs:         layerReport.processingTimeMs,
-          keyFindings,
-        },
-      }
-    } catch (err) {
-      // fall through to base64 / NVIDIA path
-    }
-  }
-
-  // ── Path B: base64 → NVIDIA vision fallback ───────────────────────────────
-  const prompt = `You are an expert digital forensics analyst specializing in AI-generated image detection and deepfake identification.
-
-Perform a thorough authenticity analysis of this image:
-
-EXAMINE:
-1. AI generation signatures — diffusion artifacts, overly smooth textures, symmetric perfection, unnatural bokeh
-2. Deepfake indicators — facial boundary blending, eye reflections/inconsistency, hair strand errors, skin tone uniformity
-3. Physical plausibility — lighting direction, shadow consistency, object proportions
-4. Fine detail stress-test — fingers, text, teeth, background objects (AI consistently fails here)
-5. Metadata consistency — if EXIF patterns suggest generation
-
-User context: ${userContext || 'General authenticity check requested.'}
-
-RESPOND WITH EXACTLY THIS STRUCTURE:
-VERDICT: [AI-Generated | Likely Authentic | Deepfake | Manipulated Photo | Uncertain]
-CONFIDENCE: [0-99]%
-KEY_FINDINGS:
-- [finding 1]
-- [finding 2]
-- [finding 3]
-ANALYSIS: [2-3 sentence technical summary of what you observed]
-RECOMMENDATION: [What the user should do with this information]`
-
-  const tryModel = async (model: string) => {
-    const r = await fetch(`${NVIDIA_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: [
-          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: 'text', text: prompt },
-        ]}],
-        max_tokens: 1400, temperature: 0.15, stream: false,
-      }),
-      signal: AbortSignal.timeout(50000),
-    })
-    if (!r.ok) throw new Error(`vision ${r.status}: ${(await r.text()).slice(0, 150)}`)
-    return r.json()
-  }
-
-  try {
-    // Type the NVIDIA chat completion response shape directly
-    interface NvidiaChoice { message: { content: string } }
-    interface NvidiaResponse { choices?: NvidiaChoice[] }
-    let d: NvidiaResponse
-    try { d = await tryModel(VISION_MODEL) as NvidiaResponse }
-    catch { d = await tryModel(VISION_FALLBACK) as NvidiaResponse }
-
-    const text: string = d.choices?.[0]?.message?.content || ''
-    const isAI     = /ai.generated|deepfake|manipulated|not (authentic|real|genuine)/i.test(text)
-    const confM    = text.match(/CONFIDENCE:\s*(\d{1,3})\s*%/i)
-    const conf     = confM ? Math.min(99, parseInt(confM[1])) : (isAI ? 78 : 25)
-    const verdictM = text.match(/VERDICT:\s*(.+?)(?:\n|$)/i)
-    const verdict  = verdictM?.[1]?.trim() || (isAI ? 'AI-Generated' : 'Likely Authentic')
-    const findingsM = text.match(/KEY_FINDINGS:([\s\S]*?)(?:ANALYSIS:|$)/i)
-    const findings  = findingsM?.[1]?.trim().split('\n').map((l: string) => l.replace(/^-\s*/, '').trim()).filter(Boolean) || []
-    const analysisM = text.match(/ANALYSIS:\s*([\s\S]*?)(?:RECOMMENDATION:|$)/i)
-    const recM      = text.match(/RECOMMENDATION:\s*([\s\S]*?)$/i)
-
-    return {
-      verdict,
-      confidence_pct: conf,
-      analysis: analysisM?.[1]?.trim() || text,
-      details: {
-        key_findings:   findings,
-        recommendation: recM?.[1]?.trim() || '',
-        raw:            text,
-        pipeline:       'nvidia_vision_fallback',
-      },
-    }
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return { verdict: 'Analysis Failed', confidence_pct: 0, analysis: `Vision engine error: ${msg}`, details: {} }
-  }
-}
-
-// Keep the old analyzeImage export alias for any remaining callers during migration
-async function analyzeImage(
-  imageBase64: string, mediaType: string, userContext: string, apiKey: string
-): Promise<{ verdict: string; confidence_pct: number; analysis: string; details: Record<string, unknown> }> {
-  return analyzeImageForensic(imageBase64, mediaType, null, userContext, apiKey)
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TEXT ANALYSIS — calls /api/detect/text (referred to as "Aiscern Text Engine")
-// ─────────────────────────────────────────────────────────────────────────────
-async function analyzeText(text: string, baseUrl: string): Promise<Record<string, any> | null> {
-  try {
-    const r = await fetch(`${baseUrl}/api/detect/text`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': process.env.INTERNAL_API_SECRET || '' },
-      body: JSON.stringify({ text }),
-      signal: AbortSignal.timeout(35000),
-    })
-    if (!r.ok) return null
-    const d = await r.json()
-    return d.success ? d.data : null
-  } catch { return null }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INTENT ENGINE — understands what the user wants before calling the LLM
@@ -347,7 +182,12 @@ function detectIntent(message: string, history: ChatMessage[]): Intent {
 // Production system prompt — fully private, zero internal disclosure
 // Merged from: v2.0 refactor + Lighthouse audit + 11-phase architecture + live repo scan
 // ═══════════════════════════════════════════════════════════════════════════════
-function buildSystemPrompt(injectedContext: string, intent: Intent): string {
+function buildSystemPrompt(
+  injectedContext: string,
+  intent: Intent,
+  needsImageCapability: boolean = false,
+  needsAudioCapability: boolean = false,
+): string {
 
   // ── Dynamic context blocks ────────────────────────────────────────────────
   const detectionGuide = `
@@ -366,11 +206,19 @@ Build on the existing result — do not re-explain what was already shown. Answe
   const urgencyGuide = intent.urgency === 'high' ? `
 USER HAS INDICATED URGENCY — Lead with the most critical information immediately. Skip preamble.` : ''
 
-  const resultsBlock = injectedContext
-    ? `
-═══ LIVE ANALYSIS CONTEXT (interpret this for the user, do not copy-paste raw numbers) ═══
-${injectedContext}
-═══ END CONTEXT ═══`
+  // A.4: Split injected context into KB knowledge vs live analysis context.
+  const kbTagEnd = '</aiscern_knowledge>'
+  const kbEndIdx = injectedContext.indexOf(kbTagEnd)
+  const kbEndPos = kbEndIdx !== -1 ? kbEndIdx + kbTagEnd.length : -1
+  const kbBlock  = kbEndPos !== -1 ? injectedContext.slice(0, kbEndPos) : ''
+  const liveCtx  = kbEndPos !== -1 ? injectedContext.slice(kbEndPos).trim() : injectedContext
+
+  const kbSection = kbBlock
+    ? `\n═══ AISCERN KNOWLEDGE BASE — use as ground truth for all Aiscern-specific facts ═══\n${kbBlock}\n═══ END KNOWLEDGE BASE ═══`
+    : ''
+
+  const resultsBlock = liveCtx
+    ? `\n═══ LIVE ANALYSIS CONTEXT (interpret for the user, do not copy-paste raw numbers) ═══\n${liveCtx}\n═══ END CONTEXT ═══`
     : ''
 
   return `You are ARIA — the intelligent AI assistant built into Aiscern, a leading platform for detecting AI-generated content across text, images, audio, and video.
@@ -394,7 +242,7 @@ AISCERN — COMPANY & FOUNDER INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FOUNDER & OWNER:
-Aiscern is an independent, bootstrapped AI content detection platform.
+Aiscern was founded and is owned by Anas Ali (also known as Saghir), a student entrepreneur from Mandi Bahauddin, Pakistan.
 Anas built Aiscern independently as a solo founder, handling all product design, engineering, machine learning, and infrastructure himself while balancing his academic studies.
 
 MISSION:
@@ -492,10 +340,10 @@ PROFILE & SETTINGS — /settings
    • Account deletion option
 
 REST API — /docs/api
-   • Free API for developers: POST /api/v1/detect/text
-   • Send text content, receive verdict + confidence + signals in JSON
-   • No authentication required for basic usage
-   • API key available in settings for higher rate limits
+   • Free API for developers: POST /api/v1/detect/{text,image,audio}
+   • Send text/image/audio content, receive verdict + confidence + signals in JSON
+   • Requires an X-API-Key header — generate a free key in Settings → API Access
+   • Video API coming soon (dashboard-only for now)
 
 PRICING — /pricing
    • Aiscern is completely free — no subscription, no credit card, no scan limits
@@ -603,17 +451,18 @@ ETHICAL CONSTRAINTS
 • ALWAYS maintain user privacy — do not reference, store, or repeat uploaded content beyond the immediate conversation
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMAGE FORENSIC PIPELINE CAPABILITIES
+${needsImageCapability ? `IMAGE FORENSIC PIPELINE CAPABILITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${ARIA_FORENSIC_CAPABILITY}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : ''}${needsAudioCapability ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AUDIO FORENSIC PIPELINE CAPABILITIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${ARIA_AUDIO_CAPABILITY}
+` : ''}
 ${detectionGuide}
 ${followupGuide}
 ${urgencyGuide}
+${kbSection}
 ${resultsBlock}`
 }
 
@@ -628,15 +477,37 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { messages, attachments } = body
-    if (!messages?.length) return new Response('Missing messages', { status: 400 })
+    if (!messages?.length) return NextResponse.json({ success: false, error: { code: 'NO_MESSAGES', message: 'Missing messages' } }, { status: 400 })
 
     const apiKey  = process.env.NVIDIA_API_KEY || ''
+    // Fallback NVIDIA API key: only used if the primary key's requests all
+    // fail (invalid key, rate-limited, account issue). Kept as a SEPARATE
+    // sequential attempt rather than racing both keys eagerly on every
+    // request, so the common case (primary key healthy) doesn't double
+    // NVIDIA API usage for no benefit.
+    const apiKeyFallback = process.env.NVIDIA_API_KEY_FALLBACK || process.env.NVIDIA_API_KEY_2 || ''
     const cfToken = process.env.CLOUDFLARE_API_TOKEN || ''
     const baseUrl = req.nextUrl.origin
+    const toolCtx: ToolContext = { apiKey, baseUrl, cfToken }
 
-    if (!apiKey) {
-      return new Response(JSON.stringify({ text: '⚠️ AI assistant not configured. Please contact support.' }), {
-        headers: { 'Content-Type': 'application/json' },
+    if (!apiKey && !apiKeyFallback) {
+      const encoder = new TextEncoder()
+      const stream  = new ReadableStream({
+        start(controller) {
+          const send = (obj: Record<string, unknown>) =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+          send({ type: 'text', text: '⚠️ AI assistant not configured. Please contact support.' })
+          send({ type: 'done' })
+          controller.close()
+        },
+      })
+      return new Response(stream, {
+        headers: {
+          'Content-Type':  'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection':    'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
       })
     }
 
@@ -648,106 +519,256 @@ export async function POST(req: NextRequest) {
     const intent = detectIntent(lastUserMsg, history)
 
     // ── GRAPH RAG — build conversation knowledge graph & inject context ────────
-    const graphContext = buildGraphRAGContext(history, lastUserMsg)
+    let graphContext = ''
+    try {
+      graphContext = buildGraphRAGContext(history, lastUserMsg)
+    } catch (err) {
+      console.warn('[chat] graph RAG context failed, continuing without it:', err)
+    }
+
+    // ── ARIA KB RAG — hybrid keyword + semantic retrieval (Track 2, Item 6) ──
+    // hybridRetrieve() runs the instant keyword pass and a bounded (2.5s max)
+    // semantic search against the separate vector-RAG Supabase project in
+    // parallel — see lib/rag/hybrid-rag.ts. If that project isn't configured
+    // (env vars unset) or isn't seeded yet, this degrades to exactly the
+    // keyword-only behavior from before.
+    let ragResult: RetrievedContext
+    try {
+      ragResult = await hybridRetrieve(lastUserMsg)
+    } catch (err) {
+      console.warn('[chat] KB RAG retrieval failed, continuing without it:', err)
+      ragResult = { entries: [], confidence: 0, source: 'knowledge_base' }
+    }
+
+    // ── WEB SEARCH FALLBACK (Track 2, Item 7) — only when the KB genuinely
+    // doesn't have a good match (retrieveContext() returns exactly 0.3 as its
+    // "nothing relevant, here's the top-3 anyway" fallback confidence — see
+    // aria-rag.ts). Gated to substantive, non-greeting messages with no image
+    // attached, to avoid an ~8s external HTTP round-trip on every low-signal
+    // turn. Best-effort: see the fragility note in lib/aria/tools.ts — a
+    // failure here just means one fewer contextParts entry, never a broken
+    // response.
+    // Intentionally NOT pushed to toolEvents: that array drives both a
+    // 'tool_result' SSE card in the UI (built for structured verdict/
+    // confidence results, not loose search snippets) and the heavy-vs-fast
+    // model selection below — a search snippet doesn't need the 70B tier's
+    // forensic reasoning. It only affects contextParts.
+    let webSearchContext = ''
+    if (
+      ragResult.confidence <= 0.3 &&
+      intent.wantsHelpWith !== 'greeting' &&
+      imageAttachments.length === 0 &&
+      lastUserMsg.trim().length >= 12
+    ) {
+      try {
+        const snippets = await ariaTools.run<string>('web_search', { query: lastUserMsg }, toolCtx)
+        if (snippets) webSearchContext = `[WEB SEARCH — best-effort, may be incomplete]\n${snippets}`
+      } catch (err) {
+        console.warn('[chat] web search fallback failed, continuing without it:', err)
+      }
+    }
 
     // ── PRE-ROUTING: gather all context before calling LLM ────────────────────
     const contextParts: string[] = []
-    // Conversation graph (history-based) first
+    // 1. KB knowledge first (most factual, grounding ARIA's persona and Aiscern facts)
+    const kbContext = formatKBContext(ragResult)
+    if (kbContext) contextParts.push(kbContext)
+    // 2. Conversation graph (history-based)
     if (graphContext) contextParts.push(graphContext)
+    // 3. Web search — only present when triggered above
+    if (webSearchContext) contextParts.push(webSearchContext)
     const toolEvents: Array<{ tool: string; result: Record<string, unknown> }> = []
 
     // 1. Image → Vision Engine analysis
     if (imageAttachments.length > 0) {
-      const img = imageAttachments[0]
-      // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
-      // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
-      const dataUrl = `data:${img.type};base64,${img.data}`
-      const result = await analyzeImageForensic(img.data, img.type, dataUrl, lastUserMsg, apiKey)
+      try {
+        const img = imageAttachments[0]
+        // BUG-03 FIX: Build a data URL so analyzeImageForensic takes Path A (9-agent semantic RAG)
+        // instead of Path B (single NVIDIA vision prompt). Path A only runs when imageUrl is non-null.
+        const dataUrl = `data:${img.type};base64,${img.data}`
+        const result = await ariaTools.run<ImageAnalysisResult>('detect_image', { imageBase64: img.data, mediaType: img.type, imageUrl: dataUrl, userContext: lastUserMsg }, toolCtx)
 
-      toolEvents.push({ tool: 'detect_image', result: {
-        verdict:        result.verdict,
-        confidence_pct: result.confidence_pct,
-        key_findings:   result.details.key_findings || [],
-        recommendation: result.details.recommendation || '',
-        engine:         'Aiscern Vision Engine',
-      }})
+        toolEvents.push({ tool: 'detect_image', result: {
+          verdict:        result.verdict,
+          confidence_pct: result.confidence_pct,
+          key_findings:   result.details.key_findings || [],
+          recommendation: result.details.recommendation || '',
+          engine:         'Aiscern Vision Engine',
+        }})
 
-      contextParts.push(
-        `[IMAGE ANALYSIS — Aiscern Vision Engine]\n` +
-        `Verdict: ${result.verdict}\n` +
-        `Confidence: ${result.confidence_pct}%\n` +
-        (((result.details as Record<string, unknown>)['key_findings'] as string[] | undefined)?.length
-          ? `Key findings:\n${((result.details as Record<string, unknown>)['key_findings'] as string[]).map((f: string) => `  • ${f}`).join('\n')}\n`
-          : '') +
-        `Technical analysis: ${result.analysis}\n` +
-        ((result.details as Record<string, unknown>)['recommendation'] ? `Recommendation: ${(result.details as Record<string, unknown>)['recommendation']}` : '')
-      )
+        contextParts.push(
+          `[IMAGE ANALYSIS — Aiscern Vision Engine]\n` +
+          `Verdict: ${result.verdict}\n` +
+          `Confidence: ${result.confidence_pct}%\n` +
+          (((result.details as Record<string, unknown>)['key_findings'] as string[] | undefined)?.length
+            ? `Key findings:\n${((result.details as Record<string, unknown>)['key_findings'] as string[]).map((f: string) => `  • ${f}`).join('\n')}\n`
+            : '') +
+          `Technical analysis: ${result.analysis}\n` +
+          ((result.details as Record<string, unknown>)['recommendation'] ? `Recommendation: ${(result.details as Record<string, unknown>)['recommendation']}` : '')
+        )
+      } catch (err) {
+        // Fix: a failure/timeout in the image forensic pipeline (9-agent
+        // semantic RAG, can be slow) previously threw all the way out to
+        // the outer catch, which returns a plain JSON error instead of a
+        // valid text/event-stream response -- the frontend's stream reader
+        // can't display that gracefully, which looked exactly like "ARIA
+        // not responding". Now it degrades: skip image context, continue
+        // with the rest of the request so the user still gets a reply.
+        console.warn('[chat] image analysis failed, continuing without it:', err)
+      }
     }
 
     // 2. Pipeline stats
     if (intent.wantsPipelineStats && cfToken) {
-      const stats = await fetchPipelineStats(cfToken)
-      toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
-      contextParts.push(
-        `[Aiscern PIPELINE STATUS]\n` +
-        `Total samples in training system: ${stats.total_samples?.toLocaleString()}\n` +
-        `Published to detection engine: ${stats.published?.toLocaleString()}\n` +
-        `Pending processing: ${stats.pending?.toLocaleString()}\n` +
-        `Publish rate: ${stats.publish_rate}%\n` +
-        `Last updated: ${stats.last_updated}\n` +
-        `By modality: ${JSON.stringify(stats.by_modality)}\n` +
-        `Daily processing capacity: ${stats.daily_capacity}\n` +
-        `Source coverage: ${stats.sources} detection datasets`
-      )
+      try {
+        const stats = await ariaTools.run<Record<string, any>>('get_pipeline_stats', {}, toolCtx)
+        toolEvents.push({ tool: 'get_pipeline_stats', result: stats })
+        contextParts.push(
+          `[Aiscern PIPELINE STATUS]\n` +
+          `Total samples in training system: ${stats.total_samples?.toLocaleString()}\n` +
+          `Published to detection engine: ${stats.published?.toLocaleString()}\n` +
+          `Pending processing: ${stats.pending?.toLocaleString()}\n` +
+          `Publish rate: ${stats.publish_rate}%\n` +
+          `Last updated: ${stats.last_updated}\n` +
+          `By modality: ${JSON.stringify(stats.by_modality)}\n` +
+          `Daily processing capacity: ${stats.daily_capacity}\n` +
+          `Source coverage: ${stats.sources} detection datasets`
+        )
+      } catch (err) {
+        console.warn('[chat] pipeline stats fetch failed, continuing without it:', err)
+      }
     }
 
     // 3. Text analysis
     if (intent.wantsTextAnalysis && intent.extractedText && intent.extractedText.length >= 50) {
-      const result = await analyzeText(intent.extractedText, baseUrl)
-      if (result) {
-        toolEvents.push({ tool: 'detect_text', result: {
-          verdict:        result.verdict,
-          confidence_pct: Math.round(result.confidence * 100),
-          engine:         'Aiscern Text Engine',
-          signals:        result.signals?.slice(0, 4),
-        }})
-        contextParts.push(
-          `[TEXT ANALYSIS — Aiscern Text Engine]\n` +
-          `Verdict: ${result.verdict}\n` +
-          `Confidence: ${Math.round(result.confidence * 100)}%\n` +
-          `Summary: ${result.summary || 'Analysis complete.'}\n` +
-          (result.signals?.length ? `Signals detected: ${result.signals.slice(0,4).join(', ')}` : '')
-        )
+      try {
+        const result = await ariaTools.run<Record<string, any> | null>('detect_text', { text: intent.extractedText }, toolCtx)
+        if (result) {
+          toolEvents.push({ tool: 'detect_text', result: {
+            verdict:        result.verdict,
+            confidence_pct: Math.round(result.confidence * 100),
+            engine:         'Aiscern Text Engine',
+            signals:        result.signals?.slice(0, 4),
+          }})
+          contextParts.push(
+            `[TEXT ANALYSIS — Aiscern Text Engine]\n` +
+            `Verdict: ${result.verdict}\n` +
+            `Confidence: ${Math.round(result.confidence * 100)}%\n` +
+            `Summary: ${result.summary || 'Analysis complete.'}\n` +
+            (result.signals?.length ? `Signals detected: ${result.signals.slice(0,4).join(', ')}` : '')
+          )
+        }
+      } catch (err) {
+        console.warn('[chat] text analysis failed, continuing without it:', err)
       }
     }
 
     // ── ASSEMBLE API MESSAGES ─────────────────────────────────────────────────
-    const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent)
+    // Low-latency fix: only inject the ~1,600-word image/audio forensic
+    // capability blocks when they're actually relevant, instead of on every
+    // single turn (including plain greetings) — this was inflating prefill
+    // size/latency on the vast majority of ordinary chat messages.
+    const needsImageCapability =
+      imageAttachments.length > 0 ||
+      intent.detectionContext === 'post_image' ||
+      /\b(image|photo|picture|deepfake|midjourney|dall-?e|stable diffusion|firefly|gan|diffusion)\b/i.test(lastUserMsg)
+    const needsAudioCapability =
+      intent.detectionContext === 'post_audio' ||
+      /\b(audio|voice|tts|elevenlabs|voice clone|speech|podcast|recording)\b/i.test(lastUserMsg)
 
-    // FIX 3.4 — Truncate conversation history to last 12 messages to prevent context overflow
-    const MAX_HISTORY = 12
-    const truncatedMessages = messages.length > MAX_HISTORY
-      ? [
-          messages[0],
-          { role: 'assistant', content: `[Earlier conversation context: ${messages.length - MAX_HISTORY} messages summarized — user has been discussing AI detection topics]` },
-          ...messages.slice(-(MAX_HISTORY - 2)),
-        ]
-      : messages
+    const systemPrompt = buildSystemPrompt(contextParts.join('\n\n'), intent, needsImageCapability, needsAudioCapability)
 
-    // Build conversation — include history for multi-turn awareness
-    const apiMessages = truncatedMessages.map((m: ChatMessage) => ({
+    // ── TOKENIZATION + CONTEXT WINDOW MANAGEMENT ───────────────────────────────
+    // Replaces the old fixed "last 12 messages" slice (FIX 3.4) with a token-
+    // budget-aware sliding window — see lib/aria/context-window.ts for why.
+    const flatMessages = messages.map((m: ChatMessage) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
       content: typeof m.content === 'string'
         ? m.content
         : (m.content?.[0]?.text || String(m.content) || ''),
     }))
+    const windowResult = truncateToTokenBudget(systemPrompt, flatMessages)
+    const apiMessages = windowResult.messages
+    if (windowResult.truncated) {
+      console.info(
+        `[chat] context window truncated: dropped ${windowResult.droppedMessageCount} message(s), ` +
+        `~${windowResult.totalPromptTokens} prompt tokens (system ${windowResult.systemPromptTokens} + history ${windowResult.messagesTokens})`
+      )
+    }
+
+    // NOTE: the old "RAG DIRECT BYPASS" fast path (skip NIM entirely on a
+    // high-confidence KB match) is intentionally removed here — it depended on
+    // `bypassNIM`/`directAnswer`/`topScore` fields that don't exist on the current
+    // `RetrievedContext` shape (see the top-of-file note). Re-introducing a bypass
+    // is real product work (deciding what counts as "confident enough", whether a
+    // single KB entry's `content` is safe to stream verbatim as a chat answer) and
+    // belongs in a follow-up change, not folded into this bug fix.
+
+    // ── LLM-DRIVEN FUNCTION CALLING (Track 2, final item) ──────────────────────
+    // SHIPPED DARK behind this flag — built from NVIDIA's docs without a live
+    // API key to test against in the build environment. Do not enable in
+    // production without testing in a lower environment first. See the
+    // file-level comment in lib/aria/function-calling.ts for what shaped this
+    // design (model choice, why non-streaming tool-exec + artificial chunking
+    // for the final answer instead of parsing NIM's streaming tool-call format).
+    // When this flag is off (default), execution falls through to the
+    // existing regex-pre-routing path below, completely unchanged.
+    if (process.env.ARIA_FUNCTION_CALLING_ENABLED === 'true') {
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream({
+        async start(controller) {
+          const send = (obj: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+          try {
+            const { runAgenticLoop } = await import('@/lib/aria/function-calling')
+            const loopResult = await runAgenticLoop(
+              apiKey,
+              systemPrompt,
+              apiMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+              toolCtx,
+            )
+            console.info(
+              `[chat] function-calling loop: model=${loopResult.modelUsed} rounds=${loopResult.rounds} ` +
+              `tools=[${loopResult.toolCallsExecuted.map(t => `${t.name}:${t.ok ? 'ok' : 'FAIL'}`).join(', ')}]`
+            )
+            // Artificial chunking — see file-level note in function-calling.ts
+            // for why this isn't a real token stream from NIM.
+            const text = loopResult.finalText
+            let i = 0
+            const tick = () => {
+              if (i >= text.length) { send({ type: 'done' }); controller.close(); return }
+              send({ type: 'text', text: text.slice(i, i + 6) })
+              i += 6
+              setTimeout(tick, 12)
+            }
+            tick()
+          } catch (err) {
+            console.error('[chat] function-calling loop failed:', err)
+            send({ type: 'error', message: 'ARIA had trouble processing that with tool calling enabled.' })
+            send({ type: 'done' })
+            controller.close()
+          }
+        },
+      })
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          'Content-Type':  'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection':    'keep-alive',
+          'X-Accel-Buffering': 'no',
+          'X-ARIA-Mode':   'function-calling',
+        },
+      })
+    }
 
     // ── STREAM RESPONSE ───────────────────────────────────────────────────────
     const encoder = new TextEncoder()
     const stream  = new ReadableStream({
       async start(controller) {
-        const send = (obj: Record<string, unknown>) =>
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+        const send = (obj: Record<string, unknown>) => {
+          const payload = `data: ${JSON.stringify(obj)}\n\n`
+          controller.enqueue(encoder.encode(payload))
+        }
 
         try {
           // Emit tool results first so UI cards appear immediately
@@ -760,31 +781,140 @@ export async function POST(req: NextRequest) {
           // The client must cancel this state on the first 'text' chunk it receives.
           send({ type: 'thinking', message: 'Connecting to ARIA…' })
 
-          // Try primary model, fallback if needed
-          let chatRes: Response | null = null
-          for (const model of [CHAT_MODEL, CHAT_FALLBACK]) {
-            chatRes = await fetch(`${NVIDIA_BASE}/chat/completions`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-              body: JSON.stringify({
-                model,
-                max_tokens:  2048,
-                temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
-                top_p:       0.9,
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  ...apiMessages,
-                ],
-                stream: true,
-              }),
-              signal: AbortSignal.timeout(90000),
+          // Low-latency fix: use the small/fast model for ordinary
+          // conversation (greetings, general Q&A, follow-ups where no fresh
+          // tool result needs nuanced interpretation), and reserve the
+          // slower 70B tier for cases where response quality on forensic
+          // reasoning actually matters -- a tool just ran (image/text
+          // analysis), the intent is explicitly detection-related, or the
+          // user is following up on a prior scan.
+          const needsHeavyModel =
+            toolEvents.length > 0 ||
+            intent.wantsHelpWith === 'detection' ||
+            intent.detectionContext !== 'none'
+          const modelChain = needsHeavyModel
+            ? [CHAT_MODEL, CHAT_FALLBACK]
+            : [FAST_MODEL, CHAT_FALLBACK]  // capped at 2 attempts — see timeout note below
+
+          // Fix: the previous sequential loop had NO try/catch around each
+          // fetch() attempt. AbortSignal.timeout() firing makes fetch()
+          // REJECT (not return a bad response), so a timeout on the first
+          // model threw straight out of the loop -- skipping the fallback
+          // model entirely -- and leaked the raw browser/undici error
+          // ("The operation was aborted due to timeout") to the user
+          // instead of ever trying model #2. Lowering the per-attempt
+          // timeout (in an earlier fix) made this latent bug fire far more
+          // often, which is exactly what was just reported.
+          //
+          // Real NIM cold-starts can genuinely take 30-60s (see comment
+          // above), which doesn't fit two SEQUENTIAL attempts under this
+          // route's hard maxDuration=60 ceiling on Vercel Hobby. Racing the
+          // models in PARALLEL instead means we take whichever responds
+          // first, rather than paying the full timeout cost of a slow model
+          // before ever trying the other -- the best available strategy
+          // under a fixed, low overall time budget.
+          const MODEL_TIMEOUT_MS = 25000 // per-model budget when racing in parallel (was 28000 -- tightened to match vercel.json's actual 55s maxDuration, not the previously-assumed 60s)
+
+          const tryModel = async (model: string, key: string, timeoutMs = MODEL_TIMEOUT_MS): Promise<Response | null> => {
+            // Fix: AbortSignal.timeout() stays armed for the ENTIRE request/
+            // response lifecycle, not just until headers arrive -- if the
+            // model connects fine but takes longer than timeoutMs to fully
+            // STREAM its response, the same signal fires mid-read and aborts
+            // it, throwing a raw AbortError ("The operation was aborted due
+            // to timeout") that isn't recognized as our own synthetic
+            // 'stream_timeout' guard further down and gets leaked to the
+            // user verbatim. Using a manual AbortController we can clear
+            // once a response is received means this timeout now only
+            // guards the CONNECT phase; body-read stalls are governed solely
+            // by the separate readWithTimeout() mechanism below, as intended.
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), timeoutMs)
+            try {
+              const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify({
+                  model,
+                  // Low-latency fix: was 2048. On a 70B model, a long response
+                  // at max_tokens can itself take well over 60s to fully
+                  // generate/stream -- silently colliding with this route's
+                  // own `maxDuration = 60` Vercel function limit (the platform
+                  // kills the function outright, which is indistinguishable
+                  // from "Aria not responding" to the user). 1024 is still
+                  // generous for a chat answer and gives real headroom.
+                  max_tokens:  1024,
+                  temperature: intent.wantsHelpWith === 'detection' ? 0.3 : 0.65,
+                  top_p:       0.9,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...apiMessages,
+                  ],
+                  stream: true,
+                }),
+                signal: controller.signal,
+              })
+              clearTimeout(timer) // got a response -- disarm the connect-timeout so it can't fire later during body reading
+              return res.ok ? res : null
+            } catch {
+              // Timed out, aborted, or network error on THIS model only --
+              // swallow it here so the other model in the race can still win.
+              return null
+            } finally {
+              clearTimeout(timer)
+            }
+          }
+
+          // Fix: resolve as soon as the FIRST model succeeds, instead of
+          // waiting for every model in the race to finish. tryModel() never
+          // rejects (it catches everything internally and resolves to
+          // null on failure), so Promise.allSettled -- which waits for
+          // ALL promises to settle regardless of value -- was silently
+          // forcing every request to wait for the SLOWEST model in the
+          // chain (often the 70B fallback) even when the fast 8B model
+          // had already succeeded in a couple of seconds. This defeated
+          // the entire point of racing a fast + slow model together and
+          // was a major, previously-unnoticed contributor to ARIA feeling
+          // slow even after the timeout/abort bugs were fixed.
+          function raceFirstSuccess<T>(promises: Promise<T | null>[]): Promise<T | null> {
+            return new Promise((resolve) => {
+              let remaining = promises.length
+              if (remaining === 0) { resolve(null); return }
+              for (const p of promises) {
+                p.then(v => {
+                  if (v !== null) resolve(v)
+                  else if (--remaining === 0) resolve(null)
+                }).catch(() => {
+                  if (--remaining === 0) resolve(null)
+                })
+              }
             })
-            if (chatRes.ok) break
-            chatRes = null
+          }
+
+          // Race all models in modelChain simultaneously using the primary
+          // key; take the first one that actually succeeds.
+          let chatRes: Response | null = null
+          if (apiKey) {
+            chatRes = await raceFirstSuccess(modelChain.map(m => tryModel(m, apiKey)))
+          }
+
+          // Primary key produced nothing usable (missing, invalid, rate-
+          // limited, or every model timed out) -- retry once with the
+          // fallback key if one is configured. This only fires when the
+          // primary path has already failed, so it doesn't add latency or
+          // extra API usage on the healthy/common path.
+          if (!chatRes && apiKeyFallback) {
+            chatRes = await raceFirstSuccess(
+              modelChain.map(m => tryModel(m, apiKeyFallback, 12000))
+            )
           }
 
           if (!chatRes) {
-            send({ type: 'text', text: '⚠️ ARIA is temporarily unavailable. Please try again in a moment.' })
+            console.error('[chat] all models failed — primary:', !!apiKey, 'fallback:', !!apiKeyFallback)
+            send({
+              type: 'text',
+              text: '⚠️ ARIA is warming up and didn\'t respond in time — this can happen on the ' +
+                    'first request after a period of inactivity. Please try sending your message again.',
+            })
             send({ type: 'done' })
             controller.close()
             return
@@ -804,6 +934,7 @@ export async function POST(req: NextRequest) {
             ])
 
           let inThinkBlock = false  // stateful DeepSeek <think> stripper
+          let completionText = ''   // accumulated for token-usage reporting only — not stored/persisted here
           while (true) {
             let done: boolean, value: Uint8Array | undefined
             try {
@@ -851,10 +982,28 @@ export async function POST(req: NextRequest) {
                     break
                   }
                 }
-                if (chunk) send({ type: 'text', text: chunk })
+                if (chunk) { send({ type: 'text', text: chunk }); completionText += chunk }
               } catch (_) {}
             }
           }
+
+          // ── TOKEN USAGE (prompt-side counted up-front in windowResult; completion
+          // side counted here from the accumulated stream). This is a client-side
+          // estimate (see tokenizer.ts) — not wired to Supabase persistence yet;
+          // that's the natural next step once this is confirmed useful (needs a
+          // `chat_token_usage` migration — see supabase/migrations/ for a draft).
+          const completionTokens = countTokens(completionText)
+          send({
+            type: 'usage',
+            promptTokens: windowResult.totalPromptTokens,
+            completionTokens,
+            totalTokens: windowResult.totalPromptTokens + completionTokens,
+          })
+          console.info(
+            `[chat] tokens — prompt: ${windowResult.totalPromptTokens} ` +
+            `(system ${windowResult.systemPromptTokens} + history ${windowResult.messagesTokens}), ` +
+            `completion: ${completionTokens}`
+          )
 
           send({ type: 'done' })
         } catch (e: unknown) {
@@ -875,10 +1024,44 @@ export async function POST(req: NextRequest) {
         'Content-Type':  'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection':    'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
     })
   } catch (e: unknown) {
-    const eMsg = e instanceof Error ? e.message : 'Internal server error'
-    return new Response(JSON.stringify({ error: eMsg }), { status: 500 })
+    // Fix: this catch previously returned a plain JSON {error} response.
+    // The frontend's chat client expects either application/json (handled
+    // as a special case) or a text/event-stream SSE body -- a bare JSON
+    // error with a non-JSON content-type slipped through neither path
+    // cleanly and could render as "ARIA not responding" instead of a
+    // clear message. Always return a valid SSE stream here instead.
+    const eName = e instanceof Error ? e.name : 'Unknown'
+    const eMsg  = e instanceof Error ? e.message : String(e)
+    const eStack = e instanceof Error ? e.stack : ''
+    console.error('[chat] UNHANDLED ERROR:', eName, '-', eMsg)
+    if (eStack) console.error('[chat] STACK:', eStack.slice(0, 500))
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      start(controller) {
+        const send = (obj: Record<string, unknown>) => {
+          const payload = `data: ${JSON.stringify(obj)}\n\n`
+          controller.enqueue(encoder.encode(payload))
+        }
+        send({
+          type: 'text',
+          text: '⚠️ Something went wrong on our end. Please try sending your message again.',
+        })
+        send({ type: 'done' })
+        controller.close()
+      },
+    })
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        'Content-Type':  'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection':    'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    })
   }
 }

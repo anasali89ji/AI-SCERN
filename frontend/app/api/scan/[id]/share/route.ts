@@ -11,7 +11,7 @@ export async function POST(
   const { id } = await params
   const { userId } = await auth()
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 })
   }
 
   const { data, error } = await getSupabaseAdmin()
@@ -24,7 +24,7 @@ export async function POST(
 
   if (error || !data) {
     return NextResponse.json(
-      { success: false, error: 'Scan not found or not owned by you' },
+      { success: false, error: { code: 'NOT_FOUND', message: 'Scan not found or not owned by you' } },
       { status: 404 },
     )
   }

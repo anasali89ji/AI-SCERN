@@ -1,67 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
-// Default settings — returned if the DB row doesn't exist yet
-const DEFAULTS = {
-  maintenance_mode:    false,
-  registration_open:   true,
-  free_scans_limit:    10,
-  pro_scans_limit:     500,
-  team_scans_limit:    2000,
-  max_file_size_mb:    10,
-  support_email:       'support@aiscern.com',
-  site_announcement:   '',
-}
+const SETTING_KEYS = [
+  'maintenance_mode', 'registration_open', 'free_scans_limit', 'pro_scans_limit',
+  'max_file_size_mb', 'support_email', 'default_plan', 'referral_credits',
+  'data_retention_days', 'enable_ai_chat', 'enable_image_detection',
+  'enable_audio_detection', 'enable_video_detection', 'require_email_verification'
+]
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
+  const { data } = await db.from('site_settings').select('key, value').in('key', SETTING_KEYS)
 
-  // Flat key-value store pattern
-  const { data } = await db.from('settings').select('key, value')
-  if (!data || data.length === 0) return NextResponse.json(DEFAULTS)
-
-  // Merge DB values over defaults
-  const merged: Record<string, unknown> = { ...DEFAULTS }
-  for (const row of data) {
-    const k = row.key as string
-    const v = row.value as unknown
-    if (k in merged) {
-      // Coerce booleans stored as strings
-      if (typeof DEFAULTS[k as keyof typeof DEFAULTS] === 'boolean') {
-        merged[k] = v === true || v === 'true' || v === 1
-      } else if (typeof DEFAULTS[k as keyof typeof DEFAULTS] === 'number') {
-        merged[k] = Number(v) || 0
-      } else {
-        merged[k] = v
-      }
-    }
+  const settings: Record<string, any> = {}
+  for (const row of data || []) {
+    const val = row.value
+    if (val === 'true') settings[row.key] = true
+    else if (val === 'false') settings[row.key] = false
+    else if (!isNaN(Number(val)) && val !== '') settings[row.key] = Number(val)
+    else settings[row.key] = val
   }
-
-  return NextResponse.json(merged)
+  return NextResponse.json(settings)
 }
 
 export async function PATCH(req: NextRequest) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const body = await req.json() as Record<string, unknown>
-  if (!body || Object.keys(body).length === 0) {
-    return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
-  }
-
+  const body = await req.json()
   const db = getAdminDb()
 
-  // Upsert each key
-  const upserts = Object.entries(body).map(([key, value]) =>
-    db.from('settings').upsert({ key, value }, { onConflict: 'key' })
-  )
-  await Promise.all(upserts)
+  for (const [key, value] of Object.entries(body)) {
+    if (!SETTING_KEYS.includes(key)) continue
+    const { error } = await db.from('site_settings').upsert({ key, value: String(value), updated_at: new Date().toISOString() })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
-  await logAdminAction('settings_changed', null, auth.ip, body)
+  await db.from('admin_audit_log').insert({
+    action: 'settings_updated',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { keys: Object.keys(body) },
+  })
+
   return NextResponse.json({ ok: true })
 }

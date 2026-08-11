@@ -8,12 +8,20 @@ from scipy.stats import kurtosis, skew
 from typing import Dict, Any
 
 
-def frequency_domain_analysis(image_path: str) -> Dict[str, Any]:
-    img = cv2.imread(image_path)
-    if img is None:
-        return {"error": "cannot_read_image"}
+def frequency_domain_analysis(img_array: np.ndarray) -> Dict[str, Any]:
+    """
+    Fix #6 (v4.5.0): accepts an already-decoded img_array (RGB, uint8)
+    instead of re-reading the image from disk. image_engine.py already has
+    the decoded array in memory — every v3 forensic module independently
+    re-reading the same file was 9x redundant disk I/O per request.
+    """
+    if img_array is None or img_array.size == 0:
+        return {"error": "empty_image_array"}
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if img_array.ndim == 3:
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img_array
     h, w = gray.shape
 
     f = np.fft.fft2(gray)
@@ -88,7 +96,17 @@ def detect_grid_artifacts(magnitude_log: np.ndarray) -> float:
     h_peaks = np.max(h_corr[center + 10:center + 100]) if len(h_corr) > center + 100 else 0
     v_peaks = np.max(v_corr[center + 10:center + 100]) if len(v_corr) > center + 100 else 0
 
-    return float((h_peaks + v_peaks) / 2)
+    raw = float((h_peaks + v_peaks) / 2)
+    # CALIBRATION FIX: this autocorrelation-peak-ratio was unbaselined --
+    # measured against 150 real ImageNet photos it sits at 0.35-0.91, median
+    # 0.65, because ordinary photo content (foliage, brick, fabric, repeated
+    # architectural elements) also produces secondary autocorrelation peaks.
+    # It wasn't specific to the DALL-E-style 64px tiling grid it's meant to
+    # catch. Baselined at the empirical real-photo median (0.65) so a typical
+    # real photo now nets ~0, while a genuine sharp tiling-grid peak (which
+    # runs well above natural texture repetition) still registers strongly.
+    baseline = 0.65
+    return float(max(0.0, (raw - baseline) / (1.0 - baseline)))
 
 
 def analyze_diffusion_noise_pattern(magnitude: np.ndarray, high_freq_mask: np.ndarray) -> float:
@@ -96,5 +114,24 @@ def analyze_diffusion_noise_pattern(magnitude: np.ndarray, high_freq_mask: np.nd
     if len(high_freq) == 0:
         return 0.5
     noise_kurtosis = kurtosis(high_freq)
-    score = min(max((noise_kurtosis - 3.0) / 5.0, 0.0), 1.0)
+    # CALIBRATION FIX: scipy.stats.kurtosis(fisher=True) [the default] already
+    # returns EXCESS kurtosis (0 for a Gaussian) -- subtracting 3.0 again was
+    # a double-baseline bug treating the input as raw (Pearson) kurtosis.
+    # Worse, measured against 150 real ImageNet photos, high-frequency FFT
+    # magnitude excess kurtosis ranges ~3-98 (median ~8.8) simply because
+    # real photo spectra are naturally heavy-tailed (strong edges = a few
+    # large spikes among many small values) -- NOT because of diffusion-model
+    # noise. The old linear (k-3)/5 formula saturated to 1.0 for any photo
+    # above k=8, i.e. roughly HALF of ordinary real photos, giving zero
+    # actual discrimination. Rescaled on a log1p axis calibrated to the
+    # empirical real-photo range (log1p(4)..log1p(54)) so a typical real
+    # photo now nets ~0.2-0.3 and only extreme outliers saturate. As with
+    # noise_uniformity/watermark, this signal's true correlation with
+    # AI-diffusion generation (vs. just "how much fine detail/edge content"
+    # an image has) is still unvalidated against a large photorealistic AI
+    # sample -- flagged for follow-up, weight kept modest in the meantime.
+    import math as _m
+    lo, hi = _m.log1p(4.0), _m.log1p(54.0)
+    x = _m.log1p(max(noise_kurtosis, 0.0))
+    score = min(max((x - lo) / (hi - lo), 0.0), 1.0)
     return float(score)

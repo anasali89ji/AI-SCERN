@@ -26,7 +26,8 @@ function localCheckRateLimit(key: string, limit: number, windowMs: number): bool
 // ── Redis client singleton ────────────────────────────────────────────────────
 let _redis: Redis | null = null
 
-function getRedis(): Redis | null {
+/** Exposed for probe-fingerprint.ts — shares the same Redis connection rather than opening a second one. */
+export function getRedis(): Redis | null {
   if (_redis) return _redis
   const url   = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN

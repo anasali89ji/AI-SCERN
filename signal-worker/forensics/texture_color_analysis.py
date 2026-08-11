@@ -8,9 +8,12 @@ from skimage.feature import local_binary_pattern, graycomatrix, graycoprops
 from typing import Dict, Any, List
 
 
-def texture_analysis(image_path: str) -> Dict[str, Any]:
-    img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def texture_analysis(img_array: np.ndarray) -> Dict[str, Any]:
+    """Fix #6 (v4.5.0): accepts img_array (RGB) instead of image_path."""
+    if img_array.ndim == 3:
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img_array
 
     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
     laplacian_var = laplacian.var()
@@ -39,14 +42,25 @@ def texture_analysis(image_path: str) -> Dict[str, Any]:
         "glcm_homogeneity": float(homogeneity),
         "glcm_energy": float(energy),
         "glcm_correlation": float(correlation),
-        "texture_smoothness_score": float(homogeneity / (contrast + 1e-8))
+        # homogeneity/contrast is an unbounded ratio — confirmed empirically to
+        # exceed 1.0 (up to ~1.5x and theoretically unbounded for a literal
+        # flat-color region) for very smooth/low-contrast content. It's
+        # consumed downstream as a [0,1]-scaled suspicion score with no other
+        # clamping in the pipeline, so left unclamped it could contribute more
+        # than its intended 10% weight share to the composite. Clamped here.
+        "texture_smoothness_score": float(min(homogeneity / (contrast + 1e-8), 1.0))
     }
 
 
-def color_analysis(image_path: str) -> Dict[str, Any]:
-    img = cv2.imread(image_path)
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def color_analysis(img_array: np.ndarray) -> Dict[str, Any]:
+    """Fix #6 (v4.5.0): accepts img_array (RGB) instead of image_path."""
+    if img_array.ndim == 3:
+        img_rgb = img_array  # already RGB
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+    else:
+        img_rgb = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
+    img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
 
     return {
         "rgb_mean": [float(np.mean(img_rgb[:, :, i])) for i in range(3)],
@@ -63,9 +77,12 @@ def color_analysis(image_path: str) -> Dict[str, Any]:
     }
 
 
-def illumination_consistency(image_path: str) -> Dict[str, Any]:
-    img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def illumination_consistency(img_array: np.ndarray) -> Dict[str, Any]:
+    """Fix #6 (v4.5.0): accepts img_array (RGB) instead of image_path."""
+    if img_array.ndim == 3:
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img_array
     h, w = gray.shape
     regions = []
 

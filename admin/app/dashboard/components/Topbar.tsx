@@ -1,50 +1,53 @@
 'use client'
-import { Clock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Bell, Search, Activity } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+interface TopbarProps { activeTab: string }
 
 const TAB_LABELS: Record<string, string> = {
   overview: 'Overview', analytics: 'Analytics', marketing: 'Marketing', revenue: 'Revenue',
   users: 'Users', support: 'Support Tickets', apikeys: 'API Keys', pipeline: 'Pipeline',
-  flags: 'Feature Flags', announcements: 'Announcements', health: 'Health Monitor',
+  flags: 'Feature Flags', announcements: 'Announcements', notifications: 'Notifications',
+  health: 'Health Monitor', costsummary: 'Pipeline Cost Summary',
   errors: 'Error Logs', audit: 'Audit Log', settings: 'Settings',
+  scans: 'Live Scan Monitor', 'content-moderation': 'Content Moderation',
+  webhooks: 'Webhooks', 'rate-limits': 'Rate Limit Monitor',
+  backup: 'Backup & Restore', 'admin-users': 'Admin Users',
+  branding: 'Branding', maintenance: 'Maintenance Mode',
 }
 
-interface Props { activeTab: string; healthy?: boolean | null }
-
-export default function Topbar({ activeTab, healthy }: Props) {
-  const [time, setTime] = useState('')
+export default function Topbar({ activeTab }: TopbarProps) {
+  const [liveUsers, setLiveUsers] = useState(0)
+  const [notifications, setNotifications] = useState(0)
 
   useEffect(() => {
-    const tick = () => setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
+    const eventSource = new EventSource('/api/realtime')
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.type === 'user_signup') setLiveUsers(prev => prev + 1)
+    }
+    return () => eventSource.close()
   }, [])
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-surface/80 backdrop-blur-sm flex-shrink-0">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm pl-10 lg:pl-0">
-        <span className="text-text-disabled">Dashboard</span>
-        <span className="text-text-disabled">/</span>
-        <span className="text-text-primary font-semibold">{TAB_LABELS[activeTab] ?? activeTab}</span>
+    <header className="flex items-center justify-between px-6 py-3 bg-[#0a0a12] border-b border-[#1c1c2e]">
+      <div>
+        <h1 className="text-lg font-bold text-white">{TAB_LABELS[activeTab] || activeTab}</h1>
+        <p className="text-[10px] text-text-muted">Aiscern Admin Console v2.0</p>
       </div>
-
-      {/* Right side */}
       <div className="flex items-center gap-4">
-        {/* System status */}
-        {healthy !== null && healthy !== undefined && (
-          <div className={`hidden sm:flex items-center gap-1.5 text-xs font-medium ${healthy ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {healthy
-              ? <><CheckCircle className="w-3.5 h-3.5" /><span>All systems operational</span></>
-              : <><AlertTriangle className="w-3.5 h-3.5" /><span>System issues detected</span></>
-            }
-          </div>
-        )}
-        {/* Clock */}
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-text-muted font-mono">
-          <Clock className="w-3.5 h-3.5" />
-          <span>{time}</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border">
+          <Activity className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-xs text-text-secondary">{liveUsers} new today</span>
+        </div>
+        <div className="relative">
+          <Bell className="w-5 h-5 text-text-muted" />
+          {notifications > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white flex items-center justify-center">{notifications}</span>
+          )}
+        </div>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center text-white text-xs font-bold">
+          A
         </div>
       </div>
     </header>

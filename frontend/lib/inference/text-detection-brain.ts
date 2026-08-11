@@ -1,17 +1,29 @@
 // ════════════════════════════════════════════════════════════════════════════
-// AISCERN — Text Detection Brain v1.0
+// AISCERN — Text Detection Brain v1.1
 // Deep embedded knowledge engine for AI vs human text classification.
 // Replaces Gemini as the PRIMARY text detector — zero API calls, zero latency.
 //
 // Architecture:
-//   1. Phrase Fingerprint Analysis   — 200+ exact AI tells with TF-IDF weights
-//   2. Structural Pattern Analysis   — paragraph/sentence uniformity
-//   3. Vocabulary & Register Analysis— Zipf deviation, hedging density
-//   4. Burstiness & Rhythm Analysis  — sentence length variance
-//   5. Semantic Coherence Analysis   — topical drift, coherence without life
-//   6. Human-Writing Signal Analysis — contractions, typos, register breaks
+//   1. Phrase Fingerprint Analysis     — 200+ exact AI tells with TF-IDF weights
+//   2. Structural Pattern Analysis     — paragraph/sentence uniformity
+//   3. Readability Consistency         — Flesch-Kincaid / Gunning Fog uniformity
+//                                         across paragraphs (added v1.1)
+//   4. Vocabulary & Register Analysis  — Zipf deviation, hedging density,
+//                                         TTR + MTLD lexical diversity (v1.1)
+//   5. Burstiness & Rhythm Analysis    — sentence length variance
+//   6. Semantic Coherence Analysis     — topical drift, coherence without life,
+//                                         entity callback uniformity (v1.1)
+//   7. Human-Writing Signal Analysis   — contractions, typos, register breaks
 //
-// Returns: { score: 0–1, signals: Signal[], findings: string[] }
+// v1.1 also adds cross-signal divergence detection: when strongly
+// AI-leaning and strongly human-leaning signals coexist, the composite
+// score alone can look "borderline" while actually hiding real conflicting
+// evidence. TextBrainResult.isDivergent flags this so downstream consumers
+// (API responses, ARIA, ensemble scoring) can treat such results with
+// extra caution instead of presenting a single confident-looking number.
+//
+// Returns: { score, signals, findings, verdict, divergence?, isDivergent? }
+// Tests: text-detection-brain.test.ts (run via `npm run test`)
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface BrainSignal {
@@ -23,10 +35,12 @@ export interface BrainSignal {
 }
 
 export interface TextBrainResult {
-  score:     number          // 0–1 composite AI probability
-  signals:   BrainSignal[]
-  findings:  string[]        // human-readable top findings for ARIA
-  verdict:   'AI' | 'HUMAN' | 'UNCERTAIN'
+  score:       number          // 0–1 composite AI probability
+  signals:     BrainSignal[]
+  findings:    string[]        // human-readable top findings for ARIA
+  verdict:     'AI' | 'HUMAN' | 'UNCERTAIN'
+  divergence?: number          // 0–1: how much signals disagree with each other (weighted std dev)
+  isDivergent?: boolean        // true when strong AI-leaning and strong Human-leaning signals coexist
 }
 
 // ── CATEGORY 1: AI PHRASE FINGERPRINTS ───────────────────────────────────────
@@ -416,7 +430,120 @@ function analyzeStructure(text: string): BrainSignal[] {
   return signals
 }
 
+// ── CATEGORY 3b: READABILITY CONSISTENCY ─────────────────────────────────────
+
+/** Rough syllable counter (vowel-group heuristic, good enough for readability formulas). */
+function countSyllables(word: string): number {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '')
+  if (w.length === 0) return 0
+  if (w.length <= 3) return 1
+  const stripped = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '')
+  const groups = stripped.match(/[aeiouy]{1,2}/g)
+  return Math.max(1, groups ? groups.length : 1)
+}
+
+function fleschKincaidGrade(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const syllables = words.reduce((s, w) => s + countSyllables(w), 0)
+  return 0.39 * (words.length / sentences.length) + 11.8 * (syllables / words.length) - 15.59
+}
+
+function gunningFog(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().split(/\s+/).length > 2)
+  const words = text.match(/\b[a-zA-Z']+\b/g) || []
+  if (sentences.length === 0 || words.length === 0) return 0
+  const complexWords = words.filter(w => countSyllables(w) >= 3).length
+  return 0.4 * ((words.length / sentences.length) + 100 * (complexWords / words.length))
+}
+
+/**
+ * Readability Consistency — AI text tends to hold a near-identical
+ * reading-grade level across every paragraph. We compute Flesch-Kincaid
+ * grade and Gunning Fog per paragraph and flag suspiciously low variance.
+ */
+function analyzeReadabilityConsistency(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.split(/\s+/).length >= 25)
+  if (paragraphs.length < 4) return signals
+
+  const fkGrades = paragraphs.map(fleschKincaidGrade)
+  const fogScores = paragraphs.map(gunningFog)
+
+  const stdDev = (arr: number[]): number => {
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length
+    const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length
+    return Math.sqrt(variance)
+  }
+
+  const fkStd  = stdDev(fkGrades)
+  const fogStd = stdDev(fogScores)
+
+  if (fkGrades.length >= 4) {
+    const fkScore = fkStd < 1.2 ? 0.85 : fkStd < 1.8 ? 0.68 : fkStd < 2.5 ? 0.45 : 0.22
+    signals.push({
+      name: 'Flesch-Kincaid Consistency',
+      category: 'structure',
+      score: fkScore,
+      weight: 0.07,
+      evidence: `grade-level std dev=${fkStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <1.8, Human: >2.5)`,
+    })
+  }
+
+  if (fogScores.length >= 4) {
+    const fogScore = fogStd < 1.5 ? 0.82 : fogStd < 2.5 ? 0.65 : fogStd < 3.5 ? 0.42 : 0.20
+    signals.push({
+      name: 'Gunning Fog Consistency',
+      category: 'structure',
+      score: fogScore,
+      weight: 0.06,
+      evidence: `Gunning Fog std dev=${fogStd.toFixed(2)} across ${paragraphs.length} paragraphs (AI: <2.5, Human: >3.5)`,
+    })
+  }
+
+  return signals
+}
+
 // ── CATEGORY 4: VOCABULARY ANALYSIS ──────────────────────────────────────────
+
+/**
+ * MTLD (Measure of Textual Lexical Diversity) — McCarthy & Jarvis (2010).
+ * Unlike TTR, MTLD is stable across text lengths: it walks the token
+ * sequence accumulating a running type-token ratio and "factors out" every
+ * time that ratio drops to a threshold (0.72), then does the same in
+ * reverse and averages the two factor counts. Higher MTLD = more diverse
+ * vocabulary sustained over the text, independent of how long the text is.
+ */
+function computeMTLD(tokens: string[], threshold = 0.72): number {
+  if (tokens.length < 10) return 0
+
+  const factorCount = (seq: string[]): number => {
+    let factors = 0
+    let seen = new Set<string>()
+    let tokenCount = 0
+    for (const tok of seq) {
+      seen.add(tok)
+      tokenCount++
+      const ttr = seen.size / tokenCount
+      if (ttr <= threshold) {
+        factors++
+        seen = new Set<string>()
+        tokenCount = 0
+      }
+    }
+    if (tokenCount > 0) {
+      const remainderTTR = seen.size / tokenCount
+      const partial = (1 - remainderTTR) / (1 - threshold)
+      factors += Math.max(0, Math.min(1, partial))
+    }
+    return factors > 0 ? seq.length / factors : seq.length
+  }
+
+  const forward  = factorCount(tokens)
+  const backward = factorCount([...tokens].reverse())
+  return (forward + backward) / 2
+}
 
 function analyzeVocabulary(text: string): BrainSignal[] {
   const signals: BrainSignal[] = []
@@ -438,6 +565,19 @@ function analyzeVocabulary(text: string): BrainSignal[] {
     weight: 0.08,
     evidence: `TTR=${ttr.toFixed(3)} (${uniqueWords} unique / ${words.length} total words)`,
   })
+
+  // --- MTLD (length-independent lexical diversity) ---
+  if (words.length >= 60) {
+    const mtld = computeMTLD(words)
+    const mtldScore = mtld < 40 ? 0.82 : mtld < 55 ? 0.66 : mtld < 75 ? 0.45 : mtld < 100 ? 0.30 : 0.20
+    signals.push({
+      name: 'MTLD Lexical Diversity',
+      category: 'vocabulary',
+      score: mtldScore,
+      weight: 0.08,
+      evidence: `MTLD=${mtld.toFixed(1)} (length-independent; AI: <55, Human: >75)`,
+    })
+  }
 
   // --- Hedging language density ---
   const hedgePhrases = [
@@ -519,12 +659,19 @@ function analyzeVocabulary(text: string): BrainSignal[] {
   const exclRatio      = exclamations / sentences
   const questRatio     = questionMarks / sentences
   // AI formal: exclRatio < 0.02, questRatio < 0.05
-  const punctScore     = (exclRatio > 0.05 || questRatio > 0.08) ? 0.25 : exclRatio < 0.01 && questRatio < 0.03 ? 0.78 : 0.50
+  // Calibration fix (audit day): plenty of ordinary human writing (plain
+  // narrative, casual recounting of events) simply doesn't use exclamation
+  // marks or rhetorical questions — that's not distinctly AI behavior, it's
+  // just unexcited prose. Softened the "no punctuation variety" branch from
+  // a strong AI lean (0.78) to a mild one, and reduced its weight, since
+  // this feature alone is weak evidence without corroboration from other
+  // signals.
+  const punctScore     = (exclRatio > 0.05 || questRatio > 0.08) ? 0.25 : exclRatio < 0.01 && questRatio < 0.03 ? 0.58 : 0.48
   signals.push({
     name: 'Punctuation Naturalness',
     category: 'vocabulary',
     score: punctScore,
-    weight: 0.06,
+    weight: 0.04,
     evidence: `!: ${exclRatio.toFixed(3)}/sentence, ?: ${questRatio.toFixed(3)}/sentence`,
   })
 
@@ -596,9 +743,16 @@ function analyzePhraseFingerprints(text: string): BrainSignal[] {
     }
   }
 
-  const rawPhraseScore = totalWeight > 0 ? Math.min(1, totalScore / totalWeight) : 0.5
+  // Calibration fix (audit day): previously defaulted to 0.5 (neutral) when
+  // zero AI phrases matched — but with this signal carrying 30% of total
+  // weight, that neutral default was systematically dragging plain,
+  // ordinary human text (which naturally contains none of these AI
+  // fingerprint phrases) upward toward "uncertain/AI". Absence of AI
+  // phrases is itself informative and should default lower, and genuine
+  // human-phrase evidence should count for more.
+  const rawPhraseScore = totalWeight > 0 ? Math.min(1, totalScore / totalWeight) : 0.30
   const humanPenalty   = humanWeight > 0 ? humanScore / humanWeight : 0
-  const phraseScore    = Math.max(0, Math.min(1, rawPhraseScore - humanPenalty * 0.4))
+  const phraseScore    = Math.max(0, Math.min(1, rawPhraseScore - humanPenalty * 0.6))
 
   return [{
     name: 'AI Phrase Fingerprints',
@@ -626,23 +780,33 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
     .filter(n => !['The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of', 'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They'].includes(n))
     .length
   const groundingDensity  = (specificNumbers + properNouns) / (wordCount / 100)
-  // AI: low grounding density (generic claims, few specifics). Human: higher
-  const groundingScore    = groundingDensity < 1 ? 0.82 : groundingDensity < 3 ? 0.65 : groundingDensity < 6 ? 0.42 : 0.22
-  signals.push({
-    name: 'Grounding Density',
-    category: 'semantic',
-    score: groundingScore,
-    weight: 0.09,
-    evidence: `${specificNumbers} numbers, ${properNouns} proper nouns (${groundingDensity.toFixed(2)}/100 words)`,
-  })
-
-  // --- Personal anecdote / experiential language ---
-  const anecdoteSignals = [
+  // Calibration fix (audit day): the original bands treated low grounding
+  // density (few numbers/names) as strongly AI-like — but that conflates
+  // "citation-style specificity" (essay register) with narrative grounding.
+  // Casual personal storytelling ("I tried making sourdough...") is
+  // genuinely grounded in lived experience even with zero proper nouns or
+  // statistics. Softened the bands and added a discount when personal
+  // anecdote language is present (checked below), since that's a stronger,
+  // more direct signal of human narrative grounding than raw noun-counting.
+  const anecdoteSignalsForGrounding = [
     'i remember', 'i once', 'i used to', 'i saw', 'i heard', 'i experienced',
     'i was there', 'i met', 'i tried', 'i read about', 'i found', 'i learned',
     'my experience', 'my opinion', 'my perspective', 'i believe', 'i think',
     'i feel', 'i noticed', 'i realized', 'i discovered', 'in my experience',
   ]
+  const hasAnecdoteLanguage = anecdoteSignalsForGrounding.some(a => lower.includes(a))
+  let groundingScore = groundingDensity < 1 ? 0.62 : groundingDensity < 3 ? 0.50 : groundingDensity < 6 ? 0.38 : 0.22
+  if (hasAnecdoteLanguage) groundingScore = Math.max(0.15, groundingScore - 0.20)
+  signals.push({
+    name: 'Grounding Density',
+    category: 'semantic',
+    score: groundingScore,
+    weight: 0.06,
+    evidence: `${specificNumbers} numbers, ${properNouns} proper nouns (${groundingDensity.toFixed(2)}/100 words)${hasAnecdoteLanguage ? ' — discounted, personal anecdote language present' : ''}`,
+  })
+
+  // --- Personal anecdote / experiential language ---
+  const anecdoteSignals = anecdoteSignalsForGrounding
   const anecdoteCount = anecdoteSignals.reduce((n, a) => n + (lower.includes(a) ? 1 : 0), 0)
   if (anecdoteCount > 0) {
     signals.push({
@@ -673,19 +837,379 @@ function analyzeSemanticCoherence(text: string): BrainSignal[] {
     })
   }
 
+  // --- Entity recurrence-pattern uniformity (coreference-lite) ---
+  const paragraphsForEntities = text.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 40)
+  if (paragraphsForEntities.length >= 4) {
+    const STOPWORD_ENTITIES = new Set([
+      'The', 'A', 'An', 'In', 'On', 'At', 'By', 'To', 'For', 'Of',
+      'And', 'But', 'Or', 'I', 'As', 'It', 'He', 'She', 'We', 'They', 'This', 'That', 'These', 'Those',
+      // Common sentence-initial transition/adverb words — these were being
+      // misidentified as proper-noun entities because they're capitalized
+      // at the start of a sentence, corrupting the callback-ratio signal.
+      'However', 'Additionally', 'Therefore', 'Meanwhile', 'Furthermore', 'Moreover',
+      'Nevertheless', 'Nonetheless', 'Consequently', 'Accordingly', 'Thus', 'Hence',
+      'Also', 'Then', 'So', 'Now', 'Here', 'There', 'Overall', 'Finally', 'First',
+      'Second', 'Third', 'Next', 'Later', 'Still', 'Indeed', 'Instead', 'Otherwise',
+      'Similarly', 'Conversely', 'Regardless', 'Ultimately', 'Notably', 'Specifically',
+      'Generally', 'Certainly', 'Clearly', 'Importantly', 'Interestingly', 'Unfortunately',
+      'Fortunately', 'Perhaps', 'Sometimes', 'Often', 'Again', 'Yet', 'While', 'When',
+      'If', 'Because', 'Since', 'Although', 'Though', 'Despite', 'Given',
+    ])
+    const extractEntities = (p: string): string[] =>
+      (p.match(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g) || []).filter(n => !STOPWORD_ENTITIES.has(n))
+
+    const seen = new Set<string>()
+    const callbackRatios: number[] = []
+    for (const p of paragraphsForEntities) {
+      const entities = extractEntities(p)
+      if (entities.length === 0) continue
+      const callbacks = entities.filter(e => seen.has(e)).length
+      callbackRatios.push(callbacks / entities.length)
+      entities.forEach(e => seen.add(e))
+    }
+
+    if (callbackRatios.length >= 4) {
+      const mean = callbackRatios.reduce((a, b) => a + b, 0) / callbackRatios.length
+      const variance = callbackRatios.reduce((s, v) => s + (v - mean) ** 2, 0) / callbackRatios.length
+      const stdDev = Math.sqrt(variance)
+      const entityScore = stdDev < 0.10 ? 0.78 : stdDev < 0.15 ? 0.62 : stdDev < 0.22 ? 0.42 : 0.25
+      signals.push({
+        name: 'Entity Callback Uniformity',
+        category: 'semantic',
+        score: entityScore,
+        weight: 0.07,
+        evidence: `entity callback-ratio std dev=${stdDev.toFixed(3)} across ${callbackRatios.length} paragraphs (AI: <0.15, Human: >0.22)`,
+      })
+    }
+  }
+
   return signals
 }
 
-// ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
+// ── EXTENSION: Long-text / PDF chunk analysis ─────────────────────────────────
+// Ported from enhancement/deep-detection-v3 (audit day). Not yet wired into
+// any PDF/long-document route on main — added as an available utility for
+// when that integration work happens.
+
+export interface ChunkAnalysisResult {
+  chunkScores:   number[]
+  meanScore:     number
+  highAIChunks:  number
+  chunkFindings: string[]
+}
+
+/**
+ * analyzeTextInChunks — splits long text into overlapping 1000-word chunks,
+ * runs the brain on each chunk, and returns aggregate statistics.
+ * Intended for long-document (PDF) scanning once wired into that route.
+ */
+export function analyzeTextInChunks(text: string, chunkSize = 800, overlap = 100): ChunkAnalysisResult {
+  const words  = text.split(/\s+/)
+  const chunks: string[] = []
+
+  if (words.length <= chunkSize) {
+    chunks.push(text)
+  } else {
+    for (let i = 0; i < words.length; i += chunkSize - overlap) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '))
+      if (i + chunkSize >= words.length) break
+    }
+  }
+
+  const chunkScores: number[] = []
+  for (const chunk of chunks) {
+    if (chunk.split(/\s+/).length < 30) continue
+    const result = analyzeTextWithBrain(chunk)
+    chunkScores.push(result.score)
+  }
+
+  if (!chunkScores.length) return { chunkScores: [0.5], meanScore: 0.5, highAIChunks: 0, chunkFindings: [] }
+
+  const meanScore    = chunkScores.reduce((a, b) => a + b, 0) / chunkScores.length
+  const highAIChunks = chunkScores.filter(s => s > 0.65).length
+  const maxScore     = Math.max(...chunkScores)
+  const minScore     = Math.min(...chunkScores)
+
+  const chunkFindings = [
+    `Analysed ${chunkScores.length} text segments of ~${chunkSize} words each`,
+    `Mean AI score: ${(meanScore * 100).toFixed(1)}% | Max: ${(maxScore * 100).toFixed(0)}% | Min: ${(minScore * 100).toFixed(0)}%`,
+    `High-AI segments: ${highAIChunks}/${chunkScores.length} (>${65}%)`,
+  ]
+
+  return { chunkScores, meanScore, highAIChunks, chunkFindings }
+}
+
+// ── EXTENSION: Academic Assignment Pattern Detection ─────────────────────────
+// Ported from enhancement/deep-detection-v3 (audit day) — this module already
+// existed and was tested there but had never made it into production.
+
+const ACADEMIC_AI_PHRASES: Array<[string, number]> = [
+  // Assignment opener patterns
+  ['in this essay, i will',          0.97],
+  ['in this assignment, i will',     0.97],
+  ['this essay will explore',        0.96],
+  ['this paper will discuss',        0.96],
+  ['this essay aims to',             0.96],
+  ['this assignment will examine',   0.97],
+  ['the purpose of this essay',      0.95],
+  ['the purpose of this paper',      0.95],
+  ['the aim of this report',         0.95],
+  ['this report will analyze',       0.96],
+  ['this report will analyse',       0.96],
+  // Academic hedging + AI phrases
+  ['it can be argued that',          0.94],
+  ['one could argue that',           0.93],
+  ['there is no denying that',       0.92],
+  ['it is widely accepted that',     0.94],
+  ['scholars have noted that',       0.93],
+  ['research suggests that',         0.88],
+  ['studies have shown that',        0.87],
+  ['evidence suggests that',         0.89],
+  ['according to scholars',          0.91],
+  ['academic literature suggests',   0.93],
+  ['in academic circles',            0.92],
+  // AI conclusion patterns for assignments
+  ['in conclusion, this essay has',  0.97],
+  ['in conclusion, this paper',      0.97],
+  ['this essay has demonstrated',    0.96],
+  ['this paper has shown that',      0.96],
+  ['as this essay has argued',       0.96],
+  ['as this paper has demonstrated', 0.97],
+  ['having examined the evidence',   0.94],
+  ['based on the evidence presented', 0.92],
+  // Over-structured academic AI patterns
+  ['firstly,',                       0.84],
+  ['secondly,',                      0.88],
+  ['thirdly,',                       0.92],
+  ['lastly,',                        0.86],
+  ['to begin with,',                 0.87],
+  ['in the first instance,',         0.90],
+  ['to conclude,',                   0.88],
+  ['in light of the above',          0.91],
+  ['taking everything into account', 0.92],
+  ['all things considered,',         0.90],
+]
+
+function analyzeAcademicPatterns(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const lower     = text.toLowerCase()
+  const wordCount = text.split(/\s+/).length
+
+  // Score academic AI phrases
+  let acadTotal = 0, acadWeight = 0
+  const acadFound: string[] = []
+  for (const [phrase, w] of ACADEMIC_AI_PHRASES) {
+    const cnt = lower.split(phrase).length - 1
+    if (cnt > 0) {
+      acadTotal  += w * Math.min(1, cnt / 2)
+      acadWeight += w
+      acadFound.push(`"${phrase}"`)
+    }
+  }
+  if (acadWeight > 0) {
+    const phraseScore = Math.min(1, acadTotal / acadWeight)
+    signals.push({
+      name:     'Academic AI Phrase Patterns',
+      category: 'phrase',
+      score:    phraseScore,
+      weight:   0.18,
+      evidence: acadFound.length > 0
+        ? `${acadFound.length} academic AI phrase(s): ${acadFound.slice(0, 4).join(', ')}`
+        : 'No academic AI phrases',
+    })
+  }
+
+  // Citation abuse detection: AI over-cites with (Author, Year) patterns
+  const citations = (text.match(/\([A-Z][a-z]+,?\s+\d{4}\)/g) || []).length
+  const citDensity = citations / Math.max(1, wordCount / 100)
+  if (citDensity > 0) {
+    // Normal academic work: 1–3 citations per 100 words. AI: sometimes over-cites, sometimes 0
+    const citScore = citDensity === 0 ? 0.72 : citDensity > 5 ? 0.80 : 0.35
+    signals.push({
+      name:     'Citation Pattern Consistency',
+      category: 'structure',
+      score:    citScore,
+      weight:   0.07,
+      evidence: `${citations} citations (${citDensity.toFixed(2)}/100 words)`,
+    })
+  }
+
+  // Paragraph opener variety analysis (AI starts paragraphs in predictable ways)
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim().length > 50)
+  if (paragraphs.length >= 3) {
+    const openers = paragraphs.map(p => {
+      const firstWord = p.trim().split(/\s+/)[0]?.toLowerCase() ?? ''
+      return firstWord
+    })
+    const uniqueOpeners = new Set(openers).size
+    const openerVariety = uniqueOpeners / openers.length
+    // AI: typically low opener variety (many start with "The", "In", "This", "Furthermore")
+    const aiOpeners = ['the', 'in', 'this', 'furthermore', 'moreover', 'additionally',
+      'however', 'another', 'finally', 'firstly', 'secondly', 'thirdly', 'lastly', 'overall']
+    const aiOpenerCount = openers.filter(o => aiOpeners.includes(o)).length
+    const aiOpenerRatio = aiOpenerCount / openers.length
+    const openerScore = openerVariety < 0.35 ? 0.85 : openerVariety < 0.55 ? 0.65 : 0.30
+    const aiOpenerScore = aiOpenerRatio > 0.80 ? 0.88 : aiOpenerRatio > 0.65 ? 0.72 : 0.35
+    signals.push({
+      name:     'Paragraph Opener Variety',
+      category: 'structure',
+      score:    openerScore * 0.5 + aiOpenerScore * 0.5,
+      weight:   0.09,
+      evidence: `opener variety=${openerVariety.toFixed(2)} | AI openers=${(aiOpenerRatio*100).toFixed(0)}% (AI: >65%)`,
+    })
+  }
+
+  // Passive voice abuse (AI academic writing overuses passive)
+  const passivePatterns = [
+    /\b(is|are|was|were|be|been|being)\s+([a-z]+(ed|en))\b/g,
+    /\b(has|have|had)\s+been\s+[a-z]+(ed|en)\b/g,
+  ]
+  let passiveCount = 0
+  for (const pattern of passivePatterns) {
+    passiveCount += (text.match(pattern) || []).length
+  }
+  const passiveDensity = passiveCount / Math.max(1, wordCount / 100)
+  if (passiveDensity > 0.5) {
+    const passiveScore = passiveDensity > 5 ? 0.82 : passiveDensity > 3 ? 0.66 : passiveDensity > 1.5 ? 0.50 : 0.28
+    signals.push({
+      name:     'Passive Voice Density',
+      category: 'structure',
+      score:    passiveScore,
+      weight:   0.08,
+      evidence: `${passiveCount} passive constructions (${passiveDensity.toFixed(2)}/100 words) — AI academic overuse`,
+    })
+  }
+
+  return signals
+}
+
+// ── EXTENSION: Cross-paragraph repetition detection ──────────────────────────
+// AI text repeats key phrases and sentence openers across different paragraphs
+// in a way humans rarely do. This is a strong AI signal in long documents.
+
+function analyzeCrossParaRepetition(text: string): BrainSignal | null {
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim().split(/\s+/).length > 20)
+  if (paragraphs.length < 3) return null
+
+  // Extract 3-grams from each paragraph
+  const getTrigramSet = (para: string): Set<string> => {
+    const words = para.toLowerCase().match(/\b[a-z]{3,}\b/g) || []
+    const trigrams = new Set<string>()
+    for (let i = 0; i < words.length - 2; i++) {
+      trigrams.add(`${words[i]} ${words[i+1]} ${words[i+2]}`)
+    }
+    return trigrams
+  }
+
+  const trigrams = paragraphs.map(getTrigramSet)
+  let totalOverlap = 0, comparisons = 0
+
+  for (let i = 0; i < trigrams.length; i++) {
+    for (let j = i + 1; j < trigrams.length; j++) {
+      const aSize = trigrams[i].size, bSize = trigrams[j].size
+      if (!aSize || !bSize) continue
+      let shared = 0
+      for (const t of trigrams[i]) { if (trigrams[j].has(t)) shared++ }
+      const jaccard = shared / (aSize + bSize - shared)
+      totalOverlap += jaccard
+      comparisons++
+    }
+  }
+
+  if (!comparisons) return null
+  const avgOverlap = totalOverlap / comparisons
+  // AI: avg inter-para trigram Jaccard typically 0.05–0.15 (more repetition)
+  // Human: 0.01–0.05 (more varied vocabulary and sentence structures)
+  const repScore = avgOverlap > 0.12 ? 0.88 : avgOverlap > 0.07 ? 0.72 : avgOverlap > 0.04 ? 0.50 : 0.22
+  return {
+    name:     'Cross-Paragraph Repetition',
+    category: 'structure',
+    score:    repScore,
+    weight:   0.10,
+    evidence: `avg Jaccard 3-gram overlap=${avgOverlap.toFixed(4)} across ${comparisons} para pairs (AI: >0.07)`,
+  }
+}
+
+// ── EXTENSION: Statistical text features ─────────────────────────────────────
+
+function analyzeStatisticalFeatures(text: string): BrainSignal[] {
+  const signals: BrainSignal[] = []
+  const words = text.match(/\b[a-z]{2,}\b/gi) || []
+  if (words.length < 40) return signals
+
+  // Average word length (AI uses slightly longer words on average)
+  const avgWL = words.reduce((s, w) => s + w.length, 0) / words.length
+  const awlScore = avgWL > 6.2 ? 0.80 : avgWL > 5.4 ? 0.60 : avgWL < 4.2 ? 0.22 : 0.42
+  signals.push({
+    name:     'Average Word Length',
+    category: 'vocabulary',
+    score:    awlScore,
+    weight:   0.05,
+    evidence: `avg word length=${avgWL.toFixed(2)} chars (AI: >5.4, Human casual: <4.5)`,
+  })
+
+  // Sentence opener word-type distribution
+  // AI: very high rate of sentence-initial transition adverbs
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.length > 20)
+  if (sentences.length >= 4) {
+    const transAdverbs = ['however', 'therefore', 'furthermore', 'moreover', 'additionally',
+      'consequently', 'subsequently', 'nevertheless', 'nonetheless', 'ultimately',
+      'importantly', 'significantly', 'notably', 'interestingly', 'essentially']
+    const transOpeners = sentences.filter(s => {
+      const first = s.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '') || ''
+      return transAdverbs.includes(first)
+    }).length
+    const transRatio = transOpeners / sentences.length
+    if (transRatio > 0.05) {
+      const transScore = transRatio > 0.30 ? 0.90 : transRatio > 0.20 ? 0.76 : transRatio > 0.12 ? 0.58 : 0.30
+      signals.push({
+        name:     'Transition Adverb Sentence Openers',
+        category: 'structure',
+        score:    transScore,
+        weight:   0.09,
+        evidence: `${transOpeners}/${sentences.length} sentences start with transition adverb (${(transRatio*100).toFixed(0)}%) (AI: >20%)`,
+      })
+    }
+  }
+
+  // Pronoun distribution (AI: more "it", "they", less "I", "we", more "one")
+  const lowerText = text.toLowerCase()
+  const iCount  = (lowerText.match(/\bi\b/g) || []).length
+  const weCount = (lowerText.match(/\bwe\b/g) || []).length
+  const oneCount = (lowerText.match(/\bone\b/g) || []).length
+  const theyCount = (lowerText.match(/\bthey\b/g) || []).length
+  const pronounTotal = iCount + weCount + oneCount + theyCount
+  const oneRatio = pronounTotal > 0 ? oneCount / pronounTotal : 0
+  if (oneRatio > 0.05) {
+    const oneScore = oneRatio > 0.25 ? 0.88 : oneRatio > 0.15 ? 0.72 : 0.45
+    signals.push({
+      name:     'Impersonal "One" Pronoun Usage',
+      category: 'vocabulary',
+      score:    oneScore,
+      weight:   0.06,
+      evidence: `"one" = ${(oneRatio*100).toFixed(0)}% of personal pronouns (AI academic writing overuse)`,
+    })
+  }
+
+  return signals
+}
 
 export function analyzeTextWithBrain(text: string): TextBrainResult {
   // Run all analysis categories in one pass
-  const phraseSignals    = analyzePhraseFingerprints(text)
-  const structureSignals = analyzeStructure(text)
-  const vocabSignals     = analyzeVocabulary(text)
-  const semanticSignals  = analyzeSemanticCoherence(text)
+  const phraseSignals       = analyzePhraseFingerprints(text)
+  const structureSignals    = analyzeStructure(text)
+  const vocabSignals        = analyzeVocabulary(text)
+  const semanticSignals     = analyzeSemanticCoherence(text)
+  const readabilitySignals  = analyzeReadabilityConsistency(text)
+  const academicSignals     = analyzeAcademicPatterns(text)
+  const statsSignals        = analyzeStatisticalFeatures(text)
+  const repSignal           = analyzeCrossParaRepetition(text)
+  const repSignals          = repSignal ? [repSignal] : []
 
-  const allSignals = [...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals]
+  const allSignals = [
+    ...phraseSignals, ...structureSignals, ...vocabSignals, ...semanticSignals, ...readabilitySignals,
+    ...academicSignals, ...statsSignals, ...repSignals,
+  ]
 
   // Weighted average
   const totalWeight = allSignals.reduce((s, sig) => s + sig.weight, 0) || 1
@@ -695,12 +1219,29 @@ export function analyzeTextWithBrain(text: string): TextBrainResult {
   const score   = Math.max(0.01, Math.min(0.99, rawScore))
   const verdict = score > 0.65 ? 'AI' : score < 0.38 ? 'HUMAN' : 'UNCERTAIN'
 
+  // --- Cross-signal divergence ---
+  // A weighted average alone can hide real disagreement: five signals all
+  // scoring 0.5 and one signal at 0.95 + one at 0.05 can land on the exact
+  // same composite score, but they describe very different situations —
+  // the first is "genuinely ambiguous everywhere," the second is "strong,
+  // conflicting evidence in both directions." We surface that difference
+  // instead of quietly averaging it away.
+  const divergence = totalWeight > 0
+    ? Math.sqrt(allSignals.reduce((s, sig) => s + sig.weight * (sig.score - score) ** 2, 0) / totalWeight)
+    : 0
+  const strongAI    = allSignals.filter(s => s.score > 0.70 && s.weight >= 0.05)
+  const strongHuman = allSignals.filter(s => s.score < 0.30 && s.weight >= 0.05)
+  const isDivergent = divergence > 0.22 && strongAI.length > 0 && strongHuman.length > 0
+
   // Build top findings for ARIA
   const sorted   = [...allSignals].sort((a, b) => Math.abs(b.score - 0.5) - Math.abs(a.score - 0.5))
   const findings = sorted.slice(0, 6).map(s => {
     const dir = s.score > 0.65 ? '🤖 AI' : s.score < 0.38 ? '✅ Human' : '⚠️ Mixed'
     return `${dir} — ${s.name}: ${s.evidence}`
   })
+  if (isDivergent) {
+    findings.unshift(`⚡ Conflicting signals detected — ${strongAI.length} strongly AI-leaning and ${strongHuman.length} strongly human-leaning signal(s) disagree (divergence=${divergence.toFixed(2)}). Treat the composite score with extra caution.`)
+  }
 
-  return { score, signals: allSignals, findings, verdict }
+  return { score, signals: allSignals, findings, verdict, divergence, isDivergent }
 }

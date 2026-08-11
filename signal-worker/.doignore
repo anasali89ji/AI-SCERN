@@ -1,0 +1,42 @@
+# Exclude from DigitalOcean build context to keep image small and fast
+
+# Large ML model files
+*.onnx
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.pkl
+*.h5
+models/
+checkpoints/
+weights/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Test artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Local dev
+.env
+.env.local
+.env.*.local
+*.log
+
+# macOS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Old entry points (unified into main.py)
+main_v3.py

@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { TriangleAlert, RotateCcw, Home } from 'lucide-react'
-import Link from 'next/link'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
 
-export default function ImageDetectionError({
+export default function ImageDetectError({
   error,
   reset,
 }: {
@@ -12,41 +11,35 @@ export default function ImageDetectionError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Image detection error boundary:', error)
+    // Route-level catch — this only fires for errors the component-level
+    // ErrorBoundary inside page.tsx didn't already handle (e.g. something
+    // thrown during the segment's own render/layout), so it's the last
+    // line of defense against a blank screen here.
+    console.error('[detect/image] route error boundary caught:', error)
   }, [error])
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-20 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
-        <TriangleAlert className="w-8 h-8 text-red-400" />
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Detection Pipeline Failed</h2>
-      <p className="text-slate-400 mb-8 text-sm leading-relaxed">
-        The image analysis engine encountered an unexpected error. This could be due to an unsupported file format, corrupted image data, or a transient service issue.
-      </p>
-
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="max-w-md w-full card text-center">
+        <div className="w-16 h-16 rounded-2xl bg-rose/10 border border-rose/20 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-8 h-8 text-rose" aria-hidden="true" />
+        </div>
+        <h2 className="text-lg font-bold text-text-primary mb-2">Detection page failed to load</h2>
+        <p className="text-sm text-text-muted mb-6">
+          Something went wrong loading the image detector. Please try again.
+        </p>
+        {error?.message && (
+          <p className="text-text-disabled text-xs font-mono mb-6 break-words">{error.message}</p>
+        )}
         <button
           onClick={reset}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-slate-950 font-semibold text-sm hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+          aria-label="Retry loading the image detector"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
           Try Again
         </button>
-        <Link
-          href="/dashboard"
-          className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-white/[0.08] text-white font-medium text-sm hover:bg-white/[0.04] transition-colors flex items-center justify-center gap-2"
-        >
-          <Home className="w-4 h-4" />
-          Back to Dashboard
-        </Link>
       </div>
-
-      {error.digest && (
-        <p className="mt-8 text-[10px] text-slate-600 font-mono">
-          Error ID: {error.digest}
-        </p>
-      )}
     </div>
   )
 }

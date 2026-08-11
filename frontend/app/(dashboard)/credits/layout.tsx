@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Credits',
-  description: 'Manage your Aiscern detection credits and view usage.',
+  description: 'Manage your Aiscern verification credits and view usage.',
   robots: { index: false, follow: false },
 }
 

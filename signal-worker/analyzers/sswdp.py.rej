@@ -1,0 +1,17 @@
+diff a/signal-worker/analyzers/sswdp.py b/signal-worker/analyzers/sswdp.py	(rejected hunks)
+@@ -327,8 +327,14 @@ def analyze_sswdp(img: np.ndarray, img_pil: Any) -> Dict[str, Any]:
+ 
+         if skin_px < 1000 or (skin_px / total_px) < 0.02:
+             elapsed = int((time.monotonic() - t0) * 1000)
++            # Fix #4 (v4.5.0): previously returned status="success" with a
++            # neutral score=0.5 here. _fuse_scores() included that 0.5 in the
++            # weighted average, diluting strong signals from other layers on
++            # every non-portrait image (products, food, architecture) where
++            # SSWDP simply has nothing to say. status="not_applicable" lets
++            # _fuse_scores() skip this layer entirely instead.
+             return {
+-                "score": 0.5, "status": "success",
++                "score": 0.5, "status": "not_applicable",
+                 "evidence": [{"name": "no_skin_detected",
+                                "score": 0.5,
+                                "detail": f"skin_px={int(skin_px)} frac={skin_px/total_px:.3f}"}],

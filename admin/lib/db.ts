@@ -2,11 +2,6 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 let _admin: SupabaseClient | null = null
 
-/**
- * Returns a singleton Supabase admin client.
- * Uses service role key. Connection is reused across warm invocations.
- * Supavisor pooling enabled via Supabase dashboard (port 6543).
- */
 export function getAdminDb(): SupabaseClient {
   if (_admin) return _admin
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -17,7 +12,7 @@ export function getAdminDb(): SupabaseClient {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       headers: {
-        'X-Client-Info': 'aiscern-admin/1.0',
+        'X-Client-Info': 'aiscern-admin/2.0',
         'apikey': key,
       },
     },

@@ -180,12 +180,12 @@ async function processItem(item: BatchItem, index: number, _userId: string): Pro
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  const rl  = await checkRateLimit('text', ip)
+  const rl  = await checkRateLimit('batch', ip)
   if (rl.limited) return NextResponse.json(rateLimitResponse(), { status: 429 })
 
   let userId: string
   try {
-    const guard = await creditGuard(req, 'text')
+    const guard = await creditGuard(req, 'batch')
     userId      = guard.userId
   } catch (err) {
     if (err instanceof HTTPError) return httpErrorResponse(err)
@@ -214,17 +214,20 @@ export async function POST(req: NextRequest) {
   // Save batch scan record to DB (non-fatal)
   if (userId && !userId.startsWith('anon_')) {
     try {
-      await getSupabaseAdmin().from('scans').insert({
+      const batchVerdict = ai > human + uncertain ? 'AI' : human > ai + uncertain ? 'HUMAN' : 'UNCERTAIN'
+      const batchConfidence = results.filter(r => r.confidence != null).reduce((s, r) => s + (r.confidence ?? 0), 0) / (results.length || 1)
+      const { data: sr } = await getSupabaseAdmin().from('scans').insert({
         user_id:          userId,
         media_type:       'text',
         file_name:        `batch_${items.length}_items`,
-        verdict:          ai > human + uncertain ? 'AI' : human > ai + uncertain ? 'HUMAN' : 'UNCERTAIN',
-        confidence_score: results.filter(r => r.confidence != null).reduce((s, r) => s + (r.confidence ?? 0), 0) / (results.length || 1),
+        verdict:          batchVerdict,
+        confidence_score: batchConfidence,
         processing_time:  processing_ms,
         model_used:       'Aiscern-BatchEngine-v1',
         status:           'complete',
         metadata:         { batch_size: items.length, ai, human, uncertain, errors, types: [...new Set(items.map(i => i.type))] },
-      })
+      }).select('id').single()
+      if (sr?.id) fireScanCompleted({ scan_id: sr.id, user_id: userId, media_type: 'text', verdict: batchVerdict, confidence: batchConfidence, model_used: 'Aiscern-BatchEngine-v1' })
     } catch { /* non-fatal */ }
   }
 

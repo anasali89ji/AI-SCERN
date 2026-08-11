@@ -5,7 +5,7 @@ export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const title = searchParams.get('title') || 'Aiscern — Free AI Detector'
+  const title = searchParams.get('title') || 'Aiscern — Enterprise AI Trust & Verification Platform'
   const tool  = searchParams.get('tool')  || 'Multi-Modal'
   const color = searchParams.get('color') || '#2563eb'
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         </div>
         {/* Badges */}
         <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-          {['Free', 'No Signup', `${tool} Detection`].map(badge => (
+          {['Enterprise-Grade', 'No Signup', `${tool} Verification`].map(badge => (
             <div key={badge} style={{
               padding: '8px 20px', borderRadius: 999,
               border: `1.5px solid ${color}40`,

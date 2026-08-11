@@ -1,5 +1,3 @@
-export const maxDuration = 55
-
 /**
  * POST /api/detect/video
  *
@@ -19,8 +17,10 @@ import { analyzeVideoWithFrames, analyzeVideo } from '@/lib/inference/hf-analyze
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { fireScanCompleted }             from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
 
 export const dynamic    = 'force-dynamic'
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: true,
           scan_id: scanId,
-          result:  { ...result, processing_time: processingTime, file_name: fileName },
+          result:  sanitizeDetectionResultForClient({ ...result, processing_time: processingTime, file_name: fileName }),
         })
       }
 
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           success: true,
           scan_id: scanId,
           note:    'Upload frames via the video detection page for NVIDIA NIM deepfake analysis.',
-          result:  { ...result, processing_time: processingTime, file_name: fileName },
+          result:  sanitizeDetectionResultForClient({ ...result, processing_time: processingTime, file_name: fileName }),
         })
       }
 
@@ -183,7 +183,8 @@ export async function POST(req: NextRequest) {
     }
 
     const ext    = file.name.split('.').pop()?.toLowerCase() || 'mp4'
-    const result = await analyzeVideo(file.name, file.size, ext)
+    const videoBuffer = Buffer.from(await file.arrayBuffer())
+    const result = await analyzeVideo(file.name, file.size, ext, videoBuffer)
 
         // Return 422 when NVIDIA NIM unavailable and frame extraction required
         if (result.model_used.includes('FrameExtractionRequired')) {
@@ -218,7 +219,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       scan_id: scanId,
-      result:  { ...result, processing_time: processingTime, file_name: file.name },
+      result:  sanitizeDetectionResultForClient({ ...result, processing_time: processingTime, file_name: file.name }),
     })
   } catch (err) {
     console.error('[detect/video]', err)

@@ -1,0 +1,37 @@
+{
+  "human_skin": {
+    "penetration_depth_mm": {"red": 4.2, "green": 1.8, "blue": 0.35},
+    "ratio_min": 8.0,
+    "scattering_coeff": 1.2,
+    "absorption_coeff": 0.8,
+    "notes": "Based on Tuchin et al. optical properties of skin"
+  },
+  "wax": {
+    "penetration_depth_mm": {"red": 8.0, "green": 3.5, "blue": 0.8},
+    "ratio_min": 6.0,
+    "scattering_coeff": 0.9,
+    "absorption_coeff": 0.3,
+    "notes": "Paraffin wax, measured values"
+  },
+  "marble": {
+    "penetration_depth_mm": {"red": 12.0, "green": 5.0, "blue": 1.5},
+    "ratio_min": 5.0,
+    "scattering_coeff": 0.7,
+    "absorption_coeff": 0.2,
+    "notes": "Carrara marble, approximate"
+  },
+  "milk": {
+    "penetration_depth_mm": {"red": 15.0, "green": 8.0, "blue": 3.0},
+    "ratio_min": 3.0,
+    "scattering_coeff": 2.5,
+    "absorption_coeff": 0.1,
+    "notes": "Whole milk, high scattering"
+  },
+  "juice": {
+    "penetration_depth_mm": {"red": 6.0, "green": 4.0, "blue": 2.0},
+    "ratio_min": 2.0,
+    "scattering_coeff": 0.5,
+    "absorption_coeff": 1.5,
+    "notes": "Orange juice, approximate"
+  }
+}

@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { BookOpen, ArrowRight, FileType2, Eye, Music, Video, Zap } from 'lucide-react'
+import { BookOpen, ArrowRight, FileText, Eye, Music, Video, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'User Guides — Aiscern',
-  description: 'Step-by-step guides on how to attest AI text, verify deepfake images, check audio for voice cloning, and more. Free resources for all users.',
+  title: 'User Guides',
+  description: 'Step-by-step guides on how to verify AI text, verify deepfake images, check audio for voice cloning, and more using Aiscern\u2019s enterprise AI verification platform.',
   openGraph: {
     title: 'User Guides — Aiscern',
     url: 'https://aiscern.com/guides',
@@ -16,40 +16,40 @@ export const metadata: Metadata = {
 
 const GUIDES = [
   {
-    icon: FileType2,
+    icon: FileText,
     color: 'primary',
-    title: 'How to Attest AI-Generated Text',
-    desc: 'A step-by-step guide to identifying AI-written content using Aiscern\'s text attestation ensemble. Covers paste, upload, URL examination, and interpreting integrity ratings.',
+    title: 'How to Detect AI-Generated Text',
+    desc: 'A step-by-step guide to identifying AI-written content using Aiscern\'s text detection ensemble. Covers paste, upload, URL scan, and interpreting confidence scores.',
     steps: ['Paste or upload your text', 'Review overall confidence score', 'Examine sentence-level heatmap', 'Export report if needed'],
     href: '/detect/text',
-    cta: 'Try Text Attestation',
+    cta: 'Try Text Detection',
   },
   {
     icon: Eye,
-    color: 'blue',
+    color: 'cyan',
     title: 'How to Verify Deepfake Images',
-    desc: 'Learn how to upload images for AI generation attestation, understand the pixel-integrity analysis, and interpret results for synthetic images from Midjourney, DALL-E, Stable Diffusion, and more.',
+    desc: 'Learn how to upload images for AI generation detection, understand the pixel-integrity analysis, and interpret results for synthetic images from Midjourney, DALL-E, Stable Diffusion, and more.',
     steps: ['Upload image (JPG, PNG, WebP)', 'Review ViT classifier confidence', 'Check pixel integrity signals', 'Review per-generator fingerprint analysis'],
     href: '/detect/image',
-    cta: 'Try Image Attestation',
+    cta: 'Try Image Detection',
   },
   {
     icon: Music,
     color: 'emerald',
-    title: 'How to Attest AI-Cloned Audio',
-    desc: 'Understand how Aiscern analyzes audio files for voice synthesis signatures. Guide covers supported formats, spectral analysis, and interpreting voice clone attestation results.',
+    title: 'How to Detect AI-Cloned Audio',
+    desc: 'Understand how Aiscern analyzes audio files for voice synthesis signatures. Guide covers supported formats, spectral analysis, and interpreting voice clone detection results.',
     steps: ['Upload audio file (MP3, WAV, M4A)', 'Wait for spectral analysis (8–15s)', 'Review voice synthesis confidence', 'Check ASVspoof benchmark comparison'],
     href: '/detect/audio',
-    cta: 'Try Audio Attestation',
+    cta: 'Try Audio Detection',
   },
   {
     icon: Video,
     color: 'amber',
-    title: 'How to Attest Deepfake Video',
-    desc: 'A complete guide to video deepfake attestation using Aiscern\'s frame-level ViT ensemble and temporal consistency analysis. Covers face-swap, lip-sync, and full-body synthesis attestation.',
+    title: 'How to Detect Deepfake Video',
+    desc: 'A complete guide to video deepfake detection using Aiscern\'s frame-level ViT ensemble and temporal consistency analysis. Covers face-swap, lip-sync, and full-body synthesis detection.',
     steps: ['Upload video file (MP4, MOV, WebM)', 'Frame extraction and analysis begins', 'Temporal consistency check runs', 'Review frame-level confidence breakdown'],
     href: '/detect/video',
-    cta: 'Try Video Attestation',
+    cta: 'Try Video Detection',
   },
   {
     icon: Zap,
@@ -64,7 +64,7 @@ const GUIDES = [
     icon: BookOpen,
     color: 'primary',
     title: 'Understanding Confidence Scores',
-    desc: 'A deep dive into what Aiscern\'s confidence percentages actually mean, how to interpret uncertain results, and when not to act on a single attestation result.',
+    desc: 'A deep dive into what Aiscern\'s confidence percentages actually mean, how to interpret uncertain results, and when not to act on a single detection result.',
     steps: ['≥62% = AI classification', '39–61% = Uncertain zone', '≤38% = Human classification', 'Always use alongside human judgment'],
     href: '/methodology',
     cta: 'Read Full Methodology',
@@ -72,32 +72,30 @@ const GUIDES = [
 ]
 
 const colorMap: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
-  primary: { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
-  blue:    { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
-  cyan:    { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
-  emerald: { bg: 'bg-accent/10', border: 'border-accent/20', icon: 'text-accent', badge: 'text-accent bg-accent/10 border-accent/20' },
-  amber:   { bg: 'bg-warning/10',   border: 'border-warning/20',   icon: 'text-warning',   badge: 'text-warning bg-warning/10 border-warning/20'   },
-  rose:    { bg: 'bg-error/10',    border: 'border-error/20',    icon: 'text-error',    badge: 'text-error bg-error/10 border-error/20'     },
+  primary: { bg: 'bg-primary/8', border: 'border-primary/20', icon: 'text-primary', badge: 'text-primary bg-primary/10 border-primary/20' },
+  cyan:    { bg: 'bg-cyan/8',    border: 'border-cyan/20',    icon: 'text-cyan',    badge: 'text-cyan bg-cyan/10 border-cyan/20'         },
+  emerald: { bg: 'bg-emerald/8', border: 'border-emerald/20', icon: 'text-emerald', badge: 'text-emerald bg-emerald/10 border-emerald/20' },
+  amber:   { bg: 'bg-amber/8',   border: 'border-amber/20',   icon: 'text-amber',   badge: 'text-amber bg-amber/10 border-amber/20'       },
+  rose:    { bg: 'bg-rose/8',    border: 'border-rose/20',    icon: 'text-rose',    badge: 'text-rose bg-rose/10 border-rose/20'           },
 }
 
 export default function GuidesPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-surface-deep pt-16">
+      <main className="min-h-screen bg-background pt-16">
         {/* Hero */}
-        <section className="pt-10 pb-12 md:py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none" />
+        <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
               <BookOpen className="w-3.5 h-3.5" />
               User Guides
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-              How to Use<br /><span className="text-accent">Aiscern</span>
+            <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-4 leading-tight">
+              How to Use<br /><span className="gradient-text">Aiscern</span>
             </h1>
-            <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto">
-              Step-by-step guides for every attestation modality. Learn how to get the most accurate results and interpret what the scores mean.
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+              Step-by-step guides for every detection modality. Learn how to get the most accurate results and interpret what the scores mean.
             </p>
           </div>
         </section>
@@ -110,21 +108,21 @@ export default function GuidesPage() {
                 const GIcon = guide.icon
                 const c = colorMap[guide.color]
                 return (
-                  <div key={i} className="card border border-silver-300 rounded-xl p-6 flex flex-col gap-5">
+                  <div key={i} className="card border border-border/60 rounded-2xl p-6 flex flex-col gap-5">
                     <div className="flex items-start gap-4">
                       <div className={`w-10 h-10 rounded-xl ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
                         <GIcon className={`w-5 h-5 ${c.icon}`} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h2 className="font-bold text-white mb-1">{guide.title}</h2>
-                        <p className="text-sm text-silver-600 leading-relaxed">{guide.desc}</p>
+                      <div>
+                        <h2 className="font-bold text-text-primary mb-1">{guide.title}</h2>
+                        <p className="text-sm text-text-muted leading-relaxed">{guide.desc}</p>
                       </div>
                     </div>
 
                     {/* Steps */}
                     <ol className="space-y-2">
                       {guide.steps.map((step, j) => (
-                        <li key={j} className="flex items-start gap-2.5 text-xs text-silver-700">
+                        <li key={j} className="flex items-start gap-2.5 text-xs text-text-secondary">
                           <span className={`w-5 h-5 rounded-full ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${c.icon}`}>
                             {j + 1}
                           </span>
@@ -142,9 +140,9 @@ export default function GuidesPage() {
             </div>
 
             {/* More Resources */}
-            <div className="mt-12 p-6 rounded-xl border border-accent/20 bg-accent/5 text-center">
-              <h2 className="text-lg font-bold text-white mb-2">Need more help?</h2>
-              <p className="text-sm text-silver-600 mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
+            <div className="mt-12 p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center">
+              <h2 className="text-lg font-bold text-text-primary mb-2">Need more help?</h2>
+              <p className="text-sm text-text-muted mb-4">Check our FAQ, read the API docs, or contact our support team.</p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/faq" className="btn-secondary text-sm">FAQ</Link>
                 <Link href="/docs/api" className="btn-secondary text-sm">API Docs</Link>

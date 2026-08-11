@@ -2,24 +2,23 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { Building2, Shield, Zap, Layers, Lock, Users, CircleCheck, Mail } from 'lucide-react'
-import { EnterpriseContactForm } from '@/components/EnterpriseContactForm'
+import { Building2, Shield, Zap, Layers, Lock, Users, CheckCircle, ArrowRight, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Aiscern AI Attestation at Scale',
-  description: 'Custom pricing, SLA guarantees, priority support, and private deployment options for enterprise teams. Contact our sales team.',
+  title: 'Enterprise AI Trust & Content Verification at Scale',
+  description: 'Enterprise-grade AI trust and content verification: custom pricing, SLA guarantees, priority support, and private deployment options. Contact our sales team.',
   openGraph: {
-    title: 'Enterprise Solutions — Aiscern',
-    description: 'Aiscern Enterprise: custom limits, SLA, BAA/DPA support, and dedicated onboarding.',
+    title: 'Enterprise AI Trust & Content Verification — Aiscern',
+    description: 'Aiscern Enterprise: the digital trust verification platform with custom limits, SLA, BAA/DPA support, and dedicated onboarding.',
     url: 'https://aiscern.com/enterprise',
     siteName: 'Aiscern',
   },
 }
 
 const FEATURES = [
-  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your attestation volume requirements.' },
+  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your scan volume requirements.' },
   { icon: Shield, title: 'SLA Guarantees', desc: '99.9% uptime SLA with priority incident response and dedicated status page communication.' },
-  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk attest thousands of documents simultaneously via async batch API with webhook callbacks.' },
+  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk scan thousands of documents simultaneously via async batch API with webhook callbacks.' },
   { icon: Lock, title: 'Data Processing Agreements', desc: 'GDPR-compliant DPA and BAA available for healthcare and legal customers. Enhanced data handling options.' },
   { icon: Users, title: 'Team Management', desc: 'Centralized billing, role-based access control, audit logs, and team usage dashboards.' },
   { icon: Building2, title: 'Dedicated Onboarding', desc: 'Technical onboarding call, integration support, and a named account manager for enterprise clients.' },
@@ -35,44 +34,43 @@ export default function EnterprisePage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-surface-deep pt-16">
+      <main className="min-h-screen bg-background pt-16">
         {/* Hero */}
-        <section className="pt-10 pb-14 md:py-28 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.10)_0%,transparent_60%)] pointer-events-none" />
+        <section className="py-20 md:py-28 relative overflow-hidden">
           <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-6">
               <Building2 className="w-3.5 h-3.5" />
               Enterprise
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
-              AI Attestation at<br /><span className="text-accent">Enterprise Scale</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-5 leading-tight">
+              AI Verification at<br /><span className="gradient-text">Enterprise Scale</span>
             </h1>
-            <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="mailto:enterprise@aiscern.com" className="btn-primary w-full sm:w-auto justify-center">
+            <div className="flex flex-wrap gap-3 justify-center">
+              <a href="mailto:enterprise@aiscern.com" className="btn-primary">
                 <Mail className="w-4 h-4" /> Contact Enterprise Sales
               </a>
-              <Link href="/pricing" className="btn-secondary w-full sm:w-auto justify-center">View All Plans</Link>
+              <Link href="/pricing" className="btn-secondary">View All Plans</Link>
             </div>
           </div>
         </section>
 
         {/* Features */}
-        <section className="py-16 border-t border-silver-300/20">
+        <section className="py-16 border-t border-border/20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-2xl md:text-3xl font-black text-white text-center mb-10">What Enterprise Includes</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-text-primary text-center mb-10">What Enterprise Includes</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {FEATURES.map((f, i) => {
                 const FIcon = f.icon
                 return (
-                  <div key={i} className="card p-5 rounded-xl border border-silver-300">
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
-                      <FIcon className="w-5 h-5 text-accent" />
+                  <div key={i} className="card p-5 rounded-xl border border-border/60">
+                    <div className="w-10 h-10 rounded-xl bg-primary/8 border border-primary/20 flex items-center justify-center mb-4">
+                      <FIcon className="w-5 h-5 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-white text-sm mb-2">{f.title}</h3>
-                    <p className="text-xs text-silver-600 leading-relaxed">{f.desc}</p>
+                    <h3 className="font-semibold text-text-primary text-sm mb-2">{f.title}</h3>
+                    <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
                   </div>
                 )
               })}
@@ -83,16 +81,16 @@ export default function EnterprisePage() {
         {/* Plan Comparison */}
         <section className="py-16 bg-surface/30">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-black text-white text-center mb-8">Plan Overview</h2>
+            <h2 className="text-2xl font-black text-text-primary text-center mb-8">Plan Overview</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {PLANS.map((plan, i) => (
-                <div key={i} className={`p-6 rounded-xl border ${plan.highlight ? 'border-accent/30 bg-accent/5' : 'border-silver-300 bg-surface'}`}>
-                  <div className="text-sm font-bold text-white mb-1">{plan.label}</div>
-                  <div className="text-xl font-black text-white mb-4">{plan.price}</div>
-                  <ul className="space-y-2 text-xs text-silver-600">
+                <div key={i} className={`p-6 rounded-2xl border ${plan.highlight ? 'border-primary/50 bg-primary/5' : 'border-border/60 bg-surface/20'}`}>
+                  <div className="text-sm font-bold text-text-primary mb-1">{plan.label}</div>
+                  <div className="text-xl font-black text-text-primary mb-4">{plan.price}</div>
+                  <ul className="space-y-2 text-xs text-text-muted">
                     {[plan.scans, plan.api, plan.support].map((item, j) => (
                       <li key={j} className="flex items-center gap-2">
-                        <CircleCheck className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
                         {item}
                       </li>
                     ))}
@@ -101,7 +99,7 @@ export default function EnterprisePage() {
               ))}
             </div>
             <p className="text-center mt-6">
-              <Link href="/pricing" className="text-sm text-accent hover:underline">See full feature comparison on pricing page →</Link>
+              <Link href="/pricing" className="text-sm text-primary hover:underline">See full feature comparison on pricing page →</Link>
             </p>
           </div>
         </section>
@@ -109,10 +107,37 @@ export default function EnterprisePage() {
         {/* Contact Form */}
         <section className="py-16 md:py-20">
           <div className="max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="card border border-silver-300 rounded-xl p-8">
-              <h2 className="text-xl font-black text-white mb-2">Talk to Sales</h2>
-              <p className="text-sm text-silver-600 mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
-              <EnterpriseContactForm />
+            <div className="card border border-border/60 rounded-2xl p-8">
+              <h2 className="text-xl font-black text-text-primary mb-2">Talk to Sales</h2>
+              <p className="text-sm text-text-muted mb-6">Tell us about your use case and we&apos;ll get back within one business day.</p>
+              <div className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1.5">First Name</label>
+                    <input type="text" placeholder="Jane" className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1.5">Last Name</label>
+                    <input type="text" placeholder="Smith" className="input-field" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5">Work Email</label>
+                  <input type="email" placeholder="jane@company.com" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5">Company</label>
+                  <input type="text" placeholder="Acme Corp" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5">Use Case</label>
+                  <textarea rows={3} placeholder="Describe your detection needs, expected volume, and any integration requirements..." className="input-field resize-none" />
+                </div>
+                <a href="mailto:enterprise@aiscern.com?subject=Enterprise Inquiry" className="btn-primary w-full justify-center">
+                  Send Inquiry <ArrowRight className="w-4 h-4" />
+                </a>
+                <p className="text-xs text-text-muted text-center">Or email us directly at enterprise@aiscern.com</p>
+              </div>
             </div>
           </div>
         </section>

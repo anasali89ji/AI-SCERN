@@ -7,20 +7,20 @@ export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  if (!userId) return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 })
 
   const { id } = await params
   try {
     const { feedback } = await req.json()
     if (!['correct', 'incorrect'].includes(feedback))
-      return NextResponse.json({ success: false, error: 'Invalid feedback value' }, { status: 400 })
+      return NextResponse.json({ success: false, error: { code: 'INVALID_FEEDBACK', message: 'Invalid feedback value' } }, { status: 400 })
 
     const db = getSupabaseAdmin()
 
     // Verify scan ownership before updating
     const { data: scan } = await db.from('scans').select('user_id,verdict,media_type,confidence_score').eq('id', id).single()
     if (!scan || scan.user_id !== userId)
-      return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+      return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } }, { status: 404 })
 
     await db.from('scans').update({ user_feedback: feedback }).eq('id', id)
 
@@ -39,6 +39,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    return NextResponse.json({ success: false, error: err instanceof Error ? err.message : 'Failed' }, { status: 500 })
+    return NextResponse.json({ success: false, error: { code: 'ERROR', message: err instanceof Error ? err.message : 'Failed' } }, { status: 500 })
   }
 }

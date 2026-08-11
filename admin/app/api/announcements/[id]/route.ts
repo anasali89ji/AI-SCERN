@@ -1,37 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, getAdminDb, logAdminAction } from '@/lib/admin-middleware'
+import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
-type Params = Promise<{ id: string }>
-
-export async function PATCH(req: NextRequest, { params }: { params: Params }) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const { id } = await params
-  const body = await req.json() as Record<string, unknown>
+  const body = await req.json()
   const db = getAdminDb()
-  const { data, error } = await db
-    .from('announcements')
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
+
+  const { error } = await db.from('announcements').update({
+    ...body,
+    updated_at: new Date().toISOString(),
+  }).eq('id', params.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  await logAdminAction('announcement_updated', id, auth.ip, body)
-  return NextResponse.json(data)
+  return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Params }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const { id } = await params
   const db = getAdminDb()
-  const { error } = await db.from('announcements').delete().eq('id', id)
+  const { error } = await db.from('announcements').delete().eq('id', params.id)
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  await logAdminAction('announcement_deleted', id, auth.ip)
+
+  await db.from('admin_audit_log').insert({
+    action: 'announcement_deleted',
+    admin_id: auth.adminId,
+    admin_ip: auth.ip,
+    metadata: { announcement_id: params.id },
+  })
+
   return NextResponse.json({ ok: true })
 }
