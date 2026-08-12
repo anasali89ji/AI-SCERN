@@ -59,8 +59,14 @@ export const clerkAppearance = {
 
     /* ── Labels ──────────────────────────────────────────────── */
     formFieldLabelRow: 'flex items-center justify-between mb-[7px]',
-    formFieldLabel:    'text-[11px] font-semibold tracking-[0.09em] uppercase text-slate-400 select-none',
-    formFieldHintText: 'text-slate-500 text-[12px] mt-1.5 leading-relaxed',
+    // v7 — label brightness fix. text-slate-400 (~#94a3b8) at 11px against
+    // the dark navy card background (#080820) failed contrast in practice —
+    // "NEW PASSWORD" / "CONFIRM PASSWORD" and every other field label read
+    // as barely-there gray, not "not clearly visible" per user report.
+    // Bumped to slate-200, close to colorText (#e8edff), so labels are
+    // legible at a glance while staying visually secondary to the input text.
+    formFieldLabel:    'text-[11px] font-semibold tracking-[0.09em] uppercase text-slate-200 select-none',
+    formFieldHintText: 'text-slate-400 text-[12px] mt-1.5 leading-relaxed',
 
     /* ── Inputs ──────────────────────────────────────────────── */
     // v6 — visibility fix. Input bg (#0a0a22) was nearly identical to the

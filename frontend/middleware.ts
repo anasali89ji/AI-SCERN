@@ -111,7 +111,19 @@ export default clerkMiddleware(async (auth, req) => {
         const url = new URL('/maintenance', req.url)
         if (maintenance.message) url.searchParams.set('msg', encodeURIComponent(maintenance.message))
         if (maintenance.duration) url.searchParams.set('dur', encodeURIComponent(maintenance.duration))
-        return NextResponse.redirect(url)
+        const res = NextResponse.redirect(url)
+        // Without this, the redirect response itself (and the RSC payload
+        // Next.js fetches for client-side <Link> navigation) was cacheable
+        // by the client Router Cache. A hard reload always hit middleware
+        // and correctly bounced to /maintenance, but a prefetched or
+        // already-visited dashboard route could still be served straight
+        // from the client cache on soft navigation, skipping middleware
+        // entirely — "site still reloads [to maintenance] and shows
+        // separate maintenance page" but other pages stayed reachable.
+        // Forcing no-store on every gated response stops that route from
+        // ever being cached client-side while maintenance mode is on.
+        res.headers.set('Cache-Control', 'no-store, must-revalidate')
+        return res
       }
     }
   }
