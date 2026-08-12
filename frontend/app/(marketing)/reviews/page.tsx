@@ -164,6 +164,14 @@ export default function ReviewsPage() {
           <p className="text-text-muted text-lg max-w-xl mx-auto mb-6">
             Real feedback from real users. Every review — 1 star to 5 stars — published unfiltered.
           </p>
+          <p className="text-text-muted text-sm max-w-2xl mx-auto mb-6">
+            We don&apos;t filter, edit, or pay for reviews — what you read here is exactly what
+            users submitted, good and bad. Ratings come from educators screening student work,
+            journalists verifying source images before publication, HR teams checking AI-written
+            applications, and researchers testing detection accuracy against their own datasets.
+            If you&apos;ve used Aiscern for text, image, audio, or video detection, add your own
+            review below.
+          </p>
           <button onClick={() => setModalOpen(true)}
             className="inline-flex items-center gap-2 btn-primary px-6 py-3 text-sm font-bold">
             <PenLine className="w-4 h-4" /> Write a Review

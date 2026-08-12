@@ -108,6 +108,13 @@ export default function ContactPage() {
           <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">
             We respond to all inquiries within 24–48 hours. Choose the right channel below for the fastest response.
           </p>
+          <p className="text-text-muted text-sm max-w-2xl mx-auto mt-4">
+            Aiscern is built and run by a single founder, so every message routes to a real
+            person — not a ticketing queue. Use the support inbox for account, billing, and
+            detection-accuracy questions; the security inbox for vulnerability reports; and
+            the general inbox for partnerships, press, or anything else. For urgent API or
+            enterprise questions, mention your plan in the message so we can prioritize.
+          </p>
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">

@@ -163,7 +163,7 @@ export default function BenchmarksPage() {
 
         <div className="rounded-xl border border-border bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground mb-3">Full results with confidence intervals and per-generator breakdowns available as CSV.</p>
-          <a href="/benchmarks/results.csv" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
+          <a href="/api/benchmarks/csv" download className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"><Download className="h-4 w-4" />Download results CSV</a>
           <p className="mt-3 text-xs text-muted-foreground"><Link href="/methodology" className="underline underline-offset-2 hover:text-foreground">Methodology</Link> · <Link href="/research" className="underline underline-offset-2 hover:text-foreground">Research Citations</Link></p>
         </div>
       </main>

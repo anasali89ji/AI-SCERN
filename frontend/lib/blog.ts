@@ -5,6 +5,10 @@ import matter from 'gray-matter'
 export interface BlogPost {
   slug:        string
   title:       string
+  /** Optional shorter title for <title>/meta tags, when `title` runs long
+   *  for search snippets (Google truncates around ~60 chars). Falls back
+   *  to `title` when not set. The on-page H1 always uses `title`. */
+  seoTitle?:   string
   description: string
   date:        string
   author:      string
@@ -24,6 +28,7 @@ function readPostFile(file: string): BlogPost {
   return {
     slug:        file.replace(/\.mdx?$/, ''),
     title:       data.title       ?? '',
+    seoTitle:    data.seoTitle    ?? undefined,
     description: data.description ?? '',
     date:        data.date        ?? '',
     author:      data.author      ?? 'Aiscern Team',

@@ -47,6 +47,13 @@ export default function ApiDocsPage() {
         <div>
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
           <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
+          <p className="text-text-muted text-sm mt-3">
+            The API exposes the same detection engine that powers the dashboard — ensemble
+            models for text, image, audio, and video — as simple REST endpoints you can call
+            from any language. Send a sample, get back a score and a confidence breakdown per
+            layer. Below are the four detection endpoints, the auth header they all share, and
+            the response shape you can expect back.
+          </p>
         </div>
 
         <section className="card p-6 space-y-4">

@@ -163,6 +163,13 @@ export default function FAQPage() {
               Contact us at contact@aiscern.com
             </a>
           </p>
+          <p className="text-text-muted text-sm max-w-2xl mx-auto mt-4">
+            This page covers the questions we get most — pricing and free-tier limits, how
+            accurate detection is across text, image, audio, and video, what happens to the
+            files you upload, and how the product itself works day to day. If your question
+            isn&apos;t answered below, the fastest way to reach us is email; we read every
+            message ourselves.
+          </p>
         </div>
 
         <div className="space-y-8 mb-12">
