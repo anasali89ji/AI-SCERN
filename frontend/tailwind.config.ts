@@ -76,6 +76,22 @@ const config: Config = {
         error:   '#FF4444',
         warning: '#FFB800',
 
+        // ── Flat text-* aliases (used by shared globals.css utility classes) ───
+        'text-primary':   '#FFFFFF',
+        'text-secondary': '#E5E5E5',
+        'text-muted':     '#A3A3A3',
+        'text-disabled':  '#6B6B6B',
+
+        // ── Flat surface/border/accent aliases (used by shared globals.css) ────
+        'surface-active': '#1A1A1A',
+        'surface-hover':  'rgba(255,255,255,0.04)',
+        'surface-border': 'rgba(255,255,255,0.08)',
+        'border-primary': '#2BEE34',
+        cyan:    '#06b6d4',
+        emerald: '#2BEE34',
+        amber:   '#FFB800',
+        rose:    '#FF4444',
+
         // ── Depth layers — special overlay panels ONLY. Do not mix with `silver`
         //    on the same surface type (see Module 0.1 token-consistency rule).
         depth: {
