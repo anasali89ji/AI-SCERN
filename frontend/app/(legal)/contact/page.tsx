@@ -6,6 +6,7 @@ import {
   Send, CheckCircle, Twitter, Linkedin, Github, Headphones
 } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 const SUBJECTS = [
   'General Inquiry',
@@ -98,6 +99,7 @@ export default function ContactPage() {
       </nav>
 
       <main className="pt-24 pb-20 max-w-5xl 2xl:max-w-[1300px] mx-auto px-4 sm:px-6 2xl:px-10">
+        <Breadcrumbs className="mb-6" />
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-5xl font-black mb-4">

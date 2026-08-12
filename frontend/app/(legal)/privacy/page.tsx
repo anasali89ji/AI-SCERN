@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Enterprise AI Verification Platform',
@@ -25,6 +26,8 @@ export default function PrivacyPage() {
           </Link>
         </div>
       </header>
+
+      <div className="max-w-4xl 2xl:max-w-5xl mx-auto w-full px-4 sm:px-6 2xl:px-8 pt-4"><Breadcrumbs /></div>
 
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">

@@ -17,6 +17,17 @@
  * Segment labels default to a humanized version of the URL slug
  * ("content-creators" -> "Content Creators") and can be overridden via
  * LABEL_OVERRIDES for cases where that doesn't read naturally.
+ *
+ * Mobile vertical-jitter fix: the row previously mixed a 14px Home icon,
+ * plain text spans/links with the browser's default line-height, and a
+ * bare "…" ellipsis inside `items-center` <li>s that themselves weren't
+ * flex containers — each item's own line-box height differed slightly, so
+ * the row visually bounced up/down as segments changed on navigation.
+ * Every <li> is now `flex items-center` itself (not just the parent <ol>),
+ * every icon has `shrink-0`, and every text node has `leading-none`, so
+ * all items share one flat baseline regardless of content. The <ol> also
+ * gets a fixed height (h-4 mobile / h-5 desktop) matching the icon size so
+ * the row doesn't reflow the page above/below it as segments load.
  */
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -105,62 +116,62 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
       />
 
       {/* Mobile — collapsed */}
-      <ol className="sm:hidden flex items-center gap-1.5 text-xs text-text-muted overflow-hidden">
+      <ol className="sm:hidden flex items-center gap-1.5 h-4 text-xs text-text-muted overflow-hidden">
         {collapsedMobile.map((item, i) => {
           const isLast = i === collapsedMobile.length - 1
           if (item === null) {
             return (
               <Fragment key="ellipsis">
-                <li className="text-text-disabled select-none">…</li>
-                <li aria-hidden><ChevronRight className="w-3 h-3 text-text-disabled shrink-0" /></li>
+                <li className="text-text-disabled select-none leading-none shrink-0">…</li>
+                <li aria-hidden className="flex items-center shrink-0"><ChevronRight className="w-3 h-3 text-text-disabled shrink-0" /></li>
               </Fragment>
             )
           }
           return (
             <Fragment key={item.href}>
-              <li className="min-w-0">
+              <li className="min-w-0 flex items-center">
                 {isLast ? (
-                  <span className="text-text-primary font-medium truncate block max-w-[140px]" aria-current="page">
+                  <span className="text-text-primary font-medium truncate block max-w-[140px] leading-none" aria-current="page">
                     {item.label}
                   </span>
                 ) : item.href === '/' ? (
                   <Link href={item.href} className="flex items-center hover:text-text-primary transition-colors" aria-label="Home">
-                    <Home className="w-3.5 h-3.5" />
+                    <Home className="w-3.5 h-3.5 shrink-0" />
                   </Link>
                 ) : (
-                  <Link href={item.href} className="hover:text-text-primary transition-colors truncate block max-w-[100px]">
+                  <Link href={item.href} className="hover:text-text-primary transition-colors truncate block max-w-[100px] leading-none">
                     {item.label}
                   </Link>
                 )}
               </li>
-              {!isLast && <li aria-hidden><ChevronRight className="w-3 h-3 text-text-disabled shrink-0" /></li>}
+              {!isLast && <li aria-hidden className="flex items-center shrink-0"><ChevronRight className="w-3 h-3 text-text-disabled shrink-0" /></li>}
             </Fragment>
           )
         })}
       </ol>
 
       {/* Desktop — full trail */}
-      <ol className="hidden sm:flex items-center gap-1.5 text-[13px] text-text-muted flex-wrap">
+      <ol className="hidden sm:flex items-center gap-1.5 h-5 text-[13px] text-text-muted flex-wrap">
         {full.map((item, i) => {
           const isLast = i === full.length - 1
           return (
             <Fragment key={item.href}>
-              <li className="min-w-0">
+              <li className="min-w-0 flex items-center">
                 {isLast ? (
-                  <span className="text-text-primary font-medium" aria-current="page">
+                  <span className="text-text-primary font-medium leading-none" aria-current="page">
                     {item.label}
                   </span>
                 ) : item.href === '/' ? (
-                  <Link href={item.href} className="flex items-center gap-1 hover:text-text-primary transition-colors">
-                    <Home className="w-3.5 h-3.5" /> Home
+                  <Link href={item.href} className="flex items-center gap-1 hover:text-text-primary transition-colors leading-none">
+                    <Home className="w-3.5 h-3.5 shrink-0" /> Home
                   </Link>
                 ) : (
-                  <Link href={item.href} className="hover:text-text-primary transition-colors">
+                  <Link href={item.href} className="hover:text-text-primary transition-colors leading-none">
                     {item.label}
                   </Link>
                 )}
               </li>
-              {!isLast && <li aria-hidden><ChevronRight className="w-3.5 h-3.5 text-text-disabled shrink-0" /></li>}
+              {!isLast && <li aria-hidden className="flex items-center shrink-0"><ChevronRight className="w-3.5 h-3.5 text-text-disabled shrink-0" /></li>}
             </Fragment>
           )
         })}
