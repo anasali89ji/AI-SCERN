@@ -1,62 +1,80 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Upload, Cpu, Eye, ArrowRight } from 'lucide-react'
-import { SectionHeader } from '@/components/ui/SectionHeader'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useRef } from 'react'
+import { motion, useScroll } from 'framer-motion'
+import { Upload, Waves, Scale, FileBarChart } from 'lucide-react'
 
 const STEPS = [
-  { icon: Upload, title: 'Upload', description: 'Drop in any text, image, audio, or video file — no format conversion needed.' },
-  { icon: Cpu, title: 'Analyze', description: 'Multiple AI detection engines run in parallel, cross-checking for synthetic artifacts across every modality.' },
-  { icon: Eye, title: 'Review', description: 'Get a clear authenticity verdict with forensic evidence, confidence scores, and visual breakdowns.' },
-  { icon: ArrowRight, title: 'Act', description: 'Export audit-ready trust verification reports, share results, or integrate via API into your workflow.' },
+  { n: '01', title: 'Ingestion',          desc: 'Upload a file or paste text — any format, any size.',                      icon: Upload      },
+  { n: '02', title: 'Signal Extraction',  desc: 'Waveform, pixel, and linguistic patterns analyzed in parallel.',           icon: Waves       },
+  { n: '03', title: 'Ensemble Judgement', desc: 'Multiple independent models vote — no single model decides alone.',        icon: Scale       },
+  { n: '04', title: 'Forensic Report',    desc: 'A verdict with a full signal-by-signal breakdown, in under 3 seconds.',    icon: FileBarChart },
 ]
 
-export default function HowItWorksSection() {
-  const shouldReduceMotion = useReducedMotion()
+export function HowItWorksSection() {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 80%', 'end 60%'] })
 
   return (
-    <section id="how-it-works" aria-label="How trust verification works" className="relative py-24 md:py-32 [overflow:clip]">
-      <div className="max-w-[1440px] mx-auto px-6">
-        <SectionHeader headline="From suspicion to certainty in under 30 seconds." />
+    <section className="py-14 sm:py-28 px-4 sm:px-6 border-t border-white/[0.06]" ref={ref}>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-10 sm:mb-14">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">How It Works</p>
+          <h2 className="text-headline text-silver-900">From upload to verdict</h2>
+        </div>
 
         <div className="relative">
-          {/* Desktop connector line */}
-          <svg className="absolute top-8 left-0 right-0 h-1 hidden lg:block" aria-hidden="true">
-            <motion.line
-              x1="12.5%" y1="0" x2="87.5%" y2="0"
-              stroke="rgba(37,99,235,0.3)"
-              strokeWidth="2"
-              strokeDasharray="8 4"
-              initial={shouldReduceMotion ? undefined : { pathLength: 0 }}
-              whileInView={shouldReduceMotion ? undefined : { pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.5, ease: 'easeOut' }}
-            />
-          </svg>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-6 relative lg:border-l-0 border-l-2 border-border/40 lg:pl-0 pl-8">
-            {STEPS.map((step, i) => {
-              const Icon = step.icon
-              return (
-                <motion.div
-                  key={step.title}
-                  initial={shouldReduceMotion ? undefined : { opacity: 0, y: 24 }}
-                  whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.6, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative rounded-[24px] bg-surface border border-border p-6 md:p-8 -ml-8 lg:ml-0"
-                >
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                    <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
+          {/* ── True mobile (<640px): vertical timeline ──
+              Stacking the same bordered cards straight down loses the
+              "process" feeling entirely (no connector renders below lg).
+              A left-aligned timeline with a scroll-filled line reads as a
+              sequence, not four unrelated boxes. */}
+          <div className="sm:hidden relative pl-[52px]">
+            <div className="absolute left-[17px] top-1 bottom-1 w-px bg-white/10" aria-hidden="true">
+              <motion.div className="w-full h-full bg-accent origin-top" style={{ scaleY: scrollYProgress }} />
+            </div>
+            <div className="flex flex-col gap-8">
+              {STEPS.map(step => (
+                <div key={step.n} className="relative">
+                  <div
+                    className="absolute -left-[52px] top-0 w-9 h-9 rounded-full bg-surface border border-white/20
+                               flex items-center justify-center z-10"
+                    aria-hidden="true"
+                  >
+                    <step.icon className="w-4 h-4 text-accent" strokeWidth={1.8} />
                   </div>
-                  <h3 className="text-xl font-semibold text-text-primary mb-2">
-                    <span className="text-text-muted mr-2">{i + 1}.</span>{step.title}
-                  </h3>
-                  <p className="text-base text-text-secondary leading-relaxed">{step.description}</p>
-                </motion.div>
-              )
-            })}
+                  <span className="block text-xs font-bold text-accent/60 tabular-nums mb-1">{step.n}</span>
+                  <h3 className="text-base font-semibold text-silver-900 mb-1.5">{step.title}</h3>
+                  <p className="text-sm text-silver-600 leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Connector line — sm and up, animates with scroll progress */}
+          <div className="hidden lg:block absolute top-9 left-[12.5%] right-[12.5%] h-px bg-white/10" aria-hidden="true">
+            <motion.div
+              className="h-full bg-accent origin-left"
+              style={{ scaleX: scrollYProgress }}
+            />
+          </div>
+
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 relative">
+            {STEPS.map(step => (
+              <div key={step.n} className="relative rounded-xl border border-white/[0.06] bg-surface p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-4xl font-bold text-accent/30 tabular-nums">{step.n}</span>
+                  <step.icon className="w-5 h-5 text-silver-600/50" strokeWidth={1.6} aria-hidden="true" />
+                </div>
+                <h3 className="text-lg font-semibold text-silver-900 mb-2">{step.title}</h3>
+                <p className="text-sm text-silver-600 leading-relaxed">{step.desc}</p>
+                {/* Dot marker on the connector line */}
+                <span
+                  className="hidden lg:block absolute -top-[27px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

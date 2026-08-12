@@ -1,8 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { ChevronDown, HelpCircle, Mail } from 'lucide-react'
+import { ChevronDown, Mail, ArrowRight } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/SiteNav'
 
@@ -10,186 +9,122 @@ const FAQ_SECTIONS = [
   {
     title: 'Pricing & Plans',
     items: [
-      {
-        q: 'Is there really a free plan?',
-        a: 'Yes. The free tier includes 10 scans per day on text and image detection. No credit card required.',
-        link: { label: 'See all pricing plans', href: '/pricing' },
-      },
-      {
-        q: 'What happens if I hit my daily limit?',
-        a: 'You can wait for the next day or upgrade to Pro instantly. Your scan count resets every 24 hours.',
-        link: null,
-      },
-      {
-        q: 'Can I cancel anytime?',
-        a: 'Yes. Monthly plans cancel anytime with no hidden fees. You keep Pro access until the end of your billing period.',
-        link: null,
-      },
-      {
-        q: 'Will the free tier stay?',
-        a: 'Yes. We believe everyone deserves access to basic AI detection. The free tier is permanent.',
-        link: null,
-      },
-      {
-        q: 'Why do you charge for Pro and Team?',
-        a: 'Running ensemble AI models across text, image, audio, and video requires significant GPU compute. Paid plans help us improve accuracy, add new modalities, and keep the service running — without selling your data or showing ads.',
-        link: null,
-      },
+      { q: 'Is there really a free plan?',           a: 'Yes. The free tier includes 10 examinations per day on text and image attestation. No credit card required.',                           link: { label: 'See all pricing plans', href: '/pricing' } },
+      { q: 'What happens if I hit my daily limit?',  a: 'You can wait for the next day or upgrade to Pro instantly. Your attestation count resets every 24 hours.',                           link: null },
+      { q: 'Can I cancel anytime?',                  a: 'Yes. Monthly plans cancel anytime with no hidden fees. You keep Pro access until the end of your billing period.',            link: null },
+      { q: 'Will the free tier stay?',               a: 'Yes. We believe everyone deserves access to basic AI attestation. The free tier is permanent.',                                  link: null },
+      { q: 'Why do you charge for Pro and Team?',    a: 'Running ensemble AI models across text, image, audio, and video requires significant GPU compute. Paid plans help us improve accuracy, add new modalities, and keep the service running — without selling your data or showing ads.', link: null },
     ],
   },
   {
-    title: 'Detection & Accuracy',
+    title: 'Attestation & Accuracy',
     items: [
-      {
-        q: 'How accurate is Aiscern?',
-        a: 'Our latest benchmarks show approximately 94% accuracy on text, 98% on images (14-layer ensemble including physics-based signals), 92% on audio, and 90% on video. Accuracy varies by content type, generator, and compression level. These are measured on public held-out test sets — not cherry-picked results. See /benchmarks for full breakdown.',
-        link: { label: 'View full methodology', href: '/methodology' },
-      },
-      {
-        q: 'Can I use Aiscern for legal or academic decisions?',
-        a: 'No. Detection results are probabilistic, not definitive. Always use human judgment for high-stakes decisions. Never use a single detection result as sole evidence in legal proceedings or academic integrity cases.',
-        link: null,
-      },
-      {
-        q: 'What AI generators can you detect?',
-        a: 'Our models are updated quarterly. We detect content from major generators including ChatGPT, GPT-4, Claude, Midjourney, DALL-E, Stable Diffusion, ElevenLabs, and common TTS tools. Novel generators released after our last update may evade detection until the next fine-tune.',
-        link: null,
-      },
-      {
-        q: 'How does the ensemble work?',
-        a: 'We run content through multiple independent detection signals and combine them into a single confidence score. No single model makes the final call — results are cross-verified before delivering a verdict.',
-        link: { label: 'Full detection methodology', href: '/methodology' },
-      },
-      {
-        q: 'What does an "Uncertain" verdict mean?',
-        a: 'An "Uncertain" result means the ensemble did not reach ≥62% confidence to label AI, nor ≤38% to label human. This is not a failure — it means the content is genuinely ambiguous. Try running a longer sample or checking a different modality.',
-        link: null,
-      },
-      {
-        q: 'Does Aiscern work on languages other than English?',
-        a: 'Text detection was primarily trained on English-language data. Non-English text may produce higher false-positive rates. Treat non-English results with extra caution. Multilingual support is on the roadmap.',
-        link: null,
-      },
+      { q: 'How accurate is Aiscern?',               a: 'Our latest benchmarks show approximately 94% accuracy on text, 98% on images (14-layer ensemble including physics-based signals), 92% on audio, and 90% on video. Accuracy varies by content type, generator, and compression level. These are measured on public held-out test sets — not cherry-picked results. See /benchmarks for full breakdown.',                                          link: { label: 'View full methodology', href: '/methodology' } },
+      { q: 'Can I use Aiscern for legal or academic decisions?', a: 'No. Attestation results are probabilistic, not definitive. Always use human judgment for high-stakes decisions. Never use a single attestation result as sole evidence in legal proceedings or academic integrity cases.', link: null },
+      { q: 'What AI generators can you attest?',     a: 'Our models are updated quarterly. We attest content from major generators including ChatGPT, GPT-4, Claude, Midjourney, DALL-E, Stable Diffusion, ElevenLabs, and common TTS tools. Novel generators released after our last update may evade attestation until the next fine-tune.', link: null },
+      { q: 'How does the ensemble work?',            a: 'We run content through multiple independent forensic signals and combine them into a single integrity rating. No single model makes the final call — results are cross-verified before delivering a verdict.',                                                                                        link: { label: 'Read the methodology', href: '/methodology' } },
+      { q: 'Does Aiscern work in languages other than English?', a: 'Text attestation works best in English. We have partial support for Spanish, French, German, and Arabic. Image, audio, and video attestation are language-agnostic.', link: null },
     ],
   },
   {
-    title: 'Privacy & Data',
+    title: 'Privacy & Security',
     items: [
-      {
-        q: 'What happens to my uploads?',
-        a: 'Files are processed for detection and deleted within 24 hours. We do not train our models on your content without explicit opt-in. Scan results are stored in your history for 12 months.',
-        link: { label: 'Read privacy policy', href: '/privacy' },
-      },
-      {
-        q: 'Do you sell my data?',
-        a: 'No. We do not sell, share, or use your submitted content for any purpose other than providing the detection service to you.',
-        link: null,
-      },
+      { q: 'Does Aiscern store my content?',         a: 'Files and text submitted for attestation are processed and immediately deleted. We do not use your content to train models. Metadata (verdict, integrity rating, timestamp) is stored per your plan\'s attestation history setting.', link: { label: 'Read our Privacy Policy', href: '/privacy' } },
+      { q: 'Is my API key secure?',                  a: 'API keys are stored as hashed values. We never log your key in plaintext. You can rotate or revoke keys anytime from your dashboard.', link: null },
+      { q: 'Is Aiscern GDPR compliant?',             a: 'Yes. Aiscern is operated as a sole proprietorship by Anas Ali in Pakistan. We process data in compliance with GDPR principles for EU users. You can request deletion of all your data at any time.', link: { label: 'View GDPR policy', href: '/gdpr' } },
     ],
   },
   {
-    title: 'Product',
+    title: 'API & Integration',
     items: [
-      {
-        q: 'Who built Aiscern?',
-        a: 'Aiscern is built by Anas Ali, a solo founder based in Mandi Bahauddin, Pakistan. It is an early-stage project — actively developed, transparent about limitations, and not VC-funded.',
-        link: { label: 'About the founder', href: '/about' },
-      },
-      {
-        q: 'Do you have an API?',
-        a: 'Yes. API access is available on Team and Enterprise plans. Documentation is available at /docs/api.',
-        link: { label: 'View API docs', href: '/docs/api' },
-      },
-      {
-        q: 'What file types do you support?',
-        a: 'Text (paste or URL), images (JPG, PNG, WEBP), audio (MP3, WAV, M4A), and video (MP4, MOV, WEBM).',
-        link: null,
-      },
+      { q: 'Is there an API?',                       a: 'Yes. API access is included on Pro and Team plans. The API supports all four modalities — text, image, audio, and video — with the same ensemble pipeline used in the dashboard.', link: { label: 'View API docs', href: '/docs/api' } },
+      { q: 'What file formats does the API accept?', a: 'Text: plain text, PDF, DOCX. Images: JPEG, PNG, WebP, HEIC. Audio: MP3, WAV, M4A, OGG, FLAC. Video: MP4, MOV, WebM. Maximum file sizes vary by plan.',               link: null },
+      { q: 'Is there a Python or JavaScript SDK?',   a: 'A community JavaScript SDK is in progress. In the meantime, the REST API is straightforward — see the docs for curl examples.',                                            link: { label: 'View API docs', href: '/docs/api' } },
     ],
   },
 ]
 
-function FAQItem({ q, a, link }: { q: string; a: string; link: { label: string; href: string } | null }) {
+function AccordionItem({ q, a, link }: { q: string; a: string; link: { label: string; href: string } | null }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-border/60 last:border-0">
+    <div className="border-b border-silver-300 last:border-0">
       <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between py-4 text-left gap-4 group"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between gap-4 py-4 text-left group"
       >
-        <span className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">{q}</span>
-        <ChevronDown className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <span className={`text-sm font-medium transition-colors duration-150 ${open ? 'text-white' : 'text-silver-800 group-hover:text-white'}`}>
+          {q}
+        </span>
+        <ChevronDown className={`w-4 h-4 flex-shrink-0 text-silver-600 transition-transform duration-200 ${open ? 'rotate-180 text-accent' : ''}`} />
       </button>
-      <motion.div
-        initial={false}
-        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.2 }}
-        className="overflow-hidden"
-        aria-hidden={!open}
-      >
-        <div className="pb-5">
-          <p className="text-sm text-text-muted leading-relaxed mb-3">{a}</p>
+      {open && (
+        <div className="pb-4 animate-slide-up">
+          <p className="text-sm text-silver-700 leading-relaxed">{a}</p>
           {link && (
-            <Link href={link.href} className="text-xs text-primary hover:underline font-medium">
-              {link.label} →
+            <Link href={link.href} className="mt-2 text-xs text-accent hover:underline font-medium flex items-center gap-1">
+              {link.label} <ArrowRight className="w-3 h-3" />
             </Link>
           )}
         </div>
-      </motion.div>
+      )}
     </div>
   )
 }
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-surface text-silver-800">
       <SiteNav />
+      <main id="main-content" className="pt-24 pb-20 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
 
-      <main className="pt-28 pb-20 max-w-2xl 2xl:max-w-3xl mx-auto px-4 sm:px-6 2xl:px-8">
-
-        <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-semibold mb-5">
-            <HelpCircle className="w-3.5 h-3.5" />
-            Frequently Asked Questions
+          {/* Header */}
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
+              Support
+            </p>
+            <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
+              Frequently Asked Questions
+            </h1>
+            <p className="text-silver-700 text-lg">
+              Everything you need to know about Aiscern.
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black mb-4">
-            Frequently Asked <span className="gradient-text">Questions</span>
-          </h1>
-          <p className="text-text-muted text-base">
-            Everything you need to know about Aiscern. Can&apos;t find what you are looking for?{' '}
-            <a href="mailto:contact@aiscern.com" className="text-primary hover:underline">
-              Contact us at contact@aiscern.com
-            </a>
-          </p>
-        </div>
 
-        <div className="space-y-8 mb-12">
-          {FAQ_SECTIONS.map(section => (
-            <div key={section.title}>
-              <h2 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-1 px-1">
-                {section.title}
-              </h2>
-              <div className="rounded-2xl border border-border bg-surface px-6">
-                {section.items.map(item => (
-                  <FAQItem key={item.q} {...item} />
-                ))}
+          {/* Sections */}
+          <div className="space-y-8">
+            {FAQ_SECTIONS.map(section => (
+              <div key={section.title}>
+                <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-4">
+                  {section.title}
+                </h2>
+                <div className="bg-surface border border-silver-300 rounded-xl px-5">
+                  {section.items.map(item => (
+                    <AccordionItem key={item.q} {...item} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="text-center rounded-2xl border border-border/60 bg-surface/50 p-8">
-          <Mail className="w-8 h-8 text-primary mx-auto mb-3 opacity-80" />
-          <p className="text-sm font-semibold text-text-primary mb-1">Still have questions?</p>
-          <p className="text-xs text-text-muted mb-4">We respond within 24–48 hours.</p>
-          <a
-            href="mailto:contact@aiscern.com"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:border-primary/50 hover:text-text-primary transition-all"
-          >
-            contact@aiscern.com
-          </a>
-        </div>
+          {/* Contact CTA */}
+          <div className="mt-14 p-8 rounded-xl border border-silver-300 bg-depth-bg text-center">
+            <Mail className="w-8 h-8 text-accent mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-white mb-2">Still have questions?</h2>
+            <p className="text-sm text-silver-700 mb-5">
+              Our team usually responds within 48 hours.
+            </p>
+            <a
+              href="mailto:hello@aiscern.com"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg
+                         bg-accent hover:bg-accent-hover text-depth-bg font-semibold text-sm
+                         transition-colors duration-150"
+            >
+              <Mail className="w-4 h-4" /> Email Support
+            </a>
+          </div>
 
+        </div>
       </main>
       <SiteFooter />
     </div>

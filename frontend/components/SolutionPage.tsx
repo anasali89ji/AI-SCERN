@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
+import Link  from 'next/link'
 import Image from 'next/image'
-import Link from 'next/link'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { ArrowRight, CheckCircle, ChevronDown, Zap, Check, X } from 'lucide-react'
+import { ArrowRight, CircleCheck, ChevronDown, Zap } from 'lucide-react'
 
 
 export interface SolutionFAQ {
@@ -19,9 +19,7 @@ export interface SolutionFeature {
 
 export interface SolutionUseCase {
   title: string
-  challenge: string
-  action: string
-  outcome: string
+  desc: string
 }
 
 export interface SolutionPainPoint {
@@ -29,39 +27,15 @@ export interface SolutionPainPoint {
   desc: string
 }
 
-export interface SolutionTrustStat {
-  label: string
-  value: string
-}
-
-export interface SolutionWorkflowStep {
-  title: string
-  desc: string
-}
-
-export interface SolutionComparisonRow {
-  feature: string
-  aiscern: string | boolean
-  competitor: string | boolean
-}
-
-export interface SolutionCaseStudy {
-  quote: string
-  author: string
-  role: string
-  company: string
-  metric: string
-  metricLabel: string
-  isPlaceholder?: boolean
-}
-
 export interface SolutionPageProps {
-  // --- existing (unchanged, kept backward-compatible) ---
   industry: string
   tagline: string
   description: string
   heroIcon: ReactNode
-  accentColor: 'primary' | 'cyan' | 'amber' | 'emerald' | 'rose'
+  /** Optional photo from /public/trust — when present, replaces the abstract
+      icon badge with a real photo for that industry's hero. */
+  heroImage?: string
+  accentColor: 'primary' | 'blue' | 'cyan' | 'amber' | 'emerald' | 'rose'
   ctaLabel: string
   problemTitle: string
   painPoints: SolutionPainPoint[]
@@ -71,77 +45,67 @@ export interface SolutionPageProps {
   testimonialQuote?: string
   testimonialAuthor?: string
   testimonialRole?: string
-
-  // --- new, all optional ---
-  heroImage?: string
-  heroImageAlt?: string
-  problemImage?: string
-  problemImageAlt?: string
-  trustBar?: SolutionTrustStat[]
-  workflow?: SolutionWorkflowStep[]
-  comparisonCompetitorName?: string
-  comparisonRows?: SolutionComparisonRow[]
-  caseStudy?: SolutionCaseStudy
 }
 
+// Token-only palette. `primary`/`cyan` map to the site accent (moss green);
+// `blue` is kept as a distinct hue for visual variety across the 9 subpages,
+// using Tailwind's core blue scale (not a raw hex value). `amber`, `emerald`,
+// `rose` reuse the verdict-color classes already safelisted in tailwind.config.
 const colorMap = {
   primary: {
-    badge:   'bg-primary/10 border-primary/20 text-primary',
-    iconBg:  'bg-primary/10 border-primary/20',
-    icon:    'text-primary',
-    glow:    'rgba(37,99,235,0.12)',
-    heroGlow:'rgba(37,99,235,0.15)',
-    check:   'text-primary',
-    btn:     'bg-primary hover:bg-primary/90',
+    badge: 'bg-accent/10 border-accent/20 text-accent',
+    iconBg: 'bg-accent/10 border-accent/20',
+    icon: 'text-accent',
+    glow: 'bg-accent/10',
+    check: 'text-accent',
   },
   cyan: {
-    badge:   'bg-cyan/10 border-cyan/20 text-cyan',
-    iconBg:  'bg-cyan/10 border-cyan/20',
-    icon:    'text-cyan',
-    glow:    'rgba(6,182,212,0.12)',
-    heroGlow:'rgba(6,182,212,0.15)',
-    check:   'text-cyan',
-    btn:     'bg-cyan hover:bg-cyan/90',
+    badge: 'bg-accent/10 border-accent/20 text-accent',
+    iconBg: 'bg-accent/10 border-accent/20',
+    icon: 'text-accent',
+    glow: 'bg-accent/10',
+    check: 'text-accent',
+  },
+  blue: {
+    badge: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    iconBg: 'bg-blue-500/10 border-blue-500/20',
+    icon: 'text-blue-400',
+    glow: 'bg-blue-500/10',
+    check: 'text-blue-400',
   },
   amber: {
-    badge:   'bg-amber/10 border-amber/20 text-amber',
-    iconBg:  'bg-amber/10 border-amber/20',
-    icon:    'text-amber',
-    glow:    'rgba(245,158,11,0.12)',
-    heroGlow:'rgba(245,158,11,0.15)',
-    check:   'text-amber',
-    btn:     'bg-amber hover:bg-amber/90',
+    badge: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    iconBg: 'bg-amber-500/10 border-amber-500/20',
+    icon: 'text-amber-400',
+    glow: 'bg-amber-500/10',
+    check: 'text-amber-400',
   },
   emerald: {
-    badge:   'bg-emerald/10 border-emerald/20 text-emerald',
-    iconBg:  'bg-emerald/10 border-emerald/20',
-    icon:    'text-emerald',
-    glow:    'rgba(16,185,129,0.12)',
-    heroGlow:'rgba(16,185,129,0.15)',
-    check:   'text-emerald',
-    btn:     'bg-emerald hover:bg-emerald/90',
+    badge: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+    icon: 'text-emerald-400',
+    glow: 'bg-emerald-500/10',
+    check: 'text-emerald-400',
   },
   rose: {
-    badge:   'bg-rose/10 border-rose/20 text-rose',
-    iconBg:  'bg-rose/10 border-rose/20',
-    icon:    'text-rose',
-    glow:    'rgba(244,63,94,0.12)',
-    heroGlow:'rgba(244,63,94,0.15)',
-    check:   'text-rose',
-    btn:     'bg-rose hover:bg-rose/90',
+    badge: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+    iconBg: 'bg-rose-500/10 border-rose-500/20',
+    icon: 'text-rose-400',
+    glow: 'bg-rose-500/10',
+    check: 'text-rose-400',
   },
-}
+} as const
 
 function FAQ({ faqs }: { faqs: SolutionFAQ[] }) {
   return (
-    <div className="divide-y divide-border/40">
+    <div className="divide-y divide-white/5">
       {faqs.map((faq, i) => (
         <details key={i} className="group py-4">
-          <summary className="flex items-center justify-between cursor-pointer list-none">
-            <span className="text-sm font-semibold text-text-primary pr-4">{faq.q}</span>
-            <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0 group-open:rotate-180 transition-transform duration-200" />
+          <summary className="flex items-center justify-between cursor-pointer list-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-md">
+            <span className="text-sm font-semibold text-silver-900 pr-4">{faq.q}</span>
+            <ChevronDown className="w-4 h-4 text-silver-600 flex-shrink-0 group-open:rotate-180 transition-transform duration-300" />
           </summary>
-          <p className="mt-3 text-sm text-text-muted leading-relaxed">{faq.a}</p>
+          <p className="mt-3 text-sm text-silver-600 leading-relaxed">{faq.a}</p>
         </details>
       ))}
     </div>
@@ -150,11 +114,9 @@ function FAQ({ faqs }: { faqs: SolutionFAQ[] }) {
 
 export function SolutionPage(props: SolutionPageProps) {
   const {
-    industry, tagline, description, heroIcon, accentColor, ctaLabel,
+    industry, tagline, description, heroIcon, heroImage, accentColor, ctaLabel,
     problemTitle, painPoints, features, useCases, faqs,
     testimonialQuote, testimonialAuthor, testimonialRole,
-    heroImage, heroImageAlt, problemImage, problemImageAlt,
-    trustBar, workflow, comparisonCompetitorName, comparisonRows, caseStudy,
   } = props
 
   const c = colorMap[accentColor]
@@ -162,7 +124,7 @@ export function SolutionPage(props: SolutionPageProps) {
   return (
     <>
       <SiteNav />
-      <main className="min-h-screen bg-background pt-16">
+      <main className="min-h-screen bg-surface-deep pt-16">
 
         {/* JSON-LD Schema */}
         <script
@@ -175,279 +137,151 @@ export function SolutionPage(props: SolutionPageProps) {
               operatingSystem: 'Web browser',
               applicationCategory: 'UtilitiesApplication',
               offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-              description: `Ensemble-based AI detection for ${industry} professionals.`,
+              description: `Ensemble-based AI attestation for ${industry} professionals.`,
             }),
           }}
         />
 
-        {/* Hero */}
-        <section className="relative py-24 md:py-36 overflow-hidden">
+        {/* Hero — main's pt-16 already clears the fixed nav (64px), so this
+            section's own vertical padding shouldn't stack another 80px on
+            top on mobile: 64+80=144px of dead space before the headline
+            eats a fifth of a phone's visible height before the fold. */}
+        <section className="relative pt-8 pb-14 md:py-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" aria-hidden>
-            {heroImage ? (
-              <>
-                <Image
-                  src={heroImage}
-                  alt={heroImageAlt || ''}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="100vw"
-                />
-                {/* Readability overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
-                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-background/20" />
-                <div className="absolute inset-0 mix-blend-overlay opacity-40"
-                  style={{ background: `radial-gradient(ellipse at 20% 20%, ${c.glow}, transparent 65%)` }} />
-              </>
-            ) : (
-              <>
-                <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at top, ${c.heroGlow} 0%, transparent 60%)` }} />
-                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[120px]"
-                  style={{ background: c.glow }} />
-              </>
-            )}
+            <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-3xl ${c.glow}`} />
           </div>
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative">
-            <div className="max-w-2xl text-center lg:text-left mx-auto lg:mx-0">
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 backdrop-blur-sm ${c.badge}`}>
-                <Zap className="w-3.5 h-3.5" />
-                {industry} Solution
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-12">
+              <div className="flex-1 text-center lg:text-left">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-6 ${c.badge}`}>
+                  <Zap className="w-3.5 h-3.5" />
+                  {industry} Solution
+                </div>
+                <h1 className="text-headline text-silver-900 mb-4">
+                  {tagline}
+                </h1>
+                <p className="text-lead text-silver-600 mb-8 max-w-xl mx-auto lg:mx-0">
+                  {description}
+                </p>
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center lg:justify-start">
+                  <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
+                    {ctaLabel} <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link href="/detect/text" className="btn-secondary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
+                    Try Free Demo
+                  </Link>
+                </div>
+                <p className="mt-4 text-xs text-silver-600">No credit card required · Free tier always available</p>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-text-primary mb-4 leading-tight drop-shadow-sm">
-                {tagline}
-              </h1>
-              <p className="text-lg text-text-secondary mb-8 leading-relaxed">
-                {description}
-              </p>
-              <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                <Link href="/signup" className="btn-primary">
-                  {ctaLabel} <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link href="/detect/text" className="btn-secondary backdrop-blur-sm">
-                  Try Free Demo
-                </Link>
+              {/* Industry photo (when available) — falls back to the abstract icon badge */}
+              <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 lg:w-64 lg:h-64">
+                {heroImage ? (
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} overflow-hidden`}>
+                    <Image
+                      src={heroImage}
+                      alt={`${industry} professional using Aiscern`}
+                      fill
+                      sizes="(max-width: 1024px) 192px, 256px"
+                      className="object-cover"
+                      priority
+                    />
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                      <CircleCheck className={`w-4 h-4 ${c.icon}`} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
+                    <span className={c.icon}>{heroIcon}</span>
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                      <CircleCheck className={`w-4 h-4 ${c.icon}`} />
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="mt-4 text-xs text-text-muted">No credit card required · Free tier always available</p>
             </div>
           </div>
         </section>
 
-        {/* Trust Bar */}
-        {trustBar && trustBar.length > 0 && (
-          <section className="solution-trust-bar py-8">
-            <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-              <div className={`grid grid-cols-2 gap-6 divide-x divide-border/20 ${
-                trustBar.length >= 4 ? 'sm:grid-cols-4' : trustBar.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
-              }`}>
-                {trustBar.map((stat, i) => (
-                  <div key={i} className={`text-center ${i > 0 ? 'pl-6' : ''}`}>
-                    <div className={`text-2xl md:text-3xl font-black ${c.icon}`}>{stat.value}</div>
-                    <div className="mt-1 text-xs text-text-muted uppercase tracking-wider">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* The Problem */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="flex flex-col lg:flex-row items-center gap-10 mb-12">
-              <div className="flex-1 text-center lg:text-left">
-                <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">{problemTitle}</h2>
-                <p className="text-text-secondary max-w-xl mx-auto lg:mx-0">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
-              </div>
-              {problemImage && (
-                <div className="flex-shrink-0 w-full lg:w-[45%]">
-                  <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-border/40">
-                    <Image
-                      src={problemImage}
-                      alt={problemImageAlt || `Illustration of the AI content risk facing ${industry.toLowerCase()}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 45vw"
-                    />
-                  </div>
-                </div>
-              )}
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">{problemTitle}</h2>
+              <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">The AI content problem is getting harder to solve. Here&apos;s what professionals in {industry.toLowerCase()} face every day.</p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div className="grid sm:grid-cols-2 gap-4 md:gap-5">
               {painPoints.map((p, i) => (
-                <div key={i} className="group relative card border border-border/60 p-6 rounded-xl overflow-hidden hover:border-border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10">
-                  <div className={`absolute top-0 left-0 w-1 h-full ${c.iconBg.split(' ')[0]} opacity-60`} aria-hidden />
-                  <h3 className="font-semibold text-text-primary mb-2 text-sm pl-2">{p.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed pl-2">{p.desc}</p>
+                <div key={i} className="bg-surface border border-white/15 p-5 rounded-xl">
+                  <h3 className="font-semibold text-silver-900 mb-2 text-sm">{p.title}</h3>
+                  <p className="text-sm text-silver-600 leading-relaxed">{p.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Workflow */}
-        {workflow && workflow.length > 0 && (
-          <section className="py-16 md:py-20 bg-surface/20 border-t border-border/20">
-            <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-12 text-center">How It Fits Your Workflow</h2>
-              <div className="grid sm:grid-cols-3 gap-8 sm:gap-4">
-                {workflow.map((step, i) => (
-                  <div key={i} className="relative text-center px-2">
-                    {i < workflow.length - 1 && <div className="solution-workflow-connector" />}
-                    <div className={`relative z-10 w-14 h-14 rounded-full ${c.iconBg} border-2 flex items-center justify-center mx-auto mb-4 font-black text-lg ${c.icon} shadow-md`}>
-                      {i + 1}
-                    </div>
-                    <h3 className="font-semibold text-text-primary text-sm mb-2">{step.title}</h3>
-                    <p className="text-xs text-text-muted leading-relaxed max-w-[220px] mx-auto">{step.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* How Aiscern Solves It */}
-        <section className="py-16 md:py-20 bg-surface/30">
+        <section className="py-12 md:py-20 bg-surface-elevated border-y border-white/15">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-3">How Aiscern Solves It</h2>
-              <p className="text-text-secondary max-w-xl mx-auto">
-                Our ensemble-based detection pipeline combines 8+ specialized models with a confidence threshold system.
-                <Link href="/methodology" className="text-primary hover:underline ml-1">Learn about our methodology →</Link>
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
+              <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">
+                Our ensemble-based attestation pipeline combines 8+ specialized models with a confidence threshold system.
+                <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Learn about our methodology →</Link>
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {features.map((f, i) => {
-                return (
-                  <div key={i} className="group card p-6 rounded-xl border border-border/60 hover:border-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10">
-                    <div className={`w-11 h-11 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}>
-                      {f.icon}
-                    </div>
-                    <h3 className="font-semibold text-text-primary text-sm mb-2">{f.title}</h3>
-                    <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {features.map((f, i) => (
+                <div key={i} className="bg-surface p-5 rounded-xl border border-white/15 hover:border-white/20 transition-colors duration-300">
+                  <div className={`w-10 h-10 rounded-xl ${c.iconBg} border flex items-center justify-center mb-4 ${c.icon}`}>
+                    {f.icon}
                   </div>
-                )
-              })}
+                  <h3 className="font-semibold text-silver-900 text-sm mb-2">{f.title}</h3>
+                  <p className="text-xs text-silver-600 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
             </div>
 
             {/* Accuracy disclaimer */}
-            <p className="mt-6 text-xs text-text-muted text-center border border-border/30 rounded-lg p-3 max-w-xl mx-auto">
-              ℹ️ Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
-              <Link href="/methodology" className="text-primary hover:underline ml-1">See full benchmarks →</Link>
+            <p className="mt-6 text-xs text-silver-600 text-center border border-white/15 rounded-lg p-3 max-w-xl mx-auto">
+              Accuracy varies by content type and model generation date. Results are probabilistic — use alongside human judgment.
+              <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">See full benchmarks →</Link>
             </p>
           </div>
         </section>
 
         {/* Use Cases */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-20">
           <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">Real-World Use Cases</h2>
-            <div className="grid sm:grid-cols-3 gap-6">
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 md:mb-10 text-center">Real-World Use Cases</h2>
+            <div className="grid sm:grid-cols-3 gap-4 md:gap-6">
               {useCases.map((uc, i) => (
-                <div key={i} className="group relative p-6 rounded-2xl border border-border/60 bg-surface/20 hover:border-border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10 flex flex-col">
-                  <div className={`text-4xl font-black mb-3 ${c.icon} opacity-20 group-hover:opacity-30 transition-opacity`}>0{i+1}</div>
-                  <h3 className="font-semibold text-text-primary mb-3">{uc.title}</h3>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Challenge</p>
-                  <p className="text-sm text-text-muted leading-relaxed mb-3">{uc.challenge}</p>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Action</p>
-                  <p className="text-sm text-text-muted leading-relaxed mb-4">{uc.action}</p>
-                  <div className={`mt-auto flex items-start gap-2 rounded-lg border p-3 text-sm font-semibold ${c.badge}`}>
-                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{uc.outcome}</span>
-                  </div>
+                <div key={i} className="relative p-6 rounded-xl border border-white/15 bg-surface">
+                  <div className={`text-4xl font-bold mb-3 ${c.icon} opacity-30`}>0{i + 1}</div>
+                  <h3 className="font-semibold text-silver-900 mb-2">{uc.title}</h3>
+                  <p className="text-sm text-silver-600 leading-relaxed">{uc.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Comparison Table */}
-        {comparisonRows && comparisonRows.length > 0 && (
-          <section className="py-16 md:py-20 bg-surface/20 border-t border-border/20">
-            <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-              <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-10 text-center">
-                How Aiscern Compares{comparisonCompetitorName ? ` to ${comparisonCompetitorName}` : ''}
-              </h2>
-              <div className="overflow-x-auto card border border-border/60 rounded-2xl p-0">
-                <table className="solution-comparison-table w-full">
-                  <thead>
-                    <tr>
-                      <th>Feature</th>
-                      <th>Aiscern</th>
-                      <th>{comparisonCompetitorName || 'Alternative'}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonRows.map((row, i) => (
-                      <tr key={i} className={`transition-colors hover:bg-surface/40 ${i % 2 === 1 ? 'bg-surface/10' : ''}`}>
-                        <td className="text-text-secondary">{row.feature}</td>
-                        <td className="aiscern-cell">
-                          {typeof row.aiscern === 'boolean'
-                            ? (row.aiscern ? <Check className={`w-4 h-4 ${c.icon}`} /> : <X className="w-4 h-4 text-text-muted" />)
-                            : row.aiscern}
-                        </td>
-                        <td className="competitor-cell">
-                          {typeof row.competitor === 'boolean'
-                            ? (row.competitor ? <Check className="w-4 h-4 text-text-muted" /> : <X className="w-4 h-4 text-text-muted" />)
-                            : row.competitor}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Case Study */}
-        {caseStudy && (
-          <section className="py-16 md:py-20 bg-surface/30">
-            <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-              {caseStudy.isPlaceholder && (
-                <div className="flex justify-center mb-4">
-                  <span className="solution-placeholder-badge">Placeholder — replace with a real customer</span>
-                </div>
-              )}
-              <div className="card border border-border/60 rounded-2xl p-8 md:p-10">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <div className="flex-1 text-center md:text-left">
-                    <span className={`text-5xl font-black leading-none ${c.icon} opacity-30 block mb-2`} aria-hidden>&ldquo;</span>
-                    <blockquote className="solution-case-quote -mt-6">
-                      {caseStudy.quote}&rdquo;
-                    </blockquote>
-                  </div>
-                  <div className="flex-shrink-0 flex flex-col items-center md:items-start gap-3 md:border-l md:border-border/40 md:pl-8">
-                    <cite className="not-italic text-sm text-center md:text-left">
-                      <span className="text-text-primary font-semibold block">{caseStudy.author}</span>
-                      <span className="text-text-muted">{caseStudy.role}, {caseStudy.company}</span>
-                    </cite>
-                    <div className={`rounded-xl border p-4 text-center min-w-[140px] ${c.badge}`}>
-                      <div className="text-2xl font-black">{caseStudy.metric}</div>
-                      <div className="text-xs uppercase tracking-wider">{caseStudy.metricLabel}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Legacy testimonial (kept for backward compatibility) */}
-        {!caseStudy && testimonialQuote && (
-          <section className="py-12 bg-surface/30">
+        {/* Testimonial */}
+        {testimonialQuote && (
+          <section className="py-10 md:py-12 bg-surface-elevated border-y border-white/15">
             <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-              <blockquote className="text-lg text-text-secondary italic leading-relaxed mb-4">
+              <blockquote className="text-base md:text-lg text-silver-600 italic leading-relaxed mb-4">
                 &ldquo;{testimonialQuote}&rdquo;
               </blockquote>
               {testimonialAuthor && (
-                <cite className="not-italic text-sm text-text-muted">
-                  <span className="text-text-primary font-semibold">{testimonialAuthor}</span>
+                <cite className="not-italic text-sm text-silver-600">
+                  <span className="text-silver-900 font-medium">{testimonialAuthor}</span>
                   {testimonialRole && <span>, {testimonialRole}</span>}
                 </cite>
               )}
               {!testimonialAuthor && (
-                <div className="text-sm text-text-muted">
-                  <Link href="/reviews" className="text-primary hover:underline">Be among the first to leave a review →</Link>
+                <div className="text-sm text-silver-600">
+                  <Link href="/reviews" className="text-accent hover:underline focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Be among the first to leave a review →</Link>
                 </div>
               )}
             </div>
@@ -455,32 +289,32 @@ export function SolutionPage(props: SolutionPageProps) {
         )}
 
         {/* FAQ */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-20">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="card border border-border/60 rounded-2xl p-6">
+            <div className="bg-surface border border-white/15 rounded-xl p-5 md:p-6">
               <FAQ faqs={faqs} />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-16 md:py-20 border-t border-border/20">
+        <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-4">
-              Ready to detect AI content in {industry.toLowerCase()}?
+            <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-4">
+              Ready to attest content in {industry.toLowerCase()}?
             </h2>
-            <p className="text-text-secondary mb-8">
-              Start with a free account — no credit card, no commitment. Upgrade when you need more scans.
+            <p className="text-silver-600 text-sm md:text-base mb-8">
+              Start with a free account — no credit card, no commitment. Upgrade when you need more attestations.
             </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/signup" className="btn-primary">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+              <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
                 {ctaLabel} <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/pricing" className="btn-secondary">View Pricing</Link>
-              <Link href="/about" className="btn-ghost">About Aiscern</Link>
+              <Link href="/pricing" className="btn-secondary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">View Pricing</Link>
+              <Link href="/about" className="btn-ghost w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">About Aiscern</Link>
             </div>
           </div>
         </section>

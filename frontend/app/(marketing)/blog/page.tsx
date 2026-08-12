@@ -1,22 +1,14 @@
-import Link          from 'next/link'
+import Link from 'next/link'
 import { ArrowRight, Clock, Tag } from 'lucide-react'
-import { SiteFooter }             from '@/components/site-footer'
+import { SiteFooter } from '@/components/site-footer'
 import { getAllPosts, type BlogPostMeta } from '@/lib/blog'
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
-  title: 'Blog — AI Trust & Verification Insights',
-  description: 'Learn how to verify AI-generated content, understand deepfakes, and stay ahead of synthetic media with Aiscern\u2019s enterprise AI trust verification platform.',
-  openGraph: { title: 'Aiscern Blog', description: 'AI trust and verification insights and guides', url: 'https://aiscern.com/blog' },
+  title: 'Aiscern Blog — AI Attestation Insights',
+  description: 'Learn how to attest AI-generated content, understand deepfakes, and stay ahead of synthetic media with Aiscern.',
+  openGraph: { title: 'Aiscern Blog', description: 'AI attestation insights and guides', url: 'https://aiscern.com/blog' },
 }
-
-const CATEGORY_GRADIENT: Record<string, string> = {
-  Guides:     'bg-primary/20',
-  Education:  'bg-blue-900/50',
-  Comparison: 'from-emerald-900/60 to-teal-900/60',
-  Technical:  'from-orange-900/60 to-red-900/60',
-}
-const grad = (cat: string) => CATEGORY_GRADIENT[cat] ?? 'from-primary/25 to-secondary/25'
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -24,15 +16,19 @@ function formatDate(d: string) {
 
 function FeaturedCard({ post }: { post: BlogPostMeta }) {
   return (
-    <Link href={`/blog/${post.slug}`}
-      className="group block mb-6 rounded-2xl border border-border bg-surface hover:border-primary/30 transition-all overflow-hidden">
-      <div className={`h-48 sm:h-64 ${grad(post.category)} flex items-end p-6`}>
-        <div>
-          <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 mb-3 inline-block">
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group block mb-8 rounded-xl border border-white/15 bg-surface
+                 hover:border-white/20 hover:shadow-lift
+                 transition-all duration-300 ease-out overflow-hidden focus-visible:ring-2 focus-visible:ring-accent/50"
+    >
+      <div className="h-48 sm:h-64 bg-surface-deep border-b border-white/15 flex items-end p-6">
+        <div className="flex-1 min-w-0">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 mb-3 inline-block">
             {post.category}
           </span>
-          <h2 className="text-xl sm:text-3xl font-black text-white mb-2">{post.title}</h2>
-          <div className="flex items-center gap-3 text-xs text-white/60">
+          <h2 className="text-headline text-silver-900 mb-2">{post.title}</h2>
+          <div className="flex items-center gap-2 text-xs text-silver-600">
             <span>{formatDate(post.date)}</span>
             <span>·</span>
             <Clock className="w-3 h-3" />
@@ -40,9 +36,9 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
           </div>
         </div>
       </div>
-      <div className="p-5 sm:p-6 flex items-center justify-between">
-        <p className="text-text-muted text-sm leading-relaxed max-w-2xl">{post.description}</p>
-        <ArrowRight className="w-5 h-5 text-primary flex-shrink-0 ml-4 group-hover:translate-x-1 transition-transform" />
+      <div className="p-5 sm:p-6 flex items-center justify-between gap-4">
+        <p className="text-lead text-silver-600 flex-1 min-w-0">{post.description}</p>
+        <ArrowRight className="w-5 h-5 text-accent flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300" />
       </div>
     </Link>
   )
@@ -50,19 +46,23 @@ function FeaturedCard({ post }: { post: BlogPostMeta }) {
 
 function PostCard({ post }: { post: BlogPostMeta }) {
   return (
-    <Link href={`/blog/${post.slug}`}
-      className="group block rounded-2xl border border-border bg-surface hover:border-primary/30 transition-all overflow-hidden">
-      <div className={`h-36 ${grad(post.category)} flex items-end p-4`}>
-        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group block rounded-xl border border-white/15 bg-surface
+                 hover:border-white/20 hover:shadow-lift
+                 transition-all duration-300 ease-out overflow-hidden focus-visible:ring-2 focus-visible:ring-accent/50"
+    >
+      <div className="h-32 bg-surface-deep border-b border-white/15 flex items-end p-4">
+        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
           {post.category}
         </span>
       </div>
       <div className="p-4 sm:p-5">
-        <h3 className="font-bold text-text-primary mb-2 group-hover:text-primary transition-colors leading-snug">
+        <h3 className="text-lg font-semibold text-silver-900 mb-2 group-hover:text-accent transition-colors duration-300 leading-snug">
           {post.title}
         </h3>
-        <p className="text-text-muted text-xs leading-relaxed mb-3 line-clamp-2">{post.description}</p>
-        <div className="flex items-center gap-2 text-xs text-text-disabled">
+        <p className="text-silver-600 text-xs leading-relaxed mb-3 line-clamp-2">{post.description}</p>
+        <div className="flex items-center gap-2 text-xs text-silver-600">
           <span>{formatDate(post.date)}</span>
           <span>·</span>
           <Clock className="w-3 h-3" />
@@ -77,29 +77,33 @@ export default function BlogPage() {
   const posts = getAllPosts()
 
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-surface-deep text-silver-800">
       <SiteNav />
+      <main id="main-content" className="pt-24 pb-20 max-w-6xl mx-auto px-4 sm:px-6">
 
-      <main className="pt-24 pb-20 max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-10">
+        {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold mb-4">
-            <Tag className="w-3 h-3" /> Insights & Guides
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-accent text-xs font-semibold mb-4">
+            <Tag className="w-3 h-3" /> Insights &amp; Guides
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">
-            Aiscern <span className="gradient-text">Blog</span>
+          <h1 className="text-headline text-silver-900 mb-4">
+            Aiscern Blog
           </h1>
-          <p className="text-text-muted text-base sm:text-lg max-w-xl mx-auto">
+          <p className="text-lead text-silver-600 max-w-xl mx-auto">
             Stay ahead of AI-generated content. Guides, comparisons, and research from the Aiscern team.
           </p>
         </div>
 
         {posts.length === 0 ? (
-          <p className="text-center text-text-muted py-20">No posts yet — check back soon.</p>
+          <div className="text-center py-24">
+            <p className="text-silver-600 text-lg mb-2">No posts yet</p>
+            <p className="text-silver-600 text-sm">Check back soon — guides and research are coming.</p>
+          </div>
         ) : (
           <>
             <FeaturedCard post={posts[0]} />
             {posts.length > 1 && (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {posts.slice(1).map(post => (
                   <PostCard key={post.slug} post={post} />
                 ))}

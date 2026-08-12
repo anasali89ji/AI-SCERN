@@ -1,166 +1,45 @@
 'use client'
 
-/**
- * components/hero/HeroHeadline.tsx
- *
- * Fix: prior version used `absolute inset-0` inside a zero-width container,
- * clipped by overflow-hidden → word invisible on mobile.
- *
- * Fix: slot now has EXPLICIT w + h at every breakpoint so it never collapses.
- * `absolute inset-0` inside a sized parent works correctly.
- */
+import { useState } from 'react'
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
-
-const ROTATING_WORDS = ['Text', 'Image', 'Audio', 'Video'] as const
-
-// Full static class strings — Tailwind must see these to include in bundle
-const WORD_STYLES = {
-  Text:  { text: 'text-amber',     bg: 'bg-amber'     },
-  Image: { text: 'text-primary',   bg: 'bg-primary'   },
-  Audio: { text: 'text-cyan',      bg: 'bg-cyan'      },
-  Video: { text: 'text-secondary', bg: 'bg-secondary' },
-} as const
-
-const INTERVAL = 2500
+// Module 2.1: rotating/typewriter word animation removed per vibecode ban.
+// Modalities are now a static, clickable tab row — no auto-rotation, no
+// interval timers, no AnimatePresence entrance/exit on the word itself.
+const MODALITIES = ['Text', 'Image', 'Audio', 'Video'] as const
 
 export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
-  const [idx,      setIdx]      = useState(initialIndex)
-  const [isPaused, setIsPaused] = useState(false)
-  const reduced = useReducedMotion()
-
-  const next = useCallback(() => setIdx(p => (p + 1) % ROTATING_WORDS.length), [])
-
-  useEffect(() => {
-    if (isPaused) return
-    const id = setInterval(next, INTERVAL)
-    return () => clearInterval(id)
-  }, [isPaused, next])
-
-  const word      = ROTATING_WORDS[idx]
-  const wordStyle = WORD_STYLES[word]
-  const dur       = reduced ? 0 : 0.3
-  const ease      = [0.25, 0.1, 0.25, 1] as const
+  const [active, setActive] = useState<typeof MODALITIES[number]>(MODALITIES[initialIndex])
 
   return (
-    <div className="text-center select-none">
+    <div className="select-none">
+      <h1 className="font-heading font-bold leading-[1.05] tracking-tight text-display text-silver-900">
+        Attest any content.
+      </h1>
+      <p className="font-heading font-semibold leading-[1.1] tracking-tight text-headline text-silver-700 mt-1">
+        AI-generated or human-made.
+      </p>
 
-      {/* Static "Detect" */}
-      <motion.h1
-        className="font-black leading-[0.9] tracking-tight"
-        initial={{ opacity: 0, y: reduced ? 0 : 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.5, ease: 'easeOut' }}
-      >
-        <span
-          className="block text-[2.5rem] xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
-          style={{
-            background: 'linear-gradient(135deg,#ffffff 0%,#93c5fd 45%,#2563eb 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          Verify
-        </span>
-      </motion.h1>
-
-      {/* Rotating word row */}
-      <motion.div
-        className="mt-3 sm:mt-4 flex items-center justify-center gap-x-3 sm:gap-x-4"
-        initial={{ opacity: 0, y: reduced ? 0 : 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.5, delay: 0.15, ease: 'easeOut' }}
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        {/*
-          KEY FIX: explicit w + h at every breakpoint.
-          Without explicit dimensions the parent collapses to 0×0 when all
-          children are absolute — overflow-hidden then clips everything.
-          Widths sized for "Image"/"Audio"/"Video" (longest words) at each size.
-        */}
-        <div
-          className="relative overflow-hidden
-                     w-[4.5rem]  h-8
-                     xs:w-[5.5rem] xs:h-9
-                     sm:w-[7.5rem] sm:h-11
-                     md:w-[9.5rem] md:h-14
-                     lg:w-[11.5rem] lg:h-16"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={idx}
-              initial={{ opacity: 0, y: reduced ?  0 :  22 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{   opacity: 0, y: reduced ?  0 : -22 }}
-              transition={{ duration: dur, ease }}
-              className={`
-                absolute inset-0 flex items-center justify-center
-                font-black leading-none
-                text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl
-                ${wordStyle.text}
-              `}
-            >
-              {word}
-            </motion.span>
-          </AnimatePresence>
-        </div>
-
-        <span className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-text-secondary whitespace-nowrap">
-          with Confidence
-        </span>
-      </motion.div>
-
-      {/* Dot indicators */}
-      <motion.div
-        className="mt-2 sm:mt-3 flex items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: reduced ? 0 : 0.4, delay: 0.3 }}
-        role="tablist"
-        aria-label="Select detection type"
-      >
-        {ROTATING_WORDS.map((w, i) => {
-          const active = i === idx
+      {/* Static modality tab row — replaces the old rotating-word carousel */}
+      <div role="tablist" aria-label="Content types" className="flex flex-wrap gap-2 mt-6">
+        {MODALITIES.map(m => {
+          const isActive = m === active
           return (
             <button
-              key={w}
+              key={m}
               role="tab"
-              aria-selected={active}
-              aria-label={`Show ${w}`}
-              aria-current={active ? 'true' : undefined}
-              onClick={() => { setIdx(i); setIsPaused(true) }}
-              className={[
-                /* Tap target kept generous, but negative margin lets targets
-                   overlap slightly so the visible dots sit close together —
-                   the previous gap-1.5 BETWEEN 44px boxes made dots look far
-                   apart despite each dot itself being tiny. */
-                'flex items-center justify-center',
-                'min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0',
-                '-mx-1.5 sm:mx-0.5',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full',
-              ].join(' ')}
+              aria-selected={isActive}
+              onClick={() => setActive(m)}
+              className={
+                isActive
+                  ? 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-accent/30 bg-accent/10 text-accent transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
+                  : 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-white/[0.08] text-silver-600 hover:text-silver-800 hover:border-white/[0.16] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
+              }
             >
-              {/* Visual dot — uses transform:scaleX to avoid non-composited width animation */}
-              <span
-                className={[
-                  'block h-[5px] sm:h-1.5 rounded-full',
-                  'transition-transform duration-300',
-                  active
-                    ? `w-3.5 sm:w-4 ${WORD_STYLES[w].bg} scale-x-100`
-                    : 'w-[5px] sm:w-1.5 bg-white/30 hover:bg-white/50',
-                ].join(' ')}
-              />
+              {m}
             </button>
           )
         })}
-      </motion.div>
-
+      </div>
     </div>
   )
 }

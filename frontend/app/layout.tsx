@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+import { GeistSans } from 'geist/font/sans'
 import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
@@ -21,22 +22,21 @@ const inter = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL('https://aiscern.com'),
   title: {
-    default: 'Aiscern — Enterprise AI Trust & Content Verification Platform',
+    default: 'Aiscern — Free Multi-Modal AI Detection | Text, Image, Audio, Video',
     template: '%s | Aiscern',
   },
-  description: 'Aiscern is an enterprise AI trust and content verification platform for text, image, audio, video, and documents — ensemble-based, benchmark-tested, with a free tier for individuals.',
+  description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks. Enterprise API available.',
   keywords: [
-    'ai trust platform','enterprise ai verification','ai content verification','digital trust verification',
-    'content verification platform','ai text verification','chatgpt detector','claude detector',
+    'ai detector','free ai detector','ai text detector','chatgpt detector','claude detector',
     'gemini detector','ai content detector','detect ai generated text','chatgpt checker',
-    'ai writing verification','is this ai generated','ai checker',
-    'deepfake verification','ai image verification','image authenticity verification',
+    'ai writing detector','gpt detector free','is this ai generated','ai checker',
+    'deepfake detector','deepfake detector online free','ai image detector',
     'detect midjourney','detect dall-e','stable diffusion detector',
     'ai face detector','deepfake face detector','fake image detector',
-    'ai audio verification','voice clone verification','elevenlabs detector',
+    'ai audio detector','voice clone detector','elevenlabs detector',
     'ai voice detector','deepfake audio','synthetic voice detector',
-    'ai video verification','deepfake video detector','synthetic media verification',
-    'aiscern','enterprise content authentication','ai trust and safety platform','digital content trust',
+    'ai video detector','deepfake video detector','synthetic media detector',
+    'aiscern','ai detection tool','multimodal ai detector','best ai detector 2025',
   ],
   authors: [{ name: 'Aiscern', url: 'https://aiscern.com' }],
   creator: 'Aiscern',
@@ -61,14 +61,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website', locale: 'en_US',
     url: 'https://aiscern.com', siteName: 'Aiscern',
-    title: 'Aiscern — Enterprise AI Trust & Content Verification Platform',
-    description: 'Verify authenticity across text, image, audio, video, and documents with an enterprise-grade AI trust and digital verification platform. Ensemble-based, benchmark-tested accuracy.',
-    images: [{ url: 'https://aiscern.com/og-image.png', width: 1200, height: 630, alt: 'Aiscern — Enterprise AI Trust & Content Verification Platform' }],
+    title: 'Aiscern — Free Multi-Modal AI Detection | Text, Image, Audio, Video',
+    description: 'Free AI content detection for text, images, audio, and video. Ensemble-based analysis with published accuracy benchmarks.',
+    images: [{ url: 'https://aiscern.com/og-image.png', width: 1200, height: 630, alt: 'Aiscern — Free AI Content Detection Platform' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Aiscern — Enterprise AI Trust Verification Platform',
-    description: 'Verify ChatGPT text, Midjourney images, ElevenLabs voice & deepfake video with an enterprise-grade digital trust verification platform.',
+    title: 'Aiscern — Free AI Detector for Text, Images, Audio & Video',
+    description: 'Detect ChatGPT text, Midjourney images, ElevenLabs voice & deepfake video. Ensemble-based. Free tier available.',
     images: ['https://aiscern.com/og-image.png'],
     creator: '@aiscern', site: '@aiscern',
   },
@@ -78,10 +78,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${GeistSans.variable}`} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="ekcPkUKX1AtBfsRCRULZp5rUgXBRYt60NE4XOFrO5Ds" />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#141414" />
 
         {/* ── Critical font preloads — must come before CSS to prevent FOIT ── */}
         <link
@@ -111,17 +111,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
-            name: 'Aiscern Enterprise AI Trust & Content Verification Platform',
+            name: 'Aiscern Multi-Modal AI Detector',
             operatingSystem: 'Web browser',
             applicationCategory: 'UtilitiesApplication',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-            description: 'Enterprise AI trust and content verification platform for text, image, audio, video, and document authenticity.',
+            description: 'Ensemble-based AI detection for text, image, audio, and video.',
             url: 'https://aiscern.com',
-            sameAs: [
-              'https://twitter.com/aiscern',
-              'https://linkedin.com/company/aiscern',
-              'https://github.com/anasali89ji/AI-SCERN',
-            ],
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.5',
@@ -130,12 +125,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })}}
         />
       </head>
-      <body className="bg-background text-text-primary antialiased">
+      <body className="bg-[#141414] text-[#E5E5E5] antialiased">
         {/* Skip to main content — keyboard accessibility */}
         <a
           href="#main-content"
           aria-label="Skip to main content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+          className="skip-link"
         >
           Skip to main content
         </a>
@@ -145,18 +140,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <AnimationPreferenceProvider>
               <MotionProvider>
-              {children}
-              <Toaster
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: '#171717',
-                  border: '1px solid #262626',
-                  color: '#fff',
-                },
-              }}
-            />
-              <CookieConsent />
+                {children}
+                <Toaster richColors position="top-right" />
+                <CookieConsent />
               </MotionProvider>
             </AnimationPreferenceProvider>
           </AuthProvider>
