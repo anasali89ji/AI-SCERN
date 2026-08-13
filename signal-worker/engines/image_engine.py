@@ -227,6 +227,42 @@ def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
         }
 
 
+# ── Object Physics Layer runners (L15-L19, v4.7.0) ─────────────────────────────
+
+def _run_object_physics_layers(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Run the Object Physics ensemble (OBP + MRC + GPC + TSAD + OSIP).
+    Returns the full run_object_physics_analysis dict.
+    Fails silently — on error returns neutral composite_score=0.5 and empty
+    layer_reports so the rest of the pipeline is unaffected, matching the
+    L11-L14 failure-handling pattern in _run_physical_layers above.
+    """
+    from analyzers.object_physics_ensemble import run_object_physics_analysis
+    from utils.evidence_builder import build_layer_report
+    try:
+        return run_object_physics_analysis(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][ObjectPhysics] failed: %s", e)
+        neutral_layers = [
+            build_layer_report(15, "OBP – Object Boundary Physics",             [], "failure", 0, score=0.5),
+            build_layer_report(16, "MRC – Material Reflectance Consistency",    [], "failure", 0, score=0.5),
+            build_layer_report(17, "GPC – 3D Geometry & Perspective Consistency", [], "failure", 0, score=0.5),
+            build_layer_report(18, "TSAD – Texture Synthesis Artifact Detection", [], "failure", 0, score=0.5),
+            build_layer_report(19, "OSIP – Object-Scene Interaction Physics",   [], "failure", 0, score=0.5),
+        ]
+        return {
+            "obp":  {"score": 0.5, "status": "failure", "evidence": []},
+            "mrc":  {"score": 0.5, "status": "failure", "evidence": []},
+            "gpc":  {"score": 0.5, "status": "failure", "evidence": []},
+            "tsad": {"score": 0.5, "status": "failure", "evidence": []},
+            "osip": {"score": 0.5, "status": "failure", "evidence": []},
+            "composite_score": 0.5,
+            "active_signals":  0,
+            "layer_reports":   neutral_layers,
+            "elapsed_ms":      0,
+        }
+
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(img_array: "np.ndarray", temp_path: str) -> Dict[str, Any]:
@@ -468,6 +504,13 @@ def _fuse_scores(
         12: 1.3,   # L12 BDIS — Bayer pattern (always active)
         13: 1.0,   # L13 SSWDP — SSS decay (portrait-dependent)
         14: 0.9,   # L14 QESM — Quantum efficiency (gray-region-dependent)
+        # L15-L19 (v4.7.0): Object Physics Ensemble. Weights kept in sync
+        # with analyzers/object_physics_ensemble.py's internal _WEIGHTS.
+        15: 1.1,   # L15 OBP — Object Boundary Physics (always active)
+        16: 1.0,   # L16 MRC — Material Reflectance Consistency (always active)
+        17: 0.9,   # L17 GPC — Geometry & Perspective (scene-dependent, neutral when N/A)
+        18: 1.2,   # L18 TSAD — Texture Synthesis Artifacts (always active, strongest vs. diffusion VAEs)
+        19: 1.0,   # L19 OSIP — Object-Scene Interaction Physics (always active)
     }
 
     for layer in v2_layers:
@@ -478,7 +521,14 @@ def _fuse_scores(
         # have something to say about this image. "failure" was already
         # skipped; "not_applicable" is a distinct, deliberate signal from the
         # analyzer itself (not an error) and must be skipped too.
-        if layer.get("status") in ("failure", "not_applicable"):
+        # v4.7.0: L17 (GPC) uses status="neutral_scene_type" for the same
+        # deliberate-opt-out reason L13/L14 use "not_applicable" (e.g. a
+        # macro shot or texture fill with no reliable straight edges to
+        # measure vanishing-point consistency from) — must be skipped for
+        # the same reason "not_applicable" is: including its neutral 0.5
+        # in the weighted average would dilute real signal from layers
+        # that DO have something to say about this image.
+        if layer.get("status") in ("failure", "not_applicable", "neutral_scene_type"):
             continue
         layer_num = layer.get("layer", 0)
         # Use layerSuspicionScore directly — it already aggregates all evidence
@@ -695,6 +745,7 @@ async def analyze_image_from_url(
     import numpy as np
     from PIL import Image
     from utils.image_loader import load_image_from_url
+    from concurrent.futures import ThreadPoolExecutor
 
     start = time.time()
     target_regions = target_regions or []
@@ -725,27 +776,45 @@ async def analyze_image_from_url(
             img_pil = img_pil.resize((_nw, _nh), Image.LANCZOS)
             img_array = np.array(img_pil, dtype=np.uint8)
 
-        # v2 + P4 + L9 + L10 GFE (L1-L4, L6-L10)
-        layers = [
-            _run_l1(img_array, img_pil, target_regions),
-            _run_l2(img_array, img_pil),
-            _run_l3(img_array, img_pil),
-            _run_l4(img_array, img_pil, target_regions),
-            _run_l6(img_array, img_pil),
-            _run_l7(img_array, img_pil),
-            _run_l8(img_array, img_pil),
-            _run_l9(img_array, img_pil),
-            _run_l10(img_array, img_pil),
-        ]
-        synthid = _run_synthid(img_array,
-                               lossless=(img_pil.format or "").upper() not in ("JPEG", "JPG"))
+        # v4.7.0 fix: this path (used by /analyze-signals and the web
+        # scanner) previously ran L1-L10 as a plain sequential list while
+        # the upload path (analyze_image_from_bytes) ran the same layers in
+        # a 12-worker ThreadPoolExecutor. That asymmetry made URL-based
+        # scans several times slower for no reason, and made them more
+        # likely to hit per-layer timeouts under load — since each timed-out
+        # layer silently degrades to a neutral 0.5 (see the "not_applicable"/
+        # "failure" skip logic in _fuse_scores), that raised the false
+        # negative rate specifically on URL-scanned images (bulk site
+        # crawling, the web scanner) relative to direct uploads. Now runs
+        # concurrently, matching the bytes path.
+        with ThreadPoolExecutor(max_workers=13) as pool:
+            f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
+            f_l2  = pool.submit(_run_l2, img_array, img_pil)
+            f_l3  = pool.submit(_run_l3, img_array, img_pil)
+            f_l4  = pool.submit(_run_l4, img_array, img_pil, target_regions)
+            f_l6  = pool.submit(_run_l6, img_array, img_pil)
+            f_l7  = pool.submit(_run_l7, img_array, img_pil)
+            f_l8  = pool.submit(_run_l8, img_array, img_pil)
+            f_l9  = pool.submit(_run_l9, img_array, img_pil)
+            f_l10 = pool.submit(_run_l10, img_array, img_pil)
+            f_phys = pool.submit(_run_physical_layers, img_array, img_pil)
+            # v4.7.0: L15-L19 Object Physics Ensemble, same pool as L11-L14.
+            f_objphys = pool.submit(_run_object_physics_layers, img_array, img_pil)
+            f_synthid = pool.submit(
+                _run_synthid, img_array,
+                (img_pil.format or "").upper() not in ("JPEG", "JPG"),
+            )
+            f_v3 = pool.submit(_run_v3_forensics, img_array, temp_path)
 
-        # Physical Consistency layers (L11-L14): PAFRA, BDIS, SSWDP, QESM
-        physical = _run_physical_layers(img_array, img_pil)
-        layers.extend(physical.get("layer_reports", []))
-
-        # v3 forensics
-        v3 = _run_v3_forensics(img_array, temp_path)
+            layers = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
+                      f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
+                      f_l10.result()]
+            physical = f_phys.result()
+            layers.extend(physical.get("layer_reports", []))
+            object_physics = f_objphys.result()
+            layers.extend(object_physics.get("layer_reports", []))
+            synthid = f_synthid.result()
+            v3      = f_v3.result()
 
         # Optional GPU layers
         l5 = _run_l5_inversion(image_url) if include_gpu_layers else {"available": False, "reason": "not_requested"}
@@ -836,11 +905,12 @@ def analyze_image_from_bytes(
             pil_img = pil_img.resize((new_w, new_h), Image.LANCZOS)
         img_array = np.array(pil_img, dtype=np.uint8)
 
-        # Run v2+P4 layers + v3 forensics + synthid ALL in parallel (10 workers)
+        # Run v2+P4 layers + v3 forensics + synthid ALL in parallel.
         slog.engine_start(job_id=job_id, engine="image")
         _t0 = time.monotonic()
-        # L1-L4 (v2), L6-L8 (P4 CPU-only), SynthID, v3 forensics
-        with ThreadPoolExecutor(max_workers=12) as pool:
+        # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
+        # physics, v4.7.0), SynthID, v3 forensics — 13 concurrent tasks.
+        with ThreadPoolExecutor(max_workers=13) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -851,6 +921,10 @@ def analyze_image_from_bytes(
             f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
             f_l10     = pool.submit(_run_l10,     img_array, pil_img_original)
             f_phys    = pool.submit(_run_physical_layers, img_array, pil_img)
+            # v4.7.0: L15-L19 Object Physics Ensemble, submitted alongside
+            # L11-L14 so it doesn't add to wall-clock time (bounded by the
+            # slowest task in the pool, same as every other layer here).
+            f_objphys = pool.submit(_run_object_physics_layers, img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
@@ -860,6 +934,8 @@ def analyze_image_from_bytes(
                        f_l10.result()]
             physical = f_phys.result()
             layers.extend(physical.get("layer_reports", []))
+            object_physics = f_objphys.result()
+            layers.extend(object_physics.get("layer_reports", []))
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
