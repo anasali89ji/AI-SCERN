@@ -1,12 +1,32 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import { ClerkClientProvider } from '@/components/ClerkClientProvider'
-import { AuthProvider } from '@/components/auth-provider'
+import dynamic from 'next/dynamic'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { AnimationPreferenceProvider } from '@/components/AnimationPreferenceContext'
+
+/**
+ * Clerk's client bundle (ui-common/vendors/clerk.browser/ui.browser — ~256 KiB
+ * uncompressed) was showing up as "reduce unused JavaScript" on marketing
+ * pages that never touch auth on first paint. A static import puts that
+ * whole chunk in the initial bundle graph even though ClerkClientProvider
+ * is itself a 'use client' boundary — 'use client' only affects SSR, not
+ * chunking. next/dynamic(..., { ssr: false }) gives it its own async chunk
+ * so it loads after hydration instead of competing with FCP/LCP work.
+ */
+const ClerkClientProvider = dynamic(
+  () => import('@/components/ClerkClientProvider').then((m) => m.ClerkClientProvider),
+  { ssr: false }
+)
+/**
+ * NOT deferred like ClerkClientProvider above, on purpose: AuthGuard.tsx
+ * treats "150ms elapsed + loading:false" as a confirmed logged-out state.
+ * Deferring this too would widen that race on slow connections and could
+ * flash the sign-in wall at real logged-in users. Static import stays.
+ */
+import { AuthProvider } from '@/components/auth-provider'
 
 const inter = localFont({
   src: [
@@ -100,7 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
 
         {/* ── Preconnect for auth only — HF api is not used on homepage load ── */}
-        <link rel="preconnect" href="https://clerk.aiscern.com" />
+        <link rel="preconnect" href="https://clerk.aiscern.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://clerk.aiscern.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         {/* NOTE: HuggingFace preconnect removed — not used within first 2s */}

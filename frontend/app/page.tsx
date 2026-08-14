@@ -116,7 +116,12 @@ function RootNetworkNode({ node, file, side, index, size }: {
     : node.x > 90
     ? `min(calc(100% - ${w + 4}px), calc(${node.x}% - ${w / 2}px))`
     : `calc(${node.x}% - ${w / 2}px)`
-  const bobClass = index % 2 === 0 ? 'node-card-bob-a' : 'node-card-bob-b'
+  const bobClass = index === 0
+  ? '' // LCP-priority card: skip the fade/bob entrance, it was adding
+       // up to ~1.5s of opacity:0->1 ramp (16% of a 5s animation +
+       // staggered animation-delay) directly on top of Lighthouse's
+       // measured LCP element render delay.
+  : index % 2 === 0 ? 'node-card-bob-a' : 'node-card-bob-b'
   return (
     <div
       className={`absolute rounded-xl pointer-events-none overflow-hidden ${bobClass}`}

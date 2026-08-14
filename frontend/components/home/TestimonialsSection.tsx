@@ -93,7 +93,7 @@ export default function TestimonialsSection() {
 function TestimonialCard({ t }: { t: (typeof TESTIMONIALS)[number] }) {
   return (
     <div>
-      <div className="flex items-center gap-1 mb-4" aria-label="5 out of 5 stars">
+      <div className="flex items-center gap-1 mb-4" role="img" aria-label="5 out of 5 stars">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star key={i} className="w-4 h-4 fill-amber text-amber" aria-hidden="true" />
         ))}
