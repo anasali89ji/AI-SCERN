@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import dynamic from 'next/dynamic'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'
 import './globals.css'
@@ -13,13 +12,12 @@ import { AnimationPreferenceProvider } from '@/components/AnimationPreferenceCon
  * pages that never touch auth on first paint. A static import puts that
  * whole chunk in the initial bundle graph even though ClerkClientProvider
  * is itself a 'use client' boundary — 'use client' only affects SSR, not
- * chunking. next/dynamic(..., { ssr: false }) gives it its own async chunk
- * so it loads after hydration instead of competing with FCP/LCP work.
+ * chunking. The dynamic(..., { ssr: false }) that gives it its own async
+ * chunk lives in ClerkClientProviderDeferred.tsx: `ssr: false` isn't
+ * allowed directly in this file since layout.tsx is a Server Component
+ * (it exports `metadata`) — `next build` catches this and fails otherwise.
  */
-const ClerkClientProvider = dynamic(
-  () => import('@/components/ClerkClientProvider').then((m) => m.ClerkClientProvider),
-  { ssr: false }
-)
+import { ClerkClientProvider } from '@/components/ClerkClientProviderDeferred'
 /**
  * NOT deferred like ClerkClientProvider above, on purpose: AuthGuard.tsx
  * treats "150ms elapsed + loading:false" as a confirmed logged-out state.

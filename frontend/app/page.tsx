@@ -135,11 +135,21 @@ function RootNetworkNode({ node, file, side, index, size }: {
       <div className="absolute inset-0" style={{
         background: isAI ? 'linear-gradient(160deg,#1e40af,#1e3a8a)' : 'linear-gradient(160deg,#065f46,#052e16)',
       }} />
-      <img src={file} alt="" decoding="async"
-        className="absolute inset-0 w-full h-full object-cover" style={{ display: 'block' }}
+      {/*
+        Was a raw <img>: Lighthouse's own throttled-mobile run displays
+        this at 34x44 (the 'sm' breakpoint's cardSize) while the source
+        WEBP is a fixed 130x162 — roughly 4x oversized on exactly the
+        run that flagged it. next/image's `fill` + `sizes` lets Next's
+        image optimizer serve a variant sized to the actual breakpoint
+        instead of the full asset everywhere.
+      */}
+      <Image src={file} alt="" fill unoptimized={false}
+        className="object-cover" style={{ display: 'block' }}
         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        loading={index < 2 ? 'eager' : 'lazy'}
+        {...(index === 0 ? { priority: true } : { loading: index === 1 ? 'eager' : 'lazy' })}
         fetchPriority={index === 0 ? 'high' : 'low'}
+        sizes="(max-width: 640px) 34px, (max-width: 1024px) 48px, 64px"
+        quality={70}
       />
       <div className="absolute inset-0 bg-black/35" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
