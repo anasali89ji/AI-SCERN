@@ -263,6 +263,39 @@ def _run_object_physics_layers(img_array, img_pil) -> Dict[str, Any]:
         }
 
 
+# ── Extended Physics layer runner (L20-L21, v4.8.0, PROVISIONAL) ───────────────
+
+def _run_extended_physics_layers(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Run the Extended Physics ensemble (MISG + LOP). PROVISIONAL — see
+    analyzers/extended_physics_ensemble.py module docstring: these two
+    layers' thresholds are not yet calibrated against a labeled dataset,
+    so they're wired in at low weight (LAYER_WEIGHTS[20], [21]) rather
+    than excluded entirely — this lets their raw evidence flow through for
+    human review and future calibration-dataset construction without
+    letting an uncalibrated signal meaningfully move the fused verdict.
+    Fails silently on error, same pattern as _run_object_physics_layers.
+    """
+    from analyzers.extended_physics_ensemble import run_extended_physics_analysis
+    from utils.evidence_builder import build_layer_report
+    try:
+        return run_extended_physics_analysis(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][ExtendedPhysics] failed: %s", e)
+        neutral_layers = [
+            build_layer_report(20, "MISG – Multi-Illuminant & Global Shadow Geometry [provisional]", [], "failure", 0, score=0.5),
+            build_layer_report(21, "LOP – Lens & Optical Physics [provisional]",                       [], "failure", 0, score=0.5),
+        ]
+        return {
+            "misg": {"score": 0.5, "status": "failure", "evidence": []},
+            "lop":  {"score": 0.5, "status": "failure", "evidence": []},
+            "composite_score": 0.5,
+            "active_signals":  0,
+            "layer_reports":   neutral_layers,
+            "elapsed_ms":      0,
+        }
+
+
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
 def _run_v3_forensics(img_array: "np.ndarray", temp_path: str) -> Dict[str, Any]:
@@ -511,6 +544,11 @@ def _fuse_scores(
         17: 0.9,   # L17 GPC — Geometry & Perspective (scene-dependent, neutral when N/A)
         18: 1.2,   # L18 TSAD — Texture Synthesis Artifacts (always active, strongest vs. diffusion VAEs)
         19: 1.0,   # L19 OSIP — Object-Scene Interaction Physics (always active)
+        # L20-L21 (v4.8.0): PROVISIONAL — uncalibrated, see
+        # analyzers/extended_physics_ensemble.py module docstring. Weighted
+        # low deliberately; raise only after a real calibration pass.
+        20: 0.35,  # L20 MISG — Multi-Illuminant & Global Shadow Geometry
+        21: 0.45,  # L21 LOP — Lens & Optical Physics (chromatic aberration)
     }
 
     for layer in v2_layers:
@@ -787,7 +825,7 @@ async def analyze_image_from_url(
         # negative rate specifically on URL-scanned images (bulk site
         # crawling, the web scanner) relative to direct uploads. Now runs
         # concurrently, matching the bytes path.
-        with ThreadPoolExecutor(max_workers=13) as pool:
+        with ThreadPoolExecutor(max_workers=14) as pool:
             f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
             f_l2  = pool.submit(_run_l2, img_array, img_pil)
             f_l3  = pool.submit(_run_l3, img_array, img_pil)
@@ -800,6 +838,8 @@ async def analyze_image_from_url(
             f_phys = pool.submit(_run_physical_layers, img_array, img_pil)
             # v4.7.0: L15-L19 Object Physics Ensemble, same pool as L11-L14.
             f_objphys = pool.submit(_run_object_physics_layers, img_array, img_pil)
+            # v4.8.0: L20-L21 Extended Physics (provisional weight, see runner docstring)
+            f_extphys = pool.submit(_run_extended_physics_layers, img_array, img_pil)
             f_synthid = pool.submit(
                 _run_synthid, img_array,
                 (img_pil.format or "").upper() not in ("JPEG", "JPG"),
@@ -813,6 +853,8 @@ async def analyze_image_from_url(
             layers.extend(physical.get("layer_reports", []))
             object_physics = f_objphys.result()
             layers.extend(object_physics.get("layer_reports", []))
+            extended_physics = f_extphys.result()
+            layers.extend(extended_physics.get("layer_reports", []))
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
@@ -909,8 +951,9 @@ def analyze_image_from_bytes(
         slog.engine_start(job_id=job_id, engine="image")
         _t0 = time.monotonic()
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
-        # physics, v4.7.0), SynthID, v3 forensics — 13 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=13) as pool:
+        # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
+        # SynthID, v3 forensics — 14 concurrent tasks.
+        with ThreadPoolExecutor(max_workers=14) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -925,6 +968,8 @@ def analyze_image_from_bytes(
             # L11-L14 so it doesn't add to wall-clock time (bounded by the
             # slowest task in the pool, same as every other layer here).
             f_objphys = pool.submit(_run_object_physics_layers, img_array, pil_img)
+            # v4.8.0: L20-L21 Extended Physics (provisional weight, see runner docstring)
+            f_extphys = pool.submit(_run_extended_physics_layers, img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
@@ -936,6 +981,8 @@ def analyze_image_from_bytes(
             layers.extend(physical.get("layer_reports", []))
             object_physics = f_objphys.result()
             layers.extend(object_physics.get("layer_reports", []))
+            extended_physics = f_extphys.result()
+            layers.extend(extended_physics.get("layer_reports", []))
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
