@@ -31,3 +31,16 @@ VERSION = "4.7.0"
 # the fused verdict until calibrated — see
 # analyzers/extended_physics_ensemble.py module docstring for full detail.
 VERSION = "4.8.0"
+
+# v4.8.1: Track A — real calibration harness (scripts/calibrate.py), replacing
+# the 39-line stub. Runs the full pipeline over a labeled real/ai dataset,
+# computes per-layer ROC-AUC (Mann-Whitney U identity, no sklearn dependency)
+# and a Youden's-J-optimal threshold recommendation, and flags layers with
+# near-chance AUC or inverted score direction (real images scoring higher
+# than AI images — the exact bug class L20 already has, see v4.8.0 note
+# above). This is TOOLING ONLY: no scoring, weight, or threshold in the
+# live pipeline changes. Output is a diagnostic JSON report a human still
+# has to act on — see scripts/calibrate.py module docstring for why this
+# script deliberately does not auto-rewrite
+# config/object_physics_thresholds.json or LAYER_WEIGHTS itself.
+VERSION = "4.8.1"
