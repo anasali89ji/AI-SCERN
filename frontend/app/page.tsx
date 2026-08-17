@@ -1,22 +1,22 @@
-'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/auth-provider'
-import { formatVerdictConfidence } from '@/lib/utils/helpers'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { SiteFooter } from '@/components/site-footer'
 import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Reveal } from '@/components/motion/Reveal'
+import { HomeHeader } from '@/components/home/HomeHeader'
+import { HeroFloatingCards } from '@/components/home/HeroFloatingCards'
+import { HeroCTAButtons } from '@/components/home/HeroCTAButtons'
+import { HeroScrollIndicator } from '@/components/home/HeroScrollIndicator'
+import { SpotlightCard } from '@/components/home/SpotlightCard'
+import { ToolLink } from '@/components/home/ToolLink'
+import { CountUp } from '@/components/home/CountUp'
+import { DatasetStatValue } from '@/components/home/DatasetStatValue'
 import {
-  Shield, Brain, Eye, FileText, Globe, Zap, Bot,
-  ArrowRight, CheckCircle, XCircle, HelpCircle,
-  Image as ImageIcon, Video, Music, ChevronRight, Loader2,
-  MessageSquare, Cpu, Lock, Database, Sparkles,
-  TrendingUp, Users, Menu, X, Search,
-  Activity, Layers, ChevronDown, FlaskConical, GraduationCap,
+  Shield, Brain, FileText, Zap,
+  ArrowRight, ChevronRight,
+  Image as ImageIcon, Video, Music,
+  MessageSquare, Cpu, Database,
+  TrendingUp, Users, Search,
+  Layers, FlaskConical, GraduationCap,
   Scale, ShieldCheck, Microscope, Pen, Megaphone, Heart,
 } from 'lucide-react'
 
@@ -36,10 +36,10 @@ import TestimonialsSection from '@/components/home/TestimonialsSection'
 import FAQSection from '@/components/home/FAQSection'
 import FinalCTASection from '@/components/home/FinalCTASection'
 
-// ─── Canvas Particle Network ─────────────────────────────────────────────────
 // ─── CSS-only Network Background (replaces canvas ParticleNetwork) ────────────
 // The canvas requestAnimationFrame + filter:blur combo on mobile causes GPU
 // compositing overflow → purple/blue scanline glitch artifacts on Android/iOS.
+// No hooks/motion here — safe to stay server-rendered.
 function NetworkBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
@@ -50,385 +50,6 @@ function NetworkBackground() {
       {/* Dot grid hidden on mobile/low-power devices to prevent GPU glitches */}
       <div className="absolute inset-0 opacity-[0.015] hidden sm:block"
            style={{ backgroundImage: 'radial-gradient(circle, rgba(37,99,235,0.6) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-    </div>
-  )
-}
-
-// ─── Root Network (preserved from original) ───────────────────────────────────
-const AI_NODES_LG = [
-  { x: 3,  y: 12, delay: 0.00 }, { x: 14, y: 28, delay: 0.15 },
-  { x: 2,  y: 46, delay: 0.30 }, { x: 18, y: 60, delay: 0.45 },
-  { x: 7,  y: 76, delay: 0.60 }, { x: 28, y: 15, delay: 0.10 },
-  { x: 32, y: 36, delay: 0.25 }, { x: 24, y: 54, delay: 0.40 },
-  { x: 35, y: 70, delay: 0.55 }, { x: 20, y: 88, delay: 0.70 },
-]
-const REAL_NODES_LG = [
-  { x: 96, y: 12, delay: 0.00 }, { x: 83, y: 28, delay: 0.15 },
-  { x: 97, y: 46, delay: 0.30 }, { x: 79, y: 60, delay: 0.45 },
-  { x: 91, y: 76, delay: 0.60 }, { x: 68, y: 15, delay: 0.10 },
-  { x: 64, y: 36, delay: 0.25 }, { x: 73, y: 54, delay: 0.40 },
-  { x: 62, y: 70, delay: 0.55 }, { x: 77, y: 88, delay: 0.70 },
-]
-const AI_EDGES_LG   = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const REAL_EDGES_LG = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[8,9],[1,6],[2,7],[3,8]]
-const AI_NODES_MD = [
-  { x: 2,  y: 10, delay: 0.00 }, { x: 12, y: 28, delay: 0.15 },
-  { x: 3,  y: 50, delay: 0.30 }, { x: 15, y: 68, delay: 0.45 },
-  { x: 5,  y: 82, delay: 0.60 }, { x: 22, y: 42, delay: 0.25 },
-]
-const REAL_NODES_MD = [
-  { x: 97, y: 10, delay: 0.00 }, { x: 86, y: 28, delay: 0.15 },
-  { x: 96, y: 50, delay: 0.30 }, { x: 83, y: 68, delay: 0.45 },
-  { x: 93, y: 82, delay: 0.60 }, { x: 76, y: 42, delay: 0.25 },
-]
-const AI_EDGES_MD   = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const REAL_EDGES_MD = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,5],[1,5]]
-const AI_NODES_SM   = [{ x: 1, y: 18, delay: 0.00 }, { x: 2, y: 50, delay: 0.25 }, { x: 1, y: 80, delay: 0.50 }]
-const REAL_NODES_SM = [{ x: 98, y: 18, delay: 0.00 }, { x: 97, y: 50, delay: 0.25 }, { x: 98, y: 80, delay: 0.50 }]
-const AI_EDGES_SM   = [[0,1],[1,2]]
-const REAL_EDGES_SM = [[0,1],[1,2]]
-
-const FLOAT_BADGES = [
-  { Icon: Search, label: 'AI Text',  pct: 'Detected', color: '#2563eb', delay: 0,   pulse: true  },
-  { Icon: Eye,    label: 'Deepfake', pct: 'Flagged',  color: '#2563eb', delay: 0.5, pulse: false },
-]
-
-function useBreakpoint() {
-  const [bp, setBp] = useState<'sm'|'md'|'lg'|null>(null)
-  useEffect(() => {
-    const update = () => { const w = window.innerWidth; setBp(w < 640 ? 'sm' : w < 1024 ? 'md' : 'lg') }
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
-  return bp ?? 'lg'
-}
-
-function RootNetworkNode({ node, file, side, index, size }: {
-  node: { x: number; y: number; delay: number }
-  file: string; side: 'ai' | 'real'; index: number
-  size: { w: number; h: number }
-}) {
-  const isAI = side === 'ai'
-  const { w, h } = size
-  const safeLeft = node.x < 10
-    ? `max(4px, calc(${node.x}% - ${w / 2}px))`
-    : node.x > 90
-    ? `min(calc(100% - ${w + 4}px), calc(${node.x}% - ${w / 2}px))`
-    : `calc(${node.x}% - ${w / 2}px)`
-  const bobClass = index === 0
-  ? '' // LCP-priority card: skip the fade/bob entrance, it was adding
-       // up to ~1.5s of opacity:0->1 ramp (16% of a 5s animation +
-       // staggered animation-delay) directly on top of Lighthouse's
-       // measured LCP element render delay.
-  : index % 2 === 0 ? 'node-card-bob-a' : 'node-card-bob-b'
-  return (
-    <div
-      className={`absolute rounded-xl pointer-events-none overflow-hidden ${bobClass}`}
-      style={{
-        left: safeLeft, top: `calc(${node.y}% - ${h / 2}px)`,
-        width: w, height: h, zIndex: 2,
-        animationDelay: `${node.delay}s, ${node.delay}s`,
-        boxShadow: isAI ? '0 4px 24px rgba(37,99,235,0.12)' : '0 4px 24px rgba(16,185,129,0.08)',
-      }}
-    >
-      <div className="absolute inset-0" style={{
-        background: isAI ? 'linear-gradient(160deg,#1e40af,#1e3a8a)' : 'linear-gradient(160deg,#065f46,#052e16)',
-      }} />
-      {/*
-        Was a raw <img>: Lighthouse's own throttled-mobile run displays
-        this at 34x44 (the 'sm' breakpoint's cardSize) while the source
-        WEBP is a fixed 130x162 — roughly 4x oversized on exactly the
-        run that flagged it. next/image's `fill` + `sizes` lets Next's
-        image optimizer serve a variant sized to the actual breakpoint
-        instead of the full asset everywhere.
-      */}
-      <Image src={file} alt="" fill unoptimized={false}
-        className="object-cover" style={{ display: 'block' }}
-        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        {...(index === 0 ? { priority: true } : { loading: index === 1 ? 'eager' : 'lazy' })}
-        fetchPriority={index === 0 ? 'high' : 'low'}
-        sizes="(max-width: 640px) 34px, (max-width: 1024px) 48px, 64px"
-        quality={70}
-      />
-      <div className="absolute inset-0 bg-black/35" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      <div className={`absolute bottom-1 left-1 text-[7px] font-black px-1 py-0.5 rounded leading-none z-10 ${isAI ? 'bg-rose/80 text-white' : 'bg-emerald/80 text-white'}`}>
-        {isAI ? 'AI' : '✓'}
-      </div>
-      <div className="absolute inset-0 rounded-xl"
-        style={{ boxShadow: isAI ? 'inset 0 0 0 1px rgba(37,99,235,0.3)' : 'inset 0 0 0 1px rgba(16,185,129,0.3)' }} />
-    </div>
-  )
-}
-
-function RootNetworkSVG({ nodes, edges, color, side }: {
-  nodes: { x: number; y: number }[]; edges: number[][]; color: string; side: 'ai' | 'real'
-}) {
-  const reduced = useReducedMotion()
-  return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 100 100" preserveAspectRatio="none" style={{ opacity: 0.25, zIndex: 1 }}>
-      {edges.map(([a, b], i) => {
-        const n1 = nodes[a], n2 = nodes[b]
-        const cx = (n1.x + n2.x) / 2 + (side === 'ai' ? -3 : 3), cy = (n1.y + n2.y) / 2
-        return reduced ? (
-          <path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
-            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity={0.6} />
-        ) : (
-          <motion.path key={i} d={`M ${n1.x} ${n1.y} Q ${cx} ${cy} ${n2.x} ${n2.y}`}
-            stroke={color} strokeWidth="0.4" fill="none" strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.6 }}
-            transition={{ delay: 0.4 + i * 0.07, duration: 1.4, ease: 'easeInOut' }}
-          />
-        )
-      })}
-      {nodes.map((n, i) => (
-        reduced ? (
-          <circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color} opacity={0.5} />
-        ) : (
-          <motion.circle key={i} cx={n.x} cy={n.y} r="1.0" fill={color}
-            initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ delay: 0.7 + i * 0.08, duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )
-      ))}
-    </svg>
-  )
-}
-
-function FloatingCards() {
-  const bp = useBreakpoint()
-  const aiNodes   = bp === 'sm' ? AI_NODES_SM   : bp === 'md' ? AI_NODES_MD   : AI_NODES_LG
-  const realNodes = bp === 'sm' ? REAL_NODES_SM : bp === 'md' ? REAL_NODES_MD : REAL_NODES_LG
-  const aiEdges   = bp === 'sm' ? AI_EDGES_SM   : bp === 'md' ? AI_EDGES_MD   : AI_EDGES_LG
-  const realEdges = bp === 'sm' ? REAL_EDGES_SM : bp === 'md' ? REAL_EDGES_MD : REAL_EDGES_LG
-  const cardSize  = bp === 'sm' ? { w: 34, h: 44 } : bp === 'md' ? { w: 48, h: 60 } : { w: 64, h: 80 }
-  const badgePositions = bp === 'sm'
-    ? [{ x: '28%', y: '6%' }, { x: '54%', y: '6%' }]
-    : [{ x: '22%', y: '7%' }, { x: '66%', y: '7%' }]
-  return (
-    <>
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <RootNetworkSVG nodes={aiNodes}   edges={aiEdges}   color="#2563eb" side="ai"   />
-        <RootNetworkSVG nodes={realNodes} edges={realEdges} color="#10b981" side="real" />
-        {aiNodes.map((node, i) => (
-          <RootNetworkNode key={`ai-${i}`} node={node}
-            file={`/hero/ai/ai-${String(i+1).padStart(2,'0')}.webp`}
-            side="ai" index={i} size={cardSize} />
-        ))}
-        {realNodes.map((node, i) => (
-          <RootNetworkNode key={`real-${i}`} node={node}
-            file={`/hero/real/real-${String(i+1).padStart(2,'0')}.webp`}
-            side="real" index={i} size={cardSize} />
-        ))}
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-rose/25 bg-rose/8"
-          style={{ top: 72, left: 8 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <Bot className="w-2.5 h-2.5 text-rose" />
-          <span className="text-[8px] font-bold text-rose/80 uppercase tracking-wide hidden md:inline">AI Generated</span>
-        </motion.div>
-        <motion.div className="absolute hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border border-emerald/25 bg-emerald/8"
-          style={{ top: 72, right: 8 }} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 0.75, x: 0 }} transition={{ delay: 1.4, duration: 0.6 }}>
-          <CheckCircle className="w-2.5 h-2.5 text-emerald" />
-          <span className="text-[8px] font-bold text-emerald/80 uppercase tracking-wide hidden md:inline">Authentic</span>
-        </motion.div>
-      </div>
-      {FLOAT_BADGES.map((item, i) => {
-        const Icon = item.Icon; const pos = badgePositions[i]
-        return (
-          <motion.div key={i}
-            className="absolute hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border select-none"
-            style={{ left: pos.x, top: pos.y, zIndex: 10, background: `${item.color}12`, borderColor: `${item.color}30` }}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }}
-            transition={{ opacity: { delay: item.delay + 1.0, duration: 0.5 }, y: { delay: item.delay, duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }}>
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}22`, color: item.color }}>
-              <Icon className="w-3 h-3" strokeWidth={2} />
-            </div>
-            <div className="hidden md:block">
-              <div className="text-[8px] font-medium leading-none mb-0.5" style={{ color: `${item.color}bb` }}>{item.label}</div>
-              <div className="text-[10px] font-bold text-white leading-none">{item.pct}</div>
-            </div>
-            {item.pulse && (
-              <motion.div className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: item.color }}
-                animate={{ scale: [1, 1.6, 1], opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }} />
-            )}
-          </motion.div>
-        )
-      })}
-    </>
-  )
-}
-
-// ─── CountUp ────────────────────────────────────────────────────────────────
-function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
-  const [animated, setAnimated] = useState(false)
-  const ref = useRef<HTMLSpanElement>(null)
-  useEffect(() => {
-    if (animated) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting || animated) return
-      setAnimated(true)
-      let start = 0
-      const steps = 60; const step = target / steps
-      const interval = setInterval(() => {
-        start += step
-        if (start >= target) { setCount(target); clearInterval(interval) }
-        else setCount(Math.floor(start))
-      }, 1600 / steps)
-    }, { threshold: 0.1 })
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [target, animated])
-  return <span ref={ref} className="counter-value">{count.toLocaleString()}{suffix}</span>
-}
-
-// ─── Live Demo ────────────────────────────────────────────────────────────────
-function LiveDemo({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const [text, setText] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const analyze = async () => {
-    if (text.length < 50) return
-    setLoading(true); setResult(null)
-    try {
-      const res = await fetch('/api/detect/text', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, user_id: null }),
-      })
-      if (res.status === 401) { router.push('/signup'); setLoading(false); return }
-      const d = await res.json()
-      if (d.success) { setResult(d.result) }
-      else setResult({ verdict: 'UNCERTAIN', summary: d.error?.message || 'Try signing in for full results.' })
-    } catch { setResult({ verdict: 'UNCERTAIN', summary: 'Analysis unavailable. Sign in for full access.' }) }
-    setLoading(false)
-  }
-  const examples = [
-    { label: 'AI text',    text: 'The intersection of artificial intelligence and human creativity presents a fascinating paradox in contemporary discourse. As machine learning models become increasingly sophisticated in generating coherent, contextually appropriate text, the boundaries between human and algorithmic authorship continue to blur in unprecedented ways.' },
-    { label: 'Human text', text: "I spent all weekend trying to fix my leaky faucet and honestly I have no idea what I'm doing. Watched like 6 YouTube videos and still made it worse. Water is now shooting sideways. My neighbor thinks it's hilarious. Calling a plumber tomorrow. RIP my bank account." },
-  ]
-  return (
-    <div className="relative">
-      <div className="rounded-2xl border border-primary/20 bg-surface p-4 sm:p-5 shadow-2xl shadow-primary/5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald" />
-            </span>
-            <span className="text-sm font-bold text-text-primary">Live AI Verification</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald/10 text-emerald font-semibold border border-emerald/20">Free</span>
-          </div>
-          <div className="flex gap-2">
-            {examples.map(ex => (
-              <button key={ex.label} onClick={() => setText(ex.text)}
-                className="text-xs px-2.5 py-1 rounded-lg border border-border hover:border-primary/40 text-text-muted hover:text-primary transition-all min-h-0">
-                {ex.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <textarea value={text} onChange={e => setText(e.target.value)}
-          placeholder="Paste any text to verify if it's AI-generated… (min 50 characters)"
-          className="w-full min-w-0 h-24 sm:h-28 bg-background/80 border border-border rounded-xl px-3 sm:px-4 py-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all" />
-        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-          <span className="text-xs text-text-muted">{text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}</span>
-          <button onClick={analyze} disabled={loading || text.length < 50}
-            className="btn-primary px-5 py-2 text-sm disabled:opacity-40 flex items-center gap-2 min-h-[36px]">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-            {loading ? 'Scanning…' : 'Verify Content'}
-          </button>
-        </div>
-        <AnimatePresence>
-          {result && (
-            <motion.div initial={{ opacity: 0, y: 8, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }} className="mt-4 overflow-hidden">
-              <div className={`rounded-xl border p-4 ${result.verdict === 'AI' ? 'bg-rose/5 border-rose/20' : result.verdict === 'HUMAN' ? 'bg-emerald/5 border-emerald/20' : 'bg-amber/5 border-amber/20'}`}>
-                <div className="flex items-center justify-between mb-3 gap-2 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {result.verdict === 'AI' ? <XCircle className="w-5 h-5 text-rose shrink-0" /> : result.verdict === 'HUMAN' ? <CheckCircle className="w-5 h-5 text-emerald shrink-0" /> : <HelpCircle className="w-5 h-5 text-amber shrink-0" />}
-                    <span className={`font-bold text-base leading-tight ${result.verdict === 'AI' ? 'text-rose' : result.verdict === 'HUMAN' ? 'text-emerald' : 'text-amber'}`}>
-                      {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-2xl font-black text-text-primary tabular-nums">{formatVerdictConfidence(result.confidence || 0, result.verdict)}</div>
-                    <div className="text-[10px] text-text-muted">confidence</div>
-                  </div>
-                </div>
-                <div className="h-1.5 rounded-full bg-background overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence <= 1 ? result.confidence * 100 : result.confidence}%` }}
-                    transition={{ duration: 1.0, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${result.verdict === 'AI' ? 'bg-gradient-to-r from-rose to-pink-400' : result.verdict === 'HUMAN' ? 'bg-gradient-to-r from-emerald to-teal-400' : 'bg-gradient-to-r from-amber to-yellow-400'}`} />
-                </div>
-                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between flex-wrap gap-2">
-                  <p className="text-xs text-text-muted">✓ Free · Sign in to save trust verification reports</p>
-                  <Link href="/detect/text" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
-                    Full AI text verification <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  )
-}
-
-// ─── Spotlight Card ───────────────────────────────────────────────────────────
-function SpotlightCard({ children, className = '', color = 'rgba(37,99,235,0.12)' }: {
-  children: React.ReactNode; className?: string; color?: string
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    ref.current.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
-    ref.current.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
-  }, [])
-  return (
-    <div ref={ref} onMouseMove={onMouseMove}
-      className={`spotlight-card ${className}`}
-      style={{ '--spotlight-color': color } as React.CSSProperties}>
-      {children}
-    </div>
-  )
-}
-
-// ─── Nav scroll behavior ──────────────────────────────────────────────────────
-function useNavScrollBehavior() {
-  const [scrolled, setScrolled] = useState(false)
-  const [hidden, setHidden] = useState(false)
-  const lastY = useRef(0)
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      setScrolled(y > 20)
-      if (y > lastY.current + 10 && y > 100) setHidden(true)
-      else if (y < lastY.current - 5) setHidden(false)
-      lastY.current = y
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  return { scrolled, hidden }
-}
-
-// ─── Scroll indicator ─────────────────────────────────────────────────────────
-function HeroScrollIndicator() {
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => {
-    const onScroll = () => { if (window.scrollY > 100) setHidden(true) }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  if (hidden) return null
-  return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce opacity-30 pointer-events-none">
-      <span className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">Explore</span>
-      <ChevronDown className="w-4 h-4 text-text-muted" />
     </div>
   )
 }
@@ -470,39 +91,8 @@ const PROFESSIONALS = [
   { label: 'Healthcare',       icon: Heart       },
 ]
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ─── Main Page (Server Component) ─────────────────────────────────────────────
 export default function HomePage() {
-  const { user, loading } = useAuth()
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const reduced = useReducedMotion()
-  const { scrolled, hidden } = useNavScrollBehavior()
-
-  // iOS scroll lock — prevent body scrolling while mobile nav is open
-  useEffect(() => {
-    if (mobileNavOpen) {
-      document.body.style.overflow  = 'hidden'
-      document.body.style.position  = 'fixed'
-      document.body.style.width     = '100%'
-    } else {
-      document.body.style.overflow  = ''
-      document.body.style.position  = ''
-      document.body.style.width     = ''
-    }
-    return () => {
-      document.body.style.overflow  = ''
-      document.body.style.position  = ''
-      document.body.style.width     = ''
-    }
-  }, [mobileNavOpen])
-  const [datasetRows, setDatasetRows] = useState<number | null>(null)
-
-  useEffect(() => {
-    fetch('/api/dataset-stats')
-      .then(r => r.json())
-      .then(d => { if (d.rows) setDatasetRows(d.rows) })
-      .catch(() => {})
-  }, [])
-
   return (
     <div className="min-h-screen bg-background text-text-primary overflow-x-hidden w-full max-w-[100vw]">
 
@@ -513,120 +103,7 @@ export default function HomePage() {
         {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses a 14-layer ensemble combining ViT classifiers, RoBERTa, wav2vec2, and physics-based signal analysis (Bayer demosaicing, polarization, subsurface scattering, sensor QE matching). Benchmarked accuracy: text ~94% (F1 0.965, AUC 0.98), image ~98% (AUC 0.98, 14 layers), audio ~91% (AUC 0.95), video ~88% (AUC 0.93). See /benchmarks for full results."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image detection. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images using a 14-layer ensemble including physics-based Bayer pattern analysis (L12-BDIS) with 100% recall across all major generators."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]}
       ]` }} />
 
-      {/* ══ NAV ══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300
-        ${hidden ? 'nav-hidden' : 'nav-visible'}
-        ${scrolled
-          ? 'border-b border-primary/10 bg-[#08080d]/95 sm:bg-background/88 sm:backdrop-blur-2xl shadow-lg shadow-black/20'
-          : 'border-b border-transparent bg-[#08080d]/90 sm:bg-background/60 sm:backdrop-blur-xl'
-        }`}>
-        <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto h-full px-4 sm:px-6 2xl:px-10 flex items-center justify-between">
-
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group" title="Aiscern — Free AI Content Detector">
-            <span className="font-black text-xl gradient-text">Aiscern</span>
-          </Link>
-
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
-            {[['#trust','Trust'],['#features','Features'],['#how-it-works','How It Works'],['#solutions','Solutions'],['#technology','Technology'],['#security','Security'],['#demo','Demo']].map(([href, label]) => (
-              <a key={href} href={href} className="relative hover:text-text-primary transition-colors duration-200 group">
-                {label}
-                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
-              </a>
-            ))}
-            <Link href={user ? "/chat" : "/signup"} className="relative hover:text-text-primary transition-colors duration-200 group flex items-center gap-1">
-              <MessageSquare className="w-3.5 h-3.5" />AI Chat
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-emerald to-cyan group-hover:w-full transition-all duration-300 rounded-full" />
-            </Link>
-            <Link href="/pricing" className="relative hover:text-text-primary transition-colors duration-200 group">
-              Pricing
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-300 rounded-full" />
-            </Link>
-          </div>
-
-          {/* CTA */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user ? (
-              <Link href="/dashboard" className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/20 transition-all duration-200 group">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-black flex-shrink-0">
-                  {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
-                </span>
-                <span className="hidden sm:inline">Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-sm font-semibold text-text-primary hover:bg-surface-hover hover:border-primary/30 transition-all duration-200">
-                  Sign In
-                </Link>
-                <Link href="/signup" className="relative overflow-hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
-                  <Zap className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Get Started</span>
-                  <span className="sm:hidden">Join</span>
-                </Link>
-              </>
-            )}
-            <button className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface text-text-muted hover:text-text-primary transition-colors"
-              onClick={() => setMobileNavOpen(o => !o)}
-              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileNavOpen}
-              aria-controls="mobile-nav-panel">
-              <AnimatePresence mode="wait" initial={false}>
-                {mobileNavOpen
-                  ? <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><X className="w-5 h-5" /></motion.div>
-                  : <motion.div key="m" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}><Menu className="w-5 h-5" /></motion.div>
-                }
-              </AnimatePresence>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        <AnimatePresence>
-          {mobileNavOpen && (
-            <motion.div
-              id="mobile-nav-panel"
-              role="dialog"
-              aria-label="Navigation menu"
-              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="md:hidden border-t border-white/5 bg-[#08080d] overflow-hidden"
-              onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setMobileNavOpen(false)}>
-              <div className="px-4 py-4 flex flex-col gap-1">
-                {[
-                  { href: '#trust', label: 'Trust', Icon: Shield },
-                  { href: '#features', label: 'Features', Icon: Cpu },
-                  { href: '#how-it-works', label: 'How It Works', Icon: Activity },
-                  { href: '#solutions', label: 'Solutions', Icon: GraduationCap },
-                  { href: '#technology', label: 'Technology', Icon: Layers },
-                  { href: '#security', label: 'Security', Icon: Lock },
-                  { href: '#demo', label: 'Demo', Icon: Eye },
-                  { href: user ? '/chat' : '/signup', label: 'AI Detection Assistant', Icon: MessageSquare },
-                  { href: '/pricing', label: 'Pricing', Icon: Zap },
-                ].map((link, i) => (
-                  <motion.div key={link.href} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                    <Link href={link.href} onClick={() => setMobileNavOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
-                      <link.Icon className="w-4 h-4" />{link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-                {!loading && !user && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/40">
-                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface text-text-muted hover:text-text-primary transition-all text-sm font-medium">
-                      <Lock className="w-4 h-4" />Sign In
-                    </Link>
-                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
-                      <Zap className="w-4 h-4" />Get Started Free
-                    </Link>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+      <HomeHeader />
 
       <main id="main-content">
 
@@ -644,7 +121,7 @@ export default function HomePage() {
           </div>
 
           <NetworkBackground />
-          <FloatingCards />
+          <HeroFloatingCards />
 
           {/* Center glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
@@ -654,7 +131,7 @@ export default function HomePage() {
           <div className="relative z-20 text-center px-5 sm:px-8 md:px-10 lg:px-4 max-w-[92vw] sm:max-w-lg md:max-w-2xl lg:max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl mx-auto w-full">
 
             {/* Animated badge */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            <Reveal trigger="mount" duration={0.5}
               className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-[11px] sm:text-xs font-semibold mb-3 sm:mb-7">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -662,7 +139,7 @@ export default function HomePage() {
               </span>
               <span className="hidden sm:inline">Enterprise AI Verification Platform · Text, Image, Audio, Video</span>
               <span className="sm:hidden">Enterprise AI Verification Platform</span>
-            </motion.div>
+            </Reveal>
 
             {/* H1 + Rotating modality animation */}
             <div className="mb-4 sm:mb-7">
@@ -670,49 +147,15 @@ export default function HomePage() {
             </div>
 
             {/* Subheadline */}
-            <motion.p className="text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+            <Reveal trigger="mount" duration={0.6} delay={0.2}
+              as="span"
+              className="block text-sm sm:text-lg text-text-secondary max-w-xl mx-auto mb-7 sm:mb-10 leading-relaxed">
               <span className="sm:hidden">Enterprise AI Verification Platform for text, images, audio &amp; video.</span>
               <span className="hidden sm:inline">Enterprise AI Verification Platform. Verify <strong className="text-amber">text</strong>, <strong className="text-primary">images</strong>, <strong className="text-cyan">audio</strong>, and <strong className="text-secondary">video</strong> from a single platform — built for organizations that cannot afford to trust blindly.</span>
-            </motion.p>
+            </Reveal>
 
-            {/* CTAs */}
-            <motion.div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-9 sm:mb-14"
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-              {user ? (
-                <>
-                  <Link href="/dashboard"
-                    className="group relative w-full sm:w-auto px-8 py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-3 overflow-hidden transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', boxShadow: '0 8px 32px rgba(37,99,235,0.35)' }}>
-                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm flex-shrink-0">
-                      {(user.displayName?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
-                    </span>
-                    Open Trust Dashboard
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link href="/chat" className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-border/60 bg-surface text-base font-semibold flex items-center justify-center gap-2 hover:border-primary/40 transition-all duration-200">
-                    <MessageSquare className="w-5 h-5 text-emerald" />AI Trust Assistant
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/detect/text"
-                    className="btn-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold flex items-center justify-center shadow-lg shadow-primary/20">
-                    Verify Content — Free
-                  </Link>
-                  <Link href="/signup" className="btn-secondary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base flex items-center justify-center hover:border-primary/30">
-                    Create Free Account
-                  </Link>
-                </>
-              )}
-            </motion.div>
-
-            {/* Live demo */}
-            <motion.div className="max-w-2xl 2xl:max-w-3xl mx-auto w-full"
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
-              <LiveDemo isLoggedIn={!!user} />
-            </motion.div>
+            {/* CTAs + Live demo (auth-dependent — client island) */}
+            <HeroCTAButtons />
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 text-sm text-text-muted">
               <span className="flex items-center gap-2">
@@ -744,16 +187,13 @@ export default function HomePage() {
           <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto px-4 2xl:px-10 3xl:px-16 relative">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 2xl:gap-14">
               {STATS.map((stat, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
-                  className="text-center">
+                <Reveal key={i} delay={i * 0.1} className="text-center">
                   <div className="text-[2.5rem] sm:text-5xl lg:text-6xl 2xl:text-7xl font-black mb-2 tabular-nums"
                     style={{ background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     <CountUp target={stat.value} suffix={stat.suffix} />
                   </div>
                   <p className="text-text-secondary text-xs sm:text-sm font-medium">{stat.label}</p>
-                </motion.div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -800,8 +240,7 @@ export default function HomePage() {
             style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.06) 0%, transparent 65%)' }} />
 
           <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-14 sm:mb-20">
+            <Reveal className="text-center mb-14 sm:mb-20">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/8 text-primary text-xs font-semibold mb-4">
                 <Cpu className="w-3 h-3" /> Enterprise Verification Suite
               </div>
@@ -811,17 +250,14 @@ export default function HomePage() {
               <p className="text-text-muted text-base sm:text-lg 2xl:text-xl max-w-2xl 2xl:max-w-3xl mx-auto leading-relaxed">
                 Multi-modal enterprise AI verification covering text, images, audio, and video. Every scan delivers forensic-grade authenticity scores in seconds.
               </p>
-              <motion.div className="mt-6 mx-auto h-px w-48 rounded-full"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }}
-                initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, delay: 0.2 }} />
-            </motion.div>
+              <div className="mt-6 mx-auto h-px w-48 rounded-full"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(37,99,235,0.6), transparent)' }} />
+            </Reveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 2xl:gap-6">
               {TOOLS.map((tool, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}>
-                  <Link href={(!user && (tool.href === '/chat' || tool.href === '/batch')) ? '/signup' : tool.href} title={tool.label}>
+                <Reveal key={i} y={30} delay={i * 0.08} duration={0.5}>
+                  <ToolLink href={tool.href} title={tool.label}>
                     <SpotlightCard color={`${tool.accent}28`}
                       className={`group tool-card relative overflow-hidden rounded-[24px] border ${tool.border} p-6 md:p-8 h-full cursor-pointer transition-all duration-300 bg-surface`}>
                       {/* Accent gradient overlay */}
@@ -856,8 +292,8 @@ export default function HomePage() {
                         Verify Now <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
                     </SpotlightCard>
-                  </Link>
-                </motion.div>
+                  </ToolLink>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -879,36 +315,21 @@ export default function HomePage() {
             style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.03) 50%, transparent 100%)' }} />
 
           <div className="max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto relative">
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}
-              className="text-center mb-14">
+            <Reveal className="text-center mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald/20 bg-emerald/8 text-emerald text-xs font-semibold mb-4">
                 <Shield className="w-3 h-3" /> Trust & Accuracy
               </div>
               <h2 className="text-3xl sm:text-5xl 2xl:text-6xl font-black text-text-primary">
                 Built for forensic accuracy. <span className="gradient-text">Benchmarked on public verification datasets.</span>
               </h2>
-            </motion.div>
+            </Reveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 2xl:gap-6 mb-14">
               {TRUST_FEATURES.map(({ icon: Icon, color, bg, title, desc, large, stat, statSuffix, statLabel, accent }, idx) => {
-                // Override dataset stat with live HF count
-                const isDataset = title === 'Benchmarked Datasets'
-                const liveStat = isDataset && datasetRows
-                  ? datasetRows >= 1_000_000
-                    ? { val: Math.round(datasetRows / 100_000) / 10, suffix: 'M+', label: 'training samples' }
-                    : datasetRows >= 1000
-                    ? { val: Math.round(datasetRows / 1000), suffix: 'k+', label: 'training samples' }
-                    : { val: datasetRows, suffix: '+', label: 'training samples' }
-                  : null
-                const displayStat   = liveStat ? String(liveStat.val) : stat
-                const displaySuffix = liveStat ? liveStat.suffix : statSuffix
-                const displayLabel  = liveStat ? liveStat.label : statLabel
-                const displayTarget = parseFloat(displayStat) || 0
-                const accentHex     = accent ?? '#2563eb'
+                const isDataset  = title === 'Benchmarked Datasets'
+                const accentHex  = accent ?? '#2563eb'
                 return (
-                <motion.div key={title}
-                  initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: idx * 0.1, duration: 0.5 }}
+                <Reveal key={title} y={30} delay={idx * 0.1} duration={0.5}
                   className={large ? 'sm:col-span-2 lg:col-span-2' : ''}>
                   <SpotlightCard color={`${accentHex}22`}
                     className={`group relative h-full p-6 md:p-8 rounded-[24px] bg-surface bg-gradient-to-br ${bg} transition-all duration-300 ${large ? 'bento-shimmer' : ''} overflow-hidden`}>
@@ -921,19 +342,23 @@ export default function HomePage() {
                       style={{ background: `${accentHex}18`, border: `1px solid ${accentHex}38` }}>
                       <Icon className="w-5 h-5" strokeWidth={1.8} />
                     </div>
-                    {displayStat !== undefined && (
-                      <div className="mb-3">
-                        <div className="text-3xl sm:text-4xl font-black tabular-nums"
-                          style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                          <CountUp target={displayTarget} suffix={displaySuffix} />
+                    {stat !== undefined && (
+                      isDataset ? (
+                        <DatasetStatValue fallbackVal={stat} fallbackSuffix={statSuffix} fallbackLabel={statLabel} />
+                      ) : (
+                        <div className="mb-3">
+                          <div className="text-3xl sm:text-4xl font-black tabular-nums"
+                            style={{ background: 'linear-gradient(135deg, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                            <CountUp target={parseFloat(stat) || 0} suffix={statSuffix} />
+                          </div>
+                          <div className="text-xs text-text-muted font-medium">{statLabel}</div>
                         </div>
-                        <div className="text-xs text-text-muted font-medium">{displayLabel}</div>
-                      </div>
+                      )
                     )}
                     <h3 className="font-bold text-text-primary text-base mb-2">{title}</h3>
                     <p className="text-sm text-text-muted leading-relaxed">{desc}</p>
                   </SpotlightCard>
-                </motion.div>
+                </Reveal>
               )
               })}
             </div>
@@ -952,8 +377,7 @@ export default function HomePage() {
             </div>
 
             {/* Methodology note */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
+            <Reveal delay={0.2} className="max-w-2xl mx-auto text-center p-6 sm:p-8 rounded-2xl border border-border/50 bg-surface">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <FlaskConical className="w-4 h-4 text-primary" />
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">How trust verification works</span>
@@ -961,7 +385,7 @@ export default function HomePage() {
               <p className="text-sm text-text-muted leading-relaxed">
                 Every scan runs multiple independent AI verification models in parallel. Results are cross-validated into a single confidence score with forensic evidence — a clear AI or Human verdict in seconds.
               </p>
-            </motion.div>
+            </Reveal>
           </div>
         </section>
 
