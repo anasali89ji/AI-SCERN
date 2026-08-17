@@ -1,9 +1,6 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import { Lock, Database, Trash2, ShieldCheck, KeyRound, Globe, Shield } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { Reveal } from '@/components/motion/Reveal'
 
 const SECURITY_FEATURES = [
   { title: 'End-to-End Encryption', desc: 'All uploads are encrypted in transit and at rest using industry-standard protocols.', icon: Lock },
@@ -15,8 +12,6 @@ const SECURITY_FEATURES = [
 ]
 
 export default function SecuritySection() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <section id="security" aria-label="Security and privacy for trust verification" className="relative py-24 md:py-32 [overflow:clip]">
       {/* Subtle watermark, CSS only */}
@@ -33,19 +28,13 @@ export default function SecuritySection() {
           {SECURITY_FEATURES.map((feature, i) => {
             const Icon = feature.icon
             return (
-              <motion.div
-                key={feature.title}
-                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 16 }}
-                whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="rounded-[24px] bg-surface border border-border p-6 md:p-8 flex items-center gap-4"
-              >
+              <Reveal key={feature.title} delay={i * 0.05} duration={0.4} y={16} amount={0.1}
+                className="rounded-[24px] bg-surface border border-border p-6 md:p-8 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-base md:text-lg font-semibold text-text-primary">{feature.title}</h3>
-              </motion.div>
+              </Reveal>
             )
           })}
         </div>

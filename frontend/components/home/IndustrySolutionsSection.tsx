@@ -1,10 +1,7 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { RevealStagger, RevealStaggerItem } from '@/components/motion/RevealStagger'
 
 const INDUSTRIES = [
   {
@@ -37,33 +34,15 @@ const INDUSTRIES = [
   },
 ]
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
-}
-
 export default function IndustrySolutionsSection() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <section id="solutions" aria-label="Industry trust verification solutions" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-[1440px] mx-auto px-6">
         <SectionHeader headline="Built for every industry fighting AI-generated deception." />
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"
-          initial={shouldReduceMotion ? undefined : 'hidden'}
-          whileInView={shouldReduceMotion ? undefined : 'visible'}
-          viewport={{ once: true, margin: '-100px' }}
-          variants={containerVariants}
-        >
+        <RevealStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {INDUSTRIES.map((industry) => (
-            <motion.div key={industry.title} variants={itemVariants} className="group relative">
+            <RevealStaggerItem key={industry.title} className="group relative">
               <Link
                 href={industry.href}
                 className="bento-shimmer block relative rounded-[24px] bg-surface border border-border p-6 md:p-8 h-full transition-all duration-300 hover:border-primary/30 overflow-hidden"
@@ -82,9 +61,9 @@ export default function IndustrySolutionsSection() {
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </RevealStaggerItem>
           ))}
-        </motion.div>
+        </RevealStagger>
       </div>
     </section>
   )

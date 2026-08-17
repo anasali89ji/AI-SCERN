@@ -1,10 +1,7 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { GraduationCap, Users, Newspaper, Scale } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { RevealStagger, RevealStaggerItem } from '@/components/motion/RevealStagger'
 
 const PATHWAYS = [
   {
@@ -37,35 +34,17 @@ const PATHWAYS = [
   },
 ]
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
-}
-
 export default function WhoWeServeSection() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <section id="who-we-serve" aria-label="Who we serve" className="relative py-24 md:py-32 [overflow:clip]">
       <div className="max-w-[1440px] mx-auto px-6">
         <SectionHeader headline="Who we serve." />
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"
-          initial={shouldReduceMotion ? undefined : 'hidden'}
-          whileInView={shouldReduceMotion ? undefined : 'visible'}
-          viewport={{ once: true, margin: '-100px' }}
-          variants={containerVariants}
-        >
+        <RevealStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {PATHWAYS.map((p) => {
             const Icon = p.icon
             return (
-              <motion.div key={p.title} variants={itemVariants} whileHover={shouldReduceMotion ? undefined : { y: -4 }} transition={{ duration: 0.25 }}>
+              <RevealStaggerItem key={p.title} className="transition-transform duration-200 hover:-translate-y-1">
                 <Link href={p.href} className="group block rounded-[24px] overflow-hidden bg-surface border border-border h-full">
                   <div className={`relative h-40 flex items-center justify-center bg-gradient-to-br ${p.gradient}`}>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -76,10 +55,10 @@ export default function WhoWeServeSection() {
                     <p className="text-base text-text-secondary leading-relaxed">{p.description}</p>
                   </div>
                 </Link>
-              </motion.div>
+              </RevealStaggerItem>
             )
           })}
-        </motion.div>
+        </RevealStagger>
       </div>
     </section>
   )

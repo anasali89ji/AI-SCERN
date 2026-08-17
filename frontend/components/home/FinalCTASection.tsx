@@ -1,8 +1,5 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { Reveal } from '@/components/motion/Reveal'
 
 const PARTICLES = Array.from({ length: 20 }).map((_, i) => ({
   id: i,
@@ -13,8 +10,6 @@ const PARTICLES = Array.from({ length: 20 }).map((_, i) => ({
 }))
 
 export default function FinalCTASection() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <section aria-label="Get started with trust verification" className="relative py-24 md:py-32 lg:py-40 [overflow:clip]">
       {/* Mesh gradients, reused from hero */}
@@ -28,7 +23,10 @@ export default function FinalCTASection() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px]"
           style={{ background: 'radial-gradient(ellipse at top, rgba(37,99,235,0.08) 0%, transparent 65%)' }} />
 
-        {!shouldReduceMotion && PARTICLES.map((p) => (
+        {/* prefers-reduced-motion: global rule in globals.css already forces
+            animation-duration to 0.01ms, so these are effectively static for
+            reduced-motion users without needing a JS-side gate. */}
+        {PARTICLES.map((p) => (
           <span
             key={p.id}
             className="absolute w-1 h-1 rounded-full bg-primary/40"
@@ -43,12 +41,7 @@ export default function FinalCTASection() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 text-center relative">
-        <motion.div
-          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 24 }}
-          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.6 }}
-        >
+        <Reveal duration={0.6} y={24}>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary mb-4">
             Stop guessing. Start verifying digital authenticity.
           </h2>
@@ -70,7 +63,7 @@ export default function FinalCTASection() {
               Book Enterprise Demo
             </Link>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   )

@@ -1,50 +1,31 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import { Users, GraduationCap, Globe, Scale, CheckCircle } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { RevealStagger, RevealStaggerItem } from '@/components/motion/RevealStagger'
 
 const CARDS = [
   {
     title: 'HR Recruitment',
     icon: Users,
     features: ['Detect AI-written CVs', 'Screen Cover Letters', 'Interview Transcript Analysis'],
-    floatDelay: '0s',
   },
   {
     title: 'Academic Integrity',
     icon: GraduationCap,
     features: ['Essay & Thesis Detection', 'Research Verification', 'Assignment Bulk Review'],
-    floatDelay: '0.5s',
   },
   {
     title: 'Media Verification',
     icon: Globe,
     features: ['Deepfake Image Detection', 'AI Voice Analysis', 'Synthetic Video Forensics'],
-    floatDelay: '1s',
   },
   {
     title: 'Legal Verification',
     icon: Scale,
     features: ['Evidence Screening', 'Document Authenticity', 'Digital Media Review'],
-    floatDelay: '1.5s',
   },
 ]
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15 } },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
-}
-
 export default function EnterpriseTrustBanner() {
-  const shouldReduceMotion = useReducedMotion()
-
   return (
     <section id="trust" aria-label="Enterprise trust verification" className="relative py-24 md:py-32 [overflow:clip]">
       {/* Background */}
@@ -61,24 +42,12 @@ export default function EnterpriseTrustBanner() {
           subheadline="Whether you're screening AI-written assignments, verifying media for publication, reviewing legal evidence, or evaluating recruitment documents — Aiscern provides one unified trust verification platform."
         />
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"
-          initial={shouldReduceMotion ? undefined : 'hidden'}
-          whileInView={shouldReduceMotion ? undefined : 'visible'}
-          viewport={{ once: true, margin: '-100px' }}
-          variants={containerVariants}
-        >
+        <RevealStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {CARDS.map((card) => {
             const Icon = card.icon
             return (
-              <motion.div
-                key={card.title}
-                variants={itemVariants}
-                whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-[24px] bg-surface/80 backdrop-blur-xl md:backdrop-blur-none md:bg-surface border border-border p-6 md:p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)]"
-                style={{ animationDelay: card.floatDelay }}
-              >
+              <RevealStaggerItem key={card.title}
+                className="rounded-[24px] bg-surface/80 backdrop-blur-xl md:backdrop-blur-none md:bg-surface border border-border p-6 md:p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] hover:-translate-y-1">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                   <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
@@ -91,10 +60,10 @@ export default function EnterpriseTrustBanner() {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </RevealStaggerItem>
             )
           })}
-        </motion.div>
+        </RevealStagger>
       </div>
     </section>
   )
