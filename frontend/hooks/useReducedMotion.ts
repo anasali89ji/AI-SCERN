@@ -6,15 +6,16 @@ import { useEffect, useState } from 'react'
  * Use this to disable particle animations, auto-scroll, and heavy transitions
  * for users with vestibular disorders or motion sensitivity.
  *
- * Uses a lazy initializer so the correct value is available on first render,
- * avoiding a React 19 hydration mismatch when the user has reduced motion ON.
+ * Always initializes to `false` (matching the server-rendered value) and only
+ * updates in useEffect, which runs after hydration completes. A lazy
+ * useState initializer that reads window.matchMedia was tried here before —
+ * it actually caused a React hydration mismatch (error #418) for anyone with
+ * OS-level Reduce Motion on, because useState initializers run during React's
+ * first CLIENT render too (pre-hydration), not only at true mount — so it
+ * could disagree with the server's `false` on that very first render.
  */
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(() => {
-    // Safe SSR check — window doesn't exist on the server
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  })
+  const [reduced, setReduced] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
