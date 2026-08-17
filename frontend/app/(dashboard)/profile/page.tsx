@@ -178,7 +178,7 @@ function CreditsCard({ userId }: { userId: string }) {
             used={data.scans_today}
             total={data.daily_limit}
             unlimited={data.daily_limit === -1}
-            color="#06b6d4"
+            color="#4FFF58"
           />
 
           {/* Monthly / total stats row */}
