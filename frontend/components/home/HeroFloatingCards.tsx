@@ -60,7 +60,6 @@ function RootNetworkNode({ node, file, side, index, size }: {
   file: string; side: 'ai' | 'real'; index: number
   size: { w: number; h: number }
 }) {
-  const isAI = side === 'ai'
   const { w, h } = size
   const safeLeft = node.x < 10
     ? `max(4px, calc(${node.x}% - ${w / 2}px))`
@@ -80,12 +79,9 @@ function RootNetworkNode({ node, file, side, index, size }: {
         left: safeLeft, top: `calc(${node.y}% - ${h / 2}px)`,
         width: w, height: h, zIndex: 2,
         animationDelay: `${node.delay}s, ${node.delay}s`,
-        boxShadow: isAI ? '0 4px 24px rgba(37,99,235,0.12)' : '0 4px 24px rgba(16,185,129,0.08)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
       }}
     >
-      <div className="absolute inset-0" style={{
-        background: isAI ? 'linear-gradient(160deg,#1e40af,#1e3a8a)' : 'linear-gradient(160deg,#065f46,#052e16)',
-      }} />
       {/*
         Was a raw <img>: Lighthouse's own throttled-mobile run displays
         this at 34x44 (the 'sm' breakpoint's cardSize) while the source
@@ -95,10 +91,9 @@ function RootNetworkNode({ node, file, side, index, size }: {
         instead of the full 130x162 source.
       */}
       <Image src={file} alt="" fill sizes={`${w}px`}
-        priority={index === 0} className="object-cover opacity-90"
-        style={{ mixBlendMode: 'luminosity' }} />
+        priority={index === 0} className="object-cover" />
       <div className="absolute inset-0 rounded-xl pointer-events-none"
-        style={{ boxShadow: isAI ? 'inset 0 0 0 1px rgba(37,99,235,0.3)' : 'inset 0 0 0 1px rgba(16,185,129,0.3)' }} />
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12)' }} />
     </div>
   )
 }
