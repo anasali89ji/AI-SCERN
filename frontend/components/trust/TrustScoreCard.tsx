@@ -84,7 +84,7 @@ export function TrustScoreCard({
             <p className="text-xs text-text-disabled mt-1">Risk Score</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-cyan">{confidenceOverall}</p>
+            <p className="text-3xl font-bold text-accent">{confidenceOverall}</p>
             <p className="text-xs text-text-disabled mt-1">Confidence</p>
           </div>
         </div>
