@@ -24,6 +24,7 @@ Then:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -61,6 +62,10 @@ def parse_args() -> argparse.Namespace:
                     help="Comma-separated generator names to restrict AI samples to "
                          "(e.g. 'Midjourney,SD14'). Default: all generators, round-robin sampled.")
     p.add_argument("--seed", type=int, default=42, help="Shuffle seed (default: 42)")
+    p.add_argument("--hf-token", default=None,
+                    help="Hugging Face access token (optional for public datasets, "
+                         "but avoids shared-IP rate limits on Colab/CI). Falls back to "
+                         "HF_TOKEN env var if not passed explicitly.")
     return p.parse_args()
 
 
@@ -83,7 +88,8 @@ def main() -> None:
             wanted_generators.add(GENERATOR_NAME_TO_ID[key])
 
     print(f"Streaming {args.dataset} [{args.split}] ... (no full download, samples pulled on demand)")
-    ds = load_dataset(args.dataset, split=args.split, streaming=True)
+    token = args.hf_token or os.environ.get("HF_TOKEN")
+    ds = load_dataset(args.dataset, split=args.split, streaming=True, token=token)
     ds = ds.shuffle(seed=args.seed, buffer_size=2000)
 
     n_real = 0
