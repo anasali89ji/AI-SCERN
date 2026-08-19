@@ -676,6 +676,22 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
 // signal-worker DigitalOcean droplet. Non-availability degrades gracefully
 // (weight redistributed to Brain+Pixel, never to LLM as a last resort).
 const PYTHON_WORKER_URL = process.env.PYTHON_WORKER_URL || ''
+// Fix: this was previously silent — the entire L1-L21 signal-worker physics
+// pipeline (frequency domain, DIRE, GFE, object physics, MISG, LOP, etc.)
+// gets skipped whenever this is unset or unreachable, silently degrading
+// every image verdict to Brain+Pixel only. That's a serious accuracy drop
+// with zero visibility, so it now logs loudly once at module load instead
+// of only showing up buried inside a per-request engineDesc string.
+if (!PYTHON_WORKER_URL) {
+  console.error(
+    '[hf-analyze] PYTHON_WORKER_URL is NOT SET — the signal-worker forensic ' +
+    'pipeline (L1-L21 physics/frequency/generator-fingerprint layers) will ' +
+    'be skipped for every image scan. Verdicts will fall back to Brain(65%)+' +
+    'Pixel(35%) only, which is meaningfully less accurate for modern ' +
+    'generators. Set PYTHON_WORKER_URL to the deployed signal-worker URL ' +
+    '(and confirm GET {PYTHON_WORKER_URL}/health responds) to fix.'
+  )
+}
 
 interface PythonCVResult {
   composite_cv_score: number
@@ -1062,7 +1078,14 @@ const generatorVote = voteGenerator()
 // source alone. A single source (just Brain, or just one LLM) keeps the
 // original, more conservative behavior to avoid one weak heuristic deciding
 // the verdict alone.
-if (generatorVote.name && aiScore > 0.45) {
+// Fix: previously gated behind `aiScore > 0.45`, which meant the override
+// could only ever reinforce a score that was already leaning AI. That's
+// backwards — a confident 2-source generator match (e.g. Brain + Gemini both
+// naming "Gemini Imagen v3") is independent corroborating evidence and is
+// exactly the signal needed to correct a base ensemble score that under-shot
+// into HUMAN territory. Removing the gate lets the override do its job in
+// the low-score cases it was meant for, not just the ones that didn't need it.
+if (generatorVote.name) {
   if (generatorVote.sources.length >= 2) {
     aiScore = Math.max(aiScore, 0.80)
   } else if (brainResult.verdict === 'AI' && brainResult.generatorHints.length > 0 && brainResult.score > 0.52) {
