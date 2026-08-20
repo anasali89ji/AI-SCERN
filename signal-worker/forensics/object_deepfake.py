@@ -21,6 +21,7 @@ import numpy as np
 from typing import Dict, Any, List, Tuple
 
 from utils.model_cache import get_model
+from utils.cv_compat import normalize_hough_lines
 
 _MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
 _PROTOTXT = os.path.join(_MODELS_DIR, "deploy.prototxt")
@@ -202,13 +203,19 @@ def _detect_missing_contact_shadows(gray: np.ndarray, edges: np.ndarray) -> floa
 
 def _detect_perspective_anomalies(gray: np.ndarray) -> float:
     """Check if lines converge to plausible vanishing points."""
-    lines = cv2.HoughLinesP(gray, 1, np.pi / 180, threshold=80, minLineLength=50, maxLineGap=10)
-    if lines is None or len(lines) < 5:
+    raw_lines = cv2.HoughLinesP(gray, 1, np.pi / 180, threshold=80, minLineLength=50, maxLineGap=10)
+    # Fix (2026-08-19 calibration run): `line[0]` assumed cv2.HoughLinesP
+    # always returns shape (N,1,4); on some OpenCV builds it returns (N,4)
+    # directly, which made `line[0]` a scalar and crashed the unpack with
+    # "cannot unpack non-iterable numpy.int32 object" — this took down the
+    # whole object_specific_analysis() call for non-face images.
+    lines = normalize_hough_lines(raw_lines)
+    if len(lines) < 5:
         return 0.5  # Not enough lines to analyze
 
     angles = []
     for line in lines:
-        x1, y1, x2, y2 = line[0]
+        x1, y1, x2, y2 = line
         angle = np.arctan2(y2 - y1, x2 - x1)
         angles.append(angle)
 

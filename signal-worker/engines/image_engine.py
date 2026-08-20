@@ -48,7 +48,12 @@ _RESULT_CACHE: dict = {}
 _RESULT_CACHE_MAX = 50
 
 def _cache_key(image_bytes: bytes) -> str:
-    return hashlib.sha256(image_bytes[:65536]).hexdigest()  # hash first 64KB
+    # Fix (2026-08-19): previously hashed only the first 64KB
+    # (`image_bytes[:65536]`), so two different files sharing an identical
+    # first 64KB — e.g. same header/thumbnail with different payloads past
+    # that point — collided and one image's cached inference result could
+    # be served for the other. Hash the full file content instead.
+    return hashlib.sha256(image_bytes).hexdigest()
 
 def _cache_get(key: str):
     return _RESULT_CACHE.get(key)

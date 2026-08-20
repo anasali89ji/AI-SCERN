@@ -56,6 +56,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import cv2
 import numpy as np
 
+from utils.cv_compat import normalize_hough_lines
+
 logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -177,14 +179,17 @@ def _detect_long_lines(gray: np.ndarray) -> List[np.ndarray]:
     """Return a list of point sequences sampled along long, mostly-straight
     edge contours suitable for curvature measurement."""
     edges = cv2.Canny(gray, 60, 160)
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=60,
-                             minLineLength=int(min(gray.shape) * 0.25), maxLineGap=8)
-    if lines is None:
-        return []
+    raw_lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=60,
+                                 minLineLength=int(min(gray.shape) * 0.25), maxLineGap=8)
+    # Fix (2026-08-19 calibration run): same (N,1,4) vs (N,4) shape bug as
+    # object_physics.py / object_deepfake.py — `l[0]` unpack crashed this
+    # layer on the calibration OpenCV build (L21 LOP showed only 8/100
+    # active votes in the report, almost all from a different failure path).
+    lines = normalize_hough_lines(raw_lines)
 
     segments = []
     for l in lines[:80]:
-        x1, y1, x2, y2 = l[0]
+        x1, y1, x2, y2 = l
         segments.append(np.array([[x1, y1], [x2, y2]], dtype=np.float64))
     return segments
 

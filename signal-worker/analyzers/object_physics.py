@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import cv2
 import numpy as np
 
+from utils.cv_compat import normalize_hough_lines
+
 logger = logging.getLogger(__name__)
 
 # ── Threshold Loader ─────────────────────────────────────────────────────────
@@ -1330,10 +1332,15 @@ def _detect_scene_lines(
         maxLineGap=int(cfg.get("hough_max_line_gap", 10)),
     )
 
-    if lines is None:
+    # Fix (2026-08-19 calibration run): cv2.HoughLinesP's return shape is
+    # build-dependent — some OpenCV builds return (N,1,4), others (N,4).
+    # `lines[:, 0, :]` crashed with IndexError on the latter (this layer
+    # showed 0/100 active votes in the calibration report as a result).
+    # normalize_hough_lines() handles both shapes safely.
+    lines = normalize_hough_lines(lines)
+    if len(lines) == 0:
         return np.empty((0, 4), dtype=np.int32)
 
-    lines = lines[:, 0, :]  # OpenCV returns shape (N,1,4)
     max_lines = int(cfg.get("max_lines", 200))
     if len(lines) > max_lines:
         # Keep longest lines (most reliable for VP estimation)
