@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import './globals.css'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { AnimationPreferenceProvider } from '@/components/AnimationPreferenceContext'
+import { Analytics } from '@vercel/analytics/next'
 
 /**
  * Clerk's client bundle (ui-common/vendors/clerk.browser/ui.browser — ~256 KiB
@@ -179,6 +180,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </AnimationPreferenceProvider>
           </AuthProvider>
         </ClerkClientProvider>
+        <Analytics />
       </body>
     </html>
   )
