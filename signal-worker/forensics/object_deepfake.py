@@ -35,7 +35,66 @@ def _load_face_net():
         raise FileNotFoundError(
             f"Face detector model files missing: {_PROTOTXT}, {_CAFFEMODEL}"
         )
+    if not hasattr(cv2, "dnn") or not hasattr(cv2.dnn, "readNetFromCaffe"):
+        # Diagnostic fix (2026-08-19 calibration run): the calibration
+        # environment logged
+        #   "Failed to load face_detector_dnn: module 'cv2.dnn' has no
+        #    attribute 'readNetFromCaffe'"
+        # on every single image. cv2.dnn.readNetFromCaffe has existed in
+        # every OpenCV release for years, including the
+        # opencv-python-headless==4.10.0.84 pinned in requirements.txt —
+        # so a *missing* attribute (as opposed to a load error on a
+        # specific model file) almost always means two conflicting cv2
+        # packages are installed in the same environment (most commonly
+        # `opencv-python` + `opencv-python-headless` together). Both ship
+        # into the same `cv2` import path with incompatible compiled
+        # binaries; pip does not reconcile them, so parts of `cv2.dnn`
+        # silently vanish while the rest of `cv2` keeps working — which is
+        # why only this one function broke and everything else in the
+        # pipeline (ELA, DCT, noise, etc.) worked fine.
+        #
+        # This is an environment/dependency-conflict problem, not something
+        # this function can work around at runtime, so it fails with a
+        # message that says so explicitly instead of the previous generic
+        # AttributeError, which sent the last investigation down the wrong
+        # path (looking for a code bug where there wasn't one).
+        installed = _installed_opencv_packages()
+        raise RuntimeError(
+            "cv2.dnn.readNetFromCaffe is unavailable in this OpenCV build "
+            "even though cv2.dnn is importable. This is almost always "
+            "caused by having more than one opencv-python* package "
+            "installed in the same environment (e.g. `opencv-python` and "
+            "`opencv-python-headless` together), which corrupts the cv2.dnn "
+            "namespace. Detected opencv package(s) in this environment: "
+            f"{installed or 'unable to detect via pip'}. Fix: `pip uninstall "
+            "-y opencv-python opencv-contrib-python opencv-python-headless "
+            "opencv-contrib-python-headless` then reinstall only the pinned "
+            "version from requirements.txt (opencv-python-headless==4.10.0.84)."
+        )
     return cv2.dnn.readNetFromCaffe(_PROTOTXT, _CAFFEMODEL)
+
+
+def _installed_opencv_packages():
+    """Best-effort introspection to name the conflicting package(s) in the
+    error message above. Never raises — returns None on any failure so it
+    can't itself break face-detector loading."""
+    try:
+        import importlib.metadata as _md
+        names = [
+            "opencv-python",
+            "opencv-python-headless",
+            "opencv-contrib-python",
+            "opencv-contrib-python-headless",
+        ]
+        found = []
+        for name in names:
+            try:
+                found.append(f"{name}=={_md.version(name)}")
+            except _md.PackageNotFoundError:
+                pass
+        return ", ".join(found) if found else None
+    except Exception:
+        return None
 
 
 def _detect_faces(img_rgb: np.ndarray) -> List[Tuple[int, int, int, int]]:

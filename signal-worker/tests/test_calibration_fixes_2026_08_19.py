@@ -20,7 +20,7 @@ from utils.cv_compat import normalize_hough_lines
 from engines.image_engine import _cache_key
 from analyzers.object_physics import analyze_gpc
 from analyzers.lop import _detect_long_lines
-from forensics.object_deepfake import _detect_perspective_anomalies
+from forensics.object_deepfake import _detect_perspective_anomalies, _load_face_net
 
 
 def _synthetic_line_image_gray(size=200):
@@ -137,6 +137,53 @@ class TestCacheKeyFullContentHash(unittest.TestCase):
     def test_small_images_still_work(self):
         data = b"tiny"
         self.assertEqual(_cache_key(data), hashlib.sha256(data).hexdigest())
+
+
+class TestFaceNetDiagnosticError(unittest.TestCase):
+    """Covers the 'cv2.dnn has no attribute readNetFromCaffe' failure from
+    the calibration log. We can't reproduce the actual conflicting-package
+    environment in CI, but we can prove the diagnostic branch fires
+    correctly and produces an actionable message rather than the previous
+    bare AttributeError, by simulating a cv2.dnn missing the attribute."""
+
+    def setUp(self):
+        import forensics.object_deepfake as od
+        self.od = od
+        self._real_dnn = cv2.dnn
+
+    def tearDown(self):
+        cv2.dnn = self._real_dnn
+
+    def test_missing_attribute_raises_actionable_runtime_error(self):
+        class _FakeDnn:
+            pass  # deliberately has no readNetFromCaffe, mirroring the bug
+
+        cv2.dnn = _FakeDnn()
+        try:
+            with self.assertRaises(RuntimeError) as ctx:
+                _load_face_net()
+            msg = str(ctx.exception)
+            self.assertIn("opencv-python", msg)
+            self.assertIn("pip uninstall", msg)
+        finally:
+            cv2.dnn = self._real_dnn
+
+    def test_working_dnn_does_not_raise_the_diagnostic_error(self):
+        # Sanity check: with a real, working cv2.dnn (assuming the local
+        # test environment has a correctly-installed OpenCV — reasonable
+        # for CI), we should get past the hasattr check. We don't assert
+        # the model actually loads (that needs the .caffemodel file on
+        # disk, which may not be present in every test environment) —
+        # only that we don't hit the diagnostic RuntimeError for a
+        # namespace that legitimately has the attribute.
+        self.assertTrue(hasattr(cv2.dnn, "readNetFromCaffe"))
+        try:
+            _load_face_net()
+        except FileNotFoundError:
+            pass  # expected if model files aren't present in this env
+        except RuntimeError as e:
+            self.fail(f"Should not hit the missing-attribute diagnostic "
+                      f"when cv2.dnn.readNetFromCaffe genuinely exists: {e}")
 
 
 if __name__ == "__main__":
