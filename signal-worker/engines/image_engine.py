@@ -199,6 +199,33 @@ def _run_l10(img_array, img_pil) -> Dict[str, Any]:
         return build_layer_report(10, "Generative Fingerprinting Engine", [], "failure", 0, score=0.5)
 
 
+# ── Document/ID Forensics runner (L22, v4.9.0, PROVISIONAL) ────────────────────
+
+def _run_document_layer(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Layer 22 — Document/ID Security Forensics [provisional]. Section 1.1 of
+    the giant-level image engine optimization directive. Classify-then-route:
+    analyzers/document_forensics.py's classify_image_type() cheaply decides
+    whether this upload is a document/ID/passport/receipt; only then does
+    the five-signal security-feature submodule (hologram/OVI, microprint,
+    guilloche, UV-paper-texture proxy, font consistency) run. Reports
+    status="not_applicable" for ordinary photos, so this costs ~nothing on
+    the large majority of uploads. PROVISIONAL — uncalibrated against a
+    labeled real-ID-vs-fake-ID dataset, same caveat as L20/L21; see the
+    module docstring for why, and LAYER_WEIGHTS[22] below for how that's
+    reflected in fusion.
+    """
+    from analyzers.document_forensics import analyze_document_forensics
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_document_forensics(img_array, img_pil)
+    except Exception as e:
+        logger.warning("[ImageEngine][L22] failed: %s", e)
+        return build_layer_report(
+            22, "Document/ID Security Forensics [provisional]", [], "failure", 0, score=0.5
+        )
+
+
 # ── Physical Consistency Layer runners (L11-L14) ──────────────────────────────
 
 def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
@@ -554,6 +581,13 @@ def _fuse_scores(
         # low deliberately; raise only after a real calibration pass.
         20: 0.35,  # L20 MISG — Multi-Illuminant & Global Shadow Geometry
         21: 0.45,  # L21 LOP — Lens & Optical Physics (chromatic aberration)
+        # L22 (v4.9.0): PROVISIONAL — uncalibrated, see
+        # analyzers/document_forensics.py module docstring. Also
+        # status="not_applicable" (skipped entirely, see loop below) for the
+        # large majority of uploads that aren't documents/IDs in the first
+        # place — this weight only matters for the minority that classify
+        # as document-like.
+        22: 0.40,  # L22 Document/ID Security Forensics (hologram/microprint/guilloche/UV/font)
     }
 
     for layer in v2_layers:
@@ -830,7 +864,7 @@ async def analyze_image_from_url(
         # negative rate specifically on URL-scanned images (bulk site
         # crawling, the web scanner) relative to direct uploads. Now runs
         # concurrently, matching the bytes path.
-        with ThreadPoolExecutor(max_workers=14) as pool:
+        with ThreadPoolExecutor(max_workers=15) as pool:
             f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
             f_l2  = pool.submit(_run_l2, img_array, img_pil)
             f_l3  = pool.submit(_run_l3, img_array, img_pil)
@@ -840,6 +874,7 @@ async def analyze_image_from_url(
             f_l8  = pool.submit(_run_l8, img_array, img_pil)
             f_l9  = pool.submit(_run_l9, img_array, img_pil)
             f_l10 = pool.submit(_run_l10, img_array, img_pil)
+            f_doc = pool.submit(_run_document_layer, img_array, img_pil)
             f_phys = pool.submit(_run_physical_layers, img_array, img_pil)
             # v4.7.0: L15-L19 Object Physics Ensemble, same pool as L11-L14.
             f_objphys = pool.submit(_run_object_physics_layers, img_array, img_pil)
@@ -853,7 +888,7 @@ async def analyze_image_from_url(
 
             layers = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
                       f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
-                      f_l10.result()]
+                      f_l10.result(), f_doc.result()]
             physical = f_phys.result()
             layers.extend(physical.get("layer_reports", []))
             object_physics = f_objphys.result()
@@ -887,6 +922,11 @@ async def analyze_image_from_url(
             "composite_score": fused,
             "generative_attribution": gfe_attr,
             "version": VERSION,
+            # L22 (v4.9.0): see analyze_image_from_bytes for why this is
+            # surfaced at top level.
+            "document_analysis": next(
+                (l.get("document_classification", {}) for l in layers if l.get("layer") == 22), {}
+            ),
         }
 
     finally:
@@ -958,7 +998,7 @@ def analyze_image_from_bytes(
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
         # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
         # SynthID, v3 forensics — 14 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=14) as pool:
+        with ThreadPoolExecutor(max_workers=15) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -968,6 +1008,7 @@ def analyze_image_from_bytes(
             f_l8      = pool.submit(_run_l8,      img_array, pil_img)
             f_l9      = pool.submit(_run_l9,      img_array, pil_img_original)
             f_l10     = pool.submit(_run_l10,     img_array, pil_img_original)
+            f_doc     = pool.submit(_run_document_layer, img_array, pil_img_original)
             f_phys    = pool.submit(_run_physical_layers, img_array, pil_img)
             # v4.7.0: L15-L19 Object Physics Ensemble, submitted alongside
             # L11-L14 so it doesn't add to wall-clock time (bounded by the
@@ -981,7 +1022,7 @@ def analyze_image_from_bytes(
 
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
                        f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
-                       f_l10.result()]
+                       f_l10.result(), f_doc.result()]
             physical = f_phys.result()
             layers.extend(physical.get("layer_reports", []))
             object_physics = f_objphys.result()
@@ -1032,6 +1073,16 @@ def analyze_image_from_bytes(
             # GFE: expose generator attribution at top level
             "generative_attribution": next(
                 (l.get("generative_attribution", {}) for l in layers if l.get("layer") == 10), {}
+            ),
+            # L22 (v4.9.0): expose document/ID classification at top level so
+            # the frontend can branch into a Document Verification view
+            # without digging through the layers array. Empty dict when L22
+            # didn't run (e.g. failed) rather than when it ran and found
+            # "not a document" — that case still has a populated dict with
+            # is_document=False, which the frontend can use to explain why
+            # no document-specific evidence is shown.
+            "document_analysis": next(
+                (l.get("document_classification", {}) for l in layers if l.get("layer") == 22), {}
             ),
         }
         _cache_set(_ck, result)

@@ -44,3 +44,23 @@ VERSION = "4.8.0"
 # script deliberately does not auto-rewrite
 # config/object_physics_thresholds.json or LAYER_WEIGHTS itself.
 VERSION = "4.8.1"
+
+# v4.9.0: Added L22 — Document/ID Security Forensics (Section 1.1 of the
+# giant-level image engine optimization directive). New capability inside
+# the existing Image Engine, not a new engine: classify_image_type() cheaply
+# pre-filters every upload for document/ID/passport/receipt shape (aspect
+# ratio + dominant rectangle + text density); only images that classify as
+# document-like get routed into the five-signal security-feature submodule
+# (hologram/OVI hue-shift, microprint border-stroke analysis, guilloche
+# spectral periodicity, UV-paper-texture proxy, font/stroke-width
+# consistency) in analyzers/document_forensics.py. Ordinary photos report
+# status="not_applicable" and are skipped by _fuse_scores, same convention
+# as L13/L14/L17 — near-zero cost/no false signal on non-document uploads.
+# PROVISIONAL, same caveat as L20/L21: every signal is a genuine,
+# physically-motivated heuristic but none is calibrated against a labeled
+# real-ID-vs-fake-ID dataset yet (see module docstring), so LAYER_WEIGHTS[22]
+# is deliberately low. document_analysis is also now surfaced at the top
+# level of both analyze_image_from_bytes() and analyze_image_from_url()
+# results for frontend consumption (Document Verification Mode UI is a
+# separate, later module — this only adds the backend data it will consume).
+VERSION = "4.9.0"
