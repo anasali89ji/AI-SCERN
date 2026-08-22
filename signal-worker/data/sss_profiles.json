@@ -4,6 +4,7 @@
     "ratio_min": 8.0,
     "scattering_coeff": 1.2,
     "absorption_coeff": 0.8,
+    "color_hint": {"h_range": [0, 20], "h_range2": [170, 180], "s_range": [48, 255], "v_range": [80, 255], "smoothness": "medium"},
     "notes": "Based on Tuchin et al. optical properties of skin"
   },
   "wax": {
@@ -11,6 +12,7 @@
     "ratio_min": 6.0,
     "scattering_coeff": 0.9,
     "absorption_coeff": 0.3,
+    "color_hint": {"h_range": [15, 40], "s_range": [10, 70], "v_range": [160, 255], "smoothness": "low"},
     "notes": "Paraffin wax, measured values"
   },
   "marble": {
@@ -18,13 +20,15 @@
     "ratio_min": 5.0,
     "scattering_coeff": 0.7,
     "absorption_coeff": 0.2,
-    "notes": "Carrara marble, approximate"
+    "color_hint": {"h_range": [0, 179], "s_range": [0, 35], "v_range": [140, 255], "smoothness": "medium"},
+    "notes": "Carrara marble, approximate. Fine veining gives it medium local texture despite low saturation."
   },
   "milk": {
     "penetration_depth_mm": {"red": 15.0, "green": 8.0, "blue": 3.0},
     "ratio_min": 3.0,
     "scattering_coeff": 2.5,
     "absorption_coeff": 0.1,
+    "color_hint": {"h_range": [0, 179], "s_range": [0, 20], "v_range": [210, 255], "smoothness": "low"},
     "notes": "Whole milk, high scattering"
   },
   "juice": {
@@ -32,6 +36,47 @@
     "ratio_min": 2.0,
     "scattering_coeff": 0.5,
     "absorption_coeff": 1.5,
+    "color_hint": {"h_range": [5, 25], "s_range": [120, 255], "v_range": [120, 255], "smoothness": "low"},
     "notes": "Orange juice, approximate"
+  },
+  "jade": {
+    "penetration_depth_mm": {"red": 9.0, "green": 4.0, "blue": 1.0},
+    "ratio_min": 6.0,
+    "scattering_coeff": 0.6,
+    "absorption_coeff": 0.25,
+    "color_hint": {"h_range": [50, 85], "s_range": [40, 180], "v_range": [80, 220], "smoothness": "medium"},
+    "notes": "Order-of-magnitude engineering estimate, not a measured value — jade's translucency varies widely by grade/thickness. Grouped with marble as a similarly dense, moderately-translucent mineral."
+  },
+  "soap": {
+    "penetration_depth_mm": {"red": 7.5, "green": 3.2, "blue": 0.9},
+    "ratio_min": 6.5,
+    "scattering_coeff": 1.0,
+    "absorption_coeff": 0.3,
+    "color_hint": {"h_range": [0, 179], "s_range": [0, 60], "v_range": [170, 250], "smoothness": "low"},
+    "notes": "Order-of-magnitude estimate for glycerin-type translucent soap. Colour hint deliberately broad/pale and overlaps wax/milk — auto-detection confidence for soap specifically is low; kept in the database mainly for explicit S1/S2 use when a caller already knows the material."
+  },
+  "human_teeth": {
+    "penetration_depth_mm": {"red": 3.0, "green": 1.2, "blue": 0.3},
+    "ratio_min": 7.0,
+    "scattering_coeff": 1.5,
+    "absorption_coeff": 0.5,
+    "color_hint": {"h_range": [15, 35], "s_range": [0, 40], "v_range": [190, 255], "smoothness": "low"},
+    "notes": "Order-of-magnitude estimate. Deliberately NOT auto-routed to by detect_material_type() -- see that function's docstring. A raw colour match to 'pale and smooth' is indistinguishable from countless other objects without a mouth/face region proposal this pipeline doesn't have."
+  },
+  "plant_leaf": {
+    "penetration_depth_mm": {"red": 2.5, "green": 1.5, "blue": 0.6},
+    "ratio_min": 3.5,
+    "scattering_coeff": 1.8,
+    "absorption_coeff": 2.0,
+    "color_hint": {"h_range": [35, 85], "s_range": [60, 255], "v_range": [40, 200], "smoothness": "high"},
+    "notes": "Chlorophyll absorbs strongly in BOTH red and blue for photosynthesis, so leaves don't follow the same 'red penetrates much deeper' story that drives skin's high ratio_min -- their translucency is concentrated more in green/near-IR. ratio_min is set conservatively lower for this reason; this signal is inherently weaker for leaves than for skin."
+  },
+  "fruit_flesh": {
+    "penetration_depth_mm": {"red": 5.0, "green": 2.5, "blue": 1.0},
+    "ratio_min": 4.0,
+    "scattering_coeff": 1.3,
+    "absorption_coeff": 0.4,
+    "color_hint": {"h_range": [0, 179], "s_range": [0, 255], "v_range": [0, 255], "smoothness": "medium"},
+    "notes": "Extremely high variance by fruit type (apple flesh vs. orange interior vs. melon) makes a single colour hint meaningless -- deliberately NOT auto-routed to by detect_material_type(), same reasoning as human_teeth. Kept in the database for explicit/future use once a real cut-fruit region proposal exists."
   }
 }
