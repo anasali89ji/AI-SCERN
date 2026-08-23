@@ -9,7 +9,8 @@
       "outer_far_offset": 6,
       "intensity_drop_threshold": 0.12,
       "real_threshold": 0.85,
-      "ai_threshold": 0.7
+      "ai_threshold": 0.7,
+      "vertical_tolerance_deg": 25.0
     },
     "edge_fresnel": {
       "interior_depth": 4,
@@ -27,6 +28,14 @@
       "min_arc_length": 40,
       "max_contours": 25,
       "min_object_area": 400
+    },
+    "shadow_penumbra": {
+      "real_threshold": 1.2,
+      "ai_threshold": 0.2
+    },
+    "chromatic_roughness": {
+      "real_threshold": 0.15,
+      "ai_threshold": 0.03
     }
   },
   "l16_mrc": {

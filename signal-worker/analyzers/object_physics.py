@@ -313,241 +313,588 @@ def _create_object_mask(img: np.ndarray, cfg: dict) -> np.ndarray:
     return mask
 
 
-def _sample_vertical_bottom_shadows(
-    gray: np.ndarray,
-    mask: np.ndarray,
-    cfg: dict,
-) -> Tuple[float, int]:
+# ── L15 Internal Helpers ───────────────────────────────────────────────────
+#
+# Module 6 (L15 OBP) upgrade notes
+# ---------------------------------
+# The original implementation only sampled contact shadows straight down,
+# used a flat edge/interior brightness ratio for "Fresnel", and measured
+# roughness at one fixed scale. This block replaces those three internal
+# helpers with gravity-aware multi-direction shadow + penumbra sampling,
+# BRDF-type-classified Fresnel curve fitting, and multi-scale + chromatic
+# edge roughness — per the L15 section of the optimization prompt.
+#
+# Two spots where we deliberately fell short of the literal spec, flagged
+# rather than faked:
+#
+# 1. Gravity direction estimation is line-based only. The spec also lists
+#    EXIF orientation and face-orientation as gravity cues; this analyzer
+#    receives only a raw numpy array (no EXIF, no face detector wired in
+#    here), so we fall back to "no confident vertical-line cluster -> assume
+#    straight down", the same default the old code always used. If EXIF/face
+#    data becomes available to this function later, it should be blended in
+#    ahead of the line-based estimate, not instead of it.
+#
+# 2. "Multi-angle sampling by analyzing curved surfaces" for Fresnel fitting
+#    would require actual 3D surface normal estimation, which this codebase
+#    doesn't have. We use distance-from-boundary as a monotonic proxy for
+#    grazing angle (edge-adjacent pixels ~ grazing, interior pixels ~ normal
+#    incidence) and fit Schlick-family curves against that proxy. It's a
+#    real curve fit against real per-pixel data, but the x-axis is a
+#    geometric approximation, not a measured viewing angle — documented in
+#    `_fit_fresnel_curve`.
+
+
+def _rotate_vector(v: Tuple[float, float], degrees: float) -> Tuple[float, float]:
+    """Rotate a 2-D vector by `degrees` (image coordinates: +y is down)."""
+    rad = math.radians(degrees)
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+    x, y = v
+    return (x * cos_a - y * sin_a, x * sin_a + y * cos_a)
+
+
+def _estimate_gravity_direction(gray: np.ndarray, cfg: dict) -> Tuple[Tuple[float, float], float]:
     r"""
-    Heuristic contact-shadow detector.
+    Estimate the image-space gravity direction from dominant vertical lines.
 
-    Mathematical Model
-    ------------------
-    Real objects resting on a surface cast an *ambient occlusion* or *contact*
-    shadow directly beneath the boundary.  We model this as an intensity
-    depression in the exterior region immediately below the object:
-
-    .. math::
-        I_{near}(x) < I_{far}(x) \quad	ext{and}\quad
-        I_{interior}(x) - I_{near}(x) > \Delta
-
-    where :math:`\Delta` is ``intensity_drop_threshold``.
-
-    Because photographs are overwhelmingly captured with gravity pointing
-    downward, we sample vertically below the bottom-most masked pixel in each
-    column.  This is a heuristic; it fails for rotated images but covers the
-    vast majority of natural photographs.
-
-    Optimization
-    ------------
-    Vectorised via ``np.flipud`` and column-wise ``argmax``.  No Python
-    loops over pixels.  Complexity :math:`O(H \cdot W)`.
-
-    Parameters
-    ----------
-    gray : np.ndarray
-        H×W uint8 grayscale image.
-    mask : np.ndarray
-        H×W uint8 binary object mask.
-    cfg : dict
-        ``contact_shadow`` threshold block.
+    Real photographs of built/structured scenes contain verticals (door
+    frames, walls, poles, standing figures) that align with true gravity.
+    We detect line segments, keep those within ``vertical_tolerance_deg`` of
+    vertical, and take the median deviation as the scene tilt.
 
     Returns
     -------
-    Tuple[float, int]
-        (contact_shadow_ratio, sample_count).
-        Ratio ∈ [0, 1]; 0 = no shadows detected, 1 = all sampled points show
-        contact-shadow signature.
+    (unit_vector, confidence) : ((float, float), float)
+        unit_vector points in the gravity ("down") direction in image space.
+        confidence in [0, 1] is the fraction of detected lines that were
+        near-vertical; low confidence means "fell back to the default
+        straight-down assumption", not "gravity is sideways".
     """
+    default_dir = (0.0, 1.0)
     h, w = gray.shape
+    tol = _safe_float(cfg.get("vertical_tolerance_deg", 25.0))
+
+    edges = cv2.Canny(gray, 50, 150)
+    min_len = max(20, min(h, w) // 8)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=40,
+                             minLineLength=min_len, maxLineGap=8)
+    lines = normalize_hough_lines(lines)
+    if lines.shape[0] == 0:
+        return default_dir, 0.0
+
+    dx = (lines[:, 2] - lines[:, 0]).astype(np.float64)
+    dy = (lines[:, 3] - lines[:, 1]).astype(np.float64)
+    valid = (np.abs(dx) + np.abs(dy)) > 0
+    if not valid.any():
+        return default_dir, 0.0
+    angles = np.degrees(np.arctan2(dy[valid], dx[valid])) % 180.0
+
+    near_vertical = angles[(angles > (90.0 - tol)) & (angles < (90.0 + tol))]
+    confidence = float(near_vertical.size) / float(angles.size)
+
+    if near_vertical.size < 3:
+        return default_dir, 0.0
+
+    tilt_deg = float(np.median(near_vertical)) - 90.0
+    tilt_rad = math.radians(tilt_deg)
+    gx, gy = math.sin(tilt_rad), math.cos(tilt_rad)
+    norm = math.hypot(gx, gy) or 1.0
+    return (gx / norm, gy / norm), float(np.clip(confidence, 0.0, 1.0))
+
+
+def _get_boundary_points(mask: np.ndarray, max_points: int = 1500) -> np.ndarray:
+    """External-contour points of the object mask, subsampled for cost control."""
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if not contours:
+        return np.empty((0, 2), dtype=np.int32)
+    pts = np.concatenate([c.reshape(-1, 2) for c in contours], axis=0)
+    if pts.shape[0] > max_points:
+        idx = np.linspace(0, pts.shape[0] - 1, max_points).astype(int)
+        pts = pts[idx]
+    return pts
+
+
+def _sample_directional_contact_shadow(
+    gray_f: np.ndarray,
+    mask: np.ndarray,
+    cfg: dict,
+    direction: Tuple[float, float],
+    boundary_pts: np.ndarray,
+) -> Tuple[float, int, float]:
+    r"""
+    Sample contact-shadow signature and penumbra width along one direction.
+
+    Generalizes the original vertical-only column scan to an arbitrary unit
+    direction, sampled at boundary-contour points rather than per-column
+    (needed once direction isn't guaranteed axis-aligned). Uses a single
+    global direction per call, same simplification the original code made
+    for the vertical case (a true per-point outward surface normal is not
+    computed) — kept consistent rather than silently upgraded in one branch.
+
+    Returns
+    -------
+    (ratio, valid_samples, penumbra_width_px)
+    """
+    h, w = gray_f.shape
     inner = int(cfg.get("inner_offset", 2))
     near = int(cfg.get("outer_near_offset", 1))
     far = int(cfg.get("outer_far_offset", 6))
     drop_thresh = _safe_float(cfg.get("intensity_drop_threshold", 0.12))
+    dx, dy = direction
 
-    binary_mask = (mask > 0).astype(np.uint8)
-    col_sums = binary_mask.sum(axis=0)
-    has_mask = col_sums > 0
+    if boundary_pts.shape[0] == 0:
+        return 0.0, 0, 0.0
 
-    if not has_mask.any():
-        return 0.0, 0
+    xs = boundary_pts[:, 0].astype(np.float64)
+    ys = boundary_pts[:, 1].astype(np.float64)
 
-    # Bottom-most pixel per column via flipped argmax
-    flipped = np.flipud(binary_mask)
-    ymax_flipped = np.argmax(flipped, axis=0)
-    ymax = h - 1 - ymax_flipped
+    def sample_at(offset: float):
+        sx = np.clip(np.round(xs + dx * offset), 0, w - 1).astype(np.int32)
+        sy = np.clip(np.round(ys + dy * offset), 0, h - 1).astype(np.int32)
+        return gray_f[sy, sx] / 255.0, sx, sy
 
-    # Valid columns: enough room for interior and far exterior samples
-    valid = has_mask & (ymax + far < h) & (ymax - inner >= 0)
-    xs = np.arange(w)[valid]
-    y_bottom = ymax[valid]
+    interior_vals, _, _ = sample_at(-inner)   # into the object
+    near_vals, nsx, nsy = sample_at(near)
+    far_vals, fsx, fsy = sample_at(far)
 
-    if xs.size == 0:
-        return 0.0, 0
+    bg_near = mask[nsy, nsx] == 0
+    bg_far = mask[fsy, fsx] == 0
+    valid = bg_near & bg_far
 
-    # Vectorised intensity sampling
-    interior = gray[y_bottom - inner, xs].astype(np.float32) / 255.0
-    outside_near = gray[y_bottom + near, xs].astype(np.float32) / 255.0
-    outside_far = gray[y_bottom + far, xs].astype(np.float32) / 255.0
+    n_valid = int(valid.sum())
+    if n_valid == 0:
+        return 0.0, 0, 0.0
 
     with np.errstate(invalid="ignore"):
-        shadow_sig = (outside_near < outside_far) & ((interior - outside_near) > drop_thresh)
+        shadow_sig = valid & (near_vals < far_vals) & ((interior_vals - near_vals) > drop_thresh)
 
-    contact_count = int(np.count_nonzero(shadow_sig))
-    total = xs.size
+    ratio = float(np.count_nonzero(shadow_sig)) / float(n_valid)
 
-    ratio = contact_count / total if total > 0 else 0.0
-    return float(ratio), int(total)
+    # Penumbra width: for points with a detected shadow signature, sample a
+    # short profile between `near` and `far` and measure the 10%-90%
+    # intensity-transition width. Capped sample count for cost control.
+    penumbra = 0.0
+    sig_idx = np.nonzero(shadow_sig)[0]
+    if sig_idx.size > 0:
+        step = max(1, sig_idx.size // 200)
+        sample_idx = sig_idx[::step]
+        offsets = np.linspace(near, far, 6)
+        profile_cols = []
+        for off in offsets:
+            v, _, _ = sample_at(off)
+            profile_cols.append(v[sample_idx])
+        profile = np.stack(profile_cols, axis=1)  # (n_pts, 6)
+        lo = profile[:, 0]
+        hi = profile[:, -1]
+        span = np.clip(hi - lo, 1e-6, None)
+        widths = []
+        for row, l, s in zip(profile, lo, span):
+            frac = np.clip((row - l) / s, 0.0, 1.0)
+            below10 = np.nonzero(frac >= 0.1)[0]
+            above90 = np.nonzero(frac >= 0.9)[0]
+            if below10.size and above90.size and above90[0] >= below10[0]:
+                w_px = float(offsets[above90[0]] - offsets[below10[0]])
+                if w_px > 0:
+                    widths.append(w_px)
+        if widths:
+            penumbra = float(np.median(widths))
+
+    return ratio, n_valid, penumbra
 
 
-def _compute_edge_fresnel(
-    gray: np.ndarray,
+def _sample_multi_direction_shadows(
+    gray_f: np.ndarray,
     mask: np.ndarray,
     cfg: dict,
-) -> Tuple[float, int]:
+) -> Dict[str, Any]:
+    """
+    Sample contact shadows along the estimated gravity direction plus its
+    two perpendiculars and its opposite (4 directions total), instead of
+    vertical-only. Real objects should show a shadow signature concentrated
+    in the gravity direction; AI composites sometimes show shadow-like
+    intensity drops in an arbitrary or inconsistent direction, or none at
+    all in any direction.
+    """
+    gray_u8 = np.clip(gray_f, 0, 255).astype(np.uint8)
+    gravity_dir, gravity_conf = _estimate_gravity_direction(gray_u8, cfg)
+    boundary_pts = _get_boundary_points(mask)
+
+    directions = {
+        "gravity":      gravity_dir,
+        "perp_a":       _rotate_vector(gravity_dir, 90.0),
+        "perp_b":       _rotate_vector(gravity_dir, -90.0),
+        "opposite":     _rotate_vector(gravity_dir, 180.0),
+    }
+
+    per_direction = {}
+    for name, d in directions.items():
+        ratio, n, penumbra = _sample_directional_contact_shadow(
+            gray_f, mask, cfg, d, boundary_pts
+        )
+        per_direction[name] = {"ratio": ratio, "samples": n, "penumbra_px": penumbra}
+
+    gravity_ratio = per_direction["gravity"]["ratio"]
+    other_ratios = [per_direction[k]["ratio"] for k in ("perp_a", "perp_b", "opposite")]
+    max_other = max(other_ratios) if other_ratios else 0.0
+
+    # A real grounded object should show its strongest shadow signature in
+    # the gravity direction. If a non-gravity direction shows a
+    # substantially stronger "shadow" than gravity does, that's more
+    # consistent with a random dark region than a physical contact shadow.
+    directional_consistency = (
+        gravity_ratio >= max_other - 0.05 if per_direction["gravity"]["samples"] > 0 else None
+    )
+
+    return {
+        "per_direction": per_direction,
+        "gravity_direction": gravity_dir,
+        "gravity_confidence": gravity_conf,
+        "gravity_ratio": gravity_ratio,
+        "max_other_ratio": max_other,
+        "directional_consistency": directional_consistency,
+        "penumbra_px": per_direction["gravity"]["penumbra_px"],
+    }
+
+
+def _classify_surface_type(
+    img: np.ndarray,
+    dist_in: np.ndarray,
+    edge_depth: int,
+    interior_depth: int,
+    smooth_mask: np.ndarray,
+) -> Tuple[str, float]:
     r"""
-    Approximate edge Fresnel ratio for smooth-surface objects.
+    Coarse BRDF-type classification: dielectric / conductor / translucent.
 
-    Mathematical Model
-    ------------------
-    The Fresnel equations predict that reflectance :math:`R` increases as the
-    viewing angle approaches grazing incidence:
+    Heuristic, not a trained classifier:
+    - conductor: the brightest edge-band pixels share the body's hue
+      (metals tint their specular reflection with body color).
+    - dielectric: the brightest edge-band pixels are desaturated/white
+      relative to the body (plastics/wood/most non-metals reflect white
+      specular highlights regardless of body color).
+    - translucent: edge-band color correlates with what's just outside the
+      object (transmission bleed-through) more than with the body color.
+
+    Returns (surface_type, confidence).
+    """
+    edge_band = (dist_in <= edge_depth) & (dist_in > 0) & smooth_mask
+    interior_band = (dist_in > edge_depth) & (dist_in <= edge_depth + interior_depth) & smooth_mask
+
+    if edge_band.sum() < 50 or interior_band.sum() < 50:
+        return "unknown", 0.0
+
+    img_f = img.astype(np.float32)
+    body_color = img_f[interior_band].mean(axis=0)
+
+    edge_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).astype(np.float32)
+    edge_vals = edge_gray[edge_band]
+    bright_thresh = np.percentile(edge_vals, 85.0)
+    bright_mask_local = edge_vals >= bright_thresh
+    edge_pixels = img_f[edge_band]
+    highlight_color = edge_pixels[bright_mask_local].mean(axis=0) if bright_mask_local.any() else body_color
+
+    def _hsv_sat(rgb: np.ndarray) -> float:
+        arr = np.uint8(np.clip(rgb, 0, 255)).reshape(1, 1, 3)
+        return float(cv2.cvtColor(arr, cv2.COLOR_RGB2HSV)[0, 0, 1]) / 255.0
+
+    highlight_sat = _hsv_sat(highlight_color)
+
+    def _cos_sim(a: np.ndarray, b: np.ndarray) -> float:
+        na, nb = np.linalg.norm(a) + 1e-6, np.linalg.norm(b) + 1e-6
+        return float(np.dot(a, b) / (na * nb))
+
+    body_highlight_sim = _cos_sim(body_color, highlight_color)
+
+    if highlight_sat < 0.15:
+        return "dielectric", 1.0 - highlight_sat / 0.15
+
+    if body_highlight_sim > 0.90 and highlight_sat >= 0.15:
+        return "conductor", float(np.clip(body_highlight_sim, 0.0, 1.0))
+
+    return "translucent", float(np.clip(1.0 - body_highlight_sim, 0.0, 1.0))
+
+
+def _fit_fresnel_curve(
+    gray_f: np.ndarray,
+    dist_in: np.ndarray,
+    edge_depth: int,
+    interior_depth: int,
+    smooth_mask: np.ndarray,
+) -> Tuple[float, float, float, int]:
+    r"""
+    Fit a Schlick-family reflectance curve against a distance-from-boundary
+    proxy for grazing angle (see module note above on this approximation).
 
     .. math::
-        R(	heta) = R_0 + (1 - R_0)(1 - \cos	heta)^5
+        I(\theta) \approx I_{min} + (I_{max}-I_{min})\bigl[R_0 + (1-R_0)(1-\cos\theta)^n\bigr]
 
-    For smooth dielectric or metallic objects, this manifests as a measurable
-    brightening in a thin band just inside the physical edge.  We approximate
-
-    .. math::
-        
-ho = rac{ar{I}_{edge}}{ar{I}_{interior}}
-
-    where :math:`ar{I}_{edge}` is the mean intensity within ``edge_depth``
-    px of the boundary and :math:`ar{I}_{interior}` is the mean intensity
-    ``interior_depth`` px inward.  Only pixels whose interior neighbourhood
-    has low variance (smooth surface) are considered, because Fresnel is not
-    visible on textured matte surfaces.
-
-    Complexity: :math:`O(H \cdot W)` via distance transforms.
-
-    Parameters
-    ----------
-    gray : np.ndarray
-        H×W uint8 grayscale image.
-    mask : np.ndarray
-        H×W uint8 binary object mask.
-    cfg : dict
-        ``edge_fresnel`` threshold block.
+    where :math:`\theta(d) = 90^\circ \cdot (1 - d / d_{max})` — grazing at
+    the boundary, near-normal at the far edge of the interior band.
 
     Returns
     -------
-    Tuple[float, int]
-        (fresnel_ratio, valid_pixel_count).
-        Ratio > 1.2 is typical of real smooth objects; ≈ 1.0 suggests AI.
+    (R0, n_exponent, r_squared, n_profile_points)
+        r_squared measures how well the profile follows *any* member of the
+        Schlick family; a genuinely flat/no-brightening profile fits R0≈1
+        with a poor or degenerate r_squared, which is itself informative.
+    """
+    d_max = edge_depth + interior_depth
+    if d_max < 2:
+        return 1.0, 0.0, 0.0, 0
+
+    distances = np.arange(0, d_max + 1)
+    profile = []
+    for d in distances:
+        band = (dist_in > d) & (dist_in <= d + 1) & smooth_mask
+        if band.sum() < 20:
+            profile.append(np.nan)
+        else:
+            profile.append(float(gray_f[band].mean()))
+    profile = np.array(profile, dtype=np.float64)
+
+    valid = ~np.isnan(profile)
+    if valid.sum() < 4:
+        return 1.0, 0.0, 0.0, int(valid.sum())
+
+    d_valid = distances[valid].astype(np.float64)
+    i_valid = profile[valid]
+
+    i_min, i_max = i_valid.min(), i_valid.max()
+    span = i_max - i_min
+    if span < 1e-6:
+        # Perfectly flat intensity vs distance from boundary — no grazing
+        # brightening at all, the strongest "no Fresnel" signature.
+        return 1.0, 0.0, 0.0, int(valid.sum())
+
+    i_norm = (i_valid - i_min) / span
+    theta = np.radians(90.0 * (1.0 - d_valid / d_max))
+    cos_term = 1.0 - np.cos(theta)
+
+    best = (1.0, 0.0, -np.inf)  # (R0, n, neg_sse) -> maximize
+    ss_tot = float(np.sum((i_norm - i_norm.mean()) ** 2)) + 1e-9
+    for n_exp in (1.0, 1.5, 2.0, 3.0, 5.0, 8.0):
+        ct_n = cos_term ** n_exp
+        # Closed-form least-squares R0 for fixed n:
+        # model = R0 + (1-R0)*ct_n = R0*(1-ct_n) + ct_n
+        # residual = i_norm - ct_n - R0*(1-ct_n)  -> linear in R0
+        basis = 1.0 - ct_n
+        denom = float(np.sum(basis * basis)) + 1e-9
+        r0 = float(np.sum((i_norm - ct_n) * basis) / denom)
+        r0 = float(np.clip(r0, 0.0, 1.0))
+        model = r0 + (1.0 - r0) * ct_n
+        sse = float(np.sum((i_norm - model) ** 2))
+        if -sse > best[2]:
+            best = (r0, n_exp, -sse)
+
+    r0, n_exp, neg_sse = best
+    r_squared = float(np.clip(1.0 - (-neg_sse) / ss_tot, 0.0, 1.0))
+    return r0, n_exp, r_squared, int(valid.sum())
+
+
+def _compute_edge_fresnel_v2(
+    img: np.ndarray,
+    gray: np.ndarray,
+    mask: np.ndarray,
+    cfg: dict,
+) -> Dict[str, Any]:
+    """
+    BRDF-type-classified Fresnel analysis. Wraps the original edge/interior
+    ratio (kept for score-threshold backward compatibility) with surface
+    classification and curve-fit quality as additional evidence.
     """
     interior_depth = int(cfg.get("interior_depth", 4))
     edge_depth = int(cfg.get("edge_depth", 2))
     var_thresh = _safe_float(cfg.get("smooth_surface_variance_threshold", 400.0))
 
-    # Distance transforms: interior distance and exterior distance
     dist_in = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
-    dist_out = cv2.distanceTransform(255 - mask, cv2.DIST_L2, 5)
-
-    # Edge band: pixels close to boundary but inside the object
-    edge_band = (dist_in <= edge_depth) & (dist_in > 0)
-    interior_band = (dist_in > edge_depth) & (dist_in <= edge_depth + interior_depth)
-
-    if edge_band.sum() < 100 or interior_band.sum() < 100:
-        return 1.0, 0
-
     gray_f = gray.astype(np.float32)
 
-    # Local variance of interior to filter textured surfaces
-    # Box-filter mean and mean-of-squares
     mean_box = cv2.blur(gray_f, (7, 7))
     mean_sq_box = cv2.blur(gray_f ** 2, (7, 7))
     with np.errstate(invalid="ignore"):
         local_var = mean_sq_box - mean_box ** 2
-
     smooth_mask = local_var < var_thresh
 
-    valid_edge = edge_band & smooth_mask
-    valid_interior = interior_band & smooth_mask
+    edge_band = (dist_in <= edge_depth) & (dist_in > 0) & smooth_mask
+    interior_band = (dist_in > edge_depth) & (dist_in <= edge_depth + interior_depth) & smooth_mask
 
-    valid_edge_count = int(np.count_nonzero(valid_edge))
-    valid_interior_count = int(np.count_nonzero(valid_interior))
+    valid_edge_count = int(np.count_nonzero(edge_band))
+    valid_interior_count = int(np.count_nonzero(interior_band))
 
     if valid_edge_count < 100 or valid_interior_count < 100:
-        return 1.0, 0
+        return {"ratio": 1.0, "samples": 0, "surface_type": "unknown",
+                "surface_confidence": 0.0, "r0": 1.0, "n_exponent": 0.0,
+                "r_squared": 0.0}
 
-    edge_mean = float(gray_f[valid_edge].mean())
-    interior_mean = float(gray_f[valid_interior].mean()) + 1e-9
-
+    edge_mean = float(gray_f[edge_band].mean())
+    interior_mean = float(gray_f[interior_band].mean()) + 1e-9
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = edge_mean / interior_mean
 
-    return float(ratio), valid_edge_count
+    surface_type, surface_conf = _classify_surface_type(
+        img, dist_in, edge_depth, interior_depth, smooth_mask
+    )
+    r0, n_exp, r_squared, n_pts = _fit_fresnel_curve(
+        gray_f, dist_in, edge_depth, interior_depth, smooth_mask
+    )
+
+    return {
+        "ratio": float(ratio),
+        "samples": valid_edge_count,
+        "surface_type": surface_type,
+        "surface_confidence": round(surface_conf, 3),
+        "r0": round(r0, 3),
+        "n_exponent": n_exp,
+        "r_squared": round(r_squared, 3),
+        "fit_points": n_pts,
+    }
 
 
-def _compute_edge_roughness(
+def _compute_multiscale_roughness(
     gray: np.ndarray,
     edge_mask: np.ndarray,
     cfg: dict,
-) -> float:
+) -> Dict[str, Any]:
     r"""
-    Compute edge micro-roughness via Laplacian variance in a boundary band.
+    Roughness (Laplacian std in an edge band) at scales 1/2/4/8 px, via
+    increasing structuring-element radius rather than a literal wavelet
+    decomposition (cheaper, and behaviourally equivalent for "does the
+    micro-roughness spectrum fall off like a real edge's" purposes — flagged
+    as a simplification of the spec's wavelet-decomposition wording).
 
-    Mathematical Model
-    ------------------
-    Real object boundaries exhibit micro-geometry: surface texture,
-    sub-pixel sensor blur, chromatic aberration, and optical diffraction
-    create high-frequency variation in the second derivative:
-
-    .. math::
-        \sigma^2_L = \mathrm{Var}igl( 
-abla^2 I igr)_{\Omega}
-
-    where :math:`\Omega` is a symmetric band of width ``band_width``
-    pixels centred on the Canny edge.  AI generators render edges with
-    sub-pixel precision and suppress this micro-structure, yielding a
-    significantly lower :math:`\sigma^2_L`.
-
-    Complexity: :math:`O(H \cdot W)`.
-
-    Parameters
-    ----------
-    gray : np.ndarray
-        H×W uint8 grayscale image.
-    edge_mask : np.ndarray
-        H×W bool array from Canny detector.
-    cfg : dict
-        ``edge_roughness`` threshold block.
-
-    Returns
-    -------
-    float
-        Laplacian standard deviation in the edge band (higher = rougher).
+    Real edges: roughness varies meaningfully across scales in a roughly
+    monotonic, power-law-like way (self-similar micro-structure). AI edges:
+    roughness stays low and nearly flat across all scales (no real structure
+    at any scale to reveal).
     """
-    band_width = int(cfg.get("band_width", 2))
-
-    # Second-derivative magnitude (sensitive to micro-structures)
+    scales = (1, 2, 4, 8)
     lap = cv2.Laplacian(gray, cv2.CV_32F)
-
-    # Symmetric band around the edge: dilate XOR erode using a small cross kernel
-    k = cv2.getStructuringElement(cv2.MORPH_CROSS, (band_width * 2 + 1, band_width * 2 + 1))
     edge_u8 = edge_mask.astype(np.uint8)
-    dilated = cv2.dilate(edge_u8, k)
-    # In-place erode to avoid another allocation
-    eroded = cv2.erode(edge_u8, k)
-    band = dilated ^ eroded  # XOR via bitwise operator on uint8
 
-    if band.sum() < 50:
-        return 0.0
+    per_scale: Dict[int, float] = {}
+    for s in scales:
+        k = cv2.getStructuringElement(cv2.MORPH_CROSS, (s * 2 + 1, s * 2 + 1))
+        dilated = cv2.dilate(edge_u8, k)
+        eroded = cv2.erode(edge_u8, k)
+        band = dilated ^ eroded
+        if band.sum() < 50:
+            continue
+        per_scale[s] = float(lap[band > 0].std())
 
-    vals = lap[band > 0]
-    roughness = float(vals.std())
-    return roughness
+    if len(per_scale) < 2:
+        finest = per_scale.get(1, 0.0)
+        return {"per_scale": per_scale, "mean_roughness": finest,
+                "cv": 0.0, "log_log_r_squared": 0.0}
+
+    values = np.array(list(per_scale.values()))
+    mean_roughness = float(values.mean())
+    cv_val = float(values.std() / (values.mean() + 1e-6))
+
+    log_scales = np.log(np.array(list(per_scale.keys()), dtype=np.float64))
+    log_vals = np.log(np.clip(values, 1e-6, None))
+    if len(log_scales) >= 2 and log_scales.std() > 0:
+        slope, intercept = np.polyfit(log_scales, log_vals, 1)
+        pred = slope * log_scales + intercept
+        ss_res = float(np.sum((log_vals - pred) ** 2))
+        ss_tot = float(np.sum((log_vals - log_vals.mean()) ** 2)) + 1e-9
+        r_squared = float(np.clip(1.0 - ss_res / ss_tot, 0.0, 1.0))
+    else:
+        r_squared = 0.0
+
+    return {"per_scale": per_scale, "mean_roughness": mean_roughness,
+            "cv": cv_val, "log_log_r_squared": r_squared}
+
+
+def _measure_chromatic_edge_misalignment(
+    img: np.ndarray,
+    edge_mask: np.ndarray,
+    cfg: dict,
+    max_samples: int = 150,
+) -> Tuple[float, int]:
+    r"""
+    Estimate sub-pixel R/B channel edge misalignment (chromatic aberration).
+
+    Real lenses focus different wavelengths at slightly different points,
+    so R and B channel edges are offset by a small sub-pixel amount at
+    high-contrast boundaries. AI generators produce perfectly channel-
+    aligned edges. We estimate the shift via phase correlation between R
+    and B gradient-magnitude patches centred on a subsample of edge points.
+
+    Phase correlation is degenerate along a perfectly straight edge (the
+    classic aperture problem: sliding a patch along the edge direction
+    doesn't change it, so any shift along that axis "matches" equally well,
+    producing spurious large results). Synthetic flat-color test images are
+    made of nothing but straight edges and hit this constantly; real photos
+    hit it far less often but not never. We guard against it by requiring
+    genuine 2-D corner-like structure in the patch (via the Harris/Shi-Tomasi
+    structure-tensor eigenvalue ratio) before trusting a phase-correlation
+    result, rather than trusting every high-"response" match.
+
+    Returns (median_shift_px, n_samples_used).
+    """
+    ys, xs = np.nonzero(edge_mask)
+    if ys.size == 0:
+        return 0.0, 0
+
+    if ys.size > max_samples:
+        idx = np.random.RandomState(0).choice(ys.size, max_samples, replace=False)
+        ys, xs = ys[idx], xs[idx]
+
+    r_f = img[:, :, 0].astype(np.float32)
+    b_f = img[:, :, 2].astype(np.float32)
+    gr = cv2.magnitude(cv2.Sobel(r_f, cv2.CV_32F, 1, 0, ksize=3),
+                        cv2.Sobel(r_f, cv2.CV_32F, 0, 1, ksize=3))
+    gb = cv2.magnitude(cv2.Sobel(b_f, cv2.CV_32F, 1, 0, ksize=3),
+                        cv2.Sobel(b_f, cv2.CV_32F, 0, 1, ksize=3))
+
+    gray_f = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).astype(np.float32)
+
+    h, w = img.shape[:2]
+    half = 8
+    max_plausible_shift = 3.0  # px; beyond this a result is treated as noise, not signal
+    shifts = []
+    for y, x in zip(ys, xs):
+        y0, y1 = y - half, y + half
+        x0, x1 = x - half, x + half
+        if y0 < 0 or x0 < 0 or y1 >= h or x1 >= w:
+            continue
+        patch_r = gr[y0:y1, x0:x1]
+        patch_b = gb[y0:y1, x0:x1]
+        if patch_r.std() < 1e-3 or patch_b.std() < 1e-3:
+            continue
+
+        # Corner-like structure check: reject patches that are just one
+        # straight edge (aperture-problem-prone) before trusting the
+        # correlation result.
+        patch_gray = gray_f[y0:y1, x0:x1]
+        gx = cv2.Sobel(patch_gray, cv2.CV_32F, 1, 0, ksize=3)
+        gy = cv2.Sobel(patch_gray, cv2.CV_32F, 0, 1, ksize=3)
+        sxx, syy, sxy = float(np.sum(gx * gx)), float(np.sum(gy * gy)), float(np.sum(gx * gy))
+        trace = sxx + syy
+        if trace < 1e-6:
+            continue
+        det = sxx * syy - sxy * sxy
+        # Eigenvalues of the 2x2 structure tensor
+        disc = max(trace * trace - 4.0 * det, 0.0)
+        lam1 = (trace + math.sqrt(disc)) / 2.0
+        lam2 = (trace - math.sqrt(disc)) / 2.0
+        if lam1 < 1e-6 or (lam2 / lam1) < 0.12:
+            continue  # too edge-like / 1-D, skip (aperture problem)
+
+        try:
+            (dx, dy), response = cv2.phaseCorrelate(patch_r, patch_b)
+        except cv2.error:
+            continue
+        if response < 0.1:
+            continue
+        shift = math.hypot(dx, dy)
+        if shift > max_plausible_shift:
+            continue
+        shifts.append(shift)
+
+    if not shifts:
+        return 0.0, 0
+    return float(np.median(shifts)), len(shifts)
 
 
 # ── L15 Public API ───────────────────────────────────────────────────────────
@@ -558,44 +905,34 @@ def analyze_obp(
     img_pil: Any = None,
 ) -> Dict[str, Any]:
     r"""
-    Layer 15: Object Boundary Physics (OBP).
+    Layer 15: Object Boundary Physics (OBP) — Module 6 upgrade.
 
-    Detects physically implausible object boundaries characteristic of
-    AI-generated imagery:
+    Five signals (up from three):
 
-    1. **Missing contact shadows** — real objects cast ambient-occlusion
-       darkening where they meet a supporting surface; AI frequently omits
-       or inconsistently renders this cue.
-    2. **Edge Fresnel effect absence** — smooth real surfaces exhibit
-       grazing-angle reflectance increase per the Fresnel equations; AI
-       edges often lack this brightening.
-    3. **Edge micro-roughness suppression** — real boundaries contain
-       high-frequency micro-structure from optics and surface geometry;
-       AI produces unnaturally smooth, "vector-drawn" transitions.
+    1. **Multi-direction contact shadows** — sampled in an estimated gravity
+       direction (from vertical-line clustering, not a fixed "down"
+       assumption) plus 3 other directions, with a directional-consistency
+       check: real grounding shadows should be strongest in the gravity
+       direction specifically.
+    2. **Shadow penumbra width** — transition width of the shadow gradient;
+       a literal zero-width cutoff is a vector-edge/AI-like signature.
+    3. **Edge Fresnel, BRDF-classified** — surface classified as
+       dielectric/conductor/translucent, then a Schlick-family reflectance
+       curve is fit against a distance-from-boundary grazing-angle proxy
+       (see module docstring for the "proxy angle, not measured angle"
+       caveat); fit quality and R0 feed the score alongside the original
+       edge/interior ratio.
+    4. **Multi-scale edge roughness** — Laplacian-std roughness at 1/2/4/8 px
+       scales instead of one fixed scale, plus a log-log power-law fit
+       quality diagnostic.
+    5. **Chromatic edge misalignment** — sub-pixel R/B edge shift via phase
+       correlation; real lenses show a small nonzero shift, AI edges tend
+       toward perfect channel alignment.
 
-    Input Validation
-    ----------------
-    * ``img`` must be H×W×3 uint8 RGB.
-    * If validation fails, returns a failure report with ``score=0.5``.
-
-    Performance
-    -----------
-    * Expected runtime on 768 px RGB: **< 120 ms** (single CPU core).
-    * Memory overhead: **< 60 MB** (six H×W float32 buffers).
-    * Complexity: :math:`O(H \cdot W)`.
-
-    Parameters
-    ----------
-    img : np.ndarray
-        H×W×3 uint8 RGB image.
-    img_pil : PIL.Image, optional
-        Unused; kept for API consistency with other analyzers.
-
-    Returns
-    -------
-    dict
-        Standard LayerReport with evidence nodes for contact shadows,
-        edge Fresnel, and edge roughness.
+    Performance target: kept under the existing 400 ms test budget; the new
+    per-boundary-point sampling is capped at 1500 contour points and the
+    chromatic-shift check at 150 sampled edge points specifically to hold
+    that budget on large images.
     """
     t0 = time.monotonic()
     layer_num = 15
@@ -611,7 +948,6 @@ def analyze_obp(
             layer_num, layer_name, [], "failure", 0, score=0.5
         )
     if img.dtype != np.uint8:
-        # Graceful coerce rather than crash
         try:
             img = np.clip(img, 0, 255).astype(np.uint8)
         except Exception:
@@ -624,24 +960,19 @@ def analyze_obp(
         if not cfg:
             logger.warning("[OBP] Empty threshold config; using safe defaults.")
 
-        # ── Pre-processing (shared buffers) ──────────────────────────────
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         gray_f = gray.astype(np.float32)
 
-        # Canny edge map — reused by roughness module
         canny_low = int(cfg.get("canny_low_threshold", 50))
         canny_high = int(cfg.get("canny_high_threshold", 150))
         edge_mask = cv2.Canny(gray, canny_low, canny_high) > 0
 
-        # Object mask for interior / exterior classification
         mask = _create_object_mask(img, cfg)
 
-        # Filter out small connected components (noise / texture specks)
         min_area = int(cfg.get("contour_filters", {}).get("min_object_area", 400))
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
             mask, connectivity=8
         )
-        # Vectorised filtering: build a lookup table for area thresholds
         area_lut = np.zeros(num_labels, dtype=np.uint8)
         for i in range(1, num_labels):
             area_lut[i] = 255 if stats[i, cv2.CC_STAT_AREA] >= min_area else 0
@@ -659,58 +990,125 @@ def analyze_obp(
 
         evidence: List[dict] = []
 
-        # ── Signal 1: Contact Shadows ────────────────────────────────────
+        # ── Signal 1+2: Multi-direction contact shadow + penumbra ────────
         cs_cfg = cfg.get("contact_shadow", {})
-        cs_ratio, cs_samples = _sample_vertical_bottom_shadows(gray_f, mask, cs_cfg)
+        shadow_info = _sample_multi_direction_shadows(gray_f, mask, cs_cfg)
+        cs_ratio = shadow_info["gravity_ratio"]
+        cs_samples = shadow_info["per_direction"]["gravity"]["samples"]
 
         cs_real = _safe_float(cs_cfg.get("real_threshold", 0.85))
         cs_ai = _safe_float(cs_cfg.get("ai_threshold", 0.70))
         cs_suspicion = _score_from_metric(cs_ratio, cs_real, cs_ai)
-        cs_status, cs_conf = _map_suspicion_to_status_confidence(cs_suspicion)
 
+        # Directional-consistency penalty: a stronger "shadow" signal in a
+        # non-gravity direction than in the gravity direction is atypical
+        # of a genuine contact shadow.
+        if shadow_info["directional_consistency"] is False:
+            cs_suspicion = float(np.clip(cs_suspicion + 0.15, 0.0, 1.0))
+
+        cs_status, cs_conf = _map_suspicion_to_status_confidence(cs_suspicion)
         evidence.append(_build_evidence_node(
             layer_num, "contact_shadow_ratio", cs_status, cs_conf,
-            f"Contact shadow ratio={cs_ratio:.3f} (n={cs_samples}). "
-            f"Real objects cast grounding shadows; AI often omits them.",
+            f"Contact shadow ratio={cs_ratio:.3f} (n={cs_samples}, "
+            f"gravity_conf={shadow_info['gravity_confidence']:.2f}, "
+            f"max_other_dir={shadow_info['max_other_ratio']:.3f}). "
+            f"Sampled in estimated gravity direction + 3 others.",
             cs_ratio,
         ))
 
-        # ── Signal 2: Edge Fresnel ────────────────────────────────────────
+        penumbra_cfg = cfg.get("shadow_penumbra", {})
+        penumbra_px = shadow_info["penumbra_px"]
+        pen_real = _safe_float(penumbra_cfg.get("real_threshold", 1.2))
+        pen_ai = _safe_float(penumbra_cfg.get("ai_threshold", 0.2))
+        # Only score penumbra when a contact shadow was actually found;
+        # penumbra width is meaningless without a shadow to measure.
+        if cs_ratio > 0.3 and cs_samples > 0:
+            pen_suspicion = _score_from_metric(penumbra_px, pen_real, pen_ai)
+            pen_status, pen_conf = _map_suspicion_to_status_confidence(pen_suspicion)
+            evidence.append(_build_evidence_node(
+                layer_num, "shadow_penumbra_width", pen_status, pen_conf,
+                f"Penumbra transition width={penumbra_px:.2f}px. Sharp/zero-width "
+                f"cutoffs are atypical of physically cast shadows.",
+                penumbra_px,
+            ))
+        else:
+            pen_suspicion = 0.5
+
+        # ── Signal 3: BRDF-classified edge Fresnel ────────────────────────
         fres_cfg = cfg.get("edge_fresnel", {})
-        fres_ratio, fres_samples = _compute_edge_fresnel(gray, mask, fres_cfg)
+        fres = _compute_edge_fresnel_v2(img, gray, mask, fres_cfg)
 
         fres_real = _safe_float(fres_cfg.get("real_threshold", 1.20))
         fres_ai = _safe_float(fres_cfg.get("ai_threshold", 1.00))
-        fres_suspicion = _score_from_metric(fres_ratio, fres_real, fres_ai)
-        fres_status, fres_conf = _map_suspicion_to_status_confidence(fres_suspicion)
+        fres_ratio_suspicion = _score_from_metric(fres["ratio"], fres_real, fres_ai)
 
+        # Fit-quality modifier: a well-fit Schlick curve with real
+        # brightening (R0 meaningfully < 1) supports "real"; a degenerate
+        # fit (R0≈1, i.e. no grazing brightening at all) supports "AI".
+        # Only applied when we had enough profile points to fit meaningfully.
+        if fres.get("fit_points", 0) >= 4:
+            if fres["r0"] > 0.92 and fres["r_squared"] < 0.3:
+                fit_suspicion = 0.75
+            elif fres["r0"] < 0.85 and fres["r_squared"] > 0.5:
+                fit_suspicion = 0.20
+            else:
+                fit_suspicion = 0.5
+            fres_suspicion = float(np.clip(0.6 * fres_ratio_suspicion + 0.4 * fit_suspicion, 0.0, 1.0))
+        else:
+            fres_suspicion = fres_ratio_suspicion
+
+        fres_status, fres_conf = _map_suspicion_to_status_confidence(fres_suspicion)
         evidence.append(_build_evidence_node(
             layer_num, "edge_fresnel_ratio", fres_status, fres_conf,
-            f"Edge Fresnel ratio={fres_ratio:.3f} (n={fres_samples}). "
-            f"Real smooth surfaces show grazing-angle brightening.",
-            fres_ratio,
+            f"Edge Fresnel ratio={fres['ratio']:.3f} (n={fres['samples']}), "
+            f"surface={fres['surface_type']}({fres['surface_confidence']:.2f}), "
+            f"R0={fres['r0']:.2f} n={fres['n_exponent']:.1f} "
+            f"fit_R2={fres['r_squared']:.2f}.",
+            fres["ratio"],
         ))
 
-        # ── Signal 3: Edge Roughness ─────────────────────────────────────
+        # ── Signal 4: Multi-scale + chromatic edge roughness ─────────────
         rough_cfg = cfg.get("edge_roughness", {})
-        roughness = _compute_edge_roughness(gray, edge_mask, rough_cfg)
+        multiscale = _compute_multiscale_roughness(gray, edge_mask, rough_cfg)
 
         rough_real = _safe_float(rough_cfg.get("real_threshold", 18.0))
         rough_ai = _safe_float(rough_cfg.get("ai_threshold", 7.0))
-        rough_suspicion = _score_from_metric(roughness, rough_real, rough_ai)
-        rough_status, rough_conf = _map_suspicion_to_status_confidence(rough_suspicion)
+        rough_suspicion = _score_from_metric(multiscale["mean_roughness"], rough_real, rough_ai)
 
+        # Flat-spectrum modifier: low cross-scale variability alongside low
+        # absolute roughness reinforces "no real micro-structure at any
+        # scale" beyond what the single-scale magnitude already says.
+        if multiscale["mean_roughness"] < rough_ai and multiscale["cv"] < 0.15:
+            rough_suspicion = float(np.clip(rough_suspicion + 0.1, 0.0, 1.0))
+
+        rough_status, rough_conf = _map_suspicion_to_status_confidence(rough_suspicion)
         evidence.append(_build_evidence_node(
             layer_num, "edge_roughness", rough_status, rough_conf,
-            f"Edge roughness (Laplacian std)={roughness:.2f}. "
-            f"Real edges have micro-geometry; AI edges are unnaturally smooth.",
-            roughness,
+            f"Multi-scale roughness mean={multiscale['mean_roughness']:.2f} "
+            f"cv={multiscale['cv']:.2f} log-log_R2={multiscale['log_log_r_squared']:.2f} "
+            f"scales={list(multiscale['per_scale'].keys())}.",
+            multiscale["mean_roughness"],
         ))
 
+        chroma_cfg = cfg.get("chromatic_roughness", {})
+        chroma_shift, chroma_n = _measure_chromatic_edge_misalignment(img, edge_mask, chroma_cfg)
+        if chroma_n >= 8:
+            chroma_real = _safe_float(chroma_cfg.get("real_threshold", 0.15))
+            chroma_ai = _safe_float(chroma_cfg.get("ai_threshold", 0.03))
+            chroma_suspicion = _score_from_metric(chroma_shift, chroma_real, chroma_ai)
+            chroma_status, chroma_conf = _map_suspicion_to_status_confidence(chroma_suspicion)
+            evidence.append(_build_evidence_node(
+                layer_num, "chromatic_edge_misalignment", chroma_status, chroma_conf,
+                f"Median R/B edge shift={chroma_shift:.3f}px (n={chroma_n}). Real "
+                f"lenses show a small nonzero chromatic-aberration shift.",
+                chroma_shift,
+            ))
+        else:
+            chroma_suspicion = 0.5
+
         # ── Composite Fusion ─────────────────────────────────────────────
-        # Contact shadow is the most discriminative cue → highest weight.
-        scores = [cs_suspicion, fres_suspicion, rough_suspicion]
-        weights = [1.2, 1.0, 0.9]
+        scores = [cs_suspicion, pen_suspicion, fres_suspicion, rough_suspicion, chroma_suspicion]
+        weights = [1.2, 0.5, 1.0, 0.9, 0.6]
 
         active = [(s, w) for s, w in zip(scores, weights) if s != 0.5]
         if active:
@@ -730,7 +1128,6 @@ def analyze_obp(
         return build_layer_report(
             layer_num, layer_name, [], "failure", elapsed, score=0.5
         )
-
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
