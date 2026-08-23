@@ -23,7 +23,7 @@ const TESTIMONIALS = [
     org: 'Systems Limited',
     quote: 'We screened over 400 applications last quarter. Aiscern flagged 23 CVs with AI-generated cover letters we would have missed. The explainable trust verification reports make our hiring decisions defensible.',
     initials: 'ST',
-    accent: '#10b981',
+    accent: '#047857', // emerald-700: original #10b981 was 2.54:1 with white text, failing WCAG AA
   },
 ]
 

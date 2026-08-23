@@ -60,7 +60,7 @@ export function InteractiveDemo() {
                 aria-selected={active}
                 onClick={() => { setTab(t.id); reset() }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  active ? 'bg-primary/10 text-primary border border-primary/30' : 'text-text-muted border border-transparent hover:text-text-primary'
+                  active ? 'bg-primary/10 text-blue-400 border border-primary/30' : 'text-text-muted border border-transparent hover:text-text-primary'
                 }`}
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />
