@@ -61,7 +61,14 @@
       "specular_uniformity": 1.0,
       "metallic_correlation": 1.0,
       "transparency_distortion": 0.8
-    }
+    },
+    "fresnel_hue_shift_real_threshold": 4.0,
+    "fresnel_hue_shift_ai_threshold": 0.8,
+    "chromatic_dispersion": {
+      "real_threshold": 0.35,
+      "ai_threshold": 0.05
+    },
+    "fresnel_min_saturation": 50.0
   },
   "l17_gpc": {
     "resize_max": 512,

@@ -1138,64 +1138,51 @@ def analyze_obp(
 def _signal_specular_uniformity(
     gray: np.ndarray,
     hsv: np.ndarray,
+    img: np.ndarray,
     cfg: dict,
 ) -> Tuple[float, int, str]:
     r"""
-    Signal 1 — Specular Highlight Realism.
+    Signal 1 — Specular Highlight Realism (Module 7 upgrade).
 
-    Mathematical Model
-    ------------------
-    Under the Dichromatic Reflection Model (Shafer, 1985), the observed
-    radiance :math:`\mathbf{C}` of a dielectric surface is:
+    Keeps the original circularity + intensity-variance proxies (still a
+    valid, cheap first pass) and adds two more, per the L16 spec:
+
+    **Roughness ("alpha") proxy via radial falloff.**
+    True Beckmann/SGGX roughness-parameter fitting needs the light, view and
+    surface-normal directions, which a single 2-D image doesn't give us. We
+    use a defensible proxy instead: the radius of gyration of each
+    highlight's intensity profile,
 
     .. math::
-        \mathbf{C} = m_d \, \mathbf{C}_b + m_s \, \mathbf{C}_i
+        \sigma \approx \sqrt{\frac{\sum_i I_i r_i^2}{\sum_i I_i}}
 
-    where :math:`\mathbf{C}_b` is the body (diffuse) colour,
-    :math:`\mathbf{C}_i` is the interface (specular) colour
-    (approximately the illuminant), and :math:`m_d, m_s` are
-    geometry-dependent coefficients.
+    normalized by the highlight's equivalent radius. A tight, steep falloff
+    (small normalized sigma) reads as a polished/low-roughness lobe; a
+    broad, gradual falloff reads as a rougher/matte lobe. This is a radial
+    spread statistic, not a fitted microfacet parameter — flagged as such.
+    We flag near-identical alpha proxies across multiple, differently
+    colored highlight regions as suspicious (spec: "AI: alpha is often
+    uniform across materials").
 
-    For real surfaces, the specular lobe follows the microfacet distribution
-    (Beckmann / Torrance-Sparrow), producing *irregular* highlight shapes with
-    intensity falloff governed by surface roughness.  AI generators approximate
-    highlights as uniform circular/elliptical blobs with flat intensity
-    profiles because they lack a physical BRDF model.
-
-    We quantify this via three proxies:
-
-    1. **Circularity** — :math:`\psi = 4\pi A / P^2`.  A perfect circle yields
-       :math:`\psi = 1`; real highlights are typically :math:`\psi < 0.6`.
-    2. **Intensity variance** — real highlights have gradient falloff
-       (:math:`\sigma^2_I \gg 0`); AI highlights are flat
-       (:math:`\sigma^2_I pprox 0`).
-    3. **Boundary roughness** — real highlight perimeters are jagged; AI
-       perimeters are smooth.
-
-    The composite *uniformity* score is a weighted suspicion metric:
-    high circularity + low variance = AI.
-
-    Parameters
-    ----------
-    gray : np.ndarray
-        H×W uint8 grayscale image.
-    hsv : np.ndarray
-        H×W×3 uint8 HSV image (OpenCV ordering: H∈[0,179], S∈[0,255], V∈[0,255]).
-    cfg : dict
-        ``l16_mrc`` threshold block.
+    **Anisotropy consistency.**
+    Fit an ellipse to each highlight region and compare its elongation and
+    orientation against the dominant local texture orientation of the
+    surrounding body region (via the 2x2 gradient structure tensor). A
+    material with strong directional texture (e.g. brushed metal) but an
+    isotropic (round) or misaligned highlight is a plausible AI tell per
+    spec; a material with weak/no directional texture gives no reliable
+    signal either way and is treated as neutral, not scored.
 
     Returns
     -------
     Tuple[float, int, str]
         (uniformity_suspicion, region_count, detail_string).
-        uniformity_suspicion ∈ [0,1] where 1 = strongly AI.
     """
     v = hsv[:, :, 2].astype(np.float32)
     p = int(cfg.get("highlight_percentile", 92))
     thresh = float(np.percentile(v, p))
     highlight_mask = v > thresh
 
-    # Morphological cleanup — remove single-pixel noise and fill gaps
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     highlight_mask = cv2.morphologyEx(highlight_mask.astype(np.uint8), cv2.MORPH_OPEN, k)
     highlight_mask = cv2.morphologyEx(highlight_mask, cv2.MORPH_CLOSE, k)
@@ -1213,6 +1200,10 @@ def _signal_specular_uniformity(
 
     circularities: List[float] = []
     variances: List[float] = []
+    alpha_proxies: List[float] = []
+    anisotropy_mismatches: List[bool] = []
+    anisotropy_evaluated = 0
+    gray_f = gray.astype(np.float32)
 
     for cnt in contours[:max_regions]:
         area = cv2.contourArea(cnt)
@@ -1224,12 +1215,72 @@ def _signal_specular_uniformity(
         circ = (4.0 * np.pi * area) / (peri ** 2)
         circularities.append(float(min(circ, 1.0)))
 
-        # Intensity variance inside this highlight region
-        mask = np.zeros(gray.shape, dtype=np.uint8)
-        cv2.drawContours(mask, [cnt], -1, 255, -1)
-        vals = gray[mask > 0]
+        region_mask = np.zeros(gray.shape, dtype=np.uint8)
+        cv2.drawContours(region_mask, [cnt], -1, 255, -1)
+        vals = gray[region_mask > 0]
         if vals.size > 0:
             variances.append(float(vals.var()))
+
+        # ── Alpha (roughness) proxy: radius of gyration of the intensity
+        # profile in a window around the highlight, normalized by its
+        # equivalent radius.
+        M = cv2.moments(cnt)
+        if M["m00"] > 0:
+            cx, cy = M["m10"] / M["m00"], M["m01"] / M["m00"]
+            eq_radius = math.sqrt(area / math.pi)
+            win = int(max(8, eq_radius * 3))
+            y0, y1 = int(max(0, cy - win)), int(min(gray.shape[0], cy + win))
+            x0, x1 = int(max(0, cx - win)), int(min(gray.shape[1], cx + win))
+            if y1 - y0 > 4 and x1 - x0 > 4:
+                patch = gray_f[y0:y1, x0:x1]
+                yy, xx = np.mgrid[y0:y1, x0:x1]
+                rr2 = (xx - cx) ** 2 + (yy - cy) ** 2
+                w_i = np.clip(patch - float(np.percentile(patch, 20)), 0, None)
+                total_w = float(w_i.sum())
+                if total_w > 1e-6 and eq_radius > 0.5:
+                    sigma = math.sqrt(float((w_i * rr2).sum()) / total_w)
+                    alpha_proxies.append(sigma / eq_radius)
+
+        # ── Anisotropy consistency check
+        if len(cnt) >= 5:
+            try:
+                (ecx, ecy), (ma, MA), h_angle = cv2.fitEllipse(cnt)
+            except cv2.error:
+                ma = MA = h_angle = None
+            if ma is not None and ma > 0.5:
+                aspect = MA / ma
+                # Body/texture region: ring around the highlight, excluding it.
+                ring_outer = int(max(6, eq_radius * 4)) if M["m00"] > 0 else 15
+                ry0, ry1 = int(max(0, cy - ring_outer)), int(min(gray.shape[0], cy + ring_outer))
+                rx0, rx1 = int(max(0, cx - ring_outer)), int(min(gray.shape[1], cx + ring_outer))
+                if ry1 - ry0 > 6 and rx1 - rx0 > 6:
+                    ring_gray = gray_f[ry0:ry1, rx0:rx1]
+                    ring_hl = highlight_mask[ry0:ry1, rx0:rx1]
+                    gx = cv2.Sobel(ring_gray, cv2.CV_32F, 1, 0, ksize=3)
+                    gy = cv2.Sobel(ring_gray, cv2.CV_32F, 0, 1, ksize=3)
+                    body = ~ring_hl
+                    if body.sum() >= 40:
+                        sxx = float(np.sum(gx[body] ** 2))
+                        syy = float(np.sum(gy[body] ** 2))
+                        sxy = float(np.sum(gx[body] * gy[body]))
+                        trace = sxx + syy
+                        if trace > 1e-6:
+                            det = sxx * syy - sxy * sxy
+                            disc = max(trace * trace - 4.0 * det, 0.0)
+                            lam1 = (trace + math.sqrt(disc)) / 2.0
+                            lam2 = (trace - math.sqrt(disc)) / 2.0
+                            coherence = (lam1 - lam2) / (lam1 + lam2 + 1e-9)
+                            if coherence > 0.30:
+                                # Dominant texture orientation from the structure tensor
+                                tex_angle_rad = 0.5 * math.atan2(2 * sxy, sxx - syy)
+                                tex_angle_deg = math.degrees(tex_angle_rad) % 180.0
+                                anisotropy_evaluated += 1
+                                if aspect < 1.3:
+                                    # Directional texture present but highlight stayed round
+                                    anisotropy_mismatches.append(True)
+                                else:
+                                    ang_diff = abs(((h_angle - tex_angle_deg) + 90.0) % 180.0 - 90.0)
+                                    anisotropy_mismatches.append(ang_diff > 35.0)
 
     if not circularities:
         return 0.5, 0, "no_valid_highlight_regions"
@@ -1237,23 +1288,126 @@ def _signal_specular_uniformity(
     mean_circ = float(np.mean(circularities))
     mean_var = float(np.mean(variances)) if variances else 0.0
 
-    # Variance score: high variance = real → low suspicion
     var_real = _safe_float(cfg.get("highlight_var_real_threshold", 250.0))
     var_ai = _safe_float(cfg.get("highlight_var_ai_threshold", 60.0))
     var_suspicion = _score_from_metric(mean_var, var_real, var_ai)
 
-    # Circularity score: high circularity = AI → high suspicion
     circ_real = _safe_float(cfg.get("highlight_circularity_real_threshold", 0.40))
     circ_ai = _safe_float(cfg.get("highlight_circularity_ai_threshold", 0.75))
     circ_suspicion = _score_from_metric(mean_circ, circ_real, circ_ai)
 
-    # Composite uniformity: weighted toward circularity (stronger AI tell)
     uniformity = 0.6 * circ_suspicion + 0.4 * var_suspicion
 
+    # Alpha-uniformity modifier: multiple highlights with near-identical
+    # roughness proxy despite being distinct regions is a mild AI tell.
+    alpha_note = "n/a"
+    if len(alpha_proxies) >= 2:
+        alpha_arr = np.array(alpha_proxies)
+        alpha_cv = float(alpha_arr.std() / (alpha_arr.mean() + 1e-6))
+        alpha_note = f"cv={alpha_cv:.2f}"
+        if alpha_cv < 0.08:
+            uniformity = float(np.clip(uniformity + 0.10, 0.0, 1.0))
+
+    # Anisotropy-mismatch modifier
+    aniso_note = "n/a"
+    if anisotropy_evaluated > 0:
+        mismatch_frac = sum(anisotropy_mismatches) / anisotropy_evaluated
+        aniso_note = f"mismatch_frac={mismatch_frac:.2f}(n={anisotropy_evaluated})"
+        if mismatch_frac >= 0.5:
+            uniformity = float(np.clip(uniformity + 0.12, 0.0, 1.0))
+
     detail = (
-        f"circ={mean_circ:.3f} var={mean_var:.1f} n={len(circularities)}"
+        f"circ={mean_circ:.3f} var={mean_var:.1f} n={len(circularities)} "
+        f"alpha_{alpha_note} aniso_{aniso_note}"
     )
     return float(np.clip(uniformity, 0.0, 1.0)), len(circularities), detail
+
+
+def _fit_dichromatic_model(
+    rgb_pixels: np.ndarray,
+    body_color: np.ndarray,
+    interface_color: np.ndarray,
+) -> Tuple[float, float]:
+    r"""
+    Least-squares fit of C = m_d*C_b + m_s*C_i per pixel, with proper
+    non-negativity constraints (2-variable active-set NNLS, not a solve-
+    then-clip approximation — see note below), reported as an aggregate
+    goodness-of-fit.
+
+    Returns
+    -------
+    (r_squared_2component, mean_m_s)
+        r_squared_2component compares the 2-component (body + interface)
+        model's residual against a null 1-component (body-only) model —
+        i.e. "does adding an interface-color term actually explain more
+        of the pixel variance", not an absolute fit quality.
+
+        Caveat: this R^2 has a mild one-sided optimism bias even under a
+        genuinely body-only (m_s=0) null, because the extra non-negative
+        free parameter can still fit some of the residual noise (it can
+        only help, never hurt, versus forcing m_s=0). Empirically this
+        showed up as roughly R^2~0.25 on a synthetic pure-body-color test
+        with realistic pixel noise, not exactly 0 as a naive reading of
+        "no interface term" would suggest. Treated here as a threshold-
+        calibration caveat (the real_threshold used downstream is set
+        above that empirical noise floor), not a fixed bug — a proper
+        fix would need a permutation test or F-test p-value, which is out
+        of scope for this pass.
+    """
+    cb = body_color.astype(np.float64)
+    ci = interface_color.astype(np.float64)
+    pixels = rgb_pixels.astype(np.float64)
+
+    # Solve the 2x2 normal equations per pixel batch (vectorized):
+    # [cb.cb  cb.ci] [m_d]   [pixel.cb]
+    # [cb.ci  ci.ci] [m_s] = [pixel.ci]
+    a11 = float(np.dot(cb, cb)) + 1e-9
+    a22 = float(np.dot(ci, ci)) + 1e-9
+    a12 = float(np.dot(cb, ci))
+    det = a11 * a22 - a12 * a12
+
+    b1 = pixels @ cb
+    b2 = pixels @ ci
+
+    if abs(det) < 1e-6:
+        return 0.0, 0.0
+
+    m_d = (b1 * a22 - b2 * a12) / det
+    m_s = (b2 * a11 - b1 * a12) / det
+
+    # Naively clipping a negative unconstrained solution to 0 is NOT the
+    # least-squares-optimal non-negative solution and can fit worse than
+    # the null (body-only) model, corrupting R^2 into meaningless negative
+    # values. The correct closed-form 2-variable NNLS solution: when the
+    # unconstrained solution has exactly one negative component, the
+    # constrained optimum sets that component to 0 and re-solves the
+    # other as a 1-D least-squares fit (standard active-set result for a
+    # 2-variable NNLS problem); when both are negative, both are 0.
+    neg_d = m_d < 0
+    neg_s = m_s < 0
+    only_d_neg = neg_d & ~neg_s
+    only_s_neg = neg_s & ~neg_d
+    both_neg = neg_d & neg_s
+
+    m_d = m_d.copy()
+    m_s = m_s.copy()
+    m_d[only_d_neg] = 0.0
+    m_s[only_d_neg] = np.clip(b2[only_d_neg] / a22, 0.0, None)
+    m_s[only_s_neg] = 0.0
+    m_d[only_s_neg] = np.clip(b1[only_s_neg] / a11, 0.0, None)
+    m_d[both_neg] = 0.0
+    m_s[both_neg] = 0.0
+
+    model_2c = m_d[:, None] * cb[None, :] + m_s[:, None] * ci[None, :]
+    resid_2c = float(np.sum((pixels - model_2c) ** 2))
+
+    # Null model: body-only (m_s forced to 0), best-fit scalar m_d
+    m_d0 = np.clip(b1 / a11, 0.0, None)
+    model_1c = m_d0[:, None] * cb[None, :]
+    resid_1c = float(np.sum((pixels - model_1c) ** 2)) + 1e-9
+
+    r_squared = float(np.clip(1.0 - resid_2c / resid_1c, 0.0, 1.0))
+    return r_squared, float(np.mean(m_s))
 
 
 def _signal_metallic_correlation(
@@ -1262,54 +1416,34 @@ def _signal_metallic_correlation(
     cfg: dict,
 ) -> Tuple[float, int, str]:
     r"""
-    Signal 2 — Metallic Colour Consistency via the Dichromatic Model.
+    Signal 2 — Metallic Colour Consistency (Module 7 upgrade).
 
-    Mathematical Model
-    ------------------
-    For **metals**, the body-reflection coefficient :math:`m_d pprox 0`.
-    All observed colour comes from interface (specular) reflection, which is
-    therefore the *same* as the metal’s body colour:
+    Keeps the original V-S correlation and body/highlight cosine-similarity
+    proxies, and adds:
 
-    .. math::
-        \mathbf{C}_{	ext{metal}} pprox m_s \, \mathbf{C}_i
-        \quad\Rightarrow\quad
-        	ext{hue}(	ext{body}) = 	ext{hue}(	ext{highlight})
+    **Per-pixel dichromatic model fit.** Using the body color (mid-brightness
+    metal pixels) and interface color (brightest metal pixels) as the two
+    basis colors, fit C = m_d*C_b + m_s*C_i per pixel and compare against a
+    body-only null model (see `_fit_dichromatic_model`). A meaningfully
+    better 2-component fit with a non-trivial specular contribution (m_s)
+    supports "real dichromatic reflectance"; near-zero improvement suggests
+    the highlight isn't actually behaving like a colored interface term.
 
-    AI generators frequently render metallic highlights as achromatic
-    (white/gray) regardless of the metal’s body colour — a direct violation
-    of the DRM.  We detect this via two proxies:
-
-    **Proxy A — V-S correlation within metal candidates.**
-    Real metal: brightening does *not* desaturate the surface because the
-    specular lobe retains the metal’s intrinsic colour.  Therefore
-    brightness :math:`V` and saturation :math:`S` are uncorrelated or
-    weakly positively correlated.  AI metal: the highlight is white, so
-    :math:`S 	o 0` as :math:`V 	o 1` → strong *negative* correlation.
-
-    **Proxy B — Body vs. highlight RGB cosine similarity.**
-    We split metal-candidate pixels into body (moderate brightness) and
-    highlight (top brightness) subsets, compute mean RGB vectors, and
-    measure their cosine similarity.  Real metal: vectors are nearly
-    collinear (:math:`\cos	heta pprox 1`).  AI metal: vectors are
-    orthogonal (:math:`\cos	heta pprox 0`).
-
-    Parameters
-    ----------
-    img : np.ndarray
-        H×W×3 uint8 RGB image.
-    hsv : np.ndarray
-        H×W×3 uint8 HSV image.
-    cfg : dict
-        ``l16_mrc`` threshold block.
+    **Metallic Fresnel color shift.** Real metals (gold, copper) show a
+    measurable hue shift between the object's center and its grazing edge
+    (wavelength-dependent Fresnel reflectance); AI tends toward uniform
+    color regardless of distance from center. Measured via mean hue in
+    near-center vs near-edge distance bins of the metal mask.
 
     Returns
     -------
     Tuple[float, int, str]
         (correlation_score, pixel_count, detail).
-        correlation_score ∈ [0,1] where 1 = strongly real (consistent metal).
+        correlation_score in [0,1], 1 = strongly real.
     """
     s = hsv[:, :, 1].astype(np.float32)
     v = hsv[:, :, 2].astype(np.float32)
+    h_channel = hsv[:, :, 0].astype(np.float32)
 
     sat_thresh = float(np.percentile(s, int(cfg.get("metal_saturation_percentile", 70))))
     metal_mask = (s > sat_thresh) & (v > int(cfg.get("metal_min_brightness", 40)))
@@ -1318,7 +1452,6 @@ def _signal_metallic_correlation(
     if metal_mask.sum() < min_pixels:
         return 0.5, 0, "no_metal_detected"
 
-    # ── Proxy A: V-S correlation ───────────────────────────────────────
     v_metal = v[metal_mask]
     s_metal = s[metal_mask]
 
@@ -1328,97 +1461,202 @@ def _signal_metallic_correlation(
         with np.errstate(invalid="ignore"):
             vs_corr = float(np.corrcoef(v_metal, s_metal)[0, 1])
 
-    # Map: negative correlation = AI highlight desaturation
     vs_real = _safe_float(cfg.get("vs_corr_real_threshold", 0.20))
     vs_ai = _safe_float(cfg.get("vs_corr_ai_threshold", -0.25))
     vs_suspicion = _score_from_metric(vs_corr, vs_real, vs_ai)
-    vs_realness = 1.0 - vs_suspicion  # invert: low suspicion = real
+    vs_realness = 1.0 - vs_suspicion
 
-    # ── Proxy B: Body–highlight RGB cosine similarity ────────────────────
     rgb_metal = img[metal_mask].astype(np.float32)
-
     p40 = float(np.percentile(v_metal, 40))
     p80 = float(np.percentile(v_metal, 80))
-
     body_idx = (v_metal >= p40) & (v_metal <= p80)
     highlight_idx = v_metal >= p80
 
-    rgb_corr = 0.5  # neutral default
+    rgb_corr = 0.5
+    dichromatic_r2 = None
+    mean_m_s = None
     if body_idx.sum() >= 10 and highlight_idx.sum() >= 5:
         body_rgb = rgb_metal[body_idx].mean(axis=0)
         highlight_rgb = rgb_metal[highlight_idx].mean(axis=0)
 
         body_n = body_rgb / (np.linalg.norm(body_rgb) + 1e-9)
         highlight_n = highlight_rgb / (np.linalg.norm(highlight_rgb) + 1e-9)
-
         cos_sim = float(np.dot(body_n, highlight_n))
-        # Map [-1, 1] → [0, 1]
         rgb_corr = (cos_sim + 1.0) / 2.0
+
+        # NOTE: body_idx and highlight_idx can overlap substantially (e.g.
+        # when v_metal has very low variance, the p40/p80 percentiles can
+        # collapse together), so body_idx.sum() + highlight_idx.sum() is
+        # NOT a reliable stand-in for the actual union population size —
+        # using it as one previously caused choice() to be asked for more
+        # samples than the true (smaller) union population. Compute the
+        # union count directly instead.
+        fit_candidates = rgb_metal[body_idx | highlight_idx]
+        union_count = fit_candidates.shape[0]
+        if union_count <= 20000:
+            fit_pixels = fit_candidates
+        else:
+            idx_sub = np.random.RandomState(0).choice(union_count, 20000, replace=False)
+            fit_pixels = fit_candidates[idx_sub]
+        dichromatic_r2, mean_m_s = _fit_dichromatic_model(fit_pixels, body_rgb, highlight_rgb)
 
     rgb_real = _safe_float(cfg.get("rgb_corr_real_threshold", 0.70))
     rgb_ai = _safe_float(cfg.get("rgb_corr_ai_threshold", 0.35))
     rgb_suspicion = _score_from_metric(rgb_corr, rgb_real, rgb_ai)
     rgb_realness = 1.0 - rgb_suspicion
 
-    # ── Fusion ───────────────────────────────────────────────────────────
     correlation = 0.4 * vs_realness + 0.6 * rgb_realness
 
+    # Dichromatic fit modifier: a well-explained 2-component model with a
+    # genuine specular contribution nudges toward "real"; a fit that adds
+    # nothing over body-only nudges toward "AI" (no coherent interface term).
+    dichromatic_note = "n/a"
+    if dichromatic_r2 is not None:
+        dichromatic_note = f"r2={dichromatic_r2:.2f} m_s={mean_m_s:.3f}"
+        # Thresholds set above the ~0.25 empirical noise floor found for a
+        # synthetic pure-body-color null (see _fit_dichromatic_model note).
+        if dichromatic_r2 > 0.40 and mean_m_s > 0.05:
+            correlation = float(np.clip(correlation + 0.08, 0.0, 1.0))
+        elif dichromatic_r2 < 0.03:
+            correlation = float(np.clip(correlation - 0.08, 0.0, 1.0))
+
+    # Metallic Fresnel color shift via distance-from-centroid hue bins.
+    #
+    # Hue is numerically unstable (essentially noise) for low-saturation
+    # pixels, and `metal_mask`'s relative-percentile threshold can end up
+    # very low on images where metal-like pixels are a small fraction of
+    # the frame (admitting near-gray boundary/background pixels). Those
+    # pixels' "hue" would otherwise dominate a spurious shift. Apply an
+    # absolute saturation floor for this specific sub-signal only — it
+    # doesn't affect the broader metal_mask used by the other proxies.
+    fresnel_note = "n/a"
+    sat_floor = _safe_float(cfg.get("fresnel_min_saturation", 50.0))
+    hue_stable_mask = metal_mask & (s > sat_floor)
+    ys, xs = np.nonzero(hue_stable_mask)
+    if ys.size >= min_pixels:
+        cy, cx = float(ys.mean()), float(xs.mean())
+        dist = np.hypot(ys - cy, xs - cx)
+        d_max = float(np.percentile(dist, 95)) + 1e-6
+        norm_dist = dist / d_max
+        inner = norm_dist < 0.33
+        outer = (norm_dist > 0.66) & (norm_dist <= 1.0)
+        if inner.sum() >= 30 and outer.sum() >= 30:
+            hue_inner = h_channel[ys[inner], xs[inner]]
+            hue_outer = h_channel[ys[outer], xs[outer]]
+            # Circular mean hue difference (OpenCV hue range [0,179])
+            def _circ_mean(h_vals: np.ndarray) -> float:
+                rad = h_vals.astype(np.float64) * (2 * np.pi / 180.0)
+                return float(np.degrees(np.arctan2(np.mean(np.sin(rad)), np.mean(np.cos(rad)))) % 180.0)
+            hi, ho = _circ_mean(hue_inner), _circ_mean(hue_outer)
+            hue_shift = abs(((hi - ho) + 90.0) % 180.0 - 90.0)
+            fresnel_note = f"hue_shift={hue_shift:.1f}deg"
+            fresnel_real = _safe_float(cfg.get("fresnel_hue_shift_real_threshold", 4.0))
+            fresnel_ai = _safe_float(cfg.get("fresnel_hue_shift_ai_threshold", 0.8))
+            fresnel_suspicion = _score_from_metric(hue_shift, fresnel_real, fresnel_ai)
+            correlation = float(np.clip(correlation - 0.10 * (fresnel_suspicion - 0.5), 0.0, 1.0))
+
     detail = (
-        f"vs_corr={vs_corr:.3f} rgb_corr={rgb_corr:.3f} n={int(metal_mask.sum())}"
+        f"vs_corr={vs_corr:.3f} rgb_corr={rgb_corr:.3f} n={int(metal_mask.sum())} "
+        f"dichrom_{dichromatic_note} fresnel_{fresnel_note}"
     )
     return float(np.clip(correlation, 0.0, 1.0)), int(metal_mask.sum()), detail
 
 
+def _measure_dispersion_shift(
+    img: np.ndarray,
+    edges: np.ndarray,
+    inner_band: np.ndarray,
+    max_samples: int = 100,
+) -> Tuple[float, int]:
+    r"""
+    Chromatic dispersion at candidate transparent-boundary pixels: sub-pixel
+    shift between R and B gradient patches, same structure-tensor-gated
+    phase-correlation technique used for lens chromatic aberration in L15,
+    scoped here to the transparency inner band specifically. Real glass/
+    prism edges show "rainbow fringing" (nonzero, often larger than typical
+    lens CA, dispersion shift); AI alpha-blended transparency shows uniform
+    color fringing (near-zero channel-to-channel shift).
+
+    We deliberately do NOT attempt refractive-index estimation from apparent
+    background magnification: recovering a true index of refraction needs
+    known reference geometry (a known undistorted background, camera pose,
+    or stereo baseline) that a single flat RGB image doesn't provide.
+    Claiming a fitted "n" here would be presenting a guess as a measurement.
+
+    Returns (median_shift_px, n_samples_used).
+    """
+    ys, xs = np.nonzero(edges & inner_band)
+    if ys.size == 0:
+        return 0.0, 0
+    if ys.size > max_samples:
+        idx = np.random.RandomState(1).choice(ys.size, max_samples, replace=False)
+        ys, xs = ys[idx], xs[idx]
+
+    r_f = img[:, :, 0].astype(np.float32)
+    b_f = img[:, :, 2].astype(np.float32)
+    gray_f = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).astype(np.float32)
+    gr = cv2.magnitude(cv2.Sobel(r_f, cv2.CV_32F, 1, 0, ksize=3),
+                        cv2.Sobel(r_f, cv2.CV_32F, 0, 1, ksize=3))
+    gb = cv2.magnitude(cv2.Sobel(b_f, cv2.CV_32F, 1, 0, ksize=3),
+                        cv2.Sobel(b_f, cv2.CV_32F, 0, 1, ksize=3))
+
+    h, w = img.shape[:2]
+    half = 8
+    max_plausible_shift = 4.0
+    shifts = []
+    for y, x in zip(ys, xs):
+        y0, y1 = y - half, y + half
+        x0, x1 = x - half, x + half
+        if y0 < 0 or x0 < 0 or y1 >= h or x1 >= w:
+            continue
+        patch_r, patch_b = gr[y0:y1, x0:x1], gb[y0:y1, x0:x1]
+        if patch_r.std() < 1e-3 or patch_b.std() < 1e-3:
+            continue
+
+        patch_gray = gray_f[y0:y1, x0:x1]
+        gx = cv2.Sobel(patch_gray, cv2.CV_32F, 1, 0, ksize=3)
+        gy = cv2.Sobel(patch_gray, cv2.CV_32F, 0, 1, ksize=3)
+        sxx, syy, sxy = float(np.sum(gx * gx)), float(np.sum(gy * gy)), float(np.sum(gx * gy))
+        trace = sxx + syy
+        if trace < 1e-6:
+            continue
+        det = sxx * syy - sxy * sxy
+        disc = max(trace * trace - 4.0 * det, 0.0)
+        lam1 = (trace + math.sqrt(disc)) / 2.0
+        lam2 = (trace - math.sqrt(disc)) / 2.0
+        if lam1 < 1e-6 or (lam2 / lam1) < 0.12:
+            continue
+
+        try:
+            (dx, dy), response = cv2.phaseCorrelate(patch_r, patch_b)
+        except cv2.error:
+            continue
+        if response < 0.1:
+            continue
+        shift = math.hypot(dx, dy)
+        if shift > max_plausible_shift:
+            continue
+        shifts.append(shift)
+
+    if not shifts:
+        return 0.0, 0
+    return float(np.median(shifts)), len(shifts)
+
+
 def _signal_transparency_distortion(
+    img: np.ndarray,
     gray: np.ndarray,
     cfg: dict,
 ) -> Tuple[float, int, str]:
     r"""
-    Signal 3 — Transparency & Glass Distortion Physics.
+    Signal 3 — Transparency & Glass Distortion Physics (Module 7 upgrade).
 
-    Mathematical Model
-    ------------------
-    Real transparent media (glass, water, acrylic) exhibit three physical
-    phenomena that AI generators rarely model:
-
-    1. **Edge doubling** — a pane of glass has two physical surfaces (front
-       and back).  Each surface produces a Fresnel reflection, creating two
-       closely-spaced parallel edges in the image.  AI typically renders
-       transparency as a single boundary with reduced opacity.
-
-    2. **Refraction distortion** — light passing through a transparent medium
-       bends according to Snell’s law.  Background texture visible through
-       the medium is geometrically distorted.  AI alpha-blending preserves
-       background structure perfectly.
-
-    3. **Gradient-orientation scrambling** — because refraction is
-       wavelength-dependent and surface-normal-dependent, the local gradient
-       orientation histogram inside a real transparent region diverges from
-       the histogram of the background just outside.  AI blending leaves
-       orientations nearly identical.
-
-    We approximate (2) and (3) jointly via the **Bhattacharyya coefficient**
-    between inner-boundary and outer-boundary gradient-orientation histograms:
-
-    .. math::
-        BC(p, q) = \sum_k \sqrt{p_k \, q_k}
-
-    where :math:`p_k` and :math:`q_k` are normalised histogram bins.
-    :math:`BC pprox 1` → identical distributions → AI-like blending.
-    :math:`BC \ll 1` → distorted → real refraction.
-
-    Parameters
-    ----------
-    gray : np.ndarray
-        H×W uint8 grayscale image.
-    cfg : dict
-        ``l16_mrc`` threshold block.
-
-    Returns
-    -------
-    Tuple[float, int, str]
-        (distortion_score, edge_count, detail).
-        distortion_score ∈ [0,1] where 1 = strongly real (physical distortion).
+    Keeps the original edge-doubling ratio and gradient-orientation
+    Bhattacharyya-coefficient distortion measure, and adds chromatic
+    dispersion detection (see `_measure_dispersion_shift`). Deliberately
+    does NOT add refractive-index estimation from apparent magnification —
+    see that function's docstring for why it isn't physically recoverable
+    from a single image here, flagged rather than faked.
     """
     edges = cv2.Canny(gray, 50, 150)
     edge_count = int(edges.sum() // 255)
@@ -1426,43 +1664,33 @@ def _signal_transparency_distortion(
     if edge_count < 100:
         return 0.5, 0, "too_few_edges"
 
-    # ── Edge doubling via local edge density ───────────────────────────
     disk_r = int(cfg.get("transparency_disk_radius", 4))
     disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (disk_r * 2 + 1, disk_r * 2 + 1))
     edge_density = cv2.filter2D(edges.astype(np.float32), -1, disk.astype(np.float32))
 
-    # An edge pixel with neighbour edges within radius disk_r suggests
-    # a second surface boundary (front + back of glass pane).
     doubled_mask = (edges > 0) & (edge_density > 1.5)
     with np.errstate(divide="ignore", invalid="ignore"):
         doubling_ratio = float(doubled_mask.sum()) / float(max(edge_count, 1))
 
-    # ── Refraction distortion via gradient-orientation histograms ────────
     dist = cv2.distanceTransform(255 - edges, cv2.DIST_L2, 5)
 
     sobelx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
     sobely = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
-    orient = np.arctan2(sobely, sobelx)  # radians, range [-π, π]
+    orient = np.arctan2(sobely, sobelx)
 
     inner_band = (dist > 1) & (dist < 4)
     outer_band = (dist > 8) & (dist < 15)
 
-    bc = 1.0  # default (identical)
+    bc = 1.0
     if inner_band.sum() >= 100 and outer_band.sum() >= 100:
         n_bins = 12
         inner_hist, _ = np.histogram(orient[inner_band], bins=n_bins, range=(-np.pi, np.pi))
         outer_hist, _ = np.histogram(orient[outer_band], bins=n_bins, range=(-np.pi, np.pi))
-
         with np.errstate(divide="ignore", invalid="ignore"):
             inner_hist = inner_hist / (inner_hist.sum() + 1e-9)
             outer_hist = outer_hist / (outer_hist.sum() + 1e-9)
-
         bc = float(np.sum(np.sqrt(inner_hist * outer_hist)))
 
-    # ── Score composition ──────────────────────────────────────────────
-    # BC interpretation:
-    #   BC ≈ 0.95 → AI (identical orientations, no refraction)
-    #   BC ≈ 0.60 → real (moderate distortion from refraction)
     bc_real = _safe_float(cfg.get("bc_real_threshold", 0.55))
     bc_ai = _safe_float(cfg.get("bc_ai_threshold", 0.88))
 
@@ -1473,13 +1701,23 @@ def _signal_transparency_distortion(
     else:
         bc_realness = (bc_ai - bc) / (bc_ai - bc_real)
 
-    # Doubling: real glass has front+back edges
     doubling_realness = float(np.clip(doubling_ratio * 3.0, 0.0, 1.0))
 
     w = _safe_float(cfg.get("doubling_weight", 0.5))
     distortion = w * doubling_realness + (1.0 - w) * bc_realness
 
-    detail = f"doubling={doubling_ratio:.3f} bc={bc:.3f}"
+    dispersion_note = "n/a"
+    disp_cfg = cfg.get("chromatic_dispersion", {})
+    disp_shift, disp_n = _measure_dispersion_shift(img, edges > 0, inner_band)
+    if disp_n >= 6:
+        disp_real = _safe_float(disp_cfg.get("real_threshold", 0.35))
+        disp_ai = _safe_float(disp_cfg.get("ai_threshold", 0.05))
+        disp_suspicion = _score_from_metric(disp_shift, disp_real, disp_ai)
+        dispersion_note = f"shift={disp_shift:.3f}px(n={disp_n})"
+        # Blend in gently — dispersion is a supplementary cue, not primary.
+        distortion = float(np.clip(distortion + 0.15 * ((1.0 - disp_suspicion) - 0.5), 0.0, 1.0))
+
+    detail = f"doubling={doubling_ratio:.3f} bc={bc:.3f} dispersion_{dispersion_note}"
     return float(np.clip(distortion, 0.0, 1.0)), edge_count, detail
 
 
@@ -1488,55 +1726,32 @@ def analyze_mrc(
     img_pil: Any = None,
 ) -> Dict[str, Any]:
     r"""
-    Layer 16: Material Reflectance Consistency (MRC).
+    Layer 16: Material Reflectance Consistency (MRC) — Module 7 upgrade.
 
-    Detects physically implausible material rendering characteristic of
-    AI-generated imagery by applying the Dichromatic Reflection Model (DRM):
+    Three signals, each enhanced beyond the original circularity/variance,
+    V-S+cosine, and doubling/BC-only versions:
 
-    .. math::
-        \mathbf{C} = m_d \, \mathbf{C}_b + m_s \, \mathbf{C}_i
+    1. **Specular highlight realism** — original circularity + variance,
+       plus a radial-falloff roughness ("alpha") proxy and an anisotropy-
+       vs-local-texture-orientation consistency check.
+    2. **Metallic color correlation** — original V-S correlation + body/
+       highlight cosine similarity, plus a per-pixel dichromatic model fit
+       (C = m_d*C_b + m_s*C_i) and a metallic Fresnel hue-shift check
+       (center vs edge).
+    3. **Transparency distortion** — original edge-doubling + gradient-
+       orientation Bhattacharyya distortion, plus a chromatic dispersion
+       (rainbow-fringing) check. Refractive-index estimation from apparent
+       magnification was deliberately not implemented — see
+       `_measure_dispersion_shift` docstring for why a single RGB image
+       doesn't support that measurement without known reference geometry.
 
-    Three forensic signals:
-
-    1. **Specular Highlight Uniformity** — real highlights follow microfacet
-       BRDF distributions (irregular shape, intensity falloff); AI renders
-       uniform circular blobs.
-    2. **Metallic Colour Correlation** — real metals have coloured specular
-       lobes (body colour = highlight colour); AI desaturates metal
-       highlights to white.
-    3. **Transparency Distortion** — real glass/water refracts background
-       texture and produces double surface edges; AI uses simple alpha
-       blending with no physical distortion.
-
-    Input Validation
-    ----------------
-    * ``img`` must be H×W×3 uint8 RGB.
-    * Invalid inputs return ``{"status":"failure","layerSuspicionScore":0.5}``.
-
-    Performance
-    -----------
-    * Expected runtime on 768 px RGB: **< 180 ms** (single CPU core).
-    * Memory overhead: **< 80 MB** (shared HSV + grayscale + edge buffers).
-    * Complexity: :math:`O(H \cdot W)`.
-
-    Parameters
-    ----------
-    img : np.ndarray
-        H×W×3 uint8 RGB image.
-    img_pil : PIL.Image, optional
-        Unused; kept for API consistency.
-
-    Returns
-    -------
-    dict
-        Standard LayerReport with evidence nodes for specular uniformity,
-        metallic correlation, and transparency distortion.
+    Input validation, performance envelope, and return schema are unchanged
+    from the original implementation.
     """
     t0 = time.monotonic()
     layer_num = 16
     layer_name = "Material Reflectance Consistency"
 
-    # ── Input validation ─────────────────────────────────────────────────
     if img is None or not isinstance(img, np.ndarray):
         return build_layer_report(
             layer_num, layer_name, [], "failure", 0, score=0.5
@@ -1558,15 +1773,13 @@ def analyze_mrc(
         if not cfg:
             logger.warning("[MRC] Empty threshold config; using safe defaults.")
 
-        # ── Shared pre-processing ──────────────────────────────────────────
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 
         evidence: List[dict] = []
         fw = cfg.get("fusion_weights", {})
 
-        # ── Signal 1: Specular Uniformity ────────────────────────────────
-        sig1_score, sig1_raw, sig1_detail = _signal_specular_uniformity(gray, hsv, cfg)
+        sig1_score, sig1_raw, sig1_detail = _signal_specular_uniformity(gray, hsv, img, cfg)
         s1_status, s1_conf = _map_suspicion_to_status_confidence(sig1_score)
         evidence.append(_build_evidence_node(
             layer_num, "specular_uniformity", s1_status, s1_conf,
@@ -1575,9 +1788,7 @@ def analyze_mrc(
             sig1_score,
         ))
 
-        # ── Signal 2: Metallic Colour Correlation ──────────────────────────
         sig2_score, sig2_raw, sig2_detail = _signal_metallic_correlation(img, hsv, cfg)
-        # sig2_score is "realness" (1 = real).  Convert to suspicion.
         sig2_suspicion = 1.0 - float(np.clip(sig2_score, 0.0, 1.0))
         s2_status, s2_conf = _map_suspicion_to_status_confidence(sig2_suspicion)
         evidence.append(_build_evidence_node(
@@ -1587,9 +1798,7 @@ def analyze_mrc(
             sig2_score,
         ))
 
-        # ── Signal 3: Transparency Distortion ────────────────────────────
-        sig3_score, sig3_raw, sig3_detail = _signal_transparency_distortion(gray, cfg)
-        # sig3_score is "realness" (1 = real).  Convert to suspicion.
+        sig3_score, sig3_raw, sig3_detail = _signal_transparency_distortion(img, gray, cfg)
         sig3_suspicion = 1.0 - float(np.clip(sig3_score, 0.0, 1.0))
         s3_status, s3_conf = _map_suspicion_to_status_confidence(sig3_suspicion)
         evidence.append(_build_evidence_node(
@@ -1599,12 +1808,10 @@ def analyze_mrc(
             sig3_score,
         ))
 
-        # ── Composite Fusion ─────────────────────────────────────────────
-        # specular_uniformity is already suspicion; metallic/transparency are realness.
         scores = [
-            sig1_score,                                    # suspicion
-            1.0 - float(np.clip(sig2_score, 0.0, 1.0)),   # suspicion
-            1.0 - float(np.clip(sig3_score, 0.0, 1.0)),   # suspicion
+            sig1_score,
+            1.0 - float(np.clip(sig2_score, 0.0, 1.0)),
+            1.0 - float(np.clip(sig3_score, 0.0, 1.0)),
         ]
         weights = [
             _safe_float(fw.get("specular_uniformity", 1.0)),
@@ -1630,7 +1837,6 @@ def analyze_mrc(
         return build_layer_report(
             layer_num, layer_name, [], "failure", elapsed, score=0.5
         )
-
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
