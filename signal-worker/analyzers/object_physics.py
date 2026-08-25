@@ -2105,36 +2105,207 @@ def _compute_vanishing_point(
         return None
 
 
+def _compute_vanishing_point_ransac(
+    lines: np.ndarray,
+    mask: np.ndarray,
+    cfg: dict,
+    rng: np.random.Generator,
+) -> Optional[Tuple[float, float, float, int, float, bool]]:
+    r"""
+    RANSAC-robustified vanishing point estimate for one orientation cluster.
+
+    Mathematical Model
+    -------------------
+    Same normalised-implicit-line model as :func:`_compute_vanishing_point`,
+    but instead of a single global least-squares solve (which one outlier
+    line can drag arbitrarily far), we:
+
+    1. Repeatedly sample 2 lines at random, solve their exact intersection
+       (closed-form 2x2 linear system).
+    2. Count "inliers" — lines whose perpendicular distance to that
+       candidate point is below ``ransac_inlier_threshold_px``.
+    3. Keep the candidate with the most inlier support.
+    4. Refine the final point with an ordinary least-squares solve using
+       *only* the inlier subset, and report the inlier residual.
+
+    This directly targets the AI-generation failure mode the spec calls
+    out: a handful of genuinely converging lines plus one or two stray
+    lines that a plain LSQ fit — which minimises total squared error, not
+    inlier count — would let dominate the fit and inflate the residual.
+
+    Parameters
+    ----------
+    lines : np.ndarray
+        N×4 array of all detected segments.
+    mask : np.ndarray
+        Boolean mask selecting the cluster subset.
+    cfg : dict
+        ``l17_gpc`` threshold block.
+    rng : np.random.Generator
+        Deterministic RNG (seeded once per ``analyze_gpc`` call) so results
+        are reproducible run-to-run for the same image.
+
+    Returns
+    -------
+    Optional[Tuple[float, float, float, int, float]]
+        ``(vp_x, vp_y, residual, inlier_count, inlier_ratio)`` or ``None``
+        if the cluster is too small to fit.
+    """
+    cluster = lines[mask]
+    n = len(cluster)
+    if n < 3:
+        return None
+
+    normals = []
+    for (x1, y1, x2, y2) in cluster:
+        a, b, c = _line_to_normal_form(float(x1), float(y1), float(x2), float(y2))
+        if a == 0.0 and b == 0.0:
+            continue
+        normals.append((a, b, c))
+
+    if len(normals) < 3:
+        return None
+
+    normals_arr = np.array(normals, dtype=np.float64)
+    n_valid = len(normals_arr)
+    inlier_thresh = _safe_float(cfg.get("ransac_inlier_threshold_px", 4.0))
+    n_iter = int(cfg.get("ransac_iterations", 60))
+
+    # ── Degeneracy check ─────────────────────────────────────────────────
+    # Bug caught by functional smoke testing: when a cluster's lines are
+    # (near-)exactly parallel in the image -- a common, perfectly ordinary
+    # real-photo case (e.g. window rows on a wall shot straight-on) -- the
+    # 2x2 normal-equations matrix A^T A is rank-deficient (every line
+    # shares ~the same (a,b) normal direction). `np.linalg.lstsq` then
+    # returns a minimum-norm solution for the *degenerate* direction (its
+    # x-coordinate here is arbitrary, not a real intersection) and an
+    # *empty* residual array, which an earlier version of this code read
+    # as "residual=0.0", i.e. "perfect finite convergence" -- exactly
+    # backwards: it's not that the lines converge tightly to a point, it's
+    # that there is no meaningful finite point at all (the true vanishing
+    # point is at infinity, which is the geometrically correct answer for
+    # parallel lines and not suspicious). We detect this directly via the
+    # condition number of A^T A rather than trusting the residual, and
+    # treat it as maximal, well-founded consistency (all lines genuinely
+    # agree with a single shared direction) rather than running it through
+    # machinery built for a finite point that doesn't exist here.
+    ata = normals_arr[:, :2].T @ normals_arr[:, :2]
+    eigvals = np.linalg.eigvalsh(ata)
+    degenerate = eigvals[0] < 1e-9 or (eigvals[0] / max(eigvals[-1], 1e-12)) < 1e-6
+    if degenerate:
+        # No finite point is well-defined (true VP at infinity). vp_x/vp_y
+        # are not meaningful here -- callers must check the is_at_infinity
+        # flag and not use the coordinates for distance-based logic.
+        return 0.0, 0.0, 0.0, n_valid, 1.0, True
+
+    best_inlier_mask = None
+    best_count = -1
+
+    idx_pool = np.arange(n_valid)
+    for _ in range(n_iter):
+        i, j = rng.choice(idx_pool, size=2, replace=False)
+        a1, b1, c1 = normals_arr[i]
+        a2, b2, c2 = normals_arr[j]
+        det = a1 * b2 - a2 * b1
+        if abs(det) < 1e-9:
+            continue  # near-parallel sample pair -> unstable intersection
+
+        px = (-c1 * b2 + c2 * b1) / det
+        py = (-a1 * c2 + a2 * c1) / det
+
+        dists = np.abs(normals_arr[:, 0] * px + normals_arr[:, 1] * py + normals_arr[:, 2])
+        inlier_mask = dists < inlier_thresh
+        count = int(inlier_mask.sum())
+
+        if count > best_count:
+            best_count = count
+            best_inlier_mask = inlier_mask
+
+    if best_inlier_mask is None or best_count < 3:
+        # RANSAC's pairwise-sample-and-intersect step is *itself*
+        # ill-conditioned when a cluster's lines are near-perfectly
+        # parallel (every 2-line intersection has det ~ 0, so consensus
+        # search systematically fails) -- this is exactly the case of a
+        # genuinely well-behaved, highly-consistent real-photo direction
+        # (e.g. a front-on wall), not a bad fit. Bug caught via functional
+        # smoke test: an earlier version of this fallback unconditionally
+        # returned inlier_count=0 here, which punished this common,
+        # perfectly legitimate real-photo geometry as if it were
+        # non-converging. Fix: fall back to the plain whole-cluster LSQ
+        # fit, then *measure* inlier support against that fitted point
+        # (rather than assuming zero) -- a genuinely consistent cluster
+        # will still show high inlier support this way; a genuinely
+        # scattered one will correctly show low support.
+        fallback = _compute_vanishing_point(lines, mask)
+        if fallback is None:
+            return None
+        vp_x, vp_y, residual = fallback
+        dists = np.abs(normals_arr[:, 0] * vp_x + normals_arr[:, 1] * vp_y + normals_arr[:, 2])
+        fallback_inliers = int((dists < inlier_thresh).sum())
+        fallback_ratio = float(fallback_inliers) / float(n_valid)
+        return vp_x, vp_y, residual, fallback_inliers, fallback_ratio, False
+
+    inlier_normals = normals_arr[best_inlier_mask]
+    A_mat = inlier_normals[:, :2]
+    c_vec = inlier_normals[:, 2]
+    try:
+        result = np.linalg.lstsq(A_mat, -c_vec, rcond=None)
+        p = result[0]
+        residual = float(result[1][0] / len(A_mat)) if len(result[1]) > 0 else 0.0
+    except Exception:
+        return None
+
+    inlier_ratio = float(best_count) / float(n_valid)
+    return float(p[0]), float(p[1]), residual, best_count, inlier_ratio, False
+
+
 def _signal_vp_consistency(
     lines: np.ndarray,
     clusters: List[np.ndarray],
     img_shape: Tuple[int, int],
     cfg: dict,
+    rng: np.random.Generator,
 ) -> Tuple[float, str]:
     r"""
-    Signal 1 — Vanishing Point Consistency.
+    Signal 1 — Vanishing Point Consistency (RANSAC-based).
 
     Mathematical Reasoning
     ----------------------
     In a real photograph of a structured 3-D scene (architecture, interior,
     street), parallel line families converge to a small number of vanishing
     points (typically 1–3).  Each VP is supported by many lines with low
-    residual.  AI generators often produce lines that:
+    residual *and* a high inlier ratio.  AI generators often produce lines
+    that:
 
-    * Do not converge to any common point (high residual).
-    * Converge to physically impossible locations (e.g., inside the scene
-      but not on the horizon line).
-    * Have only 1–2 supporting lines per "VP" (spurious convergence).
+    * Do not converge to any common point (high residual / low inlier
+      support — caught by the RANSAC inlier ratio, which a plain LSQ fit
+      cannot distinguish from "converges but noisily").
+    * Have only 1–2 genuinely supporting lines per "VP" (spurious
+      convergence that RANSAC's consensus count exposes directly).
 
-    We define the **consistency score** as a weighted average over clusters:
+    Score per cluster:
 
     .. math::
-        S_{VP} = \frac{1}{\sum w_k} \sum_k w_k \cdot
-        \exp\!\left(-\frac{r_k}{\tau}\right)
+        S_k = \exp\!\left(-\frac{r_k}{\tau}\right) \cdot \rho_k
 
-    where :math:`r_k` is the normalised residual of cluster :math:`k`,
-    :math:`\tau` is the inlier threshold, and :math:`w_k` is the cluster
-    size.  A high score means many lines converge tightly to their VPs.
+    where :math:`r_k` is the inlier residual, :math:`\tau` is the inlier
+    threshold, and :math:`\rho_k` is the inlier ratio (fraction of the
+    cluster's lines that actually agree with the fitted VP). The
+    consistency score is the inlier-count-weighted average of :math:`S_k`
+    over clusters.
+
+    **VP-at-infinity check.** For a cluster whose lines are already
+    near-parallel *in the image* (angular spread below
+    ``near_parallel_spread_deg``), a real vanishing point for that
+    direction is necessarily far outside the frame (formally: VP distance
+    grows as ~line_extent / tan(angular spread), which is enormous for a
+    tiny spread). If the RANSAC fit nonetheless places the VP close to the
+    lines themselves, that convergence is a numerical fluke, not scene
+    geometry — this is exactly the "AI draws near-parallel lines that
+    happen to intersect nearby" failure mode described in the spec. Such
+    clusters are penalised; genuinely far/at-infinity convergence is not
+    penalised (that's the expected real-photo case for far-away or
+    telephoto-shot parallel lines).
 
     Parameters
     ----------
@@ -2146,6 +2317,8 @@ def _signal_vp_consistency(
         (height, width) of the image.
     cfg : dict
         ``l17_gpc`` threshold block.
+    rng : np.random.Generator
+        Shared deterministic RNG for this ``analyze_gpc`` call.
 
     Returns
     -------
@@ -2154,26 +2327,75 @@ def _signal_vp_consistency(
         Score ∈ [0, 1] where 1 = strongly consistent (real).
     """
     h, w = img_shape
+    diag = math.hypot(w, h)
     tau = _safe_float(cfg.get("vp_inlier_threshold_deg", 3.0))
     tau = np.deg2rad(tau)  # convert to radians for residual scaling
+    near_parallel_eps = _safe_float(cfg.get("near_parallel_spread_deg", 2.0))
+    min_infinity_ratio = _safe_float(cfg.get("min_vp_infinity_ratio", 3.0))
+    parallel_penalty = _safe_float(cfg.get("parallel_mismatch_penalty", 0.5))
 
     scores = []
     weights = []
+    n_at_infinity = 0
+    n_mismatched = 0
 
     for mask in clusters:
-        vp_result = _compute_vanishing_point(lines, mask)
+        vp_result = _compute_vanishing_point_ransac(lines, mask, cfg, rng)
         if vp_result is None:
             continue
-        vp_x, vp_y, residual = vp_result
+        vp_x, vp_y, residual, inlier_count, inlier_ratio, is_at_infinity = vp_result
 
-        # Normalise residual by image diagonal
-        diag = math.hypot(w, h)
+        if is_at_infinity:
+            # Rank-deficient system: lines are genuinely, essentially
+            # parallel in the image. That's a real, valid, fully
+            # consistent direction (the geometrically correct VP for
+            # parallel lines *is* at infinity) -- not a poor fit to be
+            # scored down. No finite VP coordinate exists to run the
+            # at-infinity *mismatch* check against, so it's skipped for
+            # this cluster (there's nothing to mismatch).
+            scores.append(1.0)
+            weights.append(max(inlier_count, int(mask.sum()) // 4))
+            n_at_infinity += 1
+            continue
+
         norm_residual = residual / (diag + 1e-9)
+        score = math.exp(-norm_residual / (tau + 1e-9)) * max(inlier_ratio, 0.15)
 
-        # Score: tight convergence → high score
-        score = math.exp(-norm_residual / (tau + 1e-9))
-        cluster_size = int(mask.sum())
+        # VP-at-infinity consistency check.
+        #
+        # Caught by functional smoke testing: a naive "spread < eps AND vp
+        # not far away -> suspicious" version of this check false-flagged
+        # ordinary real photos (e.g. a wall shot straight-on has near-zero
+        # angular spread by design, and a couple of pixels of quantisation
+        # noise alone can put its finite-fit VP anywhere within a few
+        # hundred px). A near-zero-spread cluster's finite VP position is
+        # numerically unstable (tiny angle noise -> large position swings)
+        # essentially by construction, so its location alone can't carry
+        # this signal -- we require *both* genuinely tight RANSAC
+        # consensus (this isn't a degenerate/noise-dominated fit) *and* a
+        # VP distance close enough that it can't plausibly be
+        # quantisation noise, before treating it as suspicious.
+        cluster = lines[mask]
+        dx = cluster[:, 2] - cluster[:, 0]
+        dy = cluster[:, 3] - cluster[:, 1]
+        line_angles = np.arctan2(dy, dx) % np.pi
+        spread_deg = float(np.degrees(line_angles.max() - line_angles.min()))
+        if spread_deg < near_parallel_eps:
+            cx_cluster = float(np.mean((cluster[:, 0] + cluster[:, 2]) / 2.0))
+            cy_cluster = float(np.mean((cluster[:, 1] + cluster[:, 3]) / 2.0))
+            vp_dist = math.hypot(vp_x - cx_cluster, vp_y - cy_cluster)
+            confident_fit = inlier_ratio >= 0.5 and inlier_count >= 3
+            genuinely_close = vp_dist < diag * min_infinity_ratio
+            if confident_fit and genuinely_close:
+                score *= parallel_penalty
+                n_mismatched += 1
+            elif vp_dist >= diag * min_infinity_ratio:
+                n_at_infinity += 1
+            # else: degenerate/low-confidence fit with an ambiguous
+            # distance -- inconclusive, left unscored/unpenalised rather
+            # than guessed at.
 
+        cluster_size = max(inlier_count, int(mask.sum()) // 4)  # avoid 0-weight clusters
         scores.append(score)
         weights.append(cluster_size)
 
@@ -2185,8 +2407,40 @@ def _signal_vp_consistency(
         return 0.0, "zero_weights"
 
     consistency = sum(s * w for s, w in zip(scores, weights)) / total_w
-    detail = f"clusters={len(clusters)} consistency={consistency:.3f}"
+    detail = (
+        f"clusters={len(clusters)} consistency={consistency:.3f} "
+        f"at_infinity={n_at_infinity} parallel_mismatch={n_mismatched}"
+    )
     return float(np.clip(consistency, 0.0, 1.0)), detail
+
+
+def _estimate_orthogonal_focal_length_sq(
+    vp1: Tuple[float, float], vp2: Tuple[float, float], cx: float, cy: float
+) -> float:
+    r"""
+    Closed-form focal-length-squared estimate from one orthogonal VP pair.
+
+    Standard single-view-metrology result (Caprile & Torre 1990;
+    Cipolla, Drummond & Robertson 1999): for a camera with zero skew,
+    unit aspect ratio, and principal point :math:`(c_x, c_y)`, two
+    vanishing points :math:`v_1, v_2` corresponding to *orthogonal* 3-D
+    directions satisfy
+
+    .. math::
+        f^2 = -\big[(v_{1x}-c_x)(v_{2x}-c_x) + (v_{1y}-c_y)(v_{2y}-c_y)\big]
+
+    i.e. :math:`f^2` is minus the dot product of the two VPs' offsets from
+    the principal point. This falls directly out of requiring
+    :math:`\hat v_1^\top \omega \hat v_2 = 0` for
+    :math:`\omega = \mathrm{diag}(1/f^2, 1/f^2, 1)` in principal-point-centred
+    coordinates. A physically real orthogonal pair must give :math:`f^2>0`;
+    a negative value means no real focal length reproduces this VP pair as
+    orthogonal under the assumed principal point — i.e. :math:`\omega` is
+    *indefinite* for this pair, the direct IAC violation the spec asks for.
+    """
+    dx1, dy1 = vp1[0] - cx, vp1[1] - cy
+    dx2, dy2 = vp2[0] - cx, vp2[1] - cy
+    return -(dx1 * dx2 + dy1 * dy2)
 
 
 def _signal_orthogonality(
@@ -2194,9 +2448,10 @@ def _signal_orthogonality(
     clusters: List[np.ndarray],
     img_shape: Tuple[int, int],
     cfg: dict,
+    rng: np.random.Generator,
 ) -> Tuple[float, str]:
     r"""
-    Signal 2 — Orthogonality of Dominant Directions.
+    Signal 2 — Orthogonality via Image-of-Absolute-Conic (IAC) constraint.
 
     Mathematical Reasoning
     ----------------------
@@ -2207,18 +2462,37 @@ def _signal_orthogonality(
     .. math::
         \mathbf{v}_1^{\!\top} \, \omega \, \mathbf{v}_2 = 0
 
-    For a camera with square pixels and principal point near the image centre
-    (the most common case), :math:`\omega \approx \mathrm{diag}(1, 1, 0)` in
-    normalised coordinates.  This implies that orthogonal horizontal
-    directions have VPs that are roughly symmetric about the principal point
-    and lie on the horizon line.
+    Rather than the old proxy heuristic ("does the line between the two VPs
+    pass near image centre"), we now actually solve this constraint: for
+    each candidate orthogonal pair we derive the unique focal length
+    :math:`f` that makes :math:`\omega` (with the assumed principal point,
+    see below) satisfy the constraint exactly, via
+    :func:`_estimate_orthogonal_focal_length_sq`. A pair is judged:
 
-    **Heuristic used here** (explicitly labelled):
-    We do not calibrate :math:`K`; instead we check whether pairs of clusters
-    with image angles differing by :math:`\approx 90°` have VPs that are
-    geometrically plausible — i.e., their connecting line passes near the
-    image centre, and the VPs are not both inside the image (which would
-    imply the camera is inside a very small room, rare for typical photos).
+    * **Violating** — :math:`f^2 \le 0` -> :math:`\omega` is indefinite for
+      any real focal length -> these VPs cannot represent a real orthogonal
+      pair under any camera with the assumed principal point. Score 0.
+    * **Implausible** — :math:`f^2 > 0` but the implied focal length, as a
+      fraction of the image diagonal, falls outside a wide plausible band
+      (covering everything from wide-angle to moderate telephoto). Score
+      partially penalised, scaled by log-distance outside the band.
+    * **Plausible** — focal length within the band. Score 1.0.
+
+    Scope limitation (explicitly flagged, not hidden)
+    --------------------------------------------------
+    A full single-view calibration (:math:`f`, principal point, aspect
+    ratio) needs **3 mutually orthogonal VP directions solved jointly**; a
+    typical photo only yields 2 (one vertical, one horizontal family) so
+    the principal point cannot be recovered from the image alone here. We
+    use the geometric image centre as the assumed principal point, the
+    standard default in single-view metrology when no calibration target
+    or 3rd VP is available — this is an approximation, not a measurement,
+    and is noted so it isn't mistaken for calibrated camera geometry.
+    Comparing the recovered focal length against EXIF is specified in the
+    prompt but not implemented: ``analyze_gpc`` receives only a raw numpy
+    array here (no EXIF payload reaches this function), the same
+    already-documented limitation as L15's gravity-direction estimate
+    above in this file.
 
     Parameters
     ----------
@@ -2230,6 +2504,8 @@ def _signal_orthogonality(
         (height, width).
     cfg : dict
         ``l17_gpc`` threshold block.
+    rng : np.random.Generator
+        Shared deterministic RNG for this ``analyze_gpc`` call.
 
     Returns
     -------
@@ -2239,31 +2515,48 @@ def _signal_orthogonality(
     """
     h, w = img_shape
     cx, cy = w / 2.0, h / 2.0
+    diag = math.hypot(w, h)
     tol_deg = _safe_float(cfg.get("orthogonality_tolerance_deg", 20.0))
+    f_lo = _safe_float(cfg.get("focal_length_min_ratio", 0.3))
+    f_hi = _safe_float(cfg.get("focal_length_max_ratio", 3.5))
 
-    # Compute mean angle and VP for each cluster
+    min_spread_for_iac = _safe_float(cfg.get("min_perspective_spread_deg", 0.5))
+
+    # Compute mean angle and RANSAC VP for each cluster
     cluster_data = []
     for mask in clusters:
-        vp_result = _compute_vanishing_point(lines, mask)
+        vp_result = _compute_vanishing_point_ransac(lines, mask, cfg, rng)
         if vp_result is None:
             continue
-        vp_x, vp_y, _ = vp_result
+        vp_x, vp_y, _residual, _inliers, inlier_ratio, is_at_infinity = vp_result
 
         cluster = lines[mask]
         dx = cluster[:, 2] - cluster[:, 0]
         dy = cluster[:, 3] - cluster[:, 1]
+        angles = np.arctan2(dy, dx) % np.pi
         mean_angle = float(np.arctan2(dy.mean(), dx.mean()) % np.pi)
+        spread_deg = float(np.degrees(angles.max() - angles.min()))
 
         cluster_data.append({
             "vp": (vp_x, vp_y),
             "angle": mean_angle,
             "size": int(mask.sum()),
+            "inlier_ratio": inlier_ratio,
+            # A near-zero angular spread (or an explicit at-infinity flag)
+            # means this cluster has no meaningful *finite* VP position --
+            # not usable as an input to the finite-coordinate IAC dot
+            # product below, regardless of how confident the line-fit
+            # itself is. See _signal_vp_consistency's near-parallel
+            # handling for the same underlying numerical issue.
+            "stable_for_iac": (not is_at_infinity) and spread_deg >= min_spread_for_iac,
         })
 
     if len(cluster_data) < 2:
         return 0.5, "insufficient_clusters_for_orthogonality"
 
     ortho_scores = []
+    ortho_weights = []
+    n_violating = 0
     for i in range(len(cluster_data)):
         for j in range(i + 1, len(cluster_data)):
             a1 = cluster_data[i]["angle"]
@@ -2272,34 +2565,51 @@ def _signal_orthogonality(
             angle_diff = min(angle_diff, np.pi - angle_diff)
             angle_diff_deg = np.degrees(angle_diff)
 
-            # Only consider pairs that are roughly perpendicular in the image
+            # Screen candidate pairs by image-space angle (~90 deg apart);
+            # this is a selection heuristic for *which* pairs to feed the
+            # IAC test, not the orthogonality judgement itself (that comes
+            # from the f^2 sign/magnitude test below).
             if abs(angle_diff_deg - 90.0) > tol_deg:
+                continue
+
+            # Skip pairs where either VP is numerically unstable (see
+            # "stable_for_iac" above) -- we don't have the perspective
+            # information needed to test this pair meaningfully, so we
+            # leave it out rather than feed noise into the f^2 test.
+            if not (cluster_data[i]["stable_for_iac"] and cluster_data[j]["stable_for_iac"]):
                 continue
 
             vp1 = cluster_data[i]["vp"]
             vp2 = cluster_data[j]["vp"]
 
-            # Heuristic: connecting line between VPs should pass near image centre
-            # Distance from centre to line through vp1 and vp2
-            dx_v = vp2[0] - vp1[0]
-            dy_v = vp2[1] - vp1[1]
-            norm_v = math.hypot(dx_v, dy_v) + 1e-9
-            dist_to_centre = abs(dy_v * (cx - vp1[0]) - dx_v * (cy - vp1[1])) / norm_v
-            dist_norm = dist_to_centre / (math.hypot(w, h) + 1e-9)
+            f_sq = _estimate_orthogonal_focal_length_sq(vp1, vp2, cx, cy)
 
-            # Also penalise both VPs being inside the image (uncommon for real photos)
-            both_inside = (0 <= vp1[0] < w and 0 <= vp1[1] < h and
-                           0 <= vp2[0] < w and 0 <= vp2[1] < h)
-            inside_penalty = 0.3 if both_inside else 0.0
+            if f_sq <= 0:
+                score = 0.0
+                n_violating += 1
+            else:
+                f = math.sqrt(f_sq)
+                f_ratio = f / (diag + 1e-9)
+                if f_lo <= f_ratio <= f_hi:
+                    score = 1.0
+                else:
+                    over = max(f_ratio / f_hi, f_lo / f_ratio)
+                    score = max(0.0, 1.0 - 0.5 * math.log1p(over - 1.0))
 
-            score = max(0.0, 1.0 - dist_norm * 4.0 - inside_penalty)
+            weight = (cluster_data[i]["inlier_ratio"] + cluster_data[j]["inlier_ratio"]) / 2.0
+            weight = max(weight, 0.1)
             ortho_scores.append(score)
+            ortho_weights.append(weight)
 
     if not ortho_scores:
         return 0.5, "no_orthogonal_pairs_found"
 
-    ortho = float(np.mean(ortho_scores))
-    detail = f"pairs={len(ortho_scores)} ortho={ortho:.3f}"
+    total_w = sum(ortho_weights)
+    ortho = (
+        sum(s * w for s, w in zip(ortho_scores, ortho_weights)) / total_w
+        if total_w > 0 else float(np.mean(ortho_scores))
+    )
+    detail = f"pairs={len(ortho_scores)} ortho={ortho:.3f} iac_violations={n_violating}"
     return float(np.clip(ortho, 0.0, 1.0)), detail
 
 
@@ -2308,34 +2618,58 @@ def _signal_gravity_alignment(
     clusters: List[np.ndarray],
     img_shape: Tuple[int, int],
     cfg: dict,
+    rng: np.random.Generator,
 ) -> Tuple[float, str]:
     r"""
-    Signal 3 — Gravity Alignment.
+    Signal 3 — Gravity Alignment via plumb-line + horizon/roll consistency.
 
     Mathematical Reasoning
     ----------------------
     In the vast majority of photographs, the camera is held upright, so the
     gravity vector projects to a near-vertical line in the image.  All
-    vertical edges in the scene (door frames, building corners, table legs)
-    should therefore be parallel or converge to a single vanishing point
-    directly above or below the image centre.
+    vertical edges in the scene (door frames, building corners, table legs
+    — "plumb lines") should therefore be parallel or converge to a single
+    vanishing point directly above or below the image centre. This part is
+    unchanged from before: we identify the cluster whose mean orientation
+    is closest to vertical and score it on RANSAC convergence + VP
+    centring, same formula as previously.
 
-    We identify the cluster whose mean orientation is closest to vertical
-    (:math:`\theta \approx \pi/2`).  The **gravity alignment score** measures
-    how well this vertical cluster satisfies two properties:
+    **New: horizon / camera-roll cross-check.** Camera roll is a *single*
+    rotation of the whole image about the optical axis. If the camera is
+    rolled by angle :math:`\phi`, then both effects below are caused by
+    the same :math:`\phi` and must therefore agree:
 
-    1. **Convergence consistency** — the VP residual is low (lines truly
-       converge to a common point).
-    2. **Centred VP** — the VP x-coordinate is close to the image centre
-       (real cameras rarely have roll > 15°).
+    * vertical scene lines (plumb lines) appear tilted by :math:`\phi` from
+      the image's vertical axis;
+    * horizontal scene lines (ground plane / horizon-parallel edges) appear
+      tilted by the *same* :math:`\phi` from the image's horizontal axis.
 
-    Score formula (heuristic):
+    We measure both tilts independently from their respective line
+    clusters' mean orientation and compare them:
 
     .. math::
-        S_{grav} = \exp(-r/\tau) \cdot \max\bigl(0, 1 - |x_{VP} - c_x| / (w/3)\bigr)
+        S_{roll} = \max\!\left(0,\; 1 - \frac{|\phi_{vert} - \phi_{horiz}|}
+        {\tau_{roll}}\right)
 
-    where :math:`r` is the normalised residual and :math:`\tau` is the
-    inlier threshold.
+    A real photo's two independent tilt estimates should closely agree
+    (both reflect the one true roll). AI generators frequently tilt a
+    horizon without correspondingly rolling the verticals (or vice versa)
+    — a combination a single rigid camera rotation cannot produce — so a
+    large disagreement is a genuine geometric red flag, not a proxy.
+    When no horizontal cluster is available the check is skipped (neutral,
+    not penalised — we didn't measure it, so we don't guess).
+
+    Scope limitation (explicitly flagged, not hidden)
+    --------------------------------------------------
+    The spec's "human pose gravity check" (comparing a detected person's
+    head-to-feet axis against the estimated gravity direction) is **not
+    implemented**: this file has no face/pose detector wired in (dlib was
+    intentionally removed from this codebase — see ``requirements.txt``
+    — and no replacement pose estimator is available here), the same
+    already-documented limitation as the EXIF/face gravity cues noted
+    above for L15. Rather than fabricate a body axis from a Haar face
+    box alone (which gives a position, not an orientation), we omit this
+    sub-check entirely.
 
     Parameters
     ----------
@@ -2347,6 +2681,8 @@ def _signal_gravity_alignment(
         (height, width).
     cfg : dict
         ``l17_gpc`` threshold block.
+    rng : np.random.Generator
+        Shared deterministic RNG for this ``analyze_gpc`` call.
 
     Returns
     -------
@@ -2356,11 +2692,20 @@ def _signal_gravity_alignment(
     """
     h, w = img_shape
     cx = w / 2.0
-    tol_deg = _safe_float(cfg.get("gravity_angle_tolerance_deg", 15.0))
+    diag = math.hypot(w, h)
+    vert_tol_deg = _safe_float(cfg.get("gravity_angle_tolerance_deg", 15.0))
+    horiz_tol_deg = _safe_float(cfg.get("horizon_angle_tolerance_deg", 20.0))
+    roll_tol_deg = _safe_float(cfg.get("roll_consistency_tolerance_deg", 10.0))
     tau = np.deg2rad(_safe_float(cfg.get("vp_inlier_threshold_deg", 3.0)))
 
     best_score = 0.0
     best_detail = "no_vertical_cluster"
+    best_vert_tilt: Optional[float] = None
+
+    # Also track the horizontal cluster closest to horizontal, for the
+    # roll cross-check below.
+    best_horiz_tilt: Optional[float] = None
+    best_horiz_closeness = horiz_tol_deg + 1.0
 
     for mask in clusters:
         cluster = lines[mask]
@@ -2368,33 +2713,123 @@ def _signal_gravity_alignment(
         dy = cluster[:, 3] - cluster[:, 1]
         mean_angle = float(np.arctan2(dy.mean(), dx.mean()) % np.pi)
 
+        # Signed tilt from horizontal (0/pi), wrapped into [-90, 90] deg.
+        horiz_tilt_deg = np.degrees(mean_angle)
+        if horiz_tilt_deg > 90.0:
+            horiz_tilt_deg -= 180.0
+        if abs(horiz_tilt_deg) < best_horiz_closeness:
+            best_horiz_closeness = abs(horiz_tilt_deg)
+            if abs(horiz_tilt_deg) <= horiz_tol_deg:
+                best_horiz_tilt = horiz_tilt_deg
+
         # Distance from vertical (pi/2)
         vert_dist = min(abs(mean_angle - np.pi / 2), np.pi - abs(mean_angle - np.pi / 2))
         vert_dist_deg = np.degrees(vert_dist)
 
-        if vert_dist_deg > tol_deg:
+        if vert_dist_deg > vert_tol_deg:
             continue
 
-        vp_result = _compute_vanishing_point(lines, mask)
+        vp_result = _compute_vanishing_point_ransac(lines, mask, cfg, rng)
         if vp_result is None:
             continue
 
-        vp_x, vp_y, residual = vp_result
-        diag = math.hypot(w, h)
-        norm_residual = residual / (diag + 1e-9)
+        vp_x, vp_y, residual, _inliers, inlier_ratio, is_at_infinity = vp_result
 
-        convergence = math.exp(-norm_residual / (tau + 1e-9))
-        centre_alignment = max(0.0, 1.0 - abs(vp_x - cx) / (w / 3.0 + 1e-9))
+        if is_at_infinity:
+            # Perfectly (or near-perfectly) parallel verticals in the
+            # image are the ideal expression of gravity alignment -- zero
+            # roll, camera held level. There is no finite VP to check
+            # "centredness" against (that check only makes sense for a
+            # real, finite convergence point), so we give full credit
+            # from convergence alone rather than penalising a case that
+            # has no meaningful finite coordinate to measure.
+            convergence = 1.0
+            centre_alignment = 1.0
+            norm_residual = 0.0
+        else:
+            norm_residual = residual / (diag + 1e-9)
+            convergence = math.exp(-norm_residual / (tau + 1e-9)) * max(inlier_ratio, 0.15)
+            centre_alignment = max(0.0, 1.0 - abs(vp_x - cx) / (w / 3.0 + 1e-9))
 
         score = convergence * centre_alignment
         if score > best_score:
             best_score = score
-            best_detail = f"vp=({vp_x:.1f},{vp_y:.1f}) residual={norm_residual:.4f}"
+            vp_desc = "at_infinity" if is_at_infinity else f"({vp_x:.1f},{vp_y:.1f})"
+            best_detail = f"vp={vp_desc} residual={norm_residual:.4f}"
+            # Signed tilt of this vertical cluster from true vertical (deg).
+            signed_vert = np.degrees(mean_angle) - 90.0
+            best_vert_tilt = signed_vert
 
     if best_score == 0.0:
         return 0.0, best_detail
 
-    return float(np.clip(best_score, 0.0, 1.0)), best_detail
+    # ── Horizon / roll cross-check ─────────────────────────────────────
+    roll_consistency = None
+    if best_vert_tilt is not None and best_horiz_tilt is not None:
+        roll_diff = abs(best_vert_tilt - best_horiz_tilt)
+        roll_diff = min(roll_diff, 180.0 - roll_diff)
+        roll_consistency = max(0.0, 1.0 - roll_diff / (roll_tol_deg + 1e-9))
+        best_detail += f" roll_diff={roll_diff:.2f}deg roll_consistency={roll_consistency:.3f}"
+    else:
+        best_detail += " horizon_unavailable(no_horizontal_cluster)"
+
+    if roll_consistency is not None:
+        final_score = 0.6 * best_score + 0.4 * roll_consistency
+    else:
+        final_score = best_score  # not measured -> don't penalise for it
+
+    return float(np.clip(final_score, 0.0, 1.0)), best_detail
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODULE 8 (2026-08-25) — L17 GPC: RANSAC VP + IAC orthogonality + horizon/roll
+# ═══════════════════════════════════════════════════════════════════════════════
+# Per the spec's L17 GPC section, this block upgrades three of the four listed
+# sub-items:
+#
+# 1. Vanishing Point Estimation: naive whole-cluster LSQ -> RANSAC consensus
+#    fit (_compute_vanishing_point_ransac) with an inlier-ratio-weighted
+#    score, plus a "VP at infinity" consistency check for near-parallel
+#    clusters (see _signal_vp_consistency docstring).
+# 2. Orthogonality: the old heuristic ("does the VP-VP line pass near image
+#    centre") replaced with an actual IAC constraint solve
+#    (_estimate_orthogonal_focal_length_sq) — closed-form focal length from
+#    each orthogonal VP pair, scored on sign (real orthogonality requires
+#    f^2>0) and plausible magnitude.
+# 3. Gravity Alignment: added a horizon/camera-roll cross-check — the
+#    vertical-cluster tilt and the horizontal-cluster tilt must agree,
+#    since both are caused by the same single camera-roll rotation. This is
+#    the plumb-line + horizon idea from the spec, implemented from the line
+#    clusters already being computed rather than a second detector.
+#
+# Two items are explicitly NOT implemented here, flagged rather than faked:
+#
+# - **New S4 — Scale Consistency** (object size ratios vs. perspective
+#   depth) requires an object detector with size priors for people/cars/
+#   doors/chairs. No such detector exists anywhere in this codebase (no
+#   YOLO/torchvision/similar dependency), and this module's scope is
+#   GPC's existing internal helpers + analyze_gpc, not introducing a new
+#   ML model dependency. Not implemented; evidence list still has exactly
+#   3 signals, not a faked 4th.
+# - **Human pose gravity check** (person head-to-feet axis vs. gravity)
+#   requires a pose estimator. dlib was intentionally removed from this
+#   codebase (see requirements.txt) and no replacement is wired in here.
+#   cv2 ships a Haar face cascade, but a face bounding box gives position,
+#   not body orientation, so it can't answer the actual question the spec
+#   asks ("is the person's vertical axis aligned with gravity") — using it
+#   anyway would produce a number that looks like a real signal but isn't
+#   measuring what it claims to. Omitted rather than faked.
+#
+# Also flagged (spec's stale-audit pattern, same as prior modules): the old
+# docstring for Signal 2 described omega as available "for a camera with
+# square pixels and principal point near image centre" as if that were a
+# measured property; it's an *assumed* default in the absence of a 3rd
+# orthogonal VP direction to solve for the true principal point. The new
+# implementation still assumes principal point = image centre (documented
+# explicitly in _signal_orthogonality) — this is a real, common, defensible
+# single-view-metrology default, but it is an assumption, not a calibration,
+# and the docstring below says so rather than implying otherwise.
 
 
 def analyze_gpc(
@@ -2407,14 +2842,23 @@ def analyze_gpc(
     Detects physically implausible perspective geometry characteristic of
     AI-generated imagery using projective-geometry constraints:
 
-    1. **Vanishing Point Consistency** — real structured scenes have 1–3
-       dominant VPs with many supporting lines and low residual.  AI often
-       produces inconsistent convergence or spurious VPs.
+    1. **Vanishing Point Consistency** — RANSAC-fit VPs per orientation
+       cluster; real structured scenes have 1–3 dominant VPs with many
+       *inlier* supporting lines and low residual, plus a VP-at-infinity
+       check for near-parallel line families. AI often produces
+       inconsistent convergence, spurious low-support VPs, or near-parallel
+       lines that "converge" implausibly close to the lines themselves.
     2. **Orthogonality** — perpendicular walls / edges in 3-D project to
-       VPs that satisfy geometric orthogonality constraints.  AI frequently
-       violates these (e.g., impossible room corners).
+       VPs whose implied focal length (solved from the actual IAC
+       constraint, assuming principal point = image centre) is real
+       (f² > 0) and physically plausible. AI frequently violates this
+       (e.g., impossible room corners with no valid real-camera focal
+       length).
     3. **Gravity Alignment** — vertical edges in real photos converge to a
-       VP near the image centre line.  AI often tilts verticals arbitrarily.
+       VP near the image centre line, *and* the vertical tilt and horizon
+       tilt agree (both caused by the same camera roll). AI often tilts
+       verticals or the horizon independently, which no single camera
+       rotation can produce.
 
     Neutral Scene Handling
     ----------------------
@@ -2520,8 +2964,12 @@ def analyze_gpc(
         fw = cfg.get("fusion_weights", {})
         img_shape = (gray.shape[0], gray.shape[1])
 
+        # Deterministic RNG shared across all three signals' RANSAC VP fits
+        # so results (and therefore tests) are reproducible per image.
+        rng = np.random.default_rng(int(cfg.get("ransac_seed", 1234)))
+
         # ── Signal 1: VP Consistency ─────────────────────────────────────
-        vp_score, vp_detail = _signal_vp_consistency(lines, clusters, img_shape, cfg)
+        vp_score, vp_detail = _signal_vp_consistency(lines, clusters, img_shape, cfg, rng)
         vp_suspicion = 1.0 - float(np.clip(vp_score, 0.0, 1.0))
         vp_status, vp_conf = _map_suspicion_to_status_confidence(vp_suspicion)
         evidence.append(_build_evidence_node(
@@ -2531,7 +2979,7 @@ def analyze_gpc(
         ))
 
         # ── Signal 2: Orthogonality ──────────────────────────────────────
-        ortho_score, ortho_detail = _signal_orthogonality(lines, clusters, img_shape, cfg)
+        ortho_score, ortho_detail = _signal_orthogonality(lines, clusters, img_shape, cfg, rng)
         ortho_suspicion = 1.0 - float(np.clip(ortho_score, 0.0, 1.0))
         ortho_status, ortho_conf = _map_suspicion_to_status_confidence(ortho_suspicion)
         evidence.append(_build_evidence_node(
@@ -2541,7 +2989,7 @@ def analyze_gpc(
         ))
 
         # ── Signal 3: Gravity Alignment ──────────────────────────────────
-        grav_score, grav_detail = _signal_gravity_alignment(lines, clusters, img_shape, cfg)
+        grav_score, grav_detail = _signal_gravity_alignment(lines, clusters, img_shape, cfg, rng)
         grav_suspicion = 1.0 - float(np.clip(grav_score, 0.0, 1.0))
         grav_status, grav_conf = _map_suspicion_to_status_confidence(grav_suspicion)
         evidence.append(_build_evidence_node(

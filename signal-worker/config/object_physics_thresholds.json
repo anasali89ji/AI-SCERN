@@ -103,7 +103,18 @@
       "vp_consistency": 1.2,
       "orthogonality": 1.0,
       "gravity_alignment": 0.9
-    }
+    },
+    "ransac_iterations": 60,
+    "ransac_inlier_threshold_px": 4.0,
+    "ransac_seed": 1234,
+    "near_parallel_spread_deg": 2.0,
+    "min_vp_infinity_ratio": 3.0,
+    "parallel_mismatch_penalty": 0.5,
+    "focal_length_min_ratio": 0.3,
+    "focal_length_max_ratio": 3.5,
+    "horizon_angle_tolerance_deg": 20.0,
+    "roll_consistency_tolerance_deg": 10.0,
+    "min_perspective_spread_deg": 0.5
   },
   "l18_tsad": {
     "resize_max": 256,
