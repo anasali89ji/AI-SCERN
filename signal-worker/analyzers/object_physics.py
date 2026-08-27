@@ -4175,275 +4175,637 @@ def analyze_tsad(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+def _shadow_signature_for_component(
+    gray_f: np.ndarray,
+    comp_mask: np.ndarray,
+    cfg: dict,
+) -> Optional[Dict[str, Any]]:
+    r"""
+    Per-object shadow signature: contact attachment, dark-band principal
+    axis (estimated cast-shadow direction), and penumbra width, computed
+    from a single connected-component object mask.
+
+    This is the per-object building block used by
+    :func:`_signal_shadow_binding` to (a) test contact attachment for each
+    object independently and (b) collect one shadow-direction estimate per
+    object so that multi-object scenes can be checked for a **single
+    consistent light source** rather than only testing one global boundary
+    band as the previous implementation did.
+
+    Returns ``None`` if the component has too few boundary pixels to judge.
+    """
+    inner = int(cfg.get("inner_offset", 2))
+    band = int(cfg.get("shadow_band_width", 6))
+    dark_thresh = _safe_float(cfg.get("darkness_threshold", 0.15))
+
+    dist_in = cv2.distanceTransform(comp_mask, cv2.DIST_L2, 5)
+    dist_out = cv2.distanceTransform(255 - comp_mask, cv2.DIST_L2, 5)
+
+    near_band = (dist_out >= 1) & (dist_out <= band)
+    far_band = (dist_out > band) & (dist_out <= band + 4)
+    inner_band = (dist_in >= 1) & (dist_in <= inner + 2)
+
+    if near_band.sum() < 40:
+        return None
+
+    near_vals = gray_f[near_band]
+    far_vals = gray_f[far_band] if far_band.sum() > 20 else np.array([1.0])
+    inner_vals = gray_f[inner_band] if inner_band.sum() > 20 else np.array([1.0])
+
+    near_mean = float(near_vals.mean())
+    far_mean = float(far_vals.mean())
+    inner_mean = float(inner_vals.mean())
+
+    binding = 0.0
+    if near_mean + dark_thresh < inner_mean and near_mean + dark_thresh < far_mean:
+        binding = 1.0
+    elif near_mean < inner_mean and near_mean < far_mean:
+        binding = 0.6
+    elif near_mean < max(inner_mean, far_mean):
+        binding = 0.3
+
+    # Dark-band principal axis: the eigenvector of the largest eigenvalue of
+    # the dark-pixel coordinate covariance approximates the cast-shadow
+    # direction (the axis the shadow extends along), and its eccentricity
+    # approximates how directionally concentrated (vs. blob-like/ambient)
+    # that darkening is.
+    dark_band = (gray_f < near_mean + 0.05) & near_band
+    axis_angle: Optional[float] = None
+    eccentricity = 0.5
+    centroid = None
+    coords = np.argwhere(dark_band)
+    if coords.shape[0] > 10:
+        coords_f = coords.astype(np.float32)
+        centroid = coords_f.mean(axis=0)  # (y, x)
+        centered = coords_f - centroid
+        cov = np.cov(centered.T)
+        eigvals, eigvecs = np.linalg.eigh(cov)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            eccentricity = float(np.clip(
+                1.0 - np.sqrt(np.min(eigvals) / (np.max(eigvals) + 1e-9)), 0.0, 1.0
+            ))
+        major = eigvecs[:, int(np.argmax(eigvals))]  # (dy, dx)
+        # Orient the axis outward, away from the object's own centroid, so
+        # direction comparisons across objects are on a comparable footing.
+        obj_coords = np.argwhere(comp_mask > 0)
+        if obj_coords.shape[0] > 0 and centroid is not None:
+            obj_centroid = obj_coords.mean(axis=0)
+            outward = centroid - obj_centroid
+            if float(np.dot(outward, major)) < 0:
+                major = -major
+        axis_angle = float(math.atan2(major[0], major[1]))  # image-space angle
+
+    penumbra = 0.0
+    if axis_angle is not None:
+        direction = (math.cos(axis_angle), math.sin(axis_angle))
+        boundary_pts = _get_boundary_points(comp_mask, max_points=600)
+        _, _, penumbra = _sample_directional_contact_shadow(
+            gray_f * 255.0, comp_mask, cfg, direction, boundary_pts
+        )
+
+    return {
+        "binding": binding,
+        "near_mean": near_mean,
+        "far_mean": far_mean,
+        "inner_mean": inner_mean,
+        "axis_angle": axis_angle,
+        "eccentricity": eccentricity,
+        "penumbra_px": penumbra,
+        "near_band_mask": near_band,
+        "far_band_mask": far_band,
+        "area": float(comp_mask.sum() / 255.0),
+    }
+
+
+def _shadow_color_signature(
+    img_color: np.ndarray,
+    sig: Dict[str, Any],
+) -> Optional[float]:
+    r"""
+    Blue-shift check for one object's shadow.
+
+    Real cast shadows are lit primarily by scattered skylight rather than
+    the direct (often warmer) key light, so the shadowed region tends to
+    read bluer relative to its own lit surround than pure attenuation of
+    the same surface color would predict:
+
+    .. math::
+        \Delta_{blue} = \frac{B_{near}}{R_{near}+\epsilon} - \frac{B_{far}}{R_{far}+\epsilon}
+
+    AI-generated shadows are frequently produced by a flat multiplicative
+    darkening of the same pixels, which preserves chromaticity
+    (:math:`\Delta_{blue} \approx 0`) or, in some generators, skews the
+    shadow toward neutral gray/black instead.
+
+    This is a heuristic proxy, not a colorimetric measurement (no white
+    balance / illuminant estimation is performed here) — it is intended as
+    a weak corroborating signal, not a standalone verdict.
+    """
+    near_mask = sig.get("near_band_mask")
+    far_mask = sig.get("far_band_mask")
+    if near_mask is None or far_mask is None:
+        return None
+    if near_mask.sum() < 20 or far_mask.sum() < 20:
+        return None
+
+    img_f = img_color.astype(np.float32)
+    near_rgb = img_f[near_mask]
+    far_rgb = img_f[far_mask]
+
+    near_br = float(near_rgb[:, 2].mean()) / (float(near_rgb[:, 0].mean()) + 1e-6)
+    far_br = float(far_rgb[:, 2].mean()) / (float(far_rgb[:, 0].mean()) + 1e-6)
+    return near_br - far_br
+
+
 def _signal_shadow_binding(
     gray: np.ndarray,
     mask: np.ndarray,
     cfg: dict,
-) -> Tuple[float, float, str]:
+    img_color: Optional[np.ndarray] = None,
+) -> Tuple[float, float, str, Dict[str, Any]]:
     r"""
-    Signal 1 — Shadow Attachment & Direction Consistency.
+    Signal 1 — Full Shadow-Physics Consistency.
 
-    Mathematical Model
-    ------------------
-    Real shadows obey three physical constraints:
+    Enhanced from a single global boundary-band scan to a **per-object,
+    multi-shadow consistency check**, which is what actually lets us test
+    the "single light source" constraint the spec calls for — a single
+    object can only ever give you one direction estimate, never a
+    consistency check.
 
-    1. **Contact attachment** — A cast shadow begins at the object's
-       contact boundary and extends outward.  The intensity immediately
-       outside the object (:math:`I_{near}`) must be darker than both the
-       interior (:math:`I_{in}`) and the far background (:math:`I_{far}`):
+    For every connected component of the object mask we independently
+    measure:
 
-       .. math::
-           I_{near} < I_{in} \quad\text{and}\quad I_{near} < I_{far}
+    1. **Contact attachment** — as before: near-boundary intensity must be
+       darker than both the object interior and the far background.
+    2. **Cast-shadow direction** — the principal axis of the dark band
+       just outside the object, oriented outward from the object centroid.
+    3. **Penumbra width** — the 10%-90% intensity transition width along
+       that axis (reuses the OBP directional sampler, which already
+       implements this profile measurement).
+    4. **Shadow color** — B/R ratio shift between the near (shadow) band
+       and the far (lit background) band.
 
-    2. **Directional consistency** — All cast shadows in a scene share
-       approximately the same direction vector :math:`\mathbf{d}` because
-       there is typically one dominant light source (sun, room lamp).
-       We estimate shadow direction via the major axis of the dark region
-       outside each object boundary.  The angular dispersion of these
-       directions should be small for real scenes.
+    Across all objects with a valid direction estimate we then test:
 
-    3. **Softness gradient** — Real shadows have a penumbra: the edge
-       transitions smoothly from dark to light over several pixels.
-       AI shadows often have hard, binary edges.
+    * **Single-light-source consistency** — circular standard deviation of
+      the per-object shadow-axis angles (using the doubled-angle trick
+      since a PCA axis has no inherent sign). Real scenes lit by one
+      dominant source (sun, single lamp) should show low dispersion;
+      shadows glued on independently per object should not.
+    * **Softness (penumbra) consistency** — coefficient of variation of
+      penumbra widths, each normalized by :math:`\sqrt{\text{object area}}`
+      as a coarse stand-in for object scale/distance, since the spec's
+      "penumbra scales with distance to light" claim needs an actual
+      distance estimate we don't have from a single 2-D image; we
+      therefore only check that normalized softness is *consistent*
+      across objects, not that it follows a specific distance law.
 
-    We compute a **binding score** as the fraction of boundary samples
-    satisfying the contact-attachment inequality, weighted by directional
-    consistency:
-
-    .. math::
-        S_{bind} = \frac{1}{N}\sum_{i=1}^{N} \mathbb{1}_{[I_{near} < \min(I_{in}, I_{far})]}
-        \cdot \left(1 - \frac{\sigma_\theta}{\pi/4}\right)
-
-    where :math:`\sigma_\theta` is the circular standard deviation of
-    shadow directions.
+    With only one object detected, cross-object checks are not
+    computable and are reported as neutral (0.5) rather than guessed.
 
     Parameters
     ----------
     gray : np.ndarray
         H×W uint8 grayscale image.
     mask : np.ndarray
-        H×W uint8 binary object mask (0 or 255).
+        H×W uint8 binary object mask (0 or 255), may contain multiple
+        disjoint components.
     cfg : dict
-        ``l19_osip`` threshold block.
+        ``l19_osip`` → ``shadow`` threshold block.
+    img_color : np.ndarray, optional
+        H×W×3 uint8 RGB image, same resolution as ``gray``/``mask``. Used
+        for the shadow-color blue-shift check; if omitted, that check is
+        skipped (reported neutral).
 
     Returns
     -------
-    Tuple[float, float, str]
-        (binding_score, direction_consistency, detail).
-        binding_score ∈ [0, 1] where 1 = strongly real (attached shadows).
+    Tuple[float, float, str, dict]
+        (binding_score, direction_consistency, detail, extras) where
+        ``extras`` carries the color/softness sub-scores for separate
+        evidence nodes. binding_score ∈ [0, 1], 1 = strongly real.
     """
-    h, w = gray.shape
-    inner = int(cfg.get("inner_offset", 2))
-    band = int(cfg.get("shadow_band_width", 6))
-    dark_thresh = _safe_float(cfg.get("darkness_threshold", 0.15))
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    components = [i for i in range(1, num_labels) if stats[i, cv2.CC_STAT_AREA] >= 60]
 
-    binary = (mask > 0).astype(np.uint8)
-    dist_in = cv2.distanceTransform(binary, cv2.DIST_L2, 5)
-    dist_out = cv2.distanceTransform(255 - binary, cv2.DIST_L2, 5)
-
-    # Sample points: just outside object boundary
-    near_band = (dist_out >= 1) & (dist_out <= band)
-    far_band = (dist_out > band) & (dist_out <= band + 4)
-    inner_band = (dist_in >= 1) & (dist_in <= inner + 2)
-
-    if near_band.sum() < 100:
-        return 0.5, 0.5, "insufficient_boundary_pixels"
+    if not components:
+        extras = {"color_score": 0.5, "softness_score": 0.5, "light_source_deg": None}
+        return 0.5, 0.5, "no_significant_objects", extras
 
     gray_f = gray.astype(np.float32) / 255.0
+    sigs: List[Dict[str, Any]] = []
+    for lbl in components:
+        comp_mask = np.where(labels == lbl, 255, 0).astype(np.uint8)
+        sig = _shadow_signature_for_component(gray_f, comp_mask, cfg)
+        if sig is not None:
+            sigs.append(sig)
 
-    # Contact attachment: near must be darker than both interior and far
-    near_vals = gray_f[near_band]
-    far_vals = gray_f[far_band] if far_band.sum() > 50 else np.array([1.0])
-    inner_vals = gray_f[inner_band] if inner_band.sum() > 50 else np.array([1.0])
+    if not sigs:
+        extras = {"color_score": 0.5, "softness_score": 0.5, "light_source_deg": None}
+        return 0.5, 0.5, "insufficient_boundary_pixels", extras
 
-    near_mean = float(near_vals.mean())
-    far_mean = float(far_vals.mean())
-    inner_mean = float(inner_vals.mean())
+    bindings = [s["binding"] for s in sigs]
+    mean_binding = float(np.mean(bindings))
 
-    # Binding: near is darker than both by at least dark_thresh
-    binding = 0.0
-    if near_mean + dark_thresh < inner_mean and near_mean + dark_thresh < far_mean:
-        # Strong binding
-        binding = 1.0
-    elif near_mean < inner_mean and near_mean < far_mean:
-        # Weak but present binding
-        binding = 0.6
-    elif near_mean < max(inner_mean, far_mean):
-        # Partial binding
-        binding = 0.3
+    angled = [s for s in sigs if s["axis_angle"] is not None]
+    n_objects = len(sigs)
 
-    # ── Directional consistency (heuristic) ────────────────────────────
-    # Compute gradient of the dark band to estimate shadow direction
-    dark_band = (gray_f < near_mean + 0.05) & near_band
-    if dark_band.sum() < 20:
-        direction_consistency = 0.5
+    if len(angled) >= 2:
+        # Doubled-angle circular statistics: a PCA axis is a *line*, not a
+        # *vector* (no head/tail), so angle and angle+pi are the same axis.
+        doubled = np.array([2.0 * a["axis_angle"] for a in angled])
+        c = float(np.mean(np.cos(doubled)))
+        s = float(np.mean(np.sin(doubled)))
+        resultant = math.hypot(c, s)
+        circ_std = math.sqrt(max(0.0, -2.0 * math.log(max(resultant, 1e-9))))
+        direction_consistency = float(np.clip(1.0 - circ_std / (math.pi / 2.0), 0.0, 1.0))
+        light_source_deg = float(np.degrees(0.5 * math.atan2(s, c)))
+        cross_check_note = f"n_objects={n_objects} circ_std={circ_std:.2f}rad"
     else:
-        # Use PCA on dark band coordinates to find major axis
-        coords = np.argwhere(dark_band)
-        if len(coords) > 10:
-            coords_f = coords.astype(np.float32)
-            mean = coords_f.mean(axis=0)
-            centered = coords_f - mean
-            cov = np.cov(centered.T)
-            eigvals = np.linalg.eigvalsh(cov)
-            # Eccentricity: high = strong directional preference
-            with np.errstate(divide="ignore", invalid="ignore"):
-                eccentricity = 1.0 - np.sqrt(np.min(eigvals) / (np.max(eigvals) + 1e-9))
-            direction_consistency = float(np.clip(eccentricity, 0.0, 1.0))
-        else:
-            direction_consistency = 0.5
+        mean_ecc = float(np.mean([s["eccentricity"] for s in sigs]))
+        direction_consistency = mean_ecc
+        light_source_deg = angled[0]["axis_angle"] and float(np.degrees(angled[0]["axis_angle"]))
+        cross_check_note = "single_object_no_cross_light_check"
 
-    # Combined score
-    score = binding * 0.7 + direction_consistency * 0.3
-    detail = f"binding={binding:.2f} dir_cons={direction_consistency:.2f} near={near_mean:.3f}"
-    return float(np.clip(score, 0.0, 1.0)), direction_consistency, detail
+    # ── Softness (penumbra) consistency across objects ─────────────────
+    softness_score = 0.5
+    penumbras = [(s["penumbra_px"], s["area"]) for s in sigs if s["penumbra_px"] > 0 and s["area"] > 0]
+    if len(penumbras) >= 2:
+        normed = np.array([p / math.sqrt(a) for p, a in penumbras])
+        mean_n = float(normed.mean())
+        if mean_n > 1e-6:
+            cv = float(normed.std() / mean_n)
+            softness_score = float(np.clip(1.0 - cv, 0.0, 1.0))
+
+    # ── Shadow color / blue-shift ───────────────────────────────────────
+    color_score = 0.5
+    if img_color is not None and img_color.shape[:2] == gray.shape[:2]:
+        shifts = [_shadow_color_signature(img_color, s) for s in sigs]
+        shifts = [v for v in shifts if v is not None]
+        if shifts:
+            mean_shift = float(np.mean(shifts))
+            # Heuristic mapping (not colorimetrically calibrated): a
+            # positive shift (near band relatively bluer than far band)
+            # is consistent with skylight-filled real shadows.
+            color_score = float(np.clip(0.5 + mean_shift * 4.0, 0.0, 1.0))
+
+    score = (
+        mean_binding * 0.40
+        + direction_consistency * 0.20
+        + color_score * 0.20
+        + softness_score * 0.20
+    )
+
+    extras = {
+        "color_score": color_score,
+        "softness_score": softness_score,
+        "light_source_deg": light_source_deg,
+    }
+    detail = (
+        f"binding={mean_binding:.2f} dir_cons={direction_consistency:.2f} "
+        f"color={color_score:.2f} softness={softness_score:.2f} ({cross_check_note})"
+    )
+    return float(np.clip(score, 0.0, 1.0)), direction_consistency, detail, extras
+
+
+def _best_symmetry_band_at_angle(
+    grad: np.ndarray,
+    theta_deg: float,
+    band: int,
+) -> Tuple[Optional[int], List[float]]:
+    r"""
+    Rotate the gradient-magnitude image so a candidate reflection axis at
+    ``theta_deg`` becomes horizontal, then run the row-band symmetry scan
+    (upper strip vs. flipped lower strip) used by the original
+    horizontal-only implementation. Returns the row (in rotated
+    coordinates) with the best correlation and the full per-row score list
+    used later for ripple analysis, or ``(None, [])`` if nothing usable.
+
+    This generalizes reflection-plane detection from "horizontal only" to
+    an arbitrary orientation by search rather than by deriving a closed-form
+    axis (a true closed-form estimate would need calibrated camera geometry
+    we don't have from a single 2-D image without further scene priors).
+    """
+    h, w = grad.shape
+    if theta_deg == 0.0:
+        rotated = grad
+    else:
+        center = (w / 2.0, h / 2.0)
+        m = cv2.getRotationMatrix2D(center, theta_deg, 1.0)
+        rotated = cv2.warpAffine(grad, m, (w, h), flags=cv2.INTER_LINEAR)
+
+    rh = rotated.shape[0]
+    row_step = max(1, rh // 40)
+    best_row = None
+    best_corr = -2.0
+    scores: List[float] = []
+    for y in range(band, rh - band, row_step):
+        upper = rotated[y - band:y, :].ravel()
+        lower = rotated[y:y + band, :][::-1, :].ravel()
+        if upper.std() > 1.0 and lower.std() > 1.0:
+            with np.errstate(invalid="ignore"):
+                c = float(np.corrcoef(upper, lower)[0, 1])
+            if math.isfinite(c):
+                scores.append(c)
+                if c > best_corr:
+                    best_corr = c
+                    best_row = y
+    return best_row, scores
+
+
+def _reflection_color_attenuation(
+    img_color: np.ndarray,
+    theta_deg: float,
+    row: int,
+    band: int,
+) -> Optional[Tuple[float, float]]:
+    r"""
+    Compare mean brightness and blue-ness of the "source" strip against the
+    flipped "reflected" strip around the winning symmetry axis (in the
+    rotated frame used to find that axis).
+
+    Real reflections attenuate and cool the reflected image slightly
+    (Fresnel reflectance drops below 1 at near-normal incidence, and water
+    adds selective absorption that skews toward blue); a naive copy/paste
+    or AI-hallucinated reflection often has equal or wrong-direction
+    attenuation.
+
+    Returns (delta_brightness, delta_blue_ratio) where positive values mean
+    the reflected strip is darker/bluer than the source strip (real-like),
+    or ``None`` if the strip is degenerate.
+    """
+    h, w = img_color.shape[:2]
+    center = (w / 2.0, h / 2.0)
+    if theta_deg == 0.0:
+        rotated = img_color
+    else:
+        m = cv2.getRotationMatrix2D(center, theta_deg, 1.0)
+        rotated = cv2.warpAffine(img_color, m, (w, h), flags=cv2.INTER_LINEAR)
+
+    rh = rotated.shape[0]
+    if row - band < 0 or row + band > rh:
+        return None
+    source = rotated[row - band:row, :, :].astype(np.float32)
+    reflected = rotated[row:row + band, :, :].astype(np.float32)
+    if source.size == 0 or reflected.size == 0:
+        return None
+
+    src_bright = float(source.mean())
+    refl_bright = float(reflected.mean())
+    src_br_ratio = float(source[..., 2].mean()) / (float(source[..., 0].mean()) + 1e-6)
+    refl_br_ratio = float(reflected[..., 2].mean()) / (float(reflected[..., 0].mean()) + 1e-6)
+
+    delta_brightness = src_bright - refl_bright
+    delta_blue = refl_br_ratio - src_br_ratio
+    return delta_brightness, delta_blue
 
 
 def _signal_reflection_consistency(
     gray: np.ndarray,
     cfg: dict,
-) -> Tuple[float, float, str]:
+    img_color: Optional[np.ndarray] = None,
+) -> Tuple[float, float, str, Dict[str, Any]]:
     r"""
-    Signal 2 — Reflection Consistency (Mirror / Water Realism).
+    Signal 2 — Reflection Consistency (Mirror / Water Realism), generalized
+    to arbitrary reflection-plane orientation.
 
     Mathematical Model
     ------------------
     Real reflections obey the law of reflection: the angle of incidence
-    equals the angle of reflection.  For a planar mirror or still water
-    surface, this implies a **geometric symmetry** across the reflection
-    plane.  In the image, this manifests as a local correlation between
-    the gradient structure on one side of a horizontal/vertical axis and
-    the flipped gradient structure on the other side.
+    equals the angle of reflection, which for a planar reflector implies
+    geometric symmetry across the reflection plane. The previous
+    implementation only ever tested a horizontal plane. We instead search
+    a small bank of candidate plane orientations (0°/horizontal,
+    90°/vertical, and several intermediate angles), rotate the
+    gradient-magnitude image so each candidate becomes horizontal, and
+    reuse the row-band correlation scan at each orientation, keeping the
+    orientation and row with the strongest symmetry response.
 
-    We approximate this by searching for horizontal symmetry bands:
-    for each row :math:`y`, we compare the gradient magnitude profile
-    above and below within a search band of width :math:`2b`:
+    At the winning axis we additionally check:
 
-    .. math::
-        \rho(y) = \mathrm{corr}\bigl(|\nabla I|_{y-b \ldots y},\;
-        \mathrm{flip}(|\nabla I|_{y \ldots y+b})\bigr)
-
-    High correlation across a contiguous band suggests a real reflective
-    surface.  AI reflections are often:
-    * Missing entirely (no symmetry band).
-    * Perfectly mirrored without the subtle distortions that real water
-      or imperfect mirrors introduce.
-    * Inconsistent orientation (reflection axis not aligned with gravity).
-
-    **Heuristic:** We also check for "too perfect" symmetry — real water
-    has ripples, real mirrors have slight curvature.  A correlation of
-    exactly 1.0 across a large region is itself suspicious.
+    * **Color/attenuation** — real reflections are dimmer and slightly
+      bluer than their source (Fresnel falloff + selective absorption in
+      water); a flat color copy or backwards attenuation is suspicious.
+    * **Ripple / spatial variation** — real water reflections have
+      spatially-varying distortion (never perfectly uniform along the
+      axis); we approximate this via the standard deviation of
+      block-wise correlation along the winning row, since a full ripple
+      field reconstruction is not identifiable from a single frame.
 
     Parameters
     ----------
     gray : np.ndarray
         H×W uint8 grayscale image.
     cfg : dict
-        ``l19_osip`` threshold block.
+        ``l19_osip`` → ``reflection`` threshold block.
+    img_color : np.ndarray, optional
+        H×W×3 uint8 RGB image for the color/attenuation check.
 
     Returns
     -------
-    Tuple[float, float, str]
-        (reflection_score, mean_correlation, detail).
-        reflection_score ∈ [0, 1] where 1 = strongly real (plausible reflection).
+    Tuple[float, float, str, dict]
+        (reflection_score, mean_correlation, detail, extras).
+        reflection_score ∈ [0, 1], 1 = strongly real reflection.
     """
     h, w = gray.shape
     band = int(cfg.get("symmetry_search_band", 8))
+    angle_candidates = cfg.get("angle_candidates_deg", [0.0, 90.0, 20.0, -20.0, 45.0, -45.0])
 
-    # Gradient magnitude
     gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
     gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
     grad = np.sqrt(gx ** 2 + gy ** 2)
 
-    # Search for horizontal symmetry bands (skip rows for speed)
-    corr_scores: List[float] = []
-    row_step = max(1, h // 64)  # sample at most ~64 rows
-    for y in range(band, h - band, row_step):
-        upper = grad[y - band:y, :].ravel()
-        lower = grad[y:y + band, :][::-1, :].ravel()
-        if upper.std() > 1.0 and lower.std() > 1.0:
-            with np.errstate(invalid="ignore"):
-                c = float(np.corrcoef(upper, lower)[0, 1])
-            if math.isfinite(c):
-                corr_scores.append(c)
+    best_theta = None
+    best_row = None
+    best_scores: List[float] = []
+    best_mean_corr = -2.0
+    for theta in angle_candidates:
+        row, scores = _best_symmetry_band_at_angle(grad, float(theta), band)
+        if row is None or not scores:
+            continue
+        mean_c = float(np.mean(scores))
+        if mean_c > best_mean_corr:
+            best_mean_corr = mean_c
+            best_theta = float(theta)
+            best_row = row
+            best_scores = scores
 
-    if not corr_scores:
-        return 0.5, 0.0, "no_symmetry_bands_detected"
+    extras: Dict[str, Any] = {"axis_deg": None, "color_score": 0.5, "ripple_score": 0.5}
+    if best_theta is None:
+        return 0.5, 0.0, "no_symmetry_bands_detected", extras
 
-    mean_corr = float(np.mean(corr_scores))
-    max_corr = float(np.max(corr_scores))
+    mean_corr = best_mean_corr
+    max_corr = float(np.max(best_scores))
+    extras["axis_deg"] = best_theta
 
-    # Real reflection: moderate-to-high correlation but not perfect
-    # AI: either no correlation (missing reflection) or perfect 1.0 (too clean)
     if mean_corr < 0.3:
-        # Missing or inconsistent reflection
-        score = mean_corr  # low = suspicious
+        symmetry_score = mean_corr
     elif max_corr > 0.98 and mean_corr > 0.90:
-        # "Too perfect" symmetry — suspicious
-        score = 0.4
+        symmetry_score = 0.4
     else:
-        # Plausible real reflection with natural imperfections
-        score = mean_corr
+        symmetry_score = mean_corr
 
-    detail = f"mean_corr={mean_corr:.3f} max_corr={max_corr:.3f} bands={len(corr_scores)}"
-    return float(np.clip(score, 0.0, 1.0)), mean_corr, detail
+    # ── Ripple / spatial variation along the winning axis ──────────────
+    ripple_score = 0.5
+    if len(best_scores) >= 6:
+        std_along_axis = float(np.std(best_scores))
+        # Some spatial variation (moderate std) is consistent with real
+        # water/imperfect-mirror ripple; near-zero variation (perfectly
+        # uniform symmetry everywhere) or chaotic variation (essentially
+        # no coherent reflection at all) are both suspicious.
+        if std_along_axis < 0.02:
+            ripple_score = 0.35  # suspiciously uniform
+        elif std_along_axis > 0.45:
+            ripple_score = 0.35  # too chaotic to be a coherent reflection
+        else:
+            ripple_score = float(np.clip(0.5 + (std_along_axis - 0.02) * 1.5, 0.0, 1.0))
+    extras["ripple_score"] = ripple_score
+
+    # ── Color / attenuation at the winning axis ─────────────────────────
+    color_score = 0.5
+    if img_color is not None and img_color.shape[:2] == gray.shape[:2] and best_row is not None:
+        result = _reflection_color_attenuation(img_color, best_theta, best_row, band)
+        if result is not None:
+            delta_brightness, delta_blue = result
+            # Real: reflected strip modestly darker and/or bluer.
+            combined = (delta_brightness / 255.0) + delta_blue
+            color_score = float(np.clip(0.5 + combined * 3.0, 0.0, 1.0))
+    extras["color_score"] = color_score
+
+    score = symmetry_score * 0.5 + color_score * 0.25 + ripple_score * 0.25
+
+    detail = (
+        f"axis={best_theta:.0f}deg mean_corr={mean_corr:.3f} max_corr={max_corr:.3f} "
+        f"color={color_score:.2f} ripple={ripple_score:.2f} bands={len(best_scores)}"
+    )
+    return float(np.clip(score, 0.0, 1.0)), mean_corr, detail, extras
+
+
+def _classify_junction(
+    neighbours: np.ndarray,
+    centre_y: int,
+    centre_x: int,
+    tol: float,
+) -> Optional[str]:
+    r"""
+    Classify a degree-3 or degree-4 edge branch point into a junction type
+    from the angular pattern of its neighbours, generalizing the previous
+    T-only classifier to T / Y / X (L-junctions, degree-2 corners, are
+    handled separately by :func:`_classify_corner` since they are not
+    branch points).
+
+    * **T-junction**: one gap ≈ 180° (the continuous "bar" — foreground
+      occluder boundary) and two gaps ≈ 90° (the "stem" — terminating
+      background boundary).
+    * **Y-junction**: three gaps each ≈ 120° (three surfaces meeting at a
+      convex/concave corner, no single continuous edge).
+    * **X-junction**: four gaps each ≈ 90° (two edges crossing, e.g. two
+      independent occluders overlapping at a point).
+    """
+    angles = sorted(
+        math.atan2(dy - centre_y, dx - centre_x) for (dy, dx) in neighbours
+    )
+    n = len(angles)
+    diffs = []
+    for i in range(n):
+        a1 = angles[i]
+        a2 = angles[(i + 1) % n]
+        diffs.append(abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi))
+
+    if n == 3:
+        sd = sorted(diffs, reverse=True)
+        if (abs(sd[0] - math.pi) < tol * 2 and
+                abs(sd[1] - math.pi / 2) < tol and
+                abs(sd[2] - math.pi / 2) < tol):
+            return "T"
+        target = 2.0 * math.pi / 3.0
+        if all(abs(d - target) < tol * 1.3 for d in diffs):
+            return "Y"
+        return None
+    if n == 4:
+        target = math.pi / 2.0
+        if all(abs(d - target) < tol for d in diffs):
+            return "X"
+        return None
+    return None
+
+
+def _classify_corner(
+    neighbours: np.ndarray,
+    centre_y: int,
+    centre_x: int,
+    tol: float,
+) -> bool:
+    """L-junction: a degree-2 edge point whose two arms meet at ~90° (a
+    sharp turn), as opposed to ~180° (a straight edge segment, not a
+    corner)."""
+    if len(neighbours) != 2:
+        return False
+    a1 = math.atan2(neighbours[0][0] - centre_y, neighbours[0][1] - centre_x)
+    a2 = math.atan2(neighbours[1][0] - centre_y, neighbours[1][1] - centre_x)
+    gap = abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi)
+    return abs(gap - math.pi / 2.0) < tol
 
 
 def _signal_occlusion_t_junctions(
     gray: np.ndarray,
     cfg: dict,
-) -> Tuple[float, int, str]:
+    labels: Optional[np.ndarray] = None,
+) -> Tuple[float, int, str, Dict[str, Any]]:
     r"""
-    Signal 3 — Occlusion T-Junction Detection.
+    Signal 3 — Dense Occlusion-Junction Detection + Depth-Ordering Graph.
 
     Mathematical Model
     ------------------
     When one object partially occludes another, the boundary of the
     foreground object meets the boundary of the background object at a
-    **T-junction** (or Y-junction).  This is a fundamental cue in
-    computational vision for depth ordering (Kanizsa, 1979).
+    **T-junction** (Kanizsa, 1979). Natural scenes produce a characteristic
+    *distribution* of junction types dominated by T-junctions, with fewer
+    Y (three-surface corners), L (silhouette corners) and X (crossing
+    occluders) junctions. AI generators frequently under-produce
+    T-junctions specifically, because diffusion models don't reason about
+    explicit depth ordering the way real occlusion geometry enforces it.
 
-    Real scenes are full of T-junctions: a cup on a table, a person
-    standing in front of a wall, a car parked on a street.  AI generators
-    frequently fail to produce proper T-junctions because:
+    **Algorithm:**
+    1. Detect Canny edges, dilate slightly for 8-connectivity robustness.
+    2. At each sampled edge pixel, classify by neighbour count/pattern into
+       T, Y, X (branch points) or L (2-neighbour corners).
+    3. Score the junction-type distribution against the expected natural
+       ranking T ≥ Y ≥ L ≥ X (rank-inversion penalty).
+    4. **Depth-ordering cycle check** (scoped-down, approximate): at each
+       T-junction, the perpendicular "stem" arm points into the occluded
+       (background) region and the collinear "bar" arms belong to the
+       occluder's continuous silhouette. Where a T-junction's bar/stem
+       sides fall on two *different* connected components of the object
+       mask, we record a directed "front of" edge between those two
+       components. Real scenes should yield a consistent partial order
+       (no A-in-front-of-B and B-in-front-of-A both implied); AI composites
+       more often produce contradictory local cues, which shows up as
+       cycles in this graph.
 
-    1. The diffusion process treats foreground and background as separate
-       patches without explicit depth ordering.
-    2. Object boundaries "fade into" backgrounds rather than creating
-       crisp occlusion edges.
-    3. Missing T-junctions create the "floating object" illusion.
-
-    We detect T-junctions by analysing Canny edge topology:
-    a T-junction occurs where three edge segments meet at angles
-    approximately :math:`90° \pm \delta` (one stem + two arms).
-
-    **Algorithm (heuristic):**
-    1. Detect Canny edges.
-    2. Find edge pixels with exactly 3 connected neighbours (8-connectivity).
-    3. Compute the three angles between neighbour pairs.
-    4. A T-junction has one angle :math:`\approx 180°` (stem) and two
-       angles :math:`\approx 90°` (arms).
-
-    The **occlusion score** is the normalised count of valid T-junctions
-    per unit edge length:
-
-    .. math::
-        S_{occ} = \min\!\left(1,\; \frac{N_{T}}{L_{edge} / 100}\right)
-
-    where :math:`L_{edge}` is the total edge-pixel count.
+       This uses the coarse adaptive-threshold mask's own connected
+       components as a stand-in for object identity, not true instance
+       segmentation — it can only flag contradictions *between components
+       that mask segmentation actually separated*, and is reported as
+       "insufficient" rather than guessed when fewer than two components
+       with inter-component junctions are found.
 
     Parameters
     ----------
     gray : np.ndarray
         H×W uint8 grayscale image.
     cfg : dict
-        ``l19_osip`` threshold block.
+        ``l19_osip`` → ``occlusion`` threshold block.
+    labels : np.ndarray, optional
+        H×W int32 connected-component label map (0 = background), from the
+        same object mask used by the shadow signal, for the depth-order
+        check. If omitted, the depth-order check is reported as neutral.
 
     Returns
     -------
-    Tuple[float, int, str]
-        (occlusion_score, junction_count, detail).
-        occlusion_score ∈ [0, 1] where 1 = many T-junctions (real depth ordering).
+    Tuple[float, int, str, dict]
+        (occlusion_score, t_junction_count, detail, extras).
+        occlusion_score ∈ [0, 1], 1 = natural junction distribution with a
+        consistent (acyclic) depth ordering.
     """
     edges = cv2.Canny(
         gray,
@@ -4452,67 +4814,158 @@ def _signal_occlusion_t_junctions(
     )
 
     edge_pixels = np.argwhere(edges > 0)
+    extras: Dict[str, Any] = {
+        "distribution_score": 0.5, "depth_order_score": 0.5,
+        "counts": {"T": 0, "Y": 0, "L": 0, "X": 0},
+    }
     if len(edge_pixels) < 50:
-        return 0.5, 0, "too_few_edges"
+        return 0.5, 0, "too_few_edges", extras
 
     tol = np.deg2rad(_safe_float(cfg.get("junction_angle_tolerance_deg", 25.0)))
     min_strength = int(cfg.get("min_junction_strength", 15))
 
-    # Dilate edges slightly to ensure connectivity
-    k = np.ones((3, 3), np.uint8)
-    edges_dilated = cv2.dilate(edges, k)
-
-    t_count = 0
+    # BUG FIX (found via functional smoke testing, pre-existing in the
+    # original T-junction detector and inherited unchanged through module
+    # 9): the previous code dilated the edge map with a 3x3 kernel *before*
+    # counting 3x3-neighbourhood pixels. Canny edges are already thinned to
+    # ~1px by non-maximum suppression, so dilating first fattens every true
+    # junction into a solid blob that fills the entire 3x3 window (8
+    # neighbours, not 3 or 4) — the "exactly N neighbours" classifier then
+    # almost never fires near a real junction. Verified directly: a
+    # hand-built T-shaped edge classified correctly as "T" against the raw
+    # Canny output, but returned 8 neighbours (unclassifiable) once dilated
+    # first, and every synthetic smoke fixture here (including scenes with
+    # deliberately crisp rectangular occlusion edges) silently scored
+    # T=Y=L=X=0 under the old dilate-first order. Canny's own edges are
+    # already thin enough for 3x3-neighbourhood topology; no dilation is
+    # needed or correct here.
     h, w = gray.shape
+    counts = {"T": 0, "Y": 0, "L": 0, "X": 0}
+    t_junction_records: List[Tuple[int, int, np.ndarray, int, int]] = []
 
-    # Sample edge pixels (don't check every pixel for speed)
-    step = max(1, len(edge_pixels) // 120)
+    step = max(1, len(edge_pixels) // 400)
     sampled = edge_pixels[::step]
 
     for (y, x) in sampled:
-        # 3×3 neighbourhood
         y0, y1 = max(0, y - 1), min(h, y + 2)
         x0, x1 = max(0, x - 1), min(w, x + 2)
-        nb = edges_dilated[y0:y1, x0:x1]
+        nb = edges[y0:y1, x0:x1]
         neighbours = np.argwhere(nb > 0)
-        # Exclude centre pixel
         centre_y, centre_x = y - y0, x - x0
         neighbours = neighbours[(neighbours[:, 0] != centre_y) | (neighbours[:, 1] != centre_x)]
 
-        if len(neighbours) != 3:
-            continue
+        n_nb = len(neighbours)
+        if n_nb in (3, 4):
+            jtype = _classify_junction(neighbours, centre_y, centre_x, tol)
+            if jtype:
+                counts[jtype] += 1
+                if jtype == "T":
+                    t_junction_records.append((y, x, neighbours, centre_y, centre_x))
+        elif n_nb == 2:
+            if _classify_corner(neighbours, centre_y, centre_x, tol):
+                counts["L"] += 1
 
-        # Compute angles between neighbour pairs relative to centre
-        angles = []
-        for (dy, dx) in neighbours:
-            angle = math.atan2(dy - centre_y, dx - centre_x)
-            angles.append(angle)
-
-        angles = sorted(angles)
-        diffs = []
-        for i in range(3):
-            a1 = angles[i]
-            a2 = angles[(i + 1) % 3]
-            diff = abs((a2 - a1 + np.pi) % (2 * np.pi) - np.pi)
-            diffs.append(diff)
-
-        # T-junction: one large angle (~180°) and two small (~90° each)
-        diffs = sorted(diffs, reverse=True)
-        if (abs(diffs[0] - np.pi) < tol * 2 and
-                abs(diffs[1] - np.pi / 2) < tol and
-                abs(diffs[2] - np.pi / 2) < tol):
-            t_count += 1
-
-    # Normalise by edge length
+    t_count = counts["T"]
     edge_len = max(len(edge_pixels), 1)
-    score = min(1.0, t_count / (edge_len / 100.0 + 1e-9))
-
-    # Boost score if we have many junctions
+    density_score = min(1.0, t_count / (edge_len / 100.0 + 1e-9))
     if t_count >= min_strength:
-        score = max(score, 0.7)
+        density_score = max(density_score, 0.7)
 
-    detail = f"t_junctions={t_count} edge_len={edge_len} score={score:.3f}"
-    return float(np.clip(score, 0.0, 1.0)), t_count, detail
+    # ── Junction-type distribution: expected natural rank T >= Y >= L >= X
+    total = sum(counts.values())
+    if total >= 8:
+        order = ["T", "Y", "L", "X"]
+        vals = [counts[k] for k in order]
+        inversions = sum(
+            1 for i in range(len(vals)) for j in range(i + 1, len(vals)) if vals[i] < vals[j]
+        )
+        max_inversions = 6  # C(4,2)
+        distribution_score = float(np.clip(1.0 - inversions / max_inversions, 0.0, 1.0))
+    else:
+        distribution_score = 0.5
+    extras["distribution_score"] = distribution_score
+    extras["counts"] = counts
+
+    # ── Depth-ordering cycle check ──────────────────────────────────────
+    depth_order_score = 0.5
+    depth_note = "labels_unavailable"
+    if labels is not None:
+        offset = max(3, int(cfg.get("depth_edge_offset_px", 4)))
+        edges_graph: Dict[Tuple[int, int], int] = {}
+        for (y, x, neighbours, cy, cx) in t_junction_records:
+            angles_local = [
+                math.atan2(dy - cy, dx - cx) for (dy, dx) in neighbours
+            ]
+            diffs = []
+            idxs = list(range(3))
+            for i in idxs:
+                a1, a2 = angles_local[i], angles_local[(i + 1) % 3]
+                diffs.append(abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi))
+            stem_idx = int(np.argmin([abs(d - math.pi / 2) for d in diffs]))
+            # The neighbour NOT involved in either ~90 degree gap is the stem tip.
+            stem_pt = neighbours[(stem_idx + 2) % 3]
+            stem_dir = np.array([stem_pt[0] - cy, stem_pt[1] - cx], dtype=np.float64)
+            norm = np.linalg.norm(stem_dir)
+            if norm < 1e-6:
+                continue
+            stem_dir /= norm
+
+            bg_y = int(np.clip(round(y + stem_dir[0] * offset), 0, h - 1))
+            bg_x = int(np.clip(round(x + stem_dir[1] * offset), 0, w - 1))
+            fg_y = int(np.clip(round(y - stem_dir[0] * offset), 0, h - 1))
+            fg_x = int(np.clip(round(x - stem_dir[1] * offset), 0, w - 1))
+
+            bg_lbl = int(labels[bg_y, bg_x])
+            fg_lbl = int(labels[fg_y, fg_x])
+            if bg_lbl != fg_lbl and bg_lbl > 0 and fg_lbl > 0:
+                key = (fg_lbl, bg_lbl)
+                edges_graph[key] = edges_graph.get(key, 0) + 1
+
+        if len(edges_graph) >= 2:
+            nodes = set()
+            for a, b in edges_graph:
+                nodes.add(a)
+                nodes.add(b)
+            adjacency: Dict[int, List[int]] = {n: [] for n in nodes}
+            for (a, b) in edges_graph:
+                adjacency[a].append(b)
+
+            # Simple DFS cycle detection over the directed "front-of" graph.
+            WHITE, GRAY, BLACK = 0, 1, 2
+            color = {n: WHITE for n in nodes}
+            cycle_found = False
+
+            def _dfs(u: int) -> bool:
+                color[u] = GRAY
+                for v in adjacency.get(u, []):
+                    if color[v] == GRAY:
+                        return True
+                    if color[v] == WHITE and _dfs(v):
+                        return True
+                color[u] = BLACK
+                return False
+
+            for n in nodes:
+                if color[n] == WHITE:
+                    if _dfs(n):
+                        cycle_found = True
+                        break
+
+            depth_order_score = 0.25 if cycle_found else 1.0
+            depth_note = f"{'cycle' if cycle_found else 'acyclic'} edges={len(edges_graph)} nodes={len(nodes)}"
+        else:
+            depth_note = f"insufficient_inter_component_junctions({len(edges_graph)})"
+
+    extras["depth_order_score"] = depth_order_score
+
+    score = density_score * 0.5 + distribution_score * 0.3 + depth_order_score * 0.2
+
+    detail = (
+        f"T={counts['T']} Y={counts['Y']} L={counts['L']} X={counts['X']} "
+        f"dist={distribution_score:.2f} depth={depth_order_score:.2f}({depth_note}) "
+        f"edge_len={edge_len}"
+    )
+    return float(np.clip(score, 0.0, 1.0)), t_count, detail, extras
 
 
 def analyze_osip(
@@ -4619,12 +5072,15 @@ def analyze_osip(
         evidence: List[dict] = []
         fw = cfg.get("fusion_weights", {})
 
-        # ── Signal 1: Shadow Binding ─────────────────────────────────────
+        # ── Signal 1: Shadow Binding (multi-object shadow physics) ───────
         sh_cfg = cfg.get("shadow", {})
         if mask.sum() >= min_area:
-            sh_score, sh_dir, sh_detail = _signal_shadow_binding(gray, mask, sh_cfg)
+            sh_score, sh_dir, sh_detail, sh_extras = _signal_shadow_binding(
+                gray, mask, sh_cfg, img_color=img_resized
+            )
         else:
             sh_score, sh_dir, sh_detail = 0.5, 0.5, "no_significant_objects"
+            sh_extras = {"color_score": 0.5, "softness_score": 0.5, "light_source_deg": None}
 
         sh_real = _safe_float(sh_cfg.get("real_threshold", 0.80))
         sh_ai = _safe_float(sh_cfg.get("ai_threshold", 0.45))
@@ -4633,13 +5089,27 @@ def analyze_osip(
         evidence.append(_build_evidence_node(
             layer_num, "shadow_binding_score", sh_status, sh_conf,
             f"Shadow binding: {sh_detail}. "
-            f"Real shadows attach at contact boundaries with consistent direction.",
+            f"Real shadows attach at contact boundaries, share a single light "
+            f"source direction across objects, and show consistent softness.",
             sh_score,
         ))
 
-        # ── Signal 2: Reflection Consistency ─────────────────────────────
+        sh_color_score = _safe_float(sh_extras.get("color_score", 0.5))
+        sh_color_suspicion = _score_from_metric(sh_color_score, 0.65, 0.40)
+        sh_color_status, sh_color_conf = _map_suspicion_to_status_confidence(sh_color_suspicion)
+        evidence.append(_build_evidence_node(
+            layer_num, "shadow_color_blue_shift", sh_color_status, sh_color_conf,
+            f"Shadow color: score={sh_color_score:.2f}, "
+            f"light_source_deg={sh_extras.get('light_source_deg')}. "
+            f"Real shadows skew bluer (skylight fill) relative to their lit surround.",
+            sh_color_score,
+        ))
+
+        # ── Signal 2: Reflection Consistency (arbitrary-plane search) ────
         refl_cfg = cfg.get("reflection", {})
-        refl_score, refl_corr, refl_detail = _signal_reflection_consistency(gray, refl_cfg)
+        refl_score, refl_corr, refl_detail, refl_extras = _signal_reflection_consistency(
+            gray, refl_cfg, img_color=img_resized
+        )
 
         refl_real = _safe_float(refl_cfg.get("real_threshold", 0.70))
         refl_ai = _safe_float(refl_cfg.get("ai_threshold", 0.35))
@@ -4648,13 +5118,28 @@ def analyze_osip(
         evidence.append(_build_evidence_node(
             layer_num, "reflection_consistency", refl_status, refl_conf,
             f"Reflection: {refl_detail}. "
-            f"Real reflections show natural symmetry with subtle imperfections.",
+            f"Real reflections show natural, arbitrary-axis symmetry with "
+            f"attenuated/bluer color and spatially-varying (rippled) distortion.",
             refl_score,
         ))
 
-        # ── Signal 3: Occlusion T-Junctions ──────────────────────────────
+        refl_ripple_score = _safe_float(refl_extras.get("ripple_score", 0.5))
+        refl_ripple_suspicion = _score_from_metric(refl_ripple_score, 0.60, 0.35)
+        refl_ripple_status, refl_ripple_conf = _map_suspicion_to_status_confidence(refl_ripple_suspicion)
+        evidence.append(_build_evidence_node(
+            layer_num, "reflection_ripple_distortion", refl_ripple_status, refl_ripple_conf,
+            f"Reflection ripple: score={refl_ripple_score:.2f} "
+            f"axis={refl_extras.get('axis_deg')}deg. "
+            f"Real water/imperfect mirrors show spatially-varying distortion; "
+            f"AI reflections are often uniformly static or chaotic.",
+            refl_ripple_score,
+        ))
+
+        # ── Signal 3: Occlusion T/Y/L/X-Junctions + depth-order graph ────
         occ_cfg = cfg.get("occlusion", {})
-        occ_score, occ_count, occ_detail = _signal_occlusion_t_junctions(gray, occ_cfg)
+        occ_score, occ_count, occ_detail, occ_extras = _signal_occlusion_t_junctions(
+            gray, occ_cfg, labels=labels
+        )
 
         occ_real = _safe_float(occ_cfg.get("real_threshold", 0.65))
         occ_ai = _safe_float(occ_cfg.get("ai_threshold", 0.30))
@@ -4663,16 +5148,36 @@ def analyze_osip(
         evidence.append(_build_evidence_node(
             layer_num, "occlusion_t_junctions", occ_status, occ_conf,
             f"Occlusion: {occ_detail}. "
-            f"Real depth ordering produces T-junctions; AI often omits them.",
+            f"Real depth ordering produces T-junctions (T >> Y > L > X); "
+            f"AI often omits them or yields contradictory depth ordering.",
             occ_score,
         ))
 
+        occ_depth_score = _safe_float(occ_extras.get("depth_order_score", 0.5))
+        occ_depth_suspicion = _score_from_metric(occ_depth_score, 0.75, 0.40)
+        occ_depth_status, occ_depth_conf = _map_suspicion_to_status_confidence(occ_depth_suspicion)
+        evidence.append(_build_evidence_node(
+            layer_num, "occlusion_depth_order_cycles", occ_depth_status, occ_depth_conf,
+            f"Depth ordering: score={occ_depth_score:.2f} "
+            f"counts={occ_extras.get('counts')}. "
+            f"T-junctions imply a partial depth order between mask components; "
+            f"a consistent real scene has no ordering cycles.",
+            occ_depth_score,
+        ))
+
         # ── Composite Fusion ─────────────────────────────────────────────
-        scores = [sh_suspicion, refl_suspicion, occ_suspicion]
+        scores = [
+            sh_suspicion, sh_color_suspicion,
+            refl_suspicion, refl_ripple_suspicion,
+            occ_suspicion, occ_depth_suspicion,
+        ]
         weights = [
             _safe_float(fw.get("shadow_binding", 1.2)),
+            _safe_float(fw.get("shadow_color", 0.5)),
             _safe_float(fw.get("reflection_consistency", 1.0)),
+            _safe_float(fw.get("reflection_ripple", 0.5)),
             _safe_float(fw.get("occlusion_t_junctions", 0.9)),
+            _safe_float(fw.get("occlusion_depth_order", 0.6)),
         ]
 
         active = [(s, w) for s, w in zip(scores, weights) if s != 0.5]
