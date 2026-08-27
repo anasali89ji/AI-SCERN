@@ -127,12 +127,20 @@
       ],
       "peak_threshold_factor": 2.0,
       "real_threshold": 5.0,
-      "ai_threshold": 8.0
+      "ai_threshold": 8.0,
+      "min_period": 2,
+      "max_period": 128,
+      "peak_prominence_factor": 4.0,
+      "harmonic_support_factor": 1.5,
+      "phase_tile_grid": 4
     },
     "boundary": {
       "edge_band_width": 2,
       "real_threshold": 45.0,
-      "ai_threshold": 12.0
+      "ai_threshold": 12.0,
+      "anisotropy_ai_like_below": 0.3,
+      "anisotropy_real_like_above": 1.0,
+      "jitter_max_samples": 300
     },
     "fractal": {
       "scales": [
@@ -143,13 +151,24 @@
         32
       ],
       "real_threshold": 0.85,
-      "ai_threshold": 0.55
+      "ai_threshold": 0.55,
+      "multifractal_qs": [
+        -2,
+        -1,
+        0,
+        1,
+        2
+      ],
+      "multifractal_width_real_threshold": 0.15,
+      "multifractal_width_ai_threshold": 0.03
     },
     "repetition": {
       "tile_size": 16,
-      "duplicate_threshold": 0.15,
+      "duplicate_threshold": 0.02,
       "real_threshold": 0.15,
-      "ai_threshold": 0.4
+      "ai_threshold": 0.4,
+      "lbp_hist_bins": 8,
+      "min_pairs_for_offset_analysis": 5
     },
     "fusion_weights": {
       "autocorr": 1.0,
