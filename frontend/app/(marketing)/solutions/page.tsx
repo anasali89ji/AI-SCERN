@@ -9,11 +9,11 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Solutions — Aiscern AI Attestation for Every Industry',
-  description: 'Aiscern delivers multi-modal AI content attestation tailored for education, HR, journalism, legal, healthcare, security, and more.',
+  title: 'Solutions — Aiscern AI Detection for Every Industry',
+  description: 'Aiscern delivers multi-modal AI content detection tailored for education, HR, journalism, legal, healthcare, security, and more.',
   openGraph: {
     title: 'Industry Solutions — Aiscern',
-    description: 'AI attestation built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
+    description: 'AI detection built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
     url: 'https://aiscern.com/solutions',
     siteName: 'Aiscern',
     images: [{ url: 'https://aiscern.com/og-image.jpg' }],
@@ -37,7 +37,7 @@ const SOLUTIONS: Solution[] = [
     color: 'primary',
     title: 'Education',
     tagline: 'Protect academic integrity',
-    desc: 'Attest AI-generated essays, assignments, and research papers. Purpose-built for teachers, professors, and institutions.',
+    desc: 'Analyze AI-generated essays, assignments, and research papers. Purpose-built for teachers, professors, and institutions.',
     cta: 'Start Free Teacher Account',
   },
   {
@@ -64,7 +64,7 @@ const SOLUTIONS: Solution[] = [
     color: 'emerald',
     title: 'Legal & Compliance',
     tagline: 'Audit AI-generated content',
-    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade attestation reports.',
+    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade detection reports.',
     cta: 'Start Free Legal Account',
   },
   {
@@ -73,7 +73,7 @@ const SOLUTIONS: Solution[] = [
     color: 'rose',
     title: 'Cybersecurity',
     tagline: 'Stop synthetic threats',
-    desc: 'Attest deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content at scale.',
+    desc: 'Analyze deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content at scale.',
     cta: 'Start Free Security Account',
   },
   {
@@ -109,7 +109,7 @@ const SOLUTIONS: Solution[] = [
     color: 'primary',
     title: 'Content Creators',
     tagline: 'Prove your originality',
-    desc: 'Authenticate your own work and attest AI-generated content from contributors, ghostwriters, or UGC submissions.',
+    desc: 'Authenticate your own work and analyze AI-generated content from contributors, ghostwriters, or UGC submissions.',
     cta: 'Start Free Creator Account',
   },
 ]
@@ -138,16 +138,16 @@ export default function SolutionsHub() {
               Industry Solutions
             </div>
             <h1 className="text-headline text-silver-900 mb-5">
-              AI Attestation Built<br />
+              AI Detection Built<br />
               <span className="text-accent">for Your Industry</span>
             </h1>
             <p className="text-lead text-silver-600 max-w-2xl mx-auto mb-8">
-              Every industry faces unique AI content challenges. Aiscern delivers tailored attestation workflows,
+              Every industry faces unique AI content challenges. Aiscern delivers tailored detection workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/detect/text" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
-                Try Free Attestation <ArrowRight className="w-4 h-4" />
+                Try Free Detection <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pricing" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
                 View Pricing

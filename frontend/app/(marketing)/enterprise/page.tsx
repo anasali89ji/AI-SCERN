@@ -6,7 +6,7 @@ import { Building2, Shield, Zap, Layers, Lock, Users, CircleCheck, Mail } from '
 import { EnterpriseContactForm } from '@/components/EnterpriseContactForm'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Aiscern AI Attestation at Scale',
+  title: 'Enterprise — Aiscern AI Detection at Scale',
   description: 'Custom pricing, SLA guarantees, priority support, and private deployment options for enterprise teams. Contact our sales team.',
   openGraph: {
     title: 'Enterprise Solutions — Aiscern',
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 }
 
 const FEATURES = [
-  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your attestation volume requirements.' },
+  { icon: Zap, title: 'Custom API Rate Limits', desc: 'No shared infrastructure bottlenecks. Dedicated throughput aligned to your detection volume requirements.' },
   { icon: Shield, title: 'SLA Guarantees', desc: '99.9% uptime SLA with priority incident response and dedicated status page communication.' },
-  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk attest thousands of documents simultaneously via async batch API with webhook callbacks.' },
+  { icon: Layers, title: 'Batch Processing at Scale', desc: 'Bulk analyze thousands of documents simultaneously via async batch API with webhook callbacks.' },
   { icon: Lock, title: 'Data Processing Agreements', desc: 'GDPR-compliant DPA and BAA available for healthcare and legal customers. Enhanced data handling options.' },
   { icon: Users, title: 'Team Management', desc: 'Centralized billing, role-based access control, audit logs, and team usage dashboards.' },
   { icon: Building2, title: 'Dedicated Onboarding', desc: 'Technical onboarding call, integration support, and a named account manager for enterprise clients.' },
@@ -45,7 +45,7 @@ export default function EnterprisePage() {
               Enterprise
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-5 leading-tight">
-              AI Attestation at<br /><span className="text-accent">Enterprise Scale</span>
+              AI Detection at<br /><span className="text-accent">Enterprise Scale</span>
             </h1>
             <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto mb-8 leading-relaxed">
               Custom volumes, SLA guarantees, dedicated support, and compliance-ready data handling for teams that need more than a standard plan.

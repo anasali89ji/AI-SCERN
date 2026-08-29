@@ -6,7 +6,7 @@ import { Handshake, Code2, Building2, Globe, ArrowRight, CircleCheck, Mail, Zap 
 
 export const metadata: Metadata = {
   title: 'Partner Program — Aiscern',
-  description: 'Integrate Aiscern AI attestation into your platform. API access, white-label options, and reseller partnerships for technology providers.',
+  description: 'Integrate Aiscern AI detection into your platform. API access, white-label options, and reseller partnerships for technology providers.',
   openGraph: {
     title: 'Partner Program — Aiscern',
     url: 'https://aiscern.com/partners',
@@ -18,7 +18,7 @@ const PARTNER_TYPES = [
   {
     icon: Code2,
     title: 'Technology Integration',
-    desc: 'Embed Aiscern attestation directly into your SaaS platform, CMS, LMS, or productivity tool via our REST API.',
+    desc: 'Embed Aiscern detection directly into your SaaS platform, CMS, LMS, or productivity tool via our REST API.',
     benefits: ['Full API access', 'Co-marketing opportunities', 'Dedicated integration support', 'Revenue share available'],
   },
   {
@@ -52,7 +52,7 @@ export default function PartnersPage() {
               Build on Aiscern.<br /><span className="text-accent">Grow Together.</span>
             </h1>
             <p className="text-base sm:text-lg text-silver-700 max-w-2xl mx-auto mb-8 leading-relaxed">
-              Integrate multi-modal AI attestation into your platform, resell to your clients, or collaborate on research. We&apos;re building the trust infrastructure for the AI age — join us.
+              Integrate multi-modal AI detection into your platform, resell to your clients, or collaborate on research. We&apos;re building the trust infrastructure for the AI age — join us.
             </p>
             <a href="mailto:partners@aiscern.com" className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2">
               <Mail className="w-4 h-4" /> Apply to Partner Program
@@ -99,7 +99,7 @@ export default function PartnersPage() {
                 </div>
                 <h2 className="text-2xl font-black text-white mb-3">Full REST API Access</h2>
                 <p className="text-silver-600 text-sm leading-relaxed mb-5">
-                  Every attestation capability is available via our documented REST API. Text, image, audio, and video attestation endpoints with structured JSON responses. SDKs and code examples available in the docs.
+                  Every detection capability is available via our documented REST API. Text, image, audio, and deepfake video detection endpoints with structured JSON responses. SDKs and code examples available in the docs.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link href="/docs/api" className="btn-primary text-sm w-full sm:w-auto justify-center">API Documentation <ArrowRight className="w-4 h-4" /></Link>

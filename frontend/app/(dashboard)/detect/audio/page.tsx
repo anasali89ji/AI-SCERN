@@ -283,7 +283,7 @@ function AudioDetectionPage() {
 
   const exportReport = () => {
     if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Attestation Engine\nAnalyzed: ${new Date().toLocaleString()}`
+    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
@@ -306,7 +306,7 @@ function AudioDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
             <Mic className="w-6 h-6 text-accent" />
           </div>
-          Audio Attestation
+          AI Audio & Voice Clone Detection
         </h1>
         <p className="text-silver-600 ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
@@ -383,7 +383,7 @@ function AudioDetectionPage() {
                     </p>
                   </div>
                   <button onClick={reset}
-              title="Attest Another" className="text-silver-600 hover:text-error p-2 rounded-lg hover:bg-error/10 transition-colors shrink-0">
+              title="Analyze Another" className="text-silver-600 hover:text-error p-2 rounded-lg hover:bg-error/10 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -396,7 +396,7 @@ function AudioDetectionPage() {
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50">
                   {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
-                  {loading ? 'Examining…' : 'Attest'}
+                  {loading ? 'Examining…' : 'Analyze'}
                 </button>
               </div>
             </div>
@@ -449,7 +449,7 @@ function AudioDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Audio Attestation" />
+      <LazyReviewSuggestion toolName="AI Audio & Voice Clone Detection" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -468,7 +468,7 @@ function AudioDetectionPage() {
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
@@ -490,7 +490,7 @@ function AudioDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} />
       )}

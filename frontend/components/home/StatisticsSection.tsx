@@ -10,7 +10,7 @@ interface Stat {
 
 // NOTE: Using the site's actual documented benchmark figures (matching the FAQ schema
 // in app/page.tsx) rather than the prompt's placeholder marketing copy ("12M+
-// Attestations", "50ms Latency") — those aren't numbers we can currently back up.
+// Detections", "50ms Latency") — those aren't numbers we can currently back up.
 const DEFAULT_STATS: Stat[] = [
   { value: 4,  suffix: '',  label: 'Modalities Covered' },
   { value: 8,  suffix: '+', label: 'Forensic Engines'   },

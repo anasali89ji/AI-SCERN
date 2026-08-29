@@ -177,7 +177,7 @@ function ResultDetails({
         <div className="flex flex-wrap gap-1.5 w-full xs:w-auto">
           <button onClick={onReset}
             className="flex items-center gap-1.5 text-xs btn-ghost px-3 py-1.5 flex-1 xs:flex-none justify-center">
-            <RotateCcw className="w-3.5 h-3.5" /> Attest Another
+            <RotateCcw className="w-3.5 h-3.5" /> Analyze Another
           </button>
           <button onClick={copyResult}
             className="text-xs btn-ghost py-1.5 px-3 flex items-center gap-1.5 flex-1 xs:flex-none justify-center">
@@ -267,7 +267,7 @@ function TextDetectionPage() {
 
   const handleDetect = async () => {
     if (!pdfMode && (!text.trim() || text.length < 50)) {
-      setError('Please enter at least 50 characters for accurate attestation.')
+      setError('Please enter at least 50 characters for accurate detection.')
       return
     }
     setLoading(true); setError(null); setResult(null); setGraphContext(null)
@@ -319,7 +319,7 @@ Summary:    ${result.summary}
 Forensic Signals:
 ${result.signals.map(s => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}`).join('\n')}
 
-Engine: Aiscern Attestation Engine
+Engine: Aiscern Detection Engine
 Analyzed: ${new Date().toLocaleString()}`
     navigator.clipboard?.writeText(out)
     setCopied(true); setTimeout(() => setCopied(false), 2000)
@@ -369,7 +369,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
             <FileType2 className="w-6 h-6 text-warning" />
           </div>
-          Text Attestation
+          AI Text Detection
         </h1>
         <p className="text-silver-600 ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
@@ -518,7 +518,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading || charCount < 50}
                   className="btn-primary py-2 px-5 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {loading ? 'Examining…' : 'Attest'}
+                  {loading ? 'Examining…' : 'Analyze'}
                 </button>
               </div>
             </div>
@@ -580,7 +580,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 </div>
                 <h3 className="font-semibold text-white mb-2">Ready to Analyze</h3>
                 <p className="text-silver-600 text-sm max-w-xs">
-                  Enter text on the left and click Attest. Minimum 50 characters for accurate results.
+                  Enter text on the left and click Analyze. Minimum 50 characters for accurate results.
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-silver-600 w-full">
                   {['Perplexity scoring', 'Style fingerprinting', 'Burstiness analysis', 'Neural signal analysis'].map(f => (
@@ -611,7 +611,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="Text Attestation" />
+      <LazyReviewSuggestion toolName="AI Text Detection" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -630,7 +630,7 @@ Analyzed: ${new Date().toLocaleString()}`
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
@@ -654,7 +654,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
     {/* Mobile results — full parity with the desktop inline panel via ResultDetails,
         so mobile isn't a stripped-down experience and nothing is duplicated. */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && (
         <ResultDetails
           result={result}

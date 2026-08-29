@@ -130,7 +130,7 @@ export default function ScraperPage() {
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">RAG</span>
           </div>
           <p className="text-sm text-[#A3A3A3] ml-12">
-            Examine any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal attestation.
+            Examine any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal detection.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function ScraperPage() {
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              {loading ? 'Examining…' : 'Attest Site'}
+              {loading ? 'Examining…' : 'Analyze Site'}
             </button>
           </div>
 
@@ -450,7 +450,7 @@ export default function ScraperPage() {
                         className="text-[#2BEE34] hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
                         {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
                       </a>
-                      <button onClick={() => handleScrape(link.url)} title="Attest this page" aria-label="Attest this page"
+                      <button onClick={() => handleScrape(link.url)} title="Analyze this page" aria-label="Analyze this page"
                         className="text-[#6B6B6B] hover:text-white transition-colors shrink-0 ml-1 p-2 -m-2 rounded-lg hover:bg-white/[0.06]">
                         <Zap className="w-3.5 h-3.5" />
                       </button>
@@ -496,7 +496,7 @@ export default function ScraperPage() {
             </div>
             <p className="text-sm text-[#A3A3A3] font-medium">Enter any website URL above</p>
             <p className="text-xs text-[#6B6B6B] mt-1 max-w-xs">
-              Works best with articles, blog posts, and content-heavy pages. Gets a screenshot and runs 12-signal AI attestation.
+              Works best with articles, blog posts, and content-heavy pages. Gets a screenshot and runs 12-signal AI detection.
             </p>
           </div>
         )}

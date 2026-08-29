@@ -405,7 +405,7 @@ function VideoDetectionPage() {
       '',
       `Verdict:    ${result.verdict}`,
       `Confidence: ${Math.round(result.confidence * 100)}%`,
-      `Engine:     Aiscern Attestation Engine`,
+      `Engine:     Aiscern Detection Engine`,
       '',
       `Summary:    ${result.summary}`,
       '',
@@ -449,7 +449,7 @@ function VideoDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-silver-700" />
           </div>
-          Video Attestation
+          Deepfake Video Detection
         </h1>
         <p className="text-silver-600 ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
@@ -632,7 +632,7 @@ function VideoDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Video Attestation" />
+      <LazyReviewSuggestion toolName="Deepfake Video Detection" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -651,7 +651,7 @@ function VideoDetectionPage() {
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
@@ -672,7 +672,7 @@ function VideoDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
       )}

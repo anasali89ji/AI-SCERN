@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Security & Compliance — AI-SCERN',
-  description: 'Enterprise-grade security, SOC 2 compliance, and zero-trust architecture for AI media attestation.',
+  description: 'Enterprise-grade security, SOC 2 compliance, and zero-trust architecture for AI media detection.',
 }
 
 const SECURITY_PILLARS = [

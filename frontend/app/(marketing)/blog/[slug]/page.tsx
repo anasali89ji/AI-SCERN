@@ -184,11 +184,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="mt-12 p-6 rounded-xl border border-accent/20 bg-accent/5 text-center">
           <h3 className="font-semibold text-lg text-silver-900 mb-2">Try Aiscern Free</h3>
           <p className="text-silver-600 text-sm mb-4">
-            Attest AI-generated text, images, audio, and video — no account required.
+            Analyze AI-generated text, images, audio, and video — no account required.
           </p>
           <Link href="/detect/text"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-surface-deep font-semibold text-sm hover:bg-accent-hover transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/50">
-            Start Attesting Free →
+            Start Detecting Free →
           </Link>
         </div>
 

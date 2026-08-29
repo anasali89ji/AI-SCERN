@@ -5,7 +5,7 @@ import { SquareArrowOutUpRight, ArrowRight, Download, Info } from 'lucide-react'
 
 export const metadata = {
   title: 'Accuracy Benchmarks — Aiscern',
-  description: 'Aiscern attestation accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
+  description: 'Aiscern detection accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
   openGraph: { title: 'Accuracy Benchmarks — Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 
@@ -170,7 +170,7 @@ export default function BenchmarksPage() {
             <section key={s.label} className="mb-12">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-accent" />
-                {s.label} Attestation
+                {s.label} Detection
               </h2>
               <BenchTable rows={s.rows} />
             </section>

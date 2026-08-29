@@ -137,7 +137,7 @@ export function SolutionPage(props: SolutionPageProps) {
               operatingSystem: 'Web browser',
               applicationCategory: 'UtilitiesApplication',
               offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-              description: `Ensemble-based AI attestation for ${industry} professionals.`,
+              description: `Ensemble-based AI detection for ${industry} professionals.`,
             }),
           }}
         />
@@ -226,7 +226,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
               <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">
-                Our ensemble-based attestation pipeline combines 8+ specialized models with a confidence threshold system.
+                Our ensemble-based detection pipeline combines 8+ specialized models with a confidence threshold system.
                 <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Learn about our methodology →</Link>
               </p>
             </div>
@@ -304,10 +304,10 @@ export function SolutionPage(props: SolutionPageProps) {
         <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-4">
-              Ready to attest content in {industry.toLowerCase()}?
+              Ready to analyze content in {industry.toLowerCase()}?
             </h2>
             <p className="text-silver-600 text-sm md:text-base mb-8">
-              Start with a free account — no credit card, no commitment. Upgrade when you need more attestations.
+              Start with a free account — no credit card, no commitment. Upgrade when you need more detections.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
               <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">
