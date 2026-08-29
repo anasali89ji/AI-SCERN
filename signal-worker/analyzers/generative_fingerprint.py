@@ -4,18 +4,48 @@ Aiscern Signal Worker — Layer 10: Generative Fingerprinting Engine (GFE)
 ARCHITECTURE OVERVIEW
 =====================
 This is a forensic platform, not a binary classifier. It outputs:
-  • Structural match scores to 6 known generator families
+  • Structural match scores to 6 *calibrated* generator families
   • Lighting physics consistency score
   • Biological plausibility markers (faces, skin, eyes)
   • A "best generator attribution" with confidence %
 
-Generator families covered:
-  G1 — Google Gemini / Imagen / ImageFX
+Generator families with CALIBRATED per-family scoring (real fingerprints,
+tuned against samples of that specific model):
+  G1 — Google Gemini / Imagen / ImageFX  (Gemini 2.0 generation)
   G2 — OpenAI DALL-E 3 / ChatGPT gpt-image-1
   G3 — Midjourney V5/V6
-  G4 — Stable Diffusion XL / SDXL Turbo / Flux
-  G5 — Adobe Firefly
-  G6 — Generic diffusion (unknown brand)
+  G4 — Stable Diffusion XL / SDXL Turbo / Flux.1
+  G5 — Adobe Firefly (v3)
+  G6 — Generic diffusion (unknown brand / uncalibrated model)
+
+KNOWN GAP (tracked, not yet closed — see docs/2026_generator_watchlist.md):
+As of this module's last calibration pass, the following 2025-2026 image
+generators have NO dedicated latent-geometry or spectral-signature
+calibration in _latent_residual_geometry() / _spectral_generator_signatures().
+Images from these models currently fall through to "unknown_diffusion" (G6)
+rather than being specifically attributed — G6's generic AI-vs-real score is
+still informative, but the generator-name/version attribution is not:
+  OpenAI GPT Image 2 (autoregressive — likely evades L5/L5b diffusion-
+    inversion detectors entirely; needs its own detection strategy, not
+    just a new G-profile)
+  Google Nano Banana / Nano Banana Pro / Gemini 3.x image family
+  Midjourney V8.x
+  Black Forest Labs FLUX.2 (Max/Pro/Flex/Dev/Klein)
+  xAI Grok Imagine
+  Ideogram 4.x
+  Adobe Firefly Image Model 5
+  ByteDance Seedream / Seedance
+  Kuaishou Kling (image path)
+  Tencent HunyuanImage
+  Alibaba Qwen-Image / Z-Image
+Do NOT hand-write plausible-looking latent-grid periods or spectral
+coefficients for these without real calibration images (see
+scripts/calibrate.py) — a fabricated threshold is worse than an honest
+"unknown_diffusion" fallback, since it produces confident-looking wrong
+attributions instead of an appropriately hedged unknown. GENERATOR_WATCHLIST
+below exists purely as an operational surface (so a human reviewer sees
+"this might be one of these new models, we don't have a fingerprint yet")
+and MUST NOT be used to alter any suspicion score.
 
 Detection modules:
   M1 — Latent Residual Geometry (decoder architecture fingerprint)
@@ -776,6 +806,25 @@ def _gemini_visual_watermark(img_array: np.ndarray) -> float:
 # Generator Attribution Logic
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Operational-only metadata — see "KNOWN GAP" note in the module docstring.
+# These names are surfaced in generative_attribution.generator_watchlist as
+# a hint for human reviewers when top_generator == "unknown_diffusion" AND
+# overall_ai is high, i.e. "this scores as AI-generated but doesn't match
+# any calibrated family — possibly one of these." NEVER used in scoring.
+GENERATOR_WATCHLIST = [
+    "OpenAI GPT Image 2",
+    "Google Nano Banana / Nano Banana Pro (Gemini 3.x image family)",
+    "Midjourney V8.x",
+    "Black Forest Labs FLUX.2 (Max/Pro/Flex/Dev/Klein)",
+    "xAI Grok Imagine",
+    "Ideogram 4.x",
+    "Adobe Firefly Image Model 5",
+    "ByteDance Seedream / Seedance",
+    "Kuaishou Kling (image path)",
+    "Tencent HunyuanImage",
+    "Alibaba Qwen-Image / Z-Image",
+]
+
 _GENERATOR_PROFILES = {
     "gemini_imagen": {
         "display": "Google Gemini / Imagen",
@@ -911,6 +960,13 @@ def _attribute_generator(
             }
             for k, v in ranked[:3]
         ],
+        # v4.7.0: operational hint only — see GENERATOR_WATCHLIST comment.
+        # Populated only when we're confidently AI but couldn't match a
+        # calibrated family, i.e. exactly the case a genuinely new 2025-2026
+        # generator would produce. Never fed back into any score.
+        "generator_watchlist": (
+            GENERATOR_WATCHLIST if (top_gen == "unknown_diffusion" and overall_ai >= 0.55) else []
+        ),
     }
     return attribution
 

@@ -1,0 +1,225 @@
+{
+  "l15_obp": {
+    "canny_low_threshold": 50,
+    "canny_high_threshold": 150,
+    "edge_dilation_kernel_size": 3,
+    "contact_shadow": {
+      "inner_offset": 2,
+      "outer_near_offset": 1,
+      "outer_far_offset": 6,
+      "intensity_drop_threshold": 0.12,
+      "real_threshold": 0.85,
+      "ai_threshold": 0.7,
+      "vertical_tolerance_deg": 25.0
+    },
+    "edge_fresnel": {
+      "interior_depth": 4,
+      "edge_depth": 2,
+      "smooth_surface_variance_threshold": 400.0,
+      "real_threshold": 1.2,
+      "ai_threshold": 1.0
+    },
+    "edge_roughness": {
+      "band_width": 2,
+      "real_threshold": 18.0,
+      "ai_threshold": 7.0
+    },
+    "contour_filters": {
+      "min_arc_length": 40,
+      "max_contours": 25,
+      "min_object_area": 400
+    },
+    "shadow_penumbra": {
+      "real_threshold": 1.2,
+      "ai_threshold": 0.2
+    },
+    "chromatic_roughness": {
+      "real_threshold": 0.15,
+      "ai_threshold": 0.03
+    }
+  },
+  "l16_mrc": {
+    "highlight_percentile": 92,
+    "min_highlight_area": 25,
+    "max_highlight_regions": 15,
+    "highlight_var_real_threshold": 250.0,
+    "highlight_var_ai_threshold": 60.0,
+    "highlight_circularity_real_threshold": 0.4,
+    "highlight_circularity_ai_threshold": 0.75,
+    "metal_saturation_percentile": 70,
+    "metal_min_brightness": 40,
+    "min_metal_pixels": 200,
+    "vs_corr_real_threshold": 0.2,
+    "vs_corr_ai_threshold": -0.25,
+    "rgb_corr_real_threshold": 0.7,
+    "rgb_corr_ai_threshold": 0.35,
+    "transparency_disk_radius": 4,
+    "bc_real_threshold": 0.55,
+    "bc_ai_threshold": 0.88,
+    "doubling_weight": 0.5,
+    "fusion_weights": {
+      "specular_uniformity": 1.0,
+      "metallic_correlation": 1.0,
+      "transparency_distortion": 0.8
+    },
+    "fresnel_hue_shift_real_threshold": 4.0,
+    "fresnel_hue_shift_ai_threshold": 0.8,
+    "chromatic_dispersion": {
+      "real_threshold": 0.35,
+      "ai_threshold": 0.05
+    },
+    "fresnel_min_saturation": 50.0
+  },
+  "l17_gpc": {
+    "resize_max": 512,
+    "canny_low": 50,
+    "canny_high": 150,
+    "hough_rho": 1,
+    "hough_theta_deg": 1,
+    "hough_threshold": 40,
+    "hough_min_line_length": 40,
+    "hough_max_line_gap": 10,
+    "max_lines": 200,
+    "min_lines_for_analysis": 8,
+    "angle_bins": 8,
+    "min_cluster_size": 3,
+    "vp_inlier_threshold_deg": 3.0,
+    "gravity_angle_tolerance_deg": 15.0,
+    "orthogonality_tolerance_deg": 20.0,
+    "edge_density_threshold": 0.008,
+    "vp_consistency": {
+      "real_threshold": 0.7,
+      "ai_threshold": 0.45
+    },
+    "orthogonality": {
+      "real_threshold": 0.65,
+      "ai_threshold": 0.35
+    },
+    "gravity_alignment": {
+      "real_threshold": 0.8,
+      "ai_threshold": 0.55
+    },
+    "fusion_weights": {
+      "vp_consistency": 1.2,
+      "orthogonality": 1.0,
+      "gravity_alignment": 0.9
+    },
+    "ransac_iterations": 60,
+    "ransac_inlier_threshold_px": 4.0,
+    "ransac_seed": 1234,
+    "near_parallel_spread_deg": 2.0,
+    "min_vp_infinity_ratio": 3.0,
+    "parallel_mismatch_penalty": 0.5,
+    "focal_length_min_ratio": 0.3,
+    "focal_length_max_ratio": 3.5,
+    "horizon_angle_tolerance_deg": 20.0,
+    "roll_consistency_tolerance_deg": 10.0,
+    "min_perspective_spread_deg": 0.5
+  },
+  "l18_tsad": {
+    "resize_max": 256,
+    "autocorr": {
+      "grid_periods": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "peak_threshold_factor": 2.0,
+      "real_threshold": 5.0,
+      "ai_threshold": 8.0,
+      "min_period": 2,
+      "max_period": 128,
+      "peak_prominence_factor": 4.0,
+      "harmonic_support_factor": 1.5,
+      "phase_tile_grid": 4
+    },
+    "boundary": {
+      "edge_band_width": 2,
+      "real_threshold": 45.0,
+      "ai_threshold": 12.0,
+      "anisotropy_ai_like_below": 0.3,
+      "anisotropy_real_like_above": 1.0,
+      "jitter_max_samples": 300
+    },
+    "fractal": {
+      "scales": [
+        2,
+        4,
+        8,
+        16,
+        32
+      ],
+      "real_threshold": 0.85,
+      "ai_threshold": 0.55,
+      "multifractal_qs": [
+        -2,
+        -1,
+        0,
+        1,
+        2
+      ],
+      "multifractal_width_real_threshold": 0.15,
+      "multifractal_width_ai_threshold": 0.03
+    },
+    "repetition": {
+      "tile_size": 16,
+      "duplicate_threshold": 0.02,
+      "real_threshold": 0.15,
+      "ai_threshold": 0.4,
+      "lbp_hist_bins": 8,
+      "min_pairs_for_offset_analysis": 5
+    },
+    "fusion_weights": {
+      "autocorr": 1.0,
+      "boundary": 0.9,
+      "fractal": 1.1,
+      "repetition": 0.8
+    }
+  },
+  "l19_osip": {
+    "resize_max": 512,
+    "shadow": {
+      "canny_low": 50,
+      "canny_high": 150,
+      "inner_offset": 2,
+      "shadow_band_width": 6,
+      "darkness_threshold": 0.15,
+      "direction_bins": 8,
+      "direction_tolerance_deg": 30.0,
+      "real_threshold": 0.8,
+      "ai_threshold": 0.45,
+      "min_component_area": 60
+    },
+    "reflection": {
+      "symmetry_search_band": 8,
+      "gradient_correlation_threshold": 0.6,
+      "real_threshold": 0.7,
+      "ai_threshold": 0.35,
+      "angle_candidates_deg": [
+        0.0,
+        90.0,
+        20.0,
+        -20.0,
+        45.0,
+        -45.0
+      ],
+      "ripple_block_min": 6
+    },
+    "occlusion": {
+      "junction_angle_tolerance_deg": 25.0,
+      "min_junction_strength": 15,
+      "real_threshold": 0.65,
+      "ai_threshold": 0.3,
+      "depth_edge_offset_px": 4
+    },
+    "fusion_weights": {
+      "shadow_binding": 1.2,
+      "shadow_color": 0.5,
+      "reflection_consistency": 1.0,
+      "reflection_ripple": 0.5,
+      "occlusion_t_junctions": 0.9,
+      "occlusion_depth_order": 0.6
+    }
+  }
+}

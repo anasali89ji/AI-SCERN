@@ -6,4 +6,61 @@ main.py, the engines, and health checks never drift out of sync again.
 from another.)
 """
 
-VERSION = "4.4.0"
+# v4.7.0: Integrated L15-L19 Object Physics Ensemble (OBP/MRC/GPC/TSAD/OSIP —
+# previously implemented but never wired into image_engine.py). Fixed
+# analyze_image_from_url() running L1-L10 sequentially instead of in
+# parallel (asymmetric with the upload path). Fixed L17 GPC's
+# "neutral_scene_type" status not being excluded from _fuse_scores'
+# weighted average (same bug class as the "not_applicable" fix in v4.5.0).
+# Added GFE generator_watchlist metadata for 2025-2026 models without
+# calibrated fingerprints yet (informational only, not scored).
+VERSION = "4.7.0"
+
+# v4.8.0: Added L20 (MISG — Multi-Illuminant & Global Shadow Geometry) and
+# L21 (LOP — Lens & Optical Physics / chromatic aberration + line
+# curvature). NEW, previously-unimplemented layers, not merged from
+# elsewhere. PROVISIONAL: quick-tested against 3 real public-domain photos
+# (OpenCV sample images) + 1 synthetic no-CA control image, NOT calibrated
+# against a labeled real-vs-AI dataset. L21's chromatic-aberration signal
+# behaved directionally correctly (max suspicion on the synthetic zero-CA
+# control; lower, mixed scores on real photos). L20's shadow-consensus
+# signal scored 2 of 3 real test photos too high (0.70-0.80) — its
+# thresholds need real calibration before being trusted. Both layers are
+# wired in at deliberately low weight (LAYER_WEIGHTS[20]=0.35, [21]=0.45,
+# vs. 0.9-1.3 for L11-L19) specifically so they can't meaningfully move
+# the fused verdict until calibrated — see
+# analyzers/extended_physics_ensemble.py module docstring for full detail.
+VERSION = "4.8.0"
+
+# v4.8.1: Track A — real calibration harness (scripts/calibrate.py), replacing
+# the 39-line stub. Runs the full pipeline over a labeled real/ai dataset,
+# computes per-layer ROC-AUC (Mann-Whitney U identity, no sklearn dependency)
+# and a Youden's-J-optimal threshold recommendation, and flags layers with
+# near-chance AUC or inverted score direction (real images scoring higher
+# than AI images — the exact bug class L20 already has, see v4.8.0 note
+# above). This is TOOLING ONLY: no scoring, weight, or threshold in the
+# live pipeline changes. Output is a diagnostic JSON report a human still
+# has to act on — see scripts/calibrate.py module docstring for why this
+# script deliberately does not auto-rewrite
+# config/object_physics_thresholds.json or LAYER_WEIGHTS itself.
+VERSION = "4.8.1"
+
+# v4.9.0: Added L22 — Document/ID Security Forensics (Section 1.1 of the
+# giant-level image engine optimization directive). New capability inside
+# the existing Image Engine, not a new engine: classify_image_type() cheaply
+# pre-filters every upload for document/ID/passport/receipt shape (aspect
+# ratio + dominant rectangle + text density); only images that classify as
+# document-like get routed into the five-signal security-feature submodule
+# (hologram/OVI hue-shift, microprint border-stroke analysis, guilloche
+# spectral periodicity, UV-paper-texture proxy, font/stroke-width
+# consistency) in analyzers/document_forensics.py. Ordinary photos report
+# status="not_applicable" and are skipped by _fuse_scores, same convention
+# as L13/L14/L17 — near-zero cost/no false signal on non-document uploads.
+# PROVISIONAL, same caveat as L20/L21: every signal is a genuine,
+# physically-motivated heuristic but none is calibrated against a labeled
+# real-ID-vs-fake-ID dataset yet (see module docstring), so LAYER_WEIGHTS[22]
+# is deliberately low. document_analysis is also now surfaced at the top
+# level of both analyze_image_from_bytes() and analyze_image_from_url()
+# results for frontend consumption (Document Verification Mode UI is a
+# separate, later module — this only adds the backend data it will consume).
+VERSION = "4.9.0"

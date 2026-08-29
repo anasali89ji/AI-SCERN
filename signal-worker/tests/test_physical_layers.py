@@ -157,13 +157,15 @@ class TestBDIS:
         r = synthetic_bayer_real[:, :, 0].astype(np.float32)
         g = synthetic_bayer_real[:, :, 1].astype(np.float32)
         b = synthetic_bayer_real[:, :, 2].astype(np.float32)
-        score = check_bayer_correlation(r, g, b)
+        score, detail = check_bayer_correlation(r, g, b)
         assert 0 <= score <= 1
+        assert isinstance(detail, str)
 
     def test_green_periodicity(self, synthetic_bayer_real):
         g = synthetic_bayer_real[:, :, 1].astype(np.float32)
-        score = check_green_periodicity(g)
+        score, detail = check_green_periodicity(g)
         assert 0 <= score <= 1
+        assert isinstance(detail, str)
 
     def test_performance(self, synthetic_bayer_real):
         import time
@@ -280,4 +282,9 @@ class TestPhysicalConsistencyIntegration:
         for r in reports:
             assert "layerSuspicionScore" in r
             assert 0 <= r["layerSuspicionScore"] <= 1
-            assert r["status"] in ("success", "failure")
+            # "not_applicable" is a documented, deliberate analyzer status
+            # (see image_engine._fuse_scores: L13/L14/L17 opt out when their
+            # physical preconditions aren't met). The old assertion only
+            # allowed ("success", "failure") and failed on random noise
+            # inputs where SSS/QESM legitimately report not_applicable.
+            assert r["status"] in ("success", "failure", "not_applicable")
