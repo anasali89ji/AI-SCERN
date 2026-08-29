@@ -63,4 +63,20 @@ VERSION = "4.8.1"
 # level of both analyze_image_from_bytes() and analyze_image_from_url()
 # results for frontend consumption (Document Verification Mode UI is a
 # separate, later module — this only adds the backend data it will consume).
-VERSION = "4.9.0"
+# v4.10.0: Added L23 — Copy-Move & Splice Detection (CMSD), Module 12 of
+# the giant-level optimization directive. Two signals: ORB+RANSAC
+# rotation/scale-invariant copy-move verification, and block-wise
+# flat-region noise-floor splice inconsistency. PROVISIONAL, same caveat
+# as L20-L22: not yet calibrated against a labeled tampered-vs-untampered
+# dataset, so LAYER_WEIGHTS[23] is deliberately low.
+#
+# Module 12 architectural note: spec L21 (PRNU Deep Analysis) and L22
+# (AMSA) were both audited and explicitly rejected as this module's
+# target -- see analyzers/cmsd.py's module docstring for why (PRNU
+# isn't honestly buildable deeper than the existing L3 proxy without a
+# reference camera fingerprint; AMSA already substantially covered by
+# L9/L10). L23 was chosen because it's a genuine, non-overlapping gap:
+# the only existing copy-move detector (L1's clone_detection_suspicion)
+# is a fast, deliberately-scoped quick-reject proxy, not rotation/scale
+# invariant.
+VERSION = "4.10.0"

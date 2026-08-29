@@ -226,6 +226,55 @@ def _run_document_layer(img_array, img_pil) -> Dict[str, Any]:
         )
 
 
+# ── Copy-Move & Splice Detection runner (L23, v4.10.0) ─────────────────────────
+
+def _run_cmsd_layer(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Layer 23 — Copy-Move & Splice Detection (CMSD). Module 12 of the
+    giant-level optimization directive. See analyzers/cmsd.py's module
+    docstring for why this is the layer Module 12 targeted (spec L21
+    PRNU and L22 AMSA were both audited and rejected — PRNU because a
+    deeper single-image signal isn't honestly buildable without a
+    reference camera fingerprint, AMSA because L9/L10 already cover
+    that ground) and for the two forensic signals (ORB+RANSAC
+    copy-move verification, block noise-floor splice inconsistency).
+    Not calibrated against a labeled tampered-vs-untampered dataset
+    (no such dataset exists here yet, same caveat as L20-L22) — see
+    LAYER_WEIGHTS[23] below.
+    """
+    from analyzers.cmsd import analyze_cmsd
+    from utils.evidence_builder import evidence_node, build_layer_report
+    try:
+        result = analyze_cmsd(img_array, img_pil)
+        score = float(result.get("score", 0.5))
+        status = result.get("status", "failure")
+        elapsed = int(result.get("elapsed_ms", 0))
+        ev_nodes = []
+        for ev in result.get("evidence", []):
+            ev_score = float(ev.get("score", 0.5))
+            if ev_score > 0.55:
+                ev_status = "anomalous"
+            elif ev_score < 0.45:
+                ev_status = "normal"
+            else:
+                ev_status = "inconclusive"
+            ev_nodes.append(evidence_node(
+                layer=23, category="tamper_forensics", artifact_type=ev.get("name", "unknown"),
+                status=ev_status, confidence=abs(ev_score - 0.5) * 2.0,
+                detail=ev.get("detail", "") + " [PROVISIONAL: uncalibrated threshold]",
+                raw_value=ev_score,
+            ))
+        return build_layer_report(
+            layer=23, layer_name="CMSD – Copy-Move & Splice Detection [provisional]",
+            evidence=ev_nodes, status=status, elapsed_ms=elapsed, score=score,
+        )
+    except Exception as e:
+        logger.warning("[ImageEngine][L23] failed: %s", e)
+        return build_layer_report(
+            23, "CMSD – Copy-Move & Splice Detection [provisional]", [], "failure", 0, score=0.5
+        )
+
+
 # ── Physical Consistency Layer runners (L11-L14) ──────────────────────────────
 
 def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
@@ -588,6 +637,10 @@ def _fuse_scores(
         # place — this weight only matters for the minority that classify
         # as document-like.
         22: 0.40,  # L22 Document/ID Security Forensics (hologram/microprint/guilloche/UV/font)
+        # L23 (v4.10.0): PROVISIONAL — uncalibrated, see analyzers/cmsd.py
+        # module docstring. Weighted low like L20-L22 for the same reason:
+        # not yet run against a labeled tampered-vs-untampered dataset.
+        23: 0.40,  # L23 CMSD — Copy-Move & Splice Detection
     }
 
     for layer in v2_layers:
@@ -864,7 +917,7 @@ async def analyze_image_from_url(
         # negative rate specifically on URL-scanned images (bulk site
         # crawling, the web scanner) relative to direct uploads. Now runs
         # concurrently, matching the bytes path.
-        with ThreadPoolExecutor(max_workers=15) as pool:
+        with ThreadPoolExecutor(max_workers=16) as pool:
             f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
             f_l2  = pool.submit(_run_l2, img_array, img_pil)
             f_l3  = pool.submit(_run_l3, img_array, img_pil)
@@ -880,6 +933,8 @@ async def analyze_image_from_url(
             f_objphys = pool.submit(_run_object_physics_layers, img_array, img_pil)
             # v4.8.0: L20-L21 Extended Physics (provisional weight, see runner docstring)
             f_extphys = pool.submit(_run_extended_physics_layers, img_array, img_pil)
+            # v4.10.0: L23 Copy-Move & Splice Detection (provisional weight, see runner docstring)
+            f_cmsd = pool.submit(_run_cmsd_layer, img_array, img_pil)
             f_synthid = pool.submit(
                 _run_synthid, img_array,
                 (img_pil.format or "").upper() not in ("JPEG", "JPG"),
@@ -895,6 +950,7 @@ async def analyze_image_from_url(
             layers.extend(object_physics.get("layer_reports", []))
             extended_physics = f_extphys.result()
             layers.extend(extended_physics.get("layer_reports", []))
+            layers.append(f_cmsd.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
@@ -997,8 +1053,8 @@ def analyze_image_from_bytes(
         _t0 = time.monotonic()
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
         # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
-        # SynthID, v3 forensics — 14 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=15) as pool:
+        # SynthID, v3 forensics, L23 copy-move/splice (v4.10.0) — 15 concurrent tasks.
+        with ThreadPoolExecutor(max_workers=16) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -1016,6 +1072,8 @@ def analyze_image_from_bytes(
             f_objphys = pool.submit(_run_object_physics_layers, img_array, pil_img)
             # v4.8.0: L20-L21 Extended Physics (provisional weight, see runner docstring)
             f_extphys = pool.submit(_run_extended_physics_layers, img_array, pil_img)
+            # v4.10.0: L23 Copy-Move & Splice Detection (provisional weight, see runner docstring)
+            f_cmsd    = pool.submit(_run_cmsd_layer, img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
@@ -1029,6 +1087,7 @@ def analyze_image_from_bytes(
             layers.extend(object_physics.get("layer_reports", []))
             extended_physics = f_extphys.result()
             layers.extend(extended_physics.get("layer_reports", []))
+            layers.append(f_cmsd.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
