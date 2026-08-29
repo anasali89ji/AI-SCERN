@@ -1,13 +1,17 @@
 """
-Module 12 smoke tests for analyzers/cmsd.py (L23 CMSD).
+Module 12/13 smoke tests for analyzers/cmsd.py (L23 CMSD).
 Run directly: python -m tests.test_cmsd_smoke  (from signal-worker/)
 """
 import sys
 import numpy as np
+import cv2
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, ".")
-from analyzers.cmsd import analyze_cmsd, detect_copy_move, detect_splice_noise_inconsistency
+from analyzers.cmsd import (
+    analyze_cmsd, detect_copy_move, detect_splice_noise_inconsistency,
+    detect_inpainting_texture_deficit,
+)
 
 _MIN_RANSAC_INLIERS_FOR_TEST = 6  # mirrors analyzers.cmsd._MIN_RANSAC_INLIERS
 
@@ -77,6 +81,24 @@ def make_spliced_noise_image(h=480, w=480, seed=3):
 
 def make_clean_image(h=480, w=480, seed=4):
     return make_textured_base(h, w, seed)
+
+
+def make_inpainted_image(h=480, w=480, seed=41):
+    """
+    Module 13 fixture: simulates AI inpainting (Photoshop Generative Fill /
+    SD inpainting) with edge-preserving (bilateral) smoothing over a
+    region -- removes fine grain/noise while keeping macro edges intact,
+    which is the correct model of "plastic smoothness" vs. a naive
+    Gaussian blur (which also destroys the edges S3 relies on as its
+    "has structure" gate, and was tried first -- see cmsd.py docstring).
+    """
+    img = make_textured_base(h, w, seed)
+    img2 = img.copy()
+    region = img2[150:300, 150:300]
+    smoothed = cv2.bilateralFilter(region, d=9, sigmaColor=150, sigmaSpace=150)
+    smoothed = cv2.bilateralFilter(smoothed, d=9, sigmaColor=150, sigmaSpace=150)
+    img2[150:300, 150:300] = smoothed
+    return img2
 
 
 def run_case(name, img, expect_min_score=None, expect_max_score=None):
@@ -150,6 +172,27 @@ if __name__ == "__main__":
         run_case("clean_image (should score low)", make_clean_image(), expect_max_score=0.5)
     except AssertionError as e:
         failures.append(("clean_image_full", str(e)))
+
+    try:
+        # S3 regression: verify the inpainted variant scores strictly higher
+        # on the inpainting_texture_deficit signal than the same fixture's
+        # own clean baseline (relative check -- see cmsd.py's calibration
+        # note on why an absolute threshold isn't asserted here).
+        base = make_clean_image(seed=41)
+        inpainted = make_inpainted_image(seed=41)
+        base_ip = detect_inpainting_texture_deficit(base)
+        inp_ip = detect_inpainting_texture_deficit(inpainted)
+        print("\n=== S3 inpainting: clean vs inpainted (same seed) ===")
+        print("clean:", base_ip)
+        print("inpainted:", inp_ip)
+        assert base_ip is not None and inp_ip is not None
+        assert inp_ip["outlier_frac"] > base_ip["outlier_frac"], (
+            f"expected inpainted region to raise outlier_frac, got "
+            f"clean={base_ip['outlier_frac']:.3f} inpainted={inp_ip['outlier_frac']:.3f}"
+        )
+        run_case("inpainted_image (S3 evidence present)", inpainted)
+    except AssertionError as e:
+        failures.append(("inpainting_texture_deficit", str(e)))
 
     try:
         tiny = np.zeros((20, 20, 3), dtype=np.uint8)

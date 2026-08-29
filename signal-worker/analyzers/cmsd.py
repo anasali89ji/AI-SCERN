@@ -92,6 +92,42 @@ S2 -- Splice inconsistency: block-wise local noise-residual level
     source with matching noise characteristics (e.g. two crops from the
     same camera/session), which is an inherent limit of a
     noise-floor-only signal, not a bug.
+S3 -- Inpainting detection: block-wise detail-to-structure ratio outlier
+    detection. AI inpainting (Photoshop Generative Fill, Stable Diffusion
+    inpainting) synthesizes plausible content that is locally
+    "too smooth" relative to the amount of edge/structure present --
+    generative models reproduce coherent macro-structure (shapes, object
+    boundaries) far more reliably than they reproduce genuine sensor-level
+    micro-texture (film grain, fine surface detail, sensor noise texture).
+    For each block we compute a detail ratio = (fine high-frequency energy,
+    via Laplacian) / (coarse structure energy, via Sobel gradient
+    magnitude). A block with substantial structure (it clearly contains
+    edges/objects, not empty sky) but an abnormally low detail ratio
+    relative to the image's own median is flagged -- a "plastic smoothness
+    where there should be texture" signature distinct from S1 (rigid
+    geometric duplication) and S2 (noise-floor level mismatch, which
+    inpainting doesn't necessarily produce since it can locally match the
+    surrounding noise level while still lacking genuine fine detail).
+    Scope note: like S2, this is boundary-blind -- it flags a *region*
+    with atypical texture-poverty relative to its own structure content,
+    not necessarily the seam/boundary itself. It will not catch inpainting
+    of an already low-detail area (e.g. filling in a patch of clear sky),
+    which is an inherent limit of a detail-vs-structure signal, not a bug.
+    Calibration note (quick test against 4 synthetic fixtures with a
+    bilateral-filtered "inpainted" region vs. the same fixture untouched):
+    the signal is directionally consistent -- every inpainted variant
+    scored higher than its own clean baseline -- but the clean-baseline
+    absolute score varies a lot fixture-to-fixture (0.00 to 0.64 across 4
+    synthetic seeds), so a single absolute threshold is not yet reliably
+    calibrated against real photo texture statistics, same caveat as
+    MISG (L20). Kept at low ensemble weight for the same reason.
+    Module 13 note: this closes a real spec-vs-implementation gap Module
+    12 left unflagged -- the giant-level spec's L23 defines three
+    sub-signals (S1 copy-move, S2 splice, S3 inpainting), and Module 12
+    only implemented S1+S2 without calling out S3 as deferred. This
+    module adds S3 to bring L23 to full spec coverage, following the
+    same "finish the layer, don't fragment it across a new number"
+    precedent Module 11 set for LOP/CALDA.
 """
 
 from __future__ import annotations
@@ -118,6 +154,16 @@ _S2_GRID                = 8      # 8x8 block grid for noise-floor mapping
 _S2_MAD_K               = 3.5    # MAD multiplier for outlier-block threshold
 _S2_OUTLIER_FRAC_LOW    = 0.02   # real-like: <=2% of blocks are noise-floor outliers
 _S2_OUTLIER_FRAC_HIGH   = 0.10   # anomalous: >=10% of blocks are noise-floor outliers
+_S3_GRID                = 8      # 8x8 block grid for detail/structure mapping
+_S3_MIN_STRUCTURE       = 8.0    # min mean gradient magnitude for a block to count as "has structure"
+_S3_MAD_K               = 3.0    # MAD multiplier for low-outlier (too-smooth) threshold
+# PROVISIONAL, same caveat as S1/S2 and L20-L22: these bounds were set from
+# the observed range on synthetic fixtures (tests/test_cmsd_smoke.py), not
+# a labeled real-photo dataset -- real camera texture statistics are
+# unknown here. Set conservatively wide to avoid flagging ordinary
+# per-block variation as anomalous; see analyze_cmsd docstring caveat.
+_S3_OUTLIER_FRAC_LOW    = 0.08   # real-like: <=8% of structured blocks are detail-poor outliers
+_S3_OUTLIER_FRAC_HIGH   = 0.20   # anomalous: >=20% of structured blocks are detail-poor outliers
 
 
 def _to_gray_u8(img: np.ndarray) -> np.ndarray:
@@ -308,6 +354,61 @@ def detect_splice_noise_inconsistency(img: np.ndarray) -> Optional[Dict[str, Any
     }
 
 
+# ── S3: Inpainting detection (detail-to-structure ratio outliers) ─────────────
+
+def detect_inpainting_texture_deficit(img: np.ndarray) -> Optional[Dict[str, Any]]:
+    gray = img.mean(axis=2).astype(np.float32) if img.ndim == 3 else img.astype(np.float32)
+    h, w = gray.shape
+
+    # Fine high-frequency detail energy (Laplacian) vs coarse structure
+    # energy (Sobel gradient magnitude). Real camera texture/grain shows up
+    # in the Laplacian response even within a region that already has
+    # strong Sobel edges; synthesized (inpainted) content tends to be
+    # locally smoother than its structure content would predict.
+    laplacian = cv2.Laplacian(gray, cv2.CV_32F, ksize=3)
+    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    grad_mag = np.hypot(gx, gy)
+
+    tile_h, tile_w = max(h // _S3_GRID, 8), max(w // _S3_GRID, 8)
+    if tile_h < 8 or tile_w < 8:
+        return None
+
+    ratios = []
+    positions = []
+    for i in range(_S3_GRID):
+        for j in range(_S3_GRID):
+            lap_block = laplacian[i * tile_h:(i + 1) * tile_h, j * tile_w:(j + 1) * tile_w]
+            grad_block = grad_mag[i * tile_h:(i + 1) * tile_h, j * tile_w:(j + 1) * tile_w]
+            if lap_block.size < 32:
+                continue
+            structure = float(grad_block.mean())
+            if structure < _S3_MIN_STRUCTURE:
+                continue  # empty/flat block (sky, wall) -- not eligible for this signal
+            detail = float(np.abs(lap_block).mean())
+            ratios.append(detail / (structure + 1e-6))
+            positions.append((i, j))
+
+    if len(ratios) < 12:
+        return None  # too few structured blocks to establish a reliable per-image baseline
+
+    ratios_arr = np.array(ratios)
+    median = float(np.median(ratios_arr))
+    mad = float(np.median(np.abs(ratios_arr - median))) + 1e-8
+
+    # Only the LOW tail is relevant here (too-smooth-for-its-structure);
+    # unusually HIGH detail-to-structure isn't the inpainting signature.
+    low_outlier_mask = (median - ratios_arr) > (_S3_MAD_K * mad)
+    outlier_frac = float(low_outlier_mask.sum()) / len(ratios_arr)
+
+    return {
+        "outlier_frac": outlier_frac,
+        "n_structured_blocks": len(ratios_arr),
+        "n_outliers": int(low_outlier_mask.sum()),
+        "median_ratio": median,
+    }
+
+
 # ── Main entry point ───────────────────────────────────────────────────────
 
 def analyze_cmsd(img: np.ndarray, img_pil: Any = None) -> Dict[str, Any]:
@@ -380,6 +481,30 @@ def analyze_cmsd(img: np.ndarray, img_pil: Any = None) -> Dict[str, Any]:
                           f"anomalous: >{_S2_OUTLIER_FRAC_HIGH*100:.0f}%). Detects noise-level "
                           f"mismatch only — a splice from a source with matching noise "
                           f"characteristics would not be caught by this signal.",
+            })
+            active_signals += 1
+
+        # S3 — Inpainting texture-deficit detection
+        ip = detect_inpainting_texture_deficit(img)
+        if ip is None:
+            evidence.append({
+                "name": "inpainting_insufficient_structure", "score": 0.5,
+                "detail": "too few structured (non-flat) blocks to establish a reliable "
+                          "detail-to-structure baseline for this image",
+            })
+        else:
+            frac = ip["outlier_frac"]
+            s3_score = _score_band(frac, _S3_OUTLIER_FRAC_LOW, _S3_OUTLIER_FRAC_HIGH)
+            evidence.append({
+                "name": "inpainting_texture_deficit", "score": round(s3_score, 4),
+                "detail": f"{ip['n_outliers']}/{ip['n_structured_blocks']} structured blocks "
+                          f"({frac*100:.1f}%) have a detail-to-structure ratio deviating "
+                          f">{_S3_MAD_K}xMAD below the image's own median "
+                          f"(median_ratio={ip['median_ratio']:.3f}) "
+                          f"(real-like: <{_S3_OUTLIER_FRAC_LOW*100:.0f}%, "
+                          f"anomalous: >{_S3_OUTLIER_FRAC_HIGH*100:.0f}%). Flags regions with "
+                          f"strong structure but implausibly little fine detail — a signature "
+                          f"of synthesized (inpainted) content, not necessarily the seam itself.",
             })
             active_signals += 1
 

@@ -80,3 +80,16 @@ VERSION = "4.8.1"
 # is a fast, deliberately-scoped quick-reject proxy, not rotation/scale
 # invariant.
 VERSION = "4.10.0"
+
+# v4.10.1: Module 13 -- added S3 (Inpainting Detection) to existing L23
+# CMSD, closing a spec-vs-implementation gap Module 12 left unflagged:
+# the giant-level spec defines L23 with three sub-signals (S1 copy-move,
+# S2 splice, S3 inpainting), and Module 12 shipped only S1+S2. S3 is a
+# block-wise detail-to-structure (Laplacian/Sobel) ratio outlier check --
+# see analyzers/cmsd.py's module docstring for the physics rationale and
+# an explicit calibration-note caveat (directionally consistent on
+# synthetic fixtures, absolute thresholds not yet validated against real
+# photos, same caveat class as L20 MISG). No new layer number or engine
+# wiring needed -- S3 is additive evidence inside the existing L23
+# runner/weight.
+VERSION = "4.10.1"
