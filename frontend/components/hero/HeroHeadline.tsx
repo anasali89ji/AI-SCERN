@@ -13,10 +13,10 @@ export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
   return (
     <div className="select-none">
       <h1 className="font-heading font-bold leading-[1.05] tracking-tight text-display text-silver-900">
-        Attest any content.
+        Detect AI-generated content.
       </h1>
       <p className="font-heading font-semibold leading-[1.1] tracking-tight text-headline text-silver-700 mt-1">
-        AI-generated or human-made.
+        In seconds — with evidence, not guesses.
       </p>
 
       {/* Static modality tab row — replaces the old rotating-word carousel */}

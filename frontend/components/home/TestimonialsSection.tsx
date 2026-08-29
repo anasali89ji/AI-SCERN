@@ -11,12 +11,12 @@ interface Review {
 }
 
 const FALLBACK: Review[] = [
-  { id:'f1', body:"Had a batch of essays that felt off but I couldn't say why. Ran them through this and the heatmap literally pointed at the paragraphs that were rewritten. Kind of wild honestly.", display_name:'Dr. Sarah M.', tool_used:'Text Attestation' },
-  { id:'f2', body:"We almost ran a photo that turned out to be manipulated. Caught it 10 minutes before publish. That's the only reason I still use this thing.", display_name:'James K.', tool_used:'Image Attestation' },
-  { id:'f3', body:"idk if it's perfect but it's caught 2 voice clones for me this year so I'm not complaining. Takes like 20 seconds per clip.", display_name:'Priya L.', tool_used:'Audio Attestation' },
-  { id:'f4', body:'Started using this for resume screening after one too many suspiciously perfect cover letters. Not foolproof but it flags enough that it saves me time.', display_name:'Marcus T.', tool_used:'Text Attestation' },
-  { id:'f5', body:"Ran 20 student essays overnight, had results by morning, no complaints there. Free tier cap is a bit tight though, hit it by essay 15.", display_name:'Anonymous', tool_used:'Batch Content Analyser', is_anonymous:true },
-  { id:'f6', body:"A clip was going around our group chat that looked fake to me but nobody believed it. Ran it here, frame breakdown showed exactly where it was spliced. Good enough receipts to shut that down.", display_name:'Elena R.', tool_used:'Video Attestation' },
+  { id:'f1', body:"Had a batch of essays that felt off but I couldn't say why. Ran them through this and the heatmap literally pointed at the paragraphs that were rewritten. Kind of wild honestly.", display_name:'Dr. Sarah M.', tool_used:'Free AI Text Detector' },
+  { id:'f2', body:"We almost ran a photo that turned out to be manipulated. Caught it 10 minutes before publish. That's the only reason I still use this thing.", display_name:'James K.', tool_used:'Deepfake Image Detector' },
+  { id:'f3', body:"idk if it's perfect but it's caught 2 voice clones for me this year so I'm not complaining. Takes like 20 seconds per clip.", display_name:'Priya L.', tool_used:'AI Audio & Voice Clone Detector' },
+  { id:'f4', body:'Started using this for resume screening after one too many suspiciously perfect cover letters. Not foolproof but it flags enough that it saves me time.', display_name:'Marcus T.', tool_used:'Free AI Text Detector' },
+  { id:'f5', body:"Ran 20 student essays overnight, had results by morning, no complaints there. Free tier cap is a bit tight though, hit it by essay 15.", display_name:'Anonymous', tool_used:'Batch AI Content Analyser', is_anonymous:true },
+  { id:'f6', body:"A clip was going around our group chat that looked fake to me but nobody believed it. Ran it here, frame breakdown showed exactly where it was spliced. Good enough receipts to shut that down.", display_name:'Elena R.', tool_used:'Free Deepfake Video Detector' },
 ]
 
 const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) {
@@ -35,7 +35,7 @@ const ReviewCard = memo(function ReviewCard({ r, i }: { r: Review; i: number }) 
     >
       <span className="self-start inline-flex items-center gap-1 mb-4 text-xs font-medium
                         text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-        <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Verified
+        <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> User review
       </span>
 
       <p className="text-base text-silver-800 italic leading-relaxed flex-1 mb-5">&ldquo;{text}&rdquo;</p>

@@ -25,6 +25,105 @@ function StatCard({ title, value, sub, icon: Icon, color, loading }: any) {
   )
 }
 
+function MaintenancePanel() {
+  const [enabled, setEnabled]   = useState(false)
+  const [message, setMessage]   = useState('')
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [notice, setNotice]     = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/maintenance')
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => {
+        setEnabled(!!data.enabled)
+        setMessage(data.message || '')
+      })
+      .catch(() => setError('Failed to load maintenance status'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const persist = useCallback(async (next: boolean, msg: string, okNotice: string) => {
+    setSaving(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const res = await fetch('/api/admin/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: next, message: msg }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Request failed')
+      setEnabled(next)
+      setNotice(okNotice)
+    } catch (e: any) {
+      setError(e?.message || 'Failed to update maintenance mode')
+    } finally {
+      setSaving(false)
+    }
+  }, [])
+
+  const toggle = useCallback(async () => {
+    await persist(!enabled, message, enabled ? 'Maintenance mode disabled — site is live.' : 'Maintenance mode enabled — site is gated.')
+  }, [enabled, message, persist])
+
+  const saveMessage = useCallback(async () => {
+    await persist(enabled, message, 'Maintenance message saved.')
+  }, [enabled, message, persist])
+
+  return (
+    <div className={`rounded-xl border p-4 ${enabled ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/[0.08] bg-surface/60'}`}>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" />
+            Maintenance Mode
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {loading ? 'Loading status…' : enabled
+              ? 'LIVE — the whole site is gated except /admin and this panel.'
+              : 'Site is live and open to everyone.'}
+          </p>
+        </div>
+        <button
+          onClick={toggle}
+          disabled={loading || saving}
+          className={`relative w-12 h-7 rounded-full transition-colors shrink-0 disabled:opacity-50
+            ${enabled ? 'bg-rose-500' : 'bg-[#141420] border border-white/[0.08]'}`}
+          aria-label={enabled ? 'Disable maintenance mode' : 'Enable maintenance mode'}
+          aria-pressed={enabled}
+        >
+          <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform
+            ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+        </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="text"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          placeholder="Maintenance message shown to visitors"
+          className="flex-1 min-w-0 h-10 rounded-lg border border-white/[0.08] bg-[#0c111c] px-3 text-[13px] text-slate-100
+                     placeholder:text-slate-600 outline-none focus:border-[#2BEE34]/50"
+        />
+        <button
+          onClick={saveMessage}
+          disabled={saving}
+          className="h-10 px-4 rounded-lg border border-white/[0.08] hover:bg-[#141420] transition-colors
+                     text-[12px] font-semibold text-slate-200 disabled:opacity-50 shrink-0"
+        >
+          {saving ? 'Saving…' : 'Save message'}
+        </button>
+      </div>
+
+      {notice && <p className="text-[11px] text-emerald-400 mt-2" role="status">{notice}</p>}
+      {error && <p className="text-[11px] text-rose-400 mt-2" role="alert">{error}</p>}
+    </div>
+  )
+}
+
 function EventBadge({ event }: { event: string }) {
   const config: Record<string, { color: string; label: string }> = {
     signup:   { color: C.success,  label: 'Signed Up' },
@@ -99,6 +198,9 @@ export default function AdminOverview() {
           <StatCard title="Total Scans" value={stats?.totalScans?.toLocaleString() || '—'} sub={`${stats?.scansToday || 0} today`} icon={Scan} color={C.blue} loading={loading} />
           <StatCard title="Banned / Revoked" value={`${stats?.bannedUsers || 0} / ${stats?.revokedUsers || 0}`} sub="accounts restricted" icon={Shield} color={C.danger} loading={loading} />
         </div>
+
+        {/* Maintenance Mode — write path restored from main (app/api/admin/maintenance) */}
+        <MaintenancePanel />
 
         <div className="grid lg:grid-cols-5 gap-4">
           {/* Live Activity Feed */}

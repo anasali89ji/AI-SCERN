@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { SquareArrowOutUpRight, ArrowRight, Info } from 'lucide-react'
+import { SquareArrowOutUpRight, ArrowRight, Download, Info } from 'lucide-react'
 
 export const metadata = {
   title: 'Accuracy Benchmarks — Aiscern',
@@ -223,11 +223,17 @@ export default function BenchmarksPage() {
                          transition-colors duration-150">
               Read Methodology <ArrowRight className="w-4 h-4" />
             </Link>
+            <a href="/api/benchmarks/csv" download="aiscern-benchmark-results.csv"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
+                         border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
+                         font-semibold text-sm transition-all duration-150">
+              <Download className="w-4 h-4" /> Download Results CSV
+            </a>
             <Link href="/detect/text"
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
-              Try Attestation
+              Try Free Detection
             </Link>
           </div>
 

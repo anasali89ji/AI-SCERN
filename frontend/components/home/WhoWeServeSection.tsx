@@ -38,7 +38,7 @@ const WHO_NEEDS = [
     icon: Users,
     value: 'Screen CVs and cover letters for AI-polished exaggerations before shortlisting.',
     stat: '<3s',
-    statLabel: 'per attestation',
+    statLabel: 'per analysis',
     href: '/detect/text',
   },
   {
@@ -52,7 +52,7 @@ const WHO_NEEDS = [
   {
     role: 'Security Teams',
     icon: ShieldCheck,
-    value: 'Attest deepfake video calls and synthetic identities in incident response.',
+    value: 'Detect deepfake video calls and synthetic identities in incident response.',
     stat: '~88%',
     statLabel: 'video accuracy',
     href: '/detect/video',
@@ -109,7 +109,7 @@ export default function WhoWeServeSection() {
             Who Uses Aiscern
           </h2>
           <p className="text-silver-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            Nine professional verticals. One attestation platform.
+            Nine professional verticals. One detection platform.
           </p>
         </div>
 

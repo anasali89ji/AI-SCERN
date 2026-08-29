@@ -158,7 +158,7 @@ export default function AIvsRealSection() {
         </div>
 
         <p className="text-center text-xs text-silver-600 mt-6">
-          Illustrative example — try the live attestation tool above for real results.
+          Illustrative example — try the live detection demo above for real results.
         </p>
       </div>
     </section>

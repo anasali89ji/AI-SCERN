@@ -1,3 +1,18 @@
+/**
+ * Aiscern design tokens — canonical design reference.
+ *
+ * The dark graphite + luminous moss system is the product's visual
+ * foundation. Page-specific hard-coded hex values should not duplicate
+ * these semantics: import tokens from here or use the Tailwind aliases
+ * (silver / moss / surface / accent / depth) instead.
+ *
+ * §Plan 8.2 — semantic aliases make intent readable:
+ *   surface.page / raised / sunken / overlay
+ *   text.primary / secondary / muted
+ *   border.subtle / strong
+ *   accent.primary
+ *   status.success / warning / error / info
+ */
 export const tokens = {
   color: {
     background: {
@@ -25,6 +40,43 @@ export const tokens = {
       active: 'rgba(43, 238, 52, 0.3)',
     },
   },
+
+  // ── Semantic aliases (plan §8.2) ───────────────────────────────────────────
+  // These are the preferred reference for new UI code. They map onto the
+  // concrete scales above / the Tailwind silver+moss system so that the
+  // whole product speaks one visual language.
+  semantic: {
+    surface: {
+      page:    '#141414', // silver-100 — page canvas
+      raised:  '#1A1A1A', // silver-200 — cards, elevated panels
+      sunken:  '#0A0A0A', // silver-50  — inset wells, code, depth backgrounds
+      overlay: '#1E1E1E', // silver-300 — floating panels, modals, sheets
+    },
+    text: {
+      primary:   '#FFFFFF', // silver-900
+      secondary: '#E5E5E5', // silver-800
+      muted:     '#A3A3A3', // silver-700
+      disabled:  '#6B6B6B', // silver-600
+      inverse:   '#0A0A0A', // on-accent text
+    },
+    border: {
+      subtle: '#1E1E1E', // silver-300
+      strong: '#2A2A2A', // silver-400
+      accent: 'rgba(43, 238, 52, 0.3)',
+    },
+    accent: {
+      primary:      '#2BEE34', // moss-300
+      primaryHover: '#1A8F1F', // accent.hover
+      primaryGlow:  'rgba(43, 238, 52, 0.15)',
+    },
+    status: {
+      success: '#2BEE34', // moss-300 — verified / human / pass
+      warning: '#FFB800', // amber     — uncertain / review
+      error:   '#FF4444', // rose      — AI-generated / fail
+      info:    '#06b6d4', // cyan      — neutral emphasis
+    },
+  },
+
   spacing: {
     0: '0px', 1: '4px', 2: '8px', 3: '12px', 4: '16px',
     5: '20px', 6: '24px', 8: '32px', 10: '40px', 12: '48px', 16: '64px', 20: '80px',

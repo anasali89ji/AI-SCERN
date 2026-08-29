@@ -84,6 +84,13 @@ const MAINTENANCE_EXEMPT = [
   '/_next',
   '/favicon',
   '/api/webhook',
+  // Without these, enabling maintenance mode locks the admin out of the
+  // one panel that can turn it back off again -- the only way back in
+  // would be being on an allowed IP or localhost. Admin auth is already
+  // enforced separately below (isAdminRoute), so exempting these from the
+  // maintenance gate doesn't open anything up. [restored from main]
+  '/admin',
+  '/api/admin',
 ]
 
 function isExempt(pathname: string): boolean {
@@ -168,7 +175,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         const url = new URL('/maintenance', req.url)
         if (maintenance.message) url.searchParams.set('msg', encodeURIComponent(maintenance.message))
         if (maintenance.duration) url.searchParams.set('dur', encodeURIComponent(maintenance.duration))
-        return NextResponse.redirect(url)
+        const res = NextResponse.redirect(url)
+        // Without this, the redirect response itself (and the RSC payload
+        // Next.js fetches for client-side <Link> navigation) was cacheable
+        // by the client Router Cache. A hard reload always hit middleware
+        // and correctly bounced to /maintenance, but a prefetched or
+        // already-visited dashboard route could still be served straight
+        // from the client cache on soft navigation, skipping middleware
+        // entirely. Forcing no-store on every gated response stops that
+        // route from ever being cached client-side while maintenance mode
+        // is on. [restored from main]
+        res.headers.set('Cache-Control', 'no-store, must-revalidate')
+        return res
       }
     }
   }

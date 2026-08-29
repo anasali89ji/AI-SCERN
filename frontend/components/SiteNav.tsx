@@ -32,12 +32,12 @@ const SOLUTIONS = [
 ]
 
 const TOOLS = [
-  { href: '/detect/text',  label: 'Text Attestation',  icon: FileType2,      desc: 'ChatGPT, Claude & more'  },
-  { href: '/detect/image', label: 'Image Attestation', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
-  { href: '/detect/audio', label: 'Audio Attestation', icon: Music,         desc: 'Voice cloning & TTS'     },
-  { href: '/detect/video', label: 'Video Attestation', icon: Video,         desc: 'Frame-level analysis'    },
-  { href: '/chat',         label: 'ARIA Assistant', icon: MessageSquare, desc: 'Attestation chat'       },
-  { href: '/batch',        label: 'Bulk Attestation', icon: Database,      desc: 'Bulk content examination'   },
+  { href: '/detect/text',  label: 'Free AI Text Detector',           icon: FileType2,      desc: 'ChatGPT, Claude & more'  },
+  { href: '/detect/image', label: 'Deepfake Image Detector',         icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
+  { href: '/detect/audio', label: 'AI Audio & Voice Clone Detector',  icon: Music,         desc: 'Voice cloning & TTS'     },
+  { href: '/detect/video', label: 'Free Deepfake Video Detector',    icon: Video,         desc: 'Frame-level analysis'    },
+  { href: '/chat',         label: 'AI Detection Assistant',          icon: MessageSquare, desc: 'Ask about AI detection'  },
+  { href: '/batch',        label: 'Batch AI Content Analyser',       icon: Database,      desc: 'Bulk content analysis'   },
 ]
 
 const NAV_LINKS = [
@@ -298,7 +298,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                     ))}
                   </div>
                   <div className="px-4 py-2.5 border-t border-white/[0.06] flex items-center justify-between">
-                    <span className="text-xs text-silver-600">All attestation tools — free tier available</span>
+                    <span className="text-xs text-silver-600">All detection tools — free tier available</span>
                     <Link href="/batch" className="text-xs text-accent hover:text-moss-200 font-medium flex items-center gap-1 transition-colors duration-200">
                       Batch mode <Zap className="w-3 h-3" aria-hidden="true" />
                     </Link>
@@ -428,7 +428,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                            focus-visible:ring-2 focus-visible:ring-accent/50"
               >
                 <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">Begin Attestation</span>
+                <span className="hidden sm:inline">Start Free Detection</span>
                 <span className="sm:hidden">Join</span>
               </Link>
             </>
@@ -594,7 +594,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                              bg-accent hover:bg-accent-hover text-depth-bg text-sm font-semibold transition-colors duration-200
                              focus-visible:ring-2 focus-visible:ring-accent/50"
                 >
-                  <Zap className="w-4 h-4" aria-hidden="true" /> Begin Attestation Free
+                  <Zap className="w-4 h-4" aria-hidden="true" /> Start Free Detection
                 </Link>
               </motion.div>
             )}

@@ -123,9 +123,9 @@ const config: Config = {
 
       fontFamily: {
         sans:    ['var(--font-inter)', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-        heading: ['var(--font-geist-sans)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono:    ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
-        display: ['var(--font-geist-sans)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
 
       fontSize: {
