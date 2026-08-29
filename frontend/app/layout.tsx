@@ -1,6 +1,17 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import { ClerkClientProvider } from '@/components/ClerkClientProviderDeferred'
+// NOTE: statically imported on purpose — NOT deferred via
+// ClerkClientProviderDeferred. The deferred variant (adopted from main)
+// wraps the ENTIRE app in next/dynamic({ ssr: false }), which skips
+// server-rendering for every page subtree under the provider. Verified at
+// runtime: main's production build ships a 184KB homepage HTML shell whose
+// only visible text is the skip link — zero SSR content, breaking the
+// "primarily server-rendered" requirement and SEO. Clerk's heavy browser
+// SDK (clerk.browser, ~256KB) is itself lazy-loaded by ClerkProvider
+// internally, so the static import does not block first paint the way the
+// deferral comment implied. ClerkClientProviderDeferred.tsx is kept for
+// reference; do not re-adopt it without an SSR fix.
+import { ClerkClientProvider } from '@/components/ClerkClientProvider'
 import { AuthProvider } from '@/components/auth-provider'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Toaster } from 'sonner'

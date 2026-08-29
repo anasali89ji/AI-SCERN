@@ -99,7 +99,6 @@ export function VerifyDocSequenceLoader({
       }, b.ms)
     )
     return () => timers.forEach(clearTimeout)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
   if (!loading) return null
