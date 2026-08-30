@@ -216,21 +216,16 @@ export function SiteFooter() {
         </div>
       </div>
 
-        {/* Acquire.com Listing Badge */}
+         {/* BuySellStartups Listing Badge */}
       <div className="flex justify-center pt-6 pb-2">
         <a 
           href="https://buysellstartups.com/listings/listing-mtfnswz0fl0o" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="inline-block"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-gray-900/50 hover:bg-gray-800 transition-colors"
         >
-          <img 
-            src="https://buysellstartups.com/api/badge/listing-mtfnswz0fl0o" 
-            alt="For Sale on Buy Sell Startups" 
-            width={280} 
-            height={68}
-            className="rounded-lg border border-gray-700 hover:border-gray-500 transition-colors opacity-80 hover:opacity-100"
-          />
+          <span className="text-sm text-gray-400">Aiscern is currently</span>
+          <span className="text-sm font-semibold text-emerald-400">For Sale</span>
         </a>
       </div>
     </footer>
