@@ -275,6 +275,53 @@ def _run_cmsd_layer(img_array, img_pil) -> Dict[str, Any]:
         )
 
 
+# ── Temporal Coherence Analysis runner (L24, v4.11.0) ───────────────────────────
+
+def _run_tca_layer(img_array, img_pil) -> Dict[str, Any]:
+    """
+    Layer 24 — Temporal Coherence Analysis (TCA), single-image-applicable
+    subset. Module 14 of the giant-level optimization directive. See
+    analyzers/tca.py's module docstring for why only S1 (interlacing
+    detection) and S2 (motion-blur direction consistency) are
+    implemented — S3 (frame repeat detection) is explicitly video-only
+    per the spec's own text and requires multiple frames this pipeline
+    doesn't have for a single image upload. Not calibrated against a
+    labeled dataset (no such dataset exists here yet, same caveat as
+    L20-L23) — see LAYER_WEIGHTS[24] below.
+    """
+    from analyzers.tca import analyze_tca
+    from utils.evidence_builder import evidence_node, build_layer_report
+    try:
+        result = analyze_tca(img_array, img_pil)
+        score = float(result.get("score", 0.5))
+        status = result.get("status", "failure")
+        elapsed = int(result.get("elapsed_ms", 0))
+        ev_nodes = []
+        for ev in result.get("evidence", []):
+            ev_score = float(ev.get("score", 0.5))
+            if ev_score > 0.55:
+                ev_status = "anomalous"
+            elif ev_score < 0.45:
+                ev_status = "normal"
+            else:
+                ev_status = "inconclusive"
+            ev_nodes.append(evidence_node(
+                layer=24, category="temporal_forensics", artifact_type=ev.get("name", "unknown"),
+                status=ev_status, confidence=abs(ev_score - 0.5) * 2.0,
+                detail=ev.get("detail", "") + " [PROVISIONAL: uncalibrated threshold]",
+                raw_value=ev_score,
+            ))
+        return build_layer_report(
+            layer=24, layer_name="TCA – Temporal Coherence Analysis [provisional]",
+            evidence=ev_nodes, status=status, elapsed_ms=elapsed, score=score,
+        )
+    except Exception as e:
+        logger.warning("[ImageEngine][L24] failed: %s", e)
+        return build_layer_report(
+            24, "TCA – Temporal Coherence Analysis [provisional]", [], "failure", 0, score=0.5
+        )
+
+
 # ── Physical Consistency Layer runners (L11-L14) ──────────────────────────────
 
 def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
@@ -641,6 +688,9 @@ def _fuse_scores(
         # module docstring. Weighted low like L20-L22 for the same reason:
         # not yet run against a labeled tampered-vs-untampered dataset.
         23: 0.40,  # L23 CMSD — Copy-Move & Splice Detection
+        # L24 (v4.11.0): PROVISIONAL — uncalibrated, see analyzers/tca.py
+        # module docstring. Weighted low like L20-L23 for the same reason.
+        24: 0.40,  # L24 TCA — Temporal Coherence Analysis (interlacing + motion-blur consistency)
     }
 
     for layer in v2_layers:
@@ -917,7 +967,7 @@ async def analyze_image_from_url(
         # negative rate specifically on URL-scanned images (bulk site
         # crawling, the web scanner) relative to direct uploads. Now runs
         # concurrently, matching the bytes path.
-        with ThreadPoolExecutor(max_workers=16) as pool:
+        with ThreadPoolExecutor(max_workers=17) as pool:
             f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
             f_l2  = pool.submit(_run_l2, img_array, img_pil)
             f_l3  = pool.submit(_run_l3, img_array, img_pil)
@@ -935,6 +985,8 @@ async def analyze_image_from_url(
             f_extphys = pool.submit(_run_extended_physics_layers, img_array, img_pil)
             # v4.10.0: L23 Copy-Move & Splice Detection (provisional weight, see runner docstring)
             f_cmsd = pool.submit(_run_cmsd_layer, img_array, img_pil)
+            # v4.11.0: L24 Temporal Coherence Analysis (provisional weight, see runner docstring)
+            f_tca = pool.submit(_run_tca_layer, img_array, img_pil)
             f_synthid = pool.submit(
                 _run_synthid, img_array,
                 (img_pil.format or "").upper() not in ("JPEG", "JPG"),
@@ -951,6 +1003,7 @@ async def analyze_image_from_url(
             extended_physics = f_extphys.result()
             layers.extend(extended_physics.get("layer_reports", []))
             layers.append(f_cmsd.result())
+            layers.append(f_tca.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
@@ -1053,8 +1106,8 @@ def analyze_image_from_bytes(
         _t0 = time.monotonic()
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
         # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
-        # SynthID, v3 forensics, L23 copy-move/splice (v4.10.0) — 15 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=16) as pool:
+        # SynthID, v3 forensics, L23 copy-move/splice, L24 temporal coherence (v4.11.0) — 16 concurrent tasks.
+        with ThreadPoolExecutor(max_workers=17) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -1074,6 +1127,8 @@ def analyze_image_from_bytes(
             f_extphys = pool.submit(_run_extended_physics_layers, img_array, pil_img)
             # v4.10.0: L23 Copy-Move & Splice Detection (provisional weight, see runner docstring)
             f_cmsd    = pool.submit(_run_cmsd_layer, img_array, pil_img)
+            # v4.11.0: L24 Temporal Coherence Analysis (provisional weight, see runner docstring)
+            f_tca     = pool.submit(_run_tca_layer, img_array, pil_img)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
@@ -1088,6 +1143,7 @@ def analyze_image_from_bytes(
             extended_physics = f_extphys.result()
             layers.extend(extended_physics.get("layer_reports", []))
             layers.append(f_cmsd.result())
+            layers.append(f_tca.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines

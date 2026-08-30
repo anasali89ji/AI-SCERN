@@ -93,3 +93,13 @@ VERSION = "4.10.0"
 # wiring needed -- S3 is additive evidence inside the existing L23
 # runner/weight.
 VERSION = "4.10.1"
+
+# v4.11.0: Module 14 -- added L24 TCA (Temporal Coherence Analysis),
+# single-image-applicable subset: S1 interlacing (comb-artifact)
+# detection, S2 motion-blur direction consistency. Spec's S3 (frame
+# repeat detection) is explicitly video-only per the spec's own text
+# and out of scope for this image engine -- see analyzers/tca.py
+# module docstring. PROVISIONAL, same caveat as L20-L23: not yet
+# calibrated against a labeled dataset, so LAYER_WEIGHTS[24] is
+# deliberately low.
+VERSION = "4.11.0"
