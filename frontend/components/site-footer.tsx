@@ -215,6 +215,24 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
+
+        {/* Acquire.com Listing Badge */}
+      <div className="flex justify-center pt-6 pb-2">
+        <a 
+          href="https://buysellstartups.com/listings/listing-mtfnswz0fl0o" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-block"
+        >
+          <img 
+            src="https://buysellstartups.com/api/badge/listing-mtfnswz0fl0o" 
+            alt="For Sale on Buy Sell Startups" 
+            width={280} 
+            height={68}
+            className="rounded-lg border border-gray-700 hover:border-gray-500 transition-colors opacity-80 hover:opacity-100"
+          />
+        </a>
+      </div>
     </footer>
   )
 }
