@@ -322,6 +322,61 @@ def _run_tca_layer(img_array, img_pil) -> Dict[str, Any]:
         )
 
 
+# ── C2PA & Content Authenticity Analysis runner (L25, v4.12.0) ────────────────
+
+def _run_c2pa_layer(img_pil, temp_path: str) -> Dict[str, Any]:
+    """
+    Layer 25 — C2PA & Content Authenticity Analysis. Module 15 of the
+    giant-level optimization directive. Unlike L20-L24, this layer needs
+    the RAW file bytes (temp_path), not the decoded img_array -- C2PA
+    manifests live in container-level metadata (JPEG APP11 markers / PNG
+    caBX chunks) that PIL's decode to a pixel array discards entirely.
+    See analyzers/c2pa.py's module docstring for exactly what each of
+    the spec's three sub-signals covers and, importantly, what it
+    doesn't: S2's spec example (cross-referencing QESM's sensor
+    signature) isn't implementable under the current architecture where
+    layer runners don't see each other's output, and S3's full
+    certificate-chain validation isn't implementable without a C2PA
+    trust-list asset this pipeline doesn't have — both flagged
+    explicitly there rather than faked. Not calibrated against a
+    labeled dataset (no such dataset exists here yet, same caveat as
+    L20-L24) — see LAYER_WEIGHTS[25] below.
+    """
+    from analyzers.c2pa import analyze_c2pa
+    from utils.evidence_builder import evidence_node, build_layer_report
+    try:
+        with open(temp_path, "rb") as f:
+            raw_bytes = f.read()
+        result = analyze_c2pa(img_pil, raw_bytes)
+        score = float(result.get("score", 0.5))
+        status = result.get("status", "failure")
+        elapsed = int(result.get("elapsed_ms", 0))
+        ev_nodes = []
+        for ev in result.get("evidence", []):
+            ev_score = float(ev.get("score", 0.5))
+            if ev_score > 0.55:
+                ev_status = "anomalous"
+            elif ev_score < 0.45:
+                ev_status = "normal"
+            else:
+                ev_status = "inconclusive"
+            ev_nodes.append(evidence_node(
+                layer=25, category="content_authenticity", artifact_type=ev.get("name", "unknown"),
+                status=ev_status, confidence=abs(ev_score - 0.5) * 2.0,
+                detail=ev.get("detail", "") + " [PROVISIONAL: uncalibrated threshold]",
+                raw_value=ev_score,
+            ))
+        return build_layer_report(
+            layer=25, layer_name="C2PA – Content Authenticity Analysis [provisional]",
+            evidence=ev_nodes, status=status, elapsed_ms=elapsed, score=score,
+        )
+    except Exception as e:
+        logger.warning("[ImageEngine][L25] failed: %s", e)
+        return build_layer_report(
+            25, "C2PA – Content Authenticity Analysis [provisional]", [], "failure", 0, score=0.5
+        )
+
+
 # ── Physical Consistency Layer runners (L11-L14) ──────────────────────────────
 
 def _run_physical_layers(img_array, img_pil) -> Dict[str, Any]:
@@ -691,6 +746,9 @@ def _fuse_scores(
         # L24 (v4.11.0): PROVISIONAL — uncalibrated, see analyzers/tca.py
         # module docstring. Weighted low like L20-L23 for the same reason.
         24: 0.40,  # L24 TCA — Temporal Coherence Analysis (interlacing + motion-blur consistency)
+        # L25 (v4.12.0): PROVISIONAL — uncalibrated, see analyzers/c2pa.py
+        # module docstring. Weighted low like L20-L24 for the same reason.
+        25: 0.40,  # L25 C2PA — Content Authenticity Analysis (manifest presence/validity + cert sanity)
     }
 
     for layer in v2_layers:
@@ -967,7 +1025,7 @@ async def analyze_image_from_url(
         # negative rate specifically on URL-scanned images (bulk site
         # crawling, the web scanner) relative to direct uploads. Now runs
         # concurrently, matching the bytes path.
-        with ThreadPoolExecutor(max_workers=17) as pool:
+        with ThreadPoolExecutor(max_workers=18) as pool:
             f_l1  = pool.submit(_run_l1, img_array, img_pil, target_regions)
             f_l2  = pool.submit(_run_l2, img_array, img_pil)
             f_l3  = pool.submit(_run_l3, img_array, img_pil)
@@ -987,6 +1045,21 @@ async def analyze_image_from_url(
             f_cmsd = pool.submit(_run_cmsd_layer, img_array, img_pil)
             # v4.11.0: L24 Temporal Coherence Analysis (provisional weight, see runner docstring)
             f_tca = pool.submit(_run_tca_layer, img_array, img_pil)
+            # v4.12.0: L25 C2PA Content Authenticity (provisional weight, see runner docstring).
+            # CAVEAT specific to this URL-based path: temp_path here is a
+            # PIL re-encode (see the .convert("RGB").save() a few lines up),
+            # which strips any original APP11/JUMBF C2PA data the
+            # URL-fetched image may have had before this layer ever sees
+            # it. This layer will reliably report "no manifest found"
+            # (neutral, not a false negative in its own scoring, but
+            # uninformative) for URL-sourced images regardless of the
+            # source's actual C2PA status. Pre-existing limitation of this
+            # temp_path (v3 forensics has the same exposure), not
+            # something this module introduces or has fixed — flagged
+            # here since it specifically nullifies this layer's purpose
+            # for this one call path, unlike v3 forensics which is more
+            # re-encode-tolerant.
+            f_c2pa = pool.submit(_run_c2pa_layer, img_pil, temp_path)
             f_synthid = pool.submit(
                 _run_synthid, img_array,
                 (img_pil.format or "").upper() not in ("JPEG", "JPG"),
@@ -1004,6 +1077,7 @@ async def analyze_image_from_url(
             layers.extend(extended_physics.get("layer_reports", []))
             layers.append(f_cmsd.result())
             layers.append(f_tca.result())
+            layers.append(f_c2pa.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
 
@@ -1106,8 +1180,8 @@ def analyze_image_from_bytes(
         _t0 = time.monotonic()
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
         # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
-        # SynthID, v3 forensics, L23 copy-move/splice, L24 temporal coherence (v4.11.0) — 16 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=17) as pool:
+        # SynthID, v3 forensics, L23 copy-move/splice, L24 temporal coherence, L25 C2PA (v4.12.0) — 17 concurrent tasks.
+        with ThreadPoolExecutor(max_workers=18) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -1129,6 +1203,14 @@ def analyze_image_from_bytes(
             f_cmsd    = pool.submit(_run_cmsd_layer, img_array, pil_img)
             # v4.11.0: L24 Temporal Coherence Analysis (provisional weight, see runner docstring)
             f_tca     = pool.submit(_run_tca_layer, img_array, pil_img)
+            # v4.12.0: L25 C2PA Content Authenticity (provisional weight, see runner docstring).
+            # temp_path here holds the ORIGINAL uploaded bytes verbatim
+            # (written a few lines up via tmp.write(image_bytes), no
+            # re-encode) so this is the one call path where C2PA/JUMBF
+            # data, if present in the original upload, survives intact —
+            # unlike the URL-based analyze_image_from_url path, see that
+            # call site's comment for why it can't do the same.
+            f_c2pa    = pool.submit(_run_c2pa_layer, pil_img, temp_path)
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
@@ -1144,6 +1226,7 @@ def analyze_image_from_bytes(
             layers.extend(extended_physics.get("layer_reports", []))
             layers.append(f_cmsd.result())
             layers.append(f_tca.result())
+            layers.append(f_c2pa.result())
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines

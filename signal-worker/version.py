@@ -103,3 +103,21 @@ VERSION = "4.10.1"
 # calibrated against a labeled dataset, so LAYER_WEIGHTS[24] is
 # deliberately low.
 VERSION = "4.11.0"
+
+# v4.12.0: Module 15 -- added L25 C2PA (Content Authenticity Analysis).
+# Real JUMBF/C2PA container parsing (verified against the C2PA spec and
+# ISO 19566-5 before implementing, see analyzers/c2pa.py's module
+# docstring for citations): JPEG APP11 marker reassembly, PNG caBX
+# chunk extraction, C2PA Manifest Store UUID/box-structure validation,
+# embedded X.509 certificate self-signed/expiry sanity checks. Two of
+# the spec's sub-signals are explicitly scoped down with the reasons
+# documented rather than faked: S2's QESM cross-reference isn't
+# implementable under the current architecture (layer runners don't
+# see each other's output), and S3's full certificate-chain validation
+# isn't implementable without a C2PA trust-list asset this pipeline
+# doesn't have. This is also the first L20+ layer that reads the RAW
+# file bytes (temp_path) rather than the decoded pixel array, since
+# C2PA data lives in container-level metadata PIL's decode discards.
+# PROVISIONAL, same caveat as L20-L24: not yet calibrated against a
+# labeled dataset, so LAYER_WEIGHTS[25] is deliberately low.
+VERSION = "4.12.0"
