@@ -26,6 +26,13 @@ Signals (all CPU-computable, none require a GPU or paid API):
                                 unnaturally clean (too high, uniform) and
                                 degraded (too low) HNR can indicate
                                 synthesis or post-processing artifacts.
+  6. Harmonic structure       — MODULE 16 (spec Section 2.1.1). Per-frame
+                                (not global) HNR variability + harmonic
+                                amplitude envelope dynamism. See
+                                analyzers/audio_spectral_deep.py.
+  7. Phase coherence          — MODULE 16 (spec Section 2.1.2). Inter-
+                                harmonic phase lock + group delay
+                                flatness. See analyzers/audio_spectral_deep.py.
 
 IMPORTANT — calibration status: these are heuristic starting points, not
 yet calibrated against a labeled dataset (unlike image_engine.py's 14
@@ -44,6 +51,7 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 
 from version import VERSION
+from analyzers.audio_spectral_deep import run_all as _run_spectral_deep_signals
 
 logger = logging.getLogger(__name__)
 
@@ -328,12 +336,22 @@ def _signal_harmonic_noise_ratio(y: np.ndarray, sr: int) -> Dict[str, Any]:
 # in this signal category" yet — that needs a calibration pass against a
 # labeled dataset, same as image_engine.py went through before its weights
 # were trusted (see docs/CALIBRATION_LOG.md for that precedent).
+# MODULE 16: added harmonic_structure (per-frame HNR variability + harmonic
+# amplitude envelope dynamism) and phase_coherence (inter-harmonic phase
+# lock + group delay) from spec Section 2.1 items 1-2. Existing 5 weights
+# rescaled down (not simply appended at 0 marginal cost) since these two
+# genuinely overlap in signal-family with the existing harmonic_noise_ratio
+# and spectral_stability signals and should compete for ensemble trust, not
+# just add to it. Still an uncalibrated heuristic starting point overall —
+# same caveat as MODULE 3's original 5, now extended to all 7.
 _SIGNAL_WEIGHTS = {
-    "mfcc_consistency": 0.20,
-    "pitch_jitter_shimmer": 0.25,
-    "spectral_stability": 0.20,
-    "silence_pattern": 0.15,
-    "harmonic_noise_ratio": 0.20,
+    "mfcc_consistency": 0.14,
+    "pitch_jitter_shimmer": 0.17,
+    "spectral_stability": 0.14,
+    "silence_pattern": 0.10,
+    "harmonic_noise_ratio": 0.14,
+    "harmonic_structure": 0.16,
+    "phase_coherence": 0.15,
 }
 
 
@@ -403,6 +421,18 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
             logger.error("[AudioEngine] Signal '%s' raised unexpectedly: %s", name, e, exc_info=True)
             results[name] = {"available": False, "reason": f"unexpected_error: {e}"}
 
+    # MODULE 16 — spec Section 2.1 items 1-2 (harmonic structure, phase
+    # coherence). Own try/except at the call site (not just inside each
+    # analyzer fn) since analyzers/audio_spectral_deep.py is new code and
+    # a bug in run_all() itself (vs. inside one of its two functions)
+    # must not take down the whole /analyze/audio request either.
+    try:
+        results.update(_run_spectral_deep_signals(y, sr))
+    except Exception as e:
+        logger.error("[AudioEngine] audio_spectral_deep.run_all raised unexpectedly: %s", e, exc_info=True)
+        results["harmonic_structure"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["phase_coherence"] = {"available": False, "reason": f"unexpected_error: {e}"}
+
     available = {k: v for k, v in results.items() if v.get("available")}
     if available:
         total_w = sum(_SIGNAL_WEIGHTS[k] for k in available)
@@ -423,7 +453,7 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
 
     elapsed = int((time.time() - start) * 1000)
     logger.info("[AudioEngine] analysis done in %dms, %d/%d signals available",
-                elapsed, len(available), len(signal_fns))
+                elapsed, len(available), len(_SIGNAL_WEIGHTS))
 
     return {
         "jobId": job_id,
@@ -433,7 +463,7 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         "audio_signals": {k: v.get("score") for k, v in results.items()},
         "signal_details": signal_details,
         "signals_available": len(available),
-        "signals_total": len(signal_fns),
+        "signals_total": len(_SIGNAL_WEIGHTS),
         "processingTimeMs": elapsed,
         "version": VERSION,
     }

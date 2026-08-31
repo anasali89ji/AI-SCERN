@@ -150,3 +150,42 @@ def test_synthetic_regression_direction():
     assert robotic["status"] == "success"
     # Directional, not magnitude — see docstring on why this is deliberately loose.
     assert robotic["composite_audio_score"] >= human["composite_audio_score"] - 0.05
+
+
+# ── MODULE 16 — harmonic_structure / phase_coherence directional checks ────
+# Same honest-limitation caveat as test_synthetic_regression_direction above:
+# synthetic proxy fixtures, direction-only, not a real-world accuracy claim.
+
+def test_harmonic_structure_and_phase_coherence_direction():
+    from analyzers.audio_spectral_deep import harmonic_structure_analysis, phase_coherence_analysis
+
+    np.random.seed(7)
+    human = _human_like_proxy()
+    robotic = _robotic_proxy()
+
+    hs_human = harmonic_structure_analysis(human.astype(np.float32), 16000)
+    hs_robotic = harmonic_structure_analysis(robotic.astype(np.float32), 16000)
+    pc_human = phase_coherence_analysis(human.astype(np.float32), 16000)
+    pc_robotic = phase_coherence_analysis(robotic.astype(np.float32), 16000)
+
+    assert hs_human["available"] and hs_robotic["available"]
+    assert pc_human["available"] and pc_robotic["available"]
+    # Directional only — the static/robotic proxy should read as at least as
+    # suspicious as the irregular/human-like proxy on both new signals.
+    assert hs_robotic["score"] >= hs_human["score"] - 0.05
+    assert pc_robotic["score"] >= pc_human["score"] - 0.05
+
+
+def test_module16_signals_wired_into_composite():
+    """Confirms harmonic_structure/phase_coherence actually feed the composite
+    (not just computed and discarded) — catches a wiring regression, not a
+    numerical-accuracy one."""
+    from engines.audio_engine import analyze_audio, _SIGNAL_WEIGHTS
+    assert "harmonic_structure" in _SIGNAL_WEIGHTS
+    assert "phase_coherence" in _SIGNAL_WEIGHTS
+    result = analyze_audio(_wav_bytes(_robotic_proxy()), "audio/wav", "test-module16-wiring")
+    assert result["status"] == "success"
+    assert "harmonic_structure" in result["audio_signals"]
+    assert "phase_coherence" in result["audio_signals"]
+    names = {sd["name"] for sd in result["signal_details"]}
+    assert {"harmonic_structure", "phase_coherence"} <= names
