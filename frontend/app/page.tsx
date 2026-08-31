@@ -21,13 +21,14 @@ import { HeroHeadline } from '@/components/hero/HeroHeadline'
 import { HeroCTAButtons } from '@/components/home/HeroCTA'
 import { LiveDemo } from '@/components/home/LiveDemo'
 import TestimonialsSection from '@/components/home/TestimonialsSection'
-import WhoWeServeSection from '@/components/home/WhoWeServeSection'
+import { WhoWeServeSection } from '@/components/home/WhoWeServeSection'
 import AIvsRealSection from '@/components/home/AIvsRealSection'
 import ComparisonSection from '@/components/home/ComparisonSection'
 import { FAQSection } from '@/components/home/FAQSection'
 import { HowItWorksSection } from '@/components/home/HowItWorksSection'
 import { FinalCTASection } from '@/components/home/FinalCTASection'
 import { StatisticsSection } from '@/components/home/StatisticsSection'
+import { ToolsMobileCarousel } from '@/components/home/ToolsMobileCarousel'
 
 // ─── Constants — canonical product names from `main` (§Plan 3.2) ─────────────
 
@@ -127,39 +128,43 @@ export default function HomePage() {
         <StatisticsSection />
 
         {/* ══ TOOLS GRID — server-rendered (§Plan 11.2 asymmetric composition) ══ */}
-        <section id="tools" className="py-14 sm:py-28 lg:py-32 px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto">
+        <section id="tools" className="py-16 sm:py-24 lg:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
                 Six Powerful Tools
               </p>
-              <h2 className="text-headline text-silver-900 mb-3 sm:mb-4">
+              <h2 className="font-heading font-bold text-headline text-silver-900 tracking-tight mb-3 sm:mb-4">
                 AI Detection Tools
               </h2>
-              <p className="text-silver-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-lead text-silver-600 max-w-xl mx-auto">
                 Six detection tools covering every content type. Each returns a verdict,
                 confidence score, and supporting evidence in seconds.
               </p>
             </div>
 
-            {/* Asymmetric composition (§Plan 11.2): text + image lead as
-                wide featured cards; audio, video, assistant, and batch follow
-                as a supporting row — not six identical tiles. */}
+            {/* Featured row — text + image */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {TOOLS.filter(t => t.featured).map(tool => (
                 <Link
                   key={tool.href}
                   href={tool.href}
-                  className={`group bg-surface border border-white/[0.06] rounded-xl p-6 card-lift
-                              hover:border-[color:var(--accent)] focus-visible:border-[color:var(--accent)]
-                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40
-                              transition-all duration-200`}
+                  className="group relative rounded-xl border border-white/[0.06] bg-surface p-5 sm:p-6
+                             min-h-[180px] flex flex-col
+                             hover:border-[color:var(--accent)]/40 focus-visible:border-[color:var(--accent)]/40
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
+                             transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lift"
                   style={{ '--accent': tool.accent } as React.CSSProperties}
                 >
-                  <div className="flex items-start justify-between mb-5">
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      boxShadow: `0 0 0 1px ${tool.accent}20, 0 12px 32px -16px ${tool.accent}30`,
+                    }}
+                  />
+                  <div className="relative flex items-start justify-between mb-4">
                     <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0
-                                  bg-surface-elevated border transition-all duration-200 group-hover:scale-110"
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-elevated border transition-all duration-200 group-hover:scale-[1.08]"
                       style={{ borderColor: `${tool.accent}30` }}
                     >
                       <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
@@ -171,52 +176,62 @@ export default function HomePage() {
                       {tool.accuracy}
                     </span>
                   </div>
-                  <h3 className="text-base font-semibold text-silver-900 mb-2 transition-colors duration-200">
-                    {tool.label}
-                  </h3>
-                  <p className="text-sm text-silver-600 leading-relaxed">{tool.desc}</p>
-                  <div
-                    className="mt-5 flex items-center gap-1 text-xs font-medium text-silver-600
-                               group-hover:gap-2 transition-all duration-200"
-                  >
-                    <span className="group-hover:text-silver-900 transition-colors duration-200">Try now</span>
+                  <h3 className="relative text-base font-semibold text-silver-900 mb-2">{tool.label}</h3>
+                  <p className="relative text-sm text-silver-600 leading-relaxed line-clamp-2 flex-grow">{tool.desc}</p>
+                  <div className="relative mt-4 flex items-center gap-1 text-xs font-medium text-silver-600 group-hover:gap-2 transition-all duration-200">
+                    <span className="group-hover:text-[color:var(--accent)] transition-colors duration-200">Try now</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} aria-hidden="true" />
                   </div>
                 </Link>
               ))}
             </div>
 
-            {/* Supporting tools — compact cards, lower visual weight */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Supporting row — desktop grid / mobile carousel */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {TOOLS.filter(t => !t.featured).map(tool => (
                 <Link
                   key={tool.href}
                   href={tool.href}
-                  className="group bg-surface-elevated border border-white/[0.06] rounded-xl p-5
-                             hover:border-[color:var(--accent)] focus-visible:border-[color:var(--accent)]
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40
-                             transition-all duration-200"
+                  className="group relative rounded-xl border border-white/[0.06] bg-surface p-5 sm:p-6
+                             min-h-[180px] flex flex-col
+                             hover:border-[color:var(--accent)]/40 focus-visible:border-[color:var(--accent)]/40
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
+                             transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lift"
                   style={{ '--accent': tool.accent } as React.CSSProperties}
                 >
-                  <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      boxShadow: `0 0 0 1px ${tool.accent}20, 0 12px 32px -16px ${tool.accent}30`,
+                    }}
+                  />
+                  <div className="relative flex items-center justify-between mb-4">
                     <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
-                                  bg-surface border transition-all duration-200 group-hover:scale-110"
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-elevated border transition-all duration-200 group-hover:scale-[1.08]"
                       style={{ borderColor: `${tool.accent}30` }}
                     >
-                      <tool.icon className="w-4 h-4" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
+                      <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
                     </div>
                     <span
-                      className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface border"
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-surface-elevated border"
                       style={{ borderColor: `${tool.accent}30`, color: tool.accent }}
                     >
                       {tool.accuracy}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-silver-900 mb-1.5">{tool.label}</h3>
-                  <p className="text-xs text-silver-600 leading-relaxed">{tool.desc}</p>
+                  <h3 className="relative text-base font-semibold text-silver-900 mb-2">{tool.label}</h3>
+                  <p className="relative text-sm text-silver-600 leading-relaxed line-clamp-2 flex-grow">{tool.desc}</p>
+                  <div className="relative mt-4 flex items-center gap-1 text-xs font-medium text-silver-600 group-hover:gap-2 transition-all duration-200">
+                    <span className="group-hover:text-[color:var(--accent)] transition-colors duration-200">Try now</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} aria-hidden="true" />
+                  </div>
                 </Link>
               ))}
+            </div>
+
+            {/* Mobile carousel for supporting tools */}
+            <div className="sm:hidden">
+              <ToolsMobileCarousel />
             </div>
           </div>
         </section>

@@ -63,4 +63,61 @@ VERSION = "4.8.1"
 # level of both analyze_image_from_bytes() and analyze_image_from_url()
 # results for frontend consumption (Document Verification Mode UI is a
 # separate, later module — this only adds the backend data it will consume).
-VERSION = "4.9.0"
+# v4.10.0: Added L23 — Copy-Move & Splice Detection (CMSD), Module 12 of
+# the giant-level optimization directive. Two signals: ORB+RANSAC
+# rotation/scale-invariant copy-move verification, and block-wise
+# flat-region noise-floor splice inconsistency. PROVISIONAL, same caveat
+# as L20-L22: not yet calibrated against a labeled tampered-vs-untampered
+# dataset, so LAYER_WEIGHTS[23] is deliberately low.
+#
+# Module 12 architectural note: spec L21 (PRNU Deep Analysis) and L22
+# (AMSA) were both audited and explicitly rejected as this module's
+# target -- see analyzers/cmsd.py's module docstring for why (PRNU
+# isn't honestly buildable deeper than the existing L3 proxy without a
+# reference camera fingerprint; AMSA already substantially covered by
+# L9/L10). L23 was chosen because it's a genuine, non-overlapping gap:
+# the only existing copy-move detector (L1's clone_detection_suspicion)
+# is a fast, deliberately-scoped quick-reject proxy, not rotation/scale
+# invariant.
+VERSION = "4.10.0"
+
+# v4.10.1: Module 13 -- added S3 (Inpainting Detection) to existing L23
+# CMSD, closing a spec-vs-implementation gap Module 12 left unflagged:
+# the giant-level spec defines L23 with three sub-signals (S1 copy-move,
+# S2 splice, S3 inpainting), and Module 12 shipped only S1+S2. S3 is a
+# block-wise detail-to-structure (Laplacian/Sobel) ratio outlier check --
+# see analyzers/cmsd.py's module docstring for the physics rationale and
+# an explicit calibration-note caveat (directionally consistent on
+# synthetic fixtures, absolute thresholds not yet validated against real
+# photos, same caveat class as L20 MISG). No new layer number or engine
+# wiring needed -- S3 is additive evidence inside the existing L23
+# runner/weight.
+VERSION = "4.10.1"
+
+# v4.11.0: Module 14 -- added L24 TCA (Temporal Coherence Analysis),
+# single-image-applicable subset: S1 interlacing (comb-artifact)
+# detection, S2 motion-blur direction consistency. Spec's S3 (frame
+# repeat detection) is explicitly video-only per the spec's own text
+# and out of scope for this image engine -- see analyzers/tca.py
+# module docstring. PROVISIONAL, same caveat as L20-L23: not yet
+# calibrated against a labeled dataset, so LAYER_WEIGHTS[24] is
+# deliberately low.
+VERSION = "4.11.0"
+
+# v4.12.0: Module 15 -- added L25 C2PA (Content Authenticity Analysis).
+# Real JUMBF/C2PA container parsing (verified against the C2PA spec and
+# ISO 19566-5 before implementing, see analyzers/c2pa.py's module
+# docstring for citations): JPEG APP11 marker reassembly, PNG caBX
+# chunk extraction, C2PA Manifest Store UUID/box-structure validation,
+# embedded X.509 certificate self-signed/expiry sanity checks. Two of
+# the spec's sub-signals are explicitly scoped down with the reasons
+# documented rather than faked: S2's QESM cross-reference isn't
+# implementable under the current architecture (layer runners don't
+# see each other's output), and S3's full certificate-chain validation
+# isn't implementable without a C2PA trust-list asset this pipeline
+# doesn't have. This is also the first L20+ layer that reads the RAW
+# file bytes (temp_path) rather than the decoded pixel array, since
+# C2PA data lives in container-level metadata PIL's decode discards.
+# PROVISIONAL, same caveat as L20-L24: not yet calibrated against a
+# labeled dataset, so LAYER_WEIGHTS[25] is deliberately low.
+VERSION = "4.12.0"

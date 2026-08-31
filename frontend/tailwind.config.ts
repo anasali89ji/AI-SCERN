@@ -130,8 +130,8 @@ const config: Config = {
 
       fontSize: {
         // ── Fluid scale (Module 0.1) — use these instead of arbitrary text-[...] values
-        'display':  ['clamp(3rem, 8vw, 6rem)',      { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
-        'headline': ['clamp(2rem, 5vw, 3.5rem)',     { lineHeight: '1.1',  letterSpacing: '-0.02em', fontWeight: '600' }],
+        'display':  ['clamp(2.25rem, 5.5vw, 4.25rem)', { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'headline': ['clamp(1.75rem, 4vw, 2.75rem)', { lineHeight: '1.1',  letterSpacing: '-0.02em', fontWeight: '600' }],
         'lead':     ['clamp(1.125rem, 1.5vw, 1.25rem)', { lineHeight: '1.6', fontWeight: '400' }],
         // ── Legacy fixed sizes — kept so existing usages don't 404, prefer fluid scale above
         'hero': ['clamp(48px,6vw,64px)', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],

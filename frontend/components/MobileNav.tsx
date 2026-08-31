@@ -50,27 +50,27 @@ export function MobileNav() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-[#0A0A0A]/80"
+            className="fixed inset-0 z-40 bg-silver-50/80"
             onClick={() => setMoreOpen(false)}
           />
 
           {/* Sheet */}
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#141414] border-t border-[#333333] rounded-t-xl animate-slide-up"
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-surface border-t border-silver-300 rounded-t-xl animate-enter"
             style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
 
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-[#2A2A2A]" />
+              <div className="w-10 h-1 rounded-full bg-silver-300" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-[0.1em]">
+              <p className="text-[10px] font-bold text-silver-600 uppercase tracking-[0.1em]">
                 More tools
               </p>
               <button
                 onClick={() => setMoreOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-[#1A1A1A] text-[#6B6B6B] hover:text-white transition-colors"
+                className="p-1.5 rounded-lg hover:bg-silver-200 text-silver-600 hover:text-white transition-colors"
                 aria-label="Close menu"
               >
                 <X className="w-4 h-4" />
@@ -85,8 +85,8 @@ export function MobileNav() {
                   <Link key={href} href={href} onClick={() => setMoreOpen(false)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all active:scale-95 ${
                       active
-                        ? 'bg-[#2BEE34]/10 text-[#2BEE34]'
-                        : 'text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-white'
+                        ? 'bg-accent/10 text-accent'
+                        : 'text-silver-700 hover:bg-silver-200 hover:text-white'
                     }`}
                   >
                     <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
@@ -103,7 +103,7 @@ export function MobileNav() {
 
       {/* Bottom tab bar */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#141414] border-t border-[#333333]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-silver-300"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-label="Mobile navigation"
       >
@@ -115,7 +115,7 @@ export function MobileNav() {
               <Link key={href} href={href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 px-1 rounded-xl
                             transition-all duration-150 min-w-0 active:scale-95 min-h-[44px] ${
-                  active ? 'text-[#2BEE34]' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'
+                  active ? 'text-accent' : 'text-silver-600 hover:text-silver-700'
                 }`}
               >
                 <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
@@ -133,7 +133,7 @@ export function MobileNav() {
             aria-expanded={moreOpen}
             className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 px-1 rounded-xl
                         transition-all duration-150 min-w-0 active:scale-95 min-h-[44px] ${
-              isMoreActive || moreOpen ? 'text-[#2BEE34]' : 'text-[#6B6B6B] hover:text-[#A3A3A3]'
+              isMoreActive || moreOpen ? 'text-accent' : 'text-silver-600 hover:text-silver-700'
             }`}
           >
             <MoreHorizontal className="w-5 h-5" strokeWidth={1.8} />

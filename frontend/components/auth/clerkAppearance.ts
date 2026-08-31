@@ -59,24 +59,33 @@ export const clerkAppearance = {
 
     /* ── Labels ──────────────────────────────────────────────── */
     formFieldLabelRow: 'flex items-center justify-between mb-[7px]',
-    formFieldLabel:    'text-[11px] font-semibold tracking-[0.09em] uppercase text-slate-400 select-none',
-    formFieldHintText: 'text-slate-500 text-[12px] mt-1.5 leading-relaxed',
+    // v7 — label brightness fix. text-slate-400 (~#94a3b8) at 11px against
+    // the dark navy card background (#080820) failed contrast in practice —
+    // "NEW PASSWORD" / "CONFIRM PASSWORD" and every other field label read
+    // as barely-there gray, not "not clearly visible" per user report.
+    // Bumped to slate-200, close to colorText (#e8edff), so labels are
+    // legible at a glance while staying visually secondary to the input text.
+    formFieldLabel:    'text-[11px] font-semibold tracking-[0.09em] uppercase text-slate-200 select-none',
+    formFieldHintText: 'text-slate-400 text-[12px] mt-1.5 leading-relaxed',
 
     /* ── Inputs ──────────────────────────────────────────────── */
-    // Default:  white border at 16% opacity — clearly a bounded field,
-    //           not just placeholder text floating on the background.
-    // Hover:    lifts to 28% — responds to intent.
-    // Focus:    full white at 55% + white glow — unmistakably active.
-    // Typing:   same as focus (border stays white while text is entered).
+    // v6 — visibility fix. Input bg (#0a0a22) was nearly identical to the
+    // card bg (#080820 in AuthShell) — a ~2-value RGB difference,
+    // indistinguishable on most monitors, with only a 16%-opacity border
+    // to differentiate. Applied to BOTH this field (new-password step) and
+    // otpCodeFieldInput below (6-digit code cells), since they shared the
+    // same near-invisible fill. Bumped to a clearly lighter, distinct navy
+    // and raised resting border opacity so fields read as real boxes at
+    // rest, not just on focus.
     formFieldInput: [
       'w-full h-11',
-      'bg-[#0a0a22] text-[#e8edff] focus:text-[#0a0a18]',
-      'border border-white/[0.16] rounded-[10px]',
+      'bg-[#14143a] text-[#e8edff] focus:text-[#0a0a18]',
+      'border border-white/[0.24] rounded-[10px]',
       'text-[14px] font-normal px-4',
       'placeholder:text-white/[0.28] focus:placeholder:text-slate-400',
       'outline-none',
       'transition-[border-color,box-shadow,background-color] duration-150',
-      'hover:border-white/[0.28]',
+      'hover:border-white/[0.36]',
       'focus:border-white/[0.55]',
       'focus:bg-white',
       'focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]',
@@ -95,13 +104,13 @@ export const clerkAppearance = {
 
     /* ── OTP cells ───────────────────────────────────────────── */
     otpCodeFieldInput: [
-      'bg-[#0a0a22] text-white',
-      'border border-white/[0.16] rounded-[10px]',
+      'bg-[#14143a] text-white',
+      'border border-white/[0.24] rounded-[10px]',
       'font-mono text-[20px] font-bold text-center',
       'h-12 w-10',
       'outline-none',
       'transition-[border-color,box-shadow] duration-150',
-      'hover:border-white/[0.28]',
+      'hover:border-white/[0.36]',
       'focus:border-white/[0.55]',
       'focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]',
     ].join(' '),
@@ -173,7 +182,13 @@ export const clerkAppearance = {
     identityPreviewEditButton: 'text-[#4b82f7] hover:text-[#93b4fd] text-[13px] transition-colors duration-150',
 
     /* ── Misc ────────────────────────────────────────────────── */
-    spinner: 'text-[#2563eb]',
+    // spinner was `text-[#2563eb]` — the exact same blue as
+    // formButtonPrimary's own background. On the sign-in/continue button
+    // the loading spinner was rendering in the same color as the button
+    // it sits on, so it was invisible: clicking "Sign in" or "Continue"
+    // looked like nothing happened, even while the request was in flight.
+    // White matches the button's own label text color (colorTextOnPrimaryBackground).
+    spinner: 'text-white',
     alternativeMethodsBlockButton: [
       'w-full h-11',
       'bg-white/[0.05] border border-white/[0.18] rounded-[10px]',

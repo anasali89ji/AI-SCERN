@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Aiscern AI Detection',
@@ -16,6 +17,7 @@ export default function PrivacyPage() {
       {/* Nav */}
       <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
             <span className="font-black text-[#2BEE34]">Aiscern</span>

@@ -1,45 +1,37 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { motion } from "framer-motion"
+import { useReducedMotion } from "@/hooks/useReducedMotion"
 
-// Module 2.1: rotating/typewriter word animation removed per vibecode ban.
-// Modalities are now a static, clickable tab row — no auto-rotation, no
-// interval timers, no AnimatePresence entrance/exit on the word itself.
-const MODALITIES = ['Text', 'Image', 'Audio', 'Video'] as const
-
-export function HeroHeadline({ initialIndex = 0 }: { initialIndex?: number }) {
-  const [active, setActive] = useState<typeof MODALITIES[number]>(MODALITIES[initialIndex])
+export function HeroHeadline() {
+  const reduced = useReducedMotion()
 
   return (
-    <div className="select-none">
-      <h1 className="font-heading font-bold leading-[1.05] tracking-tight text-display text-silver-900">
+    <div className="max-w-[48ch]">
+      <motion.h1
+        className="font-heading font-bold text-silver-900 tracking-tight
+          text-[2rem] leading-[1.12]
+          sm:text-[2.75rem] sm:leading-[1.08]
+          lg:text-[3.5rem] lg:leading-[1.05]
+          xl:text-[4rem]"
+        initial={reduced ? {} : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         Detect AI-generated content.
-      </h1>
-      <p className="font-heading font-semibold leading-[1.1] tracking-tight text-headline text-silver-700 mt-1">
+      </motion.h1>
+      <motion.p
+        className="font-heading font-semibold text-silver-700 tracking-tight mt-1
+          text-[1.125rem] leading-[1.25]
+          sm:text-[1.375rem] sm:leading-[1.2]
+          lg:text-[1.75rem]
+          xl:text-[2rem]"
+        initial={reduced ? {} : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+      >
         In seconds — with evidence, not guesses.
-      </p>
-
-      {/* Static modality tab row — replaces the old rotating-word carousel */}
-      <div role="tablist" aria-label="Content types" className="flex flex-wrap gap-2 mt-6">
-        {MODALITIES.map(m => {
-          const isActive = m === active
-          return (
-            <button
-              key={m}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => setActive(m)}
-              className={
-                isActive
-                  ? 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-accent/30 bg-accent/10 text-accent transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
-                  : 'min-h-11 px-3.5 py-3 sm:py-1.5 rounded-full text-xs font-semibold border border-white/[0.08] text-silver-600 hover:text-silver-800 hover:border-white/[0.16] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50'
-              }
-            >
-              {m}
-            </button>
-          )
-        })}
-      </div>
+      </motion.p>
     </div>
   )
 }

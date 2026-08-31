@@ -38,7 +38,7 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
           <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={onClose} />
 
           {/* Sheet */}
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#0f0f17] border-t border-white/[0.08] rounded-t-2xl lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-surface-elevated border-t border-white/[0.08] rounded-t-2xl lg:hidden">
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-white/20" />
@@ -46,10 +46,10 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.06]">
-              <h3 className="font-bold text-slate-100">{title}</h3>
+              <h3 className="font-bold text-silver-900">{title}</h3>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-[#141420] text-slate-500 transition-colors"
+                className="p-2 rounded-xl hover:bg-surface text-silver-600 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />

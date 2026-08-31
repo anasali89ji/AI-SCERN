@@ -1,0 +1,20 @@
+# Files to delete (run from repo root):
+rm signal-worker/analyzers/ai_fingerprint.py.rej
+rm signal-worker/analyzers/frequency_domain.py.rej
+rm signal-worker/analyzers/nlm_entropy.py.rej
+rm signal-worker/analyzers/pixel_integrity.py.rej
+rm signal-worker/analyzers/sswdp.py.rej
+rm signal-worker/Dockerfile.gpu
+rm signal-worker/deploy-gpu.sh
+rm signal-worker/docker-compose.gpu.yml
+rm signal-worker/systemd/aiscern-gpu-worker.service
+rm signal-worker/tests/test_gpu_worker.py
+rm frontend/components/home/WhyChooseSection.tsx
+rm frontend/components/home/IndustrySolutionsSection.tsx
+rm frontend/components/home/SecuritySection.tsx
+rm frontend/components/home/TechnologySection.tsx
+rm frontend/components/home/InteractiveDemoSection.tsx
+rm frontend/components/home/EnterpriseTrustBanner.tsx
+rm frontend/components/home/NavClient.tsx
+rm frontend/components/ui/CustomCursor.tsx
+rm frontend/components/ui/InfiniteMarquee.tsx

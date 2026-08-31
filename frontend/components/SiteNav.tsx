@@ -239,7 +239,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
           </Link>
         ) : (
           <Link href="/" className="flex items-center gap-2 shrink-0 group" aria-label="Aiscern home">
-            <span className="font-heading font-black text-xl text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-200">
+            <span className="font-heading font-bold text-lg text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-200">
               Aiscern
             </span>
           </Link>

@@ -15,6 +15,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UpgradeNotificationProvider } from '@/components/UpgradeNotification'
 import { CommandPalette } from '@/components/dashboard/CommandPalette'
 import dynamic from 'next/dynamic'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 const OnboardingWizard = dynamic(
   () => import('@/components/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })),
@@ -74,14 +75,6 @@ const LABEL_OVERRIDES: Record<string, string> = {
   credits: 'Credits', profile: 'Profile', settings: 'Settings',
 }
 
-function useBreadcrumb(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean)
-  const crumbs = segments.map((seg, i) => ({
-    label: LABEL_OVERRIDES[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1),
-    href: '/' + segments.slice(0, i + 1).join('/'),
-  }))
-  return [{ label: 'Home', href: '/dashboard' }, ...crumbs]
-}
 
 function UserAvatar({ user, size = 8 }: { user: any; size?: number }) {
   const initials = (user?.displayName?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2))
@@ -359,28 +352,6 @@ function CreditPill() {
   )
 }
 
-function Breadcrumb({ pathname }: { pathname: string }) {
-  const crumbs = useBreadcrumb(pathname)
-  return (
-    <nav aria-label="Breadcrumb" className="hidden lg:flex items-center gap-1.5 text-sm min-w-0">
-      {crumbs.map((c, i) => {
-        const isLast = i === crumbs.length - 1
-        return (
-          <span key={c.href} className="flex items-center gap-1.5 min-w-0">
-            {i > 0 && <ChevronRightSmall className="w-3.5 h-3.5 text-silver-600 flex-shrink-0" />}
-            {isLast ? (
-              <span className="text-silver-900 font-medium truncate">{c.label}</span>
-            ) : (
-              <Link href={c.href} className="text-silver-600 hover:text-silver-900 transition-colors duration-300 truncate">
-                {c.label}
-              </Link>
-            )}
-          </span>
-        )
-      })}
-    </nav>
-  )
-}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut }               = useAuth()
@@ -477,7 +448,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link href="/" className="flex items-center gap-2 lg:hidden hover:text-silver-900 transition-colors duration-300">
                 <span className="font-black text-silver-900 text-sm tracking-tight hover:text-accent transition-colors duration-300">Aiscern</span>
               </Link>
-              <Breadcrumb pathname={pathname} />
+              <Breadcrumbs />
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
