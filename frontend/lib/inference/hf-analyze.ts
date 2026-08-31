@@ -923,78 +923,44 @@ const brainUnified = cvAvailable && cvWorkerResult?.composite_score?.brain_inclu
 // branching below already computes — no new detection logic, just surfacing
 // what was already being decided silently.
 const imgDegradedSignals: string[] = [
+  'ensemble-voting-disabled-signal-worker-is-default-layer',
   ...(!cvAvailable  ? [PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
   ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
   ...(!llmAvailable ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
   ...(cvAvailable && !brainUnified ? ['brain-cv-not-unified-legacy-blend'] : []),
 ]
 
-if (cvAvailable && hfAvailable && llmAvailable) {
-  // Full ensemble. Unified: BrainCV(53%) + HF(18%) + Pixel(9%) + LLM(20%)
-  //          Legacy (unfolded): Brain(31%) + CV(22%) + HF(18%) + Pixel(9%) + LLM(20%)
-  llmWeightUsed = 0.20
-  aiScore    = brainUnified
-    ? cvScore * 0.53 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
-    : brainResult.score * 0.31 + cvScore * 0.22 + mlScore * 0.18 + imgSignalScore * 0.09 + llmScore * llmWeightUsed
+// ── MODULE 16-PRE: SIGNAL-WORKER AS DEFAULT IMAGE LAYER (ensemble voting
+// disabled) ──────────────────────────────────────────────────────────────
+// Per explicit instruction: the Python signal-worker (`cvScore`, which is
+// itself already an internal fusion of v2 physics layers + v3 forensics +
+// (when brainUnified) the frontend Brain score — see image_engine.py
+// _fuse_scores) is now the SOLE determinant of the image verdict. The
+// multi-branch weighted ensemble above (Brain/HF-ViT/Pixel/LLM blending,
+// v8.0-v8.2) is disabled — those signals are still computed (for logging /
+// degraded_signals visibility and for the cross-validation bridge in
+// image-detection-brain.ts) but no longer blended into aiScore.
+//
+// This is a real behavior change, not a re-weighting: if the worker is
+// offline/unconfigured there is no ensemble left to fall back into, so a
+// minimal Brain+Pixel-only path is kept ONLY for that offline case — it is
+// not "voting," just the one honest thing left to return when signal-worker
+// itself didn't answer. Every other case (worker responded) uses cvScore
+// alone.
+if (cvAvailable) {
+  aiScore    = cvScore
   modelUsed  = brainUnified
-    ? `Aiscern-ImageEngine-v8.2(BrainCV53%+HF18%+Pixel9%+LLM20%)`
-    : `Aiscern-ImageEngine-v8.1(Brain31%+CV22%+HF18%+Pixel9%+LLM20%)`
+    ? `Aiscern-ImageEngine-v9.0(SignalWorker100%,BrainUnified)`
+    : `Aiscern-ImageEngine-v9.0(SignalWorker100%,LegacyFusion)`
   engineDesc = brainUnified
-    ? `Brain+CV unified (53%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%)`
-    : `Brain (31%) + CV-Worker (22%) + ${mlScores.length} HF ViT (18%) + Pixel (9%) + LLM Gemini dual-key (20%) — legacy blend, worker didn't unify`
-} else if (cvAvailable && hfAvailable) {
-  // No LLM. Unified: BrainCV(65%) + HF(20%) + Pixel(15%)
-  //   Legacy: Brain(37%) + CV(28%) + HF(20%) + Pixel(15%)
-  aiScore    = brainUnified
-    ? cvScore * 0.65 + mlScore * 0.20 + imgSignalScore * 0.15
-    : brainResult.score * 0.37 + cvScore * 0.28 + mlScore * 0.20 + imgSignalScore * 0.15
-  modelUsed  = brainUnified
-    ? `Aiscern-ImageEngine-v8.2(BrainCV65%+HF20%+Pixel15%)`
-    : `Aiscern-ImageEngine-v8.1(Brain37%+CV28%+HF20%+Pixel15%)`
-  engineDesc = brainUnified
-    ? `Brain+CV unified (65%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM`
-    : `Brain (37%) + CV-Worker (28%) + ${mlScores.length} HF ViT (20%) + Pixel (15%) — no LLM, legacy blend`
-} else if (cvAvailable && llmAvailable) {
-  // No HF. Unified: BrainCV(67%) + Pixel(13%) + LLM(20%)
-  //   Legacy: Brain(38%) + CV(29%) + Pixel(13%) + LLM(20%)
-  llmWeightUsed = 0.20
-  aiScore    = brainUnified
-    ? cvScore * 0.67 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
-    : brainResult.score * 0.38 + cvScore * 0.29 + imgSignalScore * 0.13 + llmScore * llmWeightUsed
-  modelUsed  = brainUnified
-    ? `Aiscern-ImageEngine-v8.2(BrainCV67%+Pixel13%+LLM20%)`
-    : `Aiscern-ImageEngine-v8.1(Brain38%+CV29%+Pixel13%+LLM20%)`
-  engineDesc = brainUnified
-    ? `Brain+CV unified (67%) + Pixel (13%) + LLM (20%) — HF cold-starting`
-    : `Brain (38%) + CV-Worker (29%) + Pixel (13%) + LLM (20%) — HF cold-starting, legacy blend`
-} else if (cvAvailable) {
-  // CV + Brain + Pixel only. Unified: BrainCV(85%) + Pixel(15%)
-  //   Legacy: Brain(47%) + CV(38%) + Pixel(15%)
-  aiScore    = brainUnified
-    ? cvScore * 0.85 + imgSignalScore * 0.15
-    : brainResult.score * 0.47 + cvScore * 0.38 + imgSignalScore * 0.15
-  modelUsed  = brainUnified
-    ? `Aiscern-ImageEngine-v8.2(BrainCV85%+Pixel15%)`
-    : `Aiscern-ImageEngine-v8.1(Brain47%+CV38%+Pixel15%)`
-  engineDesc = brainUnified
-    ? `Brain+CV unified (85%) + Pixel (15%) — no LLM or HF`
-    : `Brain (47%) + CV-Worker (38%) + Pixel (15%) — no LLM or HF, legacy blend`
-} else if (hfAvailable && llmAvailable) {
-  // No CV: Brain(40%) + HF(22%) + Pixel(18%) + LLM(20%)
-  llmWeightUsed = 0.20
-  aiScore    = brainResult.score * 0.40 + mlScore * 0.22 + imgSignalScore * 0.18 + llmScore * llmWeightUsed
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain40%+HF22%+Pixel18%+LLM20%)`
-  engineDesc = `Brain (40%) + ${mlScores.length} HF ViT (22%) + Pixel (18%) + LLM (20%) — CV worker offline`
-} else if (hfAvailable) {
-  // No CV, no LLM: Brain(50%) + HF(30%) + Pixel(20%)
-  aiScore    = brainResult.score * 0.50 + mlScore * 0.30 + imgSignalScore * 0.20
-  modelUsed  = `Aiscern-ImageEngine-v8.1(Brain50%+HF30%+Pixel20%)`
-  engineDesc = `Brain (50%) + ${mlScores.length} HF ViT (30%) + Pixel (20%) — no CV or LLM`
+    ? `Signal-worker is the default layer (100%) — its fusion already folds in Brain; HF/Pixel/LLM computed but not blended`
+    : `Signal-worker is the default layer (100%) — worker did not confirm Brain unification (legacy fusion); HF/Pixel/LLM computed but not blended`
 } else {
-  // Fallback — only Brain + pixels (still better than LLM-only!)
+  // Worker offline/unconfigured — no ensemble voting fallback by design.
+  // Brain + raw pixel signals only, clearly labeled as degraded.
   aiScore    = brainResult.score * 0.65 + imgSignalScore * 0.35
-  modelUsed  = 'Aiscern-ImageEngine-v8.1(Brain65%+Pixel35%)'
-  engineDesc = 'Image Brain (65%) + Pixel signals (35%) — configure PYTHON_WORKER_URL for best accuracy'
+  modelUsed  = 'Aiscern-ImageEngine-v9.0(SignalWorkerOffline-Brain65%+Pixel35%)'
+  engineDesc = 'Signal-worker offline/unconfigured — degraded Brain (65%) + Pixel (35%) fallback, no ensemble voting'
 }
 
 // ── LLM Consensus Override (C.1.3) ──────────────────────────────────────────
@@ -1005,15 +971,10 @@ if (cvAvailable && hfAvailable && llmAvailable) {
 // HUMAN verdict to AI — it can only reinforce a borderline case. Uses the
 // actual per-branch llmWeightUsed (tracked above) rather than a hardcoded
 // 0.10 — that assumption broke once LLM weight became branch-dependent.
-if (llmScore !== null && llmScore > 0.80) {
-  const nonLlmScore = aiScore - (llmScore * llmWeightUsed)   // remove LLM contribution
-  const brainCvAgree = (brainResult.score > 0.55) && (cvScore === null || cvScore > 0.55)
-  if (brainCvAgree) {
-    // Allow LLM to push a borderline case toward AI, capped at +0.08
-    aiScore = Math.min(aiScore + 0.08, Math.max(aiScore, nonLlmScore + (llmScore - 0.50) * 0.10))
-  }
-  // If Brain+CV don't agree, LLM high score changes nothing — it already has its weight
-}
+// Disabled along with the rest of ensemble voting — signal-worker's cvScore
+// is authoritative, so a lone LLM call can no longer nudge aiScore.
+// (llmScore/llmWeightUsed are still computed above for degraded_signals
+// visibility and the generator-attribution voting below, just not blended.)
 
 // ── Multi-Source Generator Attribution Voting ───────────────────────────────
 // Restores (in spirit) the abandoned v3 cascade's attributeGenerator() idea
