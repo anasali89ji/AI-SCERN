@@ -33,6 +33,18 @@ Signals (all CPU-computable, none require a GPU or paid API):
   7. Phase coherence          — MODULE 16 (spec Section 2.1.2). Inter-
                                 harmonic phase lock + group delay
                                 flatness. See analyzers/audio_spectral_deep.py.
+  8. Spectral envelope        — MODULE 17 (spec Section 2.1.3). MFCC
+                                delta/delta2 distribution shape + spectral
+                                tilt trajectory. See
+                                analyzers/audio_subband_waterfall.py.
+  9. Sub-band analysis        — MODULE 17 (spec Section 2.1.4). 8-band
+                                decomposition, high-band rolloff +
+                                low-band noise-floor checks. See
+                                analyzers/audio_subband_waterfall.py.
+ 10. Waterfall artifacts      — MODULE 17 (spec Section 2.1.5). Spectrogram
+                                horizontal/vertical line, checkerboard,
+                                and duplication detection. See
+                                analyzers/audio_subband_waterfall.py.
 
 IMPORTANT — calibration status: these are heuristic starting points, not
 yet calibrated against a labeled dataset (unlike image_engine.py's 14
@@ -52,6 +64,7 @@ import numpy as np
 
 from version import VERSION
 from analyzers.audio_spectral_deep import run_all as _run_spectral_deep_signals
+from analyzers.audio_subband_waterfall import run_all as _run_subband_waterfall_signals
 
 logger = logging.getLogger(__name__)
 
@@ -344,14 +357,27 @@ def _signal_harmonic_noise_ratio(y: np.ndarray, sr: int) -> Dict[str, Any]:
 # and spectral_stability signals and should compete for ensemble trust, not
 # just add to it. Still an uncalibrated heuristic starting point overall —
 # same caveat as MODULE 3's original 5, now extended to all 7.
+# MODULE 17: added spectral_envelope (MFCC delta/delta2 distribution shape
+# + spectral tilt, spec 2.1.3), subband_analysis (8-band decomposition,
+# spec 2.1.4), and waterfall_artifacts (spectrogram line/checkerboard/
+# duplication detection, spec 2.1.5). All 10 weights rescaled together
+# rather than appended at zero marginal cost, same rationale as Module 16.
+# spectral_envelope given a below-average weight deliberately: its
+# kurtosis component's absolute thresholds are flagged in
+# audio_subband_waterfall.py as unvalidated against real audio (synthetic
+# sine fixtures are a poor proxy for that specific statistic), so it's
+# trusted less than the other 9 pending real labeled samples.
 _SIGNAL_WEIGHTS = {
-    "mfcc_consistency": 0.14,
-    "pitch_jitter_shimmer": 0.17,
-    "spectral_stability": 0.14,
-    "silence_pattern": 0.10,
-    "harmonic_noise_ratio": 0.14,
-    "harmonic_structure": 0.16,
-    "phase_coherence": 0.15,
+    "mfcc_consistency": 0.10,
+    "pitch_jitter_shimmer": 0.12,
+    "spectral_stability": 0.10,
+    "silence_pattern": 0.07,
+    "harmonic_noise_ratio": 0.10,
+    "harmonic_structure": 0.11,
+    "phase_coherence": 0.10,
+    "spectral_envelope": 0.08,
+    "subband_analysis": 0.10,
+    "waterfall_artifacts": 0.12,
 }
 
 
@@ -432,6 +458,16 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         logger.error("[AudioEngine] audio_spectral_deep.run_all raised unexpectedly: %s", e, exc_info=True)
         results["harmonic_structure"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["phase_coherence"] = {"available": False, "reason": f"unexpected_error: {e}"}
+
+    # MODULE 17 — spec Section 2.1 items 3-5 (spectral envelope, sub-band,
+    # waterfall). Same call-site try/except rationale as MODULE 16.
+    try:
+        results.update(_run_subband_waterfall_signals(y, sr))
+    except Exception as e:
+        logger.error("[AudioEngine] audio_subband_waterfall.run_all raised unexpectedly: %s", e, exc_info=True)
+        results["spectral_envelope"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["subband_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["waterfall_artifacts"] = {"available": False, "reason": f"unexpected_error: {e}"}
 
     available = {k: v for k, v in results.items() if v.get("available")}
     if available:

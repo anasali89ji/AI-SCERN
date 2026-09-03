@@ -189,3 +189,60 @@ def test_module16_signals_wired_into_composite():
     assert "phase_coherence" in result["audio_signals"]
     names = {sd["name"] for sd in result["signal_details"]}
     assert {"harmonic_structure", "phase_coherence"} <= names
+
+
+# ── MODULE 17 — spectral_envelope / subband_analysis / waterfall_artifacts ──
+
+def test_waterfall_and_subband_direction():
+    """Directional check against this file's existing proxy fixtures.
+
+    spectral_envelope is DELIBERATELY not asserted here: its kurtosis
+    component's absolute thresholds are documented in
+    analyzers/audio_subband_waterfall.py as unvalidated against real audio
+    (hand-built sine constructions are a poor proxy for kurtosis
+    specifically), and it was observed to flip direction between different
+    synthetic fixture designs during development. Asserting a direction
+    for it here would be testing that a known-uncalibrated heuristic
+    happens to agree with one arbitrary fixture, not a real correctness
+    guarantee — see the module docstring's open item.
+    """
+    from analyzers.audio_subband_waterfall import subband_analysis, waterfall_artifact_detection
+
+    np.random.seed(42)
+    human = _human_like_proxy(dur=6.0)
+    robotic = _robotic_proxy(dur=6.0)
+
+    sb_human = subband_analysis(human, 16000)
+    sb_robotic = subband_analysis(robotic, 16000)
+    wf_human = waterfall_artifact_detection(human, 16000)
+    wf_robotic = waterfall_artifact_detection(robotic, 16000)
+
+    assert sb_human["available"] and sb_robotic["available"]
+    assert wf_human["available"] and wf_robotic["available"]
+    assert sb_robotic["score"] >= sb_human["score"] - 0.05
+    assert wf_robotic["score"] >= wf_human["score"] - 0.05
+
+
+def test_spectral_envelope_computes_without_error():
+    """spectral_envelope's direction is not asserted (see
+    test_waterfall_and_subband_direction docstring) but it must still
+    always return a valid, usable score for both fixtures."""
+    from analyzers.audio_subband_waterfall import spectral_envelope_analysis
+
+    for y in (_human_like_proxy(dur=6.0), _robotic_proxy(dur=6.0)):
+        result = spectral_envelope_analysis(y, 16000)
+        assert result["available"]
+        assert 0.0 <= result["score"] <= 1.0
+
+
+def test_module17_signals_wired_into_composite():
+    """Same wiring-regression guard as test_module16_signals_wired_into_composite."""
+    from engines.audio_engine import analyze_audio, _SIGNAL_WEIGHTS
+    for name in ("spectral_envelope", "subband_analysis", "waterfall_artifacts"):
+        assert name in _SIGNAL_WEIGHTS
+    result = analyze_audio(_wav_bytes(_robotic_proxy()), "audio/wav", "test-module17-wiring")
+    assert result["status"] == "success"
+    for name in ("spectral_envelope", "subband_analysis", "waterfall_artifacts"):
+        assert name in result["audio_signals"]
+    names = {sd["name"] for sd in result["signal_details"]}
+    assert {"spectral_envelope", "subband_analysis", "waterfall_artifacts"} <= names
