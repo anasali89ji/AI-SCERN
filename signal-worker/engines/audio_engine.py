@@ -51,6 +51,27 @@ Signals (all CPU-computable, none require a GPU or paid API):
                                 dataset available; honest scope-down, see
                                 analyzers/tts_vendor_fingerprint.py module
                                 docstring). Includes LPC formant tracking.
+ 12. Anti-spoofing (LFCC/CQCC) — MODULE 19a (spec Section 2.3 item 2).
+                                Rule-based ASVspoof-style cepstral anomaly
+                                checks (NOT a trained classifier -- no
+                                labeled ASVspoof corpus available). See
+                                analyzers/voiceprint_liveness.py.
+ 13. Reverberation liveness   — MODULE 19a (spec Section 2.3 item 3).
+                                RT60 decay-curve linearity check for
+                                replay-of-a-recording detection. See
+                                analyzers/voiceprint_liveness.py.
+ 14. Noise-floor consistency  — MODULE 19a (spec Section 2.3 item 3).
+                                Cross-segment noise-floor spectral-shape
+                                consistency (capture-chain-switch proxy).
+                                See analyzers/voiceprint_liveness.py.
+
+NOT included — MODULE 19a deliberately does NOT include spec Section 2.3
+item 1 (Speaker Embedding Extraction / ECAPA-TDNN speaker verification).
+That needs a pretrained speechbrain checkpoint baked in at Docker build
+time (same pattern as this file's distilgpt2 bake) but could not be
+smoke-tested against synthetic fixtures in the sandbox this module was
+authored in (no route to huggingface.co to fetch the checkpoint) — left
+as a separate, explicitly flagged open item rather than shipped untested.
 
 IMPORTANT — calibration status: these are heuristic starting points, not
 yet calibrated against a labeled dataset (unlike image_engine.py's 14
@@ -72,6 +93,7 @@ from version import VERSION
 from analyzers.audio_spectral_deep import run_all as _run_spectral_deep_signals
 from analyzers.audio_subband_waterfall import run_all as _run_subband_waterfall_signals
 from analyzers.tts_vendor_fingerprint import run_all as _run_tts_fingerprint_signals
+from analyzers.voiceprint_liveness import run_all as _run_voiceprint_liveness_signals
 
 logger = logging.getLogger(__name__)
 
@@ -396,6 +418,9 @@ _SIGNAL_WEIGHTS = {
     "subband_analysis": 0.094,
     "waterfall_artifacts": 0.113,
     "tts_vendor_fingerprint": 0.06,
+    "anti_spoofing_lfcc_cqcc": 0.075,
+    "reverberation_liveness": 0.056,
+    "noise_floor_consistency": 0.047,
 }
 
 
@@ -496,6 +521,19 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
     except Exception as e:
         logger.error("[AudioEngine] tts_vendor_fingerprint.run_all raised unexpectedly: %s", e, exc_info=True)
         results["tts_vendor_fingerprint"] = {"available": False, "reason": f"unexpected_error: {e}"}
+
+    # MODULE 19a — spec Section 2.3 items 2-3 (anti-spoofing LFCC/CQCC,
+    # reverberation/replay liveness, noise-floor consistency). Same
+    # call-site try/except rationale as MODULE 16/17/18. Item 1 (speaker
+    # embedding/ECAPA-TDNN) is intentionally not wired here -- see module
+    # docstring in analyzers/voiceprint_liveness.py.
+    try:
+        results.update(_run_voiceprint_liveness_signals(y, sr))
+    except Exception as e:
+        logger.error("[AudioEngine] voiceprint_liveness.run_all raised unexpectedly: %s", e, exc_info=True)
+        results["anti_spoofing_lfcc_cqcc"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["reverberation_liveness"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["noise_floor_consistency"] = {"available": False, "reason": f"unexpected_error: {e}"}
 
     available = {k: v for k, v in results.items() if v.get("available")}
     if available:
