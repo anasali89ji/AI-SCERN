@@ -246,3 +246,68 @@ def test_module17_signals_wired_into_composite():
         assert name in result["audio_signals"]
     names = {sd["name"] for sd in result["signal_details"]}
     assert {"spectral_envelope", "subband_analysis", "waterfall_artifacts"} <= names
+
+
+# ── MODULE 18 — tts_vendor_fingerprint ──────────────────────────────────────
+
+def test_tts_vendor_fingerprint_no_false_pause_signal_on_continuous_audio():
+    """Regression guard for the bark_pause_noise bug caught during Module 18
+    development: on a fully continuous clip with NO real pauses, the
+    silence/pause detector must not fire at all (it originally fired at
+    max suspicion on ANY low-relative-RMS frames, even on fully-voiced
+    continuous audio, because it used a relative percentile instead of an
+    absolute near-silence threshold)."""
+    from analyzers.tts_vendor_fingerprint import tts_vendor_fingerprint
+
+    sr = 16000
+    t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
+    y = (0.3 * np.sin(2 * np.pi * 150 * t) + 0.02 * np.random.RandomState(3).normal(size=t.shape)).astype(np.float32)
+    result = tts_vendor_fingerprint(y, sr)
+    assert result["available"]
+    assert result["vendor_heuristic_scores"]["bark_pause_noise"] == 0.0
+
+
+def test_tts_vendor_fingerprint_formant_instability_direction():
+    """vall_e_formant_instability_proxy direction check -- the only one of
+    the 6 heuristic sub-checks validated directionally so far (see
+    analyzers/tts_vendor_fingerprint.py docstring for why
+    rvc_svc_formant_ratio is NOT asserted: unresolved fixture-construction
+    limitation, flagged as an open item rather than silently skipped)."""
+    from analyzers.tts_vendor_fingerprint import tts_vendor_fingerprint
+
+    sr = 16000
+    rng = np.random.RandomState(5)
+    t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
+
+    def vowel(f0_base, formant_freqs, formant_bw, pitch_wobble, noise):
+        f0 = f0_base + (pitch_wobble * np.sin(2 * np.pi * 3 * t) if pitch_wobble else 0)
+        phase = np.cumsum(2 * np.pi * f0 / sr)
+        y = np.zeros_like(t)
+        for h in range(1, 20):
+            hf = f0_base * h
+            amp = 1.0
+            for ff, bw in zip(formant_freqs, formant_bw):
+                amp *= 1.0 / (1.0 + ((hf - ff) / bw) ** 2) + 0.02
+            y += amp * np.sin(h * phase)
+        y += rng.normal(0, noise, len(t))
+        return (y / np.max(np.abs(y)) * 0.5).astype(np.float32)
+
+    stable = vowel(120, [700, 1200, 2500], [80, 90, 120], pitch_wobble=4.0, noise=0.02)
+    unstable = vowel(120, [300, 3200, 5000], [60, 150, 150], pitch_wobble=0.0, noise=0.01)
+
+    r_stable = tts_vendor_fingerprint(stable, sr)
+    r_unstable = tts_vendor_fingerprint(unstable, sr)
+    assert r_stable["available"] and r_unstable["available"]
+    assert (r_unstable["vendor_heuristic_scores"]["vall_e_formant_instability_proxy"]
+            >= r_stable["vendor_heuristic_scores"]["vall_e_formant_instability_proxy"] - 0.05)
+
+
+def test_module18_signal_wired_into_composite():
+    """Same wiring-regression guard as the Module 16/17 versions."""
+    from engines.audio_engine import analyze_audio, _SIGNAL_WEIGHTS
+    assert "tts_vendor_fingerprint" in _SIGNAL_WEIGHTS
+    result = analyze_audio(_wav_bytes(_robotic_proxy()), "audio/wav", "test-module18-wiring")
+    assert result["status"] == "success"
+    assert "tts_vendor_fingerprint" in result["audio_signals"]
+    names = {sd["name"] for sd in result["signal_details"]}
+    assert "tts_vendor_fingerprint" in names

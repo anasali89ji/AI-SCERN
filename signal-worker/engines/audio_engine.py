@@ -45,6 +45,12 @@ Signals (all CPU-computable, none require a GPU or paid API):
                                 horizontal/vertical line, checkerboard,
                                 and duplication detection. See
                                 analyzers/audio_subband_waterfall.py.
+ 11. TTS vendor fingerprint   — MODULE 18 (spec Section 2.2). Rule-based
+                                per-vendor heuristic signatures (NOT a
+                                trained classifier -- no labeled TTS
+                                dataset available; honest scope-down, see
+                                analyzers/tts_vendor_fingerprint.py module
+                                docstring). Includes LPC formant tracking.
 
 IMPORTANT — calibration status: these are heuristic starting points, not
 yet calibrated against a labeled dataset (unlike image_engine.py's 14
@@ -65,6 +71,7 @@ import numpy as np
 from version import VERSION
 from analyzers.audio_spectral_deep import run_all as _run_spectral_deep_signals
 from analyzers.audio_subband_waterfall import run_all as _run_subband_waterfall_signals
+from analyzers.tts_vendor_fingerprint import run_all as _run_tts_fingerprint_signals
 
 logger = logging.getLogger(__name__)
 
@@ -367,17 +374,28 @@ def _signal_harmonic_noise_ratio(y: np.ndarray, sr: int) -> Dict[str, Any]:
 # audio_subband_waterfall.py as unvalidated against real audio (synthetic
 # sine fixtures are a poor proxy for that specific statistic), so it's
 # trusted less than the other 9 pending real labeled samples.
+# MODULE 18: added tts_vendor_fingerprint (spec Section 2.2 -- rule-based
+# per-vendor heuristic signatures, honest scope-down from the spec's
+# trained-classifier ask; see analyzers/tts_vendor_fingerprint.py module
+# docstring). Given the LOWEST weight of all 11 signals: it's 6 hand-
+# specified heuristic rules rather than a learned decision boundary, one
+# of those 6 sub-checks (RVC/SVC formant ratio) is flagged as unvalidated
+# in the analyzer itself, and formant tracking generally succeeds on only
+# a fraction of frames on real-world noisy audio (see smoke-test notes).
+# Existing 10 weights rescaled by 0.94 to make room, same pattern as
+# Modules 16/17.
 _SIGNAL_WEIGHTS = {
-    "mfcc_consistency": 0.10,
-    "pitch_jitter_shimmer": 0.12,
-    "spectral_stability": 0.10,
-    "silence_pattern": 0.07,
-    "harmonic_noise_ratio": 0.10,
-    "harmonic_structure": 0.11,
-    "phase_coherence": 0.10,
-    "spectral_envelope": 0.08,
-    "subband_analysis": 0.10,
-    "waterfall_artifacts": 0.12,
+    "mfcc_consistency": 0.094,
+    "pitch_jitter_shimmer": 0.113,
+    "spectral_stability": 0.094,
+    "silence_pattern": 0.066,
+    "harmonic_noise_ratio": 0.094,
+    "harmonic_structure": 0.103,
+    "phase_coherence": 0.094,
+    "spectral_envelope": 0.075,
+    "subband_analysis": 0.094,
+    "waterfall_artifacts": 0.113,
+    "tts_vendor_fingerprint": 0.06,
 }
 
 
@@ -468,6 +486,16 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         results["spectral_envelope"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["subband_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["waterfall_artifacts"] = {"available": False, "reason": f"unexpected_error: {e}"}
+
+    # MODULE 18 — spec Section 2.2 (TTS vendor fingerprinting). Same
+    # call-site try/except rationale as MODULE 16/17. This one is slower
+    # than the others (LPC formant tracking per-frame) so it's worth
+    # watching processingTimeMs if it shows up as a bottleneck later.
+    try:
+        results.update(_run_tts_fingerprint_signals(y, sr))
+    except Exception as e:
+        logger.error("[AudioEngine] tts_vendor_fingerprint.run_all raised unexpectedly: %s", e, exc_info=True)
+        results["tts_vendor_fingerprint"] = {"available": False, "reason": f"unexpected_error: {e}"}
 
     available = {k: v for k, v in results.items() if v.get("available")}
     if available:
