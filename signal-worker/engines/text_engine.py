@@ -5,6 +5,28 @@ repetition, AI phrase fingerprinting, informality-marker analysis,
 Unicode/homoglyph forensics, humanizer-artifact detection, and
 plagiarism-risk signal.
 
+MODULE 21 (spec Section 3.2 items 1+4) added lexical_richness (MATTR,
+Brunet's Index, Honore's Statistic, hapax-legomena/Zipf deviation) and
+entropy_fingerprint (character- and word-level Shannon entropy) --
+see analyzers/lexical_entropy_stylometry.py, additive to the existing
+_compute_stylometry above (audited for overlap, none found; see that
+module's docstring for the comparison).
+
+MODULE 22 (spec Section 3.2 items 5-6) added ngram_fingerprint (internal
+n-gram diversity/concentration -- NOT a comparison against an external
+reference corpus, which this repo doesn't have; see module docstring
+for the honest scope-down) and punctuation_formatting_fingerprint (dash/
+quote-style consistency, Oxford-comma consistency, paragraph-length
+uniformity) -- see analyzers/ngram_punctuation_fingerprint.py.
+
+NOT included in Modules 21-22 -- flagged, not fabricated: spec Section
+3.2 items 2 (Syntactic Features: parse-tree depth, dependency patterns)
+and 3 (Semantic Features: LSA/LDA topic coherence, WordNet semantic
+diversity) need a dependency this repo does not currently carry (a
+proper constituency/dependency parser such as spaCy for item 2; a topic
+model or WordNet corpus access for item 3) and were not written blind --
+same "audit infra before implementing" rule as every other module.
+
 Designed for DigitalOcean basic-xs (1GB RAM).
 All ML models are lazy-loaded on first use.
 """
@@ -18,6 +40,8 @@ from typing import Any, Dict, List, Optional
 
 from utils.model_cache import get_model, get_memory_usage
 from utils.text_preprocessor import preprocess, split_sentences, tokenise_words
+from analyzers.lexical_entropy_stylometry import run_all as _run_lexical_entropy_signals
+from analyzers.ngram_punctuation_fingerprint import run_all as _run_ngram_punctuation_signals
 from version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -757,6 +781,8 @@ def analyze_text(
             "humanizer_artifacts": True,
             "plagiarism_risk": True,
             "factual": False,
+            "lexical_entropy": True,
+            "ngram_punctuation": True,
         }
 
     start = time.time()
@@ -922,6 +948,33 @@ def analyze_text(
             "details": {"status": "not_implemented"},
         }
 
+    # MODULE 21 — spec Section 3.2 items 1+4 (lexical richness: MATTR/
+    # Brunet/Honore/hapax-Zipf; entropy fingerprint: char/word Shannon
+    # entropy). Call-site try/except so a bug in the new analyzer module
+    # itself can't take down the whole /analyze/text request, same
+    # pattern as audio_engine.py's Module 16+ call sites.
+    if options.get("lexical_entropy", True):
+        try:
+            words_for_stylometry = tokenise_words(clean)
+            engines.update(_run_lexical_entropy_signals(clean, words_for_stylometry))
+        except Exception as e:
+            logger.error("[TextEngine] lexical_entropy_stylometry.run_all raised unexpectedly: %s", e, exc_info=True)
+            engines["lexical_richness"] = _empty_result(f"unexpected_error: {e}")
+            engines["entropy_fingerprint"] = _empty_result(f"unexpected_error: {e}")
+
+    # MODULE 22 — spec Section 3.2 items 5-6 (n-gram diversity/
+    # concentration fingerprint; punctuation & formatting fingerprint).
+    # Same call-site try/except rationale as MODULE 21.
+    if options.get("ngram_punctuation", True):
+        try:
+            words_for_ngram = tokenise_words(clean)
+            engines.update(_run_ngram_punctuation_signals(clean, words_for_ngram))
+        except Exception as e:
+            logger.error("[TextEngine] ngram_punctuation_fingerprint.run_all raised unexpectedly: %s", e, exc_info=True)
+            engines["ngram_fingerprint"] = _empty_result(f"unexpected_error: {e}")
+            engines["punctuation_formatting_fingerprint"] = _empty_result(f"unexpected_error: {e}")
+
+
     # Composite score — confidence-weighted average
     # Rebalanced (v4.4) for the three new forensic layers below. perplexity
     # stays the dominant single signal when available. unicode_forensics
@@ -942,6 +995,10 @@ def analyze_text(
         "unicode_forensics": 0.08,
         "humanizer_artifacts": 0.10,
         "plagiarism_risk": 0.05,
+        "lexical_richness": 0.05,
+        "entropy_fingerprint": 0.055,
+        "ngram_fingerprint": 0.045,
+        "punctuation_formatting_fingerprint": 0.03,
     }
 
     total_weight = 0.0
