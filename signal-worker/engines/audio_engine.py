@@ -64,6 +64,23 @@ Signals (all CPU-computable, none require a GPU or paid API):
                                 Cross-segment noise-floor spectral-shape
                                 consistency (capture-chain-switch proxy).
                                 See analyzers/voiceprint_liveness.py.
+ 15. Prosody analysis         — MODULE 20 (spec Section 2.4 item 1). F0-
+                                contour entropy + energy-envelope
+                                speaking-rate estimate. See
+                                analyzers/prosody_temporal.py.
+ 16. Pause analysis           — MODULE 20 (spec Section 2.4 item 2).
+                                Pause-duration log-normality deviation +
+                                digital-silence / reused-breath-sample
+                                checks. Distinct from Module 3's
+                                silence_pattern (CoV of gap length only).
+                                See analyzers/prosody_temporal.py.
+ 17. Co-articulation analysis — MODULE 20 (spec Section 2.4 item 3).
+                                Frame-to-frame MFCC-delta spikiness as a
+                                phoneme-transition-smoothness proxy.
+                                Distinct from Module 3's
+                                spectral_stability (global centroid CoV,
+                                not local frame-to-frame transitions).
+                                See analyzers/prosody_temporal.py.
 
 NOT included — MODULE 19a deliberately does NOT include spec Section 2.3
 item 1 (Speaker Embedding Extraction / ECAPA-TDNN speaker verification).
@@ -94,6 +111,7 @@ from analyzers.audio_spectral_deep import run_all as _run_spectral_deep_signals
 from analyzers.audio_subband_waterfall import run_all as _run_subband_waterfall_signals
 from analyzers.tts_vendor_fingerprint import run_all as _run_tts_fingerprint_signals
 from analyzers.voiceprint_liveness import run_all as _run_voiceprint_liveness_signals
+from analyzers.prosody_temporal import run_all as _run_prosody_temporal_signals
 
 logger = logging.getLogger(__name__)
 
@@ -421,6 +439,9 @@ _SIGNAL_WEIGHTS = {
     "anti_spoofing_lfcc_cqcc": 0.075,
     "reverberation_liveness": 0.056,
     "noise_floor_consistency": 0.047,
+    "prosody_analysis": 0.085,
+    "pause_analysis": 0.075,
+    "coarticulation_analysis": 0.066,
 }
 
 
@@ -534,6 +555,16 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         results["anti_spoofing_lfcc_cqcc"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["reverberation_liveness"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["noise_floor_consistency"] = {"available": False, "reason": f"unexpected_error: {e}"}
+
+    # MODULE 20 — spec Section 2.4 (prosody, pause, co-articulation).
+    # Same call-site try/except rationale as MODULE 16-19a.
+    try:
+        results.update(_run_prosody_temporal_signals(y, sr))
+    except Exception as e:
+        logger.error("[AudioEngine] prosody_temporal.run_all raised unexpectedly: %s", e, exc_info=True)
+        results["prosody_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["pause_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
+        results["coarticulation_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
 
     available = {k: v for k, v in results.items() if v.get("available")}
     if available:
