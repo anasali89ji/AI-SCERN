@@ -223,11 +223,13 @@ export function SiteFooter() {
           rel="noopener noreferrer"
           aria-label="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
         >
-          <img
-            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1243081&theme=neutral"
+                    <img
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1243081&theme=neutral&t=1788721156302"
             alt="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
             width={250}
             height={54}
+            referrerPolicy="no-referrer"
+            loading="lazy"
           />
         </a>
       </div>
