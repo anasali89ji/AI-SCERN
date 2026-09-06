@@ -93,7 +93,7 @@ const nextConfig = {
           "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://*.clerk.accounts.dev https://*.clerk.com https://js.clerk.dev https://cdn.jsdelivr.net https://clerk.aiscern.com https://challenges.cloudflare.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiscern.com",
           "font-src 'self' data: https://fonts.gstatic.com",
-          "img-src 'self' data: blob: https://img.clerk.com https://*.supabase.co https://images.unsplash.com https://*.clerk.accounts.dev https://*.aiscern.com https://*.r2.cloudflarestorage.com https://*.r2.dev",
+          "img-src 'self' data: blob: https://img.clerk.com https://*.supabase.co https://images.unsplash.com https://*.clerk.accounts.dev https://*.aiscern.com https://*.r2.cloudflarestorage.com https://*.r2.dev https://api.producthunt.com",
           "connect-src 'self' https://*.ondigitalocean.app https://*.supabase.co https://generativelanguage.googleapis.com https://api-inference.huggingface.co https://integrate.api.nvidia.com https://api.x.ai https://openrouter.ai https://api.cloudflare.com https://*.r2.cloudflarestorage.com https://*.r2.dev https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://clerk.aiscern.com https://aiscern.com https://inn.gs https://*.inngest.com wss://*.clerk.accounts.dev wss://*.clerk.com wss://clerk.aiscern.com https://challenges.cloudflare.com",
           "frame-src https://accounts.google.com https://*.google.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.aiscern.com https://accounts.aiscern.com https://challenges.cloudflare.com",
           "worker-src 'self' blob:",
