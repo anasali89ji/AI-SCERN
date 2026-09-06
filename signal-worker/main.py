@@ -225,6 +225,11 @@ class AnalyzeTextRequest(BaseModel):
     text: str
     jobId: str = ""
     options: Optional[Dict[str, bool]] = None
+    # MODULE 23: only meaningful for a disclosed/known watermarking scheme
+    # (e.g. {"seed": 12345, "gamma": 0.5}) -- no real provider's scheme is
+    # public, so this has no effect unless the caller has one to supply.
+    # See analyzers/llm_watermark_greenlist.py module docstring.
+    watermarkConfig: Optional[Dict[str, Any]] = None
 
 
 class BatchImageRequest(BaseModel):
@@ -450,7 +455,7 @@ async def analyze_text_endpoint(req: AnalyzeTextRequest) -> Dict[str, Any]:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(
         None,
-        lambda: analyze_text(text=req.text, job_id=req.jobId, options=req.options),
+        lambda: analyze_text(text=req.text, job_id=req.jobId, options=req.options, watermark_config=req.watermarkConfig),
     )
 
 

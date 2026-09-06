@@ -42,6 +42,8 @@ from utils.model_cache import get_model, get_memory_usage
 from utils.text_preprocessor import preprocess, split_sentences, tokenise_words
 from analyzers.lexical_entropy_stylometry import run_all as _run_lexical_entropy_signals
 from analyzers.ngram_punctuation_fingerprint import run_all as _run_ngram_punctuation_signals
+from analyzers.llm_watermark_greenlist import run_all as _run_watermark_signals
+from analyzers.near_synonym_consistency import run_all as _run_near_synonym_signals
 from version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -764,6 +766,7 @@ def analyze_text(
     text: str,
     job_id: str = "",
     options: Optional[Dict[str, bool]] = None,
+    watermark_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Run the full text detection pipeline.
@@ -783,6 +786,8 @@ def analyze_text(
             "factual": False,
             "lexical_entropy": True,
             "ngram_punctuation": True,
+            "watermark_detection": True,
+            "near_synonym_consistency": True,
         }
 
     start = time.time()
@@ -974,6 +979,30 @@ def analyze_text(
             engines["ngram_fingerprint"] = _empty_result(f"unexpected_error: {e}")
             engines["punctuation_formatting_fingerprint"] = _empty_result(f"unexpected_error: {e}")
 
+    # MODULE 23 — spec Section 3.3 item 1 (statistical greenlist
+    # watermark detection). Only produces a real finding when the caller
+    # supplies a watermark_config; otherwise returns an explicit
+    # unavailable result explaining why (no provider's scheme is public
+    # -- see analyzers/llm_watermark_greenlist.py module docstring).
+    if options.get("watermark_detection", True):
+        try:
+            engines.update(_run_watermark_signals(clean, watermark_config))
+        except Exception as e:
+            logger.error("[TextEngine] llm_watermark_greenlist.run_all raised unexpectedly: %s", e, exc_info=True)
+            engines["greenlist_watermark"] = _empty_result(f"unexpected_error: {e}")
+
+    # MODULE 24 — spec Section 3.3 item 2 (semantic watermark, honestly
+    # scoped down to a self-contained near-synonym lexical-choice
+    # consistency proxy -- see analyzers/near_synonym_consistency.py
+    # module docstring for why this is NOT a provider-specific watermark
+    # detector).
+    if options.get("near_synonym_consistency", True):
+        try:
+            engines.update(_run_near_synonym_signals(clean))
+        except Exception as e:
+            logger.error("[TextEngine] near_synonym_consistency.run_all raised unexpectedly: %s", e, exc_info=True)
+            engines["near_synonym_consistency"] = _empty_result(f"unexpected_error: {e}")
+
 
     # Composite score — confidence-weighted average
     # Rebalanced (v4.4) for the three new forensic layers below. perplexity
@@ -999,6 +1028,8 @@ def analyze_text(
         "entropy_fingerprint": 0.055,
         "ngram_fingerprint": 0.045,
         "punctuation_formatting_fingerprint": 0.03,
+        "greenlist_watermark": 0.03,
+        "near_synonym_consistency": 0.02,
     }
 
     total_weight = 0.0
