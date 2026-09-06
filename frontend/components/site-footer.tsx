@@ -215,17 +215,20 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-
-         {/* BuySellStartups Listing Badge */}
+      {/* Product Hunt badge */}
       <div className="flex justify-center pt-6 pb-2">
-        <a 
-          href="https://buysellstartups.com/listings/listing-mtfnswz0fl0o" 
-          target="_blank" 
+        <a
+          href="https://www.producthunt.com/products/aiscern?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-aiscern"
+          target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 bg-gray-900/50 hover:bg-gray-800 transition-colors"
+          aria-label="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
         >
-          <span className="text-sm text-gray-400">Aiscern is currently</span>
-          <span className="text-sm font-semibold text-emerald-400">For Sale</span>
+          <img
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1243081&theme=neutral"
+            alt="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
+            width={250}
+            height={54}
+          />
         </a>
       </div>
     </footer>
