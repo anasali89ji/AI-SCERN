@@ -22,9 +22,41 @@ copy-pasted / lightly-reworded academic and web content:
                                    long-form academic-style document is itself
                                    a soft originality-risk signal (either
                                    totally original or unreferenced source use).
+  5. Translationese detection   — MODULE 25 (spec Section 3.4 item 2's back-
+                                   translation sub-bullet). Self-contained
+                                   lexical/stylistic markers of round-trip
+                                   machine translation (contraction rate,
+                                   idiom/phrasal-verb density, formal-
+                                   connective over-representation, calque
+                                   collocation patterns). See
+                                   analyzers/translationese_detection.py.
+  6. Argument-structure fingerprint — MODULE 26 (spec Section 3.4 item 3,
+                                   "idea plagiarism"). A SimHash-style
+                                   fingerprint over the document's coarse
+                                   rhetorical-role sequence (claim/evidence/
+                                   contrast/example/conclusion), analogous
+                                   to signal 2's word-level SimHash but one
+                                   level more abstract -- meant for future
+                                   cross-submission comparison, same
+                                   "needs a stored corpus" caveat as
+                                   simhash_fingerprint below. Also includes
+                                   a genuinely single-document template-
+                                   rigidity check (role-transition entropy).
+                                   See analyzers/argument_structure_fingerprint.py.
+
+NOT included (flagged, not fabricated): Section 3.4 item 1 (exact-match
+against a 100M+ document database), the Sentence-BERT/LaBSE/LASER
+embedding-based paraphrase and cross-language detection in items 2 and 4,
+and item 5 (source attribution with real URLs) all need either an
+external document corpus/search API or a fetchable sentence-embedding
+model -- none of which this sandbox has network access to fetch and
+smoke-test (same category as Module 19a/19b's ECAPA-TDNN gap). Writing
+these without that infra would mean either fabricating a corpus/URLs or
+shipping an embedding integration that was never actually verified to
+work, both of which this project's workflow explicitly rules out.
 
 If/when a real web-crawl plagiarism check (Copyscape/Turnitin-style) is wired
-in later, that should become a 5th, much more heavily-weighted, signal here.
+in later, that should become a 7th, much more heavily-weighted, signal here.
 """
 
 from __future__ import annotations
@@ -33,6 +65,9 @@ import hashlib
 import re
 from collections import Counter
 from typing import Any, Dict, List, Tuple
+
+from analyzers.translationese_detection import detect_translationese
+from analyzers.argument_structure_fingerprint import argument_structure_fingerprint
 
 SHINGLE_SIZE = 8            # words per shingle for fingerprinting
 MIN_TEXT_LEN = 200          # below this, plagiarism scoring is unreliable
@@ -257,6 +292,24 @@ def analyze_plagiarism_risk(text: str) -> Dict[str, Any]:
     word_count = len(text.split())
     simhash_fp = simhash(text)
 
+    # MODULE 25 — spec Section 3.4 item 2's back-translation sub-bullet
+    # (translationese artifact detection). Explicit try/except since this
+    # is newer/more complex than this file's existing pure-function
+    # signals -- a bug here shouldn't take down the whole plagiarism
+    # assessment.
+    try:
+        translationese = detect_translationese(text)
+    except Exception as e:
+        translationese = {"score": 0.5, "confidence": 0.0, "details": {"reason": f"unexpected_error: {e}"}}
+
+    # MODULE 26 — spec Section 3.4 item 3 (idea plagiarism, honestly
+    # scoped to a comparison-ready structure fingerprint + a genuinely
+    # single-document template-rigidity signal -- see module docstring).
+    try:
+        arg_structure = argument_structure_fingerprint(text)
+    except Exception as e:
+        arg_structure = {"available": False, "score": 0.5, "confidence": 0.0, "reason": f"unexpected_error: {e}"}
+
     # Weighted composite (tuned to be conservative — internal duplication is
     # the strongest and most reliable of these offline signals).
     score = 0.0
@@ -270,6 +323,13 @@ def analyze_plagiarism_risk(text: str) -> Dict[str, Any]:
     score += min(len(boilerplate) * 4, 12)                    # up to 12 pts
     if word_count > 600 and citation_density == 0:
         score += 8                                            # up to 8 pts
+    # New signals kept deliberately low-weight and confidence-gated -- both
+    # are softer/more confound-prone than the signals above (see their own
+    # module docstrings), so they nudge the score rather than drive it.
+    if translationese.get("confidence", 0) > 0:
+        score += translationese.get("score", 0.5) * translationese.get("confidence", 0) * 10   # up to ~4 pts
+    if arg_structure.get("available") and arg_structure.get("confidence", 0) > 0:
+        score += arg_structure.get("score", 0.5) * arg_structure.get("confidence", 0) * 8       # up to ~2.8 pts
     score = round(min(score, 100), 1)
 
     risk_level = (
@@ -296,6 +356,8 @@ def analyze_plagiarism_risk(text: str) -> Dict[str, Any]:
             "boilerplate_phrases_found": boilerplate,
             "citation_density_per_1000_words": citation_density,
             "word_count": word_count,
+            "translationese_detection": translationese,
+            "argument_structure_fingerprint": arg_structure,
         },
         "simhash_fingerprint": simhash_fp,
         "summary": summary,
