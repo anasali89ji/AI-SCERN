@@ -43,7 +43,7 @@ export function HeroCTAButtons() {
 
       <motion.div className="max-w-2xl 2xl:max-w-3xl mx-auto w-full"
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }}>
-        <LiveDemo isLoggedIn={!!user} />
+        <LiveDemo />
       </motion.div>
     </>
   )
