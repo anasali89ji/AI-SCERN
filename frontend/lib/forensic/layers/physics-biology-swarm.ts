@@ -460,7 +460,6 @@ export async function runPhysicsBiologySwarm(imageUrl: string): Promise<PhysicsB
       agents.push(r.value.report)
       agentKeyMap[r.value.report.agentName] = r.value.key
     } else {
-      console.warn(`[physics-biology-swarm] Agent ${agentKeys[i]} failed:`, r.reason)
     }
   })
 

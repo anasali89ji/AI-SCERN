@@ -53,7 +53,6 @@ function sanitizeHtml(html: string): string {
   )
 
   // Strip or sanitize all remaining tags
-  html = html.replace(/<(\/?[a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?\/?>/ , (match) => match) // placeholder
   html = html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?>?/g, (match, tagName) => {
     const tag = (tagName ?? '').toLowerCase()
     if (!SAFE_TAGS.has(tag)) return ''
@@ -85,32 +84,33 @@ function sanitizeHtml(html: string): string {
 }
 
 // ── Minimal markdown → HTML renderer (no heavy runtime dep) ──────────────────
+// Uses only design-token utility classes (silver-*, accent) — no raw hex.
 function renderMarkdown(md: string): string {
   const result = md
     // Headings
-    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-text-primary mt-8 mb-3">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-black text-text-primary mt-10 mb-4 pb-2 border-b border-border/40">$1</h2>')
-    .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-black text-text-primary mt-10 mb-4">$1</h1>')
+    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold text-silver-900 mt-8 mb-3">$1</h3>')
+    .replace(/^## (.+)$/gm,  '<h2 class="text-xl font-semibold text-silver-900 mt-10 mb-4 pb-2 border-b border-white/15">$1</h2>')
+    .replace(/^# (.+)$/gm,   '<h1 class="text-2xl font-semibold text-silver-900 mt-10 mb-4">$1</h1>')
     // Bold / italic
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-text-primary">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-silver-900">$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em class="italic">$1</em>')
     // Inline code
-    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-border/50 text-xs font-mono text-primary">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-surface border border-white/15 text-xs font-mono text-accent">$1</code>')
     // Unordered list items
-    .replace(/^[-*] (.+)$/gm, '<li class="ml-5 list-disc text-text-muted leading-relaxed mb-1">$1</li>')
+    .replace(/^[-*] (.+)$/gm, '<li class="ml-5 list-disc text-silver-600 leading-relaxed mb-1">$1</li>')
     // Ordered list items
-    .replace(/^\d+\. (.+)$/gm, '<li class="ml-5 list-decimal text-text-muted leading-relaxed mb-1">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li class="ml-5 list-decimal text-silver-600 leading-relaxed mb-1">$1</li>')
     // Wrap consecutive <li> in <ul>/<ol>
     .replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul class="my-4 space-y-1">$1</ul>')
     // Blockquotes
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-primary/50 pl-4 my-4 text-text-muted italic">$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-accent/30 pl-4 my-4 text-silver-600 italic">$1</blockquote>')
     // Paragraphs — blank-line separated
     .split(/\n\n+/)
     .map(block => {
       const t = block.trim()
       if (!t) return ''
       if (/^<(h[1-6]|ul|ol|blockquote|li)/.test(t)) return t
-      return `<p class="text-text-muted leading-relaxed mb-4">${t.replace(/\n/g, ' ')}</p>`
+      return `<p class="text-silver-600 leading-relaxed mb-4">${t.replace(/\n/g, ' ')}</p>`
     })
     .join('\n')
 
@@ -127,7 +127,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const html = renderMarkdown(post.content) // sanitizeHtml applied inside
 
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-surface-deep text-silver-900">
       {/* Nav */}
       <SiteNav backHref="/blog" backLabel="Blog" />
 
@@ -135,18 +135,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
         {/* Category badge */}
         <div className="flex items-center gap-2 mb-4">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">
             <Tag className="w-3 h-3" /> {post.category}
           </span>
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl sm:text-4xl font-black text-text-primary leading-tight mb-5">
+        <h1 className="text-headline text-silver-900 mb-5">
           {post.title}
         </h1>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted mb-8 pb-6 border-b border-border/40">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-silver-600 mb-8 pb-6 border-b border-white/15">
           <span className="flex items-center gap-1.5">
             <User className="w-3 h-3" /> {post.author}
           </span>
@@ -160,7 +160,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         {/* Description lead */}
-        <p className="text-base text-text-secondary leading-relaxed mb-8 font-medium">
+        <p className="text-lead text-silver-700 mb-8">
           {post.description}
         </p>
 
@@ -172,10 +172,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Tags */}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-border/40">
+          <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t border-white/15">
             {post.tags.map(tag => (
               <span key={tag}
-                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-border/50 text-text-muted">
+                className="text-xs px-2.5 py-1 rounded-full bg-surface border border-white/15 text-silver-600">
                 {tag}
               </span>
             ))}
@@ -183,20 +183,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* CTA */}
-        <div className="mt-12 p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center">
-          <h3 className="font-black text-lg mb-2">Try Aiscern Free</h3>
-          <p className="text-text-muted text-sm mb-4">
-            Detect AI-generated text, images, audio, and video — no account required.
+        <div className="mt-12 p-6 rounded-xl border border-accent/20 bg-accent/5 text-center">
+          <h3 className="font-semibold text-lg text-silver-900 mb-2">Try Aiscern Free</h3>
+          <p className="text-silver-600 text-sm mb-4">
+            Attest AI-generated text, images, audio, and video — no account required.
           </p>
           <Link href="/detect/text"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">
-            Start Detecting Free →
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-surface-deep font-semibold text-sm hover:bg-accent-hover transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/50">
+            Start Attesting Free →
           </Link>
         </div>
 
         {/* Back link */}
         <div className="mt-8 text-center">
-          <Link href="/blog" className="text-sm text-text-muted hover:text-primary transition-colors">
+          <Link href="/blog" className="text-sm text-silver-600 hover:text-silver-900 transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">
             ← Back to all posts
           </Link>
         </div>

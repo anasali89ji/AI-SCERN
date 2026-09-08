@@ -110,7 +110,6 @@ export const syncProfileToConvex = inngest.createFunction(
     await step.run('push-to-convex', async () => {
       const convexUrl = process.env.CONVEX_URL
       if (!convexUrl) {
-        console.warn('[syncProfileToConvex] CONVEX_URL not set — skipping')
         return { skipped: true }
       }
 

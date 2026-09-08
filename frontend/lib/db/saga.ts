@@ -157,7 +157,6 @@ async function appendOutboxEvent(event: SagaEvent): Promise<void> {
     `
   } catch {
     // Analytics fully down — degrade gracefully
-    console.warn('[Saga:outbox] Failed to persist event:', event.step_name, event.status)
   }
 }
 

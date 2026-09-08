@@ -59,7 +59,6 @@ async function convexQuery<T>(
   args: Record<string, unknown> = {},
 ): Promise<T | null> {
   if (!CONVEX_URL) {
-    console.warn('[replica:convex] CONVEX_URL not set — skipping replica read')
     return null
   }
 

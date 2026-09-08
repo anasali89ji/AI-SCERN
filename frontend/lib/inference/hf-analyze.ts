@@ -1388,7 +1388,6 @@ export async function analyzeVideoWithFrames(
           : `Inconclusive (${Math.round(ensemble.ai_score * 100)}% AI probability). Ensure visible faces in video.`,
       }
     } catch (err: unknown) {
-      console.warn('[analyzeVideoWithFrames] NVIDIA NIM failed, falling back to HF:', (err as Error)?.message)
     }
   }
 
@@ -1462,7 +1461,6 @@ export async function analyzeVideoWithFrames(
         }
       }
     } catch (err: unknown) {
-      console.warn('[analyzeVideoWithFrames] HF finetuned failed:', (err as Error)?.message)
     }
   }
 

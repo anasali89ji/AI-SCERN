@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react'
+import { ArrowLeft, CircleCheck, AlertCircle, Clock } from 'lucide-react'
 import { SiteFooter } from '@/components/site-footer'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 
@@ -13,14 +13,14 @@ const LAST_REVIEWED = 'May 17, 2026'
 
 export default function AccessibilityPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-surface sticky top-0 z-10">
+    <div className="min-h-screen bg-[#08080d] flex flex-col">
+      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
-            <span className="font-black gradient-text">Aiscern</span>
+            <span className="font-black text-[#2BEE34]">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -30,16 +30,16 @@ export default function AccessibilityPage() {
 
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-text-primary mb-3">Accessibility Statement</h1>
-          <p className="text-text-muted">Last reviewed: {LAST_REVIEWED}</p>
+          <h1 className="text-4xl font-black text-white mb-3">Accessibility Statement</h1>
+          <p className="text-[#6B6B6B]">Last reviewed: {LAST_REVIEWED}</p>
         </div>
 
         {/* Status badge */}
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 mb-8 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-[#FFB800]/30 bg-[#FFB800]/5 p-4 mb-8 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-[#FFB800] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-amber-300 text-sm">Partial Compliance — In Progress</p>
-            <p className="text-amber-400/80 text-xs mt-1">
+            <p className="font-semibold text-[#FFB800] text-sm">Partial Compliance — In Progress</p>
+            <p className="text-[#FFB800]/80 text-xs mt-1">
               Aiscern is working toward WCAG 2.1 Level AA compliance. Some areas are not yet fully compliant.
               We are actively addressing known issues and welcome feedback.
             </p>
@@ -72,7 +72,7 @@ export default function AccessibilityPage() {
               <StatusItem icon="pass" label="Skip Navigation" detail="A 'Skip to main content' link is available at the top of every page." />
               <StatusItem icon="pass" label="Semantic HTML" detail="Pages use landmark roles (main, nav, header, footer), heading hierarchy, and ARIA labels where appropriate." />
               <StatusItem icon="warn" label="Screen Reader Testing" detail="Automated testing via axe-core has been performed. Manual screen reader testing with NVDA/JAWS is in progress." />
-              <StatusItem icon="warn" label="Complex Widgets" detail="The scan result confidence visualisations and animated charts may not convey all information to screen reader users. Text alternatives are being added." />
+              <StatusItem icon="warn" label="Complex Widgets" detail="The attestation result confidence visualisations and animated charts may not convey all information to screen reader users. Text alternatives are being added." />
               <StatusItem icon="warn" label="File Upload" detail="The drag-and-drop file upload interface has keyboard fallback but may present challenges for some assistive technologies." />
               <StatusItem icon="fail" label="WCAG 2.1 Full Audit" detail="A formal third-party WCAG audit has not yet been completed. We plan to commission one in Q3 2026." />
             </div>
@@ -97,8 +97,8 @@ export default function AccessibilityPage() {
           <Section title="4. Known Limitations">
             <p>Despite our best efforts to ensure accessibility of Aiscern, there may be some limitations. Below is a description of known limitations and potential workarounds:</p>
             <ul>
-              <li><strong>Detection result confidence rings:</strong> SVG-based visualisations may not be announced correctly by all screen readers. A numeric percentage is always displayed as a text alternative.</li>
-              <li><strong>Real-time scan progress:</strong> Live detection updates use aria-live regions but may announce too frequently. We are reviewing announcement frequency.</li>
+              <li><strong>Attestation result confidence rings:</strong> SVG-based visualisations may not be announced correctly by all screen readers. A numeric percentage is always displayed as a text alternative.</li>
+              <li><strong>Real-time attestation progress:</strong> Live attestation updates use aria-live regions but may announce too frequently. We are reviewing announcement frequency.</li>
               <li><strong>PDF export:</strong> Generated PDFs are not yet tagged for accessibility. Tagged PDF output is planned for a future release.</li>
               <li><strong>Video player (demo):</strong> The homepage hero video does not currently have captions. We are adding caption support.</li>
             </ul>
@@ -109,7 +109,7 @@ export default function AccessibilityPage() {
               We welcome your feedback on the accessibility of Aiscern. Please let us know if you encounter accessibility barriers:
             </p>
             <ul>
-              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-primary hover:underline">accessibility@aiscern.com</a></li>
+              <li><strong>Email:</strong> <a href="mailto:accessibility@aiscern.com" className="text-[#2BEE34] hover:underline">accessibility@aiscern.com</a></li>
               <li><strong>Response time:</strong> We aim to respond within 2 business days</li>
             </ul>
             <p>
@@ -122,7 +122,7 @@ export default function AccessibilityPage() {
             <p>
               If you are located in the EU and are not satisfied with our response to your accessibility feedback,
               you have the right to contact your national accessibility enforcement authority.
-              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equality and Human Rights Commission</a>.
+              In the UK, you may contact the <a href="https://www.equalityhumanrights.com" target="_blank" rel="noopener noreferrer" className="text-[#2BEE34] hover:underline">Equality and Human Rights Commission</a>.
             </p>
           </Section>
 
@@ -152,21 +152,21 @@ export default function AccessibilityPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">{title}</h2>
-      <div className="space-y-3 text-text-secondary text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
+      <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
 
 function StatusItem({ icon, label, detail }: { icon: 'pass' | 'warn' | 'fail'; label: string; detail: string }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border border-border bg-surface/50">
-      {icon === 'pass' && <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />}
-      {icon === 'warn' && <Clock className="w-4 h-4 text-amber flex-shrink-0 mt-0.5" />}
-      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-rose flex-shrink-0 mt-0.5" />}
+    <div className="flex items-start gap-3 p-3 rounded-lg border border-[#333333] bg-[#141414]/50">
+      {icon === 'pass' && <CircleCheck className="w-4 h-4 text-[#2BEE34] flex-shrink-0 mt-0.5" />}
+      {icon === 'warn' && <Clock className="w-4 h-4 text-[#FFB800] flex-shrink-0 mt-0.5" />}
+      {icon === 'fail' && <AlertCircle className="w-4 h-4 text-[#FF4444] flex-shrink-0 mt-0.5" />}
       <div>
-        <p className="font-semibold text-text-primary text-sm">{label}</p>
-        <p className="text-text-muted text-xs mt-0.5">{detail}</p>
+        <p className="font-semibold text-white text-sm">{label}</p>
+        <p className="text-[#6B6B6B] text-xs mt-0.5">{detail}</p>
       </div>
     </div>
   )

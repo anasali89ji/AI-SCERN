@@ -1,43 +1,46 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
-  Brain, FileText, Mic, BarChart3,
-  Zap, ArrowRight, Shield, CheckCircle, AlertTriangle,
-  HelpCircle, Image as ImageIcon, Video, Music, Sparkles, Layers,
-  RefreshCw
+  Brain, FileType2, BarChart3, TriangleAlert, CircleCheck,
+  CircleHelp, Image as ImageIcon, Video, Music, Sparkles,
+  Layers, RefreshCw, Bot, Shield, ArrowRight,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
-import { useDetectSettings } from '@/hooks/useDetectSettings'
-
-
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileText,  label: 'Text',  color: 'from-amber/20 to-amber/5',     iconColor: 'text-amber',     desc: 'Detect AI-written content'    },
-  { href: '/detect/image', icon: ImageIcon, label: 'Image', color: 'from-primary/20 to-primary/5', iconColor: 'text-primary', desc: 'Deepfake & AI image detection' },
-  { href: '/detect/audio', icon: Mic,       label: 'Audio', color: 'from-cyan/20 to-cyan/5',        iconColor: 'text-cyan',      desc: 'Voice clone detection'         },
-  { href: '/detect/video', icon: Video,     label: 'Video', color: 'from-rose/20 to-rose/5',        iconColor: 'text-rose',      desc: 'Deepfake video analysis'       },
-  { href: '/batch',        icon: Brain,     label: 'Batch', color: 'from-emerald/20 to-emerald/5',  iconColor: 'text-emerald',   desc: 'Scan up to 20 files at once'         },
-  { href: '/chat',         icon: Zap,       label: 'ARIA',  color: 'from-indigo-500/20 to-indigo-500/5', iconColor: 'text-indigo-400', desc: 'AI detection assistant'   },
+  { href: '/detect/text',  icon: FileType2,   label: 'Text',  desc: 'Attest AI writing'      },
+  { href: '/detect/image', icon: ImageIcon,  label: 'Image', desc: 'Deepfake attestation'      },
+  { href: '/detect/audio', icon: Music,      label: 'Audio', desc: 'Voice clone attestation'   },
+  { href: '/detect/video', icon: Video,      label: 'Video', desc: 'Deepfake video attestation' },
+  { href: '/batch',        icon: Layers,     label: 'Batch', desc: 'Attest 20 files at once'   },
+  { href: '/chat',         icon: Bot,        label: 'ARIA',  desc: 'AI attestation assistant'  },
 ]
 
+function verdictColors(verdict: string) {
+  if (verdict === 'AI')    return { text: 'text-[#FF4444]', bg: 'bg-[#FF4444]/10', border: 'border-[#FF4444]/20', dot: 'bg-[#FF4444]' }
+  if (verdict === 'HUMAN') return { text: 'text-[#2BEE34]', bg: 'bg-[#2BEE34]/10', border: 'border-[#2BEE34]/20', dot: 'bg-[#2BEE34]' }
+  return                          { text: 'text-[#FFB800]', bg: 'bg-[#FFB800]/10', border: 'border-[#FFB800]/20', dot: 'bg-[#FFB800]' }
+}
+
 function VerdictIcon({ verdict }: { verdict: string }) {
-  if (verdict === 'AI')        return <AlertTriangle className="w-3.5 h-3.5 text-rose flex-shrink-0" />
-  if (verdict === 'HUMAN')     return <CheckCircle   className="w-3.5 h-3.5 text-emerald flex-shrink-0" />
-  return                              <HelpCircle    className="w-3.5 h-3.5 text-amber flex-shrink-0" />
+  const c = verdictColors(verdict)
+  if (verdict === 'AI')    return <TriangleAlert className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
+  if (verdict === 'HUMAN') return <CircleCheck   className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
+  return                          <CircleHelp    className={`w-3.5 h-3.5 ${c.text} flex-shrink-0`} />
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
-  const s = verdict === 'AI' ? 'text-rose bg-rose/10 border-rose/20'
-          : verdict === 'HUMAN' ? 'text-emerald bg-emerald/10 border-emerald/20'
-          : 'text-amber bg-amber/10 border-amber/20'
-  return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${s}`}>{verdict}</span>
+  const c = verdictColors(verdict)
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold tracking-wider ${c.bg} ${c.border} ${c.text}`}>
+      {verdict}
+    </span>
+  )
 }
 
 function timeAgo(ts: string) {
-  const diff = Date.now() - new Date(ts).getTime()
-  const m = Math.floor(diff / 60000)
+  const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000)
   if (m < 1)  return 'just now'
   if (m < 60) return `${m}m ago`
   const h = Math.floor(m / 60)
@@ -45,24 +48,26 @@ function timeAgo(ts: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function mediaIcon(type: string) {
-  const icons: Record<string, any> = { text: FileText, image: ImageIcon, audio: Music, video: Video }
+function normalizeConf(c: number | null | undefined) {
+  if (c == null) return 0
+  return Math.round(c <= 1 ? c * 100 : c)
+}
+
+function MediaIcon({ type }: { type: string }) {
+  const icons: Record<string, any> = { text: FileType2, image: ImageIcon, audio: Music, video: Video }
   const Icon = icons[type] ?? Brain
-  return <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+  return <Icon className="w-3.5 h-3.5 flex-shrink-0 text-[#6B6B6B]" />
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const { defaultModality } = useDetectSettings(user?.uid)
-  const defaultToolHref = `/detect/${defaultModality === 'url' ? 'text' : defaultModality}`
-  const router = useRouter()
-  const [stats,   setStats]   = useState<any>(null)
-  const [scans,   setScans]   = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { user }                    = useAuth()
+  const [stats,      setStats]      = useState<any>(null)
+  const [scans,      setScans]      = useState<any[]>([])
+  const [loading,    setLoading]    = useState(true)
   const [fetchError, setFetchError] = useState(false)
-  const [isPulling, setIsPulling] = useState(false)
-  const mountedRef    = useRef(false)
-  const touchStartY   = useRef(0)
+  const [isPulling,  setIsPulling]  = useState(false)
+  const mountedRef                  = useRef(false)
+  const touchStartY                 = useRef(0)
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   const loadDashboard = useCallback(async () => {
@@ -70,210 +75,191 @@ export default function DashboardPage() {
     try {
       setFetchError(false)
       const [statsRes, scansRes] = await Promise.all([
-        fetch('/api/user/stats',                   { cache: 'no-store' }),
+        fetch('/api/user/stats',                     { cache: 'no-store' }),
         fetch('/api/user/scans?limit=8&sort=newest', { cache: 'no-store' }),
       ])
       if (statsRes.ok) {
         const d = await statsRes.json()
         const rawAvg = d.avg_confidence ?? 0
-        const avg = rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg)
-        setStats({ ...d, avg_confidence: avg })
+        setStats({ ...d, avg_confidence: rawAvg <= 1 ? Math.round(rawAvg * 100) : Math.round(rawAvg) })
       }
       if (scansRes.ok) {
         const json = await scansRes.json()
-        // API returns { data: [...], total: n }
-        setScans(json.data ?? [])
+        setScans(json.scans ?? json.data ?? [])
       }
-      if (!statsRes.ok && !scansRes.ok) setFetchError(true)
-    } catch {
-      setFetchError(true)
-    } finally {
-      setLoading(false)
-    }
+    } catch { setFetchError(true) }
+    finally  { setLoading(false)  }
   }, [user?.uid])
 
   useEffect(() => {
-    // Bust Next.js router segment cache on every mount so navigating back
-    // always fetches fresh data instead of showing a stale cached page.
-    if (!mountedRef.current) {
-      mountedRef.current = true
-      router.refresh()
-    }
-
+    if (mountedRef.current) return
+    mountedRef.current = true
     loadDashboard()
+  }, [loadDashboard])
 
-    const onVisible   = () => { if (document.visibilityState === 'visible') loadDashboard() }
-    const onFocus     = () => loadDashboard()
-    const onScanSaved = () => loadDashboard()
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('aiscern:scan-saved', onScanSaved)
-
-    // Fix 4.5: Pull-to-refresh on mobile — trigger loadDashboard on 80px+ downward pull at top
+  useEffect(() => {
     const onTouchStart = (e: TouchEvent) => { touchStartY.current = e.touches[0].clientY }
     const onTouchEnd   = (e: TouchEvent) => {
-      const pullDistance = e.changedTouches[0].clientY - touchStartY.current
-      if (pullDistance > 80 && window.scrollY === 0) {
+      if (e.changedTouches[0].clientY - touchStartY.current > 80 && window.scrollY < 10) {
         setIsPulling(true)
         loadDashboard().finally(() => setIsPulling(false))
       }
     }
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchend',   onTouchEnd,   { passive: true })
-
-    // Poll every 10 s — fast enough to feel live, cheap enough to run
-    const poll = setInterval(loadDashboard, 10_000)
-
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchend',   onTouchEnd,   { passive: true })
     return () => {
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('aiscern:scan-saved', onScanSaved)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchend', onTouchEnd)
-      clearInterval(poll)
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchend',   onTouchEnd)
     }
-  }, [loadDashboard, router])
+  }, [loadDashboard])
 
-  const totalScans = stats?.total_scans ?? 0
-  const aiCount    = stats?.ai_detected  ?? 0
+  const totalScans = stats?.total_scans    ?? 0
+  const aiCount    = stats?.ai_detected    ?? 0
   const humanCount = stats?.human_detected ?? 0
   const avgConf    = stats?.avg_confidence ?? 0
-  const aiPct      = totalScans > 0 ? Math.round(aiCount / totalScans * 100) : 0
+  const aiPct      = totalScans > 0 ? Math.round(aiCount    / totalScans * 100) : 0
   const humanPct   = totalScans > 0 ? Math.round(humanCount / totalScans * 100) : 0
+  const uncertPct  = Math.max(0, 100 - aiPct - humanPct)
+
+  const STAT_CARDS = [
+    { label: 'Total Scans',   value: loading ? '—' : totalScans.toLocaleString(), icon: Brain         },
+    { label: 'Synthesized',   value: loading ? '—' : `${aiPct}%`,                 icon: TriangleAlert },
+    { label: 'Human Rate',    value: loading ? '—' : `${humanPct}%`,              icon: CircleCheck   },
+    { label: 'Avg Confidence',value: loading ? '—' : `${avgConf}%`,               icon: BarChart3     },
+  ]
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto space-y-4 sm:space-y-6 2xl:space-y-8 overflow-x-hidden">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
 
-      {/* Fix 4.5: Pull-to-refresh spinner — shown briefly while reloading on mobile */}
+      {/* Pull-to-refresh */}
       {isPulling && (
-        <div className="flex items-center justify-center py-2 lg:hidden">
-          <div className="flex items-center gap-2 text-xs text-text-muted bg-surface px-4 py-2 rounded-full border border-border/40">
-            <svg className="w-3.5 h-3.5 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
+        <div className="flex items-center justify-center py-1 lg:hidden">
+          <div className="flex items-center gap-2 text-xs text-[#6B6B6B] bg-[#1A1A1A] px-4 py-2 rounded-full border border-[#2A2A2A]">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#2BEE34]" />
             Refreshing…
           </div>
         </div>
       )}
 
-      {/* ── Welcome ── */}
-      <div>
-        <h1 className="text-xl sm:text-3xl font-black text-text-primary">
-          Welcome back, <span className="gradient-text">{name}</span> 👋
+      {/* Welcome */}
+      <div className="animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          Welcome back, <span className="text-[#2BEE34]">{name}</span>
         </h1>
-        <p className="text-text-muted text-sm mt-1">
-          {totalScans === 0 ? 'Run your first scan below.' : `You've run ${totalScans.toLocaleString()} scan${totalScans !== 1 ? 's' : ''} so far.`}
+        <p className="text-[#6B6B6B] text-sm mt-1">
+          {totalScans === 0
+            ? 'Run your first attestation below — completely free.'
+            : `You've run ${totalScans.toLocaleString()} attestation${totalScans !== 1 ? 's' : ''} so far.`}
         </p>
       </div>
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-        {[
-          { label: 'Total Scans',  value: loading ? '—' : totalScans.toLocaleString(), icon: Brain,         color: 'bg-primary/10 text-primary'  },
-          { label: 'AI Rate',      value: loading ? '—' : `${aiPct}%`,                 icon: AlertTriangle, color: 'bg-rose/10 text-rose'        },
-          { label: 'Human Rate',   value: loading ? '—' : `${humanPct}%`,              icon: CheckCircle,   color: 'bg-emerald/10 text-emerald'  },
-          { label: 'Avg Accuracy', value: loading ? '—' : `${avgConf}%`,               icon: BarChart3,     color: 'bg-amber/10 text-amber'      },
-        ].map((s, i) => (
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-slide-up">
+        {STAT_CARDS.map(s => (
           <div key={s.label}
-            className="bg-surface border border-border/50 rounded-2xl p-4 sm:p-5 flex items-center gap-3 hover:border-primary/30 transition-all">
-            <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}>
-              <s.icon className="w-5 h-5" />
+            className="flex items-center gap-3 p-4 sm:p-5 rounded-xl
+                       bg-[#141414] border border-[#333333]
+                       hover:border-[#454545] transition-all duration-200"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
+              <s.icon className="w-5 h-5 text-[#2BEE34]" strokeWidth={1.8} />
             </div>
             <div className="min-w-0">
-              <p className="text-base sm:text-2xl font-black text-text-primary tabular-nums leading-tight">{s.value}</p>
-              <p className="text-[11px] sm:text-xs text-text-muted truncate mt-0.5">{s.label}</p>
+              <p className="text-xl sm:text-2xl font-black text-white tabular-nums leading-none">{s.value}</p>
+              <p className="text-[11px] text-[#6B6B6B] mt-1 truncate">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Tools grid ── */}
-      <div>
-        {/* New user onboarding card */}
-        {totalScans === 0 && !loading && (
-          <div
-            className="mb-4 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border border-primary/20 rounded-2xl p-5">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-text-primary mb-1">Welcome to Aiscern! 🎉</h3>
-                <p className="text-xs sm:text-sm text-text-muted mb-3 leading-relaxed">
-                  You're all set. Pick a detection tool below to run your first scan — completely free, no limits.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Link href={defaultToolHref}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all">
-                    <FileText className="w-3.5 h-3.5" /> Start Scanning
-                  </Link>
-                  <Link href="/detect/image"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
-                    <ImageIcon className="w-3.5 h-3.5" /> Try Image Detection
-                  </Link>
-                  <Link href="/batch"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-muted hover:border-primary/40 hover:text-text-primary transition-all">
-                    <Layers className="w-3.5 h-3.5" /> Try Batch Scan
-                  </Link>
-                </div>
+      {/* Onboarding (new users) */}
+      {totalScans === 0 && !loading && (
+        <div className="p-5 rounded-xl bg-[#141414] border border-[#2BEE34]/20 animate-slide-up">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-[#2BEE34]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-white mb-1">You're all set 🎉</h3>
+              <p className="text-sm text-[#A3A3A3] mb-4 leading-relaxed">
+                Pick an attestation tool to run your first examination. Free — no limits on basic examinations.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/detect/text"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
+                             bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-xs font-bold transition-colors">
+                  <FileType2 className="w-3.5 h-3.5" /> Try Text Attestation
+                </Link>
+                <Link href="/detect/image"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg
+                             border border-[#2A2A2A] text-xs font-semibold text-[#A3A3A3]
+                             hover:text-white hover:border-[#3A3A3A] transition-all">
+                  <ImageIcon className="w-3.5 h-3.5" /> Try Image Attestation
+                </Link>
               </div>
             </div>
-          </div>
-        )}
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Detection Tools</h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-          {TOOLS.map((t, i) => (
-            <div key={t.href}>
-              <Link href={t.href}
-                className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-gradient-to-br ${t.color} border border-border/50 hover:border-primary/30 transition-all text-center group`}>
-                <div className={`w-10 h-10 rounded-xl bg-background/80 flex items-center justify-center ${t.iconColor} group-hover:scale-110 transition-transform`}>
-                  <t.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-text-primary">{t.label}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight">{t.desc}</p>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── AI/Human balance bar ── */}
-      {totalScans > 0 && (
-        <div
-          className="bg-surface border border-border/50 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-text-primary">Detection Balance</h2>
-            <span className="text-xs text-text-muted">{totalScans} total scans</span>
-          </div>
-          <div className="flex rounded-full overflow-hidden h-3 gap-0.5">
-            <div className="bg-rose transition-all duration-700" style={{ width: `${aiPct}%` }} />
-            <div className="bg-amber/60 transition-all duration-700" style={{ width: `${100 - aiPct - humanPct}%` }} />
-            <div className="bg-emerald transition-all duration-700" style={{ width: `${humanPct}%` }} />
-          </div>
-          <div className="flex items-center gap-4 mt-2.5 text-xs text-text-muted">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose" />{aiPct}% AI</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber/60" />{100-aiPct-humanPct}% Uncertain</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald" />{humanPct}% Human</span>
           </div>
         </div>
       )}
 
-      {/* ── Recent scans ── */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">Recent Scans</h2>
+      {/* Tool cards */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B] mb-3">Attestation Tools</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {TOOLS.map(t => (
+            <Link key={t.href} href={t.href}
+              className="flex flex-col items-center gap-2.5 p-4 rounded-xl
+                         bg-[#141414] border border-[#333333]
+                         hover:border-[#2BEE34]/30 hover:-translate-y-px
+                         transition-all duration-200 text-center group"
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center
+                              bg-[#1A1A1A] border border-[#2A2A2A]
+                              group-hover:border-[#2BEE34]/40 transition-colors">
+                <t.icon className="w-5 h-5 text-[#A3A3A3] group-hover:text-[#2BEE34] transition-colors" strokeWidth={1.8} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#E5E5E5] group-hover:text-white transition-colors">{t.label}</p>
+                <p className="text-[10px] text-[#6B6B6B] mt-0.5 leading-tight">{t.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Verdict balance bar */}
+      {totalScans > 0 && (
+        <div className="p-5 rounded-xl bg-[#141414] border border-[#333333]">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Attestation Balance</h2>
+            <span className="text-xs text-[#6B6B6B]">{totalScans.toLocaleString()} scans</span>
+          </div>
+          <div className="flex rounded-full overflow-hidden h-2 gap-px">
+            <div className="bg-[#FF4444] h-full transition-all duration-700" style={{ width: `${aiPct}%` }} />
+            <div className="bg-[#FFB800] h-full transition-all duration-700" style={{ width: `${uncertPct}%` }} />
+            <div className="bg-[#2BEE34] h-full transition-all duration-700" style={{ width: `${humanPct}%` }} />
+          </div>
+          <div className="flex items-center gap-5 mt-3 text-xs text-[#6B6B6B]">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#FF4444]" />{aiPct}% AI</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#FFB800]" />{uncertPct}% Uncertain</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2BEE34]" />{humanPct}% Human</span>
+          </div>
+        </div>
+      )}
+
+      {/* Recent scans */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B6B6B]">Recent Scans</p>
           <div className="flex items-center gap-2">
             <button onClick={loadDashboard} title="Refresh"
-              className="text-text-disabled hover:text-text-muted transition-colors p-1 rounded-lg hover:bg-surface-hover">
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg
+                         text-[#6B6B6B] hover:text-[#A3A3A3] hover:bg-[#1A1A1A] transition-all">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
             {scans.length > 0 && (
-              <Link href="/history" className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+              <Link href="/history"
+                className="text-xs text-[#2BEE34] hover:text-[#4FFF58] font-medium flex items-center gap-1 transition-colors">
                 View all <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -283,44 +269,52 @@ export default function DashboardPage() {
         {loading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
+              <div key={i} className="h-[60px] rounded-xl bg-[#1A1A1A] animate-pulse" />
             ))}
           </div>
         ) : fetchError ? (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center">
-            <AlertTriangle className="w-8 h-8 text-amber mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">Couldn't load scan history</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Check your connection and try again</p>
+          <div className="p-8 rounded-xl bg-[#141414] border border-[#333333] text-center">
+            <TriangleAlert className="w-8 h-8 text-[#FFB800] mx-auto mb-3" />
+            <p className="text-[#A3A3A3] text-sm font-medium mb-1">Couldn't load attestation history</p>
+            <p className="text-[#6B6B6B] text-xs mb-4">Check your connection and try again</p>
             <button onClick={loadDashboard}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-hover border border-border text-sm font-semibold text-text-secondary hover:text-text-primary transition-all">
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A1A1A]
+                         border border-[#2A2A2A] text-sm font-semibold text-[#A3A3A3]
+                         hover:text-white transition-all">
               <RefreshCw className="w-4 h-4" /> Retry
             </button>
           </div>
         ) : scans.length === 0 ? (
-          <div className="bg-surface border border-border rounded-2xl p-10 text-center">
-            <Shield className="w-10 h-10 text-text-disabled mx-auto mb-3" />
-            <p className="text-text-muted text-sm font-medium">No scans yet</p>
-            <p className="text-text-disabled text-xs mt-1 mb-4">Pick a tool above to run your first detection</p>
+          <div className="p-10 rounded-xl bg-[#141414] border border-[#333333] text-center">
+            <Shield className="w-10 h-10 text-[#3A3A3A] mx-auto mb-3" />
+            <p className="text-[#A3A3A3] text-sm font-medium mb-1">No scans yet</p>
+            <p className="text-[#6B6B6B] text-xs mb-5">Pick a tool above to run your first attestation</p>
             <Link href="/detect/text"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all">
-              <FileText className="w-4 h-4" /> Try Text Detector
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-[#2BEE34] hover:bg-[#1A8F1F] text-[#0A0A0A] text-sm font-semibold transition-colors">
+              <FileType2 className="w-4 h-4" /> Try Text Attestation
             </Link>
           </div>
         ) : (
           <div className="space-y-2">
-            {scans.map((scan, i) => (
+            {scans.map(scan => (
               <div key={scan.id}
-                className="flex items-center gap-3 bg-surface border border-border/50 rounded-xl px-4 py-3 hover:border-primary/30 transition-all">
-                <div className="text-text-muted">{mediaIcon(scan.media_type)}</div>
+                className="flex items-center gap-3 px-4 py-3 rounded-xl
+                           bg-[#141414] border border-[#333333]
+                           hover:border-[#454545] transition-all duration-200"
+              >
+                <MediaIcon type={scan.media_type} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary truncate">
+                  <p className="text-sm text-[#E5E5E5] truncate">
                     {scan.content_preview?.slice(0, 60) || `${scan.media_type} scan`}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <VerdictIcon verdict={scan.verdict} />
-                    <span className="text-[11px] text-text-muted">{timeAgo(scan.created_at)}</span>
-                    <span className="text-[11px] text-text-disabled">·</span>
-                    <span className="text-[11px] text-text-muted">{Math.round((scan.confidence_score ?? 0) * 100)}% conf</span>
+                    <span className="text-[11px] text-[#6B6B6B]">{timeAgo(scan.created_at)}</span>
+                    <span className="text-[11px] text-[#3A3A3A]">·</span>
+                    <span className="text-[11px] text-[#6B6B6B]">
+                      {normalizeConf(scan.confidence_score)}% conf
+                    </span>
                   </div>
                 </div>
                 <VerdictBadge verdict={scan.verdict} />

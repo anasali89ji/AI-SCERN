@@ -12,8 +12,6 @@
  */
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-
 interface MobileResultSheetProps {
   isOpen:   boolean
   onClose:  () => void
@@ -33,42 +31,25 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
   }, [isOpen])
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <>
           {/* Backdrop — mobile only */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden fixed inset-0 bg-black/70 z-[70]"
-            onClick={onClose}
-          />
+          <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={onClose} />
 
           {/* Sheet */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="md:hidden fixed inset-x-0 bottom-0 z-[75] bg-[#0a0a12] rounded-t-3xl border-t border-border overflow-hidden"
-            style={{
-              maxHeight: '90dvh',
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            }}
-          >
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#0f0f17] border-t border-white/[0.08] rounded-t-2xl lg:hidden">
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-border/40">
-              <h3 className="font-bold text-text-primary">{title}</h3>
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.06]">
+              <h3 className="font-bold text-slate-100">{title}</h3>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-surface-active text-text-muted transition-colors"
+                className="p-2 rounded-xl hover:bg-[#141420] text-slate-500 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -79,9 +60,9 @@ export function MobileResultSheet({ isOpen, onClose, children, title }: MobileRe
             <div className="overflow-y-auto p-4" style={{ maxHeight: 'calc(90dvh - 80px)' }}>
               {children}
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   )
 }

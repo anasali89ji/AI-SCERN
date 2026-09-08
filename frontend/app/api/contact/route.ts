@@ -54,8 +54,7 @@ export async function POST(req: NextRequest) {
     const routeKey = routingHint && ROUTING[routingHint] ? routingHint : 'general'
     const accent   = SUBJECT_COLOR[routeKey] ?? '#2563eb'
 
-    console.log('[Contact]', {
-      name: safeName, email: safeEmail, subject: safeSubject,
+    void({ name: safeName, email: safeEmail, subject: safeSubject,
       routed_to: route.to, ts: new Date().toISOString(),
     })
 

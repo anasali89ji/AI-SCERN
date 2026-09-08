@@ -2,6 +2,7 @@
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
+  poweredByHeader: false,
 
   // sharp must be external — it uses native C++ bindings that cannot be bundled
   // by webpack. Without this, image detection crashes on Vercel with:
@@ -76,7 +77,10 @@ const nextConfig = {
     ].join(', ') }] },
     { source: '/trust/:file*',  headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }, { key: 'Vary', value: 'Accept' }] },
     { source: '/hero/:file*',   headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
-    { source: '/fonts/:file*',  headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }, { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+    { source: '/fonts/:file*', headers: [
+        { key: 'Access-Control-Allow-Origin', value: 'https://aiscern.com' },
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ]},
     { source: '/:path*', headers: [
       { key: 'X-Content-Type-Options',     value: 'nosniff'                         },
       { key: 'X-XSS-Protection',           value: '1; mode=block'                   },

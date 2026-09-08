@@ -52,7 +52,6 @@ const XPAY_MERCHANT = process.env.XPAY_MERCHANT_ID || ''
 export async function createXPayCheckout(order: XPayOrder): Promise<XPayCheckoutResponse> {
   if (!XPAY_API_KEY || !XPAY_SECRET || !XPAY_MERCHANT) {
     // Dev mode: return a simulated checkout URL
-    console.warn('[XPay] Missing credentials — returning mock checkout URL for development')
     return {
       success:    true,
       paymentUrl: `/api/billing/mock-checkout?orderId=${order.orderId}&amount=${order.amount}`,

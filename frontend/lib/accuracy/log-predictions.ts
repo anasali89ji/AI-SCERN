@@ -75,9 +75,7 @@ export async function logModelPredictions(
 
     if (error) {
       // Non-fatal — log to console only; never throw
-      console.warn('[accuracy] logModelPredictions failed:', error.message)
     }
   } catch (err) {
-    console.warn('[accuracy] logModelPredictions threw:', err)
   }
 }

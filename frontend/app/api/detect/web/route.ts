@@ -303,7 +303,6 @@ export async function POST(req: NextRequest) {
       try {
         imageAnalysisResults = await analyzePageImages(pageImageUrls)
       } catch (imgErr) {
-        console.warn('[detect/web] Image analysis failed (non-fatal):', imgErr)
       }
     }
 

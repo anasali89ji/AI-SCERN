@@ -1,8 +1,7 @@
 'use client'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, Search, Filter, Download, Trash2, Eye, Image as ImgIcon, Video, Mic, FileText, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
+import { Clock, Search, Filter, Download, Trash, Eye, Image as ImgIcon, Video, Mic, FileType2, Globe, RefreshCw, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
@@ -12,7 +11,7 @@ import { UsageAnalytics } from '@/components/history/UsageAnalytics'
 
 // ── FIX B.5: Swipe-to-delete row wrapper (mobile only) ──────────────────────
 // On touch devices, swipe left > 72px reveals a full-height delete button.
-// On desktop, the existing hover-reveal Trash2 button is used instead.
+// On desktop, the existing hover-reveal Trash button is used instead.
 function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; children: React.ReactNode }) {
   const startX  = useRef(0)
   const offsetX = useRef(0)
@@ -48,9 +47,9 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
       {/* Delete reveal — shown when swiped */}
       {swiped && (
         <div className="absolute right-0 top-0 h-full flex">
-          <button onClick={reset} className="px-3 bg-surface-active text-text-muted text-xs">Cancel</button>
-          <button onClick={onDelete} className="px-4 bg-rose text-white font-bold flex items-center gap-1.5 text-sm">
-            <Trash2 className="w-4 h-4" /> Delete
+          <button onClick={reset} className="px-3 bg-[#141414] text-[#6B6B6B] text-xs">Cancel</button>
+          <button onClick={onDelete} className="px-4 bg-[#FF4444] text-white font-bold flex items-center gap-1.5 text-sm">
+            <Trash className="w-4 h-4" /> Delete
           </button>
         </div>
       )}
@@ -62,13 +61,13 @@ function SwipeToDeleteRow({ onDelete, children }: { onDelete: () => void; childr
   )
 }
 
-const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileText, url: Globe }
+const mediaIcons = { image: ImgIcon, video: Video, audio: Mic, text: FileType2, url: Globe }
 const mediaColors = {
-  image: 'text-primary bg-primary/10',
-  video: 'text-secondary bg-secondary/10',
-  audio: 'text-cyan bg-cyan/10',
-  text:  'text-amber bg-amber/10',
-  url:   'text-emerald bg-emerald/10',
+  image: 'text-[#2BEE34] bg-[#2BEE34]/10',
+  video: 'text-[#A3A3A3] bg-[#1A1A1A]',
+  audio: 'text-[#2BEE34] bg-[#2BEE34]/10',
+  text:  'text-[#FFB800] bg-[#FFB800]/10',
+  url:   'text-[#2BEE34] bg-[#2BEE34]/10',
 }
 
 function normalizeConf(c: number | null) {
@@ -80,65 +79,62 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
   const conf = normalizeConf(scan.confidence_score)
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.97, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 8 }}
-        transition={{ type: 'tween', duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        className="card w-full max-w-md" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+      <div className="card w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-text-primary">Scan Details</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors">
+          <h3 className="font-bold text-white">Attestation Details</h3>
+          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-text-muted">Type</span>
-            <span className="text-text-primary font-medium capitalize">{scan.media_type}</span>
+            <span className="text-[#6B6B6B]">Type</span>
+            <span className="text-white font-medium capitalize">{scan.media_type}</span>
           </div>
           {scan.file_name && (
             <div className="flex justify-between gap-4">
-              <span className="text-text-muted shrink-0">File</span>
-              <span className="text-text-primary font-medium text-right truncate">{scan.file_name}</span>
+              <span className="text-[#6B6B6B] shrink-0">File</span>
+              <span className="text-white font-medium text-right truncate">{scan.file_name}</span>
             </div>
           )}
           {scan.file_size && (
             <div className="flex justify-between">
-              <span className="text-text-muted">Size</span>
-              <span className="text-text-primary">{formatFileSize(scan.file_size)}</span>
+              <span className="text-[#6B6B6B]">Size</span>
+              <span className="text-white">{formatFileSize(scan.file_size)}</span>
             </div>
           )}
           {scan.content_preview && (
-            <div>
-              <span className="text-text-muted block mb-1">Content preview</span>
-              <p className="text-text-secondary text-xs leading-relaxed p-2 bg-surface-active rounded-lg line-clamp-3">
+            <div className="space-y-1">
+              <span className="text-[#6B6B6B] block mb-1">Content preview</span>
+              <p className="text-[#A3A3A3] text-xs leading-relaxed p-2 bg-[#141414] rounded-lg line-clamp-3">
                 {scan.content_preview}
               </p>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-text-muted">Verdict</span>
+            <span className="text-[#6B6B6B]">Verdict</span>
             <span className={scan.verdict === 'AI' ? 'badge-ai' : scan.verdict === 'HUMAN' ? 'badge-human' : 'badge-uncertain'}>
               {scan.verdict}
             </span>
           </div>
           {conf != null && (
-            <div>
+            <div className="space-y-1">
               <div className="flex justify-between mb-1">
-                <span className="text-text-muted">Confidence</span>
-                <span className="font-bold text-text-primary">{conf}%</span>
+                <span className="text-[#6B6B6B]">Confidence</span>
+                <span className="font-bold text-white">{conf}%</span>
               </div>
-              <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
+              <div className="h-1.5 bg-[#1A1A1A] rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-[#2BEE34] transition-all" style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
               </div>
             </div>
           )}
 
           <div className="flex justify-between">
-            <span className="text-text-muted">Analyzed</span>
-            <span className="text-text-secondary">{new Date(scan.created_at).toLocaleString()}</span>
+            <span className="text-[#6B6B6B]">Analyzed</span>
+            <span className="text-[#A3A3A3]">{new Date(scan.created_at).toLocaleString()}</span>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
@@ -241,15 +237,15 @@ export default function HistoryPage() {
       <div className="p-2 sm:p-4 lg:p-8 2xl:p-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary mb-1 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="w-6 h-6 text-primary" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6 text-[#2BEE34]" />
               </div>
-              Scan History
+              Attestation History
             </h1>
-            <p className="text-text-muted ml-14 text-sm">
-              {scans.length > 0 ? `${scans.length} total scans` : 'All your previous detection results'}
+            <p className="text-[#6B6B6B] ml-14 text-sm">
+              {scans.length > 0 ? `${scans.length} total examinations` : 'All your previous attestation results'}
             </p>
           </div>
           <button onClick={() => loadScans(true)} disabled={refreshing}
@@ -277,12 +273,13 @@ export default function HistoryPage() {
         <div className="card mb-5 space-y-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
             <input type="text" placeholder="Search by filename or content…" value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="input-field pl-9 py-2" />
+              className="input pl-9 py-2" />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary">
+              <button onClick={() => setSearch('')} aria-label="Clear search"
+                className="absolute right-0.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-[#6B6B6B] hover:text-white">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -291,22 +288,22 @@ export default function HistoryPage() {
           <div className="flex flex-wrap gap-2 items-center">
             {/* Media type filter */}
             <div className="flex items-center gap-1 flex-wrap">
-              <Filter className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <Filter className="w-3.5 h-3.5 text-[#6B6B6B] shrink-0" />
               {['all', 'image', 'video', 'audio', 'text'].map(f => (
                 <button key={f} onClick={() => { setMediaFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${mediaFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#333333] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
             </div>
 
-            <div className="h-4 w-px bg-border hidden sm:block mx-1" />
+            <div className="h-4 w-px bg-[#1A1A1A] hidden sm:block mx-1" />
 
             {/* Verdict filter */}
             <div className="flex items-center gap-1 flex-wrap">
               {['all', 'AI', 'HUMAN', 'UNCERTAIN'].map(f => (
                 <button key={f} onClick={() => { setVerdictFilter(f); setPage(1) }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-primary text-white' : 'bg-surface border border-border/55 text-text-muted hover:border-primary/50'}`}>
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${verdictFilter === f ? 'bg-[#2BEE34] text-white' : 'bg-surface border border-[#333333] text-[#6B6B6B] hover:border-[#2BEE34]/50'}`}>
                   {f}
                 </button>
               ))}
@@ -315,7 +312,7 @@ export default function HistoryPage() {
             {/* Sort */}
             <div className="ml-auto">
               <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-xs bg-surface border border-border/55 rounded-lg px-2.5 py-1.5 text-text-muted focus:outline-none focus:border-primary/50">
+                className="text-[16px] sm:text-xs bg-[#141414] border border-[#333333] rounded-lg px-2.5 py-1.5 text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30">
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="confidence">By confidence</option>
@@ -326,11 +323,11 @@ export default function HistoryPage() {
 
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-[#6B6B6B]">
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
             {(search || mediaFilter !== 'all' || verdictFilter !== 'all') && (
               <button onClick={() => { setSearch(''); setMediaFilter('all'); setVerdictFilter('all') }}
-                className="ml-2 text-primary hover:underline text-xs">Clear filters</button>
+                className="ml-2 text-[#2BEE34] hover:underline text-xs">Clear filters</button>
             )}
           </p>
           <div className="flex gap-2">
@@ -340,8 +337,8 @@ export default function HistoryPage() {
               </button>
             )}
             {scans.length > 0 && (
-              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-text-muted hover:text-rose hover:border-rose/30">
-                <Trash2 className="w-3.5 h-3.5" /> Clear All
+              <button onClick={deleteAll} className="btn-ghost py-1.5 px-3 text-xs flex items-center gap-1.5 text-[#6B6B6B] hover:text-[#FF4444] hover:border-[#FF4444]/30">
+                <Trash className="w-3.5 h-3.5" /> Clear All
               </button>
             )}
           </div>
@@ -350,47 +347,42 @@ export default function HistoryPage() {
         {/* Content */}
         {loading ? (
           <div className="space-y-3">
-            {[...Array(6)].map((_, i) => <div key={i} className="card h-20 animate-pulse bg-surface-active" />)}
+            {[...Array(6)].map((_, i) => <div key={i} className="card h-20 animate-pulse bg-[#141414]" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="card flex flex-col items-center justify-center py-20 text-center">
-            <Clock className="w-12 h-12 text-text-muted mx-auto mb-4" />
-            <h3 className="font-semibold text-text-primary mb-2">No scans found</h3>
-            <p className="text-text-muted text-sm">
+            <Clock className="w-12 h-12 text-[#6B6B6B] mx-auto mb-4" />
+            <h3 className="font-semibold text-white mb-2">No scans found</h3>
+            <p className="text-[#6B6B6B] text-sm">
               {search || mediaFilter !== 'all' || verdictFilter !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Start detecting AI content to see your history here'}
+                : 'Start attesting AI content to see your history here'}
             </p>
           </div>
         ) : (
           <>
             <div className="space-y-2">
-              <AnimatePresence initial={false}>
+              
                 {paginated.map((scan, i) => {
-                  const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileText
-                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-text-muted bg-surface'
+                  const Icon = mediaIcons[scan.media_type as keyof typeof mediaIcons] || FileType2
+                  const color = mediaColors[scan.media_type as keyof typeof mediaColors] || 'text-[#6B6B6B] bg-[#141414]'
                   const conf = normalizeConf(scan.confidence_score)
                   return (
                     <SwipeToDeleteRow key={scan.id} onDelete={() => deleteScan(scan.id)}>
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                      transition={{ delay: Math.min(i * 0.02, 0.15), ease: 'easeOut' }}
-                      className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-primary/25 transition-all group cursor-pointer"
-                      onClick={() => setSelectedScan(scan)}>
+                    <div role="button" tabIndex={0} className="card flex items-center gap-2 sm:gap-4 py-3 sm:py-3.5 hover:border-[#2BEE34]/25 transition-all group cursor-pointer" onClick={() => setSelectedScan(scan)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedScan(scan) } }}>
 
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
                         <Icon className="w-5 h-5" />
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
+                        <p className="text-sm font-medium text-white truncate">
                           {scan.file_name || scan.source_url || (scan.content_preview?.substring(0, 60)) || 'Unknown content'}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs text-text-muted uppercase">{scan.media_type}</span>
-                          {scan.file_size && <span className="text-xs text-text-muted">{formatFileSize(scan.file_size)}</span>}
-                          <span className="text-xs text-text-disabled">{formatRelativeTime(scan.created_at)}</span>
+                          <span className="text-xs text-[#6B6B6B] uppercase">{scan.media_type}</span>
+                          {scan.file_size && <span className="text-xs text-[#6B6B6B]">{formatFileSize(scan.file_size)}</span>}
+                          <span className="text-xs text-[#6B6B6B]">{formatRelativeTime(scan.created_at)}</span>
                         </div>
                       </div>
 
@@ -402,29 +394,29 @@ export default function HistoryPage() {
                         )}
                         {conf != null && (
                           <div className="text-right hidden sm:block w-12">
-                            <p className="text-sm font-bold text-text-primary tabular-nums">{conf}%</p>
-                            <div className="h-1 bg-border rounded-full overflow-hidden mt-0.5">
-                              <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                            <p className="text-sm font-bold text-white tabular-nums">{conf}%</p>
+                            <div className="h-1 bg-[#1A1A1A] rounded-full overflow-hidden mt-0.5">
+                              <div className="h-full bg-[#2BEE34] rounded-full"
                                 style={{ width: `${Math.max(0, Math.min(100, conf ?? 0))}%` }} />
                             </div>
                           </div>
                         )}
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                           <button onClick={() => setSelectedScan(scan)}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors">
+                            className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-white hover:bg-[#1A8F1F]/10 transition-colors">
                             <Eye className="w-4 h-4" />
                           </button>
                           <button onClick={() => deleteScan(scan.id)} disabled={deleting === scan.id}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-rose hover:bg-rose/10 transition-colors disabled:opacity-50">
-                            <Trash2 className="w-4 h-4" />
+                            className="p-1.5 rounded-lg text-[#6B6B6B] hover:text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors disabled:opacity-50">
+                            <Trash className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                     </SwipeToDeleteRow>
                   )
                 })}
-              </AnimatePresence>
+              
             </div>
 
             {hasMore && (

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Crown, X, CheckCircle } from 'lucide-react'
+import { Crown, X, CircleCheck } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 interface Notification {
@@ -21,41 +21,26 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
   const expires = notif.data?.expires_at
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/85 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
-    >
-      <motion.div
-        initial={{ scale: 0.85, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 30 }}
-        transition={{ type: 'tween', duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-        className="relative w-full max-w-md bg-gradient-to-b from-[#110d1f] to-[#07070d] border border-[#2563eb40] rounded-3xl p-8 shadow-2xl shadow-primary/40 overflow-hidden"
-      >
+    <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/50 p-4">
+      <div className="relative w-full max-w-sm bg-[#0f0f17] border border-white/[0.08] rounded-2xl p-8 overflow-hidden">
         {/* Glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-secondary/5 pointer-events-none" />
 
         {/* Confetti dots */}
         {[...Array(12)].map((_,i) => (
-          <motion.div key={i}
-            className="absolute w-1.5 h-1.5 rounded-full"
-            style={{ background: ['#60a5fa','#60a5fa','#f59e0b','#34d399'][i%4], left:`${10+i*7}%`, top:`${5+i*3}%` }}
-            animate={{ y:[0,-20,0], opacity:[0,1,0] }}
-            transition={{ duration:1.5+i*0.1, repeat:Infinity, delay:i*0.12 }}
-          />
+          <div key={i} className="absolute w-1.5 h-1.5 rounded-full bg-primary/50"
+            style={{ top: `${(i * 31 + 8) % 95}%`, left: `${(i * 27 + 4) % 95}%` }} />
         ))}
 
-        <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/5 transition-colors">
+        <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-full text-[#4a5568] hover:text-white hover:bg-white/[0.05] transition-colors">
           <X className="w-4 h-4" />
         </button>
 
         {/* Badge */}
         <div className="flex justify-center mb-6">
-          <motion.div
-            animate={{ scale:[1,1.08,1], boxShadow:['0 0 0px #2563eb60','0 0 30px #2563eb60','0 0 0px #2563eb60'] }}
-            transition={{ duration:2, repeat:Infinity }}
-            className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#2563eb] to-[#1d4ed8]"
-          >
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <Crown className="w-10 h-10 text-white" />
-          </motion.div>
+          </div>
         </div>
 
         <h2 className="text-2xl font-black text-white text-center mb-2">{notif.title}</h2>
@@ -65,7 +50,7 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
         <div className="grid grid-cols-2 gap-2 mb-6">
           {perks.map(perk => (
             <div key={perk} className="flex items-center gap-2 px-3 py-2 bg-[#ffffff06] border border-[#ffffff0c] rounded-xl">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              <CircleCheck className="w-3.5 h-3.5 text-[#2BEE34] flex-shrink-0" />
               <span className="text-xs text-[#94a3b8]">{perk}</span>
             </div>
           ))}
@@ -81,20 +66,20 @@ function UpgradeModal({ notif, onDismiss }: { notif: Notification; onDismiss: ()
           <a
             href="/pricing"
             onClick={onDismiss}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm text-white text-center transition-all hover:scale-[1.02] active:scale-[0.98] block"
+            className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center transition-all block"
             style={{ background:'linear-gradient(135deg, #2563eb, #2563eb)' }}
           >
             View Pricing &amp; Upgrade →
           </a>
           <button
             onClick={onDismiss}
-            className="w-full py-2.5 rounded-2xl text-sm text-[#64748b] hover:text-[#94a3b8] transition-colors font-medium"
+            className="w-full py-2.5 rounded-xl text-sm text-[#64748b] hover:text-[#94a3b8] transition-colors font-medium"
           >
             Not now
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
 

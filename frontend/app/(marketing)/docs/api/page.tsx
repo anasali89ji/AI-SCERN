@@ -7,7 +7,6 @@ export const metadata: Metadata = {
 
 import Link from 'next/link'
 import { Shield } from 'lucide-react'
-import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 const CODE = {
   curl: `curl -X POST https://aiscern.com/api/v1/detect/text \\
@@ -38,37 +37,29 @@ const { verdict, confidence } = await response.json()`,
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <div className="border-b border-border px-6 py-4">
-        <Link href="/" className="text-xl font-black gradient-text">Aiscern</Link>
+    <div className="min-h-screen bg-[#141414] text-white">
+      <div className="border-b border-[#333333] px-6 py-4">
+        <Link href="/" className="text-xl font-black text-[#2BEE34]">Aiscern</Link>
       </div>
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
-        <Breadcrumbs />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-4xl font-black mb-3">API Documentation</h1>
-          <p className="text-text-muted">Programmatic access to Aiscern detection. Free for all registered users.</p>
-          <p className="text-text-muted text-sm mt-3">
-            The API exposes the same detection engine that powers the dashboard — ensemble
-            models for text, image, audio, and video — as simple REST endpoints you can call
-            from any language. Send a sample, get back a score and a confidence breakdown per
-            layer. Below are the four detection endpoints, the auth header they all share, and
-            the response shape you can expect back.
-          </p>
+          <p className="text-[#6B6B6B]">Programmatic access to Aiscern detection. Free for all registered users.</p>
         </div>
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">Authentication</h2>
-          <p className="text-text-muted text-sm">Include your API key in every request using the <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">X-API-Key</code> header.</p>
-          <p className="text-text-muted text-sm">Generate your API key in <Link href="/settings" className="text-primary hover:underline">Settings → API Access</Link> — free for all users.</p>
+          <p className="text-[#6B6B6B] text-sm">Include your API key in every request using the <code className="bg-[#141414] px-1.5 py-0.5 rounded text-[#2BEE34] text-xs">X-API-Key</code> header.</p>
+          <p className="text-[#6B6B6B] text-sm">Generate your API key in <Link href="/settings" className="text-[#2BEE34] hover:underline">Settings → API Access</Link> — free for all users.</p>
         </section>
 
         <section className="card p-6 space-y-4">
           <h2 className="text-xl font-bold">POST /api/v1/detect/text</h2>
-          <p className="text-text-muted text-sm">Analyze a text sample for AI generation.</p>
+          <p className="text-[#6B6B6B] text-sm">Analyze a text sample for AI generation.</p>
           <h3 className="font-semibold text-sm">Request Body</h3>
-          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`{ "text": "string (50–10,000 characters)" }`}</pre>
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{ "text": "string (50–10,000 characters)" }`}</pre>
           <h3 className="font-semibold text-sm">Response</h3>
-          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{
   "verdict": "AI" | "HUMAN" | "UNCERTAIN",
   "confidence": 0.94,
   "credits_remaining": 498,
@@ -116,8 +107,8 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">Code Examples</h2>
           {Object.entries(CODE).map(([lang, code]) => (
             <div key={lang}>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2">{lang}</h3>
-              <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-text-secondary">{code}</pre>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#6B6B6B] mb-2">{lang}</h3>
+              <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#A3A3A3]">{code}</pre>
             </div>
           ))}
         </section>
@@ -126,15 +117,15 @@ export default function ApiDocsPage() {
           <h2 className="text-xl font-bold">Rate Limits</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-border">
-                {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-text-muted text-xs">{h}</th>)}
+              <thead><tr className="border-b border-[#333333]">
+                {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-[#6B6B6B] text-xs">{h}</th>)}
               </tr></thead>
               <tbody>
                 {[['Free', 'Unlimited', '60 req/min']].map(([plan, credits, limit]) => (
-                  <tr key={plan} className="border-b border-border/50">
-                    <td className="py-2 px-3 text-text-primary font-semibold">{plan}</td>
-                    <td className="py-2 px-3 text-text-secondary">{credits}</td>
-                    <td className="py-2 px-3 text-text-secondary">{limit}</td>
+                  <tr key={plan} className="border-b border-[#333333]">
+                    <td className="py-2 px-3 text-white font-semibold">{plan}</td>
+                    <td className="py-2 px-3 text-[#A3A3A3]">{credits}</td>
+                    <td className="py-2 px-3 text-[#A3A3A3]">{limit}</td>
                   </tr>
                 ))}
               </tbody>

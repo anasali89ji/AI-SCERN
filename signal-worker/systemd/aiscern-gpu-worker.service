@@ -1,0 +1,25 @@
+[Unit]
+Description=AISCERN GPU Signal Worker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/opt/aiscern/.env
+ExecStart=/usr/bin/docker run -d \
+    --name aiscern-gpu-worker \
+    --runtime=nvidia \
+    --gpus all \
+    -e NVIDIA_VISIBLE_DEVICES=all \
+    -e ALLOWED_ORIGINS=https://aiscern.com,https://www.aiscern.com \
+    -e INTERNAL_API_SECRET=${INTERNAL_API_SECRET} \
+    -p 8080:8080 \
+    --restart unless-stopped \
+    -v aiscern-models:/tmp/aiscern-models \
+    registry.digitalocean.com/aiscern/gpu-worker:latest
+ExecStop=/usr/bin/docker stop aiscern-gpu-worker
+ExecStopPost=/usr/bin/docker rm aiscern-gpu-worker
+
+[Install]
+WantedBy=multi-user.target

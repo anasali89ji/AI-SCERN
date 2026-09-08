@@ -33,6 +33,5 @@ export function fireScanCompleted(payload: ScanEventPayload): void {
     })
     .catch((err: unknown) => {
       // Non-fatal — Inngest unavailable should never break detection
-      console.warn('[inngest] fireScanCompleted failed:', err instanceof Error ? err.message : err)
     })
 }

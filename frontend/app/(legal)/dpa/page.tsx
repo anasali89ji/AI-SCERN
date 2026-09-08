@@ -14,14 +14,14 @@ const VERSION = '1.0'
 
 export default function DpaPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border bg-surface sticky top-0 z-10">
+    <div className="min-h-screen bg-[#08080d] flex flex-col">
+      <header className="border-b border-[#333333] bg-[#141414] sticky top-0 z-10">
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-6 2xl:px-8 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Aiscern" className="w-8 h-auto object-contain" />
-            <span className="font-black gradient-text">Aiscern</span>
+            <span className="font-black text-[#2BEE34]">Aiscern</span>
           </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -32,19 +32,19 @@ export default function DpaPage() {
       <main className="flex-1 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto w-full px-4 sm:px-6 2xl:px-8 py-12 2xl:py-16">
         <div className="mb-10">
           <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-4xl font-black text-text-primary mb-3">Data Processing Agreement</h1>
-              <p className="text-text-muted">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-4xl font-black text-white mb-3">Data Processing Agreement</h1>
+              <p className="text-[#6B6B6B]">Version {VERSION} · Last updated: {LAST_UPDATED}</p>
             </div>
             <a
               href="mailto:privacy@aiscern.com?subject=DPA Request&body=Please send me the signed DPA for Aiscern."
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#2BEE34] px-4 py-2 text-sm font-medium text-white hover:bg-[#1A8F1F] transition-colors"
             >
               <Download className="h-4 w-4" />
               Request Signed DPA
             </a>
           </div>
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+          <div className="mt-4 rounded-lg border border-[#FFB800]/30 bg-[#FFB800]/5 px-4 py-3 text-sm text-[#FFB800]">
             This DPA is for enterprise and educational customers who require GDPR or CCPA compliance documentation.
             For a countersigned PDF, email <a href="mailto:privacy@aiscern.com" className="underline underline-offset-2">privacy@aiscern.com</a>.
           </div>
@@ -58,8 +58,8 @@ export default function DpaPage() {
               and the customer organisation using Aiscern services (&quot;Data Controller&quot; or &quot;you&quot;).
             </p>
             <p>
-              This DPA supplements the <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and
-              governs the processing of personal data that the Data Controller submits to Aiscern for AI content detection.
+              This DPA supplements the <Link href="/terms" className="text-[#2BEE34] hover:underline">Terms of Service</Link> and
+              governs the processing of personal data that the Data Controller submits to Aiscern for AI content attestation.
             </p>
             <p>This DPA applies where the processing of personal data is subject to:</p>
             <ul>
@@ -82,20 +82,20 @@ export default function DpaPage() {
 
           <Section title="3. Processing Details">
             <SubSection title="3.1 Subject Matter">
-              <p>Aiscern processes personal data contained in content submitted for AI detection analysis (text documents, images, audio, video).</p>
+              <p>Aiscern processes personal data contained in content submitted for AI attestation analysis (text documents, images, audio, video).</p>
             </SubSection>
             <SubSection title="3.2 Duration">
               <p>Processing continues for the duration of the customer&apos;s subscription. Upon termination, personal data is deleted within 30 days unless retention is required by law.</p>
             </SubSection>
             <SubSection title="3.3 Nature and Purpose">
-              <p>Processing is performed solely to provide AI content detection results to the Data Controller. No secondary processing for Aiscern&apos;s own purposes occurs without explicit consent.</p>
+              <p>Processing is performed solely to provide AI content attestation results to the Data Controller. No secondary processing for Aiscern&apos;s own purposes occurs without explicit consent.</p>
             </SubSection>
             <SubSection title="3.4 Types of Personal Data">
               <ul>
                 <li>Written content (text documents, emails, essays) that may contain names, identifiers, or personal opinions</li>
                 <li>Images, audio, or video that may contain biometric data (faces, voices)</li>
                 <li>User account identifiers (email, username) for authentication</li>
-                <li>Usage metadata (timestamps, scan counts, IP addresses)</li>
+                <li>Usage metadata (timestamps, attestation counts, IP addresses)</li>
               </ul>
             </SubSection>
             <SubSection title="3.5 Categories of Data Subjects">
@@ -106,7 +106,7 @@ export default function DpaPage() {
           <Section title="4. Processor Obligations">
             <p>Aiscern agrees to:</p>
             <ul>
-              <li>Process Personal Data only on documented instructions from the Data Controller (i.e., providing detection results)</li>
+              <li>Process Personal Data only on documented instructions from the Data Controller (i.e., providing attestation results)</li>
               <li>Ensure all personnel authorised to process Personal Data are bound by confidentiality obligations</li>
               <li>Implement appropriate technical and organisational security measures (see Section 6)</li>
               <li>Not engage new Sub-processors without informing the Data Controller (see Section 5)</li>
@@ -119,37 +119,58 @@ export default function DpaPage() {
 
           <Section title="5. Sub-processors (Annex A)">
             <p>Aiscern engages the following sub-processors. By accepting this DPA you authorise their use:</p>
-            <div className="overflow-x-auto rounded-xl border border-border mt-3">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 text-xs text-text-muted uppercase tracking-wide">
-                    <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
-                    <th className="px-4 py-3 text-left font-medium">Purpose</th>
-                    <th className="px-4 py-3 text-left font-medium">Data Location</th>
-                    <th className="px-4 py-3 text-left font-medium">Transfer Mechanism</th>
-                  </tr>
-                </thead>
-                <tbody className="text-text-secondary">
-                  {[
-                    ['Clerk (clerk.com)',           'Authentication & identity',              'US (AWS)',         'SCC'],
-                    ['Supabase (supabase.com)',      'Database & API',                        'EU / US (AWS)',    'SCC'],
-                    ['Vercel (vercel.com)',          'Application hosting & serverless',       'US / Edge',        'SCC'],
-                    ['Cloudflare (cloudflare.com)', 'CDN, R2 storage, D1 database',          'Global edge',      'SCC'],
-                    ['Google Gemini API',            'AI inference (text/image detection)',   'US (Google)',      'SCC'],
-                    ['Hugging Face (huggingface.co)','AI model inference (text/audio)',       'US (AWS)',         'SCC'],
-                    ['Upstash (upstash.com)',        'Rate limiting (hashed IPs only)',       'US / EU',          'SCC'],
-                  ].map(([name, purpose, location, mechanism]) => (
-                    <tr key={name} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium text-text-primary">{name}</td>
-                      <td className="px-4 py-3">{purpose}</td>
-                      <td className="px-4 py-3">{location}</td>
-                      <td className="px-4 py-3">{mechanism}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-text-muted">
+            {(() => {
+              const SUBPROCESSORS: [string, string, string, string][] = [
+                ['Clerk (clerk.com)',            'Authentication & identity',             'US (AWS)',      'SCC'],
+                ['Supabase (supabase.com)',       'Database & API',                        'EU / US (AWS)', 'SCC'],
+                ['Vercel (vercel.com)',           'Application hosting & serverless',      'US / Edge',     'SCC'],
+                ['Cloudflare (cloudflare.com)',   'CDN, R2 storage, D1 database',          'Global edge',   'SCC'],
+                ['Google Gemini API',             'AI inference (text/image attestation)', 'US (Google)',   'SCC'],
+                ['Hugging Face (huggingface.co)', 'AI model inference (text/audio)',       'US (AWS)',      'SCC'],
+                ['Upstash (upstash.com)',         'Rate limiting (hashed IPs only)',       'US / EU',       'SCC'],
+              ]
+              return (
+                <>
+                  {/* Mobile card fallback */}
+                  <div className="sm:hidden space-y-3 mt-3">
+                    {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
+                      <div key={name} className="rounded-xl border border-[#333333] p-4 text-sm">
+                        <p className="font-medium text-white mb-2">{name}</p>
+                        <dl className="space-y-1 text-[#A3A3A3]">
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Purpose</dt><dd>{purpose}</dd></div>
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Location</dt><dd>{location}</dd></div>
+                          <div className="flex gap-2"><dt className="text-[#6B6B6B] shrink-0 w-28">Transfer</dt><dd>{mechanism}</dd></div>
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Table for sm+ */}
+                  <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#333333] mt-3">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-[#333333] bg-muted/40 text-xs text-[#6B6B6B] uppercase tracking-wide">
+                          <th className="px-4 py-3 text-left font-medium">Sub-processor</th>
+                          <th className="px-4 py-3 text-left font-medium">Purpose</th>
+                          <th className="px-4 py-3 text-left font-medium">Data Location</th>
+                          <th className="px-4 py-3 text-left font-medium">Transfer Mechanism</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-[#A3A3A3]">
+                        {SUBPROCESSORS.map(([name, purpose, location, mechanism]) => (
+                          <tr key={name} className="border-b border-[#333333] last:border-0 hover:bg-muted/20">
+                            <td className="px-4 py-3 font-medium text-white">{name}</td>
+                            <td className="px-4 py-3">{purpose}</td>
+                            <td className="px-4 py-3">{location}</td>
+                            <td className="px-4 py-3">{mechanism}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )
+            })()}
+            <p className="mt-3 text-xs text-[#6B6B6B]">
               SCC = Standard Contractual Clauses (EU Commission Decision 2021/914). Copies available on request.
               We will notify you 30 days before adding new sub-processors.
             </p>
@@ -184,7 +205,7 @@ export default function DpaPage() {
               <ul>
                 <li>Security incidents logged and triaged within 24 hours</li>
                 <li>Data breaches reported to affected customers within 72 hours (GDPR Article 33)</li>
-                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-primary hover:underline">security.txt</a></li>
+                <li>Vulnerability disclosure: <a href="/.well-known/security.txt" className="text-[#2BEE34] hover:underline">security.txt</a></li>
               </ul>
             </SubSection>
           </Section>
@@ -197,7 +218,7 @@ export default function DpaPage() {
             </p>
             <p>
               Copies of applicable SCCs are available upon written request to{' '}
-              <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>.
+              <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>.
             </p>
           </Section>
 
@@ -207,7 +228,7 @@ export default function DpaPage() {
               a written request. This includes access, rectification, erasure, portability, restriction, and objection requests.
             </p>
             <p>
-              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a>
+              Submit requests to: <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a>
             </p>
           </Section>
 
@@ -236,7 +257,7 @@ export default function DpaPage() {
             <p>
               <strong>Aiscern, a sole proprietorship operated by Anas Ali</strong><br />
               Mandi Bahauddin, Punjab, Pakistan<br />
-              Email: <a href="mailto:privacy@aiscern.com" className="text-primary hover:underline">privacy@aiscern.com</a><br />
+              Email: <a href="mailto:privacy@aiscern.com" className="text-[#2BEE34] hover:underline">privacy@aiscern.com</a><br />
               Subject: &quot;DPA Request — [Your Organisation Name]&quot;
             </p>
           </Section>
@@ -251,8 +272,8 @@ export default function DpaPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">{title}</h2>
-      <div className="space-y-3 text-text-secondary text-sm leading-relaxed">{children}</div>
+      <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-[#333333]">{title}</h2>
+      <div className="space-y-3 text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </section>
   )
 }
@@ -260,8 +281,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <h3 className="text-base font-semibold text-text-primary mb-2">{title}</h3>
-      <div className="text-text-secondary text-sm leading-relaxed">{children}</div>
+      <h3 className="text-base font-semibold text-white mb-2">{title}</h3>
+      <div className="text-[#A3A3A3] text-sm leading-relaxed">{children}</div>
     </div>
   )
 }

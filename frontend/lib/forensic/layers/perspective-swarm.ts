@@ -323,7 +323,6 @@ export async function runPerspectiveSwarm(imageUrl: string): Promise<Perspective
   // Log failures
   agentResults.forEach((r, i) => {
     if (r.status === 'rejected') {
-      console.warn(`[perspective-swarm] Agent ${agentKeys[i]} failed:`, r.reason)
     }
   })
 

@@ -46,4 +46,5 @@ setup-secrets.sh
 .vercel/
 .vercel
 !.vercel/project.json
+frontend/tsconfig.tsbuildinfo
 .env.do

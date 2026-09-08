@@ -1,818 +1,505 @@
-"use client"
-
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+'use client'
+import { useState } from 'react'
 import {
-  Globe,
-  Search,
-  Shield,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Image as ImageIcon,
-  FileText,
-  Layers,
-  TrendingUp,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Lock,
-  Zap,
-  BarChart3,
-  Fingerprint,
-  Cpu,
-  Sparkles,
-  Loader2,
-  ScanLine,
-  BrainCircuit,
-  Eye,
-  ArrowRight,
-  Activity,
-  Download
-} from "lucide-react"
-import type { SiteScanResult, ScannedPage, ScannedImage, RemediationItem } from "@/lib/scanner/types"
-import UpgradeModal from "@/components/UpgradeModal"
+  Globe, Search, TriangleAlert, CircleCheck, CircleHelp,
+  LoaderCircle, SquareArrowOutUpRight, Link2, ChevronDown, Database, Info,
+  Monitor, FileType2, BookOpen, Zap, Shield,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth-provider'
 
-export default function ScannerPage() {
-  const [url, setUrl] = useState("")
-  const [deepCrawl, setDeepCrawl] = useState(false)
+
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Signal { name: string; flagged: boolean; description: string; weight?: number }
+interface SubPage { url: string; title: string; content_type: string; word_count: number; ai_score: number; verdict: string; snippet: string }
+interface DiscoveredLink { url: string; text: string; is_internal: boolean }
+interface ScrapeResult {
+  url: string; domain: string; title: string; description: string
+  author?: string; language?: string; publish_date?: string
+  content_type: string; word_count: number; content_quality: 'high' | 'medium' | 'low'
+  overall_ai_score: number; verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'
+  confidence: number; summary: string; reasoning?: string; writing_style?: string
+  signals: Signal[]; og_image?: string; screenshot_url?: string; image_urls: string[]; agents_used?: number
+  headings?: string[]; sub_pages: SubPage[]; discovered_links: DiscoveredLink[]
+  total_links: number; status: string; fetch_method?: string
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const verdictColor = (v: string) =>
+  v === 'AI' ? 'text-[#FF4444]' : v === 'HUMAN' ? 'text-[#2BEE34]' : 'text-[#FFB800]'
+
+const verdictBg = (v: string) =>
+  v === 'AI' ? 'bg-[#FF4444]/15 border-[#FF4444]/30' : v === 'HUMAN' ? 'bg-[#2BEE34]/15 border-[#2BEE34]/30' : 'bg-[#FFB800]/15 border-[#FFB800]/30'
+
+function VerdictIcon({ v, cls = 'w-5 h-5' }: { v: string; cls?: string }) {
+  if (v === 'AI')    return <TriangleAlert className={`${cls} text-[#FF4444]`} />
+  if (v === 'HUMAN') return <CircleCheck   className={`${cls} text-[#2BEE34]`} />
+  return               <CircleHelp       className={`${cls} text-[#FFB800]`} />
+}
+
+function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
+  const r = 48; const c = 2 * Math.PI * r
+  const fill  = (score / 100) * c
+  const color = score >= 60 ? '#FF4444' : score >= 35 ? '#FFB800' : '#2BEE34'
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r={r} fill="none" stroke="#2A2A2A" strokeWidth="9" />
+        <circle cx="55" cy="55" r={r} fill="none" stroke={color} strokeWidth="9"
+          strokeDasharray={`${fill} ${c}`} strokeLinecap="round"
+          style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)' }} />
+      </svg>
+      <div className="z-10 text-center">
+        <p className="text-2xl sm:text-3xl font-black tabular-nums" style={{ color }}>{score}%</p>
+        <p className="text-[10px] text-[#A3A3A3] font-medium mt-0.5">AI Score</p>
+      </div>
+    </div>
+  )
+}
+
+const EXAMPLES = [
+  { label: 'AI blog', url: 'https://www.jasper.ai/blog/ai-marketing-tools' },
+  { label: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/Artificial_intelligence' },
+  { label: 'HN post',  url: 'https://news.ycombinator.com' },
+]
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
+export default function ScraperPage() {
+  const { user }              = useAuth()
+  const [url, setUrl]         = useState('')
+  const [depth, setDepth]     = useState(1)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<SiteScanResult | null>(null)
-  const [error, setError] = useState("")
-  const [expandedPage, setExpandedPage] = useState<string | null>(null)
-  const [expandedImage, setExpandedImage] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("overview")
-  const [scanProgress, setScanProgress] = useState(0)
-  const [upgradeInfo, setUpgradeInfo] = useState<{ reason: string } | null>(null)
-  const progressRef = useRef<NodeJS.Timeout | null>(null)
+  const [result, setResult]   = useState<ScrapeResult | null>(null)
+  const [error, setError]     = useState<string | null>(null)
+  const [screenshotError, setScreenshotError] = useState(false)
+  const supabase = createClient()
 
-  useEffect(() => {
-    return () => {
-      if (progressRef.current) clearInterval(progressRef.current)
-    }
-  }, [])
-
-  async function handleScan() {
-    if (!url.trim()) return
-    setLoading(true)
-    setError("")
-    setResult(null)
-    setScanProgress(0)
-
-    // Simulate progress while scanning
-    progressRef.current = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 90) return prev
-        return prev + Math.random() * 8
-      })
-    }, 800)
+  const handleScrape = async (targetUrl?: string) => {
+    const scanUrl = (targetUrl ?? url).trim()
+    if (!scanUrl) return
+    if (targetUrl) setUrl(targetUrl)
+    setLoading(true); setError(null); setResult(null); setScreenshotError(false)
 
     try {
-      const res = await fetch("/api/scanner", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: url.trim(),
-          deepCrawl,
-        }),
+      const res  = await fetch('/api/scraper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: scanUrl, depth, maxSubPages: 5 }),
       })
-
-      if (progressRef.current) clearInterval(progressRef.current)
-      setScanProgress(100)
-
       const data = await res.json()
-      if (!data.success) {
-        const msg = typeof data.error === "string" ? data.error : data.error?.message
-        if (res.status === 402 || data.error?.upgrade_required) {
-          setUpgradeInfo({ reason: msg || "Scan limit reached." })
-        } else {
-          setError(msg || "Scan failed")
-        }
-      } else {
-        setResult(data)
+      if (!data.success) { setError(data.error?.message || 'Scan failed'); return }
+      setResult(data.data)
+      setScreenshotError(false)
+
+      if (user && data.data) {
+        // FIX A.3: Removed `as any` cast. Table now created in v9_scraper_sessions.sql.
+        // try/catch retained so a DB error never breaks the scan result display.
+        // Temporary `as any` on the client until Supabase types are regenerated post-migration.
+        try {
+          await (supabase as any).from('scraper_sessions').insert({
+            user_id:          user.uid,
+            target_url:       scanUrl,
+            domain:           data.data.domain,
+            page_title:       data.data.title,
+            page_description: data.data.description,
+            total_assets:     (data.data.sub_pages?.length ?? 0) + 1,
+            ai_asset_count:   data.data.verdict === 'AI' ? 1 : 0,
+            overall_ai_score: data.data.overall_ai_score,
+            scraped_content:  data.data.signals,
+            status:           'complete',
+          })
+        } catch { /* non-fatal — result still displayed to user */ }
       }
-    } catch (err) {
-      if (progressRef.current) clearInterval(progressRef.current)
-      setError(err instanceof Error ? err.message : "Network error")
-    } finally {
-      setLoading(false)
-      setTimeout(() => setScanProgress(0), 500)
-    }
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Unexpected error')
+    } finally { setLoading(false) }
   }
-
-  async function handleDownloadReport() {
-    if (!result) return
-    const { jsPDF } = await import("jspdf")
-    const doc = new jsPDF({ unit: "pt", format: "a4" })
-    const pageW = doc.internal.pageSize.getWidth()
-    const margin = 40
-    let y = 50
-
-    const ensureRoom = (needed: number) => {
-      if (y + needed > 780) { doc.addPage(); y = 50 }
-    }
-    const heading = (text: string, size = 16) => {
-      ensureRoom(size + 14)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(size); doc.setTextColor(20, 20, 30)
-      doc.text(text, margin, y); y += size + 8
-    }
-    const body = (text: string, size = 10) => {
-      doc.setFont("helvetica", "normal"); doc.setFontSize(size); doc.setTextColor(60, 60, 70)
-      const lines = doc.splitTextToSize(text, pageW - margin * 2)
-      ensureRoom(lines.length * (size + 3))
-      doc.text(lines, margin, y); y += lines.length * (size + 3) + 4
-    }
-    const kv = (label: string, value: string) => {
-      ensureRoom(16)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(40, 40, 50)
-      doc.text(`${label}:`, margin, y)
-      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
-      doc.text(value, margin + 130, y)
-      y += 16
-    }
-
-    heading("Aiscern — Website Trust Report", 18)
-    body(`Generated ${new Date().toLocaleString()}`, 9)
-    y += 6
-
-    heading("Summary", 13)
-    kv("Site scanned", result.origin)
-    kv("Pages scanned", String(result.pagesScanned))
-    kv("AI content", `${result.aiContentPercent}%`)
-    kv("Human content", `${result.humanContentPercent}%`)
-    kv("Uncertain content", `${result.uncertainContentPercent}%`)
-    kv("AI images", `${result.aiImagePercent}% (${result.aiImagesCount}/${result.totalImagesAnalyzed} analyzed)`)
-    kv("Trust score", `${Math.round((result.siteTrustScore.transparencyScore + result.siteTrustScore.linkTrustScore) / 2 * 100)}%`)
-    kv("Content originality", `${Math.round(result.contentOriginalityScore * 100)}%`)
-    y += 8
-
-    heading("Pages", 13)
-    for (const page of result.pages) {
-      ensureRoom(40)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(20, 20, 30)
-      doc.text(`[${page.verdict}] ${(page.aiScore * 100).toFixed(0)}%`, margin, y)
-      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
-      const urlLines = doc.splitTextToSize(page.url, pageW - margin * 2 - 90)
-      doc.text(urlLines, margin + 90, y)
-      y += Math.max(urlLines.length, 1) * 12 + 6
-    }
-    y += 8
-
-    heading(`Images (${result.images.length})`, 13)
-    for (const img of result.images) {
-      ensureRoom(28)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(20, 20, 30)
-      doc.text(`[${img.verdict}] ${(img.aiScore * 100).toFixed(0)}%`, margin, y)
-      doc.setFont("helvetica", "normal"); doc.setTextColor(70, 70, 80)
-      const urlLines = doc.splitTextToSize(img.url, pageW - margin * 2 - 90)
-      doc.text(urlLines, margin + 90, y)
-      y += Math.max(urlLines.length, 1) * 12 + 6
-    }
-    y += 8
-
-    if (result.remediation.length > 0) {
-      heading("Remediation", 13)
-      for (const item of result.remediation) {
-        ensureRoom(30)
-        body(`• [${item.priority.toUpperCase()}] ${item.action} — ${item.reason}`, 9)
-      }
-    }
-
-    doc.save(`aiscern-report-${result.domain}-${Date.now()}.pdf`)
-  }
-
-  const tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "pages", label: `Pages (${result?.pages.length ?? 0})` },
-    { id: "images", label: `Images (${result?.images.length ?? 0})` },
-    { id: "heatmap", label: "Heatmap" },
-    { id: "remediation", label: "Remediation" },
-  ]
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24 space-y-6">
-      {upgradeInfo && (
-        <UpgradeModal
-          feature="the Web Scanner"
-          reason={upgradeInfo.reason}
-          onClose={() => setUpgradeInfo(null)}
-        />
-      )}
+    <div className="min-h-screen bg-[#141414] pb-24 lg:pb-8">
+      <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <ScanLine className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold">Forensic Scanner</h1>
-          <p className="text-sm text-slate-500">
-            Deep-content authenticity analysis. Maps site architecture, detects synthetic media, and surfaces forensic signals across every page.
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-9 h-9 rounded-lg bg-[#2BEE34]/15 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-[#2BEE34]" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white">Web Scanner</h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">RAG</span>
+          </div>
+          <p className="text-sm text-[#A3A3A3] ml-12">
+            Examine any website for AI-generated content. Crawls sub-pages, captures screenshot, and uses Gemini RAG for 12-signal attestation.
           </p>
         </div>
-      </div>
 
-      {/* Input */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleScan()}
-              placeholder="https://example.com"
-              className="w-full bg-[#141420] border border-white/[0.07] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
-            />
-          </div>
-          <button
-            onClick={handleScan}
-            disabled={loading || !url.trim()}
-            className="px-4 py-2.5 rounded-xl bg-primary text-bg font-semibold text-sm flex items-center gap-2 disabled:opacity-50 hover:opacity-90 transition-opacity"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {loading ? "Scanning..." : "Deep Scan"}
-          </button>
-        </div>
-
-        {/* Deep Forensic Crawl toggle */}
-        <label className="mt-3 flex items-center gap-2.5 cursor-pointer select-none w-fit">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={deepCrawl}
-            onClick={() => setDeepCrawl(v => !v)}
-            className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
-              deepCrawl ? "bg-primary" : "bg-white/10"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-                deepCrawl ? "translate-x-4" : ""
-              }`}
-            />
-          </button>
-          <span className="text-xs text-slate-400">
-            Deep Forensic Crawl
-            <span className="text-slate-600 ml-1.5">
-              {deepCrawl ? "up to 150 pages / 200 images — ~3-5 min" : "up to 25 pages / 40 images — ~30 sec"}
-            </span>
-          </span>
-        </label>
-
-        {/* Progress Bar */}
-        <AnimatePresence>
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3"
+        {/* Input */}
+        <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-4 sm:p-5 mb-5">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
+              <input
+                type="url" value={url}
+                onChange={e => setUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleScrape()}
+                placeholder="https://example.com/article"
+                className="w-full bg-[#141414] border border-white/[0.07] rounded-lg pl-9 pr-4 py-2.5 text-[16px] sm:text-sm text-white placeholder:text-[#6B6B6B] focus:outline-none focus:border-[#2BEE34]/30 transition-colors"
+              />
+            </div>
+            <button
+              onClick={() => handleScrape()} disabled={loading || !url.trim()}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#2BEE34] hover:bg-[#1A8F1F] text-white text-sm font-medium disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              <div className="flex justify-between text-xs text-slate-500 mb-1">
-                <span className="flex items-center gap-1">
-                  <Activity className="w-3 h-3 animate-pulse" />
-                  Crawling site structure...
-                </span>
-                <span>{Math.round(scanProgress)}%</span>
-              </div>
-              <div className="h-1.5 bg-[#141420] rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${scanProgress}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {loading ? 'Examining…' : 'Attest Site'}
+            </button>
+          </div>
 
+          {/* Options row */}
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#6B6B6B]">Crawl depth</span>
+              <div className="flex gap-1">
+                {[1, 2].map(d => (
+                  <button key={d} onClick={() => setDepth(d)}
+                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${depth === d ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+              <span className="text-[10px] text-[#6B6B6B]">{depth === 1 ? 'Main page only' : 'Follow internal links'}</span>
+            </div>
+          </div>
+
+          {/* Example URLs */}
+          {!result && !loading && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <span className="text-[10px] text-[#6B6B6B] font-medium">Try:</span>
+              {EXAMPLES.map(ex => (
+                <button key={ex.url} onClick={() => handleScrape(ex.url)}
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#2BEE34] hover:bg-[#1A8F1F]/15 border border-[#333333] hover:border-white/[0.12] transition-colors">
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Error */}
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm flex items-start gap-2"
-          >
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            {error}
-          </motion.div>
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FF4444]/5 border border-[#FF4444]/20">
+            <TriangleAlert className="w-4 h-4 text-[#FF4444] shrink-0 mt-0.5" />
+            <p className="text-sm text-[#FF4444]">{error}</p>
+          </div>
         )}
-      </div>
 
-      {/* Results */}
-      <AnimatePresence>
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-5"
-          >
-            {/* Top Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                icon={<FileText className="w-5 h-5" />}
-                label="AI Content"
-                value={`${result.aiContentPercent}%`}
-                sub={`${result.pagesScanned} pages scanned`}
-                color={result.aiContentPercent > 50 ? "rose" : result.aiContentPercent > 20 ? "amber" : "emerald"}
-              />
-              <StatCard
-                icon={<ImageIcon className="w-5 h-5" />}
-                label="AI Images"
-                value={`${result.aiImagePercent}%`}
-                sub={`${result.totalImagesAnalyzed} images analyzed`}
-                color={result.aiImagePercent > 30 ? "rose" : result.aiImagePercent > 10 ? "amber" : "emerald"}
-              />
-              <StatCard
-                icon={<Shield className="w-5 h-5" />}
-                label="Trust Score"
-                value={`${Math.round((result.siteTrustScore.transparencyScore + result.siteTrustScore.linkTrustScore) / 2 * 100)}%`}
-                sub={`${result.siteTrustScore.authorityOutlinks} authority links`}
-                color={result.siteTrustScore.transparencyScore > 0.6 ? "emerald" : "amber"}
-              />
-              <StatCard
-                icon={<Fingerprint className="w-5 h-5" />}
-                label="Originality"
-                value={`${Math.round(result.contentOriginalityScore * 100)}%`}
-                sub={`Voice diversity: ${(result.voiceDiversityIndex * 100).toFixed(0)}%`}
-                color={result.contentOriginalityScore > 0.6 ? "emerald" : "amber"}
-              />
-            </div>
-
-            {/* WordPress Badge */}
-            {result.isWordPress && (
-              <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center gap-1">
-                    <Cpu className="w-3 h-3" />
-                    WordPress {result.wordPressInfo?.version || ""}
-                  </span>
-                  {result.wordPressInfo?.theme && (
-                    <span className="text-xs px-2 py-1 rounded-lg bg-[#141420] text-slate-400 border border-white/5">
-                      Theme: {result.wordPressInfo.theme}
-                    </span>
-                  )}
-                  {result.wordPressInfo?.aiPluginsDetected.map((slug) => (
-                    <span key={slug} className="text-xs px-2 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {slug}
-                    </span>
-                  ))}
-                  {result.wordPressInfo?.plugins.filter(p => p.hasVulnerability).map((p) => (
-                    <span key={p.slug} className="text-xs px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/30 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      {p.slug} ({p.severity})
-                    </span>
-                  ))}
+        {/* Loading skeleton — mirrors result */}
+        {loading && (
+          <div className="space-y-4 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2 bg-[#141414] border border-[#333333] rounded-xl overflow-hidden">
+                <div className="w-full h-44 bg-white/[0.04] rounded-t-2xl" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+                  <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
                 </div>
               </div>
-            )}
-
-            {/* Tabs */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] overflow-hidden">
-              <div className="flex border-b border-white/[0.07] overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                      activeTab === tab.id
-                        ? "text-primary border-b-2 border-primary"
-                        : "text-slate-500 hover:text-slate-300"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-4 sm:p-5">
-                {activeTab === "overview" && <OverviewTab result={result} />}
-                {activeTab === "pages" && (
-                  <div className="space-y-3">
-                    {result.pages.map((page) => (
-                      <PageCard
-                        key={page.url}
-                        page={page}
-                        expanded={expandedPage === page.url}
-                        onToggle={() => setExpandedPage(expandedPage === page.url ? null : page.url)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {activeTab === "images" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {result.images.map((img) => (
-                      <ImageCard
-                        key={img.url}
-                        image={img}
-                        expanded={expandedImage === img.url}
-                        onToggle={() => setExpandedImage(expandedImage === img.url ? null : img.url)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {activeTab === "heatmap" && <HeatmapTab result={result} />}
-                {activeTab === "remediation" && <RemediationTab result={result} />}
-              </div>
-            </div>
-
-            {/* Integrity Seal + Report */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f0f17] p-4">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  <span className="text-sm text-slate-500">Integrity Seal:</span>
-                  <code className="text-xs bg-[#141420] px-2 py-1 rounded text-primary font-mono">
-                    {result.integritySeal.hash}
-                  </code>
-                </div>
-                <div className="flex items-center gap-3">
-                  <a
-                    href={result.integritySeal.verificationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-                  >
-                    Verify <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <button
-                    onClick={handleDownloadReport}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-bg flex items-center gap-1.5 hover:opacity-90 transition-opacity"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    Download PDF Report
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-/* ── Sub-Components ── */
-
-function StatCard({ icon, label, value, sub, color }: { icon: React.ReactNode; label: string; value: string; sub: string; color: string }) {
-  const colorMap: Record<string, string> = {
-    rose: "border-rose-500/30 bg-rose-500/5",
-    amber: "border-amber-500/30 bg-amber-500/5",
-    emerald: "border-emerald-500/30 bg-emerald-500/5",
-  }
-  const textMap: Record<string, string> = {
-    rose: "text-rose-400",
-    amber: "text-amber-400",
-    emerald: "text-emerald-400",
-  }
-  return (
-    <div className={`rounded-2xl border ${colorMap[color]} p-4`}>
-      <div className="flex items-center gap-2 text-slate-500 mb-2">
-        {icon}
-        <span className="text-sm">{label}</span>
-      </div>
-      <div className={`text-3xl font-black ${textMap[color]}`}>{value}</div>
-      <div className="text-xs text-slate-600 mt-1">{sub}</div>
-    </div>
-  )
-}
-
-function OverviewTab({ result }: { result: SiteScanResult }) {
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-white/[0.07] bg-[#141420] p-4">
-          <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-            <Shield className="w-4 h-4 text-primary" />
-            Site Trust Analysis
-          </h3>
-          <div className="space-y-3">
-            <MetricRow label="Transparency" value={result.siteTrustScore.transparencyScore} />
-            <MetricRow label="Link Trust" value={result.siteTrustScore.linkTrustScore} />
-            <MetricRow label="SSL Security" value={result.siteTrustScore.sslScore / 100} />
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <TrustIndicator label="Contact Page" present={result.siteTrustScore.hasContactPage} />
-              <TrustIndicator label="Privacy Policy" present={result.siteTrustScore.hasPrivacyPolicy} />
-              <TrustIndicator label="Terms of Service" present={result.siteTrustScore.hasTermsOfService} />
-              <TrustIndicator label="Physical Address" present={result.siteTrustScore.hasPhysicalAddress} />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-white/[0.07] bg-[#141420] p-4">
-          <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            Content Intelligence
-          </h3>
-          <div className="space-y-3">
-            <MetricRow label="Content Originality" value={result.contentOriginalityScore} />
-            <MetricRow label="Voice Diversity" value={result.voiceDiversityIndex} />
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">AI Pages</span>
-              <span className="text-rose-400 font-medium">
-                {result.pages.filter(p => p.verdict === "AI").length} / {result.pagesScanned}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Human Pages</span>
-              <span className="text-emerald-400 font-medium">
-                {result.pages.filter(p => p.verdict === "HUMAN").length} / {result.pagesScanned}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">AI Images</span>
-              <span className="text-rose-400 font-medium">
-                {result.aiImagesCount} / {result.totalImagesAnalyzed}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Real Images</span>
-              <span className="text-emerald-400 font-medium">
-                {result.realImagesCount} / {result.totalImagesAnalyzed}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="rounded-xl border border-white/[0.07] bg-[#141420] p-4">
-        <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-yellow-400" />
-          Crawl Statistics
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-[#0f0f17] rounded-xl">
-            <div className="text-2xl font-bold text-emerald-400">{result.fetchStats.direct}</div>
-            <div className="text-xs text-slate-600">Direct Fetch</div>
-          </div>
-          <div className="text-center p-3 bg-[#0f0f17] rounded-xl">
-            <div className="text-2xl font-bold text-primary">{result.fetchStats.jina}</div>
-            <div className="text-xs text-slate-600">Jina AI Fallback</div>
-          </div>
-          <div className="text-center p-3 bg-[#0f0f17] rounded-xl">
-            <div className="text-2xl font-bold text-amber-400">{result.fetchStats.cache}</div>
-            <div className="text-xs text-slate-600">Google Cache</div>
-          </div>
-          <div className="text-center p-3 bg-[#0f0f17] rounded-xl">
-            <div className="text-2xl font-bold text-rose-400">{result.fetchStats.failed}</div>
-            <div className="text-xs text-slate-600">Failed</div>
-          </div>
-        </div>
-        <div className="mt-3 text-xs text-slate-600 text-center">
-          Processed in {(result.processingTimeMs / 1000).toFixed(1)}s using {result.modelUsed}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MetricRow({ label, value }: { label: string; value: number }) {
-  const pct = Math.round(value * 100)
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-sm">
-        <span className="text-slate-500">{label}</span>
-        <span className={pct > 60 ? "text-emerald-400" : pct > 30 ? "text-amber-400" : "text-rose-400"}>
-          {pct}%
-        </span>
-      </div>
-      <div className="h-1.5 bg-[#0f0f17] rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${pct > 60 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-rose-500"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-function TrustIndicator({ label, present }: { label: string; present: boolean }) {
-  return (
-    <div className={`flex items-center gap-2 text-xs p-2 rounded-lg ${present ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-      {present ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-      {label}
-    </div>
-  )
-}
-
-function HeatmapTab({ result }: { result: SiteScanResult }) {
-  return (
-    <div className="rounded-xl border border-white/[0.07] bg-[#141420] p-4">
-      <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-        <Layers className="w-4 h-4 text-primary" />
-        Content Section Heatmap
-      </h3>
-      <div className="space-y-3">
-        {result.sectionsHeatmap.map((section) => (
-          <div key={section.pathPrefix} className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-300 font-mono">{section.pathPrefix}</span>
-              <span className="text-slate-500">{section.pageCount} pages · {section.totalWords.toLocaleString()} words</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-2 bg-[#0f0f17] rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${section.aiContentPercent > 60 ? "bg-rose-500" : section.aiContentPercent > 30 ? "bg-amber-500" : "bg-emerald-500"}`}
-                  style={{ width: `${section.aiContentPercent}%` }}
-                />
-              </div>
-              <span className={`text-sm font-medium w-12 text-right ${section.aiContentPercent > 60 ? "text-rose-400" : section.aiContentPercent > 30 ? "text-amber-400" : "text-emerald-400"}`}>
-                {section.aiContentPercent.toFixed(0)}%
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function RemediationTab({ result }: { result: SiteScanResult }) {
-  return (
-    <div className="rounded-xl border border-white/[0.07] bg-[#141420] p-4">
-      <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-        <TrendingUp className="w-4 h-4 text-emerald-400" />
-        Actionable Remediation Report
-      </h3>
-      {result.remediation.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-400" />
-          <p>No critical issues found. Your content looks authentic!</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {result.remediation.map((item, i) => (
-            <RemediationCard key={i} item={item} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function PageCard({ page, expanded, onToggle }: { page: ScannedPage; expanded: boolean; onToggle: () => void }) {
-  const borderClass = page.verdict === "AI" ? "border-rose-500/30 bg-rose-500/5" :
-    page.verdict === "HUMAN" ? "border-emerald-500/30 bg-emerald-500/5" :
-    "border-amber-500/30 bg-amber-500/5"
-
-  return (
-    <div className={`rounded-xl border ${borderClass} p-4 transition-all`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${page.verdict === "AI" ? "bg-rose-500/20 text-rose-400" : page.verdict === "HUMAN" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
-              {page.verdict}
-            </span>
-            <span className="text-xs text-slate-600">{page.contentType}</span>
-            <span className="text-xs text-slate-600">{page.wordCount} words</span>
-            <span className="text-xs text-slate-600">{page.fetchMethod}</span>
-          </div>
-          <h3 className="text-sm font-medium text-slate-200 truncate">{page.title}</h3>
-          <p className="text-xs text-slate-600 truncate">{page.url}</p>
-        </div>
-        <div className="text-right shrink-0">
-          <div className={`text-xl font-bold ${page.aiScore > 0.6 ? "text-rose-400" : page.aiScore < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>
-            {(page.aiScore * 100).toFixed(0)}%
-          </div>
-          <button onClick={onToggle} className="text-slate-600 hover:text-slate-300">
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-      {expanded && (
-        <div className="mt-4 space-y-3 border-t border-white/[0.07] pt-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-            <SignalBadge label="Linguistic Brain" value={page.ensembleSignals.linguisticBrain} />
-            <SignalBadge label="Perplexity Burst" value={page.ensembleSignals.perplexityBurst} />
-            <SignalBadge label="Info Density" value={page.ensembleSignals.informationDensity} />
-            <SignalBadge label="Voice Diversity" value={page.ensembleSignals.voiceDiversity} />
-            <div className={`p-2 rounded-lg text-xs ${page.ensembleSignals.stylometricFlag ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"}`}>
-              Stylometric: {page.ensembleSignals.stylometricFlag ? "Flagged" : "Normal"}
-            </div>
-            <div className={`p-2 rounded-lg text-xs ${page.isSpun ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"}`}>
-              Spun: {page.isSpun ? "Yes" : "No"}
-            </div>
-          </div>
-          {page.topFindings.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-slate-500 mb-1">Top Findings</h4>
-              <div className="flex flex-wrap gap-1">
-                {page.topFindings.map((f, i) => (
-                  <span key={i} className="text-xs bg-[#0f0f17] text-slate-300 px-2 py-1 rounded-lg border border-white/5">
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {page.aiArtifacts.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-slate-500 mb-1">AI Artifacts</h4>
-              <div className="space-y-1">
-                {page.aiArtifacts.map((a, i) => (
-                  <div key={i} className={`text-xs p-2 rounded-lg ${a.severity === "high" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>
-                    <span className="font-bold uppercase">{a.type}</span>: {a.evidence}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {page.sentenceScores.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-slate-500 mb-1">Sentence-Level Analysis</h4>
-              <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                {page.sentenceScores.map((s, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <div className={`w-8 text-right font-mono shrink-0 ${s.aiScore > 0.6 ? "text-rose-400" : s.aiScore < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>
-                      {(s.aiScore * 100).toFixed(0)}%
+              <div className="md:col-span-3 bg-[#141414] border border-[#333333] rounded-xl p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-5">
+                  <div className="w-16 h-16 sm:w-[100px] sm:h-[100px] rounded-full bg-white/[0.04] shrink-0" />
+                  <div className="flex-1 space-y-2 pt-2">
+                    <div className="flex gap-2">
+                      <div className="h-5 bg-white/[0.04] rounded-full w-20" />
+                      <div className="h-5 bg-white/[0.04] rounded-full w-24" />
                     </div>
-                    <div className="text-slate-500 truncate">{s.text}</div>
+                    <div className="h-3 bg-white/[0.04] rounded w-full mt-3" />
+                    <div className="h-3 bg-white/[0.04] rounded w-4/5" />
+                    <div className="h-3 bg-white/[0.04] rounded w-2/3" />
                   </div>
-                ))}
+                </div>
+                <div className="h-3 bg-white/[0.04] rounded w-full" />
+                <div className="h-3 bg-white/[0.04] rounded w-3/4" />
               </div>
             </div>
-          )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600">
-            <div>Mean Sentence: {page.stylometry.meanSentenceLength}</div>
-            <div>Type-Token Ratio: {page.stylometry.typeTokenRatio}</div>
-            <div>Hapax Rate: {page.stylometry.hapaxLegomenaRate}</div>
-            <div>Sentence CV: {page.stylometry.sentenceLengthCV}</div>
-            <div>Lexical Div: {page.stylometry.lexicalDiversity}</div>
-            <div>Depth Score: {page.contentDepthScore}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SignalBadge({ label, value }: { label: string; value: number }) {
-  return (
-    <div className={`p-2 rounded-lg text-xs ${value > 0.6 ? "bg-rose-500/10 text-rose-400" : value < 0.4 ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
-      <div className="opacity-70 text-[10px]">{label}</div>
-      <div className="font-bold">{(value * 100).toFixed(0)}%</div>
-    </div>
-  )
-}
-
-function ImageCard({ image, expanded, onToggle }: { image: ScannedImage; expanded: boolean; onToggle: () => void }) {
-  const borderClass = image.verdict === "AI" ? "border-rose-500/30 bg-rose-500/5" :
-    image.verdict === "HUMAN" ? "border-emerald-500/30 bg-emerald-500/5" :
-    "border-amber-500/30 bg-amber-500/5"
-  return (
-    <div className={`rounded-xl border ${borderClass} p-4`}>
-      <div className="flex items-start gap-3">
-        <div className="w-16 h-16 bg-[#0f0f17] rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-          <img src={`/api/image-proxy?url=${encodeURIComponent(image.url)}`} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} loading="lazy" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${image.verdict === "AI" ? "bg-rose-500/20 text-rose-400" : image.verdict === "HUMAN" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>{image.verdict}</span>
-            <span className="text-xs text-slate-600">{image.modelUsed}</span>
-          </div>
-          <p className="text-xs text-slate-600 truncate">{image.url.split("/").pop()}</p>
-          <div className="flex items-center gap-3 mt-1">
-            <span className={`text-lg font-bold ${image.aiScore > 0.6 ? "text-rose-400" : image.aiScore < 0.4 ? "text-emerald-400" : "text-amber-400"}`}>{(image.aiScore * 100).toFixed(0)}%</span>
-            <button onClick={onToggle} className="text-slate-600 hover:text-slate-300">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
-          </div>
-        </div>
-      </div>
-      {expanded && (
-        <div className="mt-3 space-y-2 border-t border-white/[0.07] pt-3">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 bg-[#0f0f17] rounded-lg"><span className="text-slate-600">ELA Uniformity</span><div className="font-mono text-slate-300">{image.elaUniformity}</div></div>
-            <div className="p-2 bg-[#0f0f17] rounded-lg"><span className="text-slate-600">DCT Anomaly</span><div className="font-mono text-slate-300">{image.dctAnomaly}</div></div>
-          </div>
-          {image.exifFlags.length > 0 && (
-            <div>
-              <span className="text-xs text-slate-600">EXIF Flags</span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {image.exifFlags.map((flag, i) => <span key={i} className="text-xs bg-[#0f0f17] text-rose-400 px-2 py-1 rounded-lg border border-white/5">{flag}</span>)}
+            <div className="bg-[#141414] border border-[#333333] rounded-xl p-5 space-y-3">
+              <div className="h-4 bg-white/[0.04] rounded w-36" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[0,1,2,3,4,5].map(i => <div key={i} className="h-14 rounded-lg bg-white/[0.04]" />)}
               </div>
             </div>
-          )}
-          <div className="text-xs text-slate-700 font-mono">{image.colorFingerprint}</div>
-        </div>
-      )}
-    </div>
-  )
-}
+            <div className="flex items-center gap-2 text-sm text-[#6B6B6B] py-1">
+              <LoaderCircle className="w-4 h-4 animate-spin text-[#2BEE34]/60" />
+              <span>Fetching page · extracting content · running Gemini RAG analysis…</span>
+            </div>
+          </div>
+        )}
 
-function RemediationCard({ item }: { item: RemediationItem }) {
-  const borderClass = item.priority === "critical" ? "border-rose-500/30 bg-rose-500/5" : item.priority === "high" ? "border-orange-500/30 bg-orange-500/5" : item.priority === "medium" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5 bg-[#141420]"
-  const textClass = item.priority === "critical" ? "text-rose-400" : item.priority === "high" ? "text-orange-400" : item.priority === "medium" ? "text-amber-400" : "text-slate-400"
-  return (
-    <div className={`border ${borderClass} rounded-xl p-3`}>
-      <div className="flex items-start gap-3">
-        <div className={`text-xs font-bold uppercase ${textClass} shrink-0 mt-0.5`}>{item.priority}</div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-slate-200">{item.action}</div>
-          <div className="text-xs text-slate-600 mt-1">{item.reason}</div>
-          {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 mt-1">{item.url.slice(0, 60)}... <ExternalLink className="w-3 h-3" /></a>}
-          {item.imageUrl && <a href={item.imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 mt-1">{item.imageUrl.slice(0, 60)}... <ExternalLink className="w-3 h-3" /></a>}
-        </div>
+        {/* Results */}
+        
+          {result && (
+            <div className="space-y-4">
+
+              {/* Screenshot + Score row */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+                {/* Screenshot panel */}
+                <div className="md:col-span-2 bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+                  <div className="relative">
+                    {/* og:image loads instantly from the site's own CDN */}
+                    {result.og_image && !screenshotError ? (
+                      <img
+                        src={result.og_image}
+                        alt={`Preview of ${result.domain}`}
+                        className="w-full object-cover"
+                        style={{ maxHeight: 220, opacity: 0, transition: 'opacity 0.35s' }}
+                        onLoad={(e) => { (e.target as HTMLImageElement).style.opacity = '1' }}
+                        onError={(e) => {
+                          // og:image failed — try mshots screenshot as fallback
+                          const img = e.target as HTMLImageElement
+                          if (result.screenshot_url && !img.dataset.fallback) {
+                            img.dataset.fallback = '1'
+                            img.src = result.screenshot_url
+                          } else {
+                            setScreenshotError(true)
+                          }
+                        }}
+                      />
+                    ) : result.screenshot_url && !screenshotError ? (
+                      <img
+                        src={result.screenshot_url}
+                        alt={`Screenshot of ${result.domain}`}
+                        className="w-full object-cover"
+                        style={{ maxHeight: 220, opacity: 0, transition: 'opacity 0.5s' }}
+                        onLoad={(e) => { (e.target as HTMLImageElement).style.opacity = '1' }}
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          if (!img.dataset.retried) {
+                            img.dataset.retried = '1'
+                            setTimeout(() => { img.src = result.screenshot_url! + '&t=' + Date.now() }, 4000)
+                          } else { setScreenshotError(true) }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-44 flex flex-col items-center justify-center bg-[#141414] text-[#6B6B6B]">
+                        <Monitor className="w-10 h-10 mb-2 opacity-30" />
+                        <p className="text-xs">No preview available</p>
+                      </div>
+                    )}
+                    {/* Overlay badge */}
+                    <div className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${verdictBg(result.verdict)}`}>
+                      <VerdictIcon v={result.verdict} cls="w-3.5 h-3.5" />
+                      <span className={verdictColor(result.verdict)}>
+                        {result.verdict === 'AI' ? 'AI Generated' : result.verdict === 'HUMAN' ? 'Human Written' : 'Uncertain'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-semibold text-white truncate">{result.title}</p>
+                    <a href={result.url} target="_blank" rel="noreferrer"
+                      className="text-[10px] text-[#2BEE34] hover:underline flex items-center gap-1 mt-0.5">
+                      <SquareArrowOutUpRight className="w-3 h-3" />{result.domain}
+                    </a>
+                    {result.description && (
+                      <p className="text-[10px] text-[#6B6B6B] mt-1.5 line-clamp-2">{result.description}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Score + meta panel */}
+                <div className="md:col-span-3 bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+                  <div className="flex items-start gap-5">
+                    <ScoreRing score={result.overall_ai_score} />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#E5E5E5] border border-[#333333]">
+                          {result.content_type.toUpperCase()}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          result.content_quality === 'high' ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-[#2BEE34]/25' :
+                          result.content_quality === 'low'  ? 'bg-[#FF4444]/15 text-[#FF4444] border-[#FF4444]/25' :
+                          'bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/25'}`}>
+                          {result.content_quality.toUpperCase()} QUALITY
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">
+                          Aiscern RAG Engine
+                        </span>
+                      </div>
+
+                      {/* Meta grid */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
+                        {(
+                          [
+                            ['Domain', result.domain] as [string, string],
+                            ['Words', result.word_count.toLocaleString()] as [string, string],
+                            result.author       ? ['Author',    result.author]                    as [string, string] : null,
+                            result.publish_date ? ['Published', result.publish_date.slice(0, 10)] as [string, string] : null,
+                            result.language     ? ['Language',  result.language.toUpperCase()]    as [string, string] : null,
+                            ['Confidence', `${result.confidence}%`] as [string, string],
+                          ] as ([string, string] | null)[]
+                        ).filter((x): x is [string, string] => x !== null).map(([label, value]) => (
+                          <div key={label} className="flex justify-between gap-2">
+                            <span className="text-[#6B6B6B] shrink-0">{label}</span>
+                            <span className="text-[#E5E5E5] font-medium truncate text-right">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="mt-4 pt-3 border-t border-[#333333] space-y-2">
+                    <p className="text-xs text-[#E5E5E5] leading-relaxed">{result.summary}</p>
+                    {result.reasoning && (
+                      <p className="text-[10px] text-[#6B6B6B] leading-relaxed italic">"{result.reasoning}"</p>
+                    )}
+                    {result.writing_style && (
+                      <p className="text-[10px] text-[#6B6B6B]">
+                        <span className="text-[#A3A3A3] font-medium">Writing style:</span> {result.writing_style}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Signals grid */}
+              {result.signals.length > 0 && (
+                <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+                  <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#2BEE34]" />
+                    Forensic Signals
+                    <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.signals.filter(s => s.flagged).length} flagged of {result.signals.length}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {result.signals.map((sig, i) => (
+                      <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${sig.flagged ? 'bg-[#FF4444]/5 border-[#FF4444]/15' : 'bg-[#2BEE34]/5 border-[#2BEE34]/10'}`}>
+                        <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${sig.flagged ? 'bg-[#FF4444]' : 'bg-[#2BEE34]'}`} />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#E5E5E5]">{sig.name}</p>
+                          <p className="text-[10px] text-[#6B6B6B] leading-relaxed">{sig.description}</p>
+                        </div>
+                        {sig.weight != null && (
+                          <span className="text-[9px] text-[#6B6B6B] shrink-0 mt-0.5">{Math.round((sig.weight ?? 0) * 10)}/10</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-pages */}
+              {result.sub_pages.length > 0 && (
+                <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+                  <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#2BEE34]" />
+                    Sub-pages Analyzed
+                    <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.sub_pages.length} pages</span>
+                  </h3>
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {result.sub_pages.map((sp, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#141414] border border-[#333333] hover:border-white/[0.12] transition-colors">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${sp.verdict === 'AI' ? 'bg-[#FF4444]' : sp.verdict === 'HUMAN' ? 'bg-[#2BEE34]' : 'bg-[#FFB800]'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-[#E5E5E5] truncate">{sp.title}</p>
+                          <a href={sp.url} target="_blank" rel="noreferrer"
+                            className="text-[10px] text-[#6B6B6B] hover:text-white transition-colors truncate block">
+                            {(() => { try { const u = new URL(sp.url); return u.hostname + u.pathname.slice(0, 40) } catch { return sp.url } })()}
+                          </a>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className={`text-sm font-bold ${verdictColor(sp.verdict)}`}>{sp.ai_score}%</p>
+                          <p className="text-[10px] text-[#6B6B6B]">{sp.word_count.toLocaleString()} words</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Headings preview */}
+              {result.headings && result.headings.length > 0 && (
+                <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
+                  <h3 className="text-xs font-bold text-[#A3A3A3] uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <FileType2 className="w-3.5 h-3.5" />Page Structure
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {result.headings.map((h, i) => (
+                      <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-[#141414] text-[#E5E5E5] border border-[#333333]">
+                        {h.slice(0, 60)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Discovered Links */}
+              <details className="bg-[#141414] border border-white/[0.07] rounded-xl p-4 group">
+                <summary className="cursor-pointer text-sm font-semibold text-[#E5E5E5] flex items-center gap-2 list-none select-none">
+                  <Link2 className="w-4 h-4 text-[#2BEE34]" />
+                  Discovered Links
+                  <span className="text-xs text-[#6B6B6B] font-normal">{result.discovered_links.length} of {result.total_links} total</span>
+                  <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto group-open:rotate-180 transition-transform" />
+                </summary>
+                <div className="mt-3 space-y-1 max-h-56 overflow-y-auto">
+                  {result.discovered_links.map((link, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[#141414] text-xs group/row">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${link.is_internal ? 'bg-[#2BEE34]' : 'bg-[#6B6B6B]'}`} />
+                      <span className="text-[#A3A3A3] truncate flex-1">{link.text.slice(0, 55)}</span>
+                      <a href={link.url} target="_blank" rel="noreferrer"
+                        className="text-[#2BEE34] hover:underline truncate max-w-[140px] hidden sm:block text-[10px]">
+                        {(() => { try { return new URL(link.url).hostname } catch { return link.url } })()}
+                      </a>
+                      <button onClick={() => handleScrape(link.url)} title="Attest this page" aria-label="Attest this page"
+                        className="text-[#6B6B6B] hover:text-white transition-colors shrink-0 ml-1 p-2 -m-2 rounded-lg hover:bg-white/[0.06]">
+                        <Zap className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              {/* Datasets info */}
+              <details className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
+                <summary className="cursor-pointer text-sm font-semibold text-[#E5E5E5] flex items-center gap-2 list-none select-none">
+                  <Info className="w-4 h-4 text-[#2BEE34]" />Forensic Engines &amp; Reference Datasets
+                  <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto" />
+                </summary>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#6B6B6B]">
+                  {[
+                    { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
+                    { name: 'AI Text Detection Pile', desc: '500K+ labeled text samples', url: 'https://huggingface.co/datasets/artem9k/ai-text-detection-pile' },
+                    { name: 'GPT-Wiki-Intro', desc: 'GPT-generated Wikipedia intros', url: 'https://huggingface.co/datasets/aadityaubhat/GPT-wiki-intro' },
+                    { name: 'RAID Benchmark', desc: 'Robust AI text detection benchmark', url: 'https://huggingface.co/datasets/liamdugan/raid' },
+                  ].map(d => (
+                    <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
+                      className="flex items-start gap-2 p-2 rounded-lg hover:bg-[#141414] transition-colors group">
+                      <Database className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#E5E5E5] font-medium group-hover:text-white transition-colors">{d.name}</p>
+                        <p>{d.desc}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </details>
+
+            </div>
+          )}
+        
+
+        {/* Empty state */}
+        {!result && !loading && !error && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center mb-4">
+              <Globe className="w-8 h-8 text-[#2BEE34] opacity-60" />
+            </div>
+            <p className="text-sm text-[#A3A3A3] font-medium">Enter any website URL above</p>
+            <p className="text-xs text-[#6B6B6B] mt-1 max-w-xs">
+              Works best with articles, blog posts, and content-heavy pages. Gets a screenshot and runs 12-signal AI attestation.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

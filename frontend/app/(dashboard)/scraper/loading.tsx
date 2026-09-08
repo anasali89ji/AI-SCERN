@@ -1,6 +1,6 @@
 export default function ScraperLoading() {
   return (
-    <div className="min-h-screen bg-[#08080d] pb-24 lg:pb-8">
+    <div className="min-h-screen bg-[#141414] pb-24 lg:pb-8">
       <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-5 animate-pulse">
 
         {/* Header */}
@@ -11,7 +11,7 @@ export default function ScraperLoading() {
         </div>
 
         {/* Input card */}
-        <div className="bg-[#0f0f17] border border-white/[0.06] rounded-2xl p-4 sm:p-5">
+        <div className="bg-[#141414] border border-[#333333] rounded-xl p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 h-10 rounded-xl bg-white/[0.04]" />
             <div className="h-10 w-28 rounded-xl bg-white/[0.04]" />
@@ -23,7 +23,7 @@ export default function ScraperLoading() {
 
         {/* Empty state placeholder */}
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.03]" />
+          <div className="w-16 h-16 rounded-xl bg-white/[0.03]" />
           <div className="h-4 w-52 rounded-lg bg-white/[0.03]" />
           <div className="h-3 w-72 rounded-lg bg-white/[0.03]" />
         </div>

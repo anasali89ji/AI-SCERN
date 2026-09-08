@@ -183,6 +183,5 @@ export async function indexConfirmedScan(
 
     if (error) console.warn('[detection-rag] index failed:', error.message)
   } catch (err) {
-    console.warn('[detection-rag] indexConfirmedScan threw:', err)
   }
 }

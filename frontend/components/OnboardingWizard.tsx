@@ -1,409 +1,238 @@
-'use client';
-
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
-import Image from 'next/image';
+'use client'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '@/components/auth-provider'
+import { createClient } from '@/lib/supabase/client'
 import {
-  Sparkles, ArrowRight, SkipForward, LayoutDashboard, Image as ImageIcon,
-  FileText, Clock, Settings, CheckCircle2, X
-} from 'lucide-react';
-import { isFirstTimeUser } from '@/lib/onboarding/detect-first-run';
-import { completeOnboarding, skipOnboarding, updateOnboardingStep, getOnboardingState } from '@/lib/onboarding/store';
+  FileType2, Image, Mic, Video, Globe, ChevronRight,
+  X, Sparkles, User, Zap, Check
+} from 'lucide-react'
 
-const TOTAL_STEPS = 4;
+const STEPS = ['welcome','modalities','username','ready'] as const
+type Step = typeof STEPS[number]
 
-const USE_CASES = [
-  {
-    id: 'content-creator',
-    title: 'Content Creator',
-    description: 'I verify my content before publishing',
-    icon: '✍️',
-  },
-  {
-    id: 'educator',
-    title: 'Educator',
-    description: 'I check student work for AI-generated text',
-    icon: '🎓',
-  },
-  {
-    id: 'researcher',
-    title: 'Researcher',
-    description: 'I audit datasets and publications',
-    icon: '🔬',
-  },
-  {
-    id: 'developer',
-    title: 'Developer',
-    description: 'I integrate detection into my app',
-    icon: '💻',
-  },
-  {
-    id: 'enterprise',
-    title: 'Enterprise',
-    description: 'I need organization-wide content verification',
-    icon: '🏢',
-  },
-];
+const MODALITY_OPTIONS = [
+  { id:'text',  icon: FileType2, label:'Text',   sub:'Attest AI-written articles & essays' },
+  { id:'image', icon: Image,    label:'Image',  sub:'Spot AI-generated photos & art' },
+  { id:'audio', icon: Mic,      label:'Audio',  sub:'Identify synthetic voices' },
+  { id:'video', icon: Video,    label:'Video',  sub:'Find deepfakes in videos' },
+  { id:'url',   icon: Globe,    label:'Web',    sub:'Analyze entire websites for AI content' },
+]
 
-const TOUR_STEPS = [
-  {
-    target: '[data-tour="overview"]',
-    title: 'Overview',
-    description: 'Your command center. See all activity at a glance.',
-  },
-  {
-    target: '[data-tour="image"]',
-    title: 'Image Detection',
-    description: 'Upload or paste an image to detect AI generation.',
-  },
-  {
-    target: '[data-tour="history"]',
-    title: 'History',
-    description: "Every scan you've ever run lives here.",
-  },
-  {
-    target: '[data-tour="settings"]',
-    title: 'Settings',
-    description: 'Manage your API keys, integrations, and preferences.',
-  },
-];
-
-interface OnboardingWizardProps {
-  onComplete?: () => void;
-  onSkip?: () => void;
-}
-
-export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [selectedUseCase, setSelectedUseCase] = useState<string | null>(null);
-  const [tourIndex, setTourIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const { user, isLoaded } = useUser();
-  const router = useRouter();
+export function OnboardingWizard() {
+  const { user }       = useAuth()
+  const [show, setShow]         = useState(false)
+  const [step, setStep]         = useState<Step>('welcome')
+  const [selected, setSelected] = useState<string[]>([])
+  const [username, setUsername] = useState('')
+  const [uStatus, setUStatus]   = useState<'idle'|'checking'|'available'|'taken'>('idle')
+  const [suggestions, setSugg]  = useState<string[]>([])
+  const [saving, setSaving]     = useState(false)
+  const [debounce, setDebounce] = useState<NodeJS.Timeout|null>(null)
 
   useEffect(() => {
-    if (!isLoaded || checked) return;
-    if (!user?.id) { setChecked(true); return; }
+    if (!user) return
+    const db = createClient()
+    db.from('profiles').select('onboarding_completed').eq('id', user.uid).single()
+      .then(({ data }) => { if (data && !(data as any).onboarding_completed) setShow(true) })
+  }, [user])
 
-    let cancelled = false;
-    (async () => {
-      const state = await getOnboardingState(user.id);
-      if (cancelled) return;
+  const checkUsername = (val: string) => {
+    setUsername(val)
+    if (debounce) clearTimeout(debounce)
+    if (!val || val.length < 3) { setUStatus('idle'); return }
+    setUStatus('checking')
+    const t = setTimeout(async () => {
+      const res  = await fetch(`/api/profiles/username?username=${encodeURIComponent(val)}`)
+      const data = await res.json()
+      setUStatus(data.available ? 'available' : 'taken')
+      setSugg(data.suggestions || [])
+    }, 400)
+    setDebounce(t)
+  }
 
-      // Already completed or explicitly skipped before — never show again.
-      if (state?.has_completed_onboarding || state?.onboarding_skipped_at) {
-        setIsVisible(false);
-      } else if (state === null) {
-        // Couldn't load a profile row (e.g. new user, race with profile creation, or
-        // a transient error). Fall back to the createdAt/lastSignInAt heuristic instead
-        // of showing on every visit.
-        setIsVisible(isFirstTimeUser(user));
-      } else {
-        // Resume from wherever they left off, if that was persisted.
-        if (state.onboarding_step_reached && state.onboarding_step_reached > 1) {
-          setCurrentStep(state.onboarding_step_reached);
-        }
-        if (state.onboarding_use_case) {
-          setSelectedUseCase(state.onboarding_use_case);
-        }
-        setIsVisible(true);
-      }
-      setChecked(true);
-    })();
+  const next = () => {
+    const idx = STEPS.indexOf(step)
+    if (idx < STEPS.length - 1) setStep(STEPS[idx + 1])
+  }
 
-    return () => { cancelled = true };
-  }, [isLoaded, user, checked]);
+  const finish = async () => {
+    if (!user) return
+    setSaving(true)
+    const update: Record<string,any> = { onboarding_completed: true, preferred_modalities: selected }
+    if (username && uStatus === 'available') update.username = username
+    await fetch('/api/profiles/update', {
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(update)
+    }).catch(() => {})
+    setSaving(false)
+    setShow(false)
+  }
 
-  const handleNext = useCallback(async () => {
-   if (currentStep < TOTAL_STEPS) {
-      if (user?.id) {
-        try {
-          await updateOnboardingStep(user.id, currentStep + 1, selectedUseCase || undefined);
-        } catch (err) {
-          console.error('Failed to persist onboarding step (continuing anyway):', err);
-        }
-      }
-      setCurrentStep((s) => s + 1);
-    } else {
-      // Final step — complete onboarding
-      if (user?.id) {
-        try {
-          await completeOnboarding(user.id, selectedUseCase || undefined);
-        } catch (err) {
-          console.error('Failed to persist onboarding completion (continuing anyway):', err);
-        }
-      }
-      setIsVisible(false);
-      onComplete?.();
-      // Navigate to first scan
-      router.push('/detect/text');
-    }
-  }, [currentStep, user, selectedUseCase, onComplete, router]);
+  if (!show) return null
 
-  const handleSkip = useCallback(async () => {
-    if (user?.id) {
-      try {
-        await skipOnboarding(user.id);
-      } catch (err) {
-        console.error('Failed to persist onboarding skip (continuing anyway):', err);
-      }
-    }
-    setIsVisible(false);
-    onSkip?.();
-  }, [user, onSkip]);
-
-  const handleTourNext = useCallback(() => {
-    if (tourIndex < TOUR_STEPS.length - 1) {
-      setTourIndex((i) => i + 1);
-    } else {
-      handleNext();
-    }
-  }, [tourIndex, handleNext]);
-
-  if (!isVisible) return null;
+  const stepIdx = STEPS.indexOf(step)
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="relative w-full max-w-sm bg-[#0d0d18] border border-[#1e1e35] rounded-3xl overflow-hidden"
         >
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-neutral-950/90 backdrop-blur-sm" onClick={handleSkip} />
+          {/* Top gradient */}
+          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background:`linear-gradient(90deg,#2563eb,#2563eb)` }} />
 
-          {/* Modal Card */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="relative z-10 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-10"
-          >
-            {/* Progress Bar */}
-            <div className="w-full bg-neutral-800 rounded-full h-1.5 mb-8">
-              <motion.div
-                className="bg-primary h-1.5 rounded-full"
-                initial={false}
-                animate={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-            <p className="text-neutral-500 text-xs text-center mb-6">
-              Step {currentStep} of {TOTAL_STEPS}
-            </p>
-
-            {/* Step Content */}
-            {currentStep === 1 && (
-              <StepWelcome onNext={handleNext} onSkip={handleSkip} />
-            )}
-            {currentStep === 2 && (
-              <StepUseCase
-                selected={selectedUseCase}
-                onSelect={setSelectedUseCase}
-                onNext={handleNext}
-                onSkip={handleSkip}
-              />
-            )}
-            {currentStep === 3 && (
-              <StepTour
-                step={TOUR_STEPS[tourIndex]}
-                tourIndex={tourIndex}
-                totalTourSteps={TOUR_STEPS.length}
-                onNext={handleTourNext}
-                onSkip={handleSkip}
-              />
-            )}
-            {currentStep === 4 && (
-              <StepFirstScan onComplete={handleNext} onSkip={handleSkip} />
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-// ── Step 1: Welcome ──────────────────────────────────────────────────────────
-function StepWelcome({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  return (
-    <div className="text-center">
-      <div className="flex justify-center mb-6">
-        <div className="relative">
-          <Image src="/logo.png" alt="Aiscern" width={64} height={64} className="animate-pulse" />
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl" />
-        </div>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Welcome to Aiscern</h2>
-      <p className="text-neutral-400 mb-8">AI-powered detection for the modern web.</p>
-      <button
-        onClick={onNext}
-        className="w-full bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl h-11 shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-      >
-        Get Started <ArrowRight className="w-4 h-4" />
-      </button>
-      <button
-        onClick={onSkip}
-        className="mt-4 text-sm text-neutral-500 hover:text-neutral-300 transition-colors"
-      >
-        Skip for now
-      </button>
-    </div>
-  );
-}
-
-// ── Step 2: Use Case Selection ───────────────────────────────────────────────
-function StepUseCase({
-  selected,
-  onSelect,
-  onNext,
-  onSkip,
-}: {
-  selected: string | null;
-  onSelect: (id: string) => void;
-  onNext: () => void;
-  onSkip: () => void;
-}) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-white text-center mb-2">What brings you here?</h2>
-      <p className="text-neutral-400 text-sm text-center mb-6">Select one to personalize your experience.</p>
-      <div className="grid grid-cols-1 gap-3 mb-6">
-        {USE_CASES.map((useCase) => (
-          <button
-            key={useCase.id}
-            onClick={() => onSelect(useCase.id)}
-            className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all text-left
-              ${selected === useCase.id
-                ? 'ring-2 ring-primary bg-primary/10 border-primary'
-                : 'bg-neutral-800/50 border-neutral-700 hover:bg-neutral-800'
-              }`}
-          >
-            <span className="text-2xl">{useCase.icon}</span>
-            <div>
-              <p className="text-white font-medium text-sm">{useCase.title}</p>
-              <p className="text-neutral-400 text-xs">{useCase.description}</p>
-            </div>
-            {selected === useCase.id && (
-              <CheckCircle2 className="w-5 h-5 text-primary ml-auto flex-shrink-0" />
-            )}
-          </button>
-        ))}
-      </div>
-      <div className="flex items-center justify-between">
-        <button onClick={onSkip} className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors">
-          Skip
-        </button>
-        <button
-          onClick={onNext}
-          disabled={!selected}
-          className="bg-primary hover:bg-primary/90 disabled:bg-neutral-700 disabled:text-neutral-500 text-white font-semibold rounded-xl h-10 px-6 transition-all active:scale-[0.98]"
-        >
-          Continue
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 3: Interactive Tool Tour ────────────────────────────────────────────
-function StepTour({
-  step,
-  tourIndex,
-  totalTourSteps,
-  onNext,
-  onSkip,
-}: {
-  step: { target: string; title: string; description: string };
-  tourIndex: number;
-  totalTourSteps: number;
-  onNext: () => void;
-  onSkip: () => void;
-}) {
-  const [rect, setRect] = useState<DOMRect | null>(null);
-
-  useEffect(() => {
-    const el = document.querySelector(step.target);
-    if (el) {
-      setRect(el.getBoundingClientRect());
-    }
-  }, [step.target]);
-
-  return (
-    <>
-      {/* Spotlight overlay with cutout */}
-      {rect && (
-        <div className="fixed inset-0 z-40 pointer-events-none">
-          <div
-            className="absolute inset-0 bg-neutral-950/80"
-            style={{
-              clipPath: `polygon(
-                0% 0%, 0% 100%, ${rect.left}px 100%, ${rect.left}px ${rect.top}px,
-                ${rect.right}px ${rect.top}px, ${rect.right}px ${rect.bottom}px,
-                ${rect.left}px ${rect.bottom}px, ${rect.left}px 100%,
-                100% 100%, 100% 0%
-              )`,
-            }}
-          />
-        </div>
-      )}
-
-      {/* Tooltip */}
-      <div className="relative z-50">
-        <h2 className="text-xl font-bold text-white text-center mb-2">Quick Tour</h2>
-        <div className="bg-neutral-800/80 border border-neutral-700 rounded-xl p-4 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-primary bg-primary/15 px-2 py-0.5 rounded-full">
-              {tourIndex + 1} / {totalTourSteps}
-            </span>
+          {/* Progress dots */}
+          <div className="flex justify-center gap-2 mb-8">
+            {STEPS.map((s,i) => (
+              <div key={s} className={`h-1.5 rounded-full transition-all duration-200 ${i <= stepIdx ? 'bg-[#2563eb] w-8' : 'bg-[#1e1e35] w-4'}`} />
+            ))}
           </div>
-          <p className="text-white font-semibold">{step.title}</p>
-          <p className="text-neutral-400 text-sm mt-1">{step.description}</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <button onClick={onSkip} className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors">
-            Skip Tour
-          </button>
-          <button
-            onClick={onNext}
-            className="bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl h-10 px-6 transition-all active:scale-[0.98]"
-          >
-            {tourIndex === totalTourSteps - 1 ? 'Finish Tour' : 'Next'}
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
 
-// ── Step 4: First Scan Guidance ──────────────────────────────────────────────
-function StepFirstScan({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
-  return (
-    <div className="text-center">
-      <div className="flex justify-center mb-4">
-        <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+          {/* STEP: welcome */}
+          {step === 'welcome' && (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-xl mx-auto flex items-center justify-center mb-4" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
+              <p className="text-[#64748b] text-sm leading-relaxed">
+                The most accurate AI content attestation platform. Let's get you set up in 30 seconds.
+              </p>
+              <div className="grid grid-cols-3 gap-3 mt-6">
+                {[['Accurate','Multi-model ensemble'],['Fast','Results in seconds'],['Private','Files never stored']].map(([h,s]) => (
+                  <div key={h} className="bg-[#ffffff05] border border-[#1e1e35] rounded-xl p-3 text-center">
+                    <p className="text-xs font-bold text-white">{h}</p>
+                    <p className="text-[10px] text-[#4a5568] mt-0.5">{s}</p>
+                  </div>
+                ))}
+              </div>
+              <button onClick={next} className="w-full mt-4 py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                Get Started <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* STEP: modalities */}
+          {step === 'modalities' && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <h2 className="text-xl font-black text-white">What will you attest?</h2>
+                <p className="text-[#4a5568] text-xs mt-1">Select all that apply — you can use all of them anytime</p>
+              </div>
+              <div className="space-y-2">
+                {MODALITY_OPTIONS.map(m => {
+                  const Icon = m.icon
+                  const active = selected.includes(m.id)
+                  return (
+                    <button key={m.id}
+                      onClick={() => setSelected(s => s.includes(m.id) ? s.filter(x => x !== m.id) : [...s, m.id])}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? 'border-[#2563eb50] bg-[#2563eb12]' : 'border-[#1e1e35] bg-[#ffffff03] hover:border-[#2a2a45]'}`}
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[#2563eb30]' : 'bg-[#ffffff08]'}`}>
+                        <Icon className={`w-4 h-4 ${active ? 'text-[#60a5fa]' : 'text-[#4a5568]'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-[#94a3b8]'}`}>{m.label}</p>
+                        <p className="text-[11px] text-[#4a5568]">{m.sub}</p>
+                      </div>
+                      {active && <Check className="w-4 h-4 text-[#60a5fa] flex-shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+              <button onClick={next} className="w-full py-3.5 rounded-xl font-bold text-sm text-white" style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                Continue <ChevronRight className="w-4 h-4 inline ml-1" />
+              </button>
+            </div>
+          )}
+
+          {/* STEP: username */}
+          {step === 'username' && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center mb-3 bg-[#ffffff08] border border-[#1e1e35]">
+                  <User className="w-5 h-5 text-[#60a5fa]" />
+                </div>
+                <h2 className="text-xl font-black text-white">Choose a username</h2>
+                <p className="text-[#4a5568] text-xs mt-1">This is optional — you can set it later in your profile</p>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">@</span>
+                <input
+                  value={username}
+                  onChange={e => checkUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
+                  placeholder="yourname"
+                  maxLength={30}
+                  className="w-full bg-[#0d0d18] border border-[#1e1e35] rounded-xl pl-8 pr-10 py-3 text-[16px] sm:text-sm text-white placeholder:text-[#2a2a45] focus:outline-none focus:border-[#2563eb] transition-colors"
+                />
+                {uStatus === 'checking'  && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#1e1e35] border-t-[#2563eb] animate-spin" />}
+                {uStatus === 'available' && <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2BEE34]" />}
+                {uStatus === 'taken'     && <X     className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FF4444]" />}
+              </div>
+              {uStatus === 'available' && <p className="text-xs text-[#2BEE34]">@{username} is available!</p>}
+              {uStatus === 'taken' && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-[#FF4444]">@{username} is taken. Try one of these:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map(s => (
+                      <button key={s} onClick={() => { setUsername(s); setUStatus('available') }}
+                        className="px-3 py-1 rounded-lg border border-[#2563eb30] bg-[#2563eb12] text-[#60a5fa] text-xs hover:bg-[#2563eb20]">
+                        @{s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={next} className="flex-1 py-3 rounded-xl border border-[#1e1e35] text-xs text-[#64748b] hover:text-white font-semibold">
+                  Skip for now
+                </button>
+                <button onClick={next} disabled={uStatus === 'checking'}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-white disabled:opacity-50"
+                  style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP: ready */}
+          {step === 'ready' && (
+            <div className="text-center space-y-5">
+              <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 bg-[#2BEE34]/10 border border-[#2BEE34]/20">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-white">You're all set!</h2>
+              <p className="text-[#64748b] text-sm leading-relaxed">
+                Your account is ready. Start with a free examination — no upload required for text attestation.
+              </p>
+              <div className="text-left space-y-2">
+                {[
+                  ['10 scans/day', 'on your free plan'],
+                  ['3 audio + 3 video', 'free trial credits'],
+                  ['All results saved', 'in your history'],
+                ].map(([h,s]) => (
+                  <div key={h} className="flex items-center gap-3 p-3 bg-[#ffffff04] border border-[#1e1e35] rounded-xl">
+                    <Check className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
+                    <div>
+                      <span className="text-xs font-semibold text-white">{h} </span>
+                      <span className="text-xs text-[#4a5568]">{s}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={finish} disabled={saving}
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white disabled:opacity-70 transition-all"
+                style={{ background:'linear-gradient(135deg,#2563eb,#2563eb)' }}>
+                {saving ? 'Setting up…' : 'Go to Dashboard →'}
+              </button>
+            </div>
+          )}
+        </motion.div>
       </div>
-      <h2 className="text-xl font-bold text-white mb-2">You're all set!</h2>
-      <p className="text-neutral-400 text-sm mb-6">
-        Let's run your first detection. We'll take you to the text scanner and pre-fill a sample.
-      </p>
-      <button
-        onClick={onComplete}
-        className="w-full bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl h-11 shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-      >
-        Start First Scan <ArrowRight className="w-4 h-4" />
-      </button>
-      <button
-        onClick={onSkip}
-        className="mt-4 text-sm text-neutral-500 hover:text-neutral-300 transition-colors"
-      >
-        I'll explore on my own
-      </button>
-    </div>
-  );
+    </AnimatePresence>
+  )
 }

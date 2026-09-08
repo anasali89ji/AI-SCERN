@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Zap, Shield, CheckCircle, ArrowRight } from 'lucide-react'
+import { Zap, Shield, CircleCheck, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
 const SCAN_LIMIT = 3
@@ -37,9 +37,9 @@ export function incrementGlobalScanCount(): number {
 }
 
 const PERKS = [
-  'Save your scan history',
-  'Unlimited detections — always free',
-  'Batch scan multiple files',
+  'Save your attestation history',
+  'Unlimited attestations — always free',
+  'Bulk attest multiple files',
   'Access AI Chat assistant',
 ]
 
@@ -76,13 +76,11 @@ export function SignupGate() {
         <div className="absolute inset-0 bg-black/85" />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', damping: 20 }}
-          className="relative w-full max-w-md bg-surface border border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 overflow-hidden"
-        >
+          className="relative w-full max-w-sm bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
           {/* Top gradient bar */}
-          <div className="h-1 w-full bg-gradient-to-r from-primary via-orange-400 to-amber-400" />
+          <div className="h-1 w-full bg-[#2BEE34]" />
 
           <div className="p-8 space-y-6">
             {/* Logo + heading */}
@@ -92,21 +90,21 @@ export function SignupGate() {
                 alt="Aiscern"
                 width={72}
                 height={50}
-                className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(245,100,0,0.5)]"
+                className="mx-auto object-contain drop-shadow-[0_0_16px_rgba(43,238,52,0.5)]"
               />
-              <h2 className="text-2xl font-black text-text-primary">
+              <h2 className="text-2xl font-black text-slate-100">
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
               </h2>
-              <p className="text-text-muted text-sm leading-relaxed">
-                Create your free account to keep detecting — no credit card, no limits, no cost. Ever.
+              <p className="text-slate-500 text-sm leading-relaxed">
+                Create your free account to keep attesting — no credit card, no limits, no cost. Ever.
               </p>
             </div>
 
             {/* Perks */}
-            <ul className="space-y-2.5 bg-surface-active rounded-xl p-4">
+            <ul className="space-y-2.5 bg-[#1A1A1A] rounded-xl p-4">
               {PERKS.map(p => (
-                <li key={p} className="flex items-center gap-2.5 text-sm text-text-secondary">
-                  <CheckCircle className="w-4 h-4 text-emerald flex-shrink-0" />
+                <li key={p} className="flex items-center gap-2.5 text-sm text-slate-400">
+                  <CircleCheck className="w-4 h-4 text-[#2BEE34] flex-shrink-0" />
                   {p}
                 </li>
               ))}
@@ -114,17 +112,17 @@ export function SignupGate() {
 
             {/* CTA buttons */}
             <div className="space-y-3">
-              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all">
+              <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#2BEE34] text-[#0A0A0A] font-bold text-sm hover:bg-[#1A8F1F] transition-all">
                 <Zap className="w-4 h-4" />
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-text-secondary text-sm font-semibold hover:bg-surface-hover transition-all">
+              <Link href="/login" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] text-slate-400 text-sm font-semibold hover:bg-[#1A1A1A] transition-all">
                 Already have an account? Sign In
               </Link>
             </div>
 
-            <p className="text-center text-xs text-text-disabled">
+            <p className="text-center text-xs text-slate-600">
               <Shield className="w-3 h-3 inline mr-1" />
               Free tier available · No credit card · No spam
             </p>

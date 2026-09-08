@@ -1,11 +1,11 @@
 'use client'
 import Link from 'next/link'
-import { Check, X, Zap, Building2, Users, Info } from 'lucide-react'
+import { Check, Building2, Users, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { SiteFooter } from '@/components/site-footer'
-import { useAuth } from '@/components/auth-provider'
 import { SiteNav } from '@/components/SiteNav'
-import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { cn } from '@/lib/cn'
 
 const TIERS = [
   {
@@ -14,11 +14,9 @@ const TIERS = [
     yearlyPrice: 0,
     label: null,
     description: 'Get started instantly — no credit card required.',
-    color: 'border-border',
     highlight: false,
     cta: 'Start Free',
     ctaHref: '/signup',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 10,
       fileSizeMB: 10,
@@ -34,12 +32,10 @@ const TIERS = [
     monthlyPrice: 12,
     yearlyPrice: 8,
     label: 'Most Popular',
-    description: 'For individuals who need full detection power.',
-    color: 'border-primary/60',
+    description: 'For individuals who need full attestation power.',
     highlight: true,
     cta: 'Upgrade to Pro',
     ctaHref: '/signup?plan=pro',
-    ctaStyle: 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/25',
     limits: {
       scansPerDay: 100,
       fileSizeMB: 50,
@@ -56,11 +52,9 @@ const TIERS = [
     yearlyPrice: 35,
     label: null,
     description: 'Shared workspace for teams. API included.',
-    color: 'border-border',
     highlight: false,
     cta: 'Start Team Trial',
     ctaHref: '/signup?plan=team',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 500,
       fileSizeMB: 100,
@@ -77,11 +71,9 @@ const TIERS = [
     yearlyPrice: null,
     label: null,
     description: 'Custom limits, SLA, DPA, and dedicated support.',
-    color: 'border-border',
     highlight: false,
     cta: 'Contact Sales',
     ctaHref: 'mailto:sales@aiscern.com',
-    ctaStyle: 'border border-border text-text-secondary hover:border-primary/50 hover:text-text-primary',
     limits: {
       scansPerDay: 'Unlimited',
       fileSizeMB: 500,
@@ -95,215 +87,319 @@ const TIERS = [
 ]
 
 const FEATURE_ROWS = [
-  { label: 'Scans per day',             key: 'scansPerDay',  tooltip: 'Resets at midnight UTC' },
-  { label: 'Max file size',             key: 'fileSizeMB',   format: (v: number | string) => typeof v === 'number' ? `${v} MB` : String(v) },
-  { label: 'Scan history',              key: 'historyDays',  format: (v: number | string) => typeof v === 'number' ? `${v} days` : String(v) },
-  { label: 'API calls / month',         key: 'apiCalls',     format: (v: number | string) => v === 0 ? '—' : String(v) },
-  { label: 'Batch scan size',           key: 'batchSize',    format: (v: number | string | null) => !v ? '—' : `${v} files` },
-  { label: 'Support',                   key: 'support' },
+  { label: 'Scans per day',       key: 'scansPerDay' },
+  { label: 'Max file size',       key: 'fileSizeMB',   format: (v: any) => typeof v === 'number' ? `${v} MB` : String(v) },
+  { label: 'Attestation history', key: 'historyDays',  format: (v: any) => typeof v === 'number' ? `${v} days` : String(v) },
+  { label: 'API calls / month',   key: 'apiCalls',     format: (v: any) => v === 0 ? '—' : String(v) },
+  { label: 'Modalities',          key: 'modalities',   format: (v: any) => Array.isArray(v) ? v.join(', ') : String(v) },
+  { label: 'Batch size',          key: 'batchSize',    format: (v: any) => v == null ? '—' : `${v} files` },
+  { label: 'Support',             key: 'support' },
 ]
 
-const BINARY_FEATURES = [
-  { label: 'Text detection',                      free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'Image detection',                     free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'Audio detection',                     free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Video / deepfake detection',          free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Web scraper / URL scanner',           free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'ARIA AI chat assistant',              free: true,  pro: true,  team: true,  enterprise: true  },
-  { label: 'PDF report export',                   free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'API access',                          free: false, pro: true,  team: true,  enterprise: true  },
-  { label: 'Shared team workspace',               free: false, pro: false, team: true,  enterprise: true  },
-  { label: 'SSO / SAML',                         free: false, pro: false, team: false, enterprise: true  },
-  { label: 'Custom retention policy',             free: false, pro: false, team: false, enterprise: true  },
-  { label: 'DPA / GDPR documentation',           free: false, pro: false, team: true,  enterprise: true  },
-  { label: 'SLA (99.9% uptime guarantee)',        free: false, pro: false, team: false, enterprise: true  },
-  { label: 'Dedicated onboarding',               free: false, pro: false, team: false, enterprise: true  },
+const FAQ = [
+  { q: 'Is the free tier permanent?',      a: 'Yes. We believe access to basic AI attestation should not require a subscription. The free tier is permanent.' },
+  { q: 'Do you store my content?',         a: "Files are processed and immediately deleted. We do not store your text or media files for analysis purposes. Attestation metadata is retained per your plan's history limit." },
+  { q: 'Can I cancel anytime?',            a: 'Yes. Monthly plans cancel anytime. You keep Pro access until the end of your billing period with no hidden fees.' },
+  { q: 'What payment methods do you accept?', a: 'We accept all major credit and debit cards. Invoiced billing available on Team and Enterprise plans.' },
+  { q: 'Is there a student or educator discount?', a: 'Yes. Contact us at edu@aiscern.com with your institutional email and intended use for 50% off any plan.' },
 ]
 
-export default function PricingPage() {
-  const { user } = useAuth()
-  const [yearly, setYearly] = useState(false)
-
+function PriceTag({ tier, yearly }: { tier: typeof TIERS[number]; yearly: boolean }) {
+  if (tier.monthlyPrice === null) {
+    return <div className="text-3xl font-bold text-silver-900">Custom</div>
+  }
+  const price = yearly ? tier.yearlyPrice : tier.monthlyPrice
   return (
-    <>
-      <SiteNav />
-      <main className="mx-auto max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 2xl:py-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4"><Breadcrumbs /></div>
-
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-black text-text-primary mb-3">Simple, transparent pricing</h1>
-          <p className="text-text-muted max-w-xl mx-auto mb-6">Start free — no credit card required. Upgrade when you need more scans, modalities, or API access.</p>
-
-          {/* Billing toggle */}
-          <div className="inline-flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-2">
-            <button onClick={() => setYearly(false)} className={`text-sm font-semibold transition-colors ${!yearly ? 'text-text-primary' : 'text-text-muted'}`}>Monthly</button>
-            <button
-              onClick={() => setYearly(v => !v)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${yearly ? 'bg-primary' : 'bg-border'}`}
-              aria-label="Toggle yearly billing"
-            >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${yearly ? 'translate-x-5' : ''}`} />
-            </button>
-            <button onClick={() => setYearly(true)} className={`text-sm font-semibold transition-colors ${yearly ? 'text-text-primary' : 'text-text-muted'}`}>
-              Yearly <span className="text-emerald text-xs ml-1">Save 33%</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Tier cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
-          {TIERS.map(tier => (
-            <div key={tier.name} className={`relative rounded-2xl border ${tier.color} ${tier.highlight ? 'bg-primary/5' : 'bg-surface'} p-6 flex flex-col`}>
-              {tier.label && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-white text-xs font-bold whitespace-nowrap">{tier.label}</div>
-              )}
-              <div className="mb-4">
-                <h2 className="font-black text-text-primary text-lg">{tier.name}</h2>
-                <p className="text-text-muted text-xs mt-1">{tier.description}</p>
-              </div>
-              <div className="mb-6">
-                {tier.monthlyPrice === null ? (
-                  <p className="text-2xl font-black text-text-primary">Custom</p>
-                ) : (
-                  <div className="flex items-end gap-1">
-                    <span className="text-3xl font-black text-text-primary">${yearly ? tier.yearlyPrice : tier.monthlyPrice}</span>
-                    <span className="text-text-muted text-sm mb-1">/mo</span>
-                  </div>
-                )}
-                {yearly && tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
-                  <p className="text-xs text-emerald mt-1">Billed ${(tier.yearlyPrice! * 12)} / year</p>
-                )}
-              </div>
-
-              {/* Key limits */}
-              <div className="space-y-2 mb-6 flex-1">
-                <LimitRow label="Scans/day" value={String(tier.limits.scansPerDay)} />
-                <LimitRow label="File size" value={typeof tier.limits.fileSizeMB === 'number' ? `${tier.limits.fileSizeMB} MB` : String(tier.limits.fileSizeMB)} />
-                <LimitRow label="History" value={typeof tier.limits.historyDays === 'number' ? `${tier.limits.historyDays} days` : String(tier.limits.historyDays)} />
-                <LimitRow label="API calls/mo" value={tier.limits.apiCalls === 0 ? '—' : String(tier.limits.apiCalls)} />
-                <LimitRow label="Modalities" value={tier.limits.modalities.length === 2 ? 'Text + Image' : 'All 4'} />
-              </div>
-
-              <Link href={user && tier.name === 'Free' ? '/dashboard' : tier.ctaHref}
-                className={`block text-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${tier.ctaStyle}`}>
-                {user && tier.name === 'Free' ? 'Go to Dashboard' : tier.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
-
-        {/* Full comparison table */}
-        <div className="mb-16">
-          <h2 className="text-xl font-bold text-text-primary mb-6 text-center">Full Feature Comparison</h2>
-          <div className="overflow-x-auto rounded-2xl border border-border">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr className="border-b border-border bg-muted/40">
-                  <th className="px-4 py-3 text-left text-text-muted font-semibold text-xs uppercase tracking-wide w-48">Feature</th>
-                  {TIERS.map(t => (
-                    <th key={t.name} className={`px-4 py-3 text-center font-bold text-xs uppercase tracking-wide ${t.highlight ? 'text-primary' : 'text-text-muted'}`}>{t.name}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {/* Limit rows */}
-                {FEATURE_ROWS.map(row => (
-                  <tr key={row.key} className="border-b border-border/50 hover:bg-muted/20">
-                    <td className="px-4 py-3 text-text-secondary flex items-center gap-1.5">
-                      {row.label}
-                      {row.tooltip && <span title={row.tooltip} className="text-text-muted cursor-help"><Info className="w-3 h-3" /></span>}
-                    </td>
-                    {TIERS.map(tier => {
-                      const raw = tier.limits[row.key as keyof typeof tier.limits]
-                      const display = row.format ? row.format(raw as never) : String(raw)
-                      return (
-                        <td key={tier.name} className={`px-4 py-3 text-center tabular-nums ${tier.highlight ? 'text-primary font-semibold' : 'text-text-secondary'}`}>
-                          {display}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-                {/* Binary feature rows */}
-                {BINARY_FEATURES.map(feat => (
-                  <tr key={feat.label} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-3 text-text-secondary">{feat.label}</td>
-                    {(['free', 'pro', 'team', 'enterprise'] as const).map(plan => (
-                      <td key={plan} className="px-4 py-3 text-center">
-                        {feat[plan]
-                          ? <Check className="w-4 h-4 text-emerald mx-auto" />
-                          : <X className="w-4 h-4 text-text-disabled mx-auto" />
-                        }
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Rate limits note */}
-        <div className="rounded-xl border border-border bg-surface p-6 mb-12">
-          <h3 className="font-bold text-text-primary mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-amber" />API Rate Limits</h3>
-          <div className="grid sm:grid-cols-3 gap-4 text-sm text-text-secondary">
-            <div>
-              <p className="font-semibold text-text-primary mb-1">Pro</p>
-              <ul className="space-y-1">
-                <li>10 requests / minute</li>
-                <li>500 requests / month</li>
-                <li>Max payload: 50 MB</li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary mb-1">Team</p>
-              <ul className="space-y-1">
-                <li>60 requests / minute</li>
-                <li>5,000 requests / month</li>
-                <li>Max payload: 100 MB</li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary mb-1">Enterprise</p>
-              <ul className="space-y-1">
-                <li>Custom rate limits</li>
-                <li>Unlimited requests</li>
-                <li>Max payload: 500 MB</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Enterprise CTA */}
-        <div className="rounded-2xl border border-border bg-surface p-8 text-center">
-          <Building2 className="w-8 h-8 text-primary mx-auto mb-3" />
-          <h3 className="text-xl font-bold text-text-primary mb-2">Need Enterprise?</h3>
-          <p className="text-text-muted text-sm mb-4 max-w-md mx-auto">
-            Custom scan limits, SSO/SAML, dedicated onboarding, SLA, GDPR DPA, and volume pricing.
-            For HR, legal, journalism, and government organisations.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a href="mailto:sales@aiscern.com" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors">
-              <Users className="w-4 h-4" /> Contact Sales
-            </a>
-            <Link href="/dpa" className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:border-primary/40 transition-colors">
-              View DPA
-            </Link>
-          </div>
-        </div>
-
-      </main>
-      <SiteFooter />
-    </>
+    <div className="flex items-end gap-1 h-9 overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={price}
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -16, opacity: 0 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="text-3xl font-bold text-silver-900"
+        >
+          ${price}
+        </motion.span>
+      </AnimatePresence>
+      {(tier.monthlyPrice ?? 0) > 0 && <span className="text-silver-600 text-sm mb-1">/ mo</span>}
+    </div>
   )
 }
 
-function LimitRow({ label, value }: { label: string; value: string }) {
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-text-muted">{label}</span>
-      <span className="font-semibold text-text-primary">{value}</span>
+    <div className="border-b border-white/[0.06]">
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-4 py-5 text-left focus-visible:ring-2 focus-visible:ring-accent/50 rounded-lg"
+      >
+        <span className="font-medium text-silver-900">{q}</span>
+        <ChevronDown className={cn('w-4 h-4 text-silver-600 shrink-0 transition-transform duration-200', open && 'rotate-180')} aria-hidden="true" />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <p className="text-sm text-silver-600 leading-relaxed pb-5">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+export default function PricingPage() {
+  const [yearly, setYearly] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-surface text-silver-700">
+      <SiteNav />
+      <main id="main-content" className="pt-24 pb-14 sm:pb-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+
+          {/* Header */}
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
+              Transparent Pricing
+            </p>
+            <h1 className="text-headline sm:text-display text-silver-900 mb-3 sm:mb-4">
+              Simple, honest pricing
+            </h1>
+            <p className="text-lead text-silver-600 max-w-xl mx-auto">
+              Start free, upgrade when you need more. No hidden fees, no vendor lock-in.
+            </p>
+
+            {/* Toggle — sliding pill switch */}
+            <div className="inline-flex items-center gap-3 mt-8">
+              <span className={cn('text-sm font-medium transition-colors duration-200', !yearly ? 'text-silver-900' : 'text-silver-600')}>
+                Monthly
+              </span>
+              <button
+                role="switch"
+                aria-checked={yearly}
+                aria-label="Toggle yearly billing"
+                onClick={() => setYearly(y => !y)}
+                className={cn(
+                  'relative w-12 h-6 rounded-full transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50',
+                  yearly ? 'bg-accent' : 'bg-surface-elevated border border-white/[0.12]',
+                )}
+              >
+                <motion.span
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow"
+                  animate={{ left: yearly ? '26px' : '2px' }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </button>
+              <span className={cn('text-sm font-medium transition-colors duration-200 flex items-center gap-2', yearly ? 'text-silver-900' : 'text-silver-600')}>
+                Yearly
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">
+                  -33%
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10 sm:mb-16">
+            {TIERS.map(tier => (
+              <div
+                key={tier.name}
+                className={cn(
+                  'relative rounded-xl border p-6 flex flex-col transition-all duration-200',
+                  tier.highlight
+                    ? 'border-accent/20 bg-accent/[0.04] shadow-glow'
+                    : 'border-white/[0.06] bg-surface hover:border-white/[0.12]',
+                )}
+              >
+                {tier.label && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2
+                                  px-3 py-1 rounded-full bg-accent text-depth-bg
+                                  text-xs font-bold whitespace-nowrap">
+                    {tier.label}
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold text-silver-900 mb-1">{tier.name}</h2>
+                  <p className="text-sm text-silver-600 leading-relaxed">{tier.description}</p>
+                </div>
+
+                <div className="mb-6">
+                  <PriceTag tier={tier} yearly={yearly} />
+                  {tier.monthlyPrice !== null && tier.monthlyPrice > 0 && yearly && (
+                    <p className="text-xs text-accent mt-1">Billed annually</p>
+                  )}
+                </div>
+
+                <Link
+                  href={tier.ctaHref}
+                  className={cn(
+                    'block text-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 mb-6 focus-visible:ring-2 focus-visible:ring-accent/50',
+                    tier.highlight
+                      ? 'bg-accent text-depth-bg hover:bg-accent-hover'
+                      : 'bg-surface-elevated border border-white/[0.08] text-silver-700 hover:border-accent hover:text-accent',
+                  )}
+                >
+                  {tier.cta}
+                </Link>
+
+                <ul className="space-y-2.5 flex-1">
+                  {FEATURE_ROWS.map(row => {
+                    const val = (tier.limits as any)[row.key]
+                    const display = row.format ? row.format(val) : String(val)
+                    return (
+                      <li key={row.key} className="flex items-start gap-2 text-sm">
+                        <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" strokeWidth={2.5} aria-hidden="true" />
+                        <span className="text-silver-600">
+                          <span className="text-silver-900 font-medium">{display}</span>{' '}
+                          {row.label.toLowerCase()}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Comparison table — sticky header */}
+          <div className="mb-10 sm:mb-16">
+            <h2 className="text-lg sm:text-xl font-semibold text-silver-900 mb-4 sm:mb-6 flex items-center gap-2">
+              <Users className="w-5 h-5 text-accent" aria-hidden="true" />
+              Full Feature Comparison
+            </h2>
+
+            {/* Mobile (<640px): one card per tier instead of a 5-column table
+                squeezed into ~330px — a horizontally-scrolled table with
+                Enterprise's column cropped at the edge is exactly the kind
+                of thing that reads as "not finished" on a phone. */}
+            <div className="sm:hidden space-y-3">
+              {TIERS.map(t => (
+                <div
+                  key={t.name}
+                  className={cn(
+                    'rounded-xl border p-4',
+                    t.highlight ? 'border-accent/25 bg-accent/[0.04]' : 'border-white/[0.06] bg-surface',
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={cn('text-sm font-semibold', t.highlight ? 'text-accent' : 'text-silver-900')}>
+                      {t.name}
+                    </span>
+                    {t.highlight && (
+                      <span className="text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 rounded-full px-2 py-0.5">
+                        Most Popular
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-2">
+                    {FEATURE_ROWS.map(row => {
+                      const val = (t.limits as any)[row.key]
+                      const display = row.format ? row.format(val) : String(val)
+                      return (
+                        <li key={row.key} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="text-silver-600">{row.label}</span>
+                          <span className={cn('font-medium tabular-nums text-right', t.highlight ? 'text-accent' : 'text-silver-800')}>
+                            {display}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet & up: table */}
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-white/[0.06] max-h-[420px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10">
+                  <tr className="border-b border-white/[0.06] bg-depth-bg">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-silver-600">
+                      Feature
+                    </th>
+                    {TIERS.map(t => (
+                      <th key={t.name} className={cn(
+                        'px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider',
+                        t.highlight ? 'text-accent' : 'text-silver-600',
+                      )}>
+                        {t.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {FEATURE_ROWS.map(row => (
+                    <tr key={row.key} className="border-b border-white/[0.06] last:border-0 hover:bg-surface-elevated transition-colors duration-150">
+                      <td className="px-4 py-3 text-silver-600">{row.label}</td>
+                      {TIERS.map(t => {
+                        const val = (t.limits as any)[row.key]
+                        const display = row.format ? row.format(val) : String(val)
+                        return (
+                          <td key={t.name} className={cn(
+                            'px-4 py-3 text-center tabular-nums',
+                            t.highlight ? 'text-accent font-medium' : 'text-silver-800',
+                          )}>
+                            {display}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Enterprise */}
+          <div className="mb-10 sm:mb-16 p-6 sm:p-8 rounded-xl border border-white/[0.06] bg-depth-bg flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surface-elevated border border-white/[0.08]">
+                <Building2 className="w-6 h-6 text-accent" aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-semibold text-silver-900 mb-1">Enterprise</h2>
+                <p className="text-sm text-silver-600">
+                  Custom limits, dedicated SLA, DPA, and a named account manager.
+                </p>
+              </div>
+            </div>
+            <a
+              href="mailto:sales@aiscern.com"
+              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg
+                         bg-accent hover:bg-accent-hover text-depth-bg font-semibold
+                         text-sm transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
+            >
+              Contact Sales
+            </a>
+          </div>
+
+          {/* FAQ — real accordion */}
+          <div>
+            <h2 className="text-xl font-semibold text-silver-900 mb-6">Frequently Asked Questions</h2>
+            <div className="rounded-xl border border-white/[0.06] bg-surface px-5">
+              {FAQ.map(item => <FAQItem key={item.q} q={item.q} a={item.a} />)}
+            </div>
+            <p className="mt-6 text-sm text-silver-600">
+              More questions?{' '}
+              <Link href="/faq" className="text-accent hover:underline">Visit the full FAQ</Link>
+              {' '}or{' '}
+              <a href="mailto:hello@aiscern.com" className="text-accent hover:underline">email us</a>.
+            </p>
+          </div>
+
+        </div>
+      </main>
+      <SiteFooter />
     </div>
   )
 }
