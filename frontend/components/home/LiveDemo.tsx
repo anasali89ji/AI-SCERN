@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Brain, LoaderCircle, CircleX, CheckCircle2, CircleHelp, ArrowRight,
+  LoaderCircle, CircleX, CheckCircle2, CircleHelp, ArrowRight, ScanSearch,
 } from 'lucide-react'
 import { formatConfidence } from '@/lib/utils/helpers'
 
@@ -19,16 +18,26 @@ const EXAMPLES = [
   { label: 'Human text', text: "I spent all weekend trying to fix my leaky faucet and honestly I have no idea what I'm doing. Watched like 6 YouTube videos and still made it worse. Water is now shooting sideways. My neighbor thinks it's hilarious. Calling a plumber tomorrow. RIP my bank account." },
 ]
 
+/**
+ * Live AI Detection Demo (§Plan 6.5)
+ *
+ * Product-honest messaging rules:
+ *  - Anonymous text detection IS supported by the API (5 scans/day per IP),
+ *    so "no account needed" is a true claim — kept, but qualified with the
+ *    daily limit instead of implying unlimited anonymous access.
+ *  - 401/402/429 all render as inline, human-readable states — the demo never
+ *    hijacks navigation with a hard redirect.
+ */
 export function LiveDemo() {
   const [text, setText]       = useState('')
   const [result, setResult]   = useState<DetectResult | null>(null)
+  const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(false)
   const [activeExample, setActiveExample] = useState<string | null>(null)
-  const router = useRouter()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Escape exits focus mode per Module 2.2.
+  // Escape exits focus mode.
   useEffect(() => {
     if (!focused) return
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') textareaRef.current?.blur() }
@@ -38,19 +47,43 @@ export function LiveDemo() {
 
   const analyze = async () => {
     if (text.length < 50) return
-    setLoading(true); setResult(null)
+    setLoading(true); setResult(null); setError(null)
     try {
       const res = await fetch('/api/detect/text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, user_id: null }),
+        body: JSON.stringify({ text }),
       })
-      if (res.status === 401) { router.push('/signup'); setLoading(false); return }
-      const d = await res.json()
-      if (d.success) setResult(d.result)
-      else setResult({ verdict: 'UNCERTAIN', summary: d.error?.message || 'Sign in for full results.' })
+
+      if (res.status === 429) {
+        setError('Rate limit reached. Please wait a minute and try again.')
+        setLoading(false)
+        return
+      }
+      if (res.status === 402) {
+        setError('Daily free limit reached. Create an account or sign in for more scans.')
+        setLoading(false)
+        return
+      }
+      if (res.status === 401) {
+        setError('Please sign in to continue analyzing.')
+        setLoading(false)
+        return
+      }
+      if (res.status >= 500) {
+        setError('The detection service is temporarily unavailable. Please try again shortly.')
+        setLoading(false)
+        return
+      }
+
+      const d = await res.json().catch(() => null)
+      if (d?.success) {
+        setResult(d.result)
+      } else {
+        setError(d?.error?.message || 'Analysis failed. Please try again.')
+      }
     } catch {
-      setResult({ verdict: 'UNCERTAIN', summary: 'Analysis unavailable. Sign in for full access.' })
+      setError('Network error — check your connection and try again.')
     }
     setLoading(false)
   }
@@ -75,14 +108,10 @@ export function LiveDemo() {
       )}
 
       <div className="relative z-[41] max-w-[520px] w-full mx-auto rounded-xl border border-white/[0.06] bg-surface-elevated shadow-lift overflow-hidden">
-        {/* Chrome */}
+        {/* Neutral product card header — no browser-chrome parody (§Plan 6.5) */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-surface">
-          <div className="flex gap-1.5" aria-hidden="true">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FF4444' }} />
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFB800' }} />
-            <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-          </div>
-          <span className="text-xs text-silver-600 ml-1">Live Attestation Engine</span>
+          <ScanSearch className="w-4 h-4 text-accent" aria-hidden="true" />
+          <span className="text-xs font-medium text-silver-700">Live AI Detection Demo</span>
           <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">
             Free
           </span>
@@ -106,13 +135,15 @@ export function LiveDemo() {
             ))}
           </div>
 
+          <label htmlFor="live-demo-input" className="sr-only">Text to analyze</label>
           <textarea
+            id="live-demo-input"
             ref={textareaRef}
             value={text}
             onChange={e => setText(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Paste text, upload an image, or drop a file..."
+            placeholder="Paste text to check whether it is AI-generated…"
             className="w-full min-h-[160px] bg-depth-bg border border-white/[0.08] rounded-lg
                        px-4 py-3 text-[16px] sm:text-sm text-silver-800 placeholder-silver-600
                        resize-none focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
@@ -120,8 +151,8 @@ export function LiveDemo() {
           />
 
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-silver-600">
-              {text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready ✓'}
+            <span className="text-xs text-silver-600" aria-live="polite">
+              {text.length} chars {text.length < 50 ? `· need ${50 - text.length} more` : '· ready'}
             </span>
           </div>
 
@@ -133,14 +164,28 @@ export function LiveDemo() {
                        flex items-center justify-center gap-2 min-h-[44px] overflow-hidden
                        transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            {loading ? <LoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Brain className="w-4 h-4" aria-hidden="true" />}
-            {loading ? 'Analyzing...' : 'Attest Free'}
+            {loading ? <LoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" /> : <ScanSearch className="w-4 h-4" aria-hidden="true" />}
+            {loading ? 'Analyzing…' : 'Analyze Text'}
             {loading && (
               <span className="absolute bottom-0 left-0 h-0.5 bg-depth-bg/20 w-full" aria-hidden="true">
                 <span className="block h-full bg-depth-bg/50 animate-pulse" style={{ width: '60%' }} />
               </span>
             )}
           </button>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 animate-enter"
+            >
+              <p className="text-sm text-silver-700">{error}</p>
+              <div className="mt-2">
+                <Link href="/signup" className="text-xs text-accent hover:text-moss-200 font-medium transition-colors duration-200">
+                  Create a free account →
+                </Link>
+              </div>
+            </div>
+          )}
 
           {result && (
             <div
@@ -174,9 +219,9 @@ export function LiveDemo() {
                 <p className="text-sm text-silver-600 mt-3">{result.summary}</p>
               )}
               <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                <p className="text-xs text-silver-600">Free · No account needed</p>
+                <p className="text-xs text-silver-600">Free tier · no account needed for text</p>
                 <Link href="/detect/text" className="text-xs text-accent hover:text-moss-200 font-medium flex items-center gap-1 transition-colors duration-200">
-                  Full attestation <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  Full detection results <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </div>
             </div>

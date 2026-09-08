@@ -7,6 +7,15 @@
    Two-color system: Silver (#141414) + Luminous Moss (#2BEE34)
    ══════════════════════════════════════════════════════════════════════════════ */
 :root {
+/* ── Depth system note ───────────────────────────────────────────────
+ * The CSS vars --depth-bg, --depth-surface, --depth-elevated are
+ * blue-tinted legacy values. They have been superseded by the silver
+ * scale (silver-50..silver-900) and surface tokens (surface,
+ * surface-elevated, surface-active, surface-deep). All components
+ * should use silver-* and surface-* tokens. These vars remain only
+ * for backward compatibility with any external scripts referencing
+ * them directly; do not use them in new component code.
+ * ──────────────────────────────────────────────────────────────────── */
   /* ── Backgrounds ─────────────────────────────────────────────────────────── */
   --bg-base:     #141414;
   --bg-elevated: #1A1A1A;
@@ -473,3 +482,16 @@
     background-color: theme('colors.silver.500');
   }
 }
+
+/* ── Scrollbar hide utility ─────────────────────────────────────────
+ * Used by horizontal carousels (WhoWeServe, ToolsMobileCarousel).
+ * Tailwind 3.4 does not include this by default.
+ * ──────────────────────────────────────────────────────────────────── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
