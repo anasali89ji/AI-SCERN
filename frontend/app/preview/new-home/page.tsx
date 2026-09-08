@@ -1,3 +1,5 @@
+"use client";
+
 import { HeroSection } from "@/components/public/sections/HeroSection";
 import { TrustStrip } from "@/components/public/sections/TrustStrip";
 import { ProblemSection } from "@/components/public/sections/ProblemSection";
