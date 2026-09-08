@@ -22,7 +22,7 @@ export default function ChatError({
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">ARIA Connection Disrupted</h2>
       <p className="text-slate-400 mb-8 text-sm leading-relaxed">
-        The forensic AI assistant hit an unexpected error mid-conversation. Your attestation history is unaffected — this only interrupted the chat session.
+        The forensic AI assistant hit an unexpected error mid-conversation. Your detection history is unaffected — this only interrupted the chat session.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

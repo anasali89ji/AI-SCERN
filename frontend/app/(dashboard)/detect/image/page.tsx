@@ -225,7 +225,7 @@ Summary:    ${result.summary}
 Forensic Signals:
 ${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}\n    ${s.description}`).join('\n')}
 
-Engine: Aiscern Attestation Engine · ${result.processing_time}ms
+Engine: Aiscern Detection Engine · ${result.processing_time}ms
 Analyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
@@ -269,7 +269,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
             <ImageIcon className="w-6 h-6 text-accent" />
           </div>
-          Image Attestation
+          Deepfake Image Detection
         </h1>
         <p className="text-silver-600 ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
@@ -346,7 +346,7 @@ Analyzed: ${new Date().toLocaleString()}`
                   </p>
                 </div>
                 <button onClick={reset}
-              title="Attest Another" className="text-silver-600 hover:text-error transition-colors p-2 rounded-lg hover:bg-error/10 shrink-0">
+              title="Analyze Another" className="text-silver-600 hover:text-error transition-colors p-2 rounded-lg hover:bg-error/10 shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -358,7 +358,7 @@ Analyzed: ${new Date().toLocaleString()}`
                 <button onClick={handleDetect} disabled={loading}
                   className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
                   {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                  {loading ? 'Examining…' : 'Attest'}
+                  {loading ? 'Examining…' : 'Analyze'}
                 </button>
               </div>
             </div>
@@ -374,7 +374,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="card py-3 px-4 border-silver-300">
             <div className="flex items-start gap-2 text-xs text-silver-600">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-accent/60" />
-              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce attestation accuracy.</span>
+              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce detection accuracy.</span>
             </div>
           </div>
         </div>
@@ -421,7 +421,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="Image Attestation" />
+      <LazyReviewSuggestion toolName="Deepfake Image Detection" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -440,7 +440,7 @@ Analyzed: ${new Date().toLocaleString()}`
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Attestation Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
@@ -463,7 +463,7 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Attestation Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} forensicScanId={forensicScanId} />
       )}

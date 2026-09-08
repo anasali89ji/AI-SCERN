@@ -7,10 +7,10 @@ import {
 } from 'lucide-react'
 
 const TOOLS_COL = [
-  { label: 'Text Attestation',        href: '/detect/text'  },
-  { label: 'Image Attestation', href: '/detect/image' },
-  { label: 'Audio Attestation',       href: '/detect/audio' },
-  { label: 'Video Attestation', href: '/detect/video' },
+  { label: 'AI Text Detection',        href: '/detect/text'  },
+  { label: 'Deepfake Image Detection', href: '/detect/image' },
+  { label: 'AI Audio & Voice Clone Detection',       href: '/detect/audio' },
+  { label: 'Deepfake Video Detection', href: '/detect/video' },
   { label: 'ARIA AI Assistant',       href: '/chat'         },
   { label: 'Batch Content Analyser',  href: '/batch'        },
 ]
@@ -94,7 +94,7 @@ export function SiteFooter() {
             </Link>
 
             <p className="text-sm text-silver-700 leading-relaxed mb-6 max-w-[220px]">
-              Free multi-modal AI content attestation. Text, image, audio, and video.
+              Free multi-modal AI content detection. Text, image, audio, and video.
             </p>
 
             {/* Status */}
@@ -175,7 +175,7 @@ export function SiteFooter() {
               Newsletter
             </h3>
             <p className="text-sm text-silver-600 leading-relaxed mb-4">
-              Attestation research, product updates, and AI news. Once a week.
+              Detection research, product updates, and AI news. Once a week.
             </p>
 
             {sent ? (

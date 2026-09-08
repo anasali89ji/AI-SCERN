@@ -47,7 +47,7 @@ export function EnterpriseContactForm() {
       </div>
       <div className="space-y-1">
         <label className="block text-xs font-semibold text-[#A3A3A3] mb-1.5">Use Case</label>
-        <textarea rows={3} placeholder="Describe your attestation needs, expected volume, and any integration requirements..." className={`${INPUT_CLASS} resize-none`} value={useCase} onChange={e => setUseCase(e.target.value)} />
+        <textarea rows={3} placeholder="Describe your detection needs, expected volume, and any integration requirements..." className={`${INPUT_CLASS} resize-none`} value={useCase} onChange={e => setUseCase(e.target.value)} />
       </div>
       <a href={buildMailto()} className="btn-primary w-full justify-center">
         Send Inquiry <ArrowRight className="w-4 h-4" />

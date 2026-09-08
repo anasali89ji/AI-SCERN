@@ -214,7 +214,7 @@ export default function BatchPage() {
       doc.setFontSize(11); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
       doc.text('Executive Summary', margin, 115)
       doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(200,200,200)
-      const summaryLines = doc.splitTextToSize(`This attestation batch examined ${done.length} files. ${aiCount} files were flagged as synthesized (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
+      const summaryLines = doc.splitTextToSize(`This detection batch examined ${done.length} files. ${aiCount} files were flagged as synthesized (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
       doc.text(summaryLines, margin, 125)
 
       // ── Per-file breakdown ────────────────────────────────────────────
@@ -242,7 +242,7 @@ export default function BatchPage() {
       for (let i = 1; i <= total; i++) {
         doc.setPage(i)
         doc.setFontSize(8); doc.setTextColor(60,60,80); doc.setFont('helvetica','normal')
-        doc.text(`Aiscern · AI Content Attestation Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
+        doc.text(`Aiscern · AI Content Detection Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
       }
 
       doc.save(`aiscern-batch-report-${Date.now()}.pdf`)
@@ -258,7 +258,7 @@ export default function BatchPage() {
           <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6 text-[#A3A3A3]" />
           </div>
-          Bulk Attestation
+          Batch AI Content Analyser
         </h1>
         <p className="text-[#6B6B6B] ml-14 text-sm">
           Examine up to {MAX_FILES} files · PDF, images, audio, video, text · {CONCURRENCY} concurrent workers · Correlation analysis · PDF export
@@ -312,7 +312,7 @@ export default function BatchPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {displayName && completed > 0 && !running && (
                 <div className="col-span-2 sm:col-span-4 text-xs text-[#6B6B6B] mb-1">
-                  Hey <span className="text-white font-semibold">{displayName}</span> — bulk attestation complete.{' '}
+                  Hey <span className="text-white font-semibold">{displayName}</span> — bulk detection complete.{' '}
                   {aiCount > 0
                     ? <span className="text-[#FF4444] font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as synthesized</span>
                     : <span className="text-[#2BEE34] font-medium">No synthesized content detected</span>}

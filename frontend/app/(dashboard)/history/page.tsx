@@ -81,7 +81,7 @@ function ScanDetailModal({ scan, onClose }: { scan: Scan; onClose: () => void })
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
       <div className="card w-full max-w-md" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-white">Attestation Details</h3>
+          <h3 className="font-bold text-white">Detection Details</h3>
           <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[#141414] text-[#6B6B6B] hover:text-white transition-colors shrink-0">
             <X className="w-4 h-4" />
           </button>
@@ -242,10 +242,10 @@ export default function HistoryPage() {
               <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 flex items-center justify-center shrink-0">
                 <Clock className="w-6 h-6 text-[#2BEE34]" />
               </div>
-              Attestation History
+              Detection History
             </h1>
             <p className="text-[#6B6B6B] ml-14 text-sm">
-              {scans.length > 0 ? `${scans.length} total examinations` : 'All your previous attestation results'}
+              {scans.length > 0 ? `${scans.length} total scans` : 'All your previous detection results'}
             </p>
           </div>
           <button onClick={() => loadScans(true)} disabled={refreshing}
@@ -356,7 +356,7 @@ export default function HistoryPage() {
             <p className="text-[#6B6B6B] text-sm">
               {search || mediaFilter !== 'all' || verdictFilter !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Start attesting AI content to see your history here'}
+                : 'Start detecting AI content to see your history here'}
             </p>
           </div>
         ) : (

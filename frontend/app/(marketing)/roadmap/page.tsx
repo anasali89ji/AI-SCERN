@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Product Roadmap — AI-SCERN',
-  description: 'See what we are building next for AI media attestation and forensics.',
+  description: 'See what we are building next for AI media detection and forensics.',
 }
 
 const ROADMAP = [
@@ -12,7 +12,7 @@ const ROADMAP = [
     quarter: 'Q3 2026',
     status: 'in-progress',
     items: [
-      'Real-time video stream attestation (WebRTC)',
+      'Real-time video stream detection (WebRTC)',
       'Mobile native SDKs (iOS & Android)',
       'Enterprise SSO with SAML 2.0 & OIDC',
       'Advanced audio deepfake detection (TTS vs. VC)',
@@ -22,7 +22,7 @@ const ROADMAP = [
     quarter: 'Q4 2026',
     status: 'planned',
     items: [
-      'Blockchain attestation certificates (Ethereum L2)',
+      'Blockchain detection certificates (Ethereum L2)',
       'Federated learning for private model tuning',
       'Chrome extension for in-browser media scanning',
       'Multi-language support (12 languages)',
@@ -45,7 +45,7 @@ const ROADMAP = [
       'Quantum-resistant watermarking schemes',
       'Neural radiance field (NeRF) detection',
       'Cross-modal consistency reasoning (text+image+video)',
-      'Real-time hologram attestation',
+      'Real-time hologram detection',
     ],
   },
 ]
