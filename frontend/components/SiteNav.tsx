@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Menu, X, ChevronDown, Search,
+  Menu, X, ChevronDown,
   GraduationCap, Users, Newspaper, Scale, ShieldCheck,
   Heart, Megaphone, Microscope, Pencil, ArrowLeft,
   FileType2, Image as ImageIcon, Music, Video, MessageSquare, Database,
@@ -47,110 +47,6 @@ const NAV_LINKS = [
 ]
 
 // Flat list of jump targets for the command palette — pages only, no live data source.
-const COMMAND_ITEMS = [
-  ...TOOLS.map(t => ({ label: t.label, href: t.href, hint: t.desc })),
-  ...SOLUTIONS.map(s => ({ label: s.label, href: s.href, hint: s.desc })),
-  ...NAV_LINKS.map(l => ({ label: l.label, href: l.href, hint: '' })),
-  { label: 'Enterprise', href: '/enterprise', hint: 'Custom volume & SLA' },
-  { label: 'Methodology', href: '/methodology', hint: 'How detection works' },
-  { label: 'Dashboard', href: '/dashboard', hint: '' },
-]
-
-function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [query, setQuery] = useState('')
-  const [activeIndex, setActiveIndex] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
-
-  const results = query.trim()
-    ? COMMAND_ITEMS.filter(i => i.label.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
-    : COMMAND_ITEMS.slice(0, 8)
-
-  useEffect(() => {
-    if (open) {
-      setQuery('')
-      setActiveIndex(0)
-      // Focus after mount so AnimatePresence has painted the modal first.
-      requestAnimationFrame(() => inputRef.current?.focus())
-    }
-  }, [open])
-
-  const go = useCallback((href: string) => {
-    onClose()
-    router.push(href)
-  }, [onClose, router])
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { onClose(); return }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, results.length - 1)); return }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)); return }
-    if (e.key === 'Enter' && results[activeIndex]) { e.preventDefault(); go(results[activeIndex].href) }
-  }
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-depth-bg/80 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          onClick={onClose}
-          role="presentation"
-        >
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search"
-            initial={{ opacity: 0, scale: 0.97, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: -8 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            onClick={e => e.stopPropagation()}
-            onKeyDown={onKeyDown}
-            className="w-full max-w-lg bg-surface-elevated border border-white/[0.08] rounded-xl shadow-lift overflow-hidden"
-          >
-            <div className="flex items-center gap-3 px-4 border-b border-white/[0.06]">
-              <Search className="w-4 h-4 text-silver-600 shrink-0" aria-hidden="true" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => { setQuery(e.target.value); setActiveIndex(0) }}
-                placeholder="Search pages, tools, solutions..."
-                aria-label="Search pages, tools, and solutions"
-                className="flex-1 bg-transparent py-3.5 text-[16px] sm:text-sm text-silver-900 placeholder:text-silver-600 focus:outline-none"
-              />
-              <kbd className="hidden sm:inline text-[10px] text-silver-600 border border-white/[0.08] rounded px-1.5 py-0.5">Esc</kbd>
-            </div>
-            <div className="max-h-80 overflow-y-auto py-2" role="listbox">
-              {results.length === 0 && (
-                <p className="px-4 py-6 text-sm text-silver-600 text-center">No results for &ldquo;{query}&rdquo;</p>
-              )}
-              {results.map((item, i) => (
-                <button
-                  key={item.href}
-                  role="option"
-                  aria-selected={i === activeIndex}
-                  onClick={() => go(item.href)}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  className={cn(
-                    'w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors duration-200',
-                    i === activeIndex ? 'bg-white/[0.06] text-silver-900' : 'text-silver-700',
-                  )}
-                >
-                  <span className="text-sm font-medium">{item.label}</span>
-                  {item.hint && <span className="text-xs text-silver-600 truncate">{item.hint}</span>}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
-
 export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   const { user }                           = useAuth()
   const pathname                           = usePathname()
@@ -158,7 +54,6 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   const [hidden,     setHidden]            = useState(false)
   const [mobileOpen, setMobileOpen]        = useState(false)
   const [dropdown,   setDropdown]          = useState<'tools' | 'solutions' | null>(null)
-  const [paletteOpen, setPaletteOpen]      = useState(false)
   const lastY                              = useRef(0)
   const dropdownRef                        = useRef<HTMLDivElement>(null)
   const timerRef                           = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -194,18 +89,6 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdown])
 
-  // Cmd/Ctrl+K opens the command palette from anywhere on the site.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setPaletteOpen(o => !o)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
-
   const openDropdown  = (key: typeof dropdown) => { clearTimeout(timerRef.current); setDropdown(key) }
   const closeDropdown = () => { timerRef.current = setTimeout(() => setDropdown(null), 140) }
   const cancelClose   = () => clearTimeout(timerRef.current)
@@ -215,7 +98,6 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
   return (
     <>
       <ScrollProgress />
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <nav
       aria-label="Main navigation"
       className={cn(
@@ -384,20 +266,8 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
           ))}
         </div>
 
-        {/* Search trigger + Auth CTA */}
+        {/* Auth CTA */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setPaletteOpen(true)}
-            aria-label="Open search"
-            className="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg border border-white/[0.08]
-                       text-silver-600 hover:text-silver-900 hover:border-white/[0.16] transition-all duration-200
-                       focus-visible:ring-2 focus-visible:ring-accent/50"
-          >
-            <Search className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="text-xs">Search</span>
-            <kbd className="text-[10px] border border-white/[0.08] rounded px-1 py-0.5 ml-1">⌘K</kbd>
-          </button>
-
           {user ? (
             <Link
               href="/dashboard"

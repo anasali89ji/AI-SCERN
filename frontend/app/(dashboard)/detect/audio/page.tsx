@@ -6,6 +6,7 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
 import { Mic, Upload, X, TriangleAlert, LoaderCircle, RotateCcw, Play, Pause, Download, Share, Info, Database } from 'lucide-react'
+import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/utils/helpers'
@@ -414,9 +415,9 @@ function AudioDetectionPage() {
               <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} />
             </div>
           ) : loading ? (
-            <div className="card flex flex-col items-center justify-center py-16 text-center gap-4">
+            <div className="space-y-4">
               {/* Module 7.3: fake waveform animation during analysis — CSS bars, staggered pulse */}
-              <div className="flex items-end justify-center gap-1 h-16">
+              <div className="card flex items-end justify-center gap-1 h-16 py-4">
                 {Array.from({ length: 24 }).map((_, i) => (
                   <div key={i}
                     className="w-1.5 rounded-full bg-accent/50 animate-pulse-slow"
@@ -426,7 +427,7 @@ function AudioDetectionPage() {
                     }} />
                 ))}
               </div>
-              <p className="text-sm text-silver-600">Analyzing audio…</p>
+              <DetectionSequenceLoader loading={loading} uploadProgress={100} />
             </div>
           ) : !loading && (
             <div className="card flex flex-col items-center justify-center py-20 text-center">

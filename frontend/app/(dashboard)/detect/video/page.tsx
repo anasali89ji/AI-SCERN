@@ -496,7 +496,7 @@ function VideoDetectionPage() {
                   <div className="absolute inset-0 bg-surface-deep/90 flex flex-col items-center justify-center gap-3">
                     <div className="relative w-16 h-16">
                       <div className="absolute inset-0 rounded-full border-2 border-accent/20" />
-                      <div className="absolute inset-0 rounded-full border-2 border-t-secondary animate-spin" />
+                      <div className="absolute inset-0 rounded-full border-2 border-t-accent animate-spin" />
                       <div className="absolute inset-2 bg-surface-elevated rounded-full flex items-center justify-center">
                         {phase === 'extracting' ? <Scan className="w-5 h-5 text-silver-700" /> : <Eye className="w-5 h-5 text-silver-700" />}
                       </div>

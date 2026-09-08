@@ -4,6 +4,7 @@ import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { FileType2, Send, RotateCcw, TriangleAlert, CircleCheck, CircleHelp, LoaderCircle, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share, Info, Database } from 'lucide-react'
+import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 import { useAuth } from '@/components/auth-provider'
 import type { DetectionResult, Verdict } from '@/types'
 import { formatConfidence, normalizeConfidence } from '@/lib/utils/helpers'
@@ -540,19 +541,7 @@ Analyzed: ${new Date().toLocaleString()}`
         <div className="flex-1 min-w-0">
           
             {loading && (
-              <div className="card flex flex-col items-center justify-center py-16 gap-4">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full border-2 border-accent/20 flex items-center justify-center">
-                    <FileType2 className="w-8 h-8 text-accent" />
-                  </div>
-                  
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="font-semibold text-white">Analyzing text patterns…</p>
-                  <p className="text-sm text-silver-600">Perplexity · Burstiness · Style signals</p>
-                  <p className="text-xs text-silver-600">Running 3-model ensemble…</p>
-                </div>
-              </div>
+              <DetectionSequenceLoader loading={loading} uploadProgress={100} />
             )}
 
             {result && !loading && (
