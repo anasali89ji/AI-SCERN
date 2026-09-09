@@ -923,58 +923,56 @@ const brainUnified = cvAvailable && cvWorkerResult?.composite_score?.brain_inclu
 // branching below already computes — no new detection logic, just surfacing
 // what was already being decided silently.
 const imgDegradedSignals: string[] = [
-  'ensemble-voting-disabled-signal-worker-is-default-layer',
   ...(!cvAvailable  ? [PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
   ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
   ...(!llmAvailable ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
   ...(cvAvailable && !brainUnified ? ['brain-cv-not-unified-legacy-blend'] : []),
 ]
 
-// ── MODULE 16-PRE: SIGNAL-WORKER AS DEFAULT IMAGE LAYER (ensemble voting
-// disabled) ──────────────────────────────────────────────────────────────
-// Per explicit instruction: the Python signal-worker (`cvScore`, which is
-// itself already an internal fusion of v2 physics layers + v3 forensics +
-// (when brainUnified) the frontend Brain score — see image_engine.py
-// _fuse_scores) is now the SOLE determinant of the image verdict. The
-// multi-branch weighted ensemble above (Brain/HF-ViT/Pixel/LLM blending,
-// v8.0-v8.2) is disabled — those signals are still computed (for logging /
-// degraded_signals visibility and for the cross-validation bridge in
-// image-detection-brain.ts) but no longer blended into aiScore.
-//
-// This is a real behavior change, not a re-weighting: if the worker is
-// offline/unconfigured there is no ensemble left to fall back into, so a
-// minimal Brain+Pixel-only path is kept ONLY for that offline case — it is
-// not "voting," just the one honest thing left to return when signal-worker
-// itself didn't answer. Every other case (worker responded) uses cvScore
-// alone.
+// ── MODULE 16: SIGNAL-WORKER AS MAJORITY VOTER (60%) + FULL ENSEMBLE (40%) ─
+// Two-pillar vote: the Python signal-worker's physics/forensics fusion
+// (`cvScore` — v2 pixel/noise/frequency/SynthID layers + v3 forensics, and
+// when brainUnified, the frontend Brain score already folded in) is the
+// majority voter at 60%. The remaining 40% is the full model ensemble
+// (Brain pixel-statistics + HF ViT classifiers + raw pixel signals + Gemini
+// vision), renormalized over whichever of those sources actually responded.
+// Neither pillar is ever silently dropped to 0% — this replaces the earlier
+// "signal-worker 100%, ensemble disabled" behavior, which threw away the
+// HF/Brain/LLM votes entirely whenever the worker was reachable.
+const ENSEMBLE_SUB_WEIGHTS = { brain: 31, hf: 18, pixel: 9, llm: 20 } // same proportions as the v8.2 rationale above, minus the CV slice (now its own 60% pillar)
+const ensembleParts: { score: number; weight: number }[] = [
+  { score: brainResult.score, weight: ENSEMBLE_SUB_WEIGHTS.brain },
+  { score: imgSignalScore,    weight: ENSEMBLE_SUB_WEIGHTS.pixel },
+  ...(hfAvailable  ? [{ score: mlScore as number,  weight: ENSEMBLE_SUB_WEIGHTS.hf  }] : []),
+  ...(llmAvailable ? [{ score: llmScore as number, weight: ENSEMBLE_SUB_WEIGHTS.llm }] : []),
+]
+const ensembleTotalW = ensembleParts.reduce((s, p) => s + p.weight, 0) || 1
+const ensembleScore  = ensembleParts.reduce((s, p) => s + p.score * p.weight, 0) / ensembleTotalW
+
 if (cvAvailable) {
-  aiScore    = cvScore
+  aiScore    = cvScore * 0.60 + ensembleScore * 0.40
   modelUsed  = brainUnified
-    ? `Aiscern-ImageEngine-v9.0(SignalWorker100%,BrainUnified)`
-    : `Aiscern-ImageEngine-v9.0(SignalWorker100%,LegacyFusion)`
+    ? `Aiscern-ImageEngine-v9.1(SignalWorker60%+Ensemble40%,BrainUnified)`
+    : `Aiscern-ImageEngine-v9.1(SignalWorker60%+Ensemble40%,LegacyFusion)`
   engineDesc = brainUnified
-    ? `Signal-worker is the default layer (100%) — its fusion already folds in Brain; HF/Pixel/LLM computed but not blended`
-    : `Signal-worker is the default layer (100%) — worker did not confirm Brain unification (legacy fusion); HF/Pixel/LLM computed but not blended`
+    ? `Signal-worker is the majority voter (60%) — its fusion already folds in Brain; blended with the full HF/Brain/Pixel/LLM ensemble (40%)`
+    : `Signal-worker is the majority voter (60%) — worker did not confirm Brain unification (legacy fusion); blended with the full HF/Brain/Pixel/LLM ensemble (40%)`
 } else {
-  // Worker offline/unconfigured — no ensemble voting fallback by design.
-  // Brain + raw pixel signals only, clearly labeled as degraded.
-  aiScore    = brainResult.score * 0.65 + imgSignalScore * 0.35
-  modelUsed  = 'Aiscern-ImageEngine-v9.0(SignalWorkerOffline-Brain65%+Pixel35%)'
-  engineDesc = 'Signal-worker offline/unconfigured — degraded Brain (65%) + Pixel (35%) fallback, no ensemble voting'
+  // Worker offline/unconfigured — no majority-voter pillar to blend against,
+  // so the ensemble alone (renormalized over whatever responded) is used at
+  // 100%, clearly labeled as degraded.
+  aiScore    = ensembleScore
+  modelUsed  = 'Aiscern-ImageEngine-v9.1(SignalWorkerOffline-EnsembleOnly100%)'
+  engineDesc = 'Signal-worker offline/unconfigured — full HF/Brain/Pixel/LLM ensemble (100%) fallback, no signal-worker majority vote available'
 }
 
-// ── LLM Consensus Override (C.1.3) ──────────────────────────────────────────
-// LLM can ADD UP TO 0.08 to the final score when:
-//   (a) it strongly agrees with Brain+CV (both >0.55), AND
-//   (b) its own score is >0.80
-// This prevents a lone LLM vision call from flipping an otherwise-confident
-// HUMAN verdict to AI — it can only reinforce a borderline case. Uses the
-// actual per-branch llmWeightUsed (tracked above) rather than a hardcoded
-// 0.10 — that assumption broke once LLM weight became branch-dependent.
-// Disabled along with the rest of ensemble voting — signal-worker's cvScore
-// is authoritative, so a lone LLM call can no longer nudge aiScore.
-// (llmScore/llmWeightUsed are still computed above for degraded_signals
-// visibility and the generator-attribution voting below, just not blended.)
+// ── LLM Consensus Override (C.1.3) — superseded by Module 16 ────────────────
+// LLM is no longer a separate post-hoc override: it's blended directly into
+// ensembleScore above (20/78 of the 40% ensemble pillar), so a strong Gemini
+// vision call already has a proportionate, bounded influence on aiScore
+// without needing a second ad-hoc nudge here. llmScore/llmWeightUsed remain
+// available below for the generator-attribution voting and degraded_signals
+// visibility.
 
 // ── Multi-Source Generator Attribution Voting ───────────────────────────────
 // Restores (in spirit) the abandoned v3 cascade's attributeGenerator() idea
