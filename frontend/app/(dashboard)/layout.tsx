@@ -7,6 +7,7 @@ import {
   Globe, Layers, Clock, User, Settings, ChevronLeft, ChevronRight,
   Menu, LogOut, ChevronDown, MessageSquare, Star,
   Coins, Search, Bell, ChevronRight as ChevronRightSmall,
+  ShieldCheck, FileStack, Workflow,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { AuthGuard } from '@/components/AuthGuard'
@@ -41,19 +42,22 @@ const NAV_GROUPS = [
     label: 'Detect',
     items: [
       { href: '/dashboard',    icon: LayoutDashboard, label: 'Overview'  },
-      { href: '/detect/text',  icon: FileType2,        label: 'Text'      },
-      { href: '/detect/image', icon: ImageIcon,       label: 'Image'     },
-      { href: '/detect/audio', icon: Music,           label: 'Audio'     },
-      { href: '/detect/video', icon: Video,           label: 'Video'     },
+      { href: '/detect/text',     icon: FileType2,        label: 'Text'      },
+      { href: '/detect/image',    icon: ImageIcon,       label: 'Image'     },
+      { href: '/detect/audio',    icon: Music,           label: 'Audio'     },
+      { href: '/detect/video',    icon: Video,           label: 'Video'     },
+      { href: '/detect/document', icon: FileStack,       label: 'Document'  },
     ],
   },
   {
     label: 'Tools',
     items: [
-      { href: '/chat',     icon: MessageSquare, label: 'AI Assistant' },
-      { href: '/batch',    icon: Layers,        label: 'Batch Scan'   },
-      { href: '/scraper',  icon: Globe,         label: 'Web Scanner'  },
-      { href: '/pipeline', icon: Layers,        label: 'Pipeline'     },
+      { href: '/chat',       icon: MessageSquare, label: 'AI Assistant' },
+      { href: '/batch',      icon: Layers,        label: 'Batch Scan'   },
+      { href: '/scraper',    icon: Globe,         label: 'Web Scanner'  },
+      { href: '/verify/web', icon: ShieldCheck,   label: 'Web Verify'   },
+      { href: '/pipeline',   icon: Layers,        label: 'Pipeline'     },
+      { href: '/workflows',  icon: Workflow,      label: 'Workflows'    },
     ],
   },
   {
@@ -69,8 +73,9 @@ const NAV_GROUPS = [
 
 const LABEL_OVERRIDES: Record<string, string> = {
   dashboard: 'Overview', detect: 'Detect', text: 'Text', image: 'Image',
-  audio: 'Audio', video: 'Video', chat: 'AI Assistant', batch: 'Batch Scan',
-  scraper: 'Web Scanner', pipeline: 'Pipeline', history: 'History',
+  audio: 'Audio', video: 'Video', document: 'Document', chat: 'AI Assistant', batch: 'Batch Scan',
+  scraper: 'Web Scanner', verify: 'Verify', web: 'Web Verify', pipeline: 'Pipeline',
+  workflows: 'Workflows', history: 'History',
   credits: 'Credits', profile: 'Profile', settings: 'Settings',
 }
 

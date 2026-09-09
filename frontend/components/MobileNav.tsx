@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, FileType2, Image as ImageIcon, Clock,
   MoreHorizontal, Video, Music, Layers, MessageSquare,
-  User, Settings, X, Globe, Coins,
+  User, Settings, X, Globe, Coins, ShieldCheck, FileStack, Workflow,
 } from 'lucide-react'
 
 const PRIMARY_NAV = [
@@ -16,14 +16,17 @@ const PRIMARY_NAV = [
 ]
 
 const MORE_NAV = [
-  { href: '/detect/audio', icon: Music,         label: 'Audio'   },
-  { href: '/detect/video', icon: Video,         label: 'Video'   },
-  { href: '/batch',        icon: Layers,        label: 'Batch'   },
-  { href: '/chat',         icon: MessageSquare, label: 'AI Chat' },
-  { href: '/scraper',      icon: Globe,         label: 'Examiner' },
-  { href: '/credits',      icon: Coins,         label: 'Credits' },
-  { href: '/profile',      icon: User,          label: 'Profile' },
-  { href: '/settings',     icon: Settings,      label: 'Settings'},
+  { href: '/detect/audio',    icon: Music,         label: 'Audio'   },
+  { href: '/detect/video',    icon: Video,         label: 'Video'   },
+  { href: '/detect/document', icon: FileStack,     label: 'Document'},
+  { href: '/batch',           icon: Layers,        label: 'Batch'   },
+  { href: '/chat',            icon: MessageSquare, label: 'AI Chat' },
+  { href: '/scraper',         icon: Globe,         label: 'Examiner' },
+  { href: '/verify/web',      icon: ShieldCheck,   label: 'Web Verify' },
+  { href: '/workflows',       icon: Workflow,      label: 'Workflows' },
+  { href: '/credits',         icon: Coins,         label: 'Credits' },
+  { href: '/profile',         icon: User,          label: 'Profile' },
+  { href: '/settings',        icon: Settings,      label: 'Settings'},
 ]
 
 export function MobileNav() {
