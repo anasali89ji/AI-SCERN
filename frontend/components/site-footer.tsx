@@ -239,8 +239,8 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-      {/* Product Hunt badge */}
-      <div className="flex justify-center pt-6 pb-2">
+      {/* Launch badges: Product Hunt + LaunchBuff */}
+      <div className="flex flex-wrap justify-center items-center gap-4 pt-6 pb-2">
         <a
           href="https://www.producthunt.com/products/aiscern?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-aiscern"
           target="_blank"
@@ -253,6 +253,20 @@ export function SiteFooter() {
             width={250}
             height={54}
             referrerPolicy="no-referrer"
+            loading="lazy"
+          />
+        </a>
+        <a
+          href="https://launchbuff.com/products/aiscern-igt4hu"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Featured on LaunchBuff"
+        >
+          <img
+            src="https://launchbuff.com/badge-featured-dark.svg"
+            alt="Featured on LaunchBuff"
+            width={256}
+            height={80}
             loading="lazy"
           />
         </a>
