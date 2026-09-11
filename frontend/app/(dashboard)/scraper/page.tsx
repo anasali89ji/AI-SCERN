@@ -3,44 +3,48 @@ import { useState } from 'react'
 import {
   Globe, Search, TriangleAlert, CircleCheck, CircleHelp,
   LoaderCircle, SquareArrowOutUpRight, ChevronDown, Info,
-  FileType2, Shield, ImageIcon, Copy, Check, Layers, Fingerprint,
-  Zap, AlertOctagon, ListTree, Wrench, BadgeCheck,
+  FileType2, ImageIcon, Copy, Check, Layers, Fingerprint,
+  Zap, AlertOctagon, ListTree, Wrench, BadgeCheck, Gauge,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 
-// ── Types (mirrors SiteScanResult from lib/site-crawler/site-scanner.ts) ────────
+// ── Types (mirrors SiteScanResult from lib/scanner/types.ts) ────────────────────
 interface EnsembleSignals {
-  hfEnsemble: number; linguisticBrain: number; aiArtifactScore: number
+  hfEnsemble: number | null; linguisticBrain: number; perplexityBurst: number
   stylometricFlag: boolean; isSpun: boolean; isThinContent: boolean
 }
-interface PageTextVerdict {
+interface ScannedPage {
   url: string; title: string; wordCount: number; aiScore: number
   verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'; topFindings: string[]
-  ensembleSignals: EnsembleSignals; contentDepthScore: number; pageRank?: number
+  ensembleSignals: EnsembleSignals; contentDepthScore: number
 }
-interface PageImageVerdict {
-  pageUrl: string; imageUrl: string; aiScore: number
-  verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'; modelUsed: string; error?: string
+interface ScannedImage {
+  url: string; aiScore: number
+  verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'; modelUsed: string
 }
-interface SectionHeatmapEntry { pathPrefix: string; aiContentPercent: number; pageCount: number }
-interface RemediationItem { type: 'page' | 'image'; url: string; action: string; reason: string }
-interface WordPressPlugin { slug: string; source: 'plugin' | 'theme'; isAiContentPlugin: boolean; hasVulnerability?: boolean }
-interface IntegritySeal { hash: string; verificationUrl: string; issuedAt: string }
-interface DuplicateCluster { urls: string[]; avgSimilarity: number }
+interface SectionHeatmap { pathPrefix: string; aiContentPercent: number; pageCount: number }
+interface RemediationItem {
+  type: 'page' | 'image' | 'plugin' | 'section'
+  url?: string; imageUrl?: string; pluginSlug?: string; sectionPrefix?: string
+  action: string; reason: string; priority: 'critical' | 'high' | 'medium' | 'low'
+}
+interface WPPlugin { slug: string; name?: string; hasVulnerability: boolean; severity?: string; aiRelated: boolean }
+interface ContentIntegritySeal { hash: string; timestamp: string; verificationUrl: string }
 
 interface SiteScanResult {
-  origin: string; isWordPress: boolean; discoveryMethod: 'sitemap' | 'link-crawl'
-  pagesScanned: number; pagesFailed: number
+  success: boolean; origin: string; isWordPress: boolean
+  discoveryMethod: 'sitemap' | 'crawl' | 'hybrid'
+  pagesScanned: number; maxPages: number
   aiContentPercent: number; aiImagePercent: number
-  totalTextWords: number; totalImagesFound: number; totalImagesScanned: number
+  totalImagesAnalyzed: number
   contentOriginalityScore: number; voiceDiversityIndex: number
   transparencyScore: number; linkTrustScore: number
-  duplicateClusters: DuplicateCluster[]; sectionsHeatmap: SectionHeatmapEntry[]
-  wordPressPlugins: WordPressPlugin[]
-  pages: PageTextVerdict[]; images: PageImageVerdict[]
-  remediation: RemediationItem[]; integritySeal: IntegritySeal | null
+  sectionsHeatmap: SectionHeatmap[]
+  wordPressPlugins: WPPlugin[]
+  pages: ScannedPage[]; images: ScannedImage[]
+  remediation: RemediationItem[]; integritySeal: ContentIntegritySeal
   processingTimeMs: number
+  fetchStats: { direct: number; jina: number; cache: number; failed: number }
 }
 
 // ── Shared visual helpers (kept identical to the rest of the app's design system) ──
@@ -86,7 +90,10 @@ function StatTile({ label, value, sub }: { label: string; value: string; sub?: s
   )
 }
 
-const MAX_PAGE_OPTIONS = [10, 25, 60]
+const DISCOVERY_LABEL: Record<SiteScanResult['discoveryMethod'], string> = {
+  sitemap: 'SITEMAP DISCOVERY', crawl: 'LINK-CRAWL DISCOVERY', hybrid: 'HYBRID DISCOVERY',
+}
+
 const EXAMPLES = [
   { label: 'AI blog', url: 'https://www.jasper.ai/blog/ai-marketing-tools' },
   { label: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/Artificial_intelligence' },
@@ -95,15 +102,13 @@ const EXAMPLES = [
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function ScraperPage() {
-  const { user }                = useAuth()
-  const [url, setUrl]           = useState('')
-  const [maxPages, setMaxPages] = useState(25)
-  const [includeImages, setIncludeImages] = useState(true)
-  const [loading, setLoading]   = useState(false)
-  const [result, setResult]     = useState<SiteScanResult | null>(null)
-  const [error, setError]       = useState<string | null>(null)
-  const [copied, setCopied]     = useState(false)
-  const supabase = createClient()
+  useAuth()
+  const [url, setUrl]             = useState('')
+  const [deepCrawl, setDeepCrawl] = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [result, setResult]       = useState<SiteScanResult | null>(null)
+  const [error, setError]         = useState<string | null>(null)
+  const [copied, setCopied]       = useState(false)
 
   const handleScan = async (targetUrl?: string) => {
     const scanUrl = (targetUrl ?? url).trim()
@@ -112,15 +117,14 @@ export default function ScraperPage() {
     setLoading(true); setError(null); setResult(null); setCopied(false)
 
     try {
-      const res  = await fetch('/api/detect/site', {
+      const res  = await fetch('/api/scanner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scanUrl, maxPages, includeImages, maxImagesTotal: 15 }),
+        body: JSON.stringify({ url: scanUrl, deepCrawl }),
       })
       const data = await res.json()
-      if (!data.success) { setError(data.error?.message || 'Site scan failed'); return }
-      const { success: _s, scan_id: _id, ...siteResult } = data
-      setResult(siteResult as SiteScanResult)
+      if (!data.success) { setError(data.error?.message || data.error || 'Site scan failed'); return }
+      setResult(data as SiteScanResult)
     } catch (e: unknown) {
       setError((e as Error)?.message || 'Unexpected error')
     } finally { setLoading(false) }
@@ -137,6 +141,8 @@ export default function ScraperPage() {
   const overallVerdict: 'AI' | 'HUMAN' | 'UNCERTAIN' | null = !result ? null :
     result.aiContentPercent > 65 ? 'AI' : result.aiContentPercent < 35 ? 'HUMAN' : 'UNCERTAIN'
 
+  const totalWords = result ? result.pages.reduce((sum, p) => sum + p.wordCount, 0) : 0
+
   return (
     <div className="min-h-screen bg-[#141414] pb-24 lg:pb-8">
       <div className="max-w-5xl 2xl:max-w-[1300px] 3xl:max-w-[1600px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
@@ -152,7 +158,8 @@ export default function ScraperPage() {
           </div>
           <p className="text-sm text-[#A3A3A3] ml-12">
             Crawls an entire site (sitemap-first), runs text + image detection on every page, and reports
-            duplicate-content clusters, stylometric consistency, transparency, link trust, and WordPress fingerprinting.
+            stylometric consistency, transparency, link trust, and WordPress fingerprinting.
+            Deep Crawl mode extends coverage to up to 150 pages and 200 images.
           </p>
         </div>
 
@@ -180,23 +187,20 @@ export default function ScraperPage() {
 
           {/* Options row */}
           <div className="flex items-center gap-4 mt-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[#6B6B6B]">Max pages</span>
-              <div className="flex gap-1">
-                {MAX_PAGE_OPTIONS.map(n => (
-                  <button key={n} onClick={() => setMaxPages(n)}
-                    className={`px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${maxPages === n ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
-                    {n}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setDeepCrawl(false)}
+                className={`px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${!deepCrawl ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+                Standard · 30 pages
+              </button>
+              <button onClick={() => setDeepCrawl(true)}
+                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${deepCrawl ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+                <Gauge className="w-3.5 h-3.5" />
+                Deep Crawl · 150 pages
+              </button>
             </div>
-            <button
-              onClick={() => setIncludeImages(v => !v)}
-              className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold border transition-colors ${includeImages ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-[#2BEE34]/25' : 'bg-[#141414] text-[#6B6B6B] border-[#333333]'}`}>
-              <ImageIcon className="w-3.5 h-3.5" />
-              {includeImages ? 'Images on' : 'Images off'}
-            </button>
+            {deepCrawl && (
+              <span className="text-[10px] text-[#6B6B6B]">Deeper crawls take longer — roughly 3–5 minutes for large sites.</span>
+            )}
           </div>
 
           {/* Example URLs */}
@@ -265,7 +269,7 @@ export default function ScraperPage() {
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#E5E5E5] border border-[#333333]">WORDPRESS</span>
                     )}
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#E5E5E5] border border-[#333333]">
-                      {result.discoveryMethod === 'sitemap' ? 'SITEMAP DISCOVERY' : 'LINK-CRAWL DISCOVERY'}
+                      {DISCOVERY_LABEL[result.discoveryMethod]}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">
                       Full-Site Forensic Engine
@@ -276,9 +280,9 @@ export default function ScraperPage() {
                     <SquareArrowOutUpRight className="w-3.5 h-3.5 shrink-0" />{result.origin}
                   </a>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <StatTile label="Pages scanned" value={String(result.pagesScanned)} sub={result.pagesFailed ? `${result.pagesFailed} failed` : undefined} />
-                    <StatTile label="Words analyzed" value={result.totalTextWords.toLocaleString()} />
-                    <StatTile label="Images scanned" value={`${result.totalImagesScanned}/${result.totalImagesFound}`} sub={`${Math.round(result.aiImagePercent)}% AI`} />
+                    <StatTile label="Pages scanned" value={`${result.pagesScanned}/${result.maxPages}`} sub={result.fetchStats.failed ? `${result.fetchStats.failed} failed` : undefined} />
+                    <StatTile label="Words analyzed" value={totalWords.toLocaleString()} />
+                    <StatTile label="Images scanned" value={String(result.totalImagesAnalyzed)} sub={`${Math.round(result.aiImagePercent)}% AI`} />
                     <StatTile label="Scan time" value={`${(result.processingTimeMs / 1000).toFixed(1)}s`} />
                   </div>
                 </div>
@@ -335,30 +339,6 @@ export default function ScraperPage() {
               </div>
             )}
 
-            {/* Duplicate / spun-content clusters */}
-            {result.duplicateClusters.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <AlertOctagon className="w-4 h-4 text-[#FFB800]" />
-                  Duplicate / Spun Content Clusters
-                  <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.duplicateClusters.length} clusters</span>
-                </h3>
-                <div className="space-y-2">
-                  {result.duplicateClusters.map((c, i) => (
-                    <div key={i} className="p-3 rounded-lg bg-[#FFB800]/5 border border-[#FFB800]/15">
-                      <p className="text-xs font-semibold text-[#FFB800] mb-1.5">{Math.round(c.avgSimilarity * 100)}% average similarity · {c.urls.length} pages</p>
-                      <div className="space-y-1">
-                        {c.urls.slice(0, 5).map((u, j) => (
-                          <a key={j} href={u} target="_blank" rel="noreferrer" className="text-[10px] text-[#A3A3A3] hover:text-white truncate block">{u}</a>
-                        ))}
-                        {c.urls.length > 5 && <p className="text-[10px] text-[#6B6B6B]">+{c.urls.length - 5} more</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* WordPress plugins */}
             {result.isWordPress && result.wordPressPlugins.length > 0 && (
               <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
@@ -370,11 +350,12 @@ export default function ScraperPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {result.wordPressPlugins.map((p, i) => (
                     <span key={i} className={`text-[10px] font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5 ${
-                      p.isAiContentPlugin ? 'bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/25' : 'bg-[#141414] text-[#E5E5E5] border-[#333333]'}`}>
-                      {p.isAiContentPlugin && <Zap className="w-3 h-3" />}
-                      {p.slug}
-                      <span className="text-[#6B6B6B]">· {p.source}</span>
-                      {p.hasVulnerability && <TriangleAlert className="w-3 h-3 text-[#FF4444]" />}
+                      p.aiRelated ? 'bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/25' : 'bg-[#141414] text-[#E5E5E5] border-[#333333]'}`}>
+                      {p.aiRelated && <Zap className="w-3 h-3" />}
+                      {p.name || p.slug}
+                      {p.hasVulnerability && (
+                        <TriangleAlert className={`w-3 h-3 ${p.severity === 'critical' || p.severity === 'high' ? 'text-[#FF4444]' : 'text-[#FFB800]'}`} />
+                      )}
                     </span>
                   ))}
                 </div>
@@ -399,7 +380,7 @@ export default function ScraperPage() {
                           <p className="text-[10px] text-[#6B6B6B] truncate">{p.url}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {p.ensembleSignals.isSpun && <span title="Part of a near-duplicate cluster"><Copy className="w-3 h-3 text-[#FFB800]" /></span>}
+                          {p.ensembleSignals.isSpun && <span title="Near-duplicate or spun content"><Copy className="w-3 h-3 text-[#FFB800]" /></span>}
                           {p.ensembleSignals.isThinContent && <span title="Thin content"><AlertOctagon className="w-3 h-3 text-[#6B6B6B]" /></span>}
                           <div className="text-right">
                             <p className={`text-sm font-bold ${verdictColor(p.verdict)}`}>{Math.round(p.aiScore)}%</p>
@@ -410,9 +391,9 @@ export default function ScraperPage() {
                       </summary>
                       <div className="px-3 pb-3 pt-1 border-t border-[#333333] mt-1 space-y-2">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
-                          <div><span className="text-[#6B6B6B]">HF ensemble</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.hfEnsemble * 100)}%</p></div>
+                          <div><span className="text-[#6B6B6B]">HF ensemble</span><p className="text-[#E5E5E5] font-semibold">{p.ensembleSignals.hfEnsemble === null ? '—' : `${Math.round(p.ensembleSignals.hfEnsemble * 100)}%`}</p></div>
                           <div><span className="text-[#6B6B6B]">Linguistic brain</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.linguisticBrain * 100)}%</p></div>
-                          <div><span className="text-[#6B6B6B]">AI artifact score</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.aiArtifactScore * 100)}%</p></div>
+                          <div><span className="text-[#6B6B6B]">Perplexity burst</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.perplexityBurst * 100)}%</p></div>
                           <div><span className="text-[#6B6B6B]">Content depth</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.contentDepthScore)}%</p></div>
                         </div>
                         {p.topFindings.length > 0 && (
@@ -441,7 +422,7 @@ export default function ScraperPage() {
                   {result.images.map((img, i) => (
                     <div key={i} className="rounded-lg overflow-hidden border border-[#333333] bg-[#141414]">
                       <div className="relative">
-                        <img src={img.imageUrl} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                        <img src={img.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
                         <div className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${verdictBg(img.verdict)} ${verdictColor(img.verdict)}`}>
                           {Math.round(img.aiScore)}%
                         </div>
@@ -465,16 +446,23 @@ export default function ScraperPage() {
                   <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto group-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="mt-3 space-y-1.5">
-                  {result.remediation.map((r, i) => (
-                    <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-[#141414] border border-[#333333]">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#2A2A2A] text-[#A3A3A3] shrink-0 mt-0.5 uppercase">{r.type}</span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#E5E5E5]">{r.action}</p>
-                        <p className="text-[10px] text-[#6B6B6B]">{r.reason}</p>
-                        <a href={r.url} target="_blank" rel="noreferrer" className="text-[10px] text-[#2BEE34] hover:underline truncate block mt-0.5">{r.url}</a>
+                  {result.remediation.map((r, i) => {
+                    const target = r.url || r.imageUrl || r.pluginSlug || r.sectionPrefix
+                    return (
+                      <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-[#141414] border border-[#333333]">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#2A2A2A] text-[#A3A3A3] shrink-0 mt-0.5 uppercase">{r.type}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#E5E5E5]">{r.action}</p>
+                          <p className="text-[10px] text-[#6B6B6B]">{r.reason}</p>
+                          {target && (r.url || r.imageUrl) ? (
+                            <a href={target} target="_blank" rel="noreferrer" className="text-[10px] text-[#2BEE34] hover:underline truncate block mt-0.5">{target}</a>
+                          ) : target ? (
+                            <p className="text-[10px] text-[#2BEE34] truncate mt-0.5">{target}</p>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </details>
             )}
@@ -489,14 +477,13 @@ export default function ScraperPage() {
                 <div className="flex items-start gap-2">
                   <Fingerprint className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
                   <p>Text pages are scored by an ensemble of the HF text-classifier vote, a local linguistic-signal
-                  brain, and AI-artifact/watermark residue scanning, then cross-checked against duplicate-content
-                  clustering, content depth, and stylometric consistency across the whole site.</p>
+                  brain, and perplexity-burst analysis, then cross-checked against content depth and stylometric
+                  consistency across the whole site.</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <ImageIcon className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
-                  <p>Images reuse the same ensemble as the standalone Image Detection tool: the HF/vision ensemble
-                  and the DigitalOcean signal-worker pixel-forensics layers are combined, with the signal-worker's
-                  physical-artifact analysis weighted as the majority vote.</p>
+                  <p>Images are analyzed with pixel-level forensics — noise variance, color smoothness, ELA
+                  uniformity, and resolution heuristics — combined into a single verdict per image.</p>
                 </div>
               </div>
             </details>
@@ -513,7 +500,7 @@ export default function ScraperPage() {
             <p className="text-sm text-[#A3A3A3] font-medium">Enter any website URL above</p>
             <p className="text-xs text-[#6B6B6B] mt-1 max-w-xs">
               Crawls the whole site via sitemap discovery, runs forensic text + image detection on every page,
-              and flags duplicate content, thin pages, and WordPress AI-plugins.
+              and flags thin pages and WordPress AI-plugins. Switch to Deep Crawl for sites up to 150 pages.
             </p>
           </div>
         )}
