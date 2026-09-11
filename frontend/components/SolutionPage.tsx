@@ -173,26 +173,28 @@ export function SolutionPage(props: SolutionPageProps) {
                 </div>
                 <p className="mt-4 text-xs text-silver-600">No credit card required · Free tier always available</p>
               </div>
-              {/* Industry photo (when available) — falls back to the abstract icon badge */}
-              <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 lg:w-64 lg:h-64">
+              {/* Industry hero image (16:9, art-directed per industry from the
+                  documented /public/solutions package) — falls back to the
+                  abstract icon badge when no image is provided. */}
+              <div className="w-full lg:w-[440px] flex-shrink-0">
                 {heroImage ? (
-                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} overflow-hidden`}>
+                  <div className={`relative w-full aspect-video mx-auto rounded-xl border ${c.iconBg} overflow-hidden shadow-lift`}>
                     <Image
                       src={heroImage}
                       alt={`${industry} professional using Aiscern`}
                       fill
-                      sizes="(max-width: 1024px) 192px, 256px"
+                      sizes="(max-width: 1024px) 100vw, 440px"
                       className="object-cover"
                       priority
                     />
-                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-surface-elevated/90 backdrop-blur-sm border border-white/20 flex items-center justify-center">
                       <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>
                 ) : (
-                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
+                  <div className={`relative w-full aspect-video mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
                     <span className={c.icon}>{heroIcon}</span>
-                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
                       <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>

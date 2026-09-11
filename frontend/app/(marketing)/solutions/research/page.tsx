@@ -19,7 +19,7 @@ export default function ResearchPage() {
       tagline="Uphold Scientific Integrity in the AI Age"
       description="AI-generated research content threatens peer review, reproducibility, and scientific trust. Aiscern helps researchers, journal editors, and institutions validate the authenticity of submitted work before it enters the scientific record."
       heroIcon={<Microscope className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      heroImage="/trust/researchers.jpg"
+      heroImage="/solutions/research/hero.webp"
       accentColor="blue"
       ctaLabel="Start Free Research Account"
       problemTitle="Scientific Integrity Under Pressure"
@@ -30,7 +30,7 @@ export default function ResearchPage() {
         { title: 'Data fabrication in experiment logs and lab notes', desc: 'AI assistance in generating experiment logs, results tables, and analysis text blurs the line between AI-assisted writing and outright fabrication.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Research Paper Analysis', desc: 'Full-document ensemble detection on academic papers with ≥96% AUC. Section-level confidence breakdown for targeted review.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Research Paper Analysis', desc: 'Full-document ensemble detection on academic papers with a 0.94 ensemble AUC (see /benchmarks). Section-level confidence breakdown for targeted review.' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Heatmap', desc: 'Identify which specific paragraphs and sections are AI-flagged — crucial for peer reviewers assessing partial AI use.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Journal Submission Screening', desc: 'Process entire submission batches. API integration available for journal management systems (OJS, ScholarOne, Editorial Manager).' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Statistical Confidence Reporting', desc: 'Detailed confidence intervals and model breakdown — the kind of methodological transparency academic contexts demand.' },

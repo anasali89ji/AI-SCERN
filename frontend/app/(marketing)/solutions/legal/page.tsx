@@ -19,7 +19,7 @@ export default function LegalPage() {
       tagline="Forensic AI Verification for Legal Documents"
       description="Legal professionals need more than a score — they need a defensible audit trail. Aiscern delivers forensic-grade AI detection with timestamped reports, confidence breakdowns, and model transparency for use in compliance and legal proceedings."
       heroIcon={<Scale className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      heroImage="/trust/legal.jpg"
+      heroImage="/solutions/legal/hero.webp"
       accentColor="emerald"
       ctaLabel="Start Free Legal Account"
       problemTitle="AI Fabrication Risks in Legal Practice"
@@ -30,7 +30,7 @@ export default function LegalPage() {
         { title: 'Regulatory compliance documentation risk', desc: 'AI-generated compliance reports and filings that don\'t reflect genuine organizational analysis create significant liability exposure.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble analyzes AI text across legal drafting styles with ≥96% AUC.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Multi-Model Ensemble', desc: 'RoBERTa + Binoculars + Gemini ensemble analyzes AI text across legal drafting styles with a 0.94 ensemble AUC (see /benchmarks).' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Document-Level Analysis', desc: 'Analyze full legal documents including briefs, contracts, affidavits, and compliance filings.' },
         { icon: <Lock className="w-5 h-5" />, title: 'Forensic PDF Reports', desc: 'Timestamped, detection-ID-stamped PDF reports with model confidence breakdown. Exportable for court submission.' },
         { icon: <CircleCheck className="w-5 h-5" />, title: 'Chain of Custody Logging', desc: 'Every detection generates an immutable log entry with user ID, timestamp, document hash, and verdict.' },

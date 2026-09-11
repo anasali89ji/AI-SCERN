@@ -151,7 +151,7 @@ function LoginContent() {
           ))}
         </div>
 
-        <p className="mt-5 text-xs text-silver-500">© 2026 Aiscern · Secured by Clerk</p>
+        <p className="mt-5 text-xs text-silver-700">© 2026 Aiscern · Secured by Clerk</p>
       </div>
     </div>
   )

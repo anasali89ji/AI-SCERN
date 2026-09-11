@@ -112,7 +112,8 @@ export function SiteFooter() {
             <div className="mt-5 flex flex-col gap-2">
               {TRUST_BADGES.map(b => (
                 <div key={b.label} className="flex items-center gap-2 text-xs text-silver-600">
-                  <b.icon className="w-3.5 h-3.5 text-silver-500" aria-hidden="true" />
+                  {/* silver-700: visible muted icon — silver-500 is the disabled-state color (~1.8:1) */}
+                  <b.icon className="w-3.5 h-3.5 text-silver-700" aria-hidden="true" />
                   {b.label}
                 </div>
               ))}

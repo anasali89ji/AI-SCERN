@@ -3,12 +3,17 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { ArrowRight, Music, Video, MessageSquare, Layers } from "lucide-react"
+import { tokens } from "@/lib/design-tokens"
+
+// Modality accents from the token layer (amber=text · blue=image · cyan=audio ·
+// violet=video); chat/batch are product surfaces → moss. No raw hex.
+const MODALITY = tokens.semantic.modality
 
 const SUPPORTING_TOOLS = [
-  { href: '/detect/audio', icon: Music, label: 'AI Audio & Voice Clone Detector', desc: 'Synthetic speech, voice clones, and AI-generated audio', accuracy: '~91%', accent: '#06b6d4' },
-  { href: '/detect/video', icon: Video, label: 'Deepfake Video Detector', desc: 'Face-swap, lip-sync, and synthetic video detection', accuracy: '~88%', accent: '#8b5cf6' },
-  { href: '/chat', icon: MessageSquare, label: 'AI Detection Assistant', desc: 'Ask anything about AI detection — get expert answers in real time', accuracy: 'New', accent: '#2BEE34' },
-  { href: '/batch', icon: Layers, label: 'Batch AI Content Analyser', desc: 'Process up to 20 files simultaneously across all media types', accuracy: '20×', accent: '#f43f5e' },
+  { href: '/detect/audio', icon: Music, label: 'AI Audio & Voice Clone Detector', desc: 'Synthetic speech, voice clones, and AI-generated audio', accuracy: '~91%', accent: MODALITY.audio },
+  { href: '/detect/video', icon: Video, label: 'Deepfake Video Detector', desc: 'Face-swap, lip-sync, and synthetic video detection', accuracy: '~88%', accent: MODALITY.video },
+  { href: '/chat', icon: MessageSquare, label: 'AI Detection Assistant', desc: 'Ask anything about AI detection — get expert answers in real time', accuracy: 'New', accent: tokens.semantic.accent.primary },
+  { href: '/batch', icon: Layers, label: 'Batch AI Content Analyser', desc: 'Process up to 20 files simultaneously across all media types', accuracy: '20×', accent: tokens.semantic.accent.primary },
 ]
 
 export function ToolsMobileCarousel() {

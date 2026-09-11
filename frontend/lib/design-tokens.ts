@@ -15,29 +15,41 @@
  */
 export const tokens = {
   color: {
+    // Aligned to the silver + moss system (previously stale blue-tinted
+    // values that contradicted the semantic aliases below — this file is
+    // the canonical reference, so the two blocks must agree).
     background: {
-      base: '#0a0e17',
-      elevated: '#0f1520',
-      overlay: '#131a28',
-      sunken: '#070a10',
+      base:     '#141414', // semantic.surface.page
+      elevated: '#1A1A1A', // semantic.surface.raised
+      overlay:  '#1E1E1E', // semantic.surface.overlay
+      sunken:   '#0A0A0A', // semantic.surface.sunken
     },
     foreground: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
-      tertiary: '#475569',
-      inverse: '#020617',
+      primary:   '#FFFFFF', // silver-900
+      secondary: '#E5E5E5', // silver-800
+      tertiary:  '#A3A3A3', // silver-700 (muted)
+      inverse:   '#0A0A0A', // on-accent text
     },
     accent: {
-      emerald: '#2bee34',
+      emerald:     '#2bee34', // moss-300
       emeraldMuted: 'rgba(43, 238, 52, 0.1)',
-      blue: '#60a5fa',
-      amber: '#f59e0b',
-      red: '#ff4444',
+      blue:        '#2563eb', // modality.image — NOT a chrome color
+      amber:       '#f59e0b', // modality.text — NOT a chrome color
+      red:         '#ff4444', // status.error
     },
     border: {
       subtle: 'rgba(255, 255, 255, 0.06)',
-      hover: 'rgba(255, 255, 255, 0.12)',
+      hover:  'rgba(255, 255, 255, 0.12)',
       active: 'rgba(43, 238, 52, 0.3)',
+    },
+    // ── Per-modality accents (v5.0 plan) — mirrors tailwind `modality` scale
+    //    and the --modality-* CSS vars in globals.css. Semantic, not decorative:
+    //    use for the tool/detector of that media type only.
+    modality: {
+      text:  '#f59e0b', // amber
+      image: '#2563eb', // blue
+      audio: '#06b6d4', // cyan
+      video: '#8b5cf6', // violet
     },
   },
 
@@ -74,6 +86,15 @@ export const tokens = {
       warning: '#FFB800', // amber     — uncertain / review
       error:   '#FF4444', // rose      — AI-generated / fail
       info:    '#06b6d4', // cyan      — neutral emphasis
+    },
+    // Modality accents as semantic aliases — preferred import for page data
+    // (homepage tool grid, persona cards). Non-modality product surfaces use
+    // `accent.primary` (moss).
+    modality: {
+      text:  '#f59e0b',
+      image: '#2563eb',
+      audio: '#06b6d4',
+      video: '#8b5cf6',
     },
   },
 

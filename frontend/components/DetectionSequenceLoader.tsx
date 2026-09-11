@@ -74,19 +74,19 @@ export function DetectionSequenceLoader({
                   'w-6 h-6 rounded-full flex items-center justify-center border',
                   isDone   ? 'border-transparent bg-accent/10 text-accent' : '',
                   isActive ? 'border-accent bg-accent/10' : '',
-                  isFuture ? 'border-silver-500/50' : '',
+                  isFuture ? 'border-silver-700/60' : '',
                 ].join(' ')}>
                   {isDone ? (
                     <Check className="w-3.5 h-3.5" />
                   ) : (
-                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-accent' : 'bg-silver-500/50'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-accent' : 'bg-silver-700/60'}`} />
                   )}
                 </div>
                 <span className={[
                   'text-[11px] font-medium text-center leading-tight max-w-[80px]',
                   isDone   ? 'text-silver-600' : '',
                   isActive ? 'text-accent' : '',
-                  isFuture ? 'text-silver-500/50' : '',
+                  isFuture ? 'text-silver-700/60' : '',
                 ].join(' ')}>
                   {s.label}
                 </span>

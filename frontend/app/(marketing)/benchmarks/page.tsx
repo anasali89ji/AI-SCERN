@@ -227,7 +227,7 @@ export default function BenchmarksPage() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
-              Try Attestation
+              Try Free Detection
             </Link>
           </div>
 

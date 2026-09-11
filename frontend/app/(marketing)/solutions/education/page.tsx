@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: 'Protect academic integrity with ensemble-based AI AI text detection. Built for educators and institutions.',
     url: 'https://aiscern.com/solutions/education',
     siteName: 'Aiscern',
-    images: [{ url: 'https://aiscern.com/og-image.jpg' }],
+    images: [{ url: 'https://aiscern.com/og-image.png' }],
   },
 }
 
@@ -21,18 +21,18 @@ export default function EducationPage() {
       tagline="Protect Academic Integrity at Scale"
       description="AI-generated essays are flooding classrooms. Aiscern gives educators a forensic-grade ensemble detection system to identify AI-written assignments across text modalities — with explainable results, not just scores."
       heroIcon={<GraduationCap className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      heroImage="/trust/educators.jpg"
+      heroImage="/solutions/education/hero.webp"
       accentColor="primary"
       ctaLabel="Start Free Teacher Account"
       problemTitle="The Academic Integrity Crisis"
       painPoints={[
         { title: 'ChatGPT rewrites are undetectable by eye', desc: 'Modern AI-generated text is fluent, coherent, and stylistically diverse. Human graders cannot reliably distinguish AI work from genuine student writing.' },
-        { title: 'Single-model detection tools have high false-positive rates', desc: 'Tools that rely on one model flag innocent students. Aiscern uses an ensemble to reduce false positives below 3%.' },
+        { title: 'Single-model detection tools have high false-positive rates', desc: 'Tools that rely on one model flag innocent students. Aiscern’s ensemble cuts the false-positive rate to 6% on text benchmarks — single models run 8–10%.' },
         { title: 'Students are evading detection with paraphrasing tools', desc: 'Light paraphrasing fools simpler detection tools. Aiscern analyzes linguistic fingerprints that survive paraphrasing.' },
         { title: 'No audit trail for grade appeals', desc: 'Instructors need a defensible, documented record. Aiscern provides forensic reports exportable for disciplinary proceedings.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for ≥96% ensemble AUC across student writing datasets.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Ensemble Detection', desc: 'Combines RoBERTa, Binoculars perplexity analysis, and Gemini for a 0.94 ensemble AUC across student writing datasets (see /benchmarks).' },
         { icon: <FileSearch className="w-5 h-5" />, title: 'Sentence-Level Highlights', desc: 'Color-coded heatmap shows which sentences are AI-likely — not just an overall score.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Confidence Scoring', desc: 'Confidence threshold system: ≥62% = AI, ≤38% = Human, middle zone = uncertain. Designed for defensible academic decisions.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Batch Processing', desc: 'Upload entire class sets at once. Process 50+ documents simultaneously with a Pro or Team plan.' },

@@ -19,7 +19,7 @@ export default function MarketingPage() {
       tagline="Verify Your Content Is Genuinely Human"
       description="Brand authenticity depends on genuine human creativity. Aiscern helps marketing teams verify that UGC campaigns, influencer deliverables, and agency content reflect real human effort — not AI-generated filler."
       heroIcon={<Megaphone className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      heroImage="/trust/marketing.jpg"
+      heroImage="/solutions/marketing/hero.webp"
       accentColor="amber"
       ctaLabel="Start Free Marketing Account"
       problemTitle="The Brand Authenticity Problem"
@@ -30,7 +30,7 @@ export default function MarketingPage() {
         { title: 'Deepfake imagery in competitor analysis and industry research', desc: 'Synthetic images circulating on social media can be misidentified as real product photos, misleading competitive intelligence.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with ≥96% ensemble AUC.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with a 0.94 ensemble AUC (see /benchmarks).' },
         { icon: <Eye className="w-5 h-5" />, title: 'Image Authenticity', desc: 'Analyze AI-generated brand imagery, synthetic product photos, and fabricated lifestyle content.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Bulk Content Audits', desc: 'Examine entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },

@@ -15,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: [
           '/',
-          '/detect/',
           '/pricing',
           '/enterprise',
           '/compare',
@@ -37,7 +36,6 @@ export default function robots(): MetadataRoute.Robots {
           '/changelog',
           '/roadmap',
           '/status',
-          '/chat',
           '/login',
           '/signup',
           '/privacy',

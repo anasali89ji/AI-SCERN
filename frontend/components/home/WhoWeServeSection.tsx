@@ -12,14 +12,21 @@ import {
   PenTool, Newspaper, GraduationCap, Users, Scale, ShieldCheck,
   Microscope, Megaphone, HeartPulse
 } from "lucide-react"
+import { tokens } from "@/lib/design-tokens"
 
 /* ── Data ─────────────────────────────────────────────────────────────── */
+
+// Accent = the modality of the linked detector (semantic color, not decoration):
+// amber=text · blue=image · cyan=audio · violet=video · moss=product surface.
+// All values come from the token layer — no raw hex in page data.
+const MODALITY = tokens.semantic.modality
+const MOSS = tokens.semantic.accent.primary
 
 const WHO_NEEDS = [
   {
     role: "Content Creators",
     icon: PenTool,
-    accent: "#2BEE34",
+    accent: MOSS,
     stat: "94%",
     statLabel: "text accuracy",
     desc: "Verify authenticity before publishing. Protect your reputation and audience trust with forensic-grade detection.",
@@ -29,20 +36,9 @@ const WHO_NEEDS = [
     href: "/detect/text",
   },
   {
-    role: "Content Creators",
-    icon: PenTool,
-    accent: "#2BEE34",
-    stat: "94%",
-    statLabel: "text accuracy",
-    desc: "Verify authenticity before publishing. Protect your reputation and audience trust with forensic-grade detection.",
-    large: true,
-    image: null as string | null,
-    placeholderLabel: "Creator workflow",
-  },
-  {
     role: "Journalists",
     icon: Newspaper,
-    accent: "#2563eb",
+    accent: MODALITY.image,
     stat: "98%",
     statLabel: "image detection",
     desc: "Source verification and image authenticity for newsroom standards.",
@@ -54,7 +50,7 @@ const WHO_NEEDS = [
   {
     role: "Educators",
     icon: GraduationCap,
-    accent: "#f59e0b",
+    accent: MODALITY.text,
     stat: "94%",
     statLabel: "text detection",
     desc: "Maintain academic integrity with AI-generated content detection.",
@@ -66,7 +62,7 @@ const WHO_NEEDS = [
   {
     role: "HR Teams",
     icon: Users,
-    accent: "#06b6d4",
+    accent: MODALITY.text,
     stat: "20×",
     statLabel: "faster screening",
     desc: "Screen candidate submissions for AI-generated resumes and portfolios.",
@@ -78,7 +74,7 @@ const WHO_NEEDS = [
   {
     role: "Legal Professionals",
     icon: Scale,
-    accent: "#8b5cf6",
+    accent: MODALITY.text,
     stat: "<3s",
     statLabel: "per document",
     desc: "Forensic evidence for digital document authenticity in legal proceedings.",
@@ -90,7 +86,7 @@ const WHO_NEEDS = [
   {
     role: "Security Teams",
     icon: ShieldCheck,
-    accent: "#f43f5e",
+    accent: MODALITY.video,
     stat: "88%",
     statLabel: "video detection",
     desc: "Detect synthetic media in security footage and communications.",
@@ -102,7 +98,7 @@ const WHO_NEEDS = [
   {
     role: "Researchers",
     icon: Microscope,
-    accent: "#10b981",
+    accent: MODALITY.image,
     stat: "20+",
     statLabel: "forensic signals",
     desc: "Deep-dive into content provenance with signal-level transparency.",
@@ -114,7 +110,7 @@ const WHO_NEEDS = [
   {
     role: "Marketing Teams",
     icon: Megaphone,
-    accent: "#f97316",
+    accent: MOSS,
     stat: "Batch",
     statLabel: "20× throughput",
     desc: "Verify campaign assets and influencer content at scale.",
@@ -126,7 +122,7 @@ const WHO_NEEDS = [
   {
     role: "Healthcare",
     icon: HeartPulse,
-    accent: "#0ea5e9",
+    accent: MODALITY.text,
     stat: "HIPAA",
     statLabel: "compliant",
     desc: "Ensure medical imaging and documentation integrity.",
@@ -210,8 +206,7 @@ function PersonaCard({
             style={{ borderColor: `${persona.accent}20` }}
           >
             <Icon
-              className="w-[18px] h-[18px] transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
-              style={{ color: "#A3A3A3" }}
+              className="w-[18px] h-[18px] text-silver-700 transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
             />
           </div>
           <h3 className="text-base font-semibold text-silver-900">{persona.role}</h3>
@@ -223,8 +218,7 @@ function PersonaCard({
         {/* Stat footer */}
         <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-baseline gap-1.5">
           <span
-            className="text-lg font-bold tabular-nums transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
-            style={{ color: "#FFFFFF" }}
+            className="text-lg font-bold text-silver-900 tabular-nums transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
           >
             {persona.stat}
           </span>

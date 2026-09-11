@@ -37,10 +37,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: BASE, lastModified: d('2026-04-10'), changeFrequency: 'weekly',  priority: 1.0 },
 
     // ── Detection tools (core product) ───────────────────────────────────
-    { url: `${BASE}/detect/text`,  lastModified: d('2026-04-01'), changeFrequency: 'weekly',  priority: 0.95 },
-    { url: `${BASE}/detect/image`, lastModified: d('2026-04-01'), changeFrequency: 'weekly',  priority: 0.95 },
-    { url: `${BASE}/detect/audio`, lastModified: d('2026-03-20'), changeFrequency: 'weekly',  priority: 0.9  },
-    { url: `${BASE}/detect/video`, lastModified: d('2026-03-20'), changeFrequency: 'weekly',  priority: 0.9  },
+    // NOTE: /detect/* routes are auth-gated (middleware 307 → /login), so they
+    // are deliberately NOT listed here — advertising them only feeds crawlers
+    // redirect loops. Anonymous users land on / where the live demo runs.
 
     // ── Pricing & conversion ──────────────────────────────────────────────
     { url: `${BASE}/pricing`,     lastModified: d('2026-04-05'), changeFrequency: 'monthly', priority: 0.85 },
@@ -80,7 +79,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/login`,  lastModified: d('2026-03-01'), changeFrequency: 'yearly', priority: 0.6 },
 
     // ── ARIA AI Assistant ─────────────────────────────────────────────────
-    { url: `${BASE}/chat`, lastModified: d('2026-03-25'), changeFrequency: 'weekly', priority: 0.65 },
+    // (/chat is auth-gated — same redirect reason as /detect/* above)
 
     // ── Updates & status ──────────────────────────────────────────────────
     { url: `${BASE}/changelog`, lastModified: d('2026-04-08'), changeFrequency: 'weekly',  priority: 0.55 },

@@ -41,7 +41,7 @@ function StarRow({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }
   return (
     <div className="flex gap-0.5">
       {[1,2,3,4,5].map(i => (
-        <Star key={i} className={`${cls} ${i <= rating ? 'text-warning fill-warning' : 'text-silver-500'}`} />
+        <Star key={i} className={`${cls} ${i <= rating ? 'text-warning fill-warning' : 'text-silver-700'}`} />
       ))}
     </div>
   )
@@ -266,7 +266,7 @@ export default function ReviewsPage() {
           </div>
         ) : reviews.length === 0 ? (
           <div className="text-center py-24">
-            <Star className="w-12 h-12 text-silver-500 mx-auto mb-4" />
+            <Star className="w-12 h-12 text-silver-700 mx-auto mb-4" />
             <p className="text-silver-600 font-medium mb-2">
               {starFilter > 0 ? `No ${starFilter}-star reviews yet` : 'No reviews yet'}
             </p>

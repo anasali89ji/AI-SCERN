@@ -19,7 +19,7 @@ export default function MediaPage() {
       tagline="Defend the Truth Against Synthetic Media"
       description="Deepfakes, AI-generated press releases, and synthetic imagery are weaponized against journalism every day. Aiscern gives newsrooms a multi-modal detection layer across text, image, audio, and video."
       heroIcon={<Newspaper className="w-20 h-20 lg:w-28 lg:h-28 opacity-80" strokeWidth={1} />}
-      heroImage="/trust/journalists.jpg"
+      heroImage="/solutions/media/hero.webp"
       accentColor="amber"
       ctaLabel="Start Free Journalist Account"
       problemTitle="The Synthetic Media Threat to Journalism"
@@ -30,7 +30,7 @@ export default function MediaPage() {
         { title: 'Viral deepfake videos spread before verification can catch up', desc: 'The detection window is narrow. By the time manual verification completes, synthetic content has already been widely shared.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'AI AI Text Detection', desc: 'Ensemble RoBERTa + Binoculars analysis on press releases, reports, and submitted articles with ≥96% AUC.' },
+        { icon: <Brain className="w-5 h-5" />, title: 'AI Text Detection', desc: 'Ensemble RoBERTa + Binoculars analysis on press releases, reports, and submitted articles with a 0.94 ensemble AUC (see /benchmarks).' },
         { icon: <Eye className="w-5 h-5" />, title: 'Deepfake Deepfake Image Detection', desc: 'ViT-based classifier with pixel-level integrity analysis. Analyzes GAN-generated and diffusion model images.' },
         { icon: <Video className="w-5 h-5" />, title: 'Video Deepfake Detection', desc: 'Frame-level analysis combined with NVIDIA NIM deepfake models for facial manipulation detection.' },
         { icon: <TriangleAlert className="w-5 h-5" />, title: 'Audio Clone Detection', desc: 'wav2vec2-based voice analysis against ASVspoof benchmarks — flags synthetic speech with 92% recall.' },
