@@ -13,6 +13,7 @@ import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/uti
 import dynamic from 'next/dynamic'
 import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 import { ConfidenceRing } from '@/components/ConfidenceRing'
+import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -430,6 +431,13 @@ function VideoDetectionPage() {
 
   const cfg = result ? verdictConfig[result.verdict as Verdict] : null
 
+  // Frame extraction runs client-side with real progress; once it hands off
+  // to the API call, treat it as "upload complete" so the sequence loader's
+  // remaining steps auto-advance the same way image/text/audio pages do.
+  const sequenceProgress = phase === 'extracting'
+    ? Math.round((framesDone / FRAME_POSITIONS.length) * 100)
+    : 100
+
   const loadingLabel = phase === 'extracting'
     ? `Extracting frame ${framesDone} of ${FRAME_POSITIONS.length}…`
     : phase === 'analyzing'
@@ -602,7 +610,9 @@ function VideoDetectionPage() {
             <div className="hidden lg:block">
               <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
             </div>
-          ) : !loading && (
+          ) : loading ? (
+            <DetectionSequenceLoader loading={loading} uploadProgress={sequenceProgress} />
+          ) : (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-surface-elevated flex items-center justify-center mx-auto mb-4 ">
                 <Video className="w-10 h-10 text-silver-700" />
