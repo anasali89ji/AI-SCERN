@@ -56,7 +56,6 @@ const NAV_GROUPS = [
       { href: '/batch',      icon: Layers,        label: 'Batch Scan'   },
       { href: '/scraper',    icon: Globe,         label: 'Web Scanner'  },
       { href: '/verify/web', icon: ShieldCheck,   label: 'Web Verify'   },
-      { href: '/pipeline',   icon: Layers,        label: 'Pipeline'     },
       { href: '/workflows',  icon: Workflow,      label: 'Workflows'    },
     ],
   },
@@ -74,7 +73,7 @@ const NAV_GROUPS = [
 const LABEL_OVERRIDES: Record<string, string> = {
   dashboard: 'Overview', detect: 'Detect', text: 'Text', image: 'Image',
   audio: 'Audio', video: 'Video', document: 'Document', chat: 'AI Assistant', batch: 'Batch Scan',
-  scraper: 'Web Scanner', verify: 'Verify', web: 'Web Verify', pipeline: 'Pipeline',
+  scraper: 'Web Scanner', verify: 'Verify', web: 'Web Verify',
   workflows: 'Workflows', history: 'History',
   credits: 'Credits', profile: 'Profile', settings: 'Settings',
 }
