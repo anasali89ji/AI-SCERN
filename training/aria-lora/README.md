@@ -23,7 +23,7 @@ way the current NVIDIA-backed path does. Text-only — no image understanding
    already expects. **Not wired into `chat/route.ts` yet** — see "Next step"
    below for why.
 
-## Steps
+## Steps (Colab)
 
 ```bash
 cd training/aria-lora
@@ -33,6 +33,40 @@ python3 build_dataset.py --out aria_sft.jsonl   # ~68 examples from the current 
 Open `aria_lora_training.ipynb` in Colab (Runtime -> T4 GPU), upload
 `aria_sft.jsonl` when prompted, run all cells. Takes roughly 15-30 minutes
 on a free T4 for 3 epochs over this dataset size.
+
+## Steps (DigitalOcean GPU Droplet)
+
+If you're using DO credit instead of free Colab, `train.py` is the same
+training logic without Colab's upload/mount cells — run it over SSH.
+
+Pick **L40S or RTX 6000 Ada** (~$1.57/GPU-hr on-demand as of Sept 2026) —
+a 7B QLoRA fine-tune doesn't need H100-class hardware, and this tier is
+the cheapest DO offers. Expect well under $1 for a run this size, even
+generously oversized (a few thousand examples, several epochs would still
+land under $3).
+
+```bash
+# 1. Create the Droplet (DO's AI/ML-ready image has CUDA + PyTorch preinstalled)
+# 2. From your machine:
+scp build_dataset.py train.py setup_droplet.sh root@<droplet-ip>:~
+scp ../../frontend/lib/rag/aria-knowledge.json root@<droplet-ip>:~
+
+# 3. On the Droplet:
+ssh root@<droplet-ip>
+bash setup_droplet.sh
+python3 build_dataset.py --out aria_sft.jsonl
+python3 train.py --dataset aria_sft.jsonl --output ./aria-lora-adapter \
+  --push-to-hub your-username/aria-lora-qwen2.5-7b   # optional, needs `huggingface-cli login` first
+
+# 4. Pull the adapter down (if not pushed to the Hub):
+scp -r root@<droplet-ip>:~/aria-lora-adapter ./
+```
+
+**Destroy the Droplet when you're done training** — not just power it
+off. DigitalOcean bills GPU Droplets for reserved capacity even while
+powered off; only destroying stops the charge. If you decide later to
+also host inference there instead of HF Spaces, that's a separate,
+longer-lived Droplet — don't conflate the two.
 
 Then create a new HF Space (Settings -> new Space -> SDK: Gradio,
 Hardware: ZeroGPU — free), and either:
