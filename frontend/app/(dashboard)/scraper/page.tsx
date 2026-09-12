@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Globe, Search, TriangleAlert, CircleCheck, CircleHelp,
   LoaderCircle, SquareArrowOutUpRight, ChevronDown, Info,
@@ -109,6 +109,26 @@ export default function ScraperPage() {
   const [result, setResult]       = useState<SiteScanResult | null>(null)
   const [error, setError]         = useState<string | null>(null)
   const [copied, setCopied]       = useState(false)
+  const [activeTab, setActiveTab] = useState<string>('pages')
+
+  const tabs = useMemo(() => {
+    if (!result) return []
+    return [
+      { id: 'pages',      label: 'Pages',      icon: FileType2,  count: result.pages.length,            show: result.pages.length > 0 },
+      { id: 'images',     label: 'Images',      icon: ImageIcon,  count: result.images.length,           show: result.images.length > 0 },
+      { id: 'heatmap',    label: 'Heatmap',     icon: ListTree,   count: result.sectionsHeatmap.length,  show: result.sectionsHeatmap.length > 0 },
+      { id: 'wordpress',  label: 'WordPress',   icon: Layers,     count: result.wordPressPlugins.length, show: result.isWordPress && result.wordPressPlugins.length > 0 },
+      { id: 'remediation',label: 'Remediation', icon: Wrench,     count: result.remediation.length,      show: result.remediation.length > 0 },
+      { id: 'engine',     label: 'Engine Info', icon: Info,       count: null as number | null,          show: true },
+    ].filter(t => t.show)
+  }, [result])
+
+  // Default to the first available tab whenever a new scan result comes in
+  useEffect(() => {
+    if (!result) return
+    setActiveTab(prev => tabs.some(t => t.id === prev) ? prev : (tabs[0]?.id ?? 'engine'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result])
 
   const handleScan = async (targetUrl?: string) => {
     const scanUrl = (targetUrl ?? url).trim()
@@ -315,14 +335,26 @@ export default function ScraperPage() {
               </div>
             )}
 
-            {/* Sections heatmap */}
-            {result.sectionsHeatmap.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <ListTree className="w-4 h-4 text-[#2BEE34]" />
-                  Sitemap AI Heatmap
-                  <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.sectionsHeatmap.length} sections</span>
-                </h3>
+
+            {/* Section tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setActiveTab(t.id)}
+                  className={`flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-colors border ${
+                    activeTab === t.id
+                      ? 'bg-[#2BEE34]/15 text-[#2BEE34] border-[#2BEE34]/30'
+                      : 'bg-[#141414] text-[#A3A3A3] border-[#333333] hover:border-white/[0.12]'}`}>
+                  <t.icon className="w-3.5 h-3.5" />
+                  {t.label}
+                  {t.count !== null && <span className="text-[10px] opacity-70">{t.count}</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Active section panel */}
+            <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+
+              {activeTab === 'heatmap' && (
                 <div className="space-y-2">
                   {result.sectionsHeatmap.map((s, i) => (
                     <div key={i} className="flex items-center gap-3">
@@ -336,17 +368,9 @@ export default function ScraperPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* WordPress plugins */}
-            {result.isWordPress && result.wordPressPlugins.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#2BEE34]" />
-                  WordPress Plugins &amp; Themes Detected
-                  <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.wordPressPlugins.length} found</span>
-                </h3>
+              {activeTab === 'wordpress' && (
                 <div className="flex flex-wrap gap-1.5">
                   {result.wordPressPlugins.map((p, i) => (
                     <span key={i} className={`text-[10px] font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5 ${
@@ -359,18 +383,10 @@ export default function ScraperPage() {
                     </span>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Per-page verdicts */}
-            {result.pages.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <FileType2 className="w-4 h-4 text-[#2BEE34]" />
-                  Pages Analyzed
-                  <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.pages.length} pages</span>
-                </h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+              {activeTab === 'pages' && (
+                <div className="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
                   {result.pages.map((p, i) => (
                     <details key={i} className="rounded-lg bg-[#141414] border border-[#333333] hover:border-white/[0.12] transition-colors group">
                       <summary className="flex items-center gap-3 p-3 cursor-pointer list-none select-none">
@@ -407,22 +423,15 @@ export default function ScraperPage() {
                     </details>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Per-image verdicts */}
-            {result.images.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-[#2BEE34]" />
-                  Images Analyzed
-                  <span className="ml-auto text-[10px] text-[#6B6B6B] font-normal">{result.images.length} images</span>
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {activeTab === 'images' && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[32rem] overflow-y-auto pr-1">
                   {result.images.map((img, i) => (
                     <div key={i} className="rounded-lg overflow-hidden border border-[#333333] bg-[#141414]">
-                      <div className="relative">
-                        <img src={img.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                      <div className="relative bg-[#0A0A0A]">
+                        <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-24 object-cover"
+                          loading="lazy" onError={e => { e.currentTarget.style.display = 'none' }} />
                         <div className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${verdictBg(img.verdict)} ${verdictColor(img.verdict)}`}>
                           {Math.round(img.aiScore)}%
                         </div>
@@ -433,19 +442,10 @@ export default function ScraperPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Remediation */}
-            {result.remediation.length > 0 && (
-              <details className="bg-[#141414] border border-white/[0.07] rounded-xl p-4 group">
-                <summary className="cursor-pointer text-sm font-semibold text-[#E5E5E5] flex items-center gap-2 list-none select-none">
-                  <Wrench className="w-4 h-4 text-[#2BEE34]" />
-                  Remediation Recommendations
-                  <span className="text-xs text-[#6B6B6B] font-normal">{result.remediation.length}</span>
-                  <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto group-open:rotate-180 transition-transform" />
-                </summary>
-                <div className="mt-3 space-y-1.5">
+              {activeTab === 'remediation' && (
+                <div className="space-y-1.5">
                   {result.remediation.map((r, i) => {
                     const target = r.url || r.imageUrl || r.pluginSlug || r.sectionPrefix
                     return (
@@ -464,29 +464,26 @@ export default function ScraperPage() {
                     )
                   })}
                 </div>
-              </details>
-            )}
+              )}
 
-            {/* Engine info */}
-            <details className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-[#E5E5E5] flex items-center gap-2 list-none select-none">
-                <Info className="w-4 h-4 text-[#2BEE34]" />Forensic Engine &amp; Voting Weights
-                <ChevronDown className="w-4 h-4 text-[#6B6B6B] ml-auto" />
-              </summary>
-              <div className="mt-3 space-y-2 text-xs text-[#6B6B6B]">
-                <div className="flex items-start gap-2">
-                  <Fingerprint className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
-                  <p>Text pages are scored by an ensemble of the HF text-classifier vote, a local linguistic-signal
-                  brain, and perplexity-burst analysis, then cross-checked against content depth and stylometric
-                  consistency across the whole site.</p>
+              {activeTab === 'engine' && (
+                <div className="space-y-2 text-xs text-[#6B6B6B]">
+                  <div className="flex items-start gap-2">
+                    <Fingerprint className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
+                    <p>Text pages are scored by an ensemble of the HF text-classifier vote, a local linguistic-signal
+                    brain, and perplexity-burst analysis, then cross-checked against content depth and stylometric
+                    consistency across the whole site.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <ImageIcon className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
+                    <p>Images are analyzed with pixel-level forensics — noise variance, color smoothness, ELA
+                    uniformity, and resolution heuristics — combined into a single verdict per image.</p>
+                  </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <ImageIcon className="w-3.5 h-3.5 text-[#2BEE34] mt-0.5 shrink-0" />
-                  <p>Images are analyzed with pixel-level forensics — noise variance, color smoothness, ELA
-                  uniformity, and resolution heuristics — combined into a single verdict per image.</p>
-                </div>
-              </div>
-            </details>
+              )}
+
+            </div>
+
 
           </div>
         )}
