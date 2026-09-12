@@ -5,7 +5,7 @@
  */
 
 const NIM_API   = 'https://integrate.api.nvidia.com/v1/chat/completions'
-const NIM_KEY   = process.env.NVIDIA_API_KEY ?? ''
+const NIM_KEY   = process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY || ''
 const NIM_MODEL = 'meta/llama-3.2-11b-vision-instruct'
 
 export interface NIMFrameResult {

@@ -479,7 +479,7 @@ export async function POST(req: NextRequest) {
     const { messages, attachments } = body
     if (!messages?.length) return NextResponse.json({ success: false, error: { code: 'NO_MESSAGES', message: 'Missing messages' } }, { status: 400 })
 
-    const apiKey  = process.env.NVIDIA_API_KEY || ''
+    const apiKey  = process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY || ''
     // Fallback NVIDIA API key: only used if the primary key's requests all
     // fail (invalid key, rate-limited, account issue). Kept as a SEPARATE
     // sequential attempt rather than racing both keys eagerly on every

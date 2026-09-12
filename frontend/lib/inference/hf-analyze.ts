@@ -1365,7 +1365,7 @@ export async function analyzeVideoWithFrames(
 ): Promise<DetectionResult> {
   const durationEst = Math.max(1, Math.round(fileSize / (1024 * 1024 * 2)))
 
-  if (frames.length > 0 && process.env.NVIDIA_API_KEY) {
+  if (frames.length > 0 && (process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY)) {
     try {
       trackVendorCall('nvidia_nim', 'video')
       const nimResult = await analyzeVideoFrames(frames)
@@ -1450,7 +1450,7 @@ export async function analyzeVideoWithFrames(
             ai_score:     Math.round((frameScores[i] ?? ensScore) * 1000) / 1000,
             face_detected: true,
           })),
-          degraded_signals: [process.env.NVIDIA_API_KEY ? 'nvidia-nim-call-failed' : 'nvidia-nim-unconfigured'],
+          degraded_signals: [(process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY) ? 'nvidia-nim-call-failed' : 'nvidia-nim-unconfigured'],
           summary: verdict === 'AI'
             ? `Deepfake detected — ${Math.round(ensScore * 100)}% confidence across ${frameScores.length} frames (IQR=${iqr.toFixed(2)}).`
             : verdict === 'HUMAN'

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 const NVIDIA_BASE = 'https://integrate.api.nvidia.com/v1'
 
 export async function GET() {
-  const apiKey = process.env.NVIDIA_API_KEY || ''
+  const apiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY || ''
   const apiKeyFallback = process.env.NVIDIA_API_KEY_FALLBACK || process.env.NVIDIA_API_KEY_2 || ''
 
   const checks: Record<string, any> = {

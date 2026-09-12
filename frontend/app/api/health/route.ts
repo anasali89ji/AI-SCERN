@@ -65,7 +65,7 @@ export async function GET() {
     (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2) ? 'configured' : 'unconfigured'
 
   const nvidiaNimStatus: 'configured' | 'unconfigured' =
-    process.env.NVIDIA_API_KEY ? 'configured' : 'unconfigured'
+    (process.env.NVIDIA_API_KEY || process.env.NVIDIA_NIM_API_KEY) ? 'configured' : 'unconfigured'
 
   const hfStatus: 'configured' | 'unconfigured' =
     (process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN) ? 'configured' : 'unconfigured'
