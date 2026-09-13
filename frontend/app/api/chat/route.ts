@@ -704,6 +704,60 @@ export async function POST(req: NextRequest) {
     // single KB entry's `content` is safe to stream verbatim as a chat answer) and
     // belongs in a follow-up change, not folded into this bug fix.
 
+    // ── SELF-HOSTED ARIA LORA (free Colab-trained model, HF Spaces ZeroGPU) ───
+    // Gated behind ARIA_LORA_ENABLED — same dark-launch pattern as
+    // ARIA_FUNCTION_CALLING_ENABLED below, for the same reason: an
+    // independently-trained model's real-world output quality can't be
+    // fully known until it's live, so it doesn't belong in the default path
+    // yet. Unlike the function-calling block, a failure here does NOT
+    // return an error to the user — it falls straight through to the
+    // existing NVIDIA path below, so a flaky/cold/misconfigured Space
+    // degrades to normal service instead of breaking chat.
+    if (process.env.ARIA_LORA_ENABLED === 'true') {
+      try {
+        const { callAriaLora } = await import('@/lib/inference/aria-lora')
+        const loraMessages = [
+          { role: 'system' as const, content: systemPrompt },
+          ...apiMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        ]
+        const loraResult = await callAriaLora(loraMessages)
+        if (loraResult.content) {
+          const encoder = new TextEncoder()
+          const text = loraResult.content
+          const stream = new ReadableStream({
+            start(controller) {
+              const send = (obj: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+              // Artificial chunking — the Space returns a full completion,
+              // not a token stream, so we fake the incremental feel the
+              // client already expects from the NVIDIA SSE path.
+              let i = 0
+              const tick = () => {
+                if (i >= text.length) { send({ type: 'done' }); controller.close(); return }
+                send({ type: 'text', text: text.slice(i, i + 6) })
+                i += 6
+                setTimeout(tick, 12)
+              }
+              tick()
+            },
+          })
+          console.info('[chat] served by ARIA LoRA Space')
+          return new Response(stream, {
+            status: 200,
+            headers: {
+              'Content-Type':  'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection':    'keep-alive',
+              'X-Accel-Buffering': 'no',
+              'X-ARIA-Mode':   'lora',
+            },
+          })
+        }
+        console.warn('[chat] ARIA LoRA Space returned no content — falling back to NVIDIA')
+      } catch (err) {
+        console.error('[chat] ARIA LoRA Space call failed — falling back to NVIDIA:', err instanceof Error ? err.message : err)
+      }
+    }
+
     // ── LLM-DRIVEN FUNCTION CALLING (Track 2, final item) ──────────────────────
     // SHIPPED DARK behind this flag — built from NVIDIA's docs without a live
     // API key to test against in the build environment. Do not enable in
