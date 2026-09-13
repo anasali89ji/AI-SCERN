@@ -80,7 +80,7 @@ export function ReviewModal({ isOpen, onClose, toolName, initialRating = 0 }: Pr
 
       {/* Modal */}
       <div className="relative w-full sm:max-w-lg bg-[#141414] border border-[#333333] rounded-t-2xl sm:rounded-xl
-                      shadow-[0_8px_40px_rgba(0,0,0,0.8)] max-h-[92dvh] overflow-y-auto animate-slide-up">
+                      shadow-[0_8px_40px_rgba(0,0,0,0.8)] max-h-[92dvh] overflow-y-auto animate-enter">
 
         {/* Header */}
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-[#333333] bg-[#141414] z-10">

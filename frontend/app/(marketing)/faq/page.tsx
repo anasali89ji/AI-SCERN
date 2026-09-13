@@ -58,7 +58,7 @@ function AccordionItem({ q, a, link }: { q: string; a: string; link: { label: st
         <ChevronDown className={`w-4 h-4 flex-shrink-0 text-silver-600 transition-transform duration-200 ${open ? 'rotate-180 text-accent' : ''}`} />
       </button>
       {open && (
-        <div className="pb-4 animate-slide-up">
+        <div className="pb-4 animate-enter">
           <p className="text-sm text-silver-700 leading-relaxed">{a}</p>
           {link && (
             <Link href={link.href} className="mt-2 text-xs text-accent hover:underline font-medium flex items-center gap-1">

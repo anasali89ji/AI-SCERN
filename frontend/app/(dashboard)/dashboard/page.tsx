@@ -142,7 +142,7 @@ export default function DashboardPage() {
       )}
 
       {/* Welcome */}
-      <div className="animate-fade-in">
+      <div className="animate-enter">
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
           Welcome back, <span className="text-[#2BEE34]">{name}</span>
         </h1>
@@ -154,12 +154,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-slide-up">
-        {STAT_CARDS.map(s => (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {STAT_CARDS.map((s, i) => (
           <div key={s.label}
-            className="flex items-center gap-3 p-4 sm:p-5 rounded-xl
+            style={{ animationDelay: `${i * 60}ms` }}
+            className="flex items-center gap-3 p-4 sm:p-5 rounded-xl opacity-0 animate-enter
                        bg-[#141414] border border-[#333333]
-                       hover:border-[#454545] transition-all duration-200"
+                       hover:border-[#454545] hover:-translate-y-0.5 transition-all duration-200"
           >
             <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
               <s.icon className="w-5 h-5 text-[#2BEE34]" strokeWidth={1.8} />
@@ -174,7 +175,7 @@ export default function DashboardPage() {
 
       {/* Onboarding (new users) */}
       {totalScans === 0 && !loading && (
-        <div className="p-5 rounded-xl bg-[#141414] border border-[#2BEE34]/20 animate-slide-up">
+        <div className="p-5 rounded-xl bg-[#141414] border border-[#2BEE34]/20 animate-enter">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#2BEE34]/10 border border-[#2BEE34]/20 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-5 h-5 text-[#2BEE34]" />
