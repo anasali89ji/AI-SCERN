@@ -55,7 +55,7 @@ export function MobileNav() {
           />
 
           {/* Sheet */}
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#141414] border-t border-[#333333] rounded-t-xl animate-slide-up"
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-[#141414] border-t border-[#333333] rounded-t-xl animate-enter"
             style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
 
             {/* Drag handle */}

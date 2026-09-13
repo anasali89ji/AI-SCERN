@@ -247,7 +247,7 @@ function UserDropdown({ user, signOut }: { user: any; signOut: () => void }) {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-64 z-50
                         bg-surface border border-white/15 rounded-xl
-                        shadow-deep overflow-hidden animate-slide-up">
+                        shadow-deep overflow-hidden animate-enter">
           {/* Profile header */}
           <div className="flex items-center gap-3 px-4 py-4 border-b border-white/15 bg-surface-deep">
             <UserAvatar user={user} size={11} />
@@ -317,7 +317,7 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-surface border border-white/15 rounded-xl shadow-deep overflow-hidden animate-slide-up">
+        <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-surface border border-white/15 rounded-xl shadow-deep overflow-hidden animate-enter">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/15">
             <span className="text-sm font-semibold text-silver-900">Notifications</span>
             {items.length > 0 && (
@@ -452,7 +452,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Backdrop */}
             <div className="absolute inset-0 bg-surface-deep/80" onClick={() => setMobileOpen(false)} />
             {/* Drawer */}
-            <aside className="relative w-72 bg-surface border-r border-white/15 flex flex-col animate-slide-up">
+            <aside className="relative w-72 bg-surface border-r border-white/15 flex flex-col animate-enter">
               <Sidebar
                 user={user} signOut={signOut} collapsed={false} pathname={pathname}
                 onNavClick={() => setMobileOpen(false)} chatPreviews={chatPreviews} onChatSelect={handleChatSelect}

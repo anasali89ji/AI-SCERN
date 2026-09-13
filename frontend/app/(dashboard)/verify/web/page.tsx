@@ -68,6 +68,14 @@ function WebVerificationContent() {
         </p>
       </div>
 
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
+        <TriangleAlert className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+        <p className="text-warning/90 leading-relaxed">
+          <span className="font-semibold">Early stage feature.</span> Web verification is still in active development —
+          results may be incomplete or inaccurate on some sites while we improve it. Feedback welcome.
+        </p>
+      </div>
+
       <div className="rounded-2xl border border-white/[0.08] bg-surface/50 backdrop-blur-sm p-6 sm:p-8">
         <div className="flex gap-3">
           <div className="relative flex-1">
