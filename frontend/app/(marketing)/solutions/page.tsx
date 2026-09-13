@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { SiteNav } from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
 import {
@@ -9,14 +10,14 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Solutions — Aiscern AI Verification for Every Industry',
-  description: 'Aiscern delivers multi-modal AI content verification tailored for education, HR, journalism, legal, healthcare, security, and more.',
+  title: 'Solutions — Aiscern AI Detection for Every Industry',
+  description: 'Aiscern delivers multi-modal AI content detection tailored for education, HR, journalism, legal, healthcare, security, and more.',
   openGraph: {
     title: 'Industry Solutions — Aiscern',
-    description: 'AI verification built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
+    description: 'AI detection built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
     url: 'https://aiscern.com/solutions',
     siteName: 'Aiscern',
-    images: [{ url: 'https://aiscern.com/og-image.jpg' }],
+    images: [{ url: 'https://aiscern.com/og-image.png' }],
   },
 }
 
@@ -28,6 +29,8 @@ type Solution = {
   tagline: string
   desc: string
   cta: string
+  /** 16:9 art-directed industry image from the documented /public/solutions package */
+  image: string
 }
 
 const SOLUTIONS: Solution[] = [
@@ -37,8 +40,9 @@ const SOLUTIONS: Solution[] = [
     color: 'primary',
     title: 'Education',
     tagline: 'Protect academic integrity',
-    desc: 'Verify AI-generated essays, assignments, and research papers. Purpose-built for teachers, professors, and institutions.',
+    desc: 'Analyze AI-generated essays, assignments, and research papers. Purpose-built for teachers, professors, and institutions.',
     cta: 'Start Free Teacher Account',
+    image: '/solutions/education/hero.webp',
   },
   {
     href: '/solutions/hr',
@@ -48,6 +52,7 @@ const SOLUTIONS: Solution[] = [
     tagline: 'Hire with confidence',
     desc: 'Verify authenticity of cover letters, CVs, and work samples. Catch AI-written applications before they reach interview stage.',
     cta: 'Start Free HR Account',
+    image: '/solutions/hr/hero.webp',
   },
   {
     href: '/solutions/media',
@@ -57,6 +62,7 @@ const SOLUTIONS: Solution[] = [
     tagline: 'Defend news integrity',
     desc: 'Identify AI-generated text, synthetic images, and deepfake video in submitted media. Built for fact-checkers and newsrooms.',
     cta: 'Start Free Journalist Account',
+    image: '/solutions/media/hero.webp',
   },
   {
     href: '/solutions/legal',
@@ -64,8 +70,9 @@ const SOLUTIONS: Solution[] = [
     color: 'emerald',
     title: 'Legal & Compliance',
     tagline: 'Audit AI-generated content',
-    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade verification reports.',
+    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade detection reports.',
     cta: 'Start Free Legal Account',
+    image: '/solutions/legal/hero.webp',
   },
   {
     href: '/solutions/security',
@@ -73,8 +80,9 @@ const SOLUTIONS: Solution[] = [
     color: 'rose',
     title: 'Cybersecurity',
     tagline: 'Stop synthetic threats',
-    desc: 'Verify deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content at scale.',
+    desc: 'Analyze deepfake audio in fraud calls, synthetic identity documents, and AI-crafted phishing content at scale.',
     cta: 'Start Free Security Account',
+    image: '/solutions/security/hero.webp',
   },
   {
     href: '/solutions/healthcare',
@@ -84,6 +92,7 @@ const SOLUTIONS: Solution[] = [
     tagline: 'Ensure clinical accuracy',
     desc: 'Identify AI-generated medical literature, synthetic patient data, and fabricated imagery in clinical submissions.',
     cta: 'Start Free Healthcare Account',
+    image: '/solutions/healthcare/hero.webp',
   },
   {
     href: '/solutions/marketing',
@@ -93,6 +102,7 @@ const SOLUTIONS: Solution[] = [
     tagline: 'Protect your brand voice',
     desc: 'Audit user-generated content, influencer posts, and agency deliverables for AI generation at scale.',
     cta: 'Start Free Marketing Account',
+    image: '/solutions/marketing/hero.webp',
   },
   {
     href: '/solutions/research',
@@ -102,6 +112,7 @@ const SOLUTIONS: Solution[] = [
     tagline: 'Uphold scientific integrity',
     desc: 'Validate authenticity of papers, datasets, and experiment logs. Integrate with your research workflow via API.',
     cta: 'Start Free Research Account',
+    image: '/solutions/research/hero.webp',
   },
   {
     href: '/solutions/content-creators',
@@ -109,8 +120,9 @@ const SOLUTIONS: Solution[] = [
     color: 'primary',
     title: 'Content Creators',
     tagline: 'Prove your originality',
-    desc: 'Authenticate your own work and verify AI-generated content from contributors, ghostwriters, or UGC submissions.',
+    desc: 'Authenticate your own work and analyze AI-generated content from contributors, ghostwriters, or UGC submissions.',
     cta: 'Start Free Creator Account',
+    image: '/solutions/content-creators/hero.webp',
   },
 ]
 
@@ -138,16 +150,16 @@ export default function SolutionsHub() {
               Industry Solutions
             </div>
             <h1 className="text-headline text-silver-900 mb-5">
-              AI Verification Built<br />
+              AI Detection Built<br />
               <span className="text-accent">for Your Industry</span>
             </h1>
             <p className="text-lead text-silver-600 max-w-2xl mx-auto mb-8">
-              Every industry faces unique AI content challenges. Aiscern delivers tailored verification workflows,
+              Every industry faces unique AI content challenges. Aiscern delivers tailored detection workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/detect/text" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
-                Try Free Verification <ArrowRight className="w-4 h-4" />
+                Try Free Detection <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pricing" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
                 View Pricing
@@ -165,15 +177,28 @@ export default function SolutionsHub() {
                 const Icon = sol.icon
                 return (
                   <Link key={sol.href} href={sol.href}
-                    className="group flex flex-col gap-4 p-6 rounded-xl border border-white/15 bg-surface hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lift transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-accent/50">
-                    <Icon className={`w-6 h-6 ${c.text}`} />
-                    <div className="flex-1">
-                      <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>
-                      <h2 className="text-lg font-semibold text-silver-900 mb-2">{sol.title}</h2>
-                      <p className="text-sm text-silver-600 leading-relaxed">{sol.desc}</p>
+                    className="group flex flex-col rounded-xl border border-white/15 bg-surface overflow-hidden hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lift transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-accent/50">
+                    <div className="relative w-full aspect-[16/9] overflow-hidden bg-depth-bg">
+                      <Image
+                        src={sol.image}
+                        alt={`${sol.title} — Aiscern AI detection solution`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-surface/90 via-transparent to-transparent" aria-hidden="true" />
                     </div>
-                    <div className={`text-xs font-semibold ${c.text} flex items-center gap-1 group-hover:gap-2 transition-all duration-300`}>
-                      {sol.cta} <ArrowRight className="w-3.5 h-3.5" />
+                    <div className="flex flex-col gap-3 p-6 -mt-6 relative">
+                      <Icon className={`w-6 h-6 ${c.text}`} />
+                      <div className="flex-1">
+                        <div className={`text-xs font-semibold ${c.text} mb-1`}>{sol.tagline}</div>
+                        <h2 className="text-lg font-semibold text-silver-900 mb-2">{sol.title}</h2>
+                        <p className="text-sm text-silver-600 leading-relaxed">{sol.desc}</p>
+                      </div>
+                      <div className={`text-xs font-semibold ${c.text} flex items-center gap-1 group-hover:gap-2 transition-all duration-300`}>
+                        {sol.cta} <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
                   </Link>
                 )

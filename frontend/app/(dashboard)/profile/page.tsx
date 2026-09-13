@@ -162,7 +162,7 @@ function CreditsCard({ userId }: { userId: string }) {
           {/* Credits balance */}
           {data.credits_total > 0 && (
             <UsageBar
-              label="Verification Credits"
+              label="Detection Credits"
               sublabel="Resets with your plan · used for audio & video"
               used={data.credits_used}
               total={data.credits_total}
@@ -178,7 +178,7 @@ function CreditsCard({ userId }: { userId: string }) {
             used={data.scans_today}
             total={data.daily_limit}
             unlimited={data.daily_limit === -1}
-            color="#06b6d4"
+            color="#4FFF58"
           />
 
           {/* Monthly / total stats row */}
@@ -436,10 +436,10 @@ export default function ProfilePage() {
       {/* ── Credits & Usage (live from /api/user/credits) ──────── */}
       {user?.uid && <CreditsCard userId={user.uid} />}
 
-      {/* ── Verification Stats ───────────────────────────────────── */}
+      {/* ── Detection Stats ───────────────────────────────────── */}
       <div className="card p-4">
         <h2 className="text-sm font-semibold text-[#6B6B6B] uppercase tracking-widest mb-3 px-1">
-          Verification Stats
+          Detection Stats
         </h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

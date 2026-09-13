@@ -42,7 +42,7 @@ function SignupContent() {
           </span>
         </Link>
         <h1 className="hidden lg:block text-headline text-silver-700 max-w-md">
-          Start verifying AI-generated content in seconds.
+          Start detecting AI-generated content in seconds.
         </h1>
         <div className="hidden lg:flex items-center gap-3 mt-10 flex-wrap">
           {TRUST_PILLS.map(({ icon: Icon, label }) => (
@@ -152,7 +152,7 @@ function SignupContent() {
           ))}
         </div>
 
-        <p className="mt-5 text-xs text-silver-500">© 2026 Aiscern · Secured by Clerk</p>
+        <p className="mt-5 text-xs text-silver-700">© 2026 Aiscern · Secured by Clerk</p>
       </div>
     </div>
   )
