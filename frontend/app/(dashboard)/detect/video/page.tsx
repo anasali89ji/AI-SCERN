@@ -13,7 +13,6 @@ import { formatConfidence, formatFileSize, normalizeConfidence } from '@/lib/uti
 import dynamic from 'next/dynamic'
 import { verdictConfig as baseVerdictConfig } from '@/lib/ui/verdict-config'
 import { ConfidenceRing } from '@/components/ConfidenceRing'
-import { DetectionSequenceLoader } from '@/components/DetectionSequenceLoader'
 
 // ── Post-scan components — loaded only after a result arrives ─────────────────
 const LazyReviewSuggestion = dynamic(
@@ -406,7 +405,7 @@ function VideoDetectionPage() {
       '',
       `Verdict:    ${result.verdict}`,
       `Confidence: ${Math.round(result.confidence * 100)}%`,
-      `Engine:     Aiscern Detection Engine`,
+      `Engine:     Aiscern Verification Engine`,
       '',
       `Summary:    ${result.summary}`,
       '',
@@ -431,13 +430,6 @@ function VideoDetectionPage() {
 
   const cfg = result ? verdictConfig[result.verdict as Verdict] : null
 
-  // Frame extraction runs client-side with real progress; once it hands off
-  // to the API call, treat it as "upload complete" so the sequence loader's
-  // remaining steps auto-advance the same way image/text/audio pages do.
-  const sequenceProgress = phase === 'extracting'
-    ? Math.round((framesDone / FRAME_POSITIONS.length) * 100)
-    : 100
-
   const loadingLabel = phase === 'extracting'
     ? `Extracting frame ${framesDone} of ${FRAME_POSITIONS.length}…`
     : phase === 'analyzing'
@@ -457,7 +449,7 @@ function VideoDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-silver-700" />
           </div>
-          Deepfake Video Detection
+          Video Verification
         </h1>
         <p className="text-silver-600 ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
@@ -610,9 +602,7 @@ function VideoDetectionPage() {
             <div className="hidden lg:block">
               <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
             </div>
-          ) : loading ? (
-            <DetectionSequenceLoader loading={loading} uploadProgress={sequenceProgress} />
-          ) : (
+          ) : !loading && (
             <div className="card flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-xl bg-surface-elevated flex items-center justify-center mx-auto mb-4 ">
                 <Video className="w-10 h-10 text-silver-700" />
@@ -642,7 +632,7 @@ function VideoDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Deepfake Video Detection" />
+      <LazyReviewSuggestion toolName="Video Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -661,7 +651,7 @@ function VideoDetectionPage() {
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Verification Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
@@ -682,7 +672,7 @@ function VideoDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Verification Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
       )}

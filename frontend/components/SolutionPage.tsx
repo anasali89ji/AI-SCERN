@@ -137,7 +137,7 @@ export function SolutionPage(props: SolutionPageProps) {
               operatingSystem: 'Web browser',
               applicationCategory: 'UtilitiesApplication',
               offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-              description: `Ensemble-based AI detection for ${industry} professionals.`,
+              description: `Ensemble-based AI verification for ${industry} professionals.`,
             }),
           }}
         />
@@ -173,28 +173,26 @@ export function SolutionPage(props: SolutionPageProps) {
                 </div>
                 <p className="mt-4 text-xs text-silver-600">No credit card required · Free tier always available</p>
               </div>
-              {/* Industry hero image (16:9, art-directed per industry from the
-                  documented /public/solutions package) — falls back to the
-                  abstract icon badge when no image is provided. */}
-              <div className="w-full lg:w-[440px] flex-shrink-0">
+              {/* Industry photo (when available) — falls back to the abstract icon badge */}
+              <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 lg:w-64 lg:h-64">
                 {heroImage ? (
-                  <div className={`relative w-full aspect-video mx-auto rounded-xl border ${c.iconBg} overflow-hidden shadow-lift`}>
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} overflow-hidden`}>
                     <Image
                       src={heroImage}
                       alt={`${industry} professional using Aiscern`}
                       fill
-                      sizes="(max-width: 1024px) 100vw, 440px"
+                      sizes="(max-width: 1024px) 192px, 256px"
                       className="object-cover"
                       priority
                     />
-                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-surface-elevated/90 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
                       <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>
                 ) : (
-                  <div className={`relative w-full aspect-video mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
+                  <div className={`relative w-full h-full mx-auto rounded-xl border ${c.iconBg} flex items-center justify-center`}>
                     <span className={c.icon}>{heroIcon}</span>
-                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
+                    <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-surface-elevated border border-white/20 flex items-center justify-center">
                       <CircleCheck className={`w-4 h-4 ${c.icon}`} />
                     </div>
                   </div>
@@ -228,7 +226,7 @@ export function SolutionPage(props: SolutionPageProps) {
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-3">How Aiscern Solves It</h2>
               <p className="text-silver-600 text-sm md:text-base max-w-xl mx-auto">
-                Our ensemble-based detection pipeline combines 8+ specialized models with a confidence threshold system.
+                Our ensemble-based verification pipeline combines 8+ specialized models with a confidence threshold system.
                 <Link href="/methodology" className="text-accent hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-accent/50 rounded">Learn about our methodology →</Link>
               </p>
             </div>
@@ -306,10 +304,10 @@ export function SolutionPage(props: SolutionPageProps) {
         <section className="py-12 md:py-20 border-t border-white/15">
           <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold text-silver-900 mb-4">
-              Ready to analyze content in {industry.toLowerCase()}?
+              Ready to verify content in {industry.toLowerCase()}?
             </h2>
             <p className="text-silver-600 text-sm md:text-base mb-8">
-              Start with a free account — no credit card, no commitment. Upgrade when you need more detections.
+              Start with a free account — no credit card, no commitment. Upgrade when you need more verifications.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
               <Link href="/signup" className="btn-primary w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-accent/50">

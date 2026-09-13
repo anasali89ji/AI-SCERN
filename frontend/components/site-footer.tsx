@@ -7,10 +7,10 @@ import {
 } from 'lucide-react'
 
 const TOOLS_COL = [
-  { label: 'AI Text Detection',        href: '/detect/text'  },
-  { label: 'Deepfake Image Detection', href: '/detect/image' },
-  { label: 'AI Audio & Voice Clone Detection',       href: '/detect/audio' },
-  { label: 'Deepfake Video Detection', href: '/detect/video' },
+  { label: 'Text Verification',        href: '/detect/text'  },
+  { label: 'Image Verification', href: '/detect/image' },
+  { label: 'Audio Verification',       href: '/detect/audio' },
+  { label: 'Video Verification', href: '/detect/video' },
   { label: 'ARIA AI Assistant',       href: '/chat'         },
   { label: 'Batch Content Analyser',  href: '/batch'        },
 ]
@@ -94,7 +94,7 @@ export function SiteFooter() {
             </Link>
 
             <p className="text-sm text-silver-700 leading-relaxed mb-6 max-w-[220px]">
-              Free multi-modal AI content detection. Text, image, audio, and video.
+              Free multi-modal AI content verification. Text, image, audio, and video.
             </p>
 
             {/* Status */}
@@ -112,8 +112,7 @@ export function SiteFooter() {
             <div className="mt-5 flex flex-col gap-2">
               {TRUST_BADGES.map(b => (
                 <div key={b.label} className="flex items-center gap-2 text-xs text-silver-600">
-                  {/* silver-700: visible muted icon — silver-500 is the disabled-state color (~1.8:1) */}
-                  <b.icon className="w-3.5 h-3.5 text-silver-700" aria-hidden="true" />
+                  <b.icon className="w-3.5 h-3.5 text-silver-500" aria-hidden="true" />
                   {b.label}
                 </div>
               ))}
@@ -176,7 +175,7 @@ export function SiteFooter() {
               Newsletter
             </h3>
             <p className="text-sm text-silver-600 leading-relaxed mb-4">
-              Detection research, product updates, and AI news. Once a week.
+              Verification research, product updates, and AI news. Once a week.
             </p>
 
             {sent ? (
@@ -240,8 +239,8 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-      {/* Launch badges: Product Hunt + LaunchBuff */}
-      <div className="flex flex-wrap justify-center items-center gap-4 pt-6 pb-2">
+      {/* Product Hunt badge */}
+      <div className="flex justify-center pt-6 pb-2">
         <a
           href="https://www.producthunt.com/products/aiscern?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-aiscern"
           target="_blank"
@@ -254,20 +253,6 @@ export function SiteFooter() {
             width={250}
             height={54}
             referrerPolicy="no-referrer"
-            loading="lazy"
-          />
-        </a>
-        <a
-          href="https://launchbuff.com/products/aiscern-igt4hu"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Featured on LaunchBuff"
-        >
-          <img
-            src="https://launchbuff.com/badge-featured-dark.svg"
-            alt="Featured on LaunchBuff"
-            width={256}
-            height={80}
             loading="lazy"
           />
         </a>

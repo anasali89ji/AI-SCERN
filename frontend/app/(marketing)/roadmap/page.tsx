@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Product Roadmap — AI-SCERN',
-  description: 'See what we are building next for AI media detection and forensics.',
+  description: 'See what we are building next for AI media verification and forensics.',
 }
 
 const ROADMAP = [
@@ -12,7 +12,7 @@ const ROADMAP = [
     quarter: 'Q3 2026',
     status: 'in-progress',
     items: [
-      'Real-time video stream detection (WebRTC)',
+      'Real-time video stream verification (WebRTC)',
       'Mobile native SDKs (iOS & Android)',
       'Enterprise SSO with SAML 2.0 & OIDC',
       'Advanced audio deepfake detection (TTS vs. VC)',
@@ -22,7 +22,7 @@ const ROADMAP = [
     quarter: 'Q4 2026',
     status: 'planned',
     items: [
-      'Blockchain detection certificates (Ethereum L2)',
+      'Blockchain verification certificates (Ethereum L2)',
       'Federated learning for private model tuning',
       'Chrome extension for in-browser media scanning',
       'Multi-language support (12 languages)',
@@ -45,7 +45,7 @@ const ROADMAP = [
       'Quantum-resistant watermarking schemes',
       'Neural radiance field (NeRF) detection',
       'Cross-modal consistency reasoning (text+image+video)',
-      'Real-time hologram detection',
+      'Real-time hologram verification',
     ],
   },
 ]
@@ -74,7 +74,7 @@ export default function RoadmapPage() {
             <div className="space-y-12">
               {ROADMAP.map((group) => (
                 <div key={group.quarter} className="relative pl-12 sm:pl-20">
-                  <div className="absolute left-2.5 sm:left-[26px] top-1.5 w-3 h-3 rounded-full border-2 border-silver-300 bg-silver-600" />
+                  <div className="absolute left-2.5 sm:left-[26px] top-1.5 w-3 h-3 rounded-full border-2 border-silver-300 bg-silver-500" />
 
                   <div className="flex items-center gap-3 mb-4">
                     <h2 className="text-xl font-bold text-white">{group.quarter}</h2>
