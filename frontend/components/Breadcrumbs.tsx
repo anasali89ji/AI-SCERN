@@ -44,7 +44,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
 
 // Acronyms that should stay uppercase when they appear as a whole word
 // inside an auto-humanized slug (e.g. blog/[slug] posts titled
-// "why-ai-detection-matters" -> "Why AI Detection Matters", not "Ai").
+// "why-ai-detection-matters" -> "Why AI Verification Matters", not "Ai").
 const ACRONYMS = new Set(['ai', 'api', 'seo', 'llm', 'gpt', 'faq', 'ip', 'ml'])
 
 // Routes where a breadcrumb trail doesn't make sense — either a single

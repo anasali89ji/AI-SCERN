@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/site-footer'
 
 export const metadata = {
   title: 'Security & Compliance — AI-SCERN',
-  description: 'Enterprise-grade security, SOC 2 compliance, and zero-trust architecture for AI media detection.',
+  description: 'Enterprise-grade security, SOC 2 compliance, and zero-trust architecture for AI media verification.',
 }
 
 const SECURITY_PILLARS = [
@@ -26,12 +26,12 @@ const SECURITY_PILLARS = [
   {
     icon: Fingerprint,
     title: 'Biometric Data Protection',
-    desc: 'Facial templates and voiceprints are never stored. We extract only non-reversible forensic features for detection purposes.',
+    desc: 'Facial templates and voiceprints are never stored. We extract only non-reversible forensic features for verification purposes.',
   },
   {
     icon: FileCheck,
     title: 'Audit Logging',
-    desc: 'Immutable audit trails for every detection request. Enterprise customers can stream logs to their SIEM via our API.',
+    desc: 'Immutable audit trails for every verification request. Enterprise customers can stream logs to their SIEM via our API.',
   },
   {
     icon: Shield,

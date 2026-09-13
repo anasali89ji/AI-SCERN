@@ -381,7 +381,7 @@ function VerifyDocPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-primary" />
-                <p className="text-sm font-semibold text-text-primary">Image detection</p>
+                <p className="text-sm font-semibold text-text-primary">Image verification</p>
               </div>
               <p className="text-xs text-text-muted leading-relaxed">
                 Every embedded image is extracted and run through Aiscern's full image pipeline: GAN
@@ -395,12 +395,12 @@ function VerifyDocPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
-                <p className="text-sm font-semibold text-text-primary">Text detection</p>
+                <p className="text-sm font-semibold text-text-primary">Text verification</p>
               </div>
               <p className="text-xs text-text-muted leading-relaxed">
                 All extracted body text (paragraphs, table cells, slide text boxes) is analyzed with
                 perplexity scoring, burstiness analysis, stylometric fingerprinting, and repetition
-                detection — the same ensemble used in Aiscern's standalone AI text detector.
+                verification — the same ensemble used in Aiscern's standalone AI text detector.
               </p>
             </div>
             <div className="space-y-2">
@@ -422,7 +422,7 @@ function VerifyDocPage() {
                 <p className="text-sm font-semibold text-text-primary">Why parallel matters</p>
               </div>
               <p className="text-xs text-text-muted leading-relaxed">
-                Image and text detection run concurrently, not sequentially — a document with 10 images
+                Image and text verification run concurrently, not sequentially — a document with 10 images
                 and a long body of text is scanned in roughly the time of whichever branch is slower,
                 not the sum of both. If a document has no images, the image branch is skipped entirely
                 (and vice versa), so you're never waiting on empty work.

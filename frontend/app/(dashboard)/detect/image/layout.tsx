@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Free AI Image Detector — Detect Midjourney, DALL-E & Deepfakes',
-  description: 'Detect AI-generated images from Midjourney, DALL-E 3, Stable Diffusion, Adobe Firefly and deepfakes. 98%+ accuracy. Upload any image — free, instant results. No credit card required.',
+  title: 'Free AI Image Detector — Verify Midjourney, DALL-E & Deepfakes',
+  description: 'Verify AI-generated images from Midjourney, DALL-E 3, Stable Diffusion, Adobe Firefly and deepfakes. 98%+ accuracy. Upload any image — free, instant results. No credit card required.',
   keywords: [
-    'ai image detector','deepfake detector','detect midjourney','detect dall-e',
+    'ai image detector','deepfake detector','verify midjourney','verify dall-e',
     'stable diffusion detector','ai generated image checker','fake image detector',
     'deepfake face detector','ai art detector','image authenticity checker',
-    'is this image real','detect adobe firefly','grok image detector',
+    'is this image real','verify adobe firefly','grok image detector',
     'ai photo detector free','synthetic image detector','deepfake check',
   ],
   alternates: { canonical: 'https://aiscern.com/detect/image' },
   openGraph: {
-    title: 'Free AI Image Detector — Detect Midjourney, DALL-E & Deepfakes | Aiscern',
+    title: 'Free AI Image Detector — Verify Midjourney, DALL-E & Deepfakes | Aiscern',
     description: 'Upload any image and instantly know if it was AI-generated or a deepfake. 98%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/image',
     images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Image+Detector&tool=Image&color=%237c3aed', width: 1200, height: 630 }],
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Free Deepfake & AI Image Detector — Midjourney, DALL-E, Stable Diffusion',
-    description: 'Upload any image and detect if it was AI-generated or deepfaked. 98%+ accuracy. Free.',
+    description: 'Upload any image and verify if it was AI-generated or deepfaked. 98%+ accuracy. Free.',
   },
 }
 
@@ -32,7 +32,7 @@ const jsonLd = {
       '@id': 'https://aiscern.com/detect/image',
       'url': 'https://aiscern.com/detect/image',
       'name': 'AI Image & Deepfake Detector | Aiscern',
-      'description': 'Detect Midjourney, DALL-E, Stable Diffusion and deepfake images with 98%+ accuracy.',
+      'description': 'Verify Midjourney, DALL-E, Stable Diffusion and deepfake images with 98%+ accuracy.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',
@@ -47,20 +47,20 @@ const jsonLd = {
       'mainEntity': [
                   {
                     "@type": "Question",
-                    "name": "How do I detect a Midjourney image?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Upload the image to Aiscern's AI image detector. Aiscern analyzes GAN artifacts, pixel patterns and frequency signatures to detect Midjourney, DALL-E and other AI-generated images." }
+                    "name": "How do I verify a Midjourney image?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Upload the image to Aiscern's AI image detector. Aiscern analyzes GAN artifacts, pixel patterns and frequency signatures to verify Midjourney, DALL-E and other AI-generated images." }
                   },
                   {
                     "@type": "Question",
-                    "name": "Can it detect deepfake faces?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern detects deepfake face swaps and AI-generated faces with 98%+ accuracy using ensemble vision models trained on real and synthetic face datasets." }
+                    "name": "Can it verify deepfake faces?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern verifies deepfake face swaps and AI-generated faces with 98%+ accuracy using ensemble vision models trained on real and synthetic face datasets." }
                   }
       ]
     }
   ,
     {
     "@type": "HowTo",
-    "name": "How to detect AI-generated images",
+    "name": "How to verify AI-generated images",
     "description": "Use Aiscern's free AI image detector to determine if an image was created by AI or is a deepfake.",
     "step": [
         {
@@ -70,7 +70,7 @@ const jsonLd = {
         },
         {
             "@type": "HowToStep",
-            "name": "Run AI detection",
+            "name": "Run AI verification",
             "text": "Click Analyze. Aiscern runs the image through 3 neural classifiers and pixel-level signal extractors."
         },
         {

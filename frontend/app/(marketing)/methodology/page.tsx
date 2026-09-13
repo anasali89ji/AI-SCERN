@@ -4,16 +4,16 @@ import { CheckCircle2, TriangleAlert, BarChart3, Cpu, FlaskConical, ArrowRight }
 import { SiteNav } from '@/components/SiteNav'
 
 export const metadata = {
-  title: 'Detection Methodology | Aiscern',
-  description: 'How Aiscern detects AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret confidence scores.',
-  openGraph: { title: 'Detection Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
+  title: 'Verification Methodology | Aiscern',
+  description: 'How Aiscern verifies AI-generated content — models, signals, accuracy benchmarks, known limitations, and how to interpret confidence scores.',
+  openGraph: { title: 'Verification Methodology | Aiscern', url: 'https://aiscern.com/methodology' },
 }
 
 const ACCURACY = [
   { type: 'Text',  score: 85, model: 'HuggingFace roberta-base-openai-detector + Gemini 2.0 Flash ensemble' },
   { type: 'Image', score: 82, model: 'EfficientNet-B4 fine-tuned on Midjourney/DALL-E/SD datasets'          },
   { type: 'Audio', score: 79, model: 'Wav2Vec2 + spectral fingerprint classifier'                           },
-  { type: 'Video', score: 76, model: 'Frame-sampled image detection + temporal consistency analysis'         },
+  { type: 'Video', score: 76, model: 'Frame-sampled image verification + temporal consistency analysis'         },
 ]
 
 const SIGNALS_TEXT = [
@@ -21,7 +21,7 @@ const SIGNALS_TEXT = [
   { name: 'Burstiness',           desc: 'Variation in sentence length and complexity. Human writing has high burstiness; AI tends toward uniformity.' },
   { name: 'Vocabulary diversity', desc: 'Ratio of unique words to total words. AI frequently reuses high-frequency vocabulary.' },
   { name: 'Structural patterns',  desc: 'AI text tends toward balanced paragraph lengths and consistent heading hierarchies uncommon in natural writing.' },
-  { name: 'Model fingerprint',    desc: 'Specific token-choice patterns associated with known LLMs, detected via trained classifier.' },
+  { name: 'Model fingerprint',    desc: 'Specific token-choice patterns associated with known LLMs, verified via trained classifier.' },
 ]
 
 const SIGNALS_IMAGE = [
@@ -39,7 +39,7 @@ const LIMITATIONS = [
   'AI content edited by humans after generation reduces detectability significantly',
   'Hybrid content (AI inpainting on real photos) is currently below 70% accuracy',
   'Very short audio clips (< 5 seconds) provide insufficient spectral data',
-  'Novel AI generators released after our last model update may evade detection until the next fine-tune',
+  'Novel AI generators released after our last model update may evade verification until the next fine-tune',
 ]
 
 export default function MethodologyPage() {
@@ -55,10 +55,10 @@ export default function MethodologyPage() {
               <FlaskConical className="w-3 h-3" /> Transparency
             </div>
             <h1 className="text-[40px] sm:text-[52px] font-bold text-white tracking-[-0.02em] mb-4">
-              Detection Methodology
+              Verification Methodology
             </h1>
             <p className="text-silver-700 text-lg max-w-2xl mx-auto leading-relaxed">
-              How Aiscern detects AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
+              How Aiscern verifies AI-generated content — the models, signals, accuracy benchmarks, and known limitations explained openly.
             </p>
           </div>
 
@@ -83,7 +83,7 @@ export default function MethodologyPage() {
                 <div key={m.type} className="bg-surface border border-silver-300 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-semibold text-white">{m.type} Detection</span>
+                      <span className="text-sm font-semibold text-white">{m.type} Verification</span>
                       <p className="text-xs text-silver-600 mt-0.5">{m.model}</p>
                     </div>
                     <span className="text-2xl font-black text-accent">{m.score}%</span>
@@ -172,7 +172,7 @@ export default function MethodologyPage() {
             </div>
             <div className="bg-warning/5 border border-warning/20 rounded-xl p-5 mb-4">
               <p className="text-sm text-silver-700 leading-relaxed">
-                AI detection is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
+                AI verification is a probabilistic task. We publish our limitations openly so you can make informed decisions about when to trust — and when to double-check — these results.
               </p>
             </div>
             <div className="space-y-2">
@@ -197,7 +197,7 @@ export default function MethodologyPage() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
-              Try Detection
+              Try Verification
             </Link>
           </div>
 

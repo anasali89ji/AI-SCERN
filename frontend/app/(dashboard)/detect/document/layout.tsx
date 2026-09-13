@@ -54,7 +54,7 @@ const jsonLd = {
         {
           '@type': 'Question',
           'name': 'How does VerifyDoc check images inside a document?',
-          'acceptedAnswer': { '@type': 'Answer', 'text': 'Every embedded image is extracted and run through the same detection pipeline used by Aiscern\u2019s standalone image detector, including GAN-fingerprint analysis and physical-consistency forensics (illumination, shadow, and reflection physics) that catch AI generation even when compression has stripped other metadata.' },
+          'acceptedAnswer': { '@type': 'Answer', 'text': 'Every embedded image is extracted and run through the same verification pipeline used by Aiscern\u2019s standalone image detector, including GAN-fingerprint analysis and physical-consistency forensics (illumination, shadow, and reflection physics) that catch AI generation even when compression has stripped other metadata.' },
         },
         {
           '@type': 'Question',

@@ -181,7 +181,7 @@ function DetectionMockup() {
         </div>
         <div>
           <p className="text-[10.5px] font-semibold" style={{ color: '#fb7185' }}>
-            AI-Generated Content Detected
+            AI-Generated Content Verified
           </p>
           <p className="text-[9.5px] mt-[1px]" style={{ color: '#4a4a72' }}>
             High confidence · 3 models agree
@@ -199,7 +199,7 @@ function DetectionMockup() {
 const FEATURES = [
   {
     icon:  FileText,
-    label: 'AI Text Detection',
+    label: 'AI Text Verification',
     desc:  'ChatGPT · Claude · Gemini · Llama',
   },
   {
@@ -209,7 +209,7 @@ const FEATURES = [
   },
   {
     icon:  Mic,
-    label: 'Voice Clone Detection',
+    label: 'Voice Clone Verification',
     desc:  'ElevenLabs · PlayHT · TTS',
   },
 ]
@@ -279,13 +279,13 @@ export function AuthShell({ mode, children, extraFooter, titleOverride, subtitle
             className="font-black text-white leading-[1.15] mb-3"
             style={{ fontSize: '26px', letterSpacing: '-0.02em' }}
           >
-            Detect AI content<br />in seconds. Free.
+            Verify AI content<br />in seconds. Free.
           </h2>
           <p
             className="mb-8 leading-relaxed"
             style={{ color: '#4a4a72', fontSize: '13.5px', maxWidth: '300px' }}
           >
-            Multi-modal AI detection across text, images, audio, and video.
+            Multi-modal AI verification across text, images, audio, and video.
             No subscription. No hidden fees.
           </p>
 

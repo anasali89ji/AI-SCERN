@@ -40,19 +40,19 @@ const MODALITY = tokens.semantic.modality
 const MOSS     = tokens.semantic.accent.primary
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileType2,  label: 'Free AI Text Detector',           desc: 'Detect ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: MODALITY.text,  featured: true },
+  { href: '/detect/text',  icon: FileType2,  label: 'Free AI Text Detector',           desc: 'Verify ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: MODALITY.text,  featured: true },
   { href: '/detect/image', icon: ImageIcon,  label: 'Deepfake Image Detector',         desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~98%', accent: MODALITY.image, featured: true },
   { href: '/detect/audio', icon: Music,      label: 'AI Audio & Voice Clone Detector', desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~91%', accent: MODALITY.audio },
   { href: '/detect/video', icon: Video,      label: 'Free Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',                 accuracy: '~88%', accent: MODALITY.video },
-  { href: '/chat',         icon: MessageSquare, label: 'AI Detection Assistant',       desc: 'Ask anything about AI detection',                  accuracy: 'New',  accent: MOSS },
+  { href: '/chat',         icon: MessageSquare, label: 'AI Verification Assistant',       desc: 'Ask anything about AI verification',                  accuracy: 'New',  accent: MOSS },
   { href: '/batch',        icon: Database,   label: 'Batch AI Content Analyser',       desc: 'Analyze 20 files simultaneously',                  accuracy: '20×',  accent: MOSS },
 ]
 
 const TRUST_FEATURES = [
   { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: MODALITY.image },
-  { icon: Shield,      title: 'Research-Backed',       desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: MOSS },
+  { icon: Shield,      title: 'Research-Backed',       desc: 'Built on peer-reviewed verification research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: MOSS },
   { icon: TrendingUp,  title: 'Ensemble Models',       desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: MODALITY.text },
-  { icon: Zap,         title: 'Free Tier Available',   desc: 'Start detecting for free — 10 scans per day on text and image, no credit card required.',        wide: false, stat: 'Free',  statLabel: 'to start', accent: MOSS },
+  { icon: Zap,         title: 'Free Tier Available',   desc: 'Start verifying for free — 10 scans per day on text and image, no credit card required.',        wide: false, stat: 'Free',  statLabel: 'to start', accent: MOSS },
 ]
 
 // ─── Page (Server Component) ──────────────────────────────────────────────────
@@ -63,9 +63,9 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify([
-          { "@context":"https://schema.org","@type":"WebApplication","@id":"https://aiscern.com/#app","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble-based AI content detection platform for text, images, audio, and video. Free tier available. Published accuracy benchmarks.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["AI Text Detection - ChatGPT Claude Gemini","Deepfake Image Detection","AI Audio Voice Clone Detection","Deepfake Video Detection","Batch Analysis","AI Detection API"],"creator":{"@type":"Person","name":"Anas Ali","url":"https://aiscern.com/about"}},
+          { "@context":"https://schema.org","@type":"WebApplication","@id":"https://aiscern.com/#app","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble-based AI content verification platform for text, images, audio, and video. Free tier available. Published accuracy benchmarks.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["AI Text Verification - ChatGPT Claude Gemini","Deepfake Image Verification","AI Audio Voice Clone Verification","Deepfake Video Verification","Batch Analysis","AI Verification API"],"creator":{"@type":"Person","name":"Anas Ali","url":"https://aiscern.com/about"}},
           { "@context":"https://schema.org","@type":"Organization","@id":"https://aiscern.com/#org","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png","foundingDate":"2025","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"contact@aiscern.com"}},
-          { "@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses a 14-layer ensemble combining ViT classifiers, RoBERTa, wav2vec2, and physics-based signal analysis (Bayer demosaicing, polarization, subsurface scattering, sensor QE matching). Benchmarked accuracy: text ~94% (ensemble AUC 0.94, F1 0.925), image ~98% (14-layer ensemble AUC 0.98, F1 0.965), audio ~91% (AUC 0.95), video ~88% (AUC 0.93). See /benchmarks for full results."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image detection. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern detect ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern detect Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern detects Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images using a 14-layer ensemble including physics-based Bayer pattern analysis (L12-BDIS) with 100% recall across all major generators."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]},
+          { "@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses a 14-layer ensemble combining ViT classifiers, RoBERTa, wav2vec2, and physics-based signal analysis (Bayer demosaicing, polarization, subsurface scattering, sensor QE matching). Benchmarked accuracy: text ~94% (ensemble AUC 0.94, F1 0.925), image ~98% (14-layer ensemble AUC 0.98, F1 0.965), audio ~91% (AUC 0.95), video ~88% (AUC 0.93). See /benchmarks for full results."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image verification. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern verify ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern verifies ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern verify Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern verifies Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images using a 14-layer ensemble including physics-based Bayer pattern analysis (L12-BDIS) with 100% recall across all major generators."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]},
         ]) }}
       />
 
@@ -90,8 +90,8 @@ export default function HomePage() {
                                 border border-accent/20 bg-accent/5 text-accent
                                 text-xs font-semibold mb-8">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" aria-hidden="true" />
-                  <span className="hidden sm:inline">AI detection for text, images, audio &amp; video</span>
-                  <span className="sm:hidden">AI detection · 4 modalities</span>
+                  <span className="hidden sm:inline">AI verification for text, images, audio &amp; video</span>
+                  <span className="sm:hidden">AI verification · 4 modalities</span>
                 </div>
 
                 {/* Headline — client island (interactive modality tabs) */}
@@ -142,10 +142,10 @@ export default function HomePage() {
                 Six Powerful Tools
               </p>
               <h2 className="font-heading font-bold text-headline text-silver-900 tracking-tight mb-3 sm:mb-4">
-                AI Detection Tools
+                AI Verification Tools
               </h2>
               <p className="text-lead text-silver-600 max-w-xl mx-auto">
-                Six detection tools covering every content type. Each returns a verdict,
+                Six verification tools covering every content type. Each returns a verdict,
                 confidence score, and supporting evidence in seconds.
               </p>
             </div>
@@ -324,7 +324,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 mb-4">
                   <FlaskConical className="w-4 h-4 text-accent flex-shrink-0" aria-hidden="true" />
                   <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-                    Detection methodology
+                    Verification methodology
                   </span>
                 </div>
                 <p className="text-silver-600 leading-relaxed text-sm">

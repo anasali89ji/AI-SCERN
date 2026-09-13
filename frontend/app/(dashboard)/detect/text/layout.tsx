@@ -1,28 +1,28 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Free AI Text Detector — Detect ChatGPT, Claude, Gemini Writing',
-  description: 'Instantly detect AI-generated text from ChatGPT, Claude, Gemini, GPT-4 and 50+ AI models. Sentence-level heatmap, 94%+ accuracy. Free — no credit card required. Trusted by editors, teachers & researchers.',
+  title: 'Free AI Text Detector — Verify ChatGPT, Claude, Gemini Writing',
+  description: 'Instantly verify AI-generated text from ChatGPT, Claude, Gemini, GPT-4 and 50+ AI models. Sentence-level heatmap, 94%+ accuracy. Free — no credit card required. Trusted by editors, teachers & researchers.',
   keywords: [
-    'ai text detector','chatgpt detector','detect chatgpt','is this ai generated',
+    'ai text detector','chatgpt detector','verify chatgpt','is this ai generated',
     'ai writing detector free','gpt detector','claude detector','gemini detector',
     'ai content checker','chatgpt checker','ai generated text detector',
     'ai essay detector','ai paraphrase detector','turnitin alternative free',
-    'detect ai writing','ai or human text','copyleaks alternative',
+    'verify ai writing','ai or human text','copyleaks alternative',
   ],
   alternates: {
     canonical: 'https://aiscern.com/detect/text',
   },
   openGraph: {
-    title: 'Free AI Text Detector — Detect ChatGPT, Claude & Gemini | Aiscern',
-    description: 'Paste any text and instantly know if it was written by AI. Detects ChatGPT, Claude, Gemini, GPT-4. 94%+ accuracy. Free.',
+    title: 'Free AI Text Detector — Verify ChatGPT, Claude & Gemini | Aiscern',
+    description: 'Paste any text and instantly know if it was written by AI. Verifies ChatGPT, Claude, Gemini, GPT-4. 94%+ accuracy. Free.',
     url: 'https://aiscern.com/detect/text',
     images: [{ url: 'https://aiscern.com/api/og?title=Free+AI+Text+Detector&tool=Text&color=%237c3aed', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free AI Text Detector — Detect ChatGPT, Claude & Gemini',
-    description: 'Paste text and instantly detect if it was written by AI. 94%+ accuracy. Free.',
+    title: 'Free AI Text Detector — Verify ChatGPT, Claude & Gemini',
+    description: 'Paste text and instantly verify if it was written by AI. 94%+ accuracy. Free.',
   },
 }
 
@@ -34,7 +34,7 @@ const jsonLd = {
       '@id': 'https://aiscern.com/detect/text',
       'url': 'https://aiscern.com/detect/text',
       'name': 'AI Text Detector | Aiscern',
-      'description': 'Detect ChatGPT, Claude, Gemini and other AI-written text with 94%+ accuracy.',
+      'description': 'Verify ChatGPT, Claude, Gemini and other AI-written text with 94%+ accuracy.',
       'isPartOf': { '@id': 'https://aiscern.com/#app' },
       'breadcrumb': {
         '@type': 'BreadcrumbList',
@@ -49,8 +49,8 @@ const jsonLd = {
       'mainEntity': [
                   {
                     "@type": "Question",
-                    "name": "How do I detect ChatGPT writing?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Paste the text into Aiscern's AI text detector and click Detect. The tool uses a RoBERTa ensemble to identify ChatGPT, Claude, Gemini and other AI writing with 94%+ accuracy." }
+                    "name": "How do I verify ChatGPT writing?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Paste the text into Aiscern's AI text detector and click Verify. The tool uses a RoBERTa ensemble to identify ChatGPT, Claude, Gemini and other AI writing with 94%+ accuracy." }
                   },
                   {
                     "@type": "Question",
@@ -59,15 +59,15 @@ const jsonLd = {
                   },
                   {
                     "@type": "Question",
-                    "name": "Can it detect paraphrased AI text?",
-                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern analyzes linguistic patterns including burstiness, perplexity and style fingerprinting to detect AI text even when paraphrased or lightly edited." }
+                    "name": "Can it verify paraphrased AI text?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aiscern analyzes linguistic patterns including burstiness, perplexity and style fingerprinting to verify AI text even when paraphrased or lightly edited." }
                   }
       ]
     }
   ,
     {
     "@type": "HowTo",
-    "name": "How to detect AI-generated text",
+    "name": "How to verify AI-generated text",
     "description": "Use Aiscern's free AI text detector to check if text was written by ChatGPT, Claude, Gemini, or another AI.",
     "step": [
         {
@@ -77,7 +77,7 @@ const jsonLd = {
         },
         {
             "@type": "HowToStep",
-            "name": "Run AI detection",
+            "name": "Run AI verification",
             "text": "Click Analyze. Aiscern runs the text through a RoBERTa ensemble and 7 linguistic signal extractors."
         },
         {

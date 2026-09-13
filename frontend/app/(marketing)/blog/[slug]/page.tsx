@@ -190,7 +190,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </p>
           <Link href="/detect/text"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-surface-deep font-semibold text-sm hover:bg-accent-hover transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/50">
-            Start Detecting Free →
+            Start Verifying Free →
           </Link>
         </div>
 

@@ -1,6 +1,6 @@
 'use client'
 /**
- * Aiscern — Detection Sequence Loader
+ * Aiscern — Verification Sequence Loader
  *
  * Module 7.5 (SIMPLIFY): exactly 4 steps, horizontal progress with labels.
  * No spinning loaders, no excessive SVG animation — clean and minimal.
@@ -49,7 +49,7 @@ export function DetectionSequenceLoader({
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [step, loading, uploadProgress])
 
-  // Reset when a new detection starts
+  // Reset when a new verification starts
   useEffect(() => {
     if (loading) setStep(0)
   }, [loading])
@@ -59,7 +59,7 @@ export function DetectionSequenceLoader({
   return (
     <div className={`card flex flex-col gap-5 py-6 px-5 ${className}`}>
       <p className="text-[11px] font-bold uppercase tracking-widest text-silver-600">
-        Detection in progress
+        Verification in progress
       </p>
 
       <div className="flex items-center">

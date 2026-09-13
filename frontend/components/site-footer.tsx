@@ -7,10 +7,10 @@ import {
 } from 'lucide-react'
 
 const TOOLS_COL = [
-  { label: 'AI Text Detection',        href: '/detect/text'  },
-  { label: 'Deepfake Image Detection', href: '/detect/image' },
-  { label: 'AI Audio & Voice Clone Detection',       href: '/detect/audio' },
-  { label: 'Deepfake Video Detection', href: '/detect/video' },
+  { label: 'AI Text Verification',        href: '/detect/text'  },
+  { label: 'Deepfake Image Verification', href: '/detect/image' },
+  { label: 'AI Audio & Voice Clone Verification',       href: '/detect/audio' },
+  { label: 'Deepfake Video Verification', href: '/detect/video' },
   { label: 'ARIA AI Assistant',       href: '/chat'         },
   { label: 'Batch Content Analyser',  href: '/batch'        },
 ]
@@ -94,7 +94,7 @@ export function SiteFooter() {
             </Link>
 
             <p className="text-sm text-silver-700 leading-relaxed mb-6 max-w-[220px]">
-              Free multi-modal AI content detection. Text, image, audio, and video.
+              Free multi-modal AI content verification. Text, image, audio, and video.
             </p>
 
             {/* Status */}
@@ -176,7 +176,7 @@ export function SiteFooter() {
               Newsletter
             </h3>
             <p className="text-sm text-silver-600 leading-relaxed mb-4">
-              Detection research, product updates, and AI news. Once a week.
+              Verification research, product updates, and AI news. Once a week.
             </p>
 
             {sent ? (
@@ -246,11 +246,11 @@ export function SiteFooter() {
           href="https://www.producthunt.com/products/aiscern?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-aiscern"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
+          aria-label="Aiscern - Free multi-modal AI verification for text, image, audio & video | Product Hunt"
         >
                     <img
             src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1243081&theme=neutral&t=1788721156302"
-            alt="Aiscern - Free multi-modal AI detection for text, image, audio & video | Product Hunt"
+            alt="Aiscern - Free multi-modal AI verification for text, image, audio & video | Product Hunt"
             width={250}
             height={54}
             referrerPolicy="no-referrer"

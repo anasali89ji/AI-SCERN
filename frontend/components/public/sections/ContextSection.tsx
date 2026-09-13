@@ -17,7 +17,7 @@ export function ContextSection() {
                 <span className="technical-label text-aiscern-status-authentic">MEDIA STATUS</span>
               </div>
               <h3 className="text-xl font-bold text-aiscern-text-primary mb-2">Authentic</h3>
-              <p className="text-sm text-aiscern-text-secondary">The image was captured by a verified camera. EXIF data is consistent. No manipulation signals detected.</p>
+              <p className="text-sm text-aiscern-text-secondary">The image was captured by a verified camera. EXIF data is consistent. No manipulation signals verified.</p>
             </div>
             <div className="forensic-card p-8 border-l-2 border-l-aiscern-status-suspicious">
               <div className="flex items-center gap-3 mb-4">

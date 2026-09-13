@@ -24,7 +24,7 @@ const SOLUTIONS = [
   { href: '/solutions/hr',         label: 'HR & Recruiting',    icon: Users,         desc: 'Verify candidate content'   },
   { href: '/solutions/media',      label: 'Media & Journalism', icon: Newspaper,     desc: 'Fact-check AI content'      },
   { href: '/solutions/legal',      label: 'Legal & Compliance', icon: Scale,         desc: 'Evidence authenticity'      },
-  { href: '/solutions/security',   label: 'Cybersecurity',      icon: ShieldCheck,   desc: 'Deepfake threat detection'  },
+  { href: '/solutions/security',   label: 'Cybersecurity',      icon: ShieldCheck,   desc: 'Deepfake threat verification'  },
   { href: '/solutions/healthcare', label: 'Healthcare',         icon: Heart,         desc: 'Medical content integrity'  },
   { href: '/solutions/marketing',  label: 'Marketing & Brand',  icon: Megaphone,     desc: 'Protect brand authenticity' },
   { href: '/solutions/research',   label: 'Research',           icon: Microscope,    desc: 'Dataset validation'         },
@@ -32,12 +32,12 @@ const SOLUTIONS = [
 ]
 
 const TOOLS = [
-  { href: '/detect/text',  label: 'Text Detection',  icon: FileType2,      desc: 'ChatGPT, Claude & more'  },
-  { href: '/detect/image', label: 'Image Detection', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
-  { href: '/detect/audio', label: 'Audio Detection', icon: Music,         desc: 'Voice cloning & TTS'     },
-  { href: '/detect/video', label: 'Video Detection', icon: Video,         desc: 'Frame-level analysis'    },
-  { href: '/chat',         label: 'ARIA Assistant', icon: MessageSquare, desc: 'AI detection chat'       },
-  { href: '/batch',        label: 'Bulk Detection',  icon: Database,      desc: 'Batch content analysis'  },
+  { href: '/detect/text',  label: 'Text Verification',  icon: FileType2,      desc: 'ChatGPT, Claude & more'  },
+  { href: '/detect/image', label: 'Image Verification', icon: ImageIcon,     desc: 'Deepfakes & AI images'   },
+  { href: '/detect/audio', label: 'Audio Verification', icon: Music,         desc: 'Voice cloning & TTS'     },
+  { href: '/detect/video', label: 'Video Verification', icon: Video,         desc: 'Frame-level analysis'    },
+  { href: '/chat',         label: 'ARIA Assistant', icon: MessageSquare, desc: 'AI verification chat'       },
+  { href: '/batch',        label: 'Bulk Verification',  icon: Database,      desc: 'Batch content analysis'  },
 ]
 
 const NAV_LINKS = [
@@ -180,7 +180,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                     ))}
                   </div>
                   <div className="px-4 py-2.5 border-t border-white/[0.06] flex items-center justify-between">
-                    <span className="text-xs text-silver-600">All detection tools — free tier available</span>
+                    <span className="text-xs text-silver-600">All verification tools — free tier available</span>
                     <Link href="/batch" className="text-xs text-accent hover:text-moss-200 font-medium flex items-center gap-1 transition-colors duration-200">
                       Batch mode <Zap className="w-3 h-3" aria-hidden="true" />
                     </Link>
@@ -298,7 +298,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                            focus-visible:ring-2 focus-visible:ring-accent/50"
               >
                 <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">Start Free Detection</span>
+                <span className="hidden sm:inline">Start Free Verification</span>
                 <span className="sm:hidden">Join</span>
               </Link>
             </>
@@ -464,7 +464,7 @@ export function SiteNav({ backHref, backLabel }: SiteNavProps) {
                              bg-accent hover:bg-accent-hover text-depth-bg text-sm font-semibold transition-colors duration-200
                              focus-visible:ring-2 focus-visible:ring-accent/50"
                 >
-                  <Zap className="w-4 h-4" aria-hidden="true" /> Start Free Detection
+                  <Zap className="w-4 h-4" aria-hidden="true" /> Start Free Verification
                 </Link>
               </motion.div>
             )}

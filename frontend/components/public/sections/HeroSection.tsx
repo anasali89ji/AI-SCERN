@@ -9,9 +9,9 @@ export function HeroSection() {
   const stages = [
     { label: "INGESTING MEDIA", status: "File integrity verified", state: "ok" },
     { label: "ANALYZING FRAMES", status: "1,240 frames sampled", state: "ok" },
-    { label: "ANALYZING AUDIO", status: "Synthetic speech indicators detected", state: "warn" },
+    { label: "ANALYZING AUDIO", status: "Synthetic speech indicators verified", state: "warn" },
     { label: "CHECKING METADATA", status: "Metadata extracted", state: "ok" },
-    { label: "CROSS-MODAL CONSISTENCY", status: "Face/audio mismatch detected", state: "warn" },
+    { label: "CROSS-MODAL CONSISTENCY", status: "Face/audio mismatch verified", state: "warn" },
     { label: "MODEL CONSENSUS", status: "87% suspicious", state: "alert" },
     { label: "GENERATING REPORT", status: "Evidence compiled", state: "ok" },
   ];

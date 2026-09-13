@@ -6,9 +6,9 @@ import { LoaderCircle, Zap, Shield, CheckCircle2, Lock, ArrowRight } from 'lucid
 
 const PERKS = [
   'Save your complete scan history',
-  'Access all 6 detection tools free',
+  'Access all 6 verification tools free',
   'Batch scan up to 20 files at once',
-  'AI Assistant for detection help',
+  'AI Assistant for verification help',
   'No credit card required',
 ]
 
@@ -57,7 +57,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               Sign in to <span className="text-[#2BEE34]">Aiscern</span>
             </h1>
             <p className="text-[#6B6B6B] text-sm mt-2 leading-relaxed">
-              Create a free account to access AI detection tools — no credit card, no limits.
+              Create a free account to access AI verification tools — no credit card, no limits.
             </p>
           </div>
 

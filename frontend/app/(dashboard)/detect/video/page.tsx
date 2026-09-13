@@ -109,7 +109,7 @@ function FrameStrip({
                 ${isSuspicious ? 'border-error/50' : 'border-accent/30'}`}>
                 <img src={f.preview} alt={`Frame ${i + 1}`} className="w-full h-10 object-cover" />
                 {score?.face_detected && (
-                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-accent" title="Face detected" />
+                  <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-accent" title="Face verified" />
                 )}
               </div>
               <div className="flex justify-between items-center mt-0.5 px-0.5">
@@ -145,7 +145,7 @@ function FrameStrip({
           <span className="w-2 h-2 rounded-full bg-accent/60" />Clean frame
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-accent" />Face detected
+          <span className="w-2 h-2 rounded-full bg-accent" />Face verified
         </span>
       </div>
     </div>
@@ -222,7 +222,7 @@ function ResultDetails({
         )}
       </div>
 
-      {/* Detection signals */}
+      {/* Verification signals */}
       <div className="card">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-silver-400" />
@@ -406,7 +406,7 @@ function VideoDetectionPage() {
       '',
       `Verdict:    ${result.verdict}`,
       `Confidence: ${Math.round(result.confidence * 100)}%`,
-      `Engine:     Aiscern Detection Engine`,
+      `Engine:     Aiscern Verification Engine`,
       '',
       `Summary:    ${result.summary}`,
       '',
@@ -457,7 +457,7 @@ function VideoDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center shrink-0">
             <Video className="w-6 h-6 text-silver-700" />
           </div>
-          Deepfake Video Detection
+          Deepfake Video Verification
         </h1>
         <p className="text-silver-600 ml-14 text-sm">
           Browser frame extraction · Advanced vision analysis per-frame · Temporal consistency analysis
@@ -625,10 +625,10 @@ function VideoDetectionPage() {
                 {[
                   'Browser frame extraction',
                   'Aiscern vision engine',
-                  'Face detection per frame',
+                  'Face verification per frame',
                   'Temporal consistency check',
                   'Per-frame confidence scores',
-                  'Real deepfake detection',
+                  'Real deepfake verification',
                 ].map(f => (
                   <div key={f} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-silver-400/60 shrink-0" />{f}
@@ -642,7 +642,7 @@ function VideoDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="Deepfake Video Detection" />
+      <LazyReviewSuggestion toolName="Deepfake Video Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -661,11 +661,11 @@ function VideoDetectionPage() {
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Verification Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'FakeAVCeleb v1.2', desc: 'Purdue-M multimodal deepfake dataset', url: 'https://huggingface.co/datasets/Purdue-M/FakeAVCeleb_v1.2' },
-                { name: 'DFDC Dataset', desc: 'Meta DeepFake Detection Challenge', url: 'https://ai.meta.com/datasets/dfdc/' },
+                { name: 'DFDC Dataset', desc: 'Meta DeepFake Verification Challenge', url: 'https://ai.meta.com/datasets/dfdc/' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
@@ -681,8 +681,8 @@ function VideoDetectionPage() {
         </details>
       )}
     </div>
-    {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    {/* FIX B.3: MobileResultSheet — bottom sheet for verification result on mobile */}
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Verification Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} duration={duration} />
       )}

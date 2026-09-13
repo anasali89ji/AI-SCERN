@@ -3,10 +3,10 @@ import { SolutionPage } from '@/components/SolutionPage'
 import { Megaphone, Eye, Brain, Layers, BarChart3, Shield, FileSearch, CircleCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Detection for Marketing & Brand — Aiscern',
-  description: 'Audit UGC, influencer deliverables, and agency content for AI generation. Protect your brand voice with ensemble-based detection.',
+  title: 'AI Verification for Marketing & Brand — Aiscern',
+  description: 'Audit UGC, influencer deliverables, and agency content for AI generation. Protect your brand voice with ensemble-based verification.',
   openGraph: {
-    title: 'AI Detection for Marketing — Aiscern',
+    title: 'AI Verification for Marketing — Aiscern',
     url: 'https://aiscern.com/solutions/marketing',
     siteName: 'Aiscern',
   },
@@ -30,7 +30,7 @@ export default function MarketingPage() {
         { title: 'Deepfake imagery in competitor analysis and industry research', desc: 'Synthetic images circulating on social media can be misidentified as real product photos, misleading competitive intelligence.' },
       ]}
       features={[
-        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Detection', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with a 0.94 ensemble AUC (see /benchmarks).' },
+        { icon: <Brain className="w-5 h-5" />, title: 'Text Content Verification', desc: 'Identify AI-generated blog posts, product descriptions, social captions, and UGC submissions with a 0.94 ensemble AUC (see /benchmarks).' },
         { icon: <Eye className="w-5 h-5" />, title: 'Image Authenticity', desc: 'Analyze AI-generated brand imagery, synthetic product photos, and fabricated lifestyle content.' },
         { icon: <Layers className="w-5 h-5" />, title: 'Bulk Content Audits', desc: 'Examine entire content libraries, campaign submissions, or agency deliverable batches simultaneously.' },
         { icon: <BarChart3 className="w-5 h-5" />, title: 'Risk Scoring Dashboard', desc: 'Sort and filter scanned content by AI confidence score to prioritize human review of highest-risk items.' },
@@ -44,7 +44,7 @@ export default function MarketingPage() {
       ]}
       faqs={[
         { q: 'Can Aiscern analyze AI content that has been edited by a human?', a: 'Human editing reduces AI confidence scores, particularly extensive editing. Lightly edited AI content typically scores 45–75%. Heavily edited content may fall below our 62% AI threshold. We report confidence ranges, not binary verdicts, to reflect this nuance.' },
-        { q: 'How does detection work for short-form content like social captions?', a: 'Short texts (under 150 words) have wider confidence intervals because there is less linguistic signal to analyze. We recommend supplementing with longer form analysis when assessing short-form content.' },
+        { q: 'How does verification work for short-form content like social captions?', a: 'Short texts (under 150 words) have wider confidence intervals because there is less linguistic signal to analyze. We recommend supplementing with longer form analysis when assessing short-form content.' },
         { q: 'Can we use Aiscern results in influencer contract disputes?', a: 'Our reports are technical analysis documents, not legal evidence. We recommend using them alongside your contract terms and legal counsel\'s guidance in any dispute resolution process.' },
         { q: 'Does Aiscern analyze AI-generated product images from tools like Midjourney?', a: 'Yes. Our image ensemble is trained on output from Midjourney, DALL-E, Stable Diffusion, Ideogram, and other major generators. Benchmark accuracy for diffusion model imagery is ≥93% AUC on our test datasets.' },
         { q: 'Is there a way to screen content before it is submitted by influencers?', a: 'Yes — our API can be integrated into submission portals, content management platforms, and influencer management tools to screen content at upload time.' },

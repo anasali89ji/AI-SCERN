@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: 'ARIA — AI Verification Assistant | Aiscern',
     description: 'Chat with ARIA to understand your verification results and learn about AI content identification.',
     url: 'https://aiscern.com/chat',
-    images: [{ url: 'https://aiscern.com/api/og?title=ARIA+AI+Detection+Assistant&tool=Chat&color=%232563eb', width: 1200, height: 630 }],
+    images: [{ url: 'https://aiscern.com/api/og?title=ARIA+AI+Verification+Assistant&tool=Chat&color=%232563eb', width: 1200, height: 630 }],
   },
 }
 

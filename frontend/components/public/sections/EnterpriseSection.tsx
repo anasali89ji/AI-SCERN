@@ -4,7 +4,7 @@ export function EnterpriseSection() {
   const features = [
     { title: "API Access", desc: "RESTful API with SDKs for Python, Node.js, and Go. Rate limits tailored to your volume." },
     { title: "SSO / SAML", desc: "Integrate with your existing identity provider. Role-based access control included." },
-    { title: "Audit Trails", desc: "Every detection, every report, every API call is logged and exportable for compliance." },
+    { title: "Audit Trails", desc: "Every verification, every report, every API call is logged and exportable for compliance." },
     { title: "Custom Retention", desc: "Define your own data lifecycle policies. Immediate deletion on request." },
     { title: "SLA Guarantee", desc: "99.9% uptime SLA with dedicated support channel and escalation procedures." },
     { title: "Dedicated Onboarding", desc: "White-glove setup with solution architects and integration engineers." },

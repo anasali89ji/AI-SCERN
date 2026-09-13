@@ -28,7 +28,7 @@ export function HeroCTAButtons() {
                      bg-surface-elevated border border-white/[0.08] hover:border-accent hover:text-accent
                      text-silver-800 font-semibold text-base transition-all duration-200 w-full sm:w-auto
                      focus-visible:ring-2 focus-visible:ring-accent/50">
-          <MessageSquare className="w-4 h-4" aria-hidden="true" /> AI Detection Assistant
+          <MessageSquare className="w-4 h-4" aria-hidden="true" /> AI Verification Assistant
         </Link>
       </div>
     )
@@ -41,7 +41,7 @@ export function HeroCTAButtons() {
                    bg-accent hover:bg-accent-hover text-depth-bg font-semibold
                    text-base transition-colors duration-200 w-full sm:w-auto
                    focus-visible:ring-2 focus-visible:ring-accent/50">
-        <ScanLine className="w-4 h-4" aria-hidden="true" /> Start Free Detection
+        <ScanLine className="w-4 h-4" aria-hidden="true" /> Start Free Verification
       </Link>
       <Link href="#tools"
         className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg

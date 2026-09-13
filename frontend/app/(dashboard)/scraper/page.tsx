@@ -177,7 +177,7 @@ export default function ScraperPage() {
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2BEE34]/15 text-[#2BEE34] border border-[#2BEE34]/20">FORENSIC v2</span>
           </div>
           <p className="text-sm text-[#A3A3A3] ml-12">
-            Crawls an entire site (sitemap-first), runs text + image detection on every page, and reports
+            Crawls an entire site (sitemap-first), runs text + image verification on every page, and reports
             stylometric consistency, transparency, link trust, and WordPress fingerprinting.
             Deep Crawl mode extends coverage to up to 150 pages and 200 images.
           </p>
@@ -496,7 +496,7 @@ export default function ScraperPage() {
             </div>
             <p className="text-sm text-[#A3A3A3] font-medium">Enter any website URL above</p>
             <p className="text-xs text-[#6B6B6B] mt-1 max-w-xs">
-              Crawls the whole site via sitemap discovery, runs forensic text + image detection on every page,
+              Crawls the whole site via sitemap discovery, runs forensic text + image verification on every page,
               and flags thin pages and WordPress AI-plugins. Switch to Deep Crawl for sites up to 150 pages.
             </p>
           </div>

@@ -82,7 +82,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <Command.Group heading="Actions" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-silver-600">
             <Command.Item onSelect={() => go('/detect/text')}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-silver-800 cursor-pointer data-[selected=true]:bg-white/5 data-[selected=true]:text-silver-900">
-              <FileType2 className="w-4 h-4 text-silver-600" /> New Text Detection
+              <FileType2 className="w-4 h-4 text-silver-600" /> New Text Verification
             </Command.Item>
             <Command.Item onSelect={() => go('/batch')}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-silver-800 cursor-pointer data-[selected=true]:bg-white/5 data-[selected=true]:text-silver-900">

@@ -53,7 +53,7 @@ export default function WorkflowsPage() {
         <EmptyState
           icon={GitBranch}
           title="No workflows yet"
-          description="Create your first workflow to automate detection pipelines."
+          description="Create your first workflow to automate verification pipelines."
           action={
             <Link
               href="/workflows/new"

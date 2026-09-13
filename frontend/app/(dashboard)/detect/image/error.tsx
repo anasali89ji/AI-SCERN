@@ -12,7 +12,7 @@ export default function ImageDetectionError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Image detection error boundary:', error)
+    console.error('Image verification error boundary:', error)
   }, [error])
 
   return (
@@ -20,7 +20,7 @@ export default function ImageDetectionError({
       <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
         <TriangleAlert className="w-8 h-8 text-red-400" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">Detection Pipeline Failed</h2>
+      <h2 className="text-2xl font-bold text-white mb-2">Verification Pipeline Failed</h2>
       <p className="text-slate-400 mb-8 text-sm leading-relaxed">
         The image analysis engine encountered an unexpected error. This could be due to an unsupported file format, corrupted image data, or a transient service issue.
       </p>

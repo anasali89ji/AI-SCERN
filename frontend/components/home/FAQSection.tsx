@@ -13,14 +13,14 @@ const FAQS = [
   },
   {
     q: 'Is Aiscern free?',
-    a: 'Yes. There\u2019s a free tier with 10 scans per day on text and image detection, no credit card required. Pro plans unlock audio, video, and higher limits.',
+    a: 'Yes. There\u2019s a free tier with 10 scans per day on text and image verification, no credit card required. Pro plans unlock audio, video, and higher limits.',
   },
   {
-    q: 'Can Aiscern detect ChatGPT writing?',
+    q: 'Can Aiscern verify ChatGPT writing?',
     a: 'Yes \u2014 ChatGPT, Claude, Gemini, GPT-4, and other AI writing models, using a 3-model RoBERTa ensemble with linguistic signal analysis.',
   },
   {
-    q: 'Can Aiscern detect Midjourney images?',
+    q: 'Can Aiscern verify Midjourney images?',
     a: 'Yes \u2014 Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images, using a 14-layer ensemble including physics-based Bayer pattern analysis.',
   },
   {

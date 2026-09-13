@@ -26,7 +26,7 @@ const STEPS = [
     details: [
       '20+ forensic signals · sensor physics, compression, linguistic patterns',
       'Per-modality specialized analyzers for each media type',
-      'Noise-floor, spectral, and structural artifact detection',
+      'Noise-floor, spectral, and structural artifact verification',
     ],
   },
   {

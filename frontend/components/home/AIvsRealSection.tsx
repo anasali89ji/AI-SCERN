@@ -121,7 +121,7 @@ export default function AIvsRealSection() {
             {(tab === 'audio' || tab === 'video') && (
               <div className="py-4">
                 <Waveform bars={AI_BARS} color="#FF4444" />
-                <p className="text-xs text-silver-600 mt-3">Synthetic {tab} — irregular spectral signature detected</p>
+                <p className="text-xs text-silver-600 mt-3">Synthetic {tab} — irregular spectral signature verified</p>
               </div>
             )}
           </div>
@@ -158,7 +158,7 @@ export default function AIvsRealSection() {
         </div>
 
         <p className="text-center text-xs text-silver-600 mt-6">
-          Illustrative example — try the live detection demo above for real results.
+          Illustrative example — try the live verification demo above for real results.
         </p>
       </div>
     </section>

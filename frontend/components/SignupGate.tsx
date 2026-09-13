@@ -37,7 +37,7 @@ export function incrementGlobalScanCount(): number {
 }
 
 const PERKS = [
-  'Save your detection history',
+  'Save your verification history',
   '10 free scans every day — text & image',
   'Bulk analyze multiple files',
   'Access AI Chat assistant',
@@ -96,7 +96,7 @@ export function SignupGate() {
                 You've used <span className="gradient-text">{SCAN_LIMIT} free scans</span>
               </h2>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Create your free account to keep detecting — no credit card, no limits, no cost. Ever.
+                Create your free account to keep verifying — no credit card, no limits, no cost. Ever.
               </p>
             </div>
 

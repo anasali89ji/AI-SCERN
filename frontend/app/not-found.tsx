@@ -15,7 +15,7 @@ export default function NotFound() {
         <h1 className="text-8xl font-black text-accent mb-4">404</h1>
         <h2 className="text-2xl font-bold text-silver-900 mb-3">Page Not Found</h2>
         <p className="text-silver-600 mb-8 max-w-sm mx-auto">
-          This page doesn&apos;t exist. Let&apos;s get you back to detecting AI content.
+          This page doesn&apos;t exist. Let&apos;s get you back to verifying AI content.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/" className="btn-primary px-6 py-3">← Back to Home</Link>

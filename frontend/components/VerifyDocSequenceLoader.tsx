@@ -3,8 +3,8 @@
  * Aiscern — VerifyDoc Sequence Loader
  *
  * Same visual language as DetectionSequenceLoader, but reflects VerifyDoc's
- * actual pipeline shape: extraction happens first, then image detection
- * (with physical-consistency layers) and text detection + plagiarism
+ * actual pipeline shape: extraction happens first, then image verification
+ * (with physical-consistency layers) and text verification + plagiarism
  * scoring run as PARALLEL branches — shown side-by-side rather than as one
  * linear list, since that's what's actually happening on the backend.
  */

@@ -2,7 +2,7 @@
 /**
  * MobileResultSheet — Fix 4.3
  *
- * A full-screen bottom sheet for displaying detection results on mobile (< lg).
+ * A full-screen bottom sheet for displaying verification results on mobile (< lg).
  * On desktop screens the sheet is never rendered — results stay inline.
  *
  * Usage:

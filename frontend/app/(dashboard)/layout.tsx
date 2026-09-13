@@ -39,7 +39,7 @@ function loadChatPreviews(): ChatPreview[] {
 
 const NAV_GROUPS = [
   {
-    label: 'Detect',
+    label: 'Verify',
     items: [
       { href: '/dashboard',    icon: LayoutDashboard, label: 'Overview'  },
       { href: '/detect/text',     icon: FileType2,        label: 'Text'      },
@@ -71,7 +71,7 @@ const NAV_GROUPS = [
 ]
 
 const LABEL_OVERRIDES: Record<string, string> = {
-  dashboard: 'Overview', detect: 'Detect', text: 'Text', image: 'Image',
+  dashboard: 'Overview', verify: 'Verify', text: 'Text', image: 'Image',
   audio: 'Audio', video: 'Video', document: 'Document', chat: 'AI Assistant', batch: 'Batch Scan',
   scraper: 'Web Scanner', verify: 'Verify', web: 'Web Verify',
   workflows: 'Workflows', history: 'History',

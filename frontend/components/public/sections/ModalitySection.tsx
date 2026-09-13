@@ -7,9 +7,9 @@ import { AnimatedSection, SectionLabel, SectionHeading, SectionSubheading } from
 export function ModalitySection() {
   const [activeTab, setActiveTab] = useState("text");
   const tabs = [
-    { id: "text", label: "TEXT", signals: ["Linguistic analysis", "Perplexity scoring", "Burstiness patterns", "Vocabulary fingerprints", "Model structure detection"] },
+    { id: "text", label: "TEXT", signals: ["Linguistic analysis", "Perplexity scoring", "Burstiness patterns", "Vocabulary fingerprints", "Model structure verification"] },
     { id: "image", label: "IMAGE", signals: ["Frequency domain analysis", "Metadata forensics", "Compression artifacts", "Facial geometry", "Background coherence", "Generation signals"] },
-    { id: "audio", label: "AUDIO", signals: ["Spectral analysis", "Speech pattern detection", "Synthetic voice indicators", "Waveform analysis", "Speaker consistency"] },
+    { id: "audio", label: "AUDIO", signals: ["Spectral analysis", "Speech pattern verification", "Synthetic voice indicators", "Waveform analysis", "Speaker consistency"] },
     { id: "video", label: "VIDEO", signals: ["Frame sampling", "Temporal consistency", "Face region analysis", "Audio/video sync", "Compression forensics", "Provenance tracking"] },
     { id: "url", label: "URL", signals: ["Source discovery", "Page extraction", "Claim verification", "Source comparison", "Provenance graph"] },
     { id: "document", label: "DOCUMENT", signals: ["Structure analysis", "Metadata inspection", "Edit history", "Font consistency", "Layout forensics"] },

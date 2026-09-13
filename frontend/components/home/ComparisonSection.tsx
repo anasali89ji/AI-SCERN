@@ -3,10 +3,10 @@
 import { Check, Minus, X } from 'lucide-react'
 
 const FEATURES: { name: string; aiscern: boolean | string; gptzero: boolean | string; turnitin: boolean | string; originality: boolean | string }[] = [
-  { name: 'Text AI detection',         aiscern: true, gptzero: true,  turnitin: true,      originality: true  },
-  { name: 'Image deepfake detection',  aiscern: true, gptzero: false, turnitin: false,     originality: false },
-  { name: 'Audio AI detection',        aiscern: true, gptzero: false, turnitin: false,     originality: false },
-  { name: 'Video deepfake detection',  aiscern: true, gptzero: false, turnitin: false,     originality: false },
+  { name: 'Text AI verification',         aiscern: true, gptzero: true,  turnitin: true,      originality: true  },
+  { name: 'Image deepfake verification',  aiscern: true, gptzero: false, turnitin: false,     originality: false },
+  { name: 'Audio AI verification',        aiscern: true, gptzero: false, turnitin: false,     originality: false },
+  { name: 'Video deepfake verification',  aiscern: true, gptzero: false, turnitin: false,     originality: false },
   { name: 'Batch / bulk analysis',     aiscern: true, gptzero: false, turnitin: 'partial', originality: false },
   { name: 'Sentence-level heatmap',    aiscern: true, gptzero: true,  turnitin: false,     originality: true  },
   { name: 'API access',                aiscern: true, gptzero: true,  turnitin: true,      originality: true  },

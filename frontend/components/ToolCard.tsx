@@ -3,7 +3,7 @@
  * ToolCard — C.1 refactor
  *
  * Extracted from app/(dashboard)/chat/page.tsx.
- * Renders a collapsible result card for each ARIA detection tool event.
+ * Renders a collapsible result card for each ARIA verification tool event.
  * Shared between the ARIA chat page and any future surfaces (e.g. scan history detail).
  */
 import { useState } from 'react'

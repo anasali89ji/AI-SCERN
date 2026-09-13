@@ -36,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // ── Homepage ──────────────────────────────────────────────────────────
     { url: BASE, lastModified: d('2026-04-10'), changeFrequency: 'weekly',  priority: 1.0 },
 
-    // ── Detection tools (core product) ───────────────────────────────────
+    // ── Verification tools (core product) ───────────────────────────────────
     // NOTE: /detect/* routes are auth-gated (middleware 307 → /login), so they
     // are deliberately NOT listed here — advertising them only feeds crawlers
     // redirect loops. Anonymous users land on / where the live demo runs.

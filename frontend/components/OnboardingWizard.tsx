@@ -99,7 +99,7 @@ export function OnboardingWizard() {
               </div>
               <h2 className="text-2xl font-black text-white">Welcome to Aiscern</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
-                The most accurate AI content detection platform. Let's get you set up in 30 seconds.
+                The most accurate AI content verification platform. Let's get you set up in 30 seconds.
               </p>
               <div className="grid grid-cols-3 gap-3 mt-6">
                 {[['Accurate','Multi-model ensemble'],['Fast','Results in seconds'],['Private','Files never stored']].map(([h,s]) => (
@@ -207,7 +207,7 @@ export function OnboardingWizard() {
               </div>
               <h2 className="text-2xl font-black text-white">You're all set!</h2>
               <p className="text-[#64748b] text-sm leading-relaxed">
-                Your account is ready. Start with a free scan — no upload required for AI text detection.
+                Your account is ready. Start with a free scan — no upload required for AI text verification.
               </p>
               <div className="text-left space-y-2">
                 {[

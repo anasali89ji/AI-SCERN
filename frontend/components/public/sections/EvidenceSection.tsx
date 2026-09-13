@@ -8,7 +8,7 @@ export function EvidenceSection() {
   const [expandedSignal, setExpandedSignal] = useState<string | null>("synthetic-voice");
   const signals = [
     { id: "synthetic-voice", label: "Synthetic voice indicators", level: "HIGH", score: 94, desc: "Spectral analysis reveals harmonic structures consistent with neural vocoder artifacts. Formant transitions show unnatural smoothness." },
-    { id: "frame-inconsistency", label: "Frame inconsistency", level: "MEDIUM", score: 67, desc: "Temporal coherence analysis detected 3 frames with mismatched lighting vectors between consecutive samples." },
+    { id: "frame-inconsistency", label: "Frame inconsistency", level: "MEDIUM", score: 67, desc: "Temporal coherence analysis verified 3 frames with mismatched lighting vectors between consecutive samples." },
     { id: "metadata", label: "Metadata anomaly", level: "LOW", score: 34, desc: "EXIF data shows editing software signature. Creation timestamp precedes claimed recording date by 48 hours." },
     { id: "lip-sync", label: "Lip synchronization", level: "HIGH", score: 89, desc: "Phoneme-viseme correlation coefficient below human baseline. Audio leads video by average 120ms in flagged segments." },
     { id: "compression", label: "Compression artifacts", level: "MEDIUM", score: 58, desc: "DCT coefficient distribution suggests double-compression. First generation likely synthetic, then re-encoded." },
@@ -92,7 +92,7 @@ export function EvidenceSection() {
                 </svg>
                 <div>
                   <p className="text-sm font-semibold text-aiscern-status-suspicious">Recommendation: Human review required</p>
-                  <p className="text-xs text-aiscern-text-secondary mt-1">Detection results are probabilistic. This content exhibits multiple corroborating synthetic signals and should be reviewed by a human analyst before any high-stakes decision.</p>
+                  <p className="text-xs text-aiscern-text-secondary mt-1">Verification results are probabilistic. This content exhibits multiple corroborating synthetic signals and should be reviewed by a human analyst before any high-stakes decision.</p>
                 </div>
               </div>
             </div>

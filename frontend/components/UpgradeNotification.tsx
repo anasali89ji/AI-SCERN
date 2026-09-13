@@ -10,7 +10,7 @@ interface Notification {
 }
 
 const PLAN_PERKS: Record<string, string[]> = {
-  pro:        ['100 scans/day',  'Audio & Video detection', 'Web scanner', 'PDF reports'],
+  pro:        ['100 scans/day',  'Audio & Video verification', 'Web scanner', 'PDF reports'],
   team:       ['500 scans/day',  'All modalities',          'Priority queue','API access'],
   enterprise: ['Unlimited scans','All modalities',          'Custom models', 'Dedicated support'],
 }

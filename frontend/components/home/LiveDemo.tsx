@@ -19,10 +19,10 @@ const EXAMPLES = [
 ]
 
 /**
- * Live AI Detection Demo (§Plan 6.5)
+ * Live AI Verification Demo (§Plan 6.5)
  *
  * Product-honest messaging rules:
- *  - Anonymous text detection IS supported by the API (5 scans/day per IP),
+ *  - Anonymous text verification IS supported by the API (5 scans/day per IP),
  *    so "no account needed" is a true claim — kept, but qualified with the
  *    daily limit instead of implying unlimited anonymous access.
  *  - 401/402/429 all render as inline, human-readable states — the demo never
@@ -71,7 +71,7 @@ export function LiveDemo() {
         return
       }
       if (res.status >= 500) {
-        setError('The detection service is temporarily unavailable. Please try again shortly.')
+        setError('The verification service is temporarily unavailable. Please try again shortly.')
         setLoading(false)
         return
       }
@@ -111,7 +111,7 @@ export function LiveDemo() {
         {/* Neutral product card header — no browser-chrome parody (§Plan 6.5) */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-surface">
           <ScanSearch className="w-4 h-4 text-accent" aria-hidden="true" />
-          <span className="text-xs font-medium text-silver-700">Live AI Detection Demo</span>
+          <span className="text-xs font-medium text-silver-700">Live AI Verification Demo</span>
           <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">
             Free
           </span>
@@ -221,7 +221,7 @@ export function LiveDemo() {
               <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
                 <p className="text-xs text-silver-600">Free tier · no account needed for text</p>
                 <Link href="/detect/text" className="text-xs text-accent hover:text-moss-200 font-medium flex items-center gap-1 transition-colors duration-200">
-                  Full detection results <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  Full verification results <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </div>
             </div>

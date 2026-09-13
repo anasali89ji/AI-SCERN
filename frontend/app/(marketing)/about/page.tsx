@@ -5,8 +5,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { Shield, Brain, Zap, Globe, MapPin, Briefcase, ArrowRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'About Aiscern — Free AI Content Detection',
-  description: 'Aiscern is a free multi-modal AI content detection platform built in Pakistan. Analyze AI-generated text, images, audio, and video with ensemble-based analysis and published accuracy benchmarks.',
+  title: 'About Aiscern — Free AI Content Verification',
+  description: 'Aiscern is a free multi-modal AI content verification platform built in Pakistan. Analyze AI-generated text, images, audio, and video with ensemble-based analysis and published accuracy benchmarks.',
   openGraph: { title: 'About Aiscern', url: 'https://aiscern.com/about' },
 }
 
@@ -19,9 +19,9 @@ const STATS = [
 
 // Conservative timeline — high-level milestones only, no invented precise dates.
 const TIMELINE = [
-  { year: '2025', title: 'Aiscern founded', desc: 'Started as a solo project to make AI content detection free and transparent, built from Pakistan.' },
-  { year: '2025', title: 'Multi-modal detection built', desc: 'Trained on a self-assembled dataset spanning text, image, audio, and video across dozens of AI generators.' },
-  { year: '2025', title: 'Free tier launched', desc: 'Opened basic detection to anyone, no account required — because access shouldn\'t depend on budget.' },
+  { year: '2025', title: 'Aiscern founded', desc: 'Started as a solo project to make AI content verification free and transparent, built from Pakistan.' },
+  { year: '2025', title: 'Multi-modal verification built', desc: 'Trained on a self-assembled dataset spanning text, image, audio, and video across dozens of AI generators.' },
+  { year: '2025', title: 'Free tier launched', desc: 'Opened basic verification to anyone, no account required — because access shouldn\'t depend on budget.' },
   { year: '2026', title: 'Design system overhaul', desc: 'Rebuilt the entire product on a unified dark design system with published methodology and benchmarks.' },
 ]
 
@@ -29,7 +29,7 @@ const VALUES = [
   {
     icon: Shield,
     title: 'Transparency first',
-    desc: 'We publish our accuracy benchmarks, known limitations, and detection methodology openly. You should know exactly what our scores mean before acting on them.',
+    desc: 'We publish our accuracy benchmarks, known limitations, and verification methodology openly. You should know exactly what our scores mean before acting on them.',
   },
   {
     icon: Brain,
@@ -39,7 +39,7 @@ const VALUES = [
   {
     icon: Zap,
     title: 'Accessible to everyone',
-    desc: 'AI detection tools should not be locked behind subscriptions. Aiscern offers a free tier for individuals, educators, journalists, and researchers — no account required for basic detection.',
+    desc: 'AI verification tools should not be locked behind subscriptions. Aiscern offers a free tier for individuals, educators, journalists, and researchers — no account required for basic verification.',
   },
   {
     icon: Globe,
@@ -53,7 +53,7 @@ const TEAM = [
   {
     name:     'Anas Ali',
     role:     'Founder & CEO',
-    bio:      'Building Aiscern from Pakistan. Passionate about AI transparency, media literacy, and making powerful detection tools accessible to everyone — regardless of budget or geography.',
+    bio:      'Building Aiscern from Pakistan. Passionate about AI transparency, media literacy, and making powerful verification tools accessible to everyone — regardless of budget or geography.',
     location: 'Pakistan',
     skills:   'Full-Stack + AI/ML',
     initials: 'AA',
@@ -86,7 +86,7 @@ export default function AboutPage() {
               Built for the age of synthetic media.
             </h1>
             <p className="text-lead text-silver-600">
-              Free, open, and honest AI content detection. Built for educators, journalists, HR teams, and anyone who needs to know if content is human or machine-made.
+              Free, open, and honest AI content verification. Built for educators, journalists, HR teams, and anyone who needs to know if content is human or machine-made.
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export default function AboutPage() {
                 Aiscern exists because AI-generated content is now indistinguishable from human work at a glance, and the tools to analyze it have historically been expensive, inaccurate, or locked behind enterprise contracts.
               </p>
               <p className="text-silver-600 text-base leading-relaxed">
-                We are building multi-modal AI detection that is honest about its accuracy, transparent about its methodology, and free enough for a high-school teacher in a rural district to use it every day. If you can read this, you can use Aiscern.
+                We are building multi-modal AI verification that is honest about its accuracy, transparent about its methodology, and free enough for a high-school teacher in a rural district to use it every day. If you can read this, you can use Aiscern.
               </p>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function AboutPage() {
 
           {/* CTA */}
           <div className="bg-depth-bg border border-white/[0.06] rounded-xl p-8 text-center">
-            <h2 className="text-2xl font-semibold text-silver-900 mb-3">Start detecting today</h2>
+            <h2 className="text-2xl font-semibold text-silver-900 mb-3">Start verifying today</h2>
             <p className="text-silver-600 mb-6 leading-relaxed">
               Free tier available — no account required for basic scans.
             </p>
@@ -214,7 +214,7 @@ export default function AboutPage() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg
                            bg-accent hover:bg-accent-hover text-depth-bg font-semibold text-sm
                            transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50">
-                Try Free Detection <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                Try Free Verification <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
               <Link href="/methodology"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg

@@ -10,11 +10,11 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Solutions — Aiscern AI Detection for Every Industry',
-  description: 'Aiscern delivers multi-modal AI content detection tailored for education, HR, journalism, legal, healthcare, security, and more.',
+  title: 'Solutions — Aiscern AI Verification for Every Industry',
+  description: 'Aiscern delivers multi-modal AI content verification tailored for education, HR, journalism, legal, healthcare, security, and more.',
   openGraph: {
     title: 'Industry Solutions — Aiscern',
-    description: 'AI detection built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
+    description: 'AI verification built for your industry. Explore solutions for educators, recruiters, journalists, lawyers, and more.',
     url: 'https://aiscern.com/solutions',
     siteName: 'Aiscern',
     images: [{ url: 'https://aiscern.com/og-image.png' }],
@@ -70,7 +70,7 @@ const SOLUTIONS: Solution[] = [
     color: 'emerald',
     title: 'Legal & Compliance',
     tagline: 'Audit AI-generated content',
-    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade detection reports.',
+    desc: 'Verify authorship of legal documents, contracts, and evidence. Maintain chain of custody with forensic-grade verification reports.',
     cta: 'Start Free Legal Account',
     image: '/solutions/legal/hero.webp',
   },
@@ -150,16 +150,16 @@ export default function SolutionsHub() {
               Industry Solutions
             </div>
             <h1 className="text-headline text-silver-900 mb-5">
-              AI Detection Built<br />
+              AI Verification Built<br />
               <span className="text-accent">for Your Industry</span>
             </h1>
             <p className="text-lead text-silver-600 max-w-2xl mx-auto mb-8">
-              Every industry faces unique AI content challenges. Aiscern delivers tailored detection workflows,
+              Every industry faces unique AI content challenges. Aiscern delivers tailored verification workflows,
               accuracy benchmarks, and reporting tools designed for your specific use case.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Link href="/detect/text" className="btn-primary focus-visible:ring-2 focus-visible:ring-accent/50">
-                Try Free Detection <ArrowRight className="w-4 h-4" />
+                Try Free Verification <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pricing" className="btn-secondary focus-visible:ring-2 focus-visible:ring-accent/50">
                 View Pricing
@@ -181,7 +181,7 @@ export default function SolutionsHub() {
                     <div className="relative w-full aspect-[16/9] overflow-hidden bg-depth-bg">
                       <Image
                         src={sol.image}
-                        alt={`${sol.title} — Aiscern AI detection solution`}
+                        alt={`${sol.title} — Aiscern AI verification solution`}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"

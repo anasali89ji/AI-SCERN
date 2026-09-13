@@ -26,10 +26,10 @@ interface CompareRow {
 }
 
 const ROWS: CompareRow[] = [
-  { feature: 'Text Detection',          aiscern: 'yes',      gptzero: 'yes',     zerogpt: 'yes',     originality: 'yes'     },
-  { feature: 'Image Detection',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
-  { feature: 'Audio Detection',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
-  { feature: 'Video Detection',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
+  { feature: 'Text Verification',          aiscern: 'yes',      gptzero: 'yes',     zerogpt: 'yes',     originality: 'yes'     },
+  { feature: 'Image Verification',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
+  { feature: 'Audio Verification',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
+  { feature: 'Video Verification',         aiscern: 'yes',      gptzero: 'no',      zerogpt: 'no',      originality: 'no'      },
   { feature: 'Ensemble Models (8+)',    aiscern: 'yes',      gptzero: 'partial', zerogpt: 'partial', originality: 'partial' },
   { feature: 'Sentence-Level Heatmap', aiscern: 'yes',      gptzero: 'yes',     zerogpt: 'no',      originality: 'yes'     },
   { feature: 'Confidence Intervals',   aiscern: 'yes',      gptzero: 'partial', zerogpt: 'no',      originality: 'partial' },
@@ -156,7 +156,7 @@ export default function ComparePage() {
             <h2 className="text-2xl font-black text-white text-center mb-8">Why Aiscern Is Different</h2>
             <div className="grid sm:grid-cols-3 gap-5">
               {[
-                { title: 'Only multi-modal free detector', desc: 'Text, image, audio, and video detection under one roof. No other free-tier detector covers all four modalities.' },
+                { title: 'Only multi-modal free detector', desc: 'Text, image, audio, and video verification under one roof. No other free-tier detector covers all four modalities.' },
                 { title: 'Ensemble, not single-model', desc: '8+ specialized models combined with Bayesian fusion. Single-model detectors are easier to fool and have higher false positive rates.' },
                 { title: 'Open methodology', desc: 'We publish our benchmark datasets, model breakdown, and confidence thresholds at /methodology. Most competitors treat their methods as black boxes.' },
               ].map((d, i) => (
@@ -174,10 +174,10 @@ export default function ComparePage() {
         <section className="py-16">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-black text-white mb-4">Try it yourself — free</h2>
-            <p className="text-silver-700 mb-6 text-sm">No credit card required. Run your first detection in under 60 seconds.</p>
+            <p className="text-silver-700 mb-6 text-sm">No credit card required. Run your first verification in under 60 seconds.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/detect/text" className="btn-primary w-full sm:w-auto justify-center">
-                Start Free Detection <ArrowRight className="w-4 h-4" />
+                Start Free Verification <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pricing" className="btn-secondary w-full sm:w-auto justify-center">View Pricing</Link>
             </div>

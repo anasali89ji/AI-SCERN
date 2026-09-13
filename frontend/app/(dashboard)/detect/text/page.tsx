@@ -268,7 +268,7 @@ function TextDetectionPage() {
 
   const handleDetect = async () => {
     if (!pdfMode && (!text.trim() || text.length < 50)) {
-      setError('Please enter at least 50 characters for accurate detection.')
+      setError('Please enter at least 50 characters for accurate verification.')
       return
     }
     setLoading(true); setError(null); setResult(null); setGraphContext(null)
@@ -320,7 +320,7 @@ Summary:    ${result.summary}
 Forensic Signals:
 ${result.signals.map(s => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}`).join('\n')}
 
-Engine: Aiscern Detection Engine
+Engine: Aiscern Verification Engine
 Analyzed: ${new Date().toLocaleString()}`
     navigator.clipboard?.writeText(out)
     setCopied(true); setTimeout(() => setCopied(false), 2000)
@@ -370,7 +370,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
             <FileType2 className="w-6 h-6 text-warning" />
           </div>
-          AI Text Detection
+          AI Text Verification
         </h1>
         <p className="text-silver-600 ml-14 text-sm">Perplexity scoring · Burstiness analysis · Style fingerprinting · Neural signal analysis</p>
       </div>
@@ -600,7 +600,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="AI Text Detection" />
+      <LazyReviewSuggestion toolName="AI Text Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -619,13 +619,13 @@ Analyzed: ${new Date().toLocaleString()}`
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Verification Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'HC3 Dataset', desc: 'Human ChatGPT Comparison Corpus', url: 'https://huggingface.co/datasets/Hello-SimpleAI/HC3' },
-                { name: 'AI Text Detection Pile', desc: '500K+ labeled text samples', url: 'https://huggingface.co/datasets/artem9k/ai-text-detection-pile' },
+                { name: 'AI Text Verification Pile', desc: '500K+ labeled text samples', url: 'https://huggingface.co/datasets/artem9k/ai-text-detection-pile' },
                 { name: 'GPT-Wiki-Intro', desc: 'GPT-generated Wikipedia intros', url: 'https://huggingface.co/datasets/aadityaubhat/GPT-wiki-intro' },
-                { name: 'RAID Benchmark', desc: 'Robust AI text detection benchmark', url: 'https://huggingface.co/datasets/liamdugan/raid' },
+                { name: 'RAID Benchmark', desc: 'Robust AI text verification benchmark', url: 'https://huggingface.co/datasets/liamdugan/raid' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
@@ -643,7 +643,7 @@ Analyzed: ${new Date().toLocaleString()}`
     </div>
     {/* Mobile results — full parity with the desktop inline panel via ResultDetails,
         so mobile isn't a stripped-down experience and nothing is duplicated. */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Verification Result">
       {result && (
         <ResultDetails
           result={result}

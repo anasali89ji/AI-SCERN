@@ -3,7 +3,7 @@ import LoginContentPage from './login-content'
 
 export const metadata: Metadata = {
   title: 'Sign In | Aiscern — Free AI Detector',
-  description: 'Sign in to Aiscern to save your scan history and access all AI detection tools for free.',
+  description: 'Sign in to Aiscern to save your scan history and access all AI verification tools for free.',
   robots: { index: false, follow: false },
 }
 

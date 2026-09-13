@@ -214,7 +214,7 @@ export default function BatchPage() {
       doc.setFontSize(11); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
       doc.text('Executive Summary', margin, 115)
       doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(200,200,200)
-      const summaryLines = doc.splitTextToSize(`This detection batch examined ${done.length} files. ${aiCount} files were flagged as synthesized (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
+      const summaryLines = doc.splitTextToSize(`This verification batch examined ${done.length} files. ${aiCount} files were flagged as synthesized (${overallRisk}% risk score). ${humanCount} files appear authentic. Overall risk level: ${overallRisk>=70?'HIGH':overallRisk>=40?'MEDIUM':'LOW'}.`, col)
       doc.text(summaryLines, margin, 125)
 
       // ── Per-file breakdown ────────────────────────────────────────────
@@ -242,7 +242,7 @@ export default function BatchPage() {
       for (let i = 1; i <= total; i++) {
         doc.setPage(i)
         doc.setFontSize(8); doc.setTextColor(60,60,80); doc.setFont('helvetica','normal')
-        doc.text(`Aiscern · AI Content Detection Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
+        doc.text(`Aiscern · AI Content Verification Platform · Page ${i}/${total}`, pageW/2, pageH-8, {align:'center'})
       }
 
       doc.save(`aiscern-batch-report-${Date.now()}.pdf`)
@@ -312,10 +312,10 @@ export default function BatchPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {displayName && completed > 0 && !running && (
                 <div className="col-span-2 sm:col-span-4 text-xs text-[#6B6B6B] mb-1">
-                  Hey <span className="text-white font-semibold">{displayName}</span> — bulk detection complete.{' '}
+                  Hey <span className="text-white font-semibold">{displayName}</span> — bulk verification complete.{' '}
                   {aiCount > 0
                     ? <span className="text-[#FF4444] font-medium">{aiCount} file{aiCount > 1 ? 's' : ''} flagged as synthesized</span>
-                    : <span className="text-[#2BEE34] font-medium">No synthesized content detected</span>}
+                    : <span className="text-[#2BEE34] font-medium">No synthesized content verified</span>}
                   {humanCount > 0 && aiCount > 0 && <>, <span className="text-[#2BEE34] font-medium">{humanCount} authentic</span></>}.
                 </div>
               )}
@@ -378,7 +378,7 @@ export default function BatchPage() {
             <div className="p-4 rounded-xl border border-[#FF4444]/30 bg-[#FF4444]/5 flex items-start gap-3 mb-2">
               <TriangleAlert className="w-5 h-5 text-[#FF4444] shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-[#FF4444]">Correlated Synthesis Pattern Detected</p>
+                <p className="text-sm font-semibold text-[#FF4444]">Correlated Synthesis Pattern Verified</p>
                 <p className="text-sm text-[#6B6B6B] mt-0.5">{correlation.pattern} — {correlation.score}% of this batch is AI-generated</p>
               </div>
             </div>

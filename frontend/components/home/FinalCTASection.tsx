@@ -23,7 +23,7 @@ export function FinalCTASection() {
             oversized lines below ~400px viewports — text-headline (clamp 32–56px)
             reads properly on a phone; sm+ steps back up to the bigger display scale. */}
         <h2 className="text-headline sm:text-display text-silver-900 mb-4 sm:mb-5 leading-[1.1] sm:leading-[1.05]">
-          Start detecting AI content — free
+          Start verifying AI content — free
         </h2>
         <p className="text-lead text-silver-600 mb-8 sm:mb-10 max-w-xl mx-auto">
           Analyze text and images free, no credit card required. Upgrade for audio, video, batch, and API access.
@@ -36,7 +36,7 @@ export function FinalCTASection() {
                        bg-accent hover:bg-accent-hover text-depth-bg text-base font-semibold
                        transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            {user ? 'Go to Dashboard' : 'Start Free Detection'}
+            {user ? 'Go to Dashboard' : 'Start Free Verification'}
             <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
           {user ? (

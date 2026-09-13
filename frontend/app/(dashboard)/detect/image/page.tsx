@@ -225,7 +225,7 @@ Summary:    ${result.summary}
 Forensic Signals:
 ${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}% ${s.flagged ? '⚠ flagged' : '✓ clean'}\n    ${s.description}`).join('\n')}
 
-Engine: Aiscern Detection Engine · ${result.processing_time}ms
+Engine: Aiscern Verification Engine · ${result.processing_time}ms
 Analyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
@@ -269,7 +269,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
             <ImageIcon className="w-6 h-6 text-accent" />
           </div>
-          Deepfake Image Detection
+          Deepfake Image Verification
         </h1>
         <p className="text-silver-600 ml-14 text-sm">GAN artifacts · Diffusion fingerprints · Pixel forensics · Metadata analysis</p>
       </div>
@@ -374,7 +374,7 @@ Analyzed: ${new Date().toLocaleString()}`
           <div className="card py-3 px-4 border-silver-300">
             <div className="flex items-start gap-2 text-xs text-silver-600">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-accent/60" />
-              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce detection accuracy.</span>
+              <span>For best results, use uncompressed or lightly compressed images. Heavy JPEG compression may reduce verification accuracy.</span>
             </div>
           </div>
         </div>
@@ -421,7 +421,7 @@ Analyzed: ${new Date().toLocaleString()}`
         </div>
       )}
 
-      <LazyReviewSuggestion toolName="Deepfake Image Detection" />
+      <LazyReviewSuggestion toolName="Deepfake Image Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -440,7 +440,7 @@ Analyzed: ${new Date().toLocaleString()}`
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Verification Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'AIorNot Dataset', desc: 'Kaggle AI image competition dataset', url: 'https://huggingface.co/datasets/competitions/aiornot' },
@@ -462,8 +462,8 @@ Analyzed: ${new Date().toLocaleString()}`
         </details>
       )}
     </div>
-    {/* FIX B.3: MobileResultSheet — bottom sheet for detection result on mobile */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    {/* FIX B.3: MobileResultSheet — bottom sheet for verification result on mobile */}
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Verification Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} forensicScanId={forensicScanId} />
       )}

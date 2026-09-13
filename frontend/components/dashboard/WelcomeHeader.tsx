@@ -27,7 +27,7 @@ export function WelcomeHeader({ isFirstTime }: { isFirstTime: boolean }) {
       </div>
       <p className="text-neutral-400 text-base max-w-xl">
         {isFirstTime
-          ? "Let's get you set up. Aiscern detects AI-generated content across text, images, audio, and video. Ready to run your first scan?"
+          ? "Let's get you set up. Aiscern verifies AI-generated content across text, images, audio, and video. Ready to run your first scan?"
           : "Here's everything at a glance. Your recent scans, active workflows, and quick actions are below."}
       </p>
     </motion.div>

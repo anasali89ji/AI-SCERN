@@ -11,8 +11,8 @@ const MODALITY = tokens.semantic.modality
 
 const SUPPORTING_TOOLS = [
   { href: '/detect/audio', icon: Music, label: 'AI Audio & Voice Clone Detector', desc: 'Synthetic speech, voice clones, and AI-generated audio', accuracy: '~91%', accent: MODALITY.audio },
-  { href: '/detect/video', icon: Video, label: 'Deepfake Video Detector', desc: 'Face-swap, lip-sync, and synthetic video detection', accuracy: '~88%', accent: MODALITY.video },
-  { href: '/chat', icon: MessageSquare, label: 'AI Detection Assistant', desc: 'Ask anything about AI detection — get expert answers in real time', accuracy: 'New', accent: tokens.semantic.accent.primary },
+  { href: '/detect/video', icon: Video, label: 'Deepfake Video Detector', desc: 'Face-swap, lip-sync, and synthetic video verification', accuracy: '~88%', accent: MODALITY.video },
+  { href: '/chat', icon: MessageSquare, label: 'AI Verification Assistant', desc: 'Ask anything about AI verification — get expert answers in real time', accuracy: 'New', accent: tokens.semantic.accent.primary },
   { href: '/batch', icon: Layers, label: 'Batch AI Content Analyser', desc: 'Process up to 20 files simultaneously across all media types', accuracy: '20×', accent: tokens.semantic.accent.primary },
 ]
 
@@ -92,7 +92,7 @@ export function ToolsMobileCarousel() {
           )
         })}
       </div>
-      <div className="flex justify-center gap-2 mt-4" aria-label="Choose detection tool">
+      <div className="flex justify-center gap-2 mt-4" aria-label="Choose verification tool">
         {SUPPORTING_TOOLS.map((tool, i) => (
           <button
             key={tool.href}

@@ -284,7 +284,7 @@ function AudioDetectionPage() {
 
   const exportReport = () => {
     if (!result || !file) return
-    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Detection Engine\nAnalyzed: ${new Date().toLocaleString()}`
+    const text = `Aiscern Audio Analysis Report\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nFile: ${file.name}\nSize: ${formatFileSize(file.size)}${duration ? `\nDuration: ${formatDuration(duration)}` : ''}\n\nVerdict: ${result.verdict}\nConfidence: ${formatConfidence(result.confidence)}\nSummary: ${result.summary}\n\nSignals:\n${result.signals.map((s: any) => `  • ${s.name} — ${s.weight}%`).join('\n')}\n\nEngine: Aiscern Verification Engine\nAnalyzed: ${new Date().toLocaleString()}`
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `aiscern-audio-${Date.now()}.txt`; a.click()
@@ -307,9 +307,9 @@ function AudioDetectionPage() {
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
             <Mic className="w-6 h-6 text-accent" />
           </div>
-          AI Audio & Voice Clone Detection
+          AI Audio & Voice Clone Verification
         </h1>
-        <p className="text-silver-600 ml-14 text-sm">Voice synthesis detection · Spectral analysis · Prosody patterns · TTS artifacts</p>
+        <p className="text-silver-600 ml-14 text-sm">Voice synthesis verification · Spectral analysis · Prosody patterns · TTS artifacts</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
@@ -450,7 +450,7 @@ function AudioDetectionPage() {
     </div>
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
-      <LazyReviewSuggestion toolName="AI Audio & Voice Clone Detection" />
+      <LazyReviewSuggestion toolName="AI Audio & Voice Clone Verification" />
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />
@@ -469,12 +469,12 @@ function AudioDetectionPage() {
             Forensic Engines &amp; Datasets
           </summary>
           <div className="mt-3 space-y-2 text-xs text-silver-600">
-            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Detection Engine</p>
+            <p><span className="text-silver-700 font-medium">Engine</span> Aiscern Verification Engine</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               {[
                 { name: 'ASVspoof5', desc: 'ASVspoof anti-spoofing benchmark', url: 'https://huggingface.co/datasets/ASVspoof/ASVspoof5' },
-                { name: 'Deepfake Audio Detection', desc: 'morisaki deepfake audio dataset', url: 'https://huggingface.co/datasets/morisaki/deepfake-audio-detection' },
-                { name: 'MelodyMachine V2', desc: 'Deepfake audio detection dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
+                { name: 'Deepfake Audio Verification', desc: 'morisaki deepfake audio dataset', url: 'https://huggingface.co/datasets/morisaki/deepfake-audio-detection' },
+                { name: 'MelodyMachine V2', desc: 'Deepfake audio verification dataset V2', url: 'https://huggingface.co/datasets/MelodyMachine/Deepfake-audio-detection-dataset-V2' },
               ].map(d => (
                 <a key={d.url} href={d.url} target="_blank" rel="noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface transition-colors group">
@@ -491,7 +491,7 @@ function AudioDetectionPage() {
       )}
     </div>
     {/* FIX B.3: MobileResultSheet */}
-    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Detection Result">
+    <MobileResultSheet isOpen={showMobileResult} onClose={() => setShowMobileResult(false)} title="Verification Result">
       {result && cfg && (
         <ResultDetails result={result} cfg={cfg} displayName={displayName} file={file} exportReport={exportReport} />
       )}

@@ -18,7 +18,7 @@ export function HeroHeadline() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        Detect AI-generated content.
+        Verify AI-generated content.
       </motion.h1>
       <motion.p
         className="font-heading font-semibold text-silver-700 tracking-tight mt-1

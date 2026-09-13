@@ -14,7 +14,7 @@ export function FinalCTASection() {
               <PrimaryCTA href="/signup">Start Free Verification</PrimaryCTA>
               <SecondaryCTA href="/enterprise">Contact Sales</SecondaryCTA>
             </div>
-            <p className="mt-6 text-xs text-aiscern-text-muted">Detection results are probabilistic. Human review is recommended for high-stakes decisions.</p>
+            <p className="mt-6 text-xs text-aiscern-text-muted">Verification results are probabilistic. Human review is recommended for high-stakes decisions.</p>
           </AnimatedSection>
         </div>
       </div>
