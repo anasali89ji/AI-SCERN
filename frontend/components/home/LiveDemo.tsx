@@ -82,7 +82,7 @@ export function LiveDemo() {
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFB800' }} />
             <span className="w-2.5 h-2.5 rounded-full bg-accent" />
           </div>
-          <span className="text-xs text-silver-600 ml-1">Live Attestation Engine</span>
+          <span className="text-xs text-silver-600 ml-1">Live Verification Engine</span>
           <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">
             Free
           </span>
@@ -134,7 +134,7 @@ export function LiveDemo() {
                        transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
             {loading ? <LoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Brain className="w-4 h-4" aria-hidden="true" />}
-            {loading ? 'Analyzing...' : 'Attest Free'}
+            {loading ? 'Analyzing...' : 'Verify Free'}
             {loading && (
               <span className="absolute bottom-0 left-0 h-0.5 bg-depth-bg/20 w-full" aria-hidden="true">
                 <span className="block h-full bg-depth-bg/50 animate-pulse" style={{ width: '60%' }} />
@@ -176,7 +176,7 @@ export function LiveDemo() {
               <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
                 <p className="text-xs text-silver-600">Free · No account needed</p>
                 <Link href="/detect/text" className="text-xs text-accent hover:text-moss-200 font-medium flex items-center gap-1 transition-colors duration-200">
-                  Full attestation <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  Full verification <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </div>
             </div>

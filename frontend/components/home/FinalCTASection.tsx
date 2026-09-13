@@ -19,11 +19,11 @@ export function FinalCTASection() {
       />
 
       <div className="relative max-w-3xl mx-auto text-center">
-        {/* text-display (clamp 48–96px) wraps "Start Attesting Content Free" into 3+
+        {/* text-display (clamp 48–96px) wraps "Start Verifying Content Free" into 3+
             oversized lines below ~400px viewports — text-headline (clamp 32–56px)
             reads properly on a phone; sm+ steps back up to the bigger display scale. */}
         <h2 className="text-headline sm:text-display text-silver-900 mb-4 sm:mb-5 leading-[1.1] sm:leading-[1.05]">
-          Start Attesting Content Free
+          Start Verifying Content Free
         </h2>
         <p className="text-lead text-silver-600 mb-8 sm:mb-10 max-w-xl mx-auto">
           Core features free — no credit card required. No account needed for basic examinations.
@@ -36,7 +36,7 @@ export function FinalCTASection() {
                        bg-accent hover:bg-accent-hover text-depth-bg text-base font-semibold
                        transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            {user ? 'Go to Dashboard' : 'Begin Attestation Free'}
+            {user ? 'Go to Dashboard' : 'Begin Verification Free'}
             <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
           {user ? (

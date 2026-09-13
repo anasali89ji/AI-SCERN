@@ -61,19 +61,19 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOOLS = [
-  { href: '/detect/text',  icon: FileType2,      label: 'Text Attestation',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
-  { href: '/detect/image', icon: ImageIcon,     label: 'Image Attestation',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
-  { href: '/detect/audio', icon: Music,         label: 'Audio Attestation',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
-  { href: '/detect/video', icon: Video,         label: 'Video Attestation',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },
-  { href: '/chat',         icon: MessageSquare, label: 'ARIA Attestation Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
-  { href: '/batch',        icon: Database,      label: 'Bulk Attestation',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
+  { href: '/detect/text',  icon: FileType2,      label: 'Text Verification',           desc: 'ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: '#f59e0b', glow: 'text'  },
+  { href: '/detect/image', icon: ImageIcon,     label: 'Image Verification',    desc: 'Midjourney, DALL-E, Stable Diffusion',      accuracy: '~98%', accent: '#2563eb', glow: 'image' },
+  { href: '/detect/audio', icon: Music,         label: 'Audio Verification',  desc: 'ElevenLabs, voice cloning, TTS synthesis',  accuracy: '~91%', accent: '#06b6d4', glow: 'audio' },
+  { href: '/detect/video', icon: Video,         label: 'Video Verification',    desc: 'Frame-by-frame deepfake analysis',           accuracy: '~88%', accent: '#8b5cf6', glow: 'video' },
+  { href: '/chat',         icon: MessageSquare, label: 'ARIA Verification Assistant',   desc: 'Ask anything about AI detection',            accuracy: 'New',  accent: '#2BEE34', glow: 'text'  },
+  { href: '/batch',        icon: Database,      label: 'Bulk Verification',     desc: 'Analyze 20 files simultaneously',            accuracy: '20×',  accent: '#f43f5e', glow: 'video' },
 ]
 
 const TRUST_FEATURES = [
   { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: '#2563eb' },
   { icon: Shield,      title: 'Research-Backed',        desc: 'Built on peer-reviewed detection research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: '#10b981' },
   { icon: TrendingUp,  title: 'Ensemble Models',        desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: '#f59e0b' },
-  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start attesting for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
+  { icon: Zap,         title: 'Free Tier Available',    desc: 'Start verifying for free — no credit card required. Upgrade when you need more scans.',           wide: false, stat: 'Free',  statLabel: 'to start', accent: '#06b6d4' },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ export default function HomePage() {
                                      bg-accent hover:bg-accent-hover text-depth-bg font-semibold
                                      text-base transition-colors duration-200 w-full sm:w-auto
                                      focus-visible:ring-2 focus-visible:ring-accent/50">
-                          <ScanLine className="w-4 h-4" aria-hidden="true" /> Start Free Attestation
+                          <ScanLine className="w-4 h-4" aria-hidden="true" /> Start Free Verification
                         </Link>
                       </MagneticButton>
                       <Link href="/docs/api"
@@ -202,10 +202,10 @@ export default function HomePage() {
                 Six Powerful Tools
               </p>
               <h2 className="text-headline text-silver-900 mb-3 sm:mb-4">
-                Attestation Tools
+                Verification Tools
               </h2>
               <p className="text-silver-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                Six attestation tools covering every content type. Each returns an integrity rating in under 3 seconds.
+                Six verification tools covering every content type. Each returns an integrity rating in under 3 seconds.
               </p>
             </div>
 
@@ -349,7 +349,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 mb-4">
                   <FlaskConical className="w-4 h-4 text-accent flex-shrink-0" aria-hidden="true" />
                   <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-                    Attestation methodology
+                    Verification methodology
                   </span>
                 </div>
                 <p className="text-silver-600 leading-relaxed text-sm">
