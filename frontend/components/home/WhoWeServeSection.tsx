@@ -174,18 +174,32 @@ function PersonaCard({
         {/* Image placeholder slot */}
         <div
           className={`
-            w-full rounded-lg overflow-hidden mb-4 border border-white/[0.06]
+            relative w-full rounded-lg overflow-hidden mb-4 border border-white/[0.06]
             ${isLarge ? "aspect-[16/11]" : "aspect-[16/10]"}
           `}
         >
           {persona.image ? (
-            <Image
-              src={persona.image}
-              alt={`${persona.role} workflow`}
-              fill
-              sizes="(max-width:640px) 80vw, (max-width:1024px) 50vw, 25vw"
-              className="object-cover"
-            />
+            <>
+              <Image
+                src={persona.image}
+                alt={`${persona.role} workflow`}
+                fill
+                sizes="(max-width:640px) 80vw, (max-width:1024px) 50vw, 25vw"
+                className="object-cover"
+              />
+              {/* Bottom scrim + name caption directly on the photo */}
+              <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 p-3 sm:p-4">
+                <div
+                  className="flex items-center justify-center w-7 h-7 rounded-md bg-black/40 backdrop-blur-sm border border-white/10 flex-shrink-0"
+                >
+                  <Icon className="w-4 h-4 text-white" strokeWidth={1.8} />
+                </div>
+                <span className={`font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${isLarge ? "text-lg" : "text-sm"}`}>
+                  {persona.role}
+                </span>
+              </div>
+            </>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-surface-elevated via-surface to-surface-deep flex flex-col items-center justify-center gap-2">
               <Icon
@@ -199,18 +213,23 @@ function PersonaCard({
           )}
         </div>
 
-        {/* Icon + title row */}
-        <div className="flex items-center gap-3 mb-2">
-          <div
-            className="flex items-center justify-center w-9 h-9 rounded-lg bg-surface-elevated border transition-colors duration-200"
-            style={{ borderColor: `${persona.accent}20` }}
-          >
-            <Icon
-              className="w-[18px] h-[18px] text-silver-700 transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
-            />
+        {/* Icon + title row (hidden when the image already carries the name caption) */}
+        {!persona.image && (
+          <div className="flex items-center gap-3 mb-2">
+            <div
+              className="flex items-center justify-center w-9 h-9 rounded-lg bg-surface-elevated border transition-colors duration-200"
+              style={{ borderColor: `${persona.accent}20` }}
+            >
+              <Icon
+                className="w-[18px] h-[18px] text-silver-700 transition-colors duration-200 group-hover:text-[color:var(--accent)] group-focus-within:text-[color:var(--accent)]"
+              />
+            </div>
+            <h3 className="text-base font-semibold text-silver-900">{persona.role}</h3>
           </div>
-          <h3 className="text-base font-semibold text-silver-900">{persona.role}</h3>
-        </div>
+        )}
+        {persona.image && (
+          <h3 className="sr-only">{persona.role}</h3>
+        )}
 
         {/* Description */}
         <p className="text-sm text-silver-600 leading-relaxed flex-grow">{persona.desc}</p>
