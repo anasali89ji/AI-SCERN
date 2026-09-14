@@ -7,7 +7,7 @@ import { WorkflowStepCard } from './WorkflowStepCard';
 
 const STEP_TYPE_CONFIG: Record<WorkflowStepType, { label: string; color: string }> = {
   upload: { label: 'Upload Content', color: 'bg-blue-500' },
-  verify: { label: 'AI Verification', color: 'bg-primary' },
+  detect: { label: 'AI Verification', color: 'bg-primary' },
   filter: { label: 'Filter Results', color: 'bg-amber-500' },
   rag: { label: 'RAG Retrieval', color: 'bg-cyan-500' },
   review: { label: 'Human Review', color: 'bg-purple-500' },
@@ -20,7 +20,7 @@ const STEP_TYPE_CONFIG: Record<WorkflowStepType, { label: string; color: string 
 function getDefaultConfig(type: WorkflowStepType): Record<string, unknown> {
   switch (type) {
     case 'upload': return { modality: 'image', source: 'file', allowMultiple: false };
-    case 'verify': return { models: ['vit', 'clip'], useRAG: true, confidenceThreshold: 0.7 };
+    case 'detect': return { models: ['vit', 'clip'], useRAG: true, confidenceThreshold: 0.7 };
     case 'filter': return { minConfidence: 0.5, maxConfidence: 1.0, action: 'flag' };
     case 'rag': return { topK: 5, similarityThreshold: 0.85 };
     case 'review': return { requireApproval: true, timeoutMinutes: 30 };
