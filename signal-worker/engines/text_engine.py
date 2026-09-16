@@ -43,6 +43,7 @@ from utils.text_preprocessor import preprocess, split_sentences, tokenise_words
 from analyzers.lexical_entropy_stylometry import run_all as _run_lexical_entropy_signals
 from analyzers.ngram_punctuation_fingerprint import run_all as _run_ngram_punctuation_signals
 from analyzers.llm_watermark_greenlist import run_all as _run_watermark_signals
+from analyzers.syntactic_semantic_features import run_all as _run_syntactic_semantic_signals
 from analyzers.near_synonym_consistency import run_all as _run_near_synonym_signals
 from version import VERSION
 
@@ -787,6 +788,7 @@ def analyze_text(
             "lexical_entropy": True,
             "ngram_punctuation": True,
             "watermark_detection": True,
+            "syntactic_semantic": True,
             "near_synonym_consistency": True,
         }
 
@@ -1002,6 +1004,21 @@ def analyze_text(
         except Exception as e:
             logger.error("[TextEngine] near_synonym_consistency.run_all raised unexpectedly: %s", e, exc_info=True)
             engines["near_synonym_consistency"] = _empty_result(f"unexpected_error: {e}")
+
+    # MODULE 31 — spec Section 3.2 items 2-3 (syntactic structure features;
+    # semantic LSA features). Resolves the spaCy/topic-model/WordNet
+    # dependency question that Modules 21-22 left open: implemented with zero
+    # new dependencies (numpy + a self-contained closed-class lexicon). The
+    # semantic_lsa block is PROVISIONAL and carries zero score weight — see
+    # analyzers/syntactic_semantic_features.py. WordNet synonym/hypernym
+    # density and LDA remain open. Same call-site try/except as Modules 21-24.
+    if options.get("syntactic_semantic", True):
+        try:
+            engines.update(_run_syntactic_semantic_signals(clean))
+        except Exception as e:
+            logger.error("[TextEngine] syntactic_semantic_features.run_all raised unexpectedly: %s", e, exc_info=True)
+            engines["syntactic_structure"] = _empty_result(f"unexpected_error: {e}")
+            engines["semantic_lsa"] = _empty_result(f"unexpected_error: {e}")
 
 
     # Composite score — confidence-weighted average
