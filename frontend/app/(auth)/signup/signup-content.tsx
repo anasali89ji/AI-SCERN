@@ -1,17 +1,19 @@
 'use client'
-
-import Link from 'next/link'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 import { SignUp, useAuth } from '@clerk/nextjs'
-import { ShieldCheck, Zap, Lock } from 'lucide-react'
-import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { LoaderCircle, ShieldCheck, Zap, Lock } from 'lucide-react'
 
 const TRUST_PILLS = [
-  { icon: ShieldCheck, label: 'Enterprise Security' },
-  { icon: Zap,         label: 'Instant Analysis'    },
-  { icon: Lock,        label: 'No data stored'      },
+  { icon: ShieldCheck, label: 'Free forever'    },
+  { icon: Zap,         label: 'Instant results' },
+  { icon: Lock,        label: 'No data stored'  },
 ]
 
+// Same shared appearance as login-content.tsx — see the comment there for
+// why `card` is transparent/borderless (the outer <div> below owns the
+// single frame).
 const clerkAppearance = {
   layout: {
     socialButtonsPlacement: 'bottom' as const,
@@ -19,17 +21,17 @@ const clerkAppearance = {
     showOptionalFields:     false,
   },
   variables: {
-    colorPrimary:                  '#2BEE34',
+    colorPrimary:                  '#2BEE34',  // accent.DEFAULT
     colorBackground:               'transparent',
-    colorInputBackground:          '#141414',
-    colorInputText:                '#E5E5E5',
-    colorText:                     '#E5E5E5',
-    colorTextSecondary:            '#A3A3A3',
-    colorTextOnPrimaryBackground:  '#0A0A0A',
-    colorNeutral:                  '#2A2A2A',
-    colorDanger:                   '#FF4444',
-    colorSuccess:                  '#2BEE34',
-    colorWarning:                  '#FFB800',
+    colorInputBackground:          '#141414',  // surface.DEFAULT
+    colorInputText:                '#E5E5E5',  // silver.800
+    colorText:                     '#E5E5E5',  // silver.800
+    colorTextSecondary:            '#A3A3A3',  // silver.700
+    colorTextOnPrimaryBackground:  '#0A0A0A',  // surface.deep
+    colorNeutral:                  '#2A2A2A',  // silver.400
+    colorDanger:                   '#FF4444',  // error
+    colorSuccess:                  '#2BEE34',  // accent.DEFAULT
+    colorWarning:                  '#FFB800',  // warning
     borderRadius:                  '8px',
     fontFamily:                    'inherit',
     fontSize:                      '14px',
@@ -62,46 +64,58 @@ const clerkAppearance = {
   },
 }
 
-export default function SignupContent() {
+function SignupContent() {
   const { isSignedIn, isLoaded } = useAuth()
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const redirectUrl  = searchParams.get('redirect_url') || '/dashboard'
+  const [redirecting, setRedirecting] = useState(false)
+  const redirectUrl = searchParams.get('redirect_url') || '/dashboard'
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.push(redirectUrl)
-    }
-  }, [isLoaded, isSignedIn, redirectUrl, router])
+    if (isLoaded && isSignedIn) { setRedirecting(true); router.replace(redirectUrl) }
+  }, [isLoaded, isSignedIn, router, redirectUrl])
+
+  if (redirecting) return (
+    <div className="min-h-screen bg-surface-deep flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <LoaderCircle className="w-8 h-8 text-accent animate-spin" />
+        <p className="text-sm text-silver-600">Redirecting to dashboard…</p>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
+
+      {/* Left panel — brand */}
       <div className="lg:w-1/2 bg-surface-deep flex flex-col justify-center px-6 py-10 lg:px-16 lg:py-0 border-b lg:border-b-0 lg:border-r border-white/15">
         <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10 group w-fit" aria-label="Aiscern home">
           <span className="text-xl font-semibold text-silver-900 tracking-tight group-hover:text-accent transition-colors duration-300">
-            AISCERN
+            Aiscern
           </span>
         </Link>
-
-        <h1 className="text-3xl lg:text-4xl font-bold text-silver-900 tracking-tight mb-4">
-          Verify truth in media
+        <h1 className="hidden lg:block text-headline text-silver-700 max-w-md">
+          Start verifying AI-generated content in seconds.
         </h1>
-        <p className="text-silver-600 text-base mb-8 max-w-md">
-          Detect synthetic media, audio deepfakes, and manipulated documents with multi-modal AI verification.
-        </p>
-
-        <div className="hidden lg:flex flex-wrap gap-3">
+        <div className="hidden lg:flex items-center gap-3 mt-10 flex-wrap">
           {TRUST_PILLS.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 text-xs text-silver-700">
+            <span key={label}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-silver-600
+                         bg-surface border border-white/20 px-3 py-1.5 rounded-full">
               <Icon className="w-3.5 h-3.5 text-accent" />
-              <span>{label}</span>
-            </div>
+              {label}
+            </span>
           ))}
         </div>
       </div>
 
+      {/* Right panel — form */}
       <div className="lg:w-1/2 bg-surface-deep flex flex-col items-center justify-center px-4 py-10 lg:py-0">
         <div className="w-full max-w-[420px]">
+
+          {/* Single unified frame — see login-content.tsx for the full
+              explanation of why this replaces the old split-border
+              header+card structure. */}
           <div className="bg-surface-deep border border-white/20 rounded-xl overflow-hidden">
             <div className="px-7 pt-7 pb-5 border-b border-white/10">
               <div className="flex items-center gap-2 mb-3">
@@ -126,15 +140,32 @@ export default function SignupContent() {
           </div>
         </div>
 
-        <div className="flex lg:hidden flex-wrap justify-center gap-3 mt-8">
+        {/* Trust pills (mobile only — desktop shows them in the left panel) */}
+        <div className="flex lg:hidden items-center gap-3 mt-6 flex-wrap justify-center">
           {TRUST_PILLS.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 text-xs text-silver-700">
+            <span key={label}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-silver-600
+                         bg-surface border border-white/20 px-3 py-1.5 rounded-full">
               <Icon className="w-3.5 h-3.5 text-accent" />
-              <span>{label}</span>
-            </div>
+              {label}
+            </span>
           ))}
         </div>
+
+        <p className="mt-5 text-xs text-silver-700">© 2026 Aiscern · Secured by Clerk</p>
       </div>
     </div>
+  )
+}
+
+export default function SignupContentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-surface-deep flex items-center justify-center">
+        <LoaderCircle className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
   )
 }
