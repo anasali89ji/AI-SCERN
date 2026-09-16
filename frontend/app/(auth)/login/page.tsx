@@ -1,12 +1,10 @@
-import type { Metadata } from 'next'
-import LoginContentPage from './login-content'
-
-export const metadata: Metadata = {
-  title: 'Sign In | Aiscern — Free AI Detector',
-  description: 'Sign in to Aiscern to save your scan history and access all AI verification tools for free.',
-  robots: { index: false, follow: false },
-}
+import { Suspense } from 'react'
+import LoginContent from './login-content'
 
 export default function LoginPage() {
-  return <LoginContentPage />
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface-deep" />}>
+      <LoginContent />
+    </Suspense>
+  )
 }
