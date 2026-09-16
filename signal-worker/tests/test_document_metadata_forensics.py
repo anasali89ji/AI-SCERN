@@ -803,3 +803,201 @@ def test_signature_run_all_wrapper_shape(signer_pair):
     for field in ("score", "confidence", "status", "details"):
         assert field in entry
     assert "interpretation" in entry["details"]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# MODULE 30 — container-forensics wiring into the document pipeline
+# ════════════════════════════════════════════════════════════════════════════
+
+import types  # noqa: E402
+
+from engines.document_engine import (  # noqa: E402
+    run_container_forensics,
+    summarise_integrity,
+    analyze_document_from_bytes,
+)
+
+
+# ── Dispatcher ──────────────────────────────────────────────────────────────
+
+def test_pdf_dispatches_both_pdf_analyzers():
+    out = run_container_forensics(_build_pdf(CLEAN_META), "pdf")
+    assert set(out.keys()) == {"pdf_metadata_forensics", "pdf_signature_verification"}
+    assert out["pdf_metadata_forensics"]["status"] == "ok"
+
+
+def test_docx_dispatches_the_ooxml_analyzer_only():
+    out = run_container_forensics(_build_docx(), "docx")
+    assert set(out.keys()) == {"docx_metadata_forensics"}
+
+
+def test_pptx_shares_the_ooxml_path():
+    """pptx is an OOXML package too — docProps/ parses, Word parts come back absent."""
+    out = run_container_forensics(_build_docx(), "pptx")
+    assert set(out.keys()) == {"docx_metadata_forensics"}
+
+
+def test_unknown_doc_type_dispatches_nothing():
+    assert run_container_forensics(b"whatever", "txt") == {}
+
+
+def test_analyzer_exception_is_contained_per_analyzer(monkeypatch):
+    """
+    A bug in one container analyzer must degrade to a reported error for that
+    analyzer alone — never take down the request or its siblings.
+    """
+    import analyzers.pdf_metadata_forensics as pdf_mod
+
+    def boom(_bytes):
+        raise RuntimeError("synthetic analyzer failure")
+
+    monkeypatch.setattr(pdf_mod, "analyze_pdf_metadata", boom)
+    out = run_container_forensics(_build_pdf(CLEAN_META), "pdf")
+
+    assert out["pdf_metadata_forensics"]["status"] == "error"
+    assert "synthetic analyzer failure" in out["pdf_metadata_forensics"]["details"]["reason"]
+    # Sibling analyzer still ran.
+    assert "pdf_signature_verification" in out
+
+
+# ── Integrity summary ───────────────────────────────────────────────────────
+
+def test_integrity_not_applicable_when_nothing_ran():
+    summary = summarise_integrity({})
+    assert summary["verdict"] == "NOT_APPLICABLE"
+    assert summary["findings"] == []
+
+
+def test_integrity_consistent_when_no_findings():
+    summary = summarise_integrity(
+        {"x": {"status": "ok", "details": {"findings": [], "consistency_notes": ["clean"]}}}
+    )
+    assert summary["verdict"] == "CONSISTENT"
+    assert "forgeable" in summary["summary"]
+
+
+def test_integrity_inconsistent_for_provenance_anomalies():
+    summary = summarise_integrity(
+        {"x": {"status": "ok", "details": {"findings": ["programmatic_producer", "unrecognised_producer"]}}}
+    )
+    assert summary["verdict"] == "INCONSISTENT"
+    assert len(summary["findings"]) == 2
+    assert summary["alteration_findings"] == []
+
+
+def test_integrity_altered_requires_an_alteration_finding():
+    summary = summarise_integrity(
+        {"x": {"status": "ok",
+               "details": {"findings": ["programmatic_producer",
+                                        "sig0:signed_content_digest_mismatch"]}}}
+    )
+    assert summary["verdict"] == "ALTERED"
+    assert "sig0:signed_content_digest_mismatch" in summary["alteration_findings"]
+
+
+def test_integrity_alteration_matching_is_not_substring_sloppy():
+    """
+    `content_appended_after_signing` is an alteration marker; a finding that
+    merely CONTAINS that text as part of a longer unrelated token must not
+    promote the verdict to ALTERED.
+    """
+    summary = summarise_integrity(
+        {"x": {"status": "ok", "details": {"findings": ["no_content_appended_after_signing_check"]}}}
+    )
+    assert summary["verdict"] == "INCONSISTENT"
+    assert summary["alteration_findings"] == []
+
+
+def test_integrity_records_errored_analyzers():
+    summary = summarise_integrity(
+        {"broken": {"status": "error", "details": {"reason": "boom"}}}
+    )
+    assert summary["signals_errored"] == ["broken"]
+    assert summary["verdict"] == "NOT_APPLICABLE"
+
+
+def test_tampered_pdf_reaches_altered_end_to_end(signer_pair):
+    key, cert = signer_pair
+    forensics = run_container_forensics(_build_signed_pdf(key, cert, tamper=True), "pdf")
+    summary = summarise_integrity(forensics)
+    assert summary["verdict"] == "ALTERED"
+
+
+# ── Orchestrator wiring ─────────────────────────────────────────────────────
+
+@pytest.fixture
+def stub_detection_engines(monkeypatch):
+    """
+    Stub the three heavy detection engines so the orchestrator can be tested
+    without torch/transformers/cv2. The container-forensics branch under test
+    is NOT stubbed — it runs for real.
+    """
+    image_engine = types.ModuleType("engines.image_engine")
+    image_engine.analyze_image_from_bytes = lambda *a, **k: {"verdict": "HUMAN"}
+
+    text_engine = types.ModuleType("engines.text_engine")
+    text_engine.analyze_text = lambda *a, **k: {"verdict": "HUMAN", "score": 0.2}
+
+    plagiarism_engine = types.ModuleType("engines.plagiarism_engine")
+    plagiarism_engine.analyze_plagiarism_risk = lambda *a, **k: {"status": "ok", "risk_level": "LOW"}
+    plagiarism_engine.document_fingerprint = lambda *a, **k: "stub-fingerprint"
+
+    monkeypatch.setitem(sys.modules, "engines.image_engine", image_engine)
+    monkeypatch.setitem(sys.modules, "engines.text_engine", text_engine)
+    monkeypatch.setitem(sys.modules, "engines.plagiarism_engine", plagiarism_engine)
+
+
+def test_orchestrator_emits_additive_forensics_keys(stub_detection_engines):
+    result = analyze_document_from_bytes(
+        _build_pdf(CLEAN_META, text="The quick brown fox jumps over the lazy dog repeatedly. " * 3),
+        "application/pdf",
+        "report.pdf",
+    )
+    assert result["status"] == "ok"
+    assert "container_forensics" in result
+    assert "document_integrity" in result
+    assert "pdf_metadata_forensics" in result["container_forensics"]
+    assert result["document_integrity"]["verdict"] in (
+        "CONSISTENT", "INCONSISTENT", "ALTERED", "NOT_APPLICABLE"
+    )
+
+
+def test_composite_verdict_enum_is_left_untouched(stub_detection_engines):
+    """
+    Contract with the frontend: detect/document/page.tsx types composite_verdict
+    as a closed 'CLEAN' | 'FLAGGED' | 'NO_CONTENT' union. Container forensics
+    must never widen it or flip it, however alarming the provenance findings
+    are — that is what the separate document_integrity block is for.
+    """
+    key, cert = _make_signer()
+    tampered = _build_signed_pdf(key, cert, tamper=True)
+
+    result = analyze_document_from_bytes(tampered, "application/pdf", "signed.pdf")
+    assert result["composite_verdict"] in ("CLEAN", "FLAGGED", "NO_CONTENT")
+    assert result["document_integrity"]["verdict"] == "ALTERED"
+
+
+def test_docx_orchestration_includes_ooxml_forensics(stub_detection_engines):
+    result = analyze_document_from_bytes(
+        _build_docx(words=900, total_time=40, revision=6),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "essay.docx",
+    )
+    assert "docx_metadata_forensics" in result["container_forensics"]
+    assert result["document_integrity"]["signals_run"] == ["docx_metadata_forensics"]
+
+
+def test_existing_response_contract_is_preserved(stub_detection_engines):
+    """Every key the frontend already reads must still be present."""
+    result = analyze_document_from_bytes(
+        _build_pdf(CLEAN_META, text="Sufficiently long body text for the text branch. " * 4),
+        "application/pdf",
+        "report.pdf",
+    )
+    for key in (
+        "status", "document_type", "units_analyzed", "document_fingerprint",
+        "has_text", "has_images", "image_count", "text_analysis",
+        "image_analyses", "plagiarism_analysis", "composite_verdict",
+        "composite_summary", "processing_time_ms",
+    ):
+        assert key in result, f"missing pre-existing response key: {key}"

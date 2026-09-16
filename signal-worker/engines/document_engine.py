@@ -17,6 +17,22 @@ even though this module itself is synchronous underneath the async endpoint).
 If the document contains no extractable images, only the text branch runs
 (and vice versa for image-only PDFs with no OCR-able text) — the tool
 never blocks waiting on a branch that has nothing to do.
+
+MODULE 30 additionally runs a CONTAINER FORENSICS branch in the same pool:
+  - analyzers/pdf_metadata_forensics  (Module 27)
+  - analyzers/pdf_signature_verification (Module 29)   [PDF only]
+  - analyzers/docx_metadata_forensics (Module 28)      [OOXML: docx/pptx]
+
+Deliberate design decision — this branch does NOT feed composite_verdict.
+Container forensics answers "is this file's stated provenance internally
+consistent, and has it been altered since signing?", which is a DIFFERENT
+question from "was this content AI-generated?". Folding provenance findings
+into the AI verdict would let a Google-Docs-exported PDF or a re-saved scan
+read as "AI" — a false positive with real consequences for the person who
+submitted it. So the findings surface under their own additive key
+`document_integrity`, with their own verdict vocabulary, and the existing
+composite_verdict enum (CLEAN / FLAGGED / NO_CONTENT) is left untouched so
+downstream consumers keep working unchanged.
 """
 
 from __future__ import annotations
@@ -33,6 +49,143 @@ MIN_IMAGE_BYTES = 3 * 1024     # skip tiny embedded icons/bullets/logos (noise, 
 
 class UnsupportedDocumentError(Exception):
     pass
+
+
+# ── Container forensics (MODULE 30) ─────────────────────────────────────────
+
+def run_container_forensics(file_bytes: bytes, doc_type: str) -> Dict[str, Any]:
+    """
+    Run the Module 27/28/29 container analyzers appropriate to this file type.
+
+    Each analyzer is invoked behind its own try/except: these read attacker-
+    controlled container structure, so a bug in one of them must degrade to a
+    reported error for that analyzer alone, never take down the request or
+    the other two. Same call-site pattern as audio_engine.py's Module 16+
+    sites and text_engine.py's Module 21+ sites.
+    """
+    out: Dict[str, Any] = {}
+
+    if doc_type == "pdf":
+        try:
+            from analyzers.pdf_metadata_forensics import analyze_pdf_metadata
+            out["pdf_metadata_forensics"] = analyze_pdf_metadata(file_bytes)
+        except Exception as e:
+            out["pdf_metadata_forensics"] = {
+                "score": 0.5, "confidence": 0.0, "status": "error",
+                "details": {"reason": f"unexpected_error: {e}"},
+            }
+        try:
+            from analyzers.pdf_signature_verification import analyze_pdf_signatures
+            out["pdf_signature_verification"] = analyze_pdf_signatures(file_bytes)
+        except Exception as e:
+            out["pdf_signature_verification"] = {
+                "score": 0.5, "confidence": 0.0, "status": "error",
+                "details": {"reason": f"unexpected_error: {e}"},
+            }
+    elif doc_type in ("docx", "pptx"):
+        # Both are OOXML packages and share the docProps/ convention; the
+        # Word-specific parts simply come back absent for pptx.
+        try:
+            from analyzers.docx_metadata_forensics import analyze_docx_metadata
+            out["docx_metadata_forensics"] = analyze_docx_metadata(file_bytes)
+        except Exception as e:
+            out["docx_metadata_forensics"] = {
+                "score": 0.5, "confidence": 0.0, "status": "error",
+                "details": {"reason": f"unexpected_error: {e}"},
+            }
+
+    return out
+
+
+# Findings that indicate the file was ALTERED, as opposed to merely having an
+# unusual-but-explicable provenance. Only these can reach ALTERED.
+_ALTERATION_FINDINGS = (
+    "signed_content_digest_mismatch",
+    "signature_value_verification_failed",
+    "content_appended_after_signing",
+    "byte_range_does_not_start_at_file_start",
+    "timestamp:mod_date_before_creation_date",
+    "core:modified_before_created",
+)
+
+
+def summarise_integrity(forensics: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fold the container analyzers into one additive `document_integrity` block.
+
+    Vocabulary is deliberately separate from composite_verdict:
+      ALTERED       — positive evidence the file changed after it was signed,
+                      or an impossible timestamp ordering.
+      INCONSISTENT  — provenance anomalies worth a human look.
+      CONSISTENT    — checks ran and found nothing.
+      NOT_APPLICABLE— no container analyzer applies to this file type.
+    """
+    if not forensics:
+        return {
+            "verdict": "NOT_APPLICABLE",
+            "summary": "No container forensics apply to this document type.",
+            "findings": [],
+            "signals_run": [],
+        }
+
+    all_findings: List[str] = []
+    signals_run: List[str] = []
+    notes: List[str] = []
+    errored: List[str] = []
+
+    for name, result in forensics.items():
+        status = (result or {}).get("status")
+        if status == "ok":
+            signals_run.append(name)
+            details = result.get("details", {}) or {}
+            all_findings.extend(details.get("findings", []) or [])
+            notes.extend(details.get("consistency_notes", []) or [])
+        elif status in ("error",):
+            errored.append(name)
+
+    altered = [
+        f for f in all_findings
+        if any(f == marker or f.endswith(":" + marker) for marker in _ALTERATION_FINDINGS)
+    ]
+
+    if altered:
+        verdict = "ALTERED"
+        summary = (
+            "This file shows positive evidence of modification after its stated "
+            "creation or signing: " + "; ".join(sorted(set(altered))[:4]) + "."
+        )
+    elif all_findings:
+        verdict = "INCONSISTENT"
+        summary = (
+            f"{len(all_findings)} provenance inconsistenc"
+            f"{'y' if len(all_findings) == 1 else 'ies'} found. These describe how "
+            "the file was produced, not whether its content was AI-generated."
+        )
+    elif signals_run:
+        verdict = "CONSISTENT"
+        summary = (
+            "Container metadata is internally consistent. Note that metadata is "
+            "forgeable, so this is weak exculpatory evidence."
+        )
+    else:
+        verdict = "NOT_APPLICABLE"
+        summary = "Container forensics could not be completed for this file."
+
+    return {
+        "verdict": verdict,
+        "summary": summary,
+        "findings": all_findings[:40],
+        "alteration_findings": sorted(set(altered)),
+        "consistency_notes": notes[:20],
+        "signals_run": signals_run,
+        "signals_errored": errored,
+        "interpretation": (
+            "Provenance and integrity only. Reported separately from "
+            "composite_verdict because 'was this file altered?' and 'was this "
+            "content AI-generated?' are different questions with different "
+            "failure modes."
+        ),
+    }
 
 
 # ── Extraction ──────────────────────────────────────────────────────────────
@@ -176,8 +329,17 @@ def analyze_document_from_bytes(
     # "find images first, and if not there then text detection works" per
     # product spec actually means: try both, use whichever branch has
     # content, and don't make one wait on the other.
-    with ThreadPoolExecutor(max_workers=max(4, len(images) + 2)) as pool:
+    container_forensics: Dict[str, Any] = {}
+
+    with ThreadPoolExecutor(max_workers=max(4, len(images) + 3)) as pool:
         futures = {}
+
+        # MODULE 30 — container forensics runs alongside the text and image
+        # branches. It is pure CPU over already-in-memory bytes and finishes
+        # well before the detection branches, so it adds no wall-clock cost.
+        futures[pool.submit(
+            run_container_forensics, file_bytes, extraction["doc_type"]
+        )] = ("forensics", -1)
 
         if text and len(text) >= 30:
             futures[pool.submit(analyze_text, text=text, job_id=job_id)] = ("text", -1)
@@ -195,7 +357,9 @@ def analyze_document_from_bytes(
             except Exception as e:
                 result = {"status": "error", "error": str(e)}
 
-            if kind == "text":
+            if kind == "forensics":
+                container_forensics = result if isinstance(result, dict) else {}
+            elif kind == "text":
                 text_result = result
             elif kind == "plagiarism":
                 plagiarism_result = result
@@ -241,6 +405,11 @@ def analyze_document_from_bytes(
         "text_analysis": text_result,
         "image_analyses": image_results,
         "plagiarism_analysis": plagiarism_result,
+        # MODULE 30 — additive. Deliberately NOT folded into composite_verdict:
+        # see this module's docstring. Existing consumers that don't know about
+        # these keys are unaffected.
+        "container_forensics": container_forensics,
+        "document_integrity": summarise_integrity(container_forensics),
         "composite_verdict": composite_verdict,
         "composite_summary": composite_summary,
         "processing_time_ms": round((time.time() - t0) * 1000, 1),
