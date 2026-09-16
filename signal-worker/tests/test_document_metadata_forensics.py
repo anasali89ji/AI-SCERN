@@ -482,3 +482,324 @@ def test_docx_run_all_wrapper_shape():
         assert key in entry
     assert "interpretation" in entry["details"]
     assert "container" in entry["details"]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# MODULE 29 — PDF digital signature verification (spec 3.5 item 3)
+# ════════════════════════════════════════════════════════════════════════════
+
+import hashlib  # noqa: E402
+from datetime import datetime as _dt  # noqa: E402  (module-level `datetime` name
+# is already bound to the CLASS by the Module 28 block above; importing the
+# MODULE here would shadow it and break every Module 28 fixture.)
+
+from analyzers.pdf_signature_verification import (  # noqa: E402
+    analyze_pdf_signatures,
+    run_all as run_all_sig,
+    _der_read,
+    _find_signed_data,
+    _parse_signer_info,
+    _verify_signature_value,
+    _coverage_analysis,
+    _decode_oid,
+    _encode_length,
+)
+
+crypto = pytest.importorskip("cryptography", reason="cryptography required for signature tests")
+
+from cryptography import x509  # noqa: E402
+from cryptography.hazmat.primitives import hashes  # noqa: E402
+from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
+from cryptography.hazmat.primitives.serialization import Encoding, pkcs7  # noqa: E402
+from cryptography.x509.oid import NameOID  # noqa: E402
+
+_SIG_SLOT = 4000
+
+
+def _make_signer(not_before=_dt(2026, 1, 1), not_after=_dt(2027, 1, 1)):
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Aiscern Test Signer")])
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(not_before)
+        .not_valid_after(not_after)
+        .sign(key, hashes.SHA256())
+    )
+    return key, cert
+
+
+def _build_signed_pdf(key, cert, tamper=False, append=b""):
+    """
+    Build a byte-exact detached-signature PDF: placeholder /Contents slot,
+    ByteRange computed over everything outside it, then a real PKCS#7
+    SignedData over exactly those bytes.
+
+    PKCS7Options.Binary is REQUIRED. Without it `cryptography` applies S/MIME
+    text normalisation (LF -> CRLF) before hashing, so the messageDigest
+    attribute commits to normalised bytes rather than the raw file bytes a
+    PDF signature must cover. The first version of this fixture omitted it and
+    every signature appeared to fail integrity — the fixture was wrong, not
+    the analyzer. Keeping Binary here makes the test stricter, not looser.
+    """
+    head = b"%PDF-1.7\n1 0 obj\n<< /Type /Sig /SubFilter /adbe.pkcs7.detached /ByteRange "
+    placeholder = b"[0000000000 0000000000 0000000000 0000000000]"
+    contents_prefix = b"\n/Contents <"
+    tail = (
+        b">\n>>\nendobj\n2 0 obj\n<< /Type /Page >>\nendobj\n"
+        b"trailer\n<< /Root 1 0 R >>\n%%EOF\n"
+    )
+
+    body = head + placeholder + contents_prefix + b"0" * _SIG_SLOT + tail
+    b_len = body.index(contents_prefix) + len(contents_prefix)
+    c_off = b_len + _SIG_SLOT + 1
+    d_len = len(body) - c_off
+    byte_range = b"[%010d %010d %010d %010d]" % (0, b_len, c_off, d_len)
+    assert len(byte_range) == len(placeholder)
+    body = body.replace(placeholder, byte_range, 1)
+
+    signed_bytes = body[0:b_len] + body[c_off:c_off + d_len]
+    der = (
+        pkcs7.PKCS7SignatureBuilder()
+        .set_data(signed_bytes)
+        .add_signer(cert, key, hashes.SHA256())
+        .sign(
+            Encoding.DER,
+            [
+                pkcs7.PKCS7Options.DetachedSignature,
+                pkcs7.PKCS7Options.Binary,
+                pkcs7.PKCS7Options.NoCapabilities,
+            ],
+        )
+    )
+    hex_blob = der.hex().encode()
+    assert len(hex_blob) <= _SIG_SLOT, "signature slot too small for fixture"
+    out = body[:b_len] + hex_blob.ljust(_SIG_SLOT, b"0") + body[b_len + _SIG_SLOT:]
+
+    if tamper:
+        out = out.replace(b"/Type /Page", b"/Type /Pagf", 1)
+    return out + append
+
+
+@pytest.fixture(scope="module")
+def signer_pair():
+    return _make_signer()
+
+
+# ── DER walker unit tests ───────────────────────────────────────────────────
+
+def test_encode_length_short_and_long_form():
+    assert _encode_length(5) == b"\x05"
+    assert _encode_length(127) == b"\x7f"
+    assert _encode_length(128) == b"\x81\x80"
+    assert _encode_length(300) == b"\x82\x01\x2c"
+
+
+def test_decode_oid_known_values():
+    # 1.2.840.113549.1.9.4 (messageDigest)
+    encoded = bytes([0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x04])
+    assert _decode_oid(encoded) == "1.2.840.113549.1.9.4"
+    assert _decode_oid(b"") == ""
+
+
+def test_der_reader_rejects_out_of_bounds_length():
+    # SEQUENCE claiming 200 content octets but only 2 present.
+    assert _der_read(b"\x30\x81\xc8\x01\x02") is None
+
+
+def test_der_reader_rejects_indefinite_length():
+    assert _der_read(b"\x30\x80\x01\x02") is None
+
+
+def test_der_reader_on_empty_and_truncated():
+    assert _der_read(b"") is None
+    assert _der_read(b"\x30") is None
+
+
+# ── CMS parsing against a real cryptography-built signature ─────────────────
+
+def test_cms_message_digest_matches_signed_data(signer_pair):
+    key, cert = signer_pair
+    payload = b"exactly these bytes were signed"
+    der = (
+        pkcs7.PKCS7SignatureBuilder()
+        .set_data(payload)
+        .add_signer(cert, key, hashes.SHA256())
+        .sign(Encoding.DER, [pkcs7.PKCS7Options.DetachedSignature,
+                             pkcs7.PKCS7Options.Binary,
+                             pkcs7.PKCS7Options.NoCapabilities])
+    )
+    node, _ = _der_read(der)
+    signed_data = _find_signed_data(node)
+    assert signed_data is not None
+
+    info = _parse_signer_info(signed_data)
+    assert info["parsed"] is True
+    assert info["digest_algorithm"] == "sha256"
+    assert info["message_digest"] == hashlib.sha256(payload).digest()
+    assert info["signing_time"] is not None
+    assert "1.2.840.113549.1.9.4" in info["signed_attr_oids"]
+
+
+def test_signed_attrs_reencoding_verifies(signer_pair):
+    """
+    RFC 5652 §5.4: the [0] IMPLICIT signedAttrs tag must be re-encoded as a
+    universal SET before verification. If _parse_signer_info got that wrong
+    this verification would fail.
+    """
+    key, cert = signer_pair
+    der = (
+        pkcs7.PKCS7SignatureBuilder()
+        .set_data(b"payload")
+        .add_signer(cert, key, hashes.SHA256())
+        .sign(Encoding.DER, [pkcs7.PKCS7Options.DetachedSignature,
+                             pkcs7.PKCS7Options.Binary,
+                             pkcs7.PKCS7Options.NoCapabilities])
+    )
+    node, _ = _der_read(der)
+    info = _parse_signer_info(_find_signed_data(node))
+    verdict = _verify_signature_value(der, info)
+    assert verdict["attempted"] is True
+    assert verdict["verified"] is True
+    assert verdict["scheme"] == "rsa_pkcs1v15"
+
+
+# ── End-to-end signature verification ───────────────────────────────────────
+
+def test_intact_signature_verifies_all_three_questions(signer_pair):
+    key, cert = signer_pair
+    result = analyze_pdf_signatures(_build_signed_pdf(key, cert))
+    assert result["status"] == "ok"
+    assert result["details"]["signature_count"] == 1
+
+    sig = result["details"]["signatures"][0]
+    assert sig["integrity"]["matched"] is True         # Q1
+    assert sig["coverage"]["covers_whole_file"] is True  # Q2
+    assert sig["authenticity"]["verified"] is True     # Q3
+    assert sig["status"] == "cryptographically_intact_untrusted_chain"
+    assert result["score"] < 0.5
+
+
+def test_tampered_content_breaks_integrity(signer_pair):
+    key, cert = signer_pair
+    result = analyze_pdf_signatures(_build_signed_pdf(key, cert, tamper=True))
+    sig = result["details"]["signatures"][0]
+    assert sig["integrity"]["matched"] is False
+    assert sig["status"] == "invalid_document_altered_or_signature_broken"
+    assert "signed_content_digest_mismatch" in sig["issues"]
+    assert result["score"] > 0.85
+
+
+def test_appended_content_is_distinguished_from_tampering(signer_pair):
+    """
+    Content appended AFTER signing leaves the signed bytes intact — integrity
+    and authenticity both still pass. Collapsing that into 'invalid' would
+    lose the distinction that actually matters to a reviewer.
+    """
+    key, cert = signer_pair
+    appended = _build_signed_pdf(key, cert, append=b"\n%% appended after signing\n%%EOF\n")
+    result = analyze_pdf_signatures(appended)
+    sig = result["details"]["signatures"][0]
+    assert sig["integrity"]["matched"] is True
+    assert sig["authenticity"]["verified"] is True
+    assert sig["coverage"]["covers_whole_file"] is False
+    assert sig["coverage"]["trailing_unsigned_bytes"] > 4
+    assert sig["status"] == "intact_but_incomplete_coverage"
+    assert "content_appended_after_signing" in sig["issues"]
+
+
+def test_expired_certificate_flagged_without_breaking_integrity():
+    key, cert = _make_signer(
+        not_before=_dt(2020, 1, 1), not_after=_dt(2021, 1, 1)
+    )
+    result = analyze_pdf_signatures(_build_signed_pdf(key, cert))
+    sig = result["details"]["signatures"][0]
+    assert sig["integrity"]["matched"] is True
+    assert "certificate_expired" in sig["issues"]
+    assert "certificate_not_valid_at_signing_time" in sig["issues"]
+
+
+def test_self_signed_certificate_detected(signer_pair):
+    key, cert = signer_pair
+    result = analyze_pdf_signatures(_build_signed_pdf(key, cert))
+    signer_cert = result["details"]["signatures"][0]["certificates"]["signer"]
+    assert signer_cert["self_signed"] is True
+    assert signer_cert["key_size_bits"] == 2048
+    assert signer_cert["weak_key"] is False
+
+
+# ── Coverage arithmetic ─────────────────────────────────────────────────────
+
+def test_coverage_analysis_whole_file():
+    cov = _coverage_analysis([0, 100, 4100, 43], 4143)
+    assert cov["covers_whole_file"] is True
+    assert cov["trailing_unsigned_bytes"] == 0
+    assert cov["content_appended_after_signing"] is False
+
+
+def test_coverage_analysis_detects_append():
+    cov = _coverage_analysis([0, 100, 4100, 43], 4143 + 50)
+    assert cov["covers_whole_file"] is False
+    assert cov["trailing_unsigned_bytes"] == 50
+    assert cov["content_appended_after_signing"] is True
+
+
+def test_coverage_tolerates_trailing_whitespace_slack():
+    """A few bytes of EOL slack after %%EOF is normal and must not flag."""
+    cov = _coverage_analysis([0, 100, 4100, 43], 4143 + 3)
+    assert cov["covers_whole_file"] is True
+    assert cov["content_appended_after_signing"] is False
+
+
+# ── Trust is never claimed ──────────────────────────────────────────────────
+
+def test_trust_is_never_evaluated_or_implied(signer_pair):
+    """
+    The honest-gap contract. Q4 (chain-to-trusted-root + revocation) needs the
+    AATL/EUTL store and live OCSP/CRL egress, neither of which exists here, so
+    the module must say 'not_evaluated' and must never emit a bare 'valid'.
+    """
+    key, cert = signer_pair
+    result = analyze_pdf_signatures(_build_signed_pdf(key, cert))
+    trust = result["details"]["trust_evaluation"]
+    assert trust["performed"] is False
+    assert trust["chain_to_trusted_root"] == "not_evaluated"
+    assert trust["revocation_status"] == "not_evaluated"
+
+    for sig in result["details"]["signatures"]:
+        assert sig["trust_status"] == "not_evaluated"
+        assert sig["status"] != "valid"
+        assert "untrusted" in sig["status"] or sig["status"] != "cryptographically_intact_untrusted_chain"
+
+
+# ── Robustness ──────────────────────────────────────────────────────────────
+
+def test_unsigned_pdf_is_no_information_not_suspicion():
+    result = analyze_pdf_signatures(b"%PDF-1.7\nplain unsigned document\n%%EOF\n")
+    assert result["status"] == "unavailable"
+    assert result["details"]["reason"] == "no_signature_fields_present"
+    assert result["score"] == 0.5
+    assert result["confidence"] == 0.0
+
+
+def test_signature_inputs_robustness():
+    assert analyze_pdf_signatures(b"")["status"] == "unavailable"
+    assert analyze_pdf_signatures(b"not a pdf")["status"] == "unavailable"
+    # /ByteRange present but /Contents unreadable
+    broken = b"%PDF-1.7\n/ByteRange [0 10 20 10]\n/Contents <zzzz>\n%%EOF"
+    result = analyze_pdf_signatures(broken)
+    assert result["status"] == "ok"
+    assert "signature_contents_unreadable" in result["details"]["signatures"][0]["issues"]
+
+
+def test_signature_run_all_wrapper_shape(signer_pair):
+    key, cert = signer_pair
+    out = run_all_sig(_build_signed_pdf(key, cert))
+    assert set(out.keys()) == {"pdf_signature_verification"}
+    entry = out["pdf_signature_verification"]
+    for field in ("score", "confidence", "status", "details"):
+        assert field in entry
+    assert "interpretation" in entry["details"]
