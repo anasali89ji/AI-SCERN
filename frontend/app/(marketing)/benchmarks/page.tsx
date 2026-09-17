@@ -4,9 +4,9 @@ import { SiteFooter } from '@/components/site-footer'
 import { SquareArrowOutUpRight, ArrowRight, Info } from 'lucide-react'
 
 export const metadata = {
-  title: 'Accuracy Benchmarks — Aiscern',
-  description: 'Aiscern verification accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates across text, image, audio, and video modalities.',
-  openGraph: { title: 'Accuracy Benchmarks — Aiscern', url: 'https://aiscern.com/benchmarks' },
+  title: 'AI Verification Accuracy Benchmarks | Aiscern',
+  description: 'Aiscern verification accuracy benchmarks: AUC-ROC, precision, recall, F1, and false-positive rates for AI content detection across text, image, audio, and video modalities.',
+  openGraph: { title: 'AI Verification Accuracy Benchmarks | Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 
 const TEXT_RESULTS = [
@@ -34,7 +34,7 @@ const AUDIO_RESULTS = [
   { model: 'Ensemble (all combined)', auc: 0.95, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
 ]
 const VIDEO_RESULTS = [
-  { model: 'NVIDIA NIM deepfake verification', auc: 0.91, precision: 0.89, recall: 0.90, f1: 0.895, fpr: 0.09 },
+  { model: 'NVIDIA NIM deepfake detection', auc: 0.91, precision: 0.89, recall: 0.90, f1: 0.895, fpr: 0.09 },
   { model: 'Frame-level ViT ensemble', auc: 0.88, precision: 0.86, recall: 0.87, f1: 0.865, fpr: 0.11 },
   { model: 'Temporal consistency analysis', auc: 0.83, precision: 0.82, recall: 0.83, f1: 0.825, fpr: 0.15 },
   { model: 'Ensemble (all combined)', auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
@@ -170,7 +170,7 @@ export default function BenchmarksPage() {
             <section key={s.label} className="mb-12">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-accent" />
-                {s.label} Verification
+                {s.label} Detection
               </h2>
               <BenchTable rows={s.rows} />
             </section>
@@ -227,7 +227,7 @@ export default function BenchmarksPage() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl
                          border border-silver-400 text-silver-800 hover:border-accent hover:text-accent
                          font-semibold text-sm transition-all duration-150">
-              Try Free Verification
+              Try Free Detection
             </Link>
           </div>
 

@@ -1,0 +1,144 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = {
+  title: 'API Documentation — Enterprise AI Verification REST API',
+  description: 'Integrate enterprise AI trust and content verification into your app. REST API for verifying AI-generated text, images, and audio. Video API coming soon.',
+  alternates: { canonical: 'https://aiscern.com/docs/api' },
+}
+
+import Link from 'next/link'
+import { Shield } from 'lucide-react'
+
+const CODE = {
+  curl: `curl -X POST https://aiscern.com/api/v1/detect/text \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"text": "The text you want to analyze goes here..."}'`,
+
+  python: `import requests
+
+response = requests.post(
+    "https://aiscern.com/api/v1/detect/text",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={"text": "The text you want to analyze goes here..."}
+)
+result = response.json()
+print(result["verdict"])  # "AI", "HUMAN", or "UNCERTAIN"`,
+
+  js: `const response = await fetch('https://aiscern.com/api/v1/detect/text', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ text: 'The text you want to analyze...' }),
+})
+const { verdict, confidence } = await response.json()`,
+}
+
+export default function ApiDocsPage() {
+  return (
+    <div className="min-h-screen bg-[#141414] text-white">
+      <div className="border-b border-[#333333] px-6 py-4">
+        <Link href="/" className="text-xl font-black text-[#2BEE34]">Aiscern</Link>
+      </div>
+      <div className="max-w-3xl 2xl:max-w-4xl mx-auto px-4 sm:px-6 2xl:px-8 py-12 space-y-10">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-4xl font-black mb-3">API Documentation</h1>
+          <p className="text-[#6B6B6B]">Programmatic access to Aiscern detection. Free for all registered users.</p>
+        </div>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">Authentication</h2>
+          <p className="text-[#6B6B6B] text-sm">Include your API key in every request using the <code className="bg-[#141414] px-1.5 py-0.5 rounded text-[#2BEE34] text-xs">X-API-Key</code> header.</p>
+          <p className="text-[#6B6B6B] text-sm">Generate your API key in <Link href="/settings" className="text-[#2BEE34] hover:underline">Settings → API Access</Link> — free for all users.</p>
+        </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/text</h2>
+          <p className="text-[#6B6B6B] text-sm">Analyze a text sample for AI generation.</p>
+          <h3 className="font-semibold text-sm">Request Body</h3>
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{ "text": "string (50–10,000 characters)" }`}</pre>
+          <h3 className="font-semibold text-sm">Response</h3>
+          <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#2BEE34]">{`{
+  "verdict": "AI" | "HUMAN" | "UNCERTAIN",
+  "confidence": 0.94,
+  "credits_remaining": 498,
+  "processing_time": 1240
+}`}</pre>
+        </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/image</h2>
+          <p className="text-text-muted text-sm">Analyze an image for AI generation. Send as <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">multipart/form-data</code> with a <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">file</code> field (max 10MB).</p>
+          <h3 className="font-semibold text-sm">Request</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`curl -X POST https://aiscern.com/api/v1/detect/image \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@photo.jpg"`}</pre>
+          <h3 className="font-semibold text-sm">Response</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+  "verdict": "AI" | "HUMAN" | "UNCERTAIN",
+  "confidence": 0.87,
+  "processing_time": 3120
+}`}</pre>
+        </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/audio</h2>
+          <p className="text-text-muted text-sm">Analyze an audio clip for AI generation (voice cloning, TTS). Send as <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">multipart/form-data</code> with a <code className="bg-surface-active px-1.5 py-0.5 rounded text-primary text-xs">file</code> field (max 25MB).</p>
+          <h3 className="font-semibold text-sm">Request</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-green-400">{`curl -X POST https://aiscern.com/api/v1/detect/audio \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -F "file=@clip.mp3"`}</pre>
+          <h3 className="font-semibold text-sm">Response</h3>
+          <pre className="bg-surface-active rounded-xl p-4 text-xs overflow-x-auto text-cyan-400">{`{
+  "verdict": "AI" | "HUMAN" | "UNCERTAIN",
+  "confidence": 0.71,
+  "processing_time": 2870
+}`}</pre>
+        </section>
+
+        <section className="card p-6 space-y-2">
+          <h2 className="text-xl font-bold">POST /api/v1/detect/video</h2>
+          <p className="text-text-muted text-sm">Coming soon — video detection requires browser-side frame extraction and is currently only available through the <Link href="/dashboard/detect/video" className="text-primary hover:underline">dashboard</Link>.</p>
+        </section>
+
+
+        <section className="card p-6 space-y-5">
+          <h2 className="text-xl font-bold">Code Examples</h2>
+          {Object.entries(CODE).map(([lang, code]) => (
+            <div key={lang}>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#6B6B6B] mb-2">{lang}</h3>
+              <pre className="bg-[#141414] rounded-xl p-4 text-xs overflow-x-auto text-[#A3A3A3]">{code}</pre>
+            </div>
+          ))}
+        </section>
+
+        <section className="card p-6 space-y-4">
+          <h2 className="text-xl font-bold">Rate Limits</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-[#333333]">
+                {['Plan', 'Monthly Credits', 'Rate Limit'].map(h => <th key={h} className="text-left py-2 px-3 text-[#6B6B6B] text-xs">{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {[['Free', 'Unlimited', '60 req/min']].map(([plan, credits, limit]) => (
+                  <tr key={plan} className="border-b border-[#333333]">
+                    <td className="py-2 px-3 text-white font-semibold">{plan}</td>
+                    <td className="py-2 px-3 text-[#A3A3A3]">{credits}</td>
+                    <td className="py-2 px-3 text-[#A3A3A3]">{limit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div className="text-center">
+          <Link href="/pricing" className="btn-primary px-6 py-3 rounded-xl inline-flex items-center gap-2">
+            <Shield className="w-4 h-4" /> Get API Access
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}

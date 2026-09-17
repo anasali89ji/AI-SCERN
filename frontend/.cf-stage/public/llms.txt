@@ -1,0 +1,42 @@
+# Aiscern
+
+> Free multi-modal AI content detection for text, image, audio, and video. Built with ensemble-based analysis and published accuracy benchmarks.
+
+## About
+
+Aiscern is a free AI detection platform built by Anas Ali in Mandi Bahauddin, Pakistan. It detects AI-generated content across text, images, audio, and video using ensemble machine learning models, with published accuracy benchmarks.
+
+## Key Pages
+
+- [Home](https://aiscern.com/)
+- [Pricing](https://aiscern.com/pricing)
+- [Enterprise](https://aiscern.com/enterprise)
+- [Benchmarks](https://aiscern.com/benchmarks)
+- [Methodology](https://aiscern.com/methodology)
+- [Research Citations](https://aiscern.com/research)
+- [API Documentation](https://aiscern.com/docs/api)
+- [Blog](https://aiscern.com/blog)
+- [Compare](https://aiscern.com/compare)
+- [FAQ](https://aiscern.com/faq)
+
+## Solutions
+
+- [Education](https://aiscern.com/solutions/education)
+- [Healthcare](https://aiscern.com/solutions/healthcare)
+- [HR & Recruiting](https://aiscern.com/solutions/hr)
+- [Legal & Compliance](https://aiscern.com/solutions/legal)
+- [Marketing](https://aiscern.com/solutions/marketing)
+- [Media & Journalism](https://aiscern.com/solutions/media)
+- [Research](https://aiscern.com/solutions/research)
+- [Cybersecurity](https://aiscern.com/solutions/security)
+- [Content Creators](https://aiscern.com/solutions/content-creators)
+
+## Contact
+
+- Support: support@aiscern.com
+- Security: security@aiscern.com
+- GitHub: https://github.com/anasali89ji/AI-SCERN
+
+Note: text/image/audio/video detection tools live behind sign-in at
+/detect/*, /chat, and /batch — they are not listed above since an
+unauthenticated crawler cannot reach them.

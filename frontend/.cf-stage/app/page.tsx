@@ -1,0 +1,360 @@
+import Link from 'next/link'
+import { SiteFooter } from '@/components/site-footer'
+import { SiteNav } from '@/components/SiteNav'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { tokens } from '@/lib/design-tokens'
+import {
+  Shield, FileType2, Zap,
+  ArrowRight,
+  Image as ImageIcon, Video, Music,
+  MessageSquare, Database, TrendingUp,
+  FlaskConical,
+} from 'lucide-react'
+
+// ─── Server-rendered sections (§Plan 31.1 — server-first architecture) ───────
+// The homepage itself is a Server Component. Only the genuinely interactive
+// islands below are client components: the nav (menus/palette), the hero
+// headline tabs, auth-aware CTAs, the live demo, animated statistics, and the
+// FAQ accordion. Everything else ships zero JS.
+
+// Client islands
+import { HeroHeadline } from '@/components/hero/HeroHeadline'
+import { HeroCTAButtons } from '@/components/home/HeroCTA'
+import { LiveDemo } from '@/components/home/LiveDemo'
+import TestimonialsSection from '@/components/home/TestimonialsSection'
+import { WhoWeServeSection } from '@/components/home/WhoWeServeSection'
+import AIvsRealSection from '@/components/home/AIvsRealSection'
+import ComparisonSection from '@/components/home/ComparisonSection'
+import { FAQSection } from '@/components/home/FAQSection'
+import { HowItWorksSection } from '@/components/home/HowItWorksSection'
+import { FinalCTASection } from '@/components/home/FinalCTASection'
+import { StatisticsSection } from '@/components/home/StatisticsSection'
+import { ToolsMobileCarousel } from '@/components/home/ToolsMobileCarousel'
+
+// ─── Constants — canonical product names from `main` (§Plan 3.2) ─────────────
+
+// Modality accents are semantic (amber=text · blue=image · cyan=audio ·
+// violet=video, from lib/design-tokens — mirrors the tailwind `modality`
+// scale). Non-modality product surfaces (chat, batch) use the moss accent.
+const MODALITY = tokens.semantic.modality
+const MOSS     = tokens.semantic.accent.primary
+
+const TOOLS = [
+  { href: '/detect/text',  icon: FileType2,  label: 'Free AI Text Detector',           desc: 'Verify ChatGPT, Claude, Gemini & more',            accuracy: '~94%', accent: MODALITY.text,  featured: true },
+  { href: '/detect/image', icon: ImageIcon,  label: 'Deepfake Image Detector',         desc: 'Deepfakes, Midjourney, DALL-E, Stable Diffusion', accuracy: '~98%', accent: MODALITY.image, featured: true },
+  { href: '/detect/audio', icon: Music,      label: 'AI Audio & Voice Clone Detector', desc: 'ElevenLabs, voice cloning, TTS synthesis',        accuracy: '~91%', accent: MODALITY.audio },
+  { href: '/detect/video', icon: Video,      label: 'Free Deepfake Video Detector',    desc: 'Frame-by-frame deepfake analysis',                 accuracy: '~88%', accent: MODALITY.video },
+  { href: '/chat',         icon: MessageSquare, label: 'AI Verification Assistant',       desc: 'Ask anything about AI verification',                  accuracy: 'New',  accent: MOSS },
+  { href: '/batch',        icon: Database,   label: 'Batch AI Content Analyser',       desc: 'Analyze 20 files simultaneously',                  accuracy: '20×',  accent: MOSS },
+]
+
+const TRUST_FEATURES = [
+  { icon: Database,    title: 'Benchmarked Datasets',  desc: 'Models evaluated against curated public datasets spanning AI-generated and authentic content.', wide: true,  stat: '2.2M+', statLabel: 'training samples', accent: MODALITY.image },
+  { icon: Shield,      title: 'Research-Backed',       desc: 'Built on peer-reviewed verification research. Every signal validated against real-world AI outputs.', wide: false, stat: '8+',    statLabel: 'papers cited', accent: MOSS },
+  { icon: TrendingUp,  title: 'Ensemble Models',       desc: 'Multi-model consensus — no single model makes the final call. RoBERTa, ViT, and wav2vec2.',     wide: false, stat: '20+',   statLabel: 'signals analyzed', accent: MODALITY.text },
+  { icon: Zap,         title: 'Free Tier Available',   desc: 'Start verifying for free — 10 scans per day on text and image, no credit card required.',        wide: false, stat: 'Free',  statLabel: 'to start', accent: MOSS },
+]
+
+// ─── Page (Server Component) ──────────────────────────────────────────────────
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-surface text-silver-700 overflow-x-hidden">
+      {/* Schema JSON-LD — canonical structure from `main` (product truth) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([
+          { "@context":"https://schema.org","@type":"WebApplication","@id":"https://aiscern.com/#app","name":"Aiscern - Free AI Detector","url":"https://aiscern.com","description":"Ensemble-based AI content verification platform for text, images, audio, and video. Free tier available. Published accuracy benchmarks.","applicationCategory":"SecurityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["AI Text Verification - ChatGPT Claude Gemini","Deepfake Image Verification","AI Audio Voice Clone Verification","Deepfake Video Verification","Batch Analysis","AI Verification API"],"creator":{"@type":"Person","name":"Anas Ali","url":"https://aiscern.com/about"}},
+          { "@context":"https://schema.org","@type":"Organization","@id":"https://aiscern.com/#org","name":"Aiscern","url":"https://aiscern.com","logo":"https://aiscern.com/logo.png","foundingDate":"2025","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"contact@aiscern.com"}},
+          { "@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How accurate is Aiscern?","acceptedAnswer":{"@type":"Answer","text":"Aiscern uses a 14-layer ensemble combining ViT classifiers, RoBERTa, wav2vec2, and physics-based signal analysis (Bayer demosaicing, polarization, subsurface scattering, sensor QE matching). Benchmarked accuracy: text ~94% (ensemble AUC 0.94, F1 0.925), image ~98% (14-layer ensemble AUC 0.98, F1 0.965), audio ~91% (AUC 0.95), video ~88% (AUC 0.93). See /benchmarks for full results."}},{"@type":"Question","name":"Is Aiscern free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a free tier with 10 scans per day on text and image verification. No credit card required. Pro plans available for audio, video, and higher limits."}},{"@type":"Question","name":"Can Aiscern verify ChatGPT writing?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern verifies ChatGPT, Claude, Gemini, GPT-4 and other AI writing models using a 3-model RoBERTa ensemble with linguistic signal analysis."}},{"@type":"Question","name":"Can Aiscern verify Midjourney images?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern verifies Midjourney, DALL-E 3, Stable Diffusion, SDXL, FLUX, Gemini, and Grok images using a 14-layer ensemble including physics-based Bayer pattern analysis (L12-BDIS) with 100% recall across all major generators."}},{"@type":"Question","name":"Does Aiscern have an API?","acceptedAnswer":{"@type":"Answer","text":"Yes. Aiscern has a REST API available on Team and Enterprise plans. See aiscern.com/docs/api."}}]},
+        ]) }}
+      />
+
+      <SiteNav />
+
+      <main id="main-content">
+
+        {/* ══ HERO ══ */}
+        <section className="relative min-h-[100svh] flex items-center overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-24 bg-depth-bg">
+          {/* Base gradient backdrop */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-surface via-depth-bg to-surface" />
+          {/* Single ambient orb, top-right — no particle fields, no mesh gradients */}
+          <div className="absolute -top-32 -right-32 w-[560px] h-[560px] rounded-full bg-moss-300/5 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+            <div className="grid lg:grid-cols-[55%_45%] gap-10 lg:gap-16 items-center">
+
+              {/* Left: Headline + CTAs */}
+              <div className="text-center lg:text-left">
+                {/* Badge — context label, not a sales paragraph (§Plan 6.2) */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full
+                                border border-accent/20 bg-accent/5 text-accent
+                                text-xs font-semibold mb-8">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" aria-hidden="true" />
+                  <span className="hidden sm:inline">AI verification for text, images, audio &amp; video</span>
+                  <span className="sm:hidden">AI verification · 4 modalities</span>
+                </div>
+
+                {/* Headline — client island (interactive modality tabs) */}
+                <div className="mb-6 flex flex-col items-center lg:items-start">
+                  <HeroHeadline />
+                </div>
+
+                {/* Subheadline */}
+                <p className="text-lead text-silver-600 max-w-[48ch] mx-auto lg:mx-0 mb-10">
+                  Analyze text, images, audio, and video from one workspace —
+                  benchmarked models, explainable signals, published accuracy.
+                </p>
+
+                {/* CTAs — client island (auth-aware) */}
+                <HeroCTAButtons />
+
+                <p className="text-xs text-silver-600">
+                  Free tier · No credit card · 10 scans per day on text &amp; image
+                </p>
+              </div>
+
+              {/* Right: Live demo — client island */}
+              <div className="w-full max-w-2xl mx-auto lg:max-w-none relative">
+                <LiveDemo />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── WHO NEEDS AISCERN ── */}
+        <ErrorBoundary>
+          <WhoWeServeSection />
+        </ErrorBoundary>
+
+        {/* ── AI VS REAL ── */}
+        <ErrorBoundary>
+          <AIvsRealSection />
+        </ErrorBoundary>
+
+        {/* ══ STATS RIBBON — client island (CountUp) ══ */}
+        <StatisticsSection />
+
+        {/* ══ TOOLS GRID — server-rendered (§Plan 11.2 asymmetric composition) ══ */}
+        <section id="tools" className="py-16 sm:py-24 lg:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-14">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
+                Six Powerful Tools
+              </p>
+              <h2 className="font-heading font-bold text-headline text-silver-900 tracking-tight mb-3 sm:mb-4">
+                AI Verification Tools
+              </h2>
+              <p className="text-lead text-silver-600 max-w-xl mx-auto">
+                Six verification tools covering every content type. Each returns a verdict,
+                confidence score, and supporting evidence in seconds.
+              </p>
+            </div>
+
+            {/* Featured row — text + image */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              {TOOLS.filter(t => t.featured).map(tool => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group relative rounded-xl border border-white/[0.06] bg-surface p-5 sm:p-6
+                             min-h-[180px] flex flex-col
+                             hover:border-[color:var(--accent)]/40 focus-visible:border-[color:var(--accent)]/40
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
+                             transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lift"
+                  style={{ '--accent': tool.accent } as React.CSSProperties}
+                >
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      boxShadow: `0 0 0 1px ${tool.accent}20, 0 12px 32px -16px ${tool.accent}30`,
+                    }}
+                  />
+                  <div className="relative flex items-start justify-between mb-4">
+                    <div
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-elevated border transition-all duration-200 group-hover:scale-[1.08]"
+                      style={{ borderColor: `${tool.accent}30` }}
+                    >
+                      <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
+                    </div>
+                    <span
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-surface-elevated border"
+                      style={{ borderColor: `${tool.accent}30`, color: tool.accent }}
+                    >
+                      {tool.accuracy}
+                    </span>
+                  </div>
+                  <h3 className="relative text-base font-semibold text-silver-900 mb-2">{tool.label}</h3>
+                  <p className="relative text-sm text-silver-600 leading-relaxed line-clamp-2 flex-grow">{tool.desc}</p>
+                  <div className="relative mt-4 flex items-center gap-1 text-xs font-medium text-silver-600 group-hover:gap-2 transition-all duration-200">
+                    <span className="group-hover:text-[color:var(--accent)] transition-colors duration-200">Try now</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} aria-hidden="true" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Supporting row — desktop grid / mobile carousel */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {TOOLS.filter(t => !t.featured).map(tool => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group relative rounded-xl border border-white/[0.06] bg-surface p-5 sm:p-6
+                             min-h-[180px] flex flex-col
+                             hover:border-[color:var(--accent)]/40 focus-visible:border-[color:var(--accent)]/40
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
+                             transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lift"
+                  style={{ '--accent': tool.accent } as React.CSSProperties}
+                >
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      boxShadow: `0 0 0 1px ${tool.accent}20, 0 12px 32px -16px ${tool.accent}30`,
+                    }}
+                  />
+                  <div className="relative flex items-center justify-between mb-4">
+                    <div
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-elevated border transition-all duration-200 group-hover:scale-[1.08]"
+                      style={{ borderColor: `${tool.accent}30` }}
+                    >
+                      <tool.icon className="w-5 h-5 transition-colors duration-200" style={{ color: tool.accent }} strokeWidth={1.8} aria-hidden="true" />
+                    </div>
+                    <span
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-surface-elevated border"
+                      style={{ borderColor: `${tool.accent}30`, color: tool.accent }}
+                    >
+                      {tool.accuracy}
+                    </span>
+                  </div>
+                  <h3 className="relative text-base font-semibold text-silver-900 mb-2">{tool.label}</h3>
+                  <p className="relative text-sm text-silver-600 leading-relaxed line-clamp-2 flex-grow">{tool.desc}</p>
+                  <div className="relative mt-4 flex items-center gap-1 text-xs font-medium text-silver-600 group-hover:gap-2 transition-all duration-200">
+                    <span className="group-hover:text-[color:var(--accent)] transition-colors duration-200">Try now</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" style={{ color: tool.accent }} aria-hidden="true" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Mobile carousel for supporting tools */}
+            <div className="sm:hidden">
+              <ToolsMobileCarousel />
+            </div>
+          </div>
+        </section>
+
+        {/* ══ COMPARISON ══ */}
+        <ErrorBoundary>
+          <ComparisonSection />
+        </ErrorBoundary>
+
+        {/* ══ METHODOLOGY — replaces the old static How It Works block ══ */}
+        <HowItWorksSection />
+
+        {/* ══ REVIEWS ══ */}
+        <section className="py-14 sm:py-24 px-4 sm:px-6 border-t border-white/[0.06]">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
+                User Stories
+              </p>
+              <h2 className="text-[28px] sm:text-[36px] font-semibold text-silver-900 tracking-[-0.01em] mb-3">
+                What Users Are Saying
+              </h2>
+              <p className="text-sm text-silver-600 max-w-lg mx-auto leading-relaxed">
+                Feedback from educators, journalists, HR teams, and researchers.
+              </p>
+            </div>
+            <ErrorBoundary><TestimonialsSection /></ErrorBoundary>
+            <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a href="mailto:contact@aiscern.com"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/[0.08]
+                           bg-surface-elevated text-sm font-medium text-silver-700 hover:border-accent hover:text-accent
+                           transition-all duration-200">
+                Share Your Feedback
+              </a>
+              <Link href="/reviews" className="text-sm text-silver-600 hover:text-silver-900 transition-colors duration-200 font-medium">
+                See all reviews →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ TRUST / FEATURES — server-rendered with static stats ══ */}
+        <section className="py-14 sm:py-28 lg:py-32 px-4 sm:px-6 border-t border-white/[0.06] bg-depth-bg">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-10 sm:mb-14">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent mb-3">
+                Trust &amp; Accuracy
+              </p>
+              <h2 className="text-headline text-silver-900">
+                Built for accuracy. Benchmarked on public datasets.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10 sm:mb-14">
+              {TRUST_FEATURES.map(({ icon: Icon, title, desc, wide, stat, statLabel, accent }) => (
+                <div
+                  key={title}
+                  className={`${wide ? 'sm:col-span-2 glass-premium' : 'bg-surface border border-white/[0.06] hover:border-[color:var(--accent)]'}
+                              rounded-xl p-6 card-lift transition-all duration-200 relative overflow-hidden`}
+                  style={{ '--accent': accent, ...(wide ? { boxShadow: `inset 0 0 0 1px ${accent}20` } : {}) } as React.CSSProperties}
+                >
+                  {wide && (
+                    <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
+                      style={{ background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)` }} aria-hidden="true" />
+                  )}
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5 relative"
+                    style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
+                    <Icon className="w-5 h-5" style={{ color: accent }} strokeWidth={1.8} aria-hidden="true" />
+                  </div>
+                  <div className="mb-3 relative">
+                    <div className="text-3xl sm:text-4xl font-bold text-silver-900 tabular-nums">{stat}</div>
+                    <div className="text-xs text-silver-600 font-medium mt-0.5">{statLabel}</div>
+                  </div>
+                  <h3 className="font-semibold text-silver-900 text-base mb-2 relative">{title}</h3>
+                  <p className="text-sm text-silver-600 leading-relaxed relative">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Methodology note */}
+            <div className="max-w-2xl mx-auto">
+              <div className="p-6 sm:p-8 rounded-xl border border-white/[0.06] bg-surface">
+                <div className="flex items-center gap-2 mb-4">
+                  <FlaskConical className="w-4 h-4 text-accent flex-shrink-0" aria-hidden="true" />
+                  <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+                    Verification methodology
+                  </span>
+                </div>
+                <p className="text-silver-600 leading-relaxed text-sm">
+                  Every analysis runs content through multiple independent forensic signals. Results
+                  are fused into a confidence score using weighted ensemble voting — and a clear
+                  AI-generated or human verdict is returned with the evidence behind it.
+                </p>
+                <div className="mt-4 flex items-center gap-4 flex-wrap">
+                  <Link href="/methodology" className="text-xs text-accent hover:text-moss-200 transition-colors duration-200 font-medium flex items-center gap-1">
+                    Read full methodology <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </Link>
+                  <Link href="/benchmarks" className="text-xs text-silver-600 hover:text-silver-900 transition-colors duration-200 font-medium flex items-center gap-1">
+                    View benchmarks <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ FAQ — client island (accordion), matches FAQPage JSON-LD ══ */}
+        <ErrorBoundary>
+          <FAQSection />
+        </ErrorBoundary>
+
+        {/* ══ CTA ══ */}
+        <FinalCTASection />
+
+      </main>
+      <SiteFooter />
+    </div>
+  )
+}
