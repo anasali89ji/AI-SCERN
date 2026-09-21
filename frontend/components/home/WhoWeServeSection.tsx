@@ -184,7 +184,12 @@ function PersonaCard({
                 src={persona.image}
                 alt={`${persona.role} workflow`}
                 fill
-                sizes="(max-width:640px) 80vw, (max-width:1024px) 50vw, 25vw"
+                quality={90}
+                sizes={
+                  isLarge
+                    ? "(max-width:640px) 80vw, (max-width:1024px) 50vw, 40vw"
+                    : "(max-width:640px) 80vw, (max-width:1024px) 50vw, 30vw"
+                }
                 className="object-cover"
               />
               {/* Bottom scrim + name caption directly on the photo */}
