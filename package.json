@@ -4,8 +4,8 @@
   "description": "Aiscern — AI Content Detection Platform",
   "main": "index.js",
   "scripts": {
-    "convex:dev": "npx convex dev",
-    "convex:deploy": "npx convex deploy"
+    "convex:dev": "cd db/convex && npx convex dev",
+    "convex:deploy": "cd db/convex && npx convex deploy"
   },
   "repository": {
     "type": "git",

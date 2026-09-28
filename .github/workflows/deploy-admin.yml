@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'admin/**'
+      - 'apps/admin/**'
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: admin
+        working-directory: apps/admin
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: admin/package-lock.json
+          cache-dependency-path: apps/admin/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -34,7 +34,7 @@ jobs:
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v3.0
         with:
-          publish-dir: admin/.next
+          publish-dir: apps/admin/.next
           site-id: c17c17c4-bf23-4100-8754-a7792dca32cb
           production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}

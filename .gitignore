@@ -48,3 +48,7 @@ setup-secrets.sh
 !.vercel/project.json
 frontend/tsconfig.tsbuildinfo
 .env.do
+
+# build/deploy caches - never commit
+.vercel/
+.wrangler/
