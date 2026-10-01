@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "description": "Lens database for L30 MakerNote Forensic Analyzer. Maps a lens identifier string (as found in EXIF/MakerNote LensModel tag) to the camera models that lens is compatible with. Used to cross-check that the lens claimed by MakerNote is physically compatible with the camera claimed by EXIF — AI generators that fabricate EXIF often mismatch lens and camera body.",
+    "version": "1.0.0",
+    "module": "Module 1.5 (N5)",
+    "maintainer": "AI-SCERN team",
+    "note": "This is a minimal seed — only 8 entries covering the most common combinations. A full lens database (Canon EF/RF, Nikon F/Z, Sony E/FE, etc.) is out of scope for this batch; ship the analyzer + scaffolding and grow the database later."
+  },
+  "lenses": [
+    {
+      "lens_id": "RF24-70mm F2.8 L IS USM",
+      "manufacturer": "Canon",
+      "compatible_cameras": ["Canon EOS R5", "Canon EOS R6", "Canon EOS R3", "Canon EOS R"],
+      "mount": "RF"
+    },
+    {
+      "lens_id": "RF50mm F1.2 L USM",
+      "manufacturer": "Canon",
+      "compatible_cameras": ["Canon EOS R5", "Canon EOS R6", "Canon EOS R3"],
+      "mount": "RF"
+    },
+    {
+      "lens_id": "FE 24-70mm F2.8 GM",
+      "manufacturer": "Sony",
+      "compatible_cameras": ["Sony A7 IV", "Sony A7 III", "Sony A1", "Sony A9 II"],
+      "mount": "E"
+    },
+    {
+      "lens_id": "FE 50mm F1.2 GM",
+      "manufacturer": "Sony",
+      "compatible_cameras": ["Sony A7 IV", "Sony A1", "Sony A9 II"],
+      "mount": "E"
+    },
+    {
+      "lens_id": "NIKKOR Z 24-70mm f/2.8 S",
+      "manufacturer": "Nikon",
+      "compatible_cameras": ["Nikon Z6", "Nikon Z7", "Nikon Z8", "Nikon Z9"],
+      "mount": "Z"
+    },
+    {
+      "lens_id": "NIKKOR Z 50mm f/1.2 S",
+      "manufacturer": "Nikon",
+      "compatible_cameras": ["Nikon Z6", "Nikon Z7", "Nikon Z8", "Nikon Z9"],
+      "mount": "Z"
+    },
+    {
+      "lens_id": "iPhone 14 Pro Main Camera",
+      "manufacturer": "Apple",
+      "compatible_cameras": ["iPhone 14 Pro", "iPhone 14 Pro Max"],
+      "mount": "integrated"
+    },
+    {
+      "lens_id": "iPhone 15 Pro Main Camera",
+      "manufacturer": "Apple",
+      "compatible_cameras": ["iPhone 15 Pro", "iPhone 15 Pro Max"],
+      "mount": "integrated"
+    }
+  ]
+}

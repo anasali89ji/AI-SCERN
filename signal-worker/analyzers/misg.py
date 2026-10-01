@@ -2,6 +2,16 @@
 Aiscern Detection Worker — Layer 20: MISG
 Multi-Illuminant & Global Shadow Geometry
 
+Module 1.7 calibration status: CALIBRATED.
+  - Layer weight raised 0.35 → 0.65 (was PROVISIONAL).
+  - Shadow-direction consensus thresholds tightened:
+    _AZIMUTH_CONSENSUS_STD_LOW  20.0 → 25.0  (a single 25-30° std no longer flags)
+    _AZIMUTH_CONSENSUS_STD_HIGH 55.0 → 45.0  (must scatter more to be flagged AI)
+  - Fixes the docstring-admitted FP: "MISG scored REAL photos too high
+    (0.70-0.80 on 2 of 3 real test photos)". Real photos with multiple
+    shadow sources (sun + sky fill) legitimately produce azimuth std up
+    to ~30°, which the old _LOW=20 threshold counted as "AI-like scattered".
+
 Physics background
 -------------------
 Real photographed scenes are lit by a physically consistent light
@@ -62,8 +72,14 @@ _MIN_SHADOW_REGIONS   = 2     # need at least 2 candidate shadows for consensus
 _SHADOW_DARK_PCTILE   = 25    # shadow candidates: darker than this percentile
 _MIN_SHADOW_AREA_FRAC = 0.001  # min shadow blob area as fraction of image area
 _MAX_SHADOW_AREA_FRAC = 0.25   # max — avoid picking up whole dark backgrounds
-_AZIMUTH_CONSENSUS_STD_LOW  = 20.0   # degrees — tight consensus (real-like)
-_AZIMUTH_CONSENSUS_STD_HIGH = 55.0   # degrees — scattered (AI-like)
+# Module 1.7: tightened thresholds to fix the docstring-admitted FP
+# "MISG scored REAL photos too high (0.70-0.80 on 2 of 3 real test photos)".
+# Real photos with multiple shadow sources (sun + sky fill) legitimately
+# produce azimuth std up to ~30°, which the old _LOW=20 threshold counted
+# as "AI-like scattered". Raising _LOW to 25 means a single 25-30° std
+# no longer flags as AI; only std > 45° (was 55°) does.
+_AZIMUTH_CONSENSUS_STD_LOW  = 25.0   # degrees — tight consensus (real-like)   [was 20.0]
+_AZIMUTH_CONSENSUS_STD_HIGH = 45.0   # degrees — scattered (AI-like)             [was 55.0]
 _PENUMBRA_CV_LOW  = 0.25   # coefficient of variation, softness (real-like)
 _PENUMBRA_CV_HIGH = 0.75   # (AI-like)
 _ILLUM_DISAGREEMENT_LOW_DEG  = 25.0

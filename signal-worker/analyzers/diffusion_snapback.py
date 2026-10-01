@@ -70,30 +70,48 @@ def _load_img2img_pipeline():
     return get_model("diffusion_snapback:sd15_img2img", _build_img2img_pipeline)
 
 
-def diffusion_snapback_score(image_url: str) -> dict:
+def diffusion_snapback_score(image_url: str = "", img_array: Optional[np.ndarray] = None) -> dict:
     """
     Run 4-strength snap-back analysis.
 
-    Returns:
-        snapBackScore: 0.0 (real) → 1.0 (AI)
-        confidence:    certainty
-        deltaLP:       LPIPS@0.60 - LPIPS@0.15 (primary discriminator)
-        kneeStep:      strength where SSIM drops below 0.80
-        lpipsAt015/030/060/090: per-strength LPIPS
-        ssimAt015/060: per-strength SSIM
-        aucLPIPS:      area under LPIPS curve
+    Parameters
+    ----------
+    image_url : str
+        Public URL of the image to fetch. Required if `img_array` is None.
+    img_array : np.ndarray, optional
+        Pre-loaded RGB image array (H×W×3, uint8). When provided, skips
+        the HTTP fetch entirely — used by image_engine.analyze_image_from_bytes
+        so we can analyze uploaded bytes without round-tripping through a URL.
+
+    Returns
+    --------
+    snapBackScore: 0.0 (real) → 1.0 (AI)
+    confidence:    certainty
+    deltaLP:       LPIPS@0.60 - LPIPS@0.15 (primary discriminator)
+    kneeStep:      strength where SSIM drops below 0.80
+    lpipsAt015/030/060/090: per-strength LPIPS
+    ssimAt015/060: per-strength SSIM
+    aucLPIPS:      area under LPIPS curve
     """
     import torch
     from PIL import Image
 
     # ── Fetch image ────────────────────────────────────────────────────────────
+    # Module 1.1: prefer in-memory img_array (no URL fetch needed on upload path).
     try:
-        resp = requests.get(image_url, timeout=20,
-                            headers={'User-Agent': 'Aiscern-L5b/1.0'})
-        resp.raise_for_status()
-        orig_image = Image.open(BytesIO(resp.content)).convert('RGB').resize((512, 512))
+        if img_array is not None:
+            if img_array.ndim != 3 or img_array.shape[2] != 3:
+                raise ValueError(f"img_array must be H×W×3 RGB, got shape {img_array.shape}")
+            orig_image = Image.fromarray(img_array.astype(np.uint8)).convert('RGB').resize((512, 512))
+        else:
+            if not image_url:
+                raise ValueError("either image_url or img_array must be provided")
+            resp = requests.get(image_url, timeout=20,
+                                headers={'User-Agent': 'Aiscern-L5b/1.0'})
+            resp.raise_for_status()
+            orig_image = Image.open(BytesIO(resp.content)).convert('RGB').resize((512, 512))
     except Exception as e:
-        raise ValueError(f"Failed to fetch image: {e}")
+        raise ValueError(f"Failed to load image (url={image_url!r}, img_array={'provided' if img_array is not None else 'None'}): {e}")
 
     # ── Load model ────────────────────────────────────────────────────────────
     pipe   = _load_img2img_pipeline()

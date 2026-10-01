@@ -218,7 +218,10 @@ class AnalyzeSignalsRequest(BaseModel):
     imageUrl: str
     jobId: str
     targetRegions: List[TargetRegion] = []
-    includeDiffusion: bool = False
+    # v4.13.0 (Module 1.1): Optional[bool] = None means "let the server
+    # decide based on GPU availability". Was: bool = False (always off).
+    # Explicit True/False still wins; None auto-enables on GPU boxes.
+    includeDiffusion: Optional[bool] = None
 
 
 class AnalyzeTextRequest(BaseModel):
@@ -330,6 +333,7 @@ async def health() -> Dict[str, Any]:
 async def analyze_image_upload(
     file: UploadFile = File(...),
     brain_result: str = Form(None),
+    include_gpu_layers: str = Form("false"),
 ) -> Dict[str, Any]:
     """
     Full image analysis via file upload (multipart/form-data).
@@ -343,6 +347,12 @@ async def analyze_image_upload(
     blend Brain against this worker's result itself. Malformed/missing JSON
     degrades gracefully to the pre-unification 2-pillar fusion — never a
     hard failure, this field is purely additive.
+
+    include_gpu_layers (v4.13.0, Module 1.1, optional): "true"/"false"
+    (default "false"). When "true" AND a GPU with ≥4 GB VRAM is available,
+    runs L5 (diffusion inversion) and L5b (snap-back) and feeds their scores
+    into _fuse_scores. CPU-only deployments leave this at "false" — L5/L5b
+    are silently skipped with no slowdown.
     """
     # MIME allowlist (P3): reject obvious non-images early, before reading bytes
     if not file.content_type or file.content_type.lower() not in ALLOWED_IMAGE_MIMES:
@@ -367,6 +377,10 @@ async def analyze_image_upload(
             logger.warning("[analyze/image] brain_result field present but not valid JSON — ignoring, falling back to non-unified fusion")
             parsed_brain = None
 
+    # Module 1.1: pass include_gpu_layers through. Defaults to False (CPU-only
+    # safe). /analyze-signals auto-enables on GPU boxes (see below).
+    gpu_flag = (include_gpu_layers or "false").lower() == "true"
+
     import asyncio
     import functools
     from engines.image_engine import analyze_image_from_bytes
@@ -379,6 +393,7 @@ async def analyze_image_upload(
         functools.partial(
             analyze_image_from_bytes, contents, file.content_type,
             f"upload_{int(time.time())}", brain_result=parsed_brain,
+            include_gpu_layers=gpu_flag,
         ),
     )
     _inc("latency_sum_ms", (time.time() - t0) * 1000); _inc("latency_count")
@@ -569,16 +584,27 @@ async def analyze_signals(req: AnalyzeSignalsRequest) -> Dict[str, Any]:
     Accepts imageUrl + optional targetRegions, runs v2+v3 image analysis.
     Response preserves the original v2 schema (jobId, status, processingTimeMs, layers, synthid)
     while also including the new forensics and composite_score fields.
+
+    v4.13.0 (Module 1.1): auto-enables L5/L5b GPU layers when the host has
+    a GPU available, even if the caller didn't set includeDiffusion=True.
+    Callers on CPU-only deployments get the existing behavior (no GPU
+    layers invoked).
     """
-    from engines.image_engine import analyze_image_from_url
+    from engines.image_engine import analyze_image_from_url, _gpu_available
 
     target_regions = [r.dict() for r in req.targetRegions]
+
+    # Module 1.1: auto-enable GPU layers on GPU boxes (was: only when caller
+    # explicitly set includeDiffusion). Caller's intent is still respected —
+    # explicit False wins — but on a GPU box we default to True so the
+    # strongest signal available actually runs.
+    gpu_layers = bool(req.includeDiffusion) if req.includeDiffusion is not None else _gpu_available()
 
     result = await analyze_image_from_url(
         image_url=req.imageUrl,
         job_id=req.jobId,
         target_regions=target_regions,
-        include_gpu_layers=req.includeDiffusion,
+        include_gpu_layers=gpu_layers,
     )
 
     if result.get("status") == "error":

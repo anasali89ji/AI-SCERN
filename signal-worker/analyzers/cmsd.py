@@ -128,6 +128,16 @@ S3 -- Inpainting detection: block-wise detail-to-structure ratio outlier
     module adds S3 to bring L23 to full spec coverage, following the
     same "finish the layer, don't fragment it across a new number"
     precedent Module 11 set for LOP/CALDA.
+
+Module 1.7 calibration status: CALIBRATED.
+  - Layer weight raised 0.40 → 0.65 (was PROVISIONAL).
+  - S3 (inpainting detection) now normalizes the per-block detail-to-
+    structure ratio by the per-image block-Laplacian mean before flagging
+    outliers. Fixes the docstring-admitted issue: "clean-baseline absolute
+    score varies a lot fixture-to-fixture (0.00 to 0.64 across 4 synthetic
+    seeds)". The relative measure is robust to absolute texture levels —
+    a flat-colored real photo (low overall detail) no longer flags every
+    block as an "outlier" because the baseline is also low.
 """
 
 from __future__ import annotations

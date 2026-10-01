@@ -82,7 +82,18 @@ def ela_suspicion(ela_map: np.ndarray, target_regions: list) -> tuple[float, str
 # ── Local Binary Patterns ─────────────────────────────────────────────────────
 
 def compute_lbp(gray: np.ndarray, radius: int = 1, n_points: int = 8) -> np.ndarray:
-    """Compute LBP texture map (simplified, no scikit-image dep)."""
+    """Compute LBP texture map (simplified, no scikit-image dep).
+
+    Module 1.8: replaced manual slice arithmetic with scipy.ndimage.shift.
+    The previous code had a subtle bug for negative-shift corners (dy<0, dx<0):
+    the min_h / min_w patch-up handled some cases but silently dropped corner
+    bits, producing an LBP histogram computed on a partially-populated array
+    → subtly wrong chi² values for ELA/LBP signal.
+    Using scipy.ndimage.shift with mode='reflect' is cleaner, correct, and
+    handles all four quadrants uniformly.
+    """
+    from scipy.ndimage import shift as _nd_shift
+
     h, w = gray.shape
     lbp   = np.zeros((h, w), dtype=np.uint8)
     angles = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
@@ -91,20 +102,15 @@ def compute_lbp(gray: np.ndarray, radius: int = 1, n_points: int = 8) -> np.ndar
         dx = int(round(radius * np.cos(angle)))
         dy = int(round(radius * -np.sin(angle)))
 
-        # Shift the image by (dy, dx) with clipping
-        r0, r1 = max(0, dy),  min(h, h + dy)
-        c0, c1 = max(0, dx),  min(w, w + dx)
-        sr0, sr1 = max(0, -dy), min(h, h - dy)
-        sc0, sc1 = max(0, -dx), min(w, w - dx)
+        # Shift the entire image by (dy, dx) with reflect-mode boundary.
+        # mode='reflect' is the right choice for LBP because it doesn't
+        # introduce spurious edges at the image boundary (which 'constant'
+        # with cval=0 would, artificially lowering LBP values on edges).
+        neighbor = _nd_shift(gray, (dy, dx), mode='reflect', order=0)
 
-        neighbor_patch = gray[sr0:sr1, sc0:sc1]
-        center_patch   = gray[r0:r1,   c0:c1]
-
-        min_h = min(neighbor_patch.shape[0], center_patch.shape[0])
-        min_w = min(neighbor_patch.shape[1], center_patch.shape[1])
-
-        bit = (neighbor_patch[:min_h, :min_w] >= center_patch[:min_h, :min_w]).astype(np.uint8)
-        lbp[r0:r0+min_h, c0:c0+min_w] |= (bit << idx)
+        # Bit is set where the shifted (neighbor) pixel is >= the original.
+        bit = (neighbor >= gray).astype(np.uint8)
+        lbp |= (bit << idx)
 
     return lbp
 

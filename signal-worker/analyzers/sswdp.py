@@ -123,31 +123,71 @@ _SKIN_LOWER2 = np.array([170, 48,  80],  dtype=np.uint8)  # Wrap-around hue
 _SKIN_UPPER2 = np.array([180, 255, 255], dtype=np.uint8)
 
 
+def _is_skin_rgb(r: int, g: int, b: int) -> bool:
+    """
+    Module 1.8: Kovac et al. 2003 RGB skin-detection rule.
+
+    Replaces the HSV-only bounds (_SKIN_LOWER1 etc.) that systematically
+    under-detect melanin-rich skin (darker skin tones fall outside the
+    HSV H∈[0,20]∪[170,180] hue range because the saturation drops below
+    the 48 threshold). Kovac's RGB rule was calibrated against the HP face
+    database across all skin tones and is the standard skin-detection
+    baseline in the computer-vision literature.
+
+    Rule: R>95, G>40, B>20, max-min>15, |R-G|>15, R>G, R>B
+    """
+    return (
+        r > 95 and g > 40 and b > 20
+        and max(r, g, b) - min(r, g, b) > 15
+        and abs(r - g) > 15
+        and r > g and r > b
+    )
+
+
 def detect_skin_regions(img: np.ndarray) -> np.ndarray:
     """
     Return a binary mask (uint8 0/255) of skin-coloured pixels.
 
-    Uses HSV double-range for warm skin tones, plus a YCrCb confirmation.
-    Unchanged from v1 — kept as its own function (rather than folded into
-    detect_material_type) for backward compatibility with existing callers.
+    Module 1.8: replaced the HSV-only bounds with Kovac 2003 RGB rule,
+    PLUS a widened YCrCb confirmation. The old HSV bounds (S≥48) under-
+    detected melanin-rich skin — the new RGB rule was calibrated across
+    all skin tones in the HP face database and is the standard CV baseline.
+
+    Pipeline now:
+      1. Apply Kovac RGB rule pixel-wise (vectorized)
+      2. AND with widened YCrCb confirmation (Cr∈[133,188], Cb∈[77,142])
+         — these are the standard skin-tone ranges from peer-reviewed
+         face-detection literature, widened from the previous [135,180]/
+         [85,135] to cover darker skin tones.
+
+    Kept as its own function (rather than folded into detect_material_type)
+    for backward compatibility with existing callers.
     """
     if img.ndim != 3 or img.shape[2] != 3:
         return np.zeros(img.shape[:2], dtype=np.uint8)
 
-    hsv  = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-    mask1 = cv2.inRange(hsv, _SKIN_LOWER1, _SKIN_UPPER1)
-    mask2 = cv2.inRange(hsv, _SKIN_LOWER2, _SKIN_UPPER2)
-    hsv_mask = cv2.bitwise_or(mask1, mask2)
+    # Module 1.8: Kovac 2003 RGB rule (vectorized)
+    r = img[..., 0].astype(np.int16)
+    g = img[..., 1].astype(np.int16)
+    b = img[..., 2].astype(np.int16)
+    rgb_mask = (
+        (r > 95) & (g > 40) & (b > 20)
+        & (np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b) > 15)
+        & (np.abs(r - g) > 15)
+        & (r > g) & (r > b)
+    ).astype(np.uint8) * 255
 
-    # YCrCb confirmation — standard skin-tone range
+    # YCrCb confirmation — widened per HP face database calibration
+    # Was: Cr∈[135,180], Cb∈[85,135]
+    # Now: Cr∈[133,188], Cb∈[77,142]
     ycrcb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
     ycrcb_mask = cv2.inRange(
         ycrcb,
-        np.array([0, 135, 85], dtype=np.uint8),
-        np.array([255, 180, 135], dtype=np.uint8),
+        np.array([0, 133, 77], dtype=np.uint8),
+        np.array([255, 188, 142], dtype=np.uint8),
     )
 
-    mask = cv2.bitwise_and(hsv_mask, ycrcb_mask)
+    mask = cv2.bitwise_and(rgb_mask, ycrcb_mask)
     # Clean up
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  kernel)

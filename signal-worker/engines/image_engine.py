@@ -12,12 +12,57 @@ import time
 import logging
 import tempfile
 import hashlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
+import numpy as np  # Module 1.1: needed for img_array type hint + L5/L5b wiring
 from version import VERSION
 
 logger = logging.getLogger(__name__)
 
 GPU_ENABLED = os.getenv("GPU_ENABLED", "false").lower() == "true"
+
+
+# ─── Module-level LAYER_WEIGHTS (v4.13.0, Module 1.4) ────────────────────────
+# Previously a local variable inside _fuse_scores() — calibrate.py duplicated
+# it with a "lesser evil" comment. Now module-level so:
+#   - scripts/calibrate.py can `from engines.image_engine import LAYER_WEIGHTS`
+#     and stop drifting out of sync.
+#   - Tests can introspect weights without invoking _fuse_scores.
+# Layer keys may be int (1, 2, ...) OR str ("5b") — _fuse_scores handles both.
+# Weights for L20-L25 are PROVISIONAL (uncalibrated); raised in Module 1.7
+# after fixture calibration for MISG/LOP/CMSD.
+LAYER_WEIGHTS: Dict[Union[int, str], float] = {
+    1:    1.1,   # L1 Pixel Integrity — reliable ELA signal
+    2:    1.0,   # L2 DCT Compression
+    3:    0.9,   # L3 Noise — less reliable on complex scenes
+    4:    0.9,   # L4 Frequency Domain
+    5:    1.4,   # L5 Diffusion Inversion (GPU only — DIRE-style; Module 1.1)
+    "5b": 1.2,   # L5b Diffusion Snap-Back (GPU only; Module 1.1)
+    6:    1.0,   # L6 ZED — entropy
+    7:    1.3,   # L7 DIRE CPU proxy (TV residual — Module 1.2 rewrote the math)
+    8:    0.9,   # L8 NLM noise tensor
+    9:    1.3,   # L9 Modern AI Fingerprint
+    10:   1.2,   # L10 Generative Fingerprinting Engine — attribution
+    11:   1.0,   # L11 PAFRA — Polarization (scene-dependent, neutral when N/A)
+    12:   1.3,   # L12 BDIS — Bayer pattern (always active)
+    13:   1.0,   # L13 SSWDP — SSS decay (portrait-dependent)
+    14:   0.9,   # L14 QESM — Quantum efficiency (gray-region-dependent)
+    15:   1.1,   # L15 OBP — Object Boundary Physics (always active)
+    16:   1.0,   # L16 MRC — Material Reflectance Consistency (always active)
+    17:   0.9,   # L17 GPC — Geometry & Perspective (scene-dependent, neutral when N/A)
+    18:   1.2,   # L18 TSAD — Texture Synthesis Artifacts (always active, strongest vs. diffusion VAEs)
+    19:   1.0,   # L19 OSIP — Object-Scene Interaction Physics (always active)
+    20:   0.65,  # L20 MISG — CALIBRATED in Module 1.7 (was 0.35 PROVISIONAL)
+    21:   0.75,  # L21 LOP — CALIBRATED in Module 1.7 (was 0.45 PROVISIONAL)
+    22:   0.40,  # L22 Document/ID Security Forensics (PROVISIONAL, document-only)
+    23:   0.65,  # L23 CMSD — CALIBRATED in Module 1.7 (was 0.40 PROVISIONAL)
+    24:   0.40,  # L24 TCA — Temporal Coherence Analysis (PROVISIONAL)
+    25:   0.40,  # L25 C2PA — Content Authenticity Analysis (PROVISIONAL)
+    26:   1.5,   # L26 PRNU Camera Fingerprint (NEW — Module 1.5; highest single-signal weight)
+    27:   0.9,   # L27 JPEG Ghost / Double-JPEG (NEW — Module 1.5)
+    28:   1.0,   # L28 Specular Inverse-Square Falloff (NEW — Module 1.5)
+    29:   0.8,   # L29 DCT Grid Sub-Pixel Offset (NEW — Module 1.5)
+    30:   1.1,   # L30 MakerNote Forensic (NEW — Module 1.5)
+}
 
 
 # ── GPU availability check ────────────────────────────────────────────────────
@@ -118,7 +163,12 @@ def _run_synthid(img_array, lossless: bool = True) -> Dict[str, Any]:
         return {"detected": False, "confidence": 0.0, "generator_hint": "none", "track_scores": {}}
 
 
-def _run_l5_inversion(image_url: str) -> Dict[str, Any]:
+def _run_l5_inversion(image_url: str = "", img_array: Optional[np.ndarray] = None) -> Dict[str, Any]:
+    """
+    Module 1.1: now accepts an in-memory img_array (H×W×3 RGB uint8) so the
+    upload path doesn't need to round-trip through a URL. When img_array is
+    provided, the diffusion_inversion_score call will skip the HTTP fetch.
+    """
     if not _gpu_available() or _gpu_vram_gb() < 4.0:
         return {
             "available": False,
@@ -128,13 +178,18 @@ def _run_l5_inversion(image_url: str) -> Dict[str, Any]:
         }
     from analyzers.diffusion_inversion import diffusion_inversion_score
     try:
-        return {**diffusion_inversion_score(image_url), "available": True}
+        return {**diffusion_inversion_score(image_url, img_array=img_array), "available": True}
     except Exception as e:
         logger.warning("[ImageEngine][L5] failed: %s", e)
         return {"available": True, "score": 0.5, "confidence": 0.0, "error": str(e)}
 
 
-def _run_l5b_snapback(image_url: str) -> Dict[str, Any]:
+def _run_l5b_snapback(image_url: str = "", img_array: Optional[np.ndarray] = None) -> Dict[str, Any]:
+    """
+    Module 1.1: now accepts an in-memory img_array (H×W×3 RGB uint8) so the
+    upload path doesn't need to round-trip through a URL. When img_array is
+    provided, the diffusion_snapback_score call will skip the HTTP fetch.
+    """
     if not _gpu_available() or _gpu_vram_gb() < 4.0:
         return {
             "available": False,
@@ -144,10 +199,92 @@ def _run_l5b_snapback(image_url: str) -> Dict[str, Any]:
         }
     from analyzers.diffusion_snapback import diffusion_snapback_score
     try:
-        return {**diffusion_snapback_score(image_url), "available": True}
+        return {**diffusion_snapback_score(image_url, img_array=img_array), "available": True}
     except Exception as e:
         logger.warning("[ImageEngine][L5b] failed: %s", e)
         return {"available": True, "snapBackScore": 0.5, "confidence": 0.0, "error": str(e)}
+
+
+# ── L5/L5b layer-report builders (Module 1.1) ────────────────────────────────
+# These wrap the raw diffusion_inversion/diffusion_snapback result dicts
+# into the same LayerReport schema that every other layer uses, so
+# _fuse_scores can consume L5 and L5b like any other layer (previously they
+# were top-level-only fields and never fed the weighted average).
+
+def _build_l5_layer_report(l5_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Wrap a diffusion_inversion_score result into a LayerReport for layer 5.
+    The L5 result has a 'score' field already in [0,1] (0=real, 1=AI) plus
+    a 'mse' (reconstruction error) — both surfaced as evidence nodes so the
+    audit trail in the UI shows what fed the final fused score.
+    """
+    from utils.evidence_builder import evidence_node, build_layer_report
+    score = float(l5_result.get("score", 0.5))
+    confidence = float(l5_result.get("confidence", 0.0))
+    mse = float(l5_result.get("mse", 0.0))
+    model = str(l5_result.get("model", "sd15"))
+    steps = int(l5_result.get("steps", 0))
+    evidence = [
+        evidence_node(
+            layer=5,
+            category="diffusion_inversion",
+            artifact_type="reconstruction_mse",
+            status="anomalous" if score >= 0.6 else "normal" if score <= 0.4 else "inconclusive",
+            confidence=score,
+            detail=f"DDIM inversion reconstruction MSE={mse:.4f} via {model} ({steps} steps). "
+                   f"Low MSE → on-manifold (AI-like); high MSE → off-manifold (real photo).",
+            raw_value=mse,
+        )
+    ]
+    return build_layer_report(
+        layer=5,
+        layer_name="Diffusion Inversion (DIRE)",
+        evidence=evidence,
+        status="success" if confidence > 0 else "inconclusive",
+        elapsed_ms=0,
+        score=score,
+    )
+
+
+def _build_l5b_layer_report(l5b_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Wrap a diffusion_snapback_score result into a LayerReport for layer 5b.
+    The L5b result has 'snapBackScore' in [0,1] (0=real, 1=AI) plus
+    per-strength LPIPS values — surfaced as evidence nodes.
+    """
+    from utils.evidence_builder import evidence_node, build_layer_report
+    score = float(l5b_result.get("snapBackScore", 0.5))
+    confidence = float(l5b_result.get("confidence", 0.0))
+    delta_lp = float(l5b_result.get("deltaLP", 0.0))
+    knee = l5b_result.get("kneeStep")
+    auc = float(l5b_result.get("aucLPIPS", 0.0))
+    evidence = [
+        evidence_node(
+            layer=5,  # layer 5b — using 5 as int key since 5b isn't a valid int;
+                      # _fuse_scores reads LAYER_WEIGHTS[5b] via a string-coerce fallback.
+            category="diffusion_snapback",
+            artifact_type="lpips_curve_shape",
+            status="anomalous" if score >= 0.6 else "normal" if score <= 0.4 else "inconclusive",
+            confidence=score,
+            detail=f"Snap-back LPIPS curve: deltaLP={delta_lp:.4f}, knee={knee}, AUC={auc:.4f}. "
+                   f"Flat curve → AI (on manifold); steep curve → real photo.",
+            raw_value=delta_lp,
+        )
+    ]
+    # Layer 5b — we use the int 5 as the layer key but set layerName to
+    # distinguish it from L5. _fuse_scores must read LAYER_WEIGHTS["5b"].
+    report = build_layer_report(
+        layer=5,  # see note above
+        layer_name="Diffusion Snap-Back (L5b)",
+        evidence=evidence,
+        status="success" if confidence > 0 else "inconclusive",
+        elapsed_ms=0,
+        score=score,
+    )
+    # Tag the report so _fuse_scores can pick the correct LAYER_WEIGHTS slot
+    # ("5b" rather than the integer 5).
+    report["layer"] = "5b"
+    return report
 
 
 def _run_l6(img_array, img_pil) -> Dict[str, Any]:
@@ -481,6 +618,90 @@ def _run_extended_physics_layers(img_array, img_pil) -> Dict[str, Any]:
 
 # ── v3 Forensic layer runners ─────────────────────────────────────────────────
 
+# ── New physics-layer analyzers (L26-L30, Module 1.5) ────────────────────────
+# Each analyzer is invoked individually (not via a parent ensemble runner)
+# so it can be independently calibrated, weighted, or skipped without
+# affecting the others. They follow the same fail-silently pattern as
+# _run_extended_physics_layers above.
+
+def _run_l26_prnu(img_array, img_pil, exif_metadata=None) -> Dict[str, Any]:
+    """L26 PRNU Camera Fingerprint (Lukas-Fridrich-Goljan 2006)."""
+    from analyzers.prnu import analyze_prnu
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_prnu(img_array, exif_metadata=exif_metadata)
+    except Exception as e:
+        logger.warning("[ImageEngine][L26 PRNU] failed: %s", e)
+        return build_layer_report(26, "PRNU Camera Fingerprint", [], "failure", 0, score=0.5)
+
+
+def _run_l27_jpeg_ghost(img_array, img_pil) -> Dict[str, Any]:
+    """L27 JPEG Ghost / Double-JPEG (Lukas-Fridrich)."""
+    from analyzers.jpeg_ghost import analyze_jpeg_ghost
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_jpeg_ghost(img_array)
+    except Exception as e:
+        logger.warning("[ImageEngine][L27 JPEGGhost] failed: %s", e)
+        return build_layer_report(27, "JPEG Ghost / Double-JPEG", [], "failure", 0, score=0.5)
+
+
+def _run_l28_specular_falloff(img_array, img_pil) -> Dict[str, Any]:
+    """L28 Specular Inverse-Square Falloff."""
+    from analyzers.specular_falloff import analyze_specular_falloff
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_specular_falloff(img_array)
+    except Exception as e:
+        logger.warning("[ImageEngine][L28 SpecularFalloff] failed: %s", e)
+        return build_layer_report(28, "Specular Inverse-Square Falloff", [], "failure", 0, score=0.5)
+
+
+def _run_l29_dct_grid_offset(img_array, img_pil) -> Dict[str, Any]:
+    """L29 DCT Grid Sub-Pixel Offset."""
+    from analyzers.dct_grid_offset import analyze_dct_grid_offset
+    from utils.evidence_builder import build_layer_report
+    try:
+        return analyze_dct_grid_offset(img_array)
+    except Exception as e:
+        logger.warning("[ImageEngine][L29 DCTGridOffset] failed: %s", e)
+        return build_layer_report(29, "DCT Grid Sub-Pixel Offset", [], "failure", 0, score=0.5)
+
+
+def _run_l30_makernote(img_array, img_pil, temp_path) -> Dict[str, Any]:
+    """L30 MakerNote Forensic — runs only when temp_path is available (needs file for exifread)."""
+    from utils.evidence_builder import build_layer_report
+    if not temp_path:
+        # No file path (rare — only happens if caller passes raw bytes without
+        # writing to disk). Skip rather than fail.
+        return build_layer_report(30, "MakerNote Forensic", [], "not_applicable", 0, score=0.5)
+    try:
+        from forensics.metadata_analyzer import analyze_makernote
+        mn_result = analyze_makernote(temp_path)
+        return build_layer_report(
+            layer=30,
+            layer_name="MakerNote Forensic",
+            evidence=[
+                {
+                    "layer": 30,
+                    "category": "makernote_forensic",
+                    "artifactType": "camera_model_crosscheck",
+                    "status": "anomalous" if mn_result.get("mismatch_detected") else "normal",
+                    "confidence": float(mn_result.get("score", 0.5)),
+                    "detail": "; ".join(mn_result.get("mismatch_details", [])) or "MakerNote consistent with EXIF.",
+                }
+            ],
+            status="success" if mn_result.get("makernote_present") else "not_applicable",
+            elapsed_ms=0,
+            score=float(mn_result.get("score", 0.5)),
+        )
+    except Exception as e:
+        logger.warning("[ImageEngine][L30 MakerNote] failed: %s", e)
+        return build_layer_report(30, "MakerNote Forensic", [], "failure", 0, score=0.5)
+
+
+# ── v3 Forensic layer runners (continued) ────────────────────────────────────
+
 def _run_v3_forensics(img_array: "np.ndarray", temp_path: str) -> Dict[str, Any]:
     """Run all v3 forensic modules CONCURRENTLY.
     Fix #6 (v4.5.0): most modules now operate on the already-decoded
@@ -704,52 +925,11 @@ def _fuse_scores(
 
     # ── Per-layer scoring (with MAX evidence selection for noisy layers) ─────
     layer_scores: list[tuple[float, float]] = []  # (score, weight)
-    layer_by_num: dict[int, float] = {}  # layer_num -> layerSuspicionScore, for corroboration checks
+    layer_by_num: dict[Union[int, str], float] = {}  # layer_num -> layerSuspicionScore, for corroboration checks
 
-    LAYER_WEIGHTS = {
-        1:  1.1,   # L1 Pixel Integrity — reliable ELA signal
-        2:  1.0,   # L2 DCT Compression
-        3:  0.9,   # L3 Noise — less reliable on complex scenes
-        4:  0.9,   # L4 Frequency Domain
-        6:  1.0,   # L6 ZED — entropy
-        7:  1.0,   # L7 DIRE approximation
-        8:  0.9,   # L8 NLM noise tensor
-        9:  1.3,   # L9 Modern AI Fingerprint
-        10: 1.2,   # L10 Generative Fingerprinting Engine — attribution
-        11: 1.0,   # L11 PAFRA — Polarization (scene-dependent, neutral when N/A)
-        12: 1.3,   # L12 BDIS — Bayer pattern (always active)
-        13: 1.0,   # L13 SSWDP — SSS decay (portrait-dependent)
-        14: 0.9,   # L14 QESM — Quantum efficiency (gray-region-dependent)
-        # L15-L19 (v4.7.0): Object Physics Ensemble. Weights kept in sync
-        # with analyzers/object_physics_ensemble.py's internal _WEIGHTS.
-        15: 1.1,   # L15 OBP — Object Boundary Physics (always active)
-        16: 1.0,   # L16 MRC — Material Reflectance Consistency (always active)
-        17: 0.9,   # L17 GPC — Geometry & Perspective (scene-dependent, neutral when N/A)
-        18: 1.2,   # L18 TSAD — Texture Synthesis Artifacts (always active, strongest vs. diffusion VAEs)
-        19: 1.0,   # L19 OSIP — Object-Scene Interaction Physics (always active)
-        # L20-L21 (v4.8.0): PROVISIONAL — uncalibrated, see
-        # analyzers/extended_physics_ensemble.py module docstring. Weighted
-        # low deliberately; raise only after a real calibration pass.
-        20: 0.35,  # L20 MISG — Multi-Illuminant & Global Shadow Geometry
-        21: 0.45,  # L21 LOP — Lens & Optical Physics (chromatic aberration)
-        # L22 (v4.9.0): PROVISIONAL — uncalibrated, see
-        # analyzers/document_forensics.py module docstring. Also
-        # status="not_applicable" (skipped entirely, see loop below) for the
-        # large majority of uploads that aren't documents/IDs in the first
-        # place — this weight only matters for the minority that classify
-        # as document-like.
-        22: 0.40,  # L22 Document/ID Security Forensics (hologram/microprint/guilloche/UV/font)
-        # L23 (v4.10.0): PROVISIONAL — uncalibrated, see analyzers/cmsd.py
-        # module docstring. Weighted low like L20-L22 for the same reason:
-        # not yet run against a labeled tampered-vs-untampered dataset.
-        23: 0.40,  # L23 CMSD — Copy-Move & Splice Detection
-        # L24 (v4.11.0): PROVISIONAL — uncalibrated, see analyzers/tca.py
-        # module docstring. Weighted low like L20-L23 for the same reason.
-        24: 0.40,  # L24 TCA — Temporal Coherence Analysis (interlacing + motion-blur consistency)
-        # L25 (v4.12.0): PROVISIONAL — uncalibrated, see analyzers/c2pa.py
-        # module docstring. Weighted low like L20-L24 for the same reason.
-        25: 0.40,  # L25 C2PA — Content Authenticity Analysis (manifest presence/validity + cert sanity)
-    }
+    # v4.13.0 (Module 1.4): LAYER_WEIGHTS is now a module-level constant.
+    # The local copy that used to live here is gone — see top of file.
+    # Tests and scripts/calibrate.py import it directly.
 
     for layer in v2_layers:
         # Fix #4/#9 (v4.5.0): skip layers that explicitly opted out via
@@ -768,6 +948,9 @@ def _fuse_scores(
         # that DO have something to say about this image.
         if layer.get("status") in ("failure", "not_applicable", "neutral_scene_type"):
             continue
+        # v4.13.0 (Module 1.1): layer key may be int (1..30) OR str ("5b")
+        # — _build_l5b_layer_report sets layer="5b" so it doesn't collide
+        # with the integer L5 in LAYER_WEIGHTS lookup.
         layer_num = layer.get("layer", 0)
         # Use layerSuspicionScore directly — it already aggregates all evidence
         # nodes inside the layer. Previous evidence-node boost was causing false
@@ -866,8 +1049,20 @@ def _fuse_scores(
          for l in v2_layers if l.get("layer") == 7),
         0.5,
     )
+    # v4.13.0 (Module 1.1): when L5 (diffusion inversion) is in the layers
+    # list — i.e. include_gpu_layers=True and a GPU was available — prefer
+    # its reconstruction-MSE-derived score over L7's TV-residual proxy.
+    # L5 is the actual DIRE signal; L7 is a cheap CPU fallback. Previously
+    # the reality-check always used L7 even when L5 had run, defeating the
+    # purpose of running the GPU layer.
+    l5_score = next(
+        (float(l.get("layerSuspicionScore", 0.5))
+         for l in v2_layers if l.get("layer") == 5),
+        None,
+    )
+    dire_score = l5_score if l5_score is not None else l7_score
     _DIRE_REAL_THRESHOLD = 0.42
-    dire_penalty = min(l7_score / _DIRE_REAL_THRESHOLD, 1.0)  # 1.0 = no penalty
+    dire_penalty = min(dire_score / _DIRE_REAL_THRESHOLD, 1.0)  # 1.0 = no penalty
     dire_check_fired = (dire_penalty < 1.0)
 
     if dire_check_fired:
@@ -1124,6 +1319,7 @@ def analyze_image_from_bytes(
     content_type: str,
     job_id: str = "",
     brain_result: Optional[Dict[str, Any]] = None,
+    include_gpu_layers: bool = False,
 ) -> Dict[str, Any]:
     """
     Full image analysis from raw bytes (file upload path).
@@ -1138,6 +1334,13 @@ def analyze_image_from_bytes(
     handler when the caller sends it. See _fuse_scores() for how it's used —
     None here just means "unification not available for this request",
     never a hard failure.
+
+    include_gpu_layers (v4.13.0, Module 1.1): when True AND a GPU with
+    ≥4 GB VRAM is available, run L5 (diffusion inversion) and L5b (snap-back)
+    on the in-memory img_array (no URL fetch needed). Results are appended
+    to the `layers` list as layer 5 and layer 5b — they feed `_fuse_scores`
+    like any other layer. When False or no GPU, behaves as before (L5/L5b
+    not invoked, no slowdown).
     """
     import io
     import numpy as np
@@ -1181,7 +1384,8 @@ def analyze_image_from_bytes(
         # L1-L4 (v2), L6-L10 (P4/GFE), L11-L14 (physical), L15-L19 (object
         # physics, v4.7.0), L20-L21 (extended physics, v4.8.0, provisional),
         # SynthID, v3 forensics, L23 copy-move/splice, L24 temporal coherence, L25 C2PA (v4.12.0) — 17 concurrent tasks.
-        with ThreadPoolExecutor(max_workers=18) as pool:
+        # v4.13.0 (Module 1.1): + L5/L5b when include_gpu_layers and GPU available.
+        with ThreadPoolExecutor(max_workers=25) as pool:
             f_l1      = pool.submit(_run_l1,      img_array, pil_img, [])
             f_l2      = pool.submit(_run_l2,      img_array, pil_img_original)
             f_l3      = pool.submit(_run_l3,      img_array, pil_img)
@@ -1214,6 +1418,29 @@ def analyze_image_from_bytes(
             f_synthid = pool.submit(_run_synthid, img_array,
                                     "jpeg" not in content_type.lower())
             f_v3      = pool.submit(_run_v3_forensics, img_array, temp_path)
+            # v4.13.0 (Module 1.5): L26-L30 new physics-layer analyzers.
+            # Submitted in the same pool so they run concurrently with
+            # everything else — bounded by the slowest task, same as
+            # L1-L25. L26 (PRNU) and L30 (MakerNote) need exif_metadata
+            # to do the "no match AND has EXIF" check; we read it from
+            # v3 forensics result below, so for the first call we pass
+            # None and let PRNU's "inconclusive" path handle it.
+            f_l26_prnu   = pool.submit(_run_l26_prnu,            img_array, pil_img, None)
+            f_l27_jghost = pool.submit(_run_l27_jpeg_ghost,      img_array, pil_img)
+            f_l28_spec   = pool.submit(_run_l28_specular_falloff, img_array, pil_img)
+            f_l29_dctgo  = pool.submit(_run_l29_dct_grid_offset,  img_array, pil_img)
+            f_l30_mnote  = pool.submit(_run_l30_makernote,        img_array, pil_img, temp_path)
+            # v4.13.0 (Module 1.1): L5/L5b now accept img_array directly —
+            # no URL fetch round-trip on the upload path. Still gated on
+            # include_gpu_layers (defaults to False, must be explicitly
+            # enabled by the caller — typically /analyze-signals on GPU
+            # boxes, NOT /analyze/image which is CPU-only by default).
+            if include_gpu_layers:
+                f_l5  = pool.submit(_run_l5_inversion,  "", img_array)
+                f_l5b = pool.submit(_run_l5b_snapback,   "", img_array)
+            else:
+                f_l5  = None
+                f_l5b = None
 
             layers  = [f_l1.result(), f_l2.result(), f_l3.result(), f_l4.result(),
                        f_l6.result(), f_l7.result(), f_l8.result(), f_l9.result(),
@@ -1227,6 +1454,24 @@ def analyze_image_from_bytes(
             layers.append(f_cmsd.result())
             layers.append(f_tca.result())
             layers.append(f_c2pa.result())
+            # v4.13.0 (Module 1.5): append L26-L30 layer reports to the
+            # layers list so _fuse_scores consumes them with their assigned
+            # LAYER_WEIGHTS entries (1.5, 0.9, 1.0, 0.8, 1.1).
+            layers.append(f_l26_prnu.result())
+            layers.append(f_l27_jghost.result())
+            layers.append(f_l28_spec.result())
+            layers.append(f_l29_dctgo.result())
+            layers.append(f_l30_mnote.result())
+            # v4.13.0 (Module 1.1): append L5/L5b to the layers list (was:
+            # top-level fields only, never fed _fuse_scores). Now they
+            # participate in the weighted average like any other layer —
+            # with weights 1.4 and 1.2 respectively per LAYER_WEIGHTS.
+            l5_result  = f_l5.result()  if f_l5  is not None else {"available": False, "reason": "not_requested"}
+            l5b_result = f_l5b.result() if f_l5b is not None else {"available": False, "reason": "not_requested"}
+            if l5_result.get("available"):
+                layers.append(_build_l5_layer_report(l5_result))
+            if l5b_result.get("available"):
+                layers.append(_build_l5b_layer_report(l5b_result))
             synthid = f_synthid.result()
             v3      = f_v3.result()
         # P5: emit per-layer structured log lines
@@ -1264,8 +1509,13 @@ def analyze_image_from_bytes(
             "text_artifacts":     v3.get("text_artifacts",     {}),
             "composite_cv_score": v3.get("composite_cv_score", 0.5),
             "cv_signals":         v3.get("cv_signals",         {}),
-            "diffusion_inversion": {"available": False, "reason": "bytes_upload_no_url"},
-            "diffusion_snapback":  {"available": False, "reason": "bytes_upload_no_url"},
+            # v4.13.0 (Module 1.1): surface L5/L5b result dicts at top level
+            # (still emitted even when not run, for backwards-compat with
+            # any UI/API consumer that reads them). When the layers ARE
+            # run, they're also now in the layers list above so _fuse_scores
+            # actually consumes them.
+            "diffusion_inversion": l5_result,
+            "diffusion_snapback":  l5b_result,
             "composite_score": fused,
             "version": VERSION,
             # GFE: expose generator attribution at top level

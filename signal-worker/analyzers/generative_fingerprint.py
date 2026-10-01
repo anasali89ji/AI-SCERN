@@ -707,10 +707,14 @@ def _gemini_visual_watermark(img_array: np.ndarray) -> float:
     watermark (Gemini logo) in the bottom-right corner of generated images.
     It appears as a small white/light 4-pointed diamond-star shape.
 
-    Detection approach:
-      1. Crop bottom-right 15% of image
-      2. Look for star-shaped bright blob (high radial symmetry, 4 lobes)
-      3. Check cross-shaped brightness profile in the corner region
+    Module 1.6: tightened to eliminate false positives on real photos with
+    bright corner objects (lamp, window, sun flare, white text). Previously
+    fired on any bright corner with weak radial symmetry — now requires:
+      1. Bright region < 0.5% of corner area (was: < 8% — way too generous)
+      2. Central pixel near-white (>220, was: any brightness)
+      3. Bright region ISOLATED — no other bright pixel within 2× star radius
+    Plus the contribution weight in _attribute_generator was lowered from
+    0.30 → 0.20 with the firing threshold raised from 0.40 → 0.60.
 
     Returns [0, 1]: 0 = no watermark, 1 = strong Gemini star detected.
     """
@@ -725,6 +729,13 @@ def _gemini_visual_watermark(img_array: np.ndarray) -> float:
     max_val = float(gray_c.max())
     if max_val < 120:
         return 0.0  # too dark, no watermark
+
+    # Module 1.6 (criterion 2): require the peak pixel to be near-white (>220).
+    # Real photos with bright corner objects rarely have a single pixel above
+    # 220 unless it's actually a watermark or specular reflection. The Gemini
+    # star is always near-white (it's a printed logo).
+    if max_val < 220:
+        return 0.0
 
     # Gemini star is a SMALL isolated blob — find the single peak pixel
     # and check a 20px radius around it
@@ -745,11 +756,31 @@ def _gemini_visual_watermark(img_array: np.ndarray) -> float:
     if star_mean < corner_mean * 1.5:
         return 0.0  # not a localized bright spot
 
-    # The watermark should occupy < 8% of the corner area (it's small)
+    # Module 1.6 (criterion 1): tightened from 0.08 to 0.005 (0.5%). A real
+    # Gemini star is a tiny isolated ~10-30px blob in a 200×200 corner —
+    # that's < 0.1% of the corner area. Anything above 0.5% is a larger
+    # bright region (lamp shade, sun flare, white text) — NOT a watermark.
     corner_area = gray_c.size
     bright_ratio = float((gray_c > max_val * 0.6).sum()) / corner_area
-    if bright_ratio > 0.08:
+    if bright_ratio > 0.005:
         return 0.0  # too large to be a small watermark
+
+    # Module 1.6 (criterion 3): require the bright region to be ISOLATED.
+    # No other bright pixel (above 70% of max) within a 2× star radius box
+    # around the peak. A real Gemini star is alone in the corner — if there
+    # are multiple bright spots (e.g. text labels, lamp + reflection), this
+    # is not a watermark.
+    iso_box_y0 = max(0, int(cy_peak) - 2 * r_star)
+    iso_box_y1 = min(gray_c.shape[0], int(cy_peak) + 2 * r_star)
+    iso_box_x0 = max(0, int(cx_peak) - 2 * r_star)
+    iso_box_x1 = min(gray_c.shape[1], int(cx_peak) + 2 * r_star)
+    iso_box = gray_c[iso_box_y0:iso_box_y1, iso_box_x0:iso_box_x1]
+    # Exclude the immediate star ROI from the "isolated" check
+    isolated_bright_count = int((iso_box > max_val * 0.7).sum())
+    star_bright_count = int((star_roi > max_val * 0.7).sum())
+    if isolated_bright_count - star_bright_count > 3:
+        # Too many other bright pixels nearby — not isolated
+        return 0.0
 
     thresh = float(np.percentile(star_roi, 70))
     bright_mask = star_roi >= thresh
@@ -881,7 +912,13 @@ def _attribute_generator(
     gemini_raw = (
         latent_geo.get("gemini", 0)   * 0.20 +
         sparkle_score                  * 0.50 +  # strongest discriminator
-        max(0.0, visual_wm - 0.40)    * 0.30    # only count strong visual WM
+        # Module 1.6: raised firing threshold 0.40 → 0.60 and lowered multiplier
+        # 0.30 → 0.20. The watermark detector is now much stricter (requires
+        # near-white, isolated, <0.5% area bright spot), so a visual_wm score
+        # ≥ 0.60 is a much stronger signal than the same threshold was before.
+        # The lower multiplier prevents a single detector hit from dominating
+        # the Gemini composite when sparkle and latent-geo disagree.
+        max(0.0, visual_wm - 0.60)    * 0.20    # only count strong visual WM
     )
     scores["gemini_imagen"] = float(np.clip(gemini_raw * 1.5, 0, 1))
 

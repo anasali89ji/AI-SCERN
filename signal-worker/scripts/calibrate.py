@@ -63,34 +63,72 @@ logger = logging.getLogger("calibrate")
 # information about real-vs-AI and must not be scored as if it voted "real".
 NEUTRAL_STATUSES = ("failure", "neutral_scene_type", "not_applicable")
 
-# layer_num -> (name, current_weight_in_fusion) — kept in sync manually with
-# engines/image_engine.py's LAYER_WEIGHTS. Not imported directly because
-# LAYER_WEIGHTS is a local variable inside _fuse_scores(), not a module-level
-# constant; duplicating it here is the lesser evil vs. refactoring that
-# function's internals just for this script. If you change LAYER_WEIGHTS,
-# update this table too.
-LAYER_INFO: Dict[int, Tuple[str, float]] = {
-    1:  ("Pixel Integrity (ELA)",                 1.1),
-    2:  ("DCT Compression",                       1.0),
-    3:  ("Noise & Statistical",                   0.9),
-    4:  ("Frequency Domain",                      0.9),
-    6:  ("Zero-Shot Entropy Detector",             1.0),
-    7:  ("DIRE Approximation",                    1.0),
-    8:  ("NLM Noise Entropy Tensor",               0.9),
-    9:  ("Modern AI Fingerprint",                 1.3),
-    10: ("Generative Fingerprinting Engine",       1.2),
-    11: ("PAFRA (Polarization)",                  1.0),
-    12: ("BDIS (Bayer Demosaicing)",               1.3),
-    13: ("SSWDP (Subsurface Scattering)",          1.0),
-    14: ("QESM (Quantum Efficiency Spectral)",     0.9),
-    15: ("OBP (Object Boundary Physics)",          1.1),
-    16: ("MRC (Material Reflectance)",             1.0),
-    17: ("GPC (Geometry & Perspective)",           0.9),
-    18: ("TSAD (Texture Synthesis Artifacts)",     1.2),
-    19: ("OSIP (Object-Scene Interaction)",        1.0),
-    20: ("MISG (Multi-Illuminant/Shadow)",         0.35),
-    21: ("LOP (Lens & Optical Physics)",           0.45),
+# ── Module 1.4: LAYER_INFO now imports LAYER_WEIGHTS from image_engine ──────
+# Previously this script duplicated the entire LAYER_WEIGHTS table here with
+# a "lesser evil" comment, because LAYER_WEIGHTS was a local variable inside
+# _fuse_scores() — that's no longer true (Module 1.4 promoted it to a
+# module-level constant). Now we import it directly. LAYER_INFO keeps its
+# human-readable layer names because the engine doesn't carry those.
+# Layer names for L26-L30 (new physics analyzers, Module 1.5) included.
+LAYER_NAMES: Dict[int, str] = {
+    1:  "Pixel Integrity (ELA)",
+    2:  "DCT Compression",
+    3:  "Noise & Statistical",
+    4:  "Frequency Domain",
+    5:  "Diffusion Inversion (DIRE, GPU)",
+    6:  "Zero-Shot Entropy Detector",
+    7:  "DIRE Approximation (TV residual)",
+    8:  "NLM Noise Entropy Tensor",
+    9:  "Modern AI Fingerprint",
+    10: "Generative Fingerprinting Engine",
+    11: "PAFRA (Polarization)",
+    12: "BDIS (Bayer Demosaicing)",
+    13: "SSWDP (Subsurface Scattering)",
+    14: "QESM (Quantum Efficiency Spectral)",
+    15: "OBP (Object Boundary Physics)",
+    16: "MRC (Material Reflectance)",
+    17: "GPC (Geometry & Perspective)",
+    18: "TSAD (Texture Synthesis Artifacts)",
+    19: "OSIP (Object-Scene Interaction)",
+    20: "MISG (Multi-Illuminant/Shadow)",
+    21: "LOP (Lens & Optical Physics)",
+    22: "Document/ID Security Forensics",
+    23: "CMSD (Copy-Move & Splice)",
+    24: "TCA (Temporal Coherence)",
+    25: "C2PA (Content Authenticity)",
+    26: "PRNU Camera Fingerprint (NEW)",
+    27: "JPEG Ghost / Double-JPEG (NEW)",
+    28: "Specular Inverse-Square Falloff (NEW)",
+    29: "DCT Grid Sub-Pixel Offset (NEW)",
+    30: "MakerNote Forensic (NEW)",
 }
+
+
+def _build_layer_info() -> Dict[int, Tuple[str, float]]:
+    """
+    Module 1.4: build LAYER_INFO by zipping LAYER_NAMES against the imported
+    LAYER_WEIGHTS. Returns a fresh dict on each call so tests can monkey-patch
+    LAYER_WEIGHTS at the source (engines.image_engine) and have this script
+    pick up the change. The "5b" key (string) is included via a string-int
+    aliasing trick: callers that look up by int won't see it, which is fine —
+    L5b only runs on GPU boxes and isn't part of the default calibration.
+    """
+    try:
+        from engines.image_engine import LAYER_WEIGHTS
+    except ImportError:
+        # Calibrate is invoked from inside signal-worker/, so engines.* is
+        # importable directly. If we ever run it from outside, fall back to
+        # the LAYER_NAMES-only table with neutral weights so the script
+        # still produces a report (just without engine-sourced weights).
+        return {ln: (name, 1.0) for ln, name in LAYER_NAMES.items()}
+    out: Dict[int, Tuple[str, float]] = {}
+    for ln, name in LAYER_NAMES.items():
+        w = float(LAYER_WEIGHTS.get(ln, 1.0))
+        out[ln] = (name, w)
+    return out
+
+
+LAYER_INFO: Dict[int, Tuple[str, float]] = _build_layer_info()
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 

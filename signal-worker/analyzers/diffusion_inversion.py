@@ -100,28 +100,50 @@ def _load_model(model_key: str = 'sd15'):
 
 # ── Core analysis ─────────────────────────────────────────────────────────────
 
-def diffusion_inversion_score(image_url: str, model_key: str = 'sd15') -> dict:
+def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_array: Optional[np.ndarray] = None) -> dict:
     """
     Run DDIM inversion on the image and measure reconstruction MSE.
 
-    Returns:
-        mse:        float — reconstruction error (lower = more AI-like)
-        score:      float — 0.0 (real) to 1.0 (AI-generated)
-        confidence: float — certainty of the score
-        model:      str   — model used for inversion
-        steps:      int   — DDIM steps used
+    Parameters
+    ----------
+    image_url : str
+        Public URL of the image to fetch. Required if `img_array` is None.
+    model_key : str
+        Which diffusion model to use ('sd15' or 'sdxl').
+    img_array : np.ndarray, optional
+        Pre-loaded RGB image array (H×W×3, uint8). When provided, skips
+        the HTTP fetch entirely — used by image_engine.analyze_image_from_bytes
+        so we can analyze uploaded bytes without round-tripping through a URL.
+
+    Returns
+    -------
+    mse:        float — reconstruction error (lower = more AI-like)
+    score:      float — 0.0 (real) to 1.0 (AI-generated)
+    confidence: float — certainty of the score
+    model:      str   — model used for inversion
+    steps:      int   — DDIM steps used
     """
     import torch
     from PIL import Image
 
     # ── Load image ────────────────────────────────────────────────────────────
+    # Module 1.1: prefer in-memory img_array (no URL fetch needed on upload path).
+    # Falls back to URL fetch only when img_array is None — preserves the
+    # original URL-based call site (analyze_image_from_url).
     try:
-        resp = requests.get(image_url, timeout=20,
-                            headers={'User-Agent': 'Aiscern-L5/1.0'})
-        resp.raise_for_status()
-        image = Image.open(BytesIO(resp.content)).convert('RGB')
+        if img_array is not None:
+            if img_array.ndim != 3 or img_array.shape[2] != 3:
+                raise ValueError(f"img_array must be H×W×3 RGB, got shape {img_array.shape}")
+            image = Image.fromarray(img_array.astype(np.uint8)).convert('RGB')
+        else:
+            if not image_url:
+                raise ValueError("either image_url or img_array must be provided")
+            resp = requests.get(image_url, timeout=20,
+                                headers={'User-Agent': 'Aiscern-L5/1.0'})
+            resp.raise_for_status()
+            image = Image.open(BytesIO(resp.content)).convert('RGB')
     except Exception as e:
-        raise ValueError(f"Failed to fetch image from {image_url}: {e}")
+        raise ValueError(f"Failed to load image (url={image_url!r}, img_array={'provided' if img_array is not None else 'None'}): {e}")
 
     # ── Load model ────────────────────────────────────────────────────────────
     try:

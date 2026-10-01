@@ -24,15 +24,25 @@ scikit-image==0.24.0
 imagehash==4.3.1
 
 # === GPU LAYERS (L5, L5b) -- install separately on GPU instances ===
+# v4.13.0 (Module 1.1): lpips is now uncommented because L5b (snap-back)
+# actually feeds _fuse_scores when include_gpu_layers=True. Previously
+# commented out, so L5b always fell back to L2 — much weaker. torch /
+# torchvision / diffusers / accelerate are still gated because they're huge
+# (4GB+) and only needed on GPU boxes.
 # torch==2.3.0+cu121  # Uncomment on GPU droplets
 # torchvision==0.18.0+cu121
 # torchaudio==2.3.0+cu121
 # diffusers==0.27.2
 # accelerate==0.28.0
-# lpips==0.1.4
+lpips==0.1.4
 
 # ── OCR ───────────────────────────────────────────────────────────────────────
 pytesseract==0.3.13
+
+# ── EXIF + MakerNote parsing (Module 1.5: MakerNote Forensic Analyzer) ───────
+# exifread extracts MakerNotes that PIL silently drops — needed for the
+# L30 cross-check (camera model in MakerNote vs EXIF Make/Model).
+exifread==3.0.0
 
 # ── Face detection (OpenCV DNN — see forensics/face_deepfake.py) ─────────────
 # face-recognition / dlib REMOVED: only its bounding boxes were ever used

@@ -36,9 +36,23 @@ def noise_coherence_analysis(img_array: np.ndarray) -> Dict[str, Any]:
     noise_uniformity = np.std(local_vars) / (np.mean(local_vars) + 1e-8)
 
     flat_residual = residual.flatten()
-    autocorr = np.correlate(flat_residual[:10000], flat_residual[:10000], mode="full")
-    autocorr = autocorr[autocorr.size // 2:]
-    spatial_correlation = np.mean(autocorr[1:10]) / (autocorr[0] + 1e-8)
+    # Module 1.3: replaced O(n²) np.correlate with scipy.signal.fftconvolve.
+    # The old code computed `np.correlate(flat[:10000], flat[:10000], mode='full')`
+    # which is O(n²) memory AND runtime — several seconds per image, blocking
+    # the sub-second latency target. FFT convolution produces the same first
+    # N lags in O(n log n) — milliseconds.
+    from scipy.signal import fftconvolve
+
+    N = min(10000, len(flat_residual))
+    sample = flat_residual[:N].astype(np.float32)
+    # autocorr[k] = sum_{i} sample[i] * sample[i-k]  (mode='full' gives 2N-1 lags)
+    autocorr_full = fftconvolve(sample, sample[::-1], mode='full')
+    center = len(autocorr_full) // 2
+    # First 50 lags — we only ever read [1:10] below, but compute a few extra
+    # in case future code wants to look at longer-range correlation.
+    n_lags = 50
+    autocorr = autocorr_full[center:center + n_lags]
+    spatial_correlation = float(np.mean(autocorr[1:10]) / (autocorr[0] + 1e-8))
 
     return {
         "noise_uniformity_score": float(noise_uniformity),

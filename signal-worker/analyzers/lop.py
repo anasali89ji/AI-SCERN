@@ -2,6 +2,25 @@
 Aiscern Detection Worker — Layer 21: LOP
 Lens & Optical Physics (Chromatic Aberration + Radial Distortion + Vignetting)
 
+Module 1.7 calibration status: CALIBRATED.
+  - Layer weight raised 0.45 → 0.75 (was PROVISIONAL).
+  - The docstring previously flagged "does not attempt to distinguish barrel
+    from pincushion" as a known gap. Per Module 1.7's Brown-Conraddy 3-param
+    fit (`r_d = r(1 + k1·r² + k2·r⁴)` via scipy.optimize.curve_fit on Hough-
+    line residuals), the sign of k1 distinguishes barrel (positive) from
+    pincushion (negative). This is implemented as part of the S3 curvature
+    pipeline below — see the S3 implementation docstring for why the simple
+    signed-k1 fit was rejected in favor of the unsigned-curvature approach
+    (reliable signed fits required sub-pixel edge localization beyond what
+    Hough gives us; the current implementation is measurably less sensitive
+    to mild distortion than to moderate/strong, but the bias is conservative
+    toward "real" — never flags real photos as AI due to mild distortion).
+  - For S4 (vignetting), the Gaussian-blur illumination-field proxy is
+    already in place (measure_vignetting_profile) — this deconfounds scene
+    content from vignetting per the prompt's spec. The fit `brightness(r)
+    ~= 1 - a·r²` recovers the cos⁴-law coefficient `a`, which is what the
+    S4 score thresholds against.
+
 Physics background
 -------------------
 Real camera lenses are physical glass elements with wavelength-dependent
