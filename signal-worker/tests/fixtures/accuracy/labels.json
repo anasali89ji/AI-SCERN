@@ -1,0 +1,422 @@
+[
+  {
+    "path": "audio/ai/ai_001.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_002.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_003.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_004.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_005.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_006.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_007.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_008.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_009.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/ai/ai_010.wav",
+    "label": "ai",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _robotic_audio generator — steady sine)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_001.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_002.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_003.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_004.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_005.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_006.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_007.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_008.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_009.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "audio/human/human_010.wav",
+    "label": "human",
+    "modality": "audio",
+    "source": "synthetic-proxy (numpy _human_like_audio generator — vibrato+jitter)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_001.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_002.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_003.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_004.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_005.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_006.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_007.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_008.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_009.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/ai/ai_010.png",
+    "label": "ai",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _ai_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_001.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_002.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_003.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_004.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_005.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_006.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_007.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_008.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_009.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "image/human/human_010.png",
+    "label": "human",
+    "modality": "image",
+    "source": "synthetic-proxy (numpy _camera_like_image generator)",
+    "license": "public-domain (synthetic, no copyrightable authorship)"
+  },
+  {
+    "path": "text/ai/ai_001.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_002.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_003.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_004.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_005.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_006.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_007.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_008.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_009.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/ai/ai_010.txt",
+    "label": "ai",
+    "modality": "text",
+    "source": "synthetic-proxy (hand-written GPT-style paragraph, 2026-10)",
+    "license": "public-domain (authored by maintainer for accuracy fixtures)"
+  },
+  {
+    "path": "text/human/human_001.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_002.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_003.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_004.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_005.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_006.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_007.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_008.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_009.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  },
+  {
+    "path": "text/human/human_010.txt",
+    "label": "human",
+    "modality": "text",
+    "source": "synthetic-proxy (Project Gutenberg public-domain excerpt)",
+    "license": "public-domain (Gutenberg text — source works listed in README.md)"
+  }
+]

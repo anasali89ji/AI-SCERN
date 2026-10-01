@@ -1,7 +1,13 @@
 import Link from 'next/link'
 import { SiteNav }    from '@/components/SiteNav'
 import { SiteFooter } from '@/components/site-footer'
-import { SquareArrowOutUpRight, ArrowRight, Info } from 'lucide-react'
+import { SquareArrowOutUpRight, ArrowRight, Info, AlertTriangle } from 'lucide-react'
+import { fetchBenchmarks, type BenchmarkRow } from '@/lib/benchmarks'
+
+// Disable static generation — the page must render fresh per request so the
+// `measured` flag reflects the current state of the `model_accuracy_30d` view.
+export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata = {
   title: 'AI Verification Accuracy Benchmarks | Aiscern',
@@ -9,36 +15,12 @@ export const metadata = {
   openGraph: { title: 'AI Verification Accuracy Benchmarks | Aiscern', url: 'https://aiscern.com/benchmarks' },
 }
 
-const TEXT_RESULTS = [
-  { model: 'RoBERTa-base-openai-detector',       auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
-  { model: 'Binoculars (perplexity/crossperplexity)', auc: 0.91, precision: 0.89, recall: 0.92, f1: 0.905, fpr: 0.09 },
-  { model: 'Gemini 2.0 Flash (ensemble head)',    auc: 0.90, precision: 0.88, recall: 0.89, f1: 0.885, fpr: 0.10 },
-  { model: 'Ensemble (all combined)',             auc: 0.94, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
-]
-const IMAGE_RESULTS = [
-  { model: 'ViT-based classifier (fine-tuned)', auc: 0.94, precision: 0.91, recall: 0.93, f1: 0.920, fpr: 0.07 },
-  { model: 'CLIP embedding similarity', auc: 0.89, precision: 0.87, recall: 0.89, f1: 0.880, fpr: 0.10 },
-  { model: 'Pixel integrity + frequency domain (L1–L4)', auc: 0.85, precision: 0.83, recall: 0.86, f1: 0.845, fpr: 0.13 },
-  { model: 'Grok Vision (RAG-augmented)', auc: 0.92, precision: 0.90, recall: 0.91, f1: 0.905, fpr: 0.08 },
-  { model: 'L11 PAFRA — Polarization & Fresnel (sky/outdoor)', auc: 0.81, precision: 0.76, recall: 1.00, f1: 0.865, fpr: 0.18 },
-  { model: 'L12 BDIS — Bayer Demosaicing (universal)', auc: 0.91, precision: 0.89, recall: 1.00, f1: 0.942, fpr: 0.11 },
-  { model: 'L13 SSWDP — Subsurface Scattering (portraits)', auc: 0.79, precision: 0.71, recall: 1.00, f1: 0.831, fpr: 0.21 },
-  { model: 'L14 QESM — Quantum Efficiency (gray regions)', auc: 0.83, precision: 0.78, recall: 0.88, f1: 0.826, fpr: 0.17 },
-  { model: 'Physical consistency ensemble (L11–L14)', auc: 0.91, precision: 0.88, recall: 1.00, f1: 0.936, fpr: 0.13 },
-  { model: 'Ensemble — all 14 layers combined', auc: 0.98, precision: 0.96, recall: 0.97, f1: 0.965, fpr: 0.03 },
-]
-const AUDIO_RESULTS = [
-  { model: 'wav2vec2 (fine-tuned, ASVspoof)', auc: 0.93, precision: 0.91, recall: 0.92, f1: 0.915, fpr: 0.07 },
-  { model: 'Spectral feature analysis', auc: 0.87, precision: 0.85, recall: 0.86, f1: 0.855, fpr: 0.12 },
-  { model: 'SynthID local watermark check', auc: 0.82, precision: 0.88, recall: 0.78, f1: 0.827, fpr: 0.05 },
-  { model: 'Ensemble (all combined)', auc: 0.95, precision: 0.92, recall: 0.93, f1: 0.925, fpr: 0.06 },
-]
-const VIDEO_RESULTS = [
-  { model: 'NVIDIA NIM deepfake detection', auc: 0.91, precision: 0.89, recall: 0.90, f1: 0.895, fpr: 0.09 },
-  { model: 'Frame-level ViT ensemble', auc: 0.88, precision: 0.86, recall: 0.87, f1: 0.865, fpr: 0.11 },
-  { model: 'Temporal consistency analysis', auc: 0.83, precision: 0.82, recall: 0.83, f1: 0.825, fpr: 0.15 },
-  { model: 'Ensemble (all combined)', auc: 0.93, precision: 0.91, recall: 0.90, f1: 0.905, fpr: 0.08 },
-]
+// The hardcoded TEXT_RESULTS / IMAGE_RESULTS / AUDIO_RESULTS / VIDEO_RESULTS
+// arrays that previously lived here have been moved to
+// `frontend/lib/benchmarks.ts` as FALLBACK_TARGETS — the single source of
+// truth shared with /api/benchmarks/csv/route.ts. When Supabase returns no
+// rows from model_accuracy_30d, fetchBenchmarks() returns FALLBACK_TARGETS
+// with measured:false and the page renders the "target values" banner.
 const DATASETS = [
   { modality:'Text',  name:'PAN25 Authorship Verification',   url:'https://pan.webis.de/clef25/pan25-web/authorship-verification.html', size:'~500K samples' },
   { modality:'Text',  name:'PERSUADE Corpus 2.0',             url:'https://github.com/scrosseye/persuade_corpus_2.0',                  size:'~25K essays'   },
@@ -128,13 +110,29 @@ function BenchTable({ rows }: { rows: { model: string; auc: number; precision: n
   )
 }
 
-export default function BenchmarksPage() {
-  const sections = [
-    { label: 'Text',  rows: TEXT_RESULTS  },
-    { label: 'Image', rows: IMAGE_RESULTS },
-    { label: 'Audio', rows: AUDIO_RESULTS },
-    { label: 'Video', rows: VIDEO_RESULTS },
-  ]
+export default async function BenchmarksPage() {
+  // Fetch live measured numbers from the model_accuracy_30d Supabase view.
+  // Falls back to FALLBACK_TARGETS (the historical hardcoded values) with
+  // `measured: false` when the view is empty or Supabase is unavailable.
+  // Shared with /api/benchmarks/csv/route.ts via frontend/lib/benchmarks.ts
+  // so the page and the API route never drift.
+  const payload = await fetchBenchmarks()
+  const measured = payload.measured
+  const measuredAt = payload.measuredAt
+
+  // Group by modality — works for both live rows and fallback targets.
+  const groupByModality = (rows: BenchmarkRow[]) => {
+    const map = new Map<string, BenchmarkRow[]>()
+    for (const r of rows) {
+      const k = r.modality
+      if (!map.has(k)) map.set(k, [])
+      map.get(k)!.push(r)
+    }
+    return ['Text', 'Image', 'Audio', 'Video']
+      .filter(k => map.has(k))
+      .map(k => ({ label: k, rows: map.get(k)! }))
+  }
+  const sections = groupByModality(payload.models)
 
   return (
     <div className="min-h-screen bg-surface text-silver-800">
@@ -152,11 +150,46 @@ export default function BenchmarksPage() {
             </h1>
             <p className="text-silver-700 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
               AUC-ROC, precision, recall, F1, and false-positive rates across all modalities.
-              Measured on held-out test sets from public benchmark datasets.
+              {measured
+                ? ' Measured on trailing-30-day user-feedback-validated scans.'
+                : ' Target values from held-out test sets — live numbers below.'}
             </p>
           </div>
 
-          {/* Disclaimer */}
+          {/* Measured-status banner — only renders when numbers are NOT yet measured */}
+          {!measured && (
+            <div className="flex gap-3 p-4 bg-warning/5 border border-warning/30 rounded-xl mb-8 sm:mb-10 text-sm text-silver-700">
+              <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-warning mb-1">These are target values, not measured values.</p>
+                <p className="text-silver-700">
+                  Live accuracy will appear here once 1,000+ user-feedback-validated scans accumulate
+                  in the <code className="px-1 py-0.5 bg-surface-elevated rounded text-xs">model_accuracy_30d</code>{' '}
+                  Supabase view. Until then, the numbers below are the engine&apos;s design targets on
+                  held-out test sets from public benchmark datasets — not measurements of live traffic.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Live-measured banner — only renders when numbers ARE measured */}
+          {measured && measuredAt && (
+            <div className="flex gap-3 p-4 bg-accent/5 border border-accent/30 rounded-xl mb-8 sm:mb-10 text-sm text-silver-700">
+              <Info className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-accent mb-1">Live measured accuracy (trailing 30 days).</p>
+                <p className="text-silver-700">
+                  Computed from <code className="px-1 py-0.5 bg-surface-elevated rounded text-xs">model_predictions</code>{' '}
+                  × <code className="px-1 py-0.5 bg-surface-elevated rounded text-xs">scan_feedback</code>.
+                  Last updated: {new Date(measuredAt).toLocaleString()}. Note: AUC column reflects
+                  classification accuracy (verdict-vs-ground-truth) as a proxy — a true AUC requires
+                  raw scores, see <Link href="/methodology" className="text-accent underline">methodology</Link>.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Disclaimer — always shown */}
           <div className="flex gap-3 p-4 bg-surface-elevated border border-silver-400 rounded-xl mb-8 sm:mb-10 text-sm text-silver-700">
             <Info className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
             <p>

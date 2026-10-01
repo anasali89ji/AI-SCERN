@@ -1,0 +1,92 @@
+# AI-SCERN Accuracy Smoke Fixtures
+
+Vendored labeled samples used by `signal-worker/tests/test_accuracy_fixture.py`
+to keep a per-modality accuracy regression floor in CI.
+
+## Layout
+
+```
+fixtures/accuracy/
+├── README.md             ← this file
+├── labels.json           ← manifest of every sample (path, label, modality, source, license)
+├── text/
+│   ├── ai/               ← 10 short AI-style paragraphs (~150 words each)
+│   │   ├── ai_001.txt … ai_010.txt
+│   └── human/            ← 10 Project Gutenberg public-domain excerpts (~150 words each)
+│       └── human_001.txt … human_010.txt
+├── image/
+│   ├── ai/               ← 10 synthetic PNGs (128×128, _ai_like_image generator)
+│   │   └── ai_001.png … ai_010.png
+│   └── human/            ← 10 synthetic PNGs (128×128, _camera_like_image generator)
+│       └── human_001.png … human_010.png
+└── audio/
+    ├── ai/               ← 10 synthetic WAVs (16 kHz mono, 6 s, _robotic_audio generator)
+    │   └── ai_001.wav … ai_010.wav
+    └── human/            ← 10 synthetic WAVs (16 kHz mono, 6 s, _human_like_audio generator)
+        └── human_001.wav … human_010.wav
+```
+
+## Source attribution & license
+
+Every file in this directory is in the public domain or carries no copyrightable
+authorship (synthetic numpy output). The text/human samples are short excerpts
+(~150 words) from Project Gutenberg public-domain works, used under the
+Project Gutenberg License — see https://www.gutenberg.org/help/permissions.html
+
+| Sample range          | Source work                           | Author              | Year | License |
+|-----------------------|---------------------------------------|---------------------|------|---------|
+| human_001.txt          | Pride and Prejudice                   | Jane Austen         | 1813 | Public domain (PD-US) |
+| human_002.txt          | Moby-Dick; or, The Whale              | Herman Melville     | 1851 | Public domain (PD-US) |
+| human_003.txt          | Alice's Adventures in Wonderland      | Lewis Carroll       | 1865 | Public domain (PD-US) |
+| human_004.txt          | A Scandal in Bohemia (Sherlock Holmes)| Arthur Conan Doyle  | 1892 | Public domain (PD-US) |
+| human_005.txt          | A Tale of Two Cities                  | Charles Dickens     | 1859 | Public domain (PD-US) |
+| human_006.txt          | Treasure Island                       | Robert L. Stevenson | 1883 | Public domain (PD-US) |
+| human_007.txt          | Jane Eyre                             | Charlotte Brontë    | 1847 | Public domain (PD-US) |
+| human_008.txt          | Great Expectations                    | Charles Dickens     | 1861 | Public domain (PD-US) |
+| human_009.txt          | Frankenstein; or, The Modern Prometheus | Mary Shelley      | 1818 | Public domain (PD-US) |
+| human_010.txt          | Adventures of Huckleberry Finn        | Mark Twain          | 1884 | Public domain (PD-US) |
+
+The text/ai/*.txt samples are hand-authored by the maintainer specifically as
+fixtures (released to the public domain under CC0) — they intentionally use
+GPT-style vocabulary ("delve", "tapestry", "in conclusion", "furthermore",
+"moreover", "additionally", "consequently") to provide a clearly
+AI-detectable baseline.
+
+The image/* and audio/* samples are synthetic numpy arrays produced by the
+generator script — no human authorship, no copyrightable content.
+
+## Why all samples are tagged `synthetic-proxy`
+
+`labels.json` marks every sample's `source` field with the prefix
+`synthetic-proxy`. The accuracy smoke test in
+`signal-worker/tests/test_accuracy_fixture.py` reads this prefix to select
+the lower accuracy floor (65 % for text/audio, 70 % for image) instead of
+the higher real-data floor (75–80 %).
+
+This is intentional: the vendored fixtures exist to catch *regressions*
+(i.e. "did this PR break the engine's ability to tell apart obvious cases?"),
+not to make strong real-world accuracy claims. Real labeled data should be
+sourced via `signal-worker/scripts/fetch_calibration_dataset.py` and run
+through `signal-worker/scripts/calibrate.py` for production calibration —
+see Module 7 of the master repair prompt.
+
+## Replacing with real labeled data
+
+To upgrade from synthetic-proxy to real fixtures without rewriting the test:
+
+1. Drop real labeled samples into the same directory layout
+   (`text/ai/ai_001.txt`, `image/human/human_001.png`, etc.). Keep the
+   same filenames so the existing `labels.json` paths still resolve —
+   OR replace `labels.json` entirely with your own manifest.
+2. Update the `source` field for each replaced sample to remove the
+   `synthetic-proxy` prefix (e.g. `"source": "GPT-4 via ChatGPT 2026-10-15"`
+   or `"source": "LibriVox public-domain human speech"`).
+3. The test will automatically pick the higher accuracy floor (80 % for text,
+   75 % for image/audio) once any single sample is tagged non-synthetic.
+
+## Sizing
+
+- Total directory size: 8185.0 KB (7.99 MB) — well under the 30 MB ceiling.
+- Largest individual file: ai_001.wav (375.1 KB).
+
+Generated by `/home/z/my-project/scripts/generate_fixtures.py` on 2026-10-02.
