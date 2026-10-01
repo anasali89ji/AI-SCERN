@@ -51,6 +51,13 @@ MIN_PAIRS_WITH_DATA = 2
 # in most register-neutral prose contexts (not a claim that they're
 # ALWAYS interchangeable, just that both appear regularly in ordinary
 # writing regardless of topic).
+# Module 2.7: dropped high-frequency plain-member pairs.
+# Was: included ("however", "but"), ("in order to", "to") — plain members
+# ("but", "to") appear in virtually every English document. _count(plain,
+# lower_text) returned 5-50+ for these while _count(formal, ...) returned
+# 0-2 → consistency = max(formal, plain) / total ≈ 1.0 always. The
+# < 0.75 branch could never fire. Now: only pairs where BOTH members are
+# equally distinctive — neither is a stop-word-level frequency.
 NEAR_SYNONYM_PAIRS: List[Tuple[str, str]] = [
     ("utilize", "use"),
     ("purchase", "buy"),
@@ -60,14 +67,14 @@ NEAR_SYNONYM_PAIRS: List[Tuple[str, str]] = [
     ("assist", "help"),
     ("obtain", "get"),
     ("additionally", "also"),
-    ("however", "but"),
+    # Module 2.7: REMOVED ("however", "but") — "but" too common
     ("demonstrate", "show"),
     ("sufficient", "enough"),
     ("approximately", "about"),
     ("regarding", "about"),
     ("prior to", "before"),
     ("subsequent to", "after"),
-    ("in order to", "to"),
+    # Module 2.7: REMOVED ("in order to", "to") — "to" too common
 ]
 
 

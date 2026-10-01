@@ -11,8 +11,14 @@ import { toUserError } from '@/lib/utils/user-errors'
 import { VerifyDocSequenceLoader } from '@/components/VerifyDocSequenceLoader'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { formatFileSize } from '@/lib/utils/helpers'
+import { PDF_MAX_SIZE_BYTES, DOCX_MAX_SIZE_BYTES, PPTX_MAX_SIZE_BYTES } from '@/lib/constants'
 
-const MAX_SIZE = 25 * 1024 * 1024
+// Module 2.5: replaced local MAX_SIZE = 25MB with the unified constants
+// from lib/constants.ts. Was inconsistent — /detect/text used 20MB for PDFs,
+// /detect/document used 25MB flat. Now: per-MIME limit (PDF 20MB, OOXML 25MB).
+// Dropzone accepts the largest of the three so the UX matches whichever
+// format the user picks (the route itself enforces the per-MIME limit).
+const MAX_SIZE = Math.max(PDF_MAX_SIZE_BYTES, DOCX_MAX_SIZE_BYTES, PPTX_MAX_SIZE_BYTES)
 const ACCEPTED = {
   'application/pdf': ['.pdf'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],

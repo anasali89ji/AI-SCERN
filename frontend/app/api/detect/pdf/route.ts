@@ -6,6 +6,7 @@ import { analyzeText } from '@/lib/inference/hf-analyze'
 import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { sanitizeDetectionResultForClient } from '@/lib/api/sanitize-response'
+import { validateDocumentUpload } from '@/lib/security/fileValidation'
 
 export const dynamic    = 'force-dynamic'
 
@@ -119,6 +120,19 @@ export async function POST(req: NextRequest) {
       const bytes  = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
+      // Module 2.4: magic-byte validation. The client-side `file.type` can
+      // be spoofed trivially (any binary renamed to .pdf gets `application/pdf`
+      // in most browsers' file pickers). This check verifies the first 4
+      // bytes are actually `%PDF` before the file reaches pdf-parse, blocking
+      // a major class of malicious-input DoS vectors.
+      const validation = validateDocumentUpload(buffer, 'application/pdf', file.size)
+      if (!validation.valid) {
+        return NextResponse.json({
+          success: false,
+          error: { code: 'INVALID_FILE', message: validation.error },
+        }, { status: 400 })
+      }
+
       let rawPdfText = ''
       try {
         // pdf-parse v2: main CJS export exposes { PDFParse }
@@ -131,13 +145,18 @@ export async function POST(req: NextRequest) {
         rawPdfText = textResult?.text ?? ''
         if (typeof parser.destroy === 'function') await parser.destroy()
       } catch (pdfErr: any) {
-        // Hard fallback for text-based PDFs: strip binary bytes
-        rawPdfText = buffer.toString('latin1')
-          .replace(/[^\x20-\x7E\n]/g, ' ')
-          .replace(/\d+ \d+ obj[\s\S]*?endobj/g, ' ')
-          .replace(/<<[\s\S]{0,500}>>/g, ' ')
-          .replace(/stream[\s\S]*?endstream/g, ' ')
-          .replace(/xref[\s\S]*?%%EOF/g, ' ')
+        // Module 2.10: was a latin1-strip fallback that produced non-empty
+        // garbage from corrupt PDFs and passed it as "real text" to the
+        // detection engine — confident but wrong verdicts. Now: fail
+        // cleanly so the caller sees the actual parse failure.
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'PARSE_FAILED',
+            message: 'PDF could not be parsed. The file may be corrupt or password-protected.',
+            detail: pdfErr?.message?.slice(0, 200) || String(pdfErr).slice(0, 200),
+          },
+        }, { status: 422 })
       }
 
       if (!rawPdfText.trim()) {
@@ -223,8 +242,9 @@ export async function POST(req: NextRequest) {
         if (r.status === 'fulfilled') {
           chunkResults.push(r.value)
           // Fast-path: if first 5 chunks all show >90% AI, return early
+          // Module 2.2: confidence is 0-1 float, not 0-100. Was: > 90 (always false).
           if (!earlyResult && chunkResults.length >= 5) {
-            const highConf = chunkResults.filter(c => c.confidence > 90 && c.verdict === 'AI')
+            const highConf = chunkResults.filter(c => c.confidence > 0.90 && c.verdict === 'AI')
             if (highConf.length >= 4) earlyResult = chunkResults[0]
           }
         }
@@ -232,26 +252,48 @@ export async function POST(req: NextRequest) {
     }
 
     // Aggregate results with weighted averaging
+    // Module 2.2: confidence from analyzeText is 0-1 float, NOT 0-100.
+    // Was: `c.verdict === 'AI' ? c.confidence : 100 - c.confidence` compared
+    // to thresholds >=62/<=38 — for an AI verdict with confidence=0.85, the
+    // expression evaluated to `0.85 >= 62` (false) and `0.85 <= 38` (true),
+    // classifying every AI chunk as HUMAN. Every long AI-generated PDF was
+    // misclassified as HUMAN. Now: defensive scale normalization (handles
+    // both 0-1 and 0-100 in case any caller passes the old format).
     const totalWeight = chunkResults.length
     const aiScore = chunkResults.reduce((sum, c) => {
-      const score = c.verdict === 'AI' ? c.confidence : c.verdict === 'HUMAN' ? 100 - c.confidence : 50
+      const conf100 = c.confidence <= 1 ? c.confidence * 100 : c.confidence
+      const score = c.verdict === 'AI' ? conf100 : c.verdict === 'HUMAN' ? 100 - conf100 : 50
       return sum + score
     }, 0) / Math.max(totalWeight, 1)
 
     const finalVerdict: 'AI' | 'HUMAN' | 'UNCERTAIN' =
       aiScore >= 62 ? 'AI' : aiScore <= 38 ? 'HUMAN' : 'UNCERTAIN'
 
-    // Top 5 most AI-probable paragraphs
-    const paraScores = await Promise.allSettled(
-      paragraphs.slice(0, 10).map(async p => {
-        const r = await analyzeText(p.text.slice(0, 1500))
-        return { text: p.text.slice(0, 300), start: p.start, confidence: r.confidence, verdict: r.verdict }
+    // Module 2.3: drop the top-10-paragraph re-scan.
+    // Was: `paragraphs.slice(0, 10).map(async p => analyzeText(p.text))` —
+    // 10 extra analyzeText calls (each = 6 HF models + Gemini + signal-worker)
+    // on top of the chunk analysis. For a 10-paragraph PDF that's ~70 HF
+    // calls within maxDuration=55s — blows the Vercel budget. The chunk
+    // results already cover the same text. Now: derive paragraph scores
+    // from the chunk that overlaps each paragraph (by char offset).
+    const topParagraphs = paragraphs.slice(0, 10).map(p => {
+      // Find the chunk that overlaps this paragraph's start offset
+      const containingChunk = chunkResults.find(c =>
+        p.start >= c.startChar && p.start < c.endChar,
+      )
+      return {
+        text: p.text.slice(0, 300),
+        start: p.start,
+        confidence: containingChunk?.confidence ?? 0.5,
+        verdict: containingChunk?.verdict ?? 'UNCERTAIN' as const,
+      }
+    })
+      // Sort by AI-ness (AI chunks first, then UNCERTAIN, then HUMAN)
+      .sort((a, b) => {
+        const rank = (v: string) => v === 'AI' ? 0 : v === 'UNCERTAIN' ? 1 : 2
+        if (rank(a.verdict) !== rank(b.verdict)) return rank(a.verdict) - rank(b.verdict)
+        return b.confidence - a.confidence
       })
-    )
-    const topParagraphs = paraScores
-      .filter(r => r.status === 'fulfilled')
-      .map(r => (r as any).value)
-      .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 5)
 
     const processingTime = Date.now() - start

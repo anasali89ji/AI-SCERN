@@ -9,12 +9,17 @@ import { analyzeText, analyzeImage } from '@/lib/inference/hf-analyze'
 import { preprocessImage } from '@/lib/inference/preprocess-image'
 import { analyzePlagiarism } from '@/lib/inference/plagiarism-analyzer'
 import { computeCompositeVerdict, buildCompositeSummary } from '@/lib/verdict/document-composite'
+import { validateDocumentUpload } from '@/lib/security/fileValidation'
+import { PDF_MAX_SIZE_BYTES, DOCX_MAX_SIZE_BYTES, PPTX_MAX_SIZE_BYTES } from '@/lib/constants'
 import type { TextAnalysisResult, ImageAnalysisResult } from '@/lib/verdict/document-composite'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const MAX_DOC_SIZE = 25 * 1024 * 1024 // 25MB
+// Module 2.5: replaced local MAX_DOC_SIZE = 25MB with unified constants.
+// PDFs now respect PDF_MAX_SIZE_BYTES (20MB) — was inconsistent (22MB PDF
+// rejected on /detect/text but accepted on /detect/document).
+// DOCX/PPTX use their own 25MB constants.
 const ALLOWED_MIMES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -87,13 +92,35 @@ export async function POST(req: NextRequest) {
         error: { code: 'INVALID_TYPE', message: 'Only PDF, DOCX, and PPTX files are supported' },
       }, { status: 400 })
     }
-    if (file.size > MAX_DOC_SIZE) {
-      return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Document must be under 25MB' } }, { status: 400 })
+    // Module 2.5: MIME-specific size limit (PDF 20MB, DOCX/PPTX 25MB).
+    // Was: 25MB flat for everything — inconsistent with /detect/text (20MB).
+    const maxSize = (file.type === 'application/pdf') ? PDF_MAX_SIZE_BYTES
+                  : (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ? DOCX_MAX_SIZE_BYTES
+                  : PPTX_MAX_SIZE_BYTES
+    if (file.size > maxSize) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'TOO_LARGE',
+          message: `Document must be under ${Math.floor(maxSize / 1024 / 1024)}MB`,
+        },
+      }, { status: 400 })
     }
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const bodyBytes = new Uint8Array(buffer)
+
+    // Module 2.4: magic-byte validation. Was: any binary renamed to .pdf
+    // would reach pdf-parse or JSZip before being rejected. Now: rejected
+    // early with a clear INVALID_FILE error.
+    const validation = validateDocumentUpload(buffer, file.type, file.size)
+    if (!validation.valid) {
+      return NextResponse.json({
+        success: false,
+        error: { code: 'INVALID_FILE', message: validation.error },
+      }, { status: 400 })
+    }
 
     // R2 upload of the original document -- fire-and-forget, non-fatal.
     const uploadPromise = (async () => {

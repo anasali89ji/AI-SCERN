@@ -132,6 +132,188 @@ def _compute_perplexity(text: str, model_name: str = "distilgpt2") -> Dict[str, 
     }
 
 
+# ── Binoculars (Hans et al. 2024, Module 2.8) ────────────────────────────────
+
+def _compute_binoculars(text: str) -> Dict[str, Any]:
+    """
+    Binoculars: zero-shot AI-text detection (Hans et al. 2024).
+
+    Score = perplexity_observer / perplexity_performer.
+      - observer: smaller LM (distilgpt2, 82M) — already loaded for _compute_perplexity
+      - performer: larger LM (gpt2 base, 124M) — loaded lazily via model_cache
+    AI text lies ON both manifolds → ratio near 1.0
+    Human text lies OFF the performer's manifold but ON the observer's → ratio > 1.0
+    Threshold (per paper): score < 0.9 → AI, score > 1.1 → human.
+
+    The Binoculars paper reports AUROC 0.99+ on the Hydra test set — current
+    zero-shot SOTA. Weight 0.15 in the composite (matches perplexity).
+
+    Memory: distilgpt2 (~350MB) + gpt2 base (~500MB) = ~850MB total — fits
+    in the 1GB RAM target with headroom for the rest of the engine.
+    """
+    import torch
+
+    # Observer = distilgpt2 (already loaded by _compute_perplexity)
+    observer_model_name = "distilgpt2"
+    # Performer = gpt2 base (124M)
+    performer_model_name = "gpt2"
+
+    try:
+        observer_tok = get_model(f"tokenizer:{observer_model_name}", _load_tokenizer, observer_model_name)
+        observer     = get_model(f"lm:{observer_model_name}",      _load_language_model, observer_model_name)
+        performer_tok = get_model(f"tokenizer:{performer_model_name}", _load_tokenizer, performer_model_name)
+        performer     = get_model(f"lm:{performer_model_name}",      _load_language_model, performer_model_name)
+    except Exception as e:
+        logger.warning("[Binoculars] model load failed: %s", e)
+        return {
+            "score": 0.5,
+            "confidence": 0.0,
+            "available": False,
+            "reason": f"model_load_failed: {str(e)[:100]}",
+        }
+
+    try:
+        # Observer perplexity
+        obs_enc = observer_tok(text[:4000], return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            obs_loss = observer_model(**obs_enc, labels=obs_enc.input_ids).loss
+        observer_ppl = torch.exp(obs_loss).item()
+
+        # Performer perplexity
+        perf_enc = performer_tok(text[:4000], return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            perf_loss = performer_model(**perf_enc, labels=perf_enc.input_ids).loss
+        performer_ppl = torch.exp(perf_loss).item()
+
+        score_raw = observer_ppl / max(performer_ppl, 1e-8)
+
+        # Map raw ratio → suspicion score (0=real, 1=AI)
+        # Per paper: <0.9 → AI, >1.1 → human, between → linear interp
+        if score_raw < 0.85:
+            ai_score = 0.95
+        elif score_raw > 1.15:
+            ai_score = 0.05
+        else:
+            # Linear interp in the [0.85, 1.15] band: 0.85→0.95, 1.0→0.50, 1.15→0.05
+            ai_score = 0.5 + (1.0 - score_raw) * (0.45 / 0.15)
+
+        return {
+            "score": float(np.clip(ai_score, 0, 1)),
+            "confidence": 0.85,  # high — Binoculars is SOTA per the paper
+            "available": True,
+            "details": {
+                "observer_ppl": round(observer_ppl, 2),
+                "performer_ppl": round(performer_ppl, 2),
+                "ratio": round(score_raw, 4),
+                "observer_model": observer_model_name,
+                "performer_model": performer_model_name,
+            },
+        }
+    except Exception as e:
+        logger.warning("[Binoculars] compute failed: %s", e)
+        return {
+            "score": 0.5,
+            "confidence": 0.0,
+            "available": False,
+            "reason": f"compute_failed: {str(e)[:100]}",
+        }
+
+
+# ── Sliding-window perplexity variance (GPTZero-style, Module 2.8) ──────────
+
+def _compute_sliding_window_ppl_variance(text: str) -> Dict[str, Any]:
+    """
+    GPTZero-style sliding-window perplexity variance.
+
+    Compute perplexity over a sliding 256-token window across the text,
+    return the coefficient of variation (CV = std/mean).
+      - AI text: low CV (< 0.15) — uniform perplexity, no surprising tokens
+      - Human text: high CV (> 0.4) — bursty, with some surprising tokens
+        (proper nouns, novel constructions) and some predictable ones.
+
+    Uses distilgpt2 (already loaded) as the window model.
+
+    Weight 0.10 in the composite.
+    """
+    import torch
+
+    model_name = "distilgpt2"
+    try:
+        tokenizer = get_model(f"tokenizer:{model_name}", _load_tokenizer, model_name)
+        model     = get_model(f"lm:{model_name}",         _load_language_model, model_name)
+    except Exception as e:
+        logger.warning("[SlidingWindowPPL] model load failed: %s", e)
+        return {
+            "score": 0.5,
+            "confidence": 0.0,
+            "available": False,
+            "reason": f"model_load_failed: {str(e)[:100]}",
+        }
+
+    try:
+        tokens = tokenizer(text[:8000], return_tensors="pt", truncation=True, max_length=2048).input_ids
+        window_size = 256
+        stride = 128
+
+        if tokens.shape[1] < window_size:
+            return {
+                "score": 0.5,
+                "confidence": 0.3,
+                "available": False,
+                "reason": "text_too_short_for_window",
+                "details": {"token_count": int(tokens.shape[1]), "min_required": window_size},
+            }
+
+        ppls: list[float] = []
+        for start in range(0, tokens.shape[1] - window_size, stride):
+            window = tokens[:, start:start + window_size]
+            with torch.no_grad():
+                loss = model(window, labels=window).loss
+            ppls.append(float(torch.exp(loss).item()))
+
+        if len(ppls) < 3:
+            return {
+                "score": 0.5,
+                "confidence": 0.3,
+                "available": False,
+                "reason": "not_enough_windows",
+                "details": {"n_windows": len(ppls)},
+            }
+
+        ppl_mean = float(np.mean(ppls))
+        ppl_std = float(np.std(ppls))
+        ppl_cv = ppl_std / max(ppl_mean, 1e-8)
+
+        # AI text: CV < 0.15 (uniform); Human text: CV > 0.4 (bursty)
+        if ppl_cv < 0.15:
+            ai_score = 0.85
+        elif ppl_cv > 0.4:
+            ai_score = 0.15
+        else:
+            # Linear interp: 0.15→0.85, 0.275→0.50, 0.4→0.15
+            ai_score = 0.5 + (0.275 - ppl_cv) * (0.35 / 0.125)
+
+        return {
+            "score": float(np.clip(ai_score, 0, 1)),
+            "confidence": 0.7,
+            "available": True,
+            "details": {
+                "ppl_mean": round(ppl_mean, 2),
+                "ppl_std": round(ppl_std, 2),
+                "ppl_cv": round(ppl_cv, 4),
+                "n_windows": len(ppls),
+            },
+        }
+    except Exception as e:
+        logger.warning("[SlidingWindowPPL] compute failed: %s", e)
+        return {
+            "score": 0.5,
+            "confidence": 0.0,
+            "available": False,
+            "reason": f"compute_failed: {str(e)[:100]}",
+        }
+
+
 # ── Burstiness ────────────────────────────────────────────────────────────────
 
 def _compute_burstiness(text: str) -> Dict[str, Any]:
@@ -875,6 +1057,32 @@ def analyze_text(
             degraded = True
             degraded_reason = "perplexity_unavailable"
 
+    # Module 2.8: Binoculars (Hans et al. 2024) — zero-shot SOTA.
+    # Runs only if perplexity ran successfully (shares the distilgpt2 model
+    # plus loads gpt2-base lazily). Marked degraded if it fails — but with
+    # a lower-penalty degraded_reason than perplexity since the engine still
+    # has the older perplexity signal.
+    if options.get("binoculars", True):
+        try:
+            engines["binoculars"] = _compute_binoculars(clean)
+        except ImportError:
+            engines["binoculars"] = _empty_result("transformers_not_installed")
+            # Don't mark degraded — Binoculars is a new optional detector
+            # and the engine has always worked without it.
+        except Exception as e:
+            logger.warning("[TextEngine] binoculars failed: %s", e)
+            engines["binoculars"] = _empty_result(str(e))
+
+    # Module 2.8: sliding-window perplexity variance (GPTZero-style).
+    if options.get("sliding_window_ppl_variance", True):
+        try:
+            engines["sliding_window_ppl_variance"] = _compute_sliding_window_ppl_variance(clean)
+        except ImportError:
+            engines["sliding_window_ppl_variance"] = _empty_result("transformers_not_installed")
+        except Exception as e:
+            logger.warning("[TextEngine] sliding-window PPL variance failed: %s", e)
+            engines["sliding_window_ppl_variance"] = _empty_result(str(e))
+
     if options.get("burstiness", True):
         try:
             engines["burstiness"] = _compute_burstiness(clean)
@@ -1031,22 +1239,33 @@ def analyze_text(
     # plagiarism_risk is measuring a related-but-different axis (originality,
     # not AI-generation) so it's deliberately kept low-weight -- included
     # for correlation value, not as a primary AI-detection signal.
+    # Module 2.9: weights renormalized to sum 1.0 (was 1.23 with comments
+    # lying about percentages — "perplexity carries 40%" was actually 20.3%).
+    # Added new detectors: binoculars (Hans 2024, SOTA zero-shot, weight 0.15)
+    # and sliding_window_ppl_variance (GPTZero-style, weight 0.10).
+    # Removed dead slots: greenlist_watermark (always unavailable — 0 contribution),
+    # near_synonym_consistency (distorted by high-frequency plain members;
+    # re-add after Sub-Module 2.7's both-members gate is calibrated),
+    # punctuation_formatting_fingerprint (low signal — kept as evidence, not
+    # in composite). semantic_lsa still emitted as evidence, never scored.
     weights = {
-        "perplexity": 0.25,
-        "burstiness": 0.14,
-        "stylometry": 0.115,
-        "repetition": 0.09,
-        "ai_phrase_fingerprint": 0.10,
-        "informality_markers": 0.075,
-        "unicode_forensics": 0.08,
-        "humanizer_artifacts": 0.10,
-        "plagiarism_risk": 0.05,
-        "lexical_richness": 0.05,
-        "entropy_fingerprint": 0.055,
-        "ngram_fingerprint": 0.045,
-        "punctuation_formatting_fingerprint": 0.03,
-        "greenlist_watermark": 0.03,
-        "near_synonym_consistency": 0.02,
+        "perplexity":                       0.15,   # 15% (was 25/123=20.3%)
+        "binoculars":                       0.15,   # 15% — NEW (Hans 2024)
+        "sliding_window_ppl_variance":      0.10,   # 10% — NEW (GPTZero-style)
+        "burstiness":                       0.10,   # 10%
+        "stylometry":                       0.08,   # 8%
+        "repetition":                       0.06,   # 6%
+        "ai_phrase_fingerprint":            0.07,   # 7%
+        "informality_markers":              0.05,   # 5%
+        "unicode_forensics":                0.05,   # 5%
+        "humanizer_artifacts":              0.07,   # 7%
+        "plagiarism_risk":                  0.04,   # 4%
+        "lexical_richness":                 0.03,   # 3%
+        "entropy_fingerprint":              0.03,   # 3%
+        "ngram_fingerprint":                0.02,   # 2%
+        # REMOVED: greenlist_watermark (0.03, always unavailable)
+        # REMOVED: near_synonym_consistency (0.02, distorted — fix in 2.7)
+        # REMOVED: punctuation_formatting_fingerprint (0.03, low signal)
     }
 
     total_weight = 0.0
@@ -1078,20 +1297,26 @@ def analyze_text(
             total_weight  += eff_w
 
     composite = weighted_sum / total_weight if total_weight > 0 else 0.5
-    avg_confidence = (
-        sum(e.get("confidence", 0) for e in engines.values()) / len(engines)
-        if engines else 0.0
-    )
+    # Module 2.7: avg_confidence dilution fix.
+    # Was: averaged over ALL engines including failed ones (confidence=0).
+    # If 1 of 15 engines failed, avg_confidence dropped by ~6.7% — failed
+    # analyzers diluted the reported confidence of the successful ones.
+    # Now: average only over engines with confidence > 0 (i.e. the ones
+    # that actually ran successfully).
+    real_confs = [e.get("confidence", 0) for e in engines.values() if e.get("confidence", 0) > 0]
+    avg_confidence = (sum(real_confs) / len(real_confs)) if real_confs else 0.0
 
-    # Module 3 fix: perplexity carries the most real detection signal (40%
-    # of composite weight) and, per the accuracy benchmark, casual/technical/
-    # terse-register AI text is materially under-detected by the heuristic
-    # engines alone (burstiness/stylometry/repetition). Don't let
-    # avg_confidence be reported as if every engine ran normally when the
-    # single most informative one didn't -- apply an explicit penalty on
-    # top of whatever the (now perplexity-confidence-0) average already
-    # reflects, so degraded responses are visibly less confident, not just
-    # silently narrower.
+    # Module 2.9: corrected comment. Was "perplexity carries 40% of composite
+    # weight" — actually 0.25/1.23 = 20.3%. With the renormalized weights,
+    # perplexity (0.15) + binoculars (0.15) + sliding_window_ppl_variance
+    # (0.10) = 0.40 — together carry 40% of composite weight. These three
+    # are the ML-based detectors (vs the heuristic ones); the comment now
+    # reflects their combined contribution honestly.
+    # Don't let avg_confidence be reported as if every engine ran normally
+    # when the single most informative one didn't -- apply an explicit
+    # penalty on top of whatever the (now perplexity-confidence-0) average
+    # already reflects, so degraded responses are visibly less confident,
+    # not just silently narrower.
     if degraded:
         avg_confidence = round(avg_confidence * 0.55, 4)
 

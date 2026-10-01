@@ -11,8 +11,16 @@ export const TEXT_WARN_CHARS = TEXT_MAX_CHARS - 5_000
 /** Maximum file size for image uploads (10 MB) */
 export const IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024
 
-/** Maximum file size for PDF uploads (20 MB) */
+/** Maximum file size for PDF uploads (20 MB) — matches Vercel Hobby body size limit.
+ * Module 2.5: unified across /detect/text, /detect/document, and the dashboard page.
+ * Was 20MB on /detect/text and 25MB on /detect/document — inconsistent UX. */
 export const PDF_MAX_SIZE_BYTES = 20 * 1024 * 1024
+
+/** Maximum file size for DOCX uploads (25 MB) */
+export const DOCX_MAX_SIZE_BYTES = 25 * 1024 * 1024
+
+/** Maximum file size for PPTX uploads (25 MB) */
+export const PPTX_MAX_SIZE_BYTES = 25 * 1024 * 1024
 
 /** Maximum number of files in a batch scan */
 export const BATCH_MAX_FILES = 20

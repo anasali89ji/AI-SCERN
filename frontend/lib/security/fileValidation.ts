@@ -188,6 +188,93 @@ function mimeToExtension(mime: string): string {
     'video/webm':       '.webm',
     'video/quicktime':  '.mov',
     'video/x-msvideo':  '.avi',
+    // Module 2.4: document MIME types
+    'application/pdf':           '.pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':     '.docx',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation':   '.pptx',
+    'application/msword':         '.doc',
+    'application/vnd.ms-powerpoint': '.ppt',
   }
   return map[mime] ?? ''
+}
+
+// ── Module 2.4: Document upload validation ────────────────────────────────
+// PDF/DOCX/PPTX MIME + magic-byte validation. The original validateUpload()
+// only covers image/audio/video — documents had no validation, so any binary
+// renamed to .pdf would reach pdf-parse or JSZip before being rejected.
+// Security risk: a malicious PDF can DoS pdf-parse via a billion-laughs
+// attack, and a malicious DOCX can XSS via script-enabled OOXML parts.
+
+const ALLOWED_DOCUMENT_MIMES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'application/msword', // .doc (legacy)
+  'application/vnd.ms-powerpoint', // .ppt (legacy)
+])
+
+const DOCUMENT_MAGIC_SIGNATURES: MagicEntry[] = [
+  { mime: 'application/pdf', offset: 0, magic: [0x25, 0x50, 0x44, 0x46] }, // %PDF
+  // OOXML formats (.docx, .pptx, .xlsx) all share the PK\x03\x04 ZIP signature.
+  // A more specific check would inspect [Content_Types].xml inside the ZIP,
+  // but the magic-byte check at the upload boundary is sufficient — the OOXML
+  // parser (JSZip) will reject malformed content later if it slips through.
+  { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    offset: 0, magic: [0x50, 0x4B, 0x03, 0x04] }, // PK\x03\x04
+  { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    offset: 0, magic: [0x50, 0x4B, 0x03, 0x04] }, // PK\x03\x04
+  { mime: 'application/msword',           offset: 0, magic: [0xD0, 0xCF, 0x11, 0xE0] }, // legacy .doc OLE
+  { mime: 'application/vnd.ms-powerpoint', offset: 0, magic: [0xD0, 0xCF, 0x11, 0xE0] }, // legacy .ppt OLE
+]
+
+export interface DocumentValidationResult {
+  valid: boolean
+  error?: string
+  /** Sanitized MIME — prefer this over the client-supplied value */
+  confirmedMime?: string
+}
+
+/**
+ * Module 2.4: validate a document upload (PDF/DOCX/PPTX).
+ * Performs MIME allowlist + magic-byte check + size limit.
+ *
+ * Size limits are MIME-specific:
+ *   - PDF: 20 MB (matches Vercel Hobby body size limit)
+ *   - DOCX/PPTX: 25 MB
+ *
+ * Returns { valid: true, confirmedMime } on success, { valid: false, error }
+ * on failure with a user-readable error message.
+ */
+export function validateDocumentUpload(
+  buffer: Buffer,
+  mime: string,
+  size: number,
+): DocumentValidationResult {
+  // 1. MIME allowlist
+  if (!ALLOWED_DOCUMENT_MIMES.has(mime)) {
+    return { valid: false, error: `Unsupported document type "${mime}". Allowed: PDF, DOCX, PPTX.` }
+  }
+
+  // 2. Size check — MIME-specific (PDF 20MB, OOXML 25MB, legacy OLE 25MB)
+  const isPdf = mime === 'application/pdf'
+  const maxSize = isPdf ? 20 * 1024 * 1024 : 25 * 1024 * 1024
+  if (size > maxSize) {
+    return { valid: false, error: `File exceeds ${Math.floor(maxSize / 1024 / 1024)}MB limit` }
+  }
+
+  // 3. Empty / too-small guard
+  if (buffer.length < 4) {
+    return { valid: false, error: 'File is too small or empty' }
+  }
+
+  // 4. Magic-byte check — the file's actual content must match the declared MIME
+  const sig = DOCUMENT_MAGIC_SIGNATURES.find(s => s.mime === mime)
+  if (sig) {
+    const matches = sig.magic.every((byte, i) => buffer[sig.offset + i] === byte)
+    if (!matches) {
+      return { valid: false, error: 'File content does not match declared type — magic bytes mismatch' }
+    }
+  }
+
+  return { valid: true, confirmedMime: mime }
 }

@@ -59,3 +59,50 @@ def test_text_score_range(client):
     data = client.post("/analyze/text", json={"text": SAMPLE_AI_TEXT, "jobId": "test-5"}).json()
     if data.get("composite_score") is not None:
         assert 0.0 <= data["composite_score"] <= 1.0
+
+
+# Module 2.12: New tests verifying AI-scores-AI / human-scores-human direction.
+# The original test_text.py only validated schema/range — never checked that
+# an AI sample actually scores > 0.5 or that a human sample scores < 0.5.
+# This is the smoke-test-level regression test that catches direction bugs.
+
+def test_ai_sample_scores_above_midpoint(client):
+    """AI sample should score > 0.5 (suspicion of AI)."""
+    data = client.post("/analyze/text", json={"text": SAMPLE_AI_TEXT, "jobId": "test-ai-1"}).json()
+    score = data.get("composite_score")
+    if score is None:
+        pytest.skip("composite_score not available (engine degraded?)")
+    assert score > 0.5, (
+        f"AI sample should score > 0.5 (suspicion of AI). Got {score}. "
+        f"If this fails, the text engine's direction has regressed — check the "
+        f"weights table and the perplexity/Binoculars score mappings."
+    )
+
+
+def test_human_sample_scores_below_midpoint(client):
+    """Human sample should score < 0.5 (low suspicion of AI)."""
+    data = client.post("/analyze/text", json={"text": SAMPLE_HUMAN_TEXT, "jobId": "test-human-1"}).json()
+    score = data.get("composite_score")
+    if score is None:
+        pytest.skip("composite_score not available (engine degraded?)")
+    assert score < 0.5, (
+        f"Human sample should score < 0.5 (low suspicion). Got {score}. "
+        f"If this fails, the text engine is producing false positives on "
+        f"genuine human text — check for over-weighted heuristic engines "
+        f"(burstiness/stylometry) or a miscalibrated perplexity curve."
+    )
+
+
+def test_ai_sample_scores_higher_than_human(client):
+    """AI sample should score higher than human sample (direction check)."""
+    ai_data = client.post("/analyze/text", json={"text": SAMPLE_AI_TEXT, "jobId": "test-dir-ai"}).json()
+    human_data = client.post("/analyze/text", json={"text": SAMPLE_HUMAN_TEXT, "jobId": "test-dir-human"}).json()
+    ai_score = ai_data.get("composite_score")
+    human_score = human_data.get("composite_score")
+    if ai_score is None or human_score is None:
+        pytest.skip("composite_score not available for one of the samples")
+    assert ai_score > human_score, (
+        f"AI sample should score higher than human sample. "
+        f"Got AI={ai_score}, human={human_score}. "
+        f"If this fails, the engine has lost its ability to distinguish AI from human."
+    )

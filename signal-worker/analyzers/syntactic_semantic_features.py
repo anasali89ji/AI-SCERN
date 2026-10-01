@@ -99,6 +99,13 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# Module 2.6: gate the LSA compute behind a flag. The full SVD on a
+# (sentences × vocab) matrix is 30-200ms per long-English request and
+# contributes ZERO to the final score — semantic_lsa is emitted with
+# score=0.5, provisional=True, scored=False. Skip the compute entirely
+# until scoring is calibrated against a labeled corpus.
+_LSA_SCORING_ENABLED = False
+
 # ── Closed-class lexicon ────────────────────────────────────────────────────
 # English function words are a finite, enumerable set. This is the whole basis
 # for tagging without a statistical model, and it is why this approach is
@@ -462,6 +469,21 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _semantic_signal(sentences: Sequence[str]) -> Dict[str, Any]:
+    # Module 2.6: skip the SVD entirely until scoring is turned on.
+    # _build_lsa_space does a full np.linalg.svd on a (sentences × vocab)
+    # matrix and _semantic_signal computes coherence/drift/concentration —
+    # but _score() ignores all of it (semantic_lsa is emitted with
+    # score=0.5, provisional=True, scored=False per the spec). Wastes 30-
+    # 200ms per long-English request with zero contribution. Flip this
+    # flag to True once LSA is calibrated against a labeled corpus.
+    if not _LSA_SCORING_ENABLED:
+        return {
+            "available": False,
+            "reason": "lsa_scoring_disabled_provisional",
+            "note": "LSA compute skipped — _LSA_SCORING_ENABLED is False. "
+                    "Set to True after calibrating against a labeled corpus.",
+        }
+
     embeddings, spectrum = _build_lsa_space(sentences)
     if embeddings is None:
         return {"available": False, "reason": "insufficient_cross_sentence_vocabulary"}
