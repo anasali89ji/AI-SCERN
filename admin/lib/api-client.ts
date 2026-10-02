@@ -57,7 +57,12 @@ export function typedFetcher<T>() {
   return (path: string) => api<T>(path)
 }
 
-// Fix: tabs import { fetcher } — provide a default fetcher that returns JSON
-export async function fetcher<T = unknown>(path: string): Promise<T> {
-  return api<T>(path)
+// SWR fetcher used by tabs. Tabs pass paths like '/api/marketing' while api()
+// already prefixes '/api', so strip a leading '/api' to avoid '/api/api/...'.
+// Returns `any` so tabs can read response fields without per-tab generics
+// (previously inferred as `{}` and failed `next build` type-checking).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetcher(path: string): Promise<any> {
+  const normalized = path.replace(/^\/api(?=\/|$|\?)/, '')
+  return api(normalized)
 }
