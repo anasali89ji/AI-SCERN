@@ -36,9 +36,22 @@ RUN pip install --no-cache-dir --target=/build/wheels \
 # wheel installed above as "already satisfied" and would silently
 # re-download the full CUDA build (~900MB+) from default PyPI, overwriting
 # the optimization above. Filter torch out of this specific install.
+#
+# lpips is ALSO filtered out of the CPU image. lpips declares torch +
+# torchvision as dependencies, and since torch is not "installed" from pip's
+# point of view (--target), pip resolves them from default PyPI: that pulled
+# torch 2.14 + ~3GB of nvidia-*/CUDA wheels over the CPU torch above, blowing
+# up the layer (build dies at the kaniko snapshot step on DO App Platform).
+# lpips is only used by L5b (diffusion snap-back), which also needs diffusers
+# -- not installed here -- so it is GPU-only (see Dockerfile.gpu). The L5b
+# code already falls back to L2 distance when lpips is missing.
+# Guard: the RUN below fails fast if anything drags CUDA wheels back in.
 COPY requirements.txt .
-RUN grep -v '^torch==' requirements.txt > requirements-docker.txt && \
-    pip install --no-cache-dir --target=/build/wheels -r requirements-docker.txt
+RUN grep -Ev '^(torch|lpips)==' requirements.txt > requirements-docker.txt && \
+    pip install --no-cache-dir --target=/build/wheels -r requirements-docker.txt && \
+    if ls /build/wheels | grep -qi '^nvidia\|^triton\|^cuda'; then \
+      echo "ERROR: CUDA wheels leaked into CPU build:" && ls /build/wheels | grep -i '^nvidia\|^triton\|^cuda' && exit 1; \
+    fi
 
 # Module 3 fix: pre-download distilgpt2 (~350MB) at BUILD time and bake it
 # into the image, instead of relying on a live huggingface.co fetch the
