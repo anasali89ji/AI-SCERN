@@ -487,10 +487,14 @@ async def analyze_audio_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     event loop, error → HTTPException so the frontend's graceful-degrade
     fallback triggers cleanly).
     """
+    # Module 3.9: added audio/3gpp and audio/amr (frontend already accepts
+    # them — was: 415 → frontend analyzeAudio throws → 500 for AMR/3GPP
+    # uploads). Keep in sync with frontend/lib/constants.ts:ALLOWED_AUDIO_MIMES.
     ALLOWED_AUDIO_MIMES = {
         "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave",
         "audio/webm", "audio/ogg", "audio/flac", "audio/x-flac",
         "audio/mp4", "audio/x-m4a", "audio/aac",
+        "audio/3gpp", "audio/amr",  # Module 3.9: added (frontend already accepts)
     }
     if not file.content_type or file.content_type.lower() not in ALLOWED_AUDIO_MIMES:
         raise HTTPException(

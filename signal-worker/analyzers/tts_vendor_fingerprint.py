@@ -74,9 +74,13 @@ MIN_FRAMES = 8
 
 def _lpc_formants(frame: np.ndarray, sr: int, order: int = 12) -> List[float]:
     """LPC-based formant estimate for one windowed frame. Returns up to 3
-    formant frequencies (Hz), sorted ascending. Standard technique:
-    Levinson-Durbin LPC coefficients -> polynomial roots -> angles of
-    roots inside the unit circle with positive imaginary part -> Hz.
+    formant frequencies (Hz), sorted ascending.
+
+    Module 3.1: replaced hand-rolled Levinson-Durbin with librosa.lpc.
+    The previous implementation had a fragility: `e *= (1 - k ** 2)` could
+    underflow to <=0 on noisy frames, breaking the loop early and silently
+    returning partial coefficients. librosa.lpc is one line, well-tested,
+    already a dependency.
     """
     windowed = frame * np.hamming(len(frame))
     # Pre-emphasis (standard for formant LPC — flattens the natural -6dB/
@@ -85,46 +89,41 @@ def _lpc_formants(frame: np.ndarray, sr: int, order: int = 12) -> List[float]:
     if np.allclose(emphasized, 0):
         return []
     try:
-        # Levinson-Durbin via autocorrelation + solving the normal equations.
-        autocorr = np.correlate(emphasized, emphasized, mode="full")
-        mid = len(autocorr) // 2
-        r = autocorr[mid:mid + order + 1]
-        if r[0] == 0:
-            return []
-        a = np.zeros(order + 1)
-        a[0] = 1.0
-        e = r[0]
-        for i in range(1, order + 1):
-            acc = r[i] + np.sum(a[1:i] * r[i - 1:0:-1])
-            k = -acc / e if e != 0 else 0.0
-            a_new = a.copy()
-            for j in range(1, i):
-                a_new[j] = a[j] + k * a[i - j]
-            a_new[i] = k
-            a = a_new
-            e *= (1 - k ** 2)
-            if e <= 0:
-                break
+        # Module 3.1: librosa.lpc replaces the hand-rolled Levinson-Durbin.
+        import librosa
+        a = librosa.lpc(emphasized, order=order)
         roots = np.roots(a)
-        roots = roots[np.imag(roots) >= 0]
+        # Upper half only — formants come in conjugate pairs, take positive imag
+        roots = roots[np.imag(roots) > 0]
         angles = np.arctan2(np.imag(roots), np.real(roots))
         freqs = angles * (sr / (2 * np.pi))
-        # Formants are resonances, i.e. roots close to the unit circle
-        # (low bandwidth); filter out heavily-damped roots.
-        bandwidths = -0.5 * (sr / np.pi) * np.log(np.abs(roots) + 1e-12)
+        # Formants are resonances — roots close to the unit circle (low
+        # bandwidth). Filter out heavily-damped roots.
+        bandwidths = -0.5 * (sr / (2 * np.pi)) * np.log(np.abs(roots) + 1e-12)
         valid = (freqs > 90) & (freqs < sr / 2 - 90) & (bandwidths < 400)
         formants = sorted(freqs[valid].tolist())
         return formants[:3]
     except Exception:
         return []
-
-
 def _track_formants(y: np.ndarray, sr: int, voiced_idx: np.ndarray, frame_len: int = 1024, hop: int = 512) -> List[Optional[Tuple[float, float, float]]]:
+    """
+    Module 3.1: now actually consults voiced_idx (was: ignored, iterated
+    ALL frames including silence and noise — wasted compute + added
+    spurious formant tracks polluting F2/F1 ratio and F1-jump statistics).
+    """
+    voiced_set = set(int(i) for i in np.asarray(voiced_idx).flatten()) if voiced_idx is not None and len(voiced_idx) > 0 else set()
     n_frames = 1 + (len(y) - frame_len) // hop if len(y) >= frame_len else 0
     results: List[Optional[Tuple[float, float, float]]] = []
     for i in range(n_frames):
+        # Module 3.1: skip unvoiced frames — they have no formant structure
+        if voiced_set and i not in voiced_set:
+            results.append(None)
+            continue
         start = i * hop
         frame = y[start:start + frame_len]
+        if len(frame) < frame_len:
+            results.append(None)
+            continue
         formants = _lpc_formants(frame, sr)
         if len(formants) >= 3:
             results.append((formants[0], formants[1], formants[2]))
@@ -148,7 +147,7 @@ def _elevenlabs_score(S: np.ndarray, freqs: np.ndarray) -> float:
     if not (np.any(band) and np.any(lo_neighbor) and np.any(hi_neighbor)):
         return 0.0
     band_e = float(np.mean(S[band, :] ** 2))
-    neighbor_e = float(np.mean(np.concatenate([S[lo_neighbor, :], S[hi_neighbor, :]])) ** 2)
+    neighbor_e = float(np.mean(np.concatenate([S[lo_neighbor, :], S[hi_neighbor, :]]) ** 2))
     if neighbor_e <= 1e-12:
         return 0.0
     ratio_db = 10 * np.log10((band_e + 1e-12) / neighbor_e)
@@ -274,6 +273,95 @@ def _formant_instability_score(formant_tracks: List[Optional[Tuple[float, float,
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Module 3.6: 5 new vendor heuristics (PlayHT, Murf, OpenAI TTS, Tortoise, Suno)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _playht_score(S: np.ndarray, freqs: np.ndarray) -> float:
+    """PlayHT: known 6-8kHz formant enhancement boost."""
+    band = (freqs >= 6000) & (freqs < 8000)
+    neighbor = ((freqs >= 4000) & (freqs < 6000)) | ((freqs >= 8000) & (freqs < 10000))
+    if not (np.any(band) and np.any(neighbor)):
+        return 0.0
+    band_e = float(np.mean(S[band, :] ** 2))
+    neighbor_e = float(np.mean(S[neighbor, :] ** 2))
+    ratio_db = 10 * np.log10((band_e + 1e-12) / (neighbor_e + 1e-12))
+    # +3dB boost → start firing; +9dB → max
+    return float(np.clip((ratio_db - 3.0) / 6.0, 0, 1))
+
+
+def _murf_score(f0, voiced_flag) -> float:
+    """Murf: known very-low jitter (cleaner than natural speech)."""
+    if f0 is None or voiced_flag is None or len(f0) == 0:
+        return 0.0
+    voiced_f0 = f0[voiced_flag > 0] if hasattr(voiced_flag, '__len__') else f0
+    if len(voiced_f0) < 10:
+        return 0.0
+    # Jitter (RAP) — Murf clips typically < 0.5%
+    diffs = np.abs(np.diff(voiced_f0))
+    jitter_rap = float(np.mean(diffs) / (np.mean(voiced_f0) + 1e-8))
+    # < 0.005 (0.5%) → suspicious; > 0.02 (2%) → natural
+    if jitter_rap < 0.005:
+        return 0.85
+    elif jitter_rap > 0.02:
+        return 0.15
+    else:
+        return float(np.clip(0.5 + (0.005 - jitter_rap) * 25, 0, 1))
+
+
+def _openai_tts_score(S: np.ndarray, freqs: np.ndarray, sr: int) -> float:
+    """OpenAI TTS (tts-1, tts-1-hd): very-low shimmer + characteristic breath pattern.
+    Approximated here as unusually smooth high-frequency envelope (low shimmer
+    manifests as low variance in the 4-8kHz band across frames)."""
+    band = (freqs >= 4000) & (freqs < 8000)
+    if not np.any(band):
+        return 0.0
+    band_energy = S[band, :]  # (n_freqs, n_frames)
+    # Frame-to-frame variance — low variance = low shimmer = AI
+    frame_var = float(np.mean(np.var(band_energy, axis=1)))
+    # < 0.001 → suspicious (very smooth); > 0.01 → natural
+    if frame_var < 0.001:
+        return 0.80
+    elif frame_var > 0.01:
+        return 0.20
+    else:
+        return float(np.clip(0.5 + (0.001 - frame_var) * 50, 0, 1))
+
+
+def _tortoise_score(S: np.ndarray, freqs: np.ndarray) -> float:
+    """Tortoise-TTS: metallic ring in 4-6kHz (diffusion vocoder artifact)."""
+    band = (freqs >= 4000) & (freqs < 6000)
+    neighbor = ((freqs >= 2000) & (freqs < 4000)) | ((freqs >= 6000) & (freqs < 8000))
+    if not (np.any(band) and np.any(neighbor)):
+        return 0.0
+    band_e = float(np.mean(S[band, :] ** 2))
+    neighbor_e = float(np.mean(S[neighbor, :] ** 2))
+    ratio_db = 10 * np.log10((band_e + 1e-12) / (neighbor_e + 1e-12))
+    # +4dB boost → start firing (metallic ring is a sharper peak than PlayHT's formant boost)
+    return float(np.clip((ratio_db - 4.0) / 5.0, 0, 1))
+
+
+def _suno_speech_score(S: np.ndarray, freqs: np.ndarray) -> float:
+    """Suno (speech mode): characteristic stereo widening + reverb tail.
+    Approximated here as unusually high spectral flatness in the 2-4kHz band
+    (reverb tails spread energy across frequencies)."""
+    band = (freqs >= 2000) & (freqs < 4000)
+    if not np.any(band):
+        return 0.0
+    band_S = S[band, :]
+    # Spectral flatness in the band — high = diffused/reverberant
+    geo_mean = float(np.exp(np.mean(np.log(band_S + 1e-12))))
+    arith_mean = float(np.mean(band_S))
+    flatness = geo_mean / (arith_mean + 1e-12)
+    # > 0.3 → suspicious (reverberant); < 0.1 → natural dry speech
+    if flatness > 0.3:
+        return 0.75
+    elif flatness < 0.1:
+        return 0.25
+    else:
+        return float(np.clip(0.5 + (flatness - 0.1) * 1.25, 0, 1))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -313,6 +401,13 @@ def tts_vendor_fingerprint(y: np.ndarray, sr: int) -> Dict[str, Any]:
         rvc_score, rvc_median_ratio = _rvc_formant_ratio_score(formant_tracks)
         instability_score, instability_rate = _formant_instability_score(formant_tracks)
 
+        # Module 3.6: 5 new vendor heuristics
+        playht = _playht_score(S, freqs)
+        murf = _murf_score(f0, voiced_flag)
+        openai_tts = _openai_tts_score(S, freqs, sr)
+        tortoise = _tortoise_score(S, freqs)
+        suno_speech = _suno_speech_score(S, freqs)
+
         vendor_scores = {
             "elevenlabs_clarity_boost": round(elevenlabs, 4),
             "bark_pause_noise": round(bark, 4),
@@ -320,6 +415,12 @@ def tts_vendor_fingerprint(y: np.ndarray, sr: int) -> Dict[str, Any]:
             "concatenative_micro_gaps": round(concatenative, 4),
             "rvc_svc_formant_ratio": round(rvc_score, 4),
             "vall_e_formant_instability_proxy": round(instability_score, 4),
+            # Module 3.6: new vendor scores
+            "playht_formant_boost": round(playht, 4),
+            "murf_low_jitter": round(murf, 4),
+            "openai_tts_low_shimmer": round(openai_tts, 4),
+            "tortoise_metallic_ring": round(tortoise, 4),
+            "suno_speech_reverb": round(suno_speech, 4),
         }
         likely = max(vendor_scores, key=vendor_scores.get)
         likely_strength = vendor_scores[likely]

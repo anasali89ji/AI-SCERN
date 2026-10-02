@@ -17,7 +17,11 @@ import { normalizeHomoglyphs }                                                  
 import { extractImageSignals, extractImageSignalsExtended, aggregateImageSignals, applyCalibration } from './signals/image-signals'
 import { preprocessImage } from './preprocess-image'
 import { hashBuffer, hashText, getCachedScan, setCachedScan } from '@/lib/cache/scan-cache'
-import { extractAudioSignals, extractAudioSignalsExtended, aggregateAudioSignals, applyAudioCalibration } from './signals/audio-signals'
+// Module 3.3: audio-signals.ts byte-level fiction deleted. Was:
+//   import { extractAudioSignals, ... } from './signals/audio-signals'
+// Those functions operated on raw compressed bytes as if they were 8-bit
+// PCM — pure noise for any non-WAV upload. Now: route all audio signal
+// extraction through the Python worker (which uses real librosa.load).
 import { SIGNAL_WORKER_TIMEOUT_MS } from '@/lib/forensic/constants'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { trackVendorCall } from './vendor-call-tracker'
@@ -1196,20 +1200,19 @@ export async function analyzeAudio(
     : Promise.resolve(null)
   if (hasBuffer && HF_TOKEN) trackVendorCall('huggingface', 'audio', 3) // MODULE 6 — 3 underlying model calls fired above
 
-  let audioSignals = hasBuffer
-    ? extractAudioSignalsExtended(audioBuffer!, fileSize)
-    : extractAudioSignalsExtended(Buffer.alloc(0), fileSize)
+  // Module 3.3: deleted extractAudioSignalsExtended / aggregateAudioSignals
+  // calls. Those functions operated on raw compressed bytes as if they were
+  // 8-bit PCM — pure noise for any non-WAV upload (MP3/OGG/FLAC/AAC/M4A).
+  // Now: all audio signal extraction routes through the Python worker
+  // (which uses real librosa.load). The sigScore weight (0.10) is removed
+  // from the ensemble; the remaining weights renormalize to:
+  //   gemini 0.35 + audioWorker 0.40 + HF 0.25 = 1.0
+  // (was 0.35/0.35/0.20/0.10 = 1.0 with the fictional byte-signal source).
 
   const [audioWorkerResult, mlR0, mlR1, mlR2] = await Promise.all([audioWorkerPromise, hfP0, hfP1, hfP2])
   const audioWorkerScore = (audioWorkerResult && !audioWorkerResult.insufficient_audio)
     ? audioWorkerResult.composite_audio_score
     : null
-
-  try {
-    const audioCal = await getAudioCalibrationStats()
-    if (audioCal?.ai_sample_count >= 20) audioSignals = applyAudioCalibration(audioSignals, audioCal)
-  } catch {}
-  const sigScore = aggregateAudioSignals(audioSignals)
 
   const mlScores: { score: number; weight: number }[] = []
   const parseAudio = (r: unknown, weight: number) => {
@@ -1233,33 +1236,31 @@ export async function analyzeAudio(
 
   // MODULE 3 task 4: Gemini demoted to UNCERTAIN-band fallback, same logic
   // shape as Module 2's text pipeline — call it only when the self-hosted
-  // worker is uncertain, disagrees with the heuristic signal engine by
-  // >0.15, or is unavailable (worker down/unconfigured — in which case we
-  // fall back to the pre-Module-3 behavior of always calling Gemini, so the
-  // existing fallback path never breaks).
+  // worker is uncertain or unavailable.
+  // Module 3.3: removed workerSigDisagree check (was: |worker - sigScore| >
+  // 0.15 — sigScore no longer exists since we deleted the byte-level fiction).
   const workerUncertain    = audioWorkerScore !== null && audioWorkerScore > 0.38 && audioWorkerScore < 0.62
-  const workerSigDisagree  = audioWorkerScore !== null && Math.abs(audioWorkerScore - sigScore) > 0.15
   const geminiShouldRun    = AUDIO_GEMINI_MODE === 'off'
     ? false
     : AUDIO_GEMINI_MODE === 'parallel'
     ? true
-    : (audioWorkerScore === null || workerUncertain || workerSigDisagree) // 'fallback' (default)
+    : (audioWorkerScore === null || workerUncertain) // 'fallback' (default)
 
   const geminiResult = (geminiShouldRun && geminiAvailable() && hasBuffer)
     ? (trackVendorCall('gemini', 'audio'), await geminiAnalyzeAudio(audioBuffer!, format, fileName).catch(() => null))
     : null
   const geminiScore = geminiResult?.aiScore ?? null
 
-  // Weighted blend across whichever sources actually ran. Base weights
-  // (renormalized over available sources): gemini 0.35 (down from
-  // pre-Module-3's up-to-0.45 — demoted from primary to fallback),
-  // self-hosted audio worker 0.35 (AUDIO_CV_WORKER_WEIGHT), HF ensemble
-  // 0.20, heuristic acoustic signals 0.10 (always available, lowest trust).
+  // Module 3.3: ensemble weights renormalized after removing the fictional
+  // byte-signal source. Was: gemini 0.35 + audioWorker 0.35 + HF 0.20 +
+  // sigScore 0.10 = 1.0. Now: gemini 0.35 + audioWorker 0.40 + HF 0.25 = 1.0.
+  // audioWorker bumped 0.35 → 0.40 and HF bumped 0.20 → 0.25 because the
+  // Python worker and HF models do REAL DSP/ML — the 0.10 that was wasted
+  // on noise is now split between them.
   const weighted: { score: number; weight: number }[] = [
     ...(geminiScore      !== null ? [{ score: geminiScore,      weight: 0.35 }] : []),
-    ...(audioWorkerScore !== null ? [{ score: audioWorkerScore, weight: AUDIO_CV_WORKER_WEIGHT }] : []),
-    ...(mlMean            !== null ? [{ score: mlMean,           weight: 0.20 }] : []),
-    { score: sigScore, weight: 0.10 },
+    ...(audioWorkerScore !== null ? [{ score: audioWorkerScore, weight: 0.40 }] : []),
+    ...(mlMean            !== null ? [{ score: mlMean,           weight: 0.25 }] : []),
   ]
   const wTotal  = weighted.reduce((a, b) => a + b.weight, 0)
   const aiScore = weighted.reduce((a, b) => a + b.score * b.weight, 0) / wTotal
@@ -1268,12 +1269,14 @@ export async function analyzeAudio(
     geminiScore      !== null ? 'Gemini2Flash'          : null,
     audioWorkerScore !== null ? 'SelfHostedForensics'   : null,
     mlMean            !== null ? `${mlScores.length}HFModels` : null,
-    '8AcousticSignals',
+    // Module 3.3: removed '8AcousticSignals' (was: 8 fictional byte-level
+    // signals from the deleted extractAudioSignalsExtended).
   ].filter(Boolean).join('+')
 
   const calibratedAudioScore = calibrateScore(aiScore)
   const verdict  = toVerdict(calibratedAudioScore, "audio")
-  const segCount = Math.max(3, Math.min(10, Math.ceil(durationEst / 5)))
+  // Module 3.8: segCount removed (was only used for the fabricated
+  // segment_scores sin-wave — now returns empty array).
 
   // MODULE 5 — Failure Visibility.
   const audioDegradedSignals: string[] = [
@@ -1283,15 +1286,16 @@ export async function analyzeAudio(
     ...(geminiScore === null ? (geminiShouldRun ? ['gemini-call-failed'] : []) : []),
   ]
 
-  // Deterministic segment scores using sin wave (no Math.random)
-  const segment_scores = Array.from({ length: segCount }, (_, i) => ({
-    start_sec: i * 5,
-    end_sec:   Math.min((i + 1) * 5, durationEst),
-    label:     verdict,
-    ai_score:  Math.max(0.01, Math.min(0.99,
-      Math.round((aiScore + Math.sin(i * 1.2 + aiScore * Math.PI) * 0.06) * 1000) / 1000
-    )),
-  }))
+  // Module 3.8: removed fabricated segment_scores. Was:
+  //   Array.from({ length: segCount }, (_, i) => ({
+  //     ... ai_score: Math.round((aiScore + Math.sin(i * 1.2 + aiScore * Math.PI) * 0.06) * 1000) / 1000
+  //   }))
+  // That's a deterministic sin-wave noise pattern — NOT real per-segment
+  // analysis. The UI displayed fabricated data. Now: return empty array.
+  // The UI should show "Per-segment analysis not available" when empty.
+  // TODO: compute real per-segment scores by chunking the audio and calling
+  // the Python worker per chunk (costly — left as future work).
+  const segment_scores: { start_sec: number; end_sec: number; label: string; ai_score: number }[] = []
 
   return {
     verdict,
@@ -1309,8 +1313,8 @@ export async function analyzeAudio(
           ? `${mlScores.length} wav2vec2/ASVspoof models: score ${Math.round(mlMean * 100)}%`
           : 'ML unavailable — acoustic signal analysis only',
         weight:  geminiScore !== null || mlMean !== null ? 70 : 0,
-        value:   Math.round((geminiScore ?? mlMean ?? sigScore) * 1000) / 1000,
-        flagged: (geminiScore ?? mlMean ?? sigScore) > 0.58,
+        value:   Math.round((geminiScore ?? mlMean ?? audioWorkerScore ?? 0.5) * 1000) / 1000,
+        flagged: (geminiScore ?? mlMean ?? audioWorkerScore ?? 0.5) > 0.58,
       },
       // MODULE 3 — self-hosted forensic signals (MFCC/jitter-shimmer/
       // spectral-stability/silence-pattern/HNR), one entry per sub-signal
@@ -1325,14 +1329,10 @@ export async function analyzeAudio(
           value:       sd.value ?? 0,
           flagged:     sd.flagged,
         })),
-      ...audioSignals.map(sig => ({
-        name:        sig.name,
-        category:    'Acoustic',
-        description: sig.description,
-        weight:      Math.round(sig.weight * 30),
-        value:       sig.score,
-        flagged:     sig.score > 0.62,
-      })),
+      // Module 3.3: removed audioSignals.map(...) block. Those signals came
+      // from the deleted byte-level extractAudioSignalsExtended — they were
+      // fictional for any non-WAV upload. The self-hosted worker's signal
+      // details (above) provide the real per-signal breakdown.
     ],
     summary: verdict === 'AI'
       ? `Voice detected as AI-synthesized with ${Math.round(aiScore * 100)}% confidence.${geminiResult?.reasoning ? ' ' + geminiResult.reasoning : ''}`
@@ -1349,7 +1349,9 @@ export async function analyzeAudio(
         verdict:    scoreToVerdict(m.score),
         latency_ms: 0,
       })),
-      { model_id: 'acoustic-signals-v2', raw_score: sigScore, verdict: scoreToVerdict(sigScore), latency_ms: 0 },
+      // Module 3.3: removed acoustic-signals-v2 entry. Was: raw_score: sigScore
+      // from the deleted byte-level fiction. Now: the Python worker's
+      // per-signal breakdown is already in model_breakdown above.
     ],
   }
 }

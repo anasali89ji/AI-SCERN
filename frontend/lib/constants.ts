@@ -22,6 +22,18 @@ export const DOCX_MAX_SIZE_BYTES = 25 * 1024 * 1024
 /** Maximum file size for PPTX uploads (25 MB) */
 export const PPTX_MAX_SIZE_BYTES = 25 * 1024 * 1024
 
+// ── Audio MIME allowlist (Module 3.9) ───────────────────────────────────────
+// Single source of truth — keep in sync with signal-worker/main.py's
+// ALLOWED_AUDIO_MIMES (in the analyze_audio_upload route). Was: frontend
+// accepted audio/3gpp + audio/amr but worker rejected them → 500 error.
+// Now: both sides accept the same set.
+export const ALLOWED_AUDIO_MIMES = new Set([
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
+  'audio/ogg', 'audio/flac', 'audio/x-flac', 'audio/aac', 'audio/mp4',
+  'audio/x-m4a', 'audio/webm',
+  'audio/3gpp', 'audio/amr',  // Module 3.9: added (worker now accepts too)
+])
+
 /** Maximum number of files in a batch scan */
 export const BATCH_MAX_FILES = 20
 

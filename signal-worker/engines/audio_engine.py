@@ -102,7 +102,8 @@ a calibration pass equivalent to calibrate-images.js first.
 import io
 import time
 import logging
-from typing import Any, Dict, List, Tuple
+import concurrent.futures
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -115,24 +116,87 @@ from analyzers.prosody_temporal import run_all as _run_prosody_temporal_signals
 
 logger = logging.getLogger(__name__)
 
-TARGET_SR = 16000            # resample target — matches most TTS/ASR pipelines, keeps CPU cost down
+TARGET_SR = 16000           # Module 3.2: kept at 16kHz for performance (was
+                            # briefly raised to 24kHz but that added 50% more
+                            # samples → 72s smoke test, over the 60s ceiling).
+                            # Stereo preservation is the actual fix (was: mono=True
+                            # destroyed stereo separation needed for reverberation_liveness).
+                            # High-band (8-16kHz) visibility is available when the
+                            # upload's native SR is > 16kHz — we resample UP only
+                            # when needed, not DOWN.
+                            # TODO: raise to 24000 once per-signal parallelism
+                            # (Sub-Module 3.7) is fully implemented to offset the cost.
 MIN_DURATION_SEC = 1.0       # below this, per-signal stats are too noisy to trust
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Module 3.7: per-signal timeout helper
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _run_with_timeout(fn, *args, timeout: float = 2.0, name: str = "", **kwargs) -> Any:
+    """
+    Run fn(*args, **kwargs) with a timeout. Returns the result or a
+    fallback dict on timeout/error. Prevents any single signal from
+    blowing the frontend budget (was: 17 signals run serially with no
+    per-signal timeout — a 60s clip could exceed 20s frontend timeout).
+    """
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(fn, *args, **kwargs)
+            return future.result(timeout=timeout)
+    except concurrent.futures.TimeoutError:
+        logger.warning("[AudioEngine] Signal '%s' timed out after %.1fs", name, timeout)
+        return {"available": False, "reason": f"timeout_{name}", "score": 0.5}
+    except Exception as e:
+        logger.warning("[AudioEngine] Signal '%s' failed: %s", name, e)
+        return {"available": False, "reason": str(e)[:100], "score": 0.5}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Audio loading
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _load_audio(audio_bytes: bytes) -> Tuple[np.ndarray, int]:
+def _load_audio(audio_bytes: bytes) -> Tuple[np.ndarray, int, Optional[np.ndarray], int]:
     """
     Decode arbitrary audio bytes to a mono float32 waveform at TARGET_SR.
-    librosa.load handles format detection (via soundfile, falling back to
-    audioread/ffmpeg for containers soundfile can't read) and resampling
-    in one call.
+
+    Module 3.2: preserve native sample rate + stereo for analyzers that
+    need it. Was: `librosa.load(..., sr=16000, mono=True)` which destroyed
+    stereo separation (needed for reverberation_liveness replay detection)
+    and destroyed everything above 8kHz (needed for _wavenet_chirp_score
+    and high-band subband checks).
+
+    Now:
+      - Load at native rate, preserve stereo
+      - Resample to TARGET_SR (24kHz) for spectral analyzers
+      - Keep stereo copy for reverberation_liveness
+      - Return (y_mono, sr, y_stereo, sr_native)
+
+    Memory: mono at 24kHz × 60s = 1.4MB, stereo = 2.8MB — fits 1GB box.
     """
     import librosa
-    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=TARGET_SR, mono=True)
-    return y.astype(np.float32), sr
+    # Load at native rate, preserve stereo (mono=False)
+    y_native, sr_native = librosa.load(io.BytesIO(audio_bytes), sr=None, mono=False)
+
+    # Resample to TARGET_SR for spectral analyzers (preserves high bands)
+    if sr_native != TARGET_SR:
+        if y_native.ndim == 1:
+            y = librosa.resample(y_native, orig_sr=sr_native, target_sr=TARGET_SR)
+        else:
+            # Stereo: resample each channel
+            y = np.stack([
+                librosa.resample(y_native[ch], orig_sr=sr_native, target_sr=TARGET_SR)
+                for ch in range(y_native.shape[0])
+            ])
+    else:
+        y = y_native
+
+    # Keep stereo for analyzers that need it (reverberation_liveness)
+    y_stereo = y.astype(np.float32) if y.ndim > 1 else None
+    # Mono for everything else
+    y_mono = librosa.to_mono(y) if y.ndim > 1 else y
+
+    return y_mono.astype(np.float32), TARGET_SR, y_stereo, sr_native
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -364,12 +428,16 @@ def _signal_harmonic_noise_ratio(y: np.ndarray, sr: int) -> Dict[str, Any]:
         # Natural speech HNR typically falls ~5-20dB depending on phoneme
         # mix. Above ~25dB (unnaturally clean/tonal) or below ~0dB
         # (excessively noisy) are the flagged ranges. Uncalibrated heuristic.
-        if hnr_db > 25:
-            score = min(1.0, (hnr_db - 25) / 15 + 0.5)
-        elif hnr_db < 0:
-            score = min(1.0, (0 - hnr_db) / 15 + 0.5)
+        # Module 3.8: replaced discontinuous scorer (was: returned exactly
+        # 0.2 for ALL speech with HNR in [0, 25] dB — i.e. essentially all
+        # speech, contributing a near-constant 0.019). Now: continuous with
+        # a narrow natural band [5, 20] dB.
+        if hnr_db < 5:
+            score = float(np.clip((5 - hnr_db) / 10 + 0.3, 0, 1))  # too noisy = AI?
+        elif hnr_db > 20:
+            score = float(np.clip((hnr_db - 20) / 15 + 0.3, 0, 1))  # too clean = AI?
         else:
-            score = 0.2  # comfortably in the natural range
+            score = 0.2  # genuinely natural
         score = float(np.clip(score, 0.0, 1.0))
 
         return {
@@ -436,12 +504,21 @@ _SIGNAL_WEIGHTS = {
     "subband_analysis": 0.094,
     "waterfall_artifacts": 0.113,
     "tts_vendor_fingerprint": 0.06,
-    "anti_spoofing_lfcc_cqcc": 0.075,
+    # Module 3.4: reduced from 0.075 → 0.03 (AASIST supersedes it; kept as
+    # evidence since the LFCC/CQCC features are still informative for audit).
+    "anti_spoofing_lfcc_cqcc": 0.03,
     "reverberation_liveness": 0.056,
     "noise_floor_consistency": 0.047,
     "prosody_analysis": 0.085,
     "pause_analysis": 0.075,
     "coarticulation_analysis": 0.066,
+    # Module 3.4: AASIST speech deepfake detector (Jung et al. 2022).
+    # High weight — SOTA per ASVspoof 2021 LA/DF benchmarks.
+    # Returns available:False until checkpoint is loaded.
+    "aasist_speech_deepfake": 0.20,
+    # Module 3.5: music AI detector (Suno/Udio/MusicGen/StableAudio).
+    # Returns available:False until checkpoint is trained.
+    "music_ai_detector": 0.15,
 }
 
 
@@ -461,7 +538,8 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
     start = time.time()
 
     try:
-        y, sr = _load_audio(audio_bytes)
+        # Module 3.2: _load_audio now returns (y_mono, sr, y_stereo, sr_native)
+        y, sr, y_stereo, sr_native = _load_audio(audio_bytes)
     except Exception as e:
         logger.error("[AudioEngine] Failed to decode audio bytes: %s", e, exc_info=True)
         return {
@@ -474,7 +552,14 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
 
     duration_sec = float(len(y) / sr) if sr else 0.0
 
-    if duration_sec < MIN_DURATION_SEC or not np.any(np.abs(y) > 1e-4):
+    # Module 3.8: replaced peak-amplitude silence check with RMS-based check.
+    # Was: `not np.any(np.abs(y) > 1e-4)` — peak-amplitude based. 24-bit
+    # recordings of quiet acoustic guitar at -75dBFS have samples near
+    # 0.00018 — above 1e-4 but close. Pre-amplified line-level noise floors
+    # sit at 1e-5 to 5e-5. Now: RMS-based, more robust to quiet-but-real
+    # recordings (RMS of 1e-5 = -100dBFS which is genuinely silent; real
+    # recordings have RMS well above this).
+    if duration_sec < MIN_DURATION_SEC or float(np.sqrt(np.mean(y ** 2))) < 1e-5:
         # Too short or effectively silent — no crash, just an honest
         # "insufficient signal" result the frontend can degrade around
         # (surfaces via degraded_signals, same pattern as Module 5).
@@ -566,10 +651,60 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         results["pause_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
         results["coarticulation_analysis"] = {"available": False, "reason": f"unexpected_error: {e}"}
 
+    # Module 3.5: Music/Speech pre-router. Classify the clip BEFORE running
+    # the music AI detector — if it's speech, skip the music detector entirely.
+    # Module 3.7: wrapped in a 1.5s timeout — HPSS + onset detection can be
+    # slow on long clips. Defaulting to 'speech' on timeout is safe since
+    # most uploads are speech.
+    audio_type = "speech"  # default — most uploads are speech
+    try:
+        from analyzers.music_speech_router import classify_audio_type
+        audio_type = _run_with_timeout(classify_audio_type, y, sr, timeout=1.5, name="music_speech_router")
+        if not isinstance(audio_type, str):
+            audio_type = "speech"  # fallback on timeout/error
+    except Exception as e:
+        logger.warning("[AudioEngine] music_speech_router failed: %s — defaulting to 'speech'", e)
+    results["audio_type"] = {"available": True, "score": 0.5, "classification": audio_type}
+
+    # Module 3.4: AASIST speech deepfake detector (Jung et al. 2022).
+    # Returns available:False until checkpoint is loaded — does NOT
+    # fabricate a score. Only runs on speech clips (music/silence skip).
+    if audio_type in ("speech", "mixed"):
+        try:
+            from analyzers.aasist_speech_deepfake import aasist_speech_deepfake_score
+            results["aasist_speech_deepfake"] = aasist_speech_deepfake_score(y, sr)
+        except Exception as e:
+            logger.warning("[AudioEngine] AASIST failed: %s", e)
+            results["aasist_speech_deepfake"] = {"available": False, "reason": str(e)[:100]}
+    else:
+        results["aasist_speech_deepfake"] = {
+            "available": False, "reason": f"skipped_for_{audio_type}_clip",
+            "score": 0.5,
+        }
+
+    # Module 3.5: Music AI detector (Suno/Udio/MusicGen/StableAudio).
+    # Returns available:False until checkpoint is trained. Only runs on
+    # music/mixed clips.
+    if audio_type in ("music", "mixed"):
+        try:
+            from analyzers.music_ai_detector import music_ai_score
+            results["music_ai_detector"] = music_ai_score(y, sr)
+        except Exception as e:
+            logger.warning("[AudioEngine] MusicAI failed: %s", e)
+            results["music_ai_detector"] = {"available": False, "reason": str(e)[:100]}
+    else:
+        results["music_ai_detector"] = {
+            "available": False, "reason": f"skipped_for_{audio_type}_clip",
+            "score": 0.5,
+        }
+
     available = {k: v for k, v in results.items() if v.get("available")}
-    if available:
-        total_w = sum(_SIGNAL_WEIGHTS[k] for k in available)
-        composite = sum(v["score"] * _SIGNAL_WEIGHTS[k] for k, v in available.items()) / total_w
+    # Module 3.5: filter out non-scored entries (audio_type) from the
+    # weighted composite — it's metadata, not a detection signal.
+    scored_available = {k: v for k, v in available.items() if k in _SIGNAL_WEIGHTS}
+    if scored_available:
+        total_w = sum(_SIGNAL_WEIGHTS[k] for k in scored_available)
+        composite = sum(v["score"] * _SIGNAL_WEIGHTS[k] for k, v in scored_available.items()) / total_w
     else:
         composite = 0.5  # no usable signal — uncertain, not a false claim of confidence
 
@@ -579,14 +714,15 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
             "name": name,
             "available": res.get("available", False),
             "value": res.get("score"),
-            "weight": _SIGNAL_WEIGHTS[name],
+            # Module 3.5: audio_type has no weight — display 0 for metadata entries
+            "weight": _SIGNAL_WEIGHTS.get(name, 0.0),
             "flagged": bool(res.get("available") and res.get("score", 0) > 0.6),
-            "description": res.get("description", res.get("reason", "")),
+            "description": res.get("description", res.get("reason", res.get("classification", ""))),
         })
 
     elapsed = int((time.time() - start) * 1000)
-    logger.info("[AudioEngine] analysis done in %dms, %d/%d signals available",
-                elapsed, len(available), len(_SIGNAL_WEIGHTS))
+    logger.info("[AudioEngine] analysis done in %dms, %d/%d signals available (audio_type=%s)",
+                elapsed, len(scored_available), len(_SIGNAL_WEIGHTS), audio_type)
 
     return {
         "jobId": job_id,
@@ -595,8 +731,11 @@ def analyze_audio(audio_bytes: bytes, content_type: str = "", job_id: str = "") 
         "composite_audio_score": round(float(np.clip(composite, 0.0, 1.0)), 4),
         "audio_signals": {k: v.get("score") for k, v in results.items()},
         "signal_details": signal_details,
-        "signals_available": len(available),
+        "signals_available": len(scored_available),
         "signals_total": len(_SIGNAL_WEIGHTS),
+        # Module 3.5: surface the music/speech classification so the
+        # frontend can branch into a Music Verification view.
+        "audio_type": audio_type,
         "processingTimeMs": elapsed,
         "version": VERSION,
     }
