@@ -1,18 +1,18 @@
-// ════════════════════════════════════════════════════════════════════════════
-// AISCERN — /api/verify/seal — Integrity Seal Verification
-// ════════════════════════════════════════════════════════════════════════════
-
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(req: NextRequest) {
-  const segments = req.nextUrl.pathname.split('/')
-  const hash = segments[segments.length - 1]
+export const dynamic = 'force-dynamic'
 
+/**
+ * GET /api/verify/seal (without sealNumber param)
+ *
+ * Module 5.4: Returns a helpful error directing users to use
+ * /api/verify/seal/[sealNumber] or the /verify page to search.
+ */
+export async function GET(_req: NextRequest) {
   return NextResponse.json({
-    valid: !!hash && hash.length >= 8,
-    hash,
-    message: 'This seal verifies that a forensic scan was performed by AISCERN. Full verification requires database lookup.',
-    verifiedAt: new Date().toISOString(),
-    service: 'AISCERN Forensic Scanner v2.0',
-  })
+    verified: false,
+    error: 'SEAL_NUMBER_REQUIRED',
+    message: 'Provide a seal number: /api/verify/seal/ASC-XXXXXXXX-XX',
+    verify_page: '/verify',
+  }, { status: 400 })
 }

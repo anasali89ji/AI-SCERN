@@ -143,9 +143,28 @@ export async function POST(req: NextRequest) {
       void logModelPredictions(scanId, 'text', result.model_breakdown, finalVerdict)
     }
 
+    // Module 5.3: Issue a signed seal number for this scan.
+    // Non-fatal — seal failure doesn't block the scan result.
+    let sealNumber: string | null = null
+    let sealVerifyUrl: string | null = null
+    if (scanId) {
+      try {
+        const { issueSealForScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+        sealNumber = await issueSealForScan(
+          scanId, finalVerdict, finalConfidence,
+          { media_type: 'text', content_preview: (result as any).summary?.slice(0, 200) }
+        )
+        sealVerifyUrl = buildSealUrl(sealNumber)
+      } catch (e) {
+        console.warn('[detect/text] seal issuance failed:', e)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       scan_id: scanId,
+      sealNumber,
+      sealVerifyUrl,
       result:  sanitizeDetectionResultForClient({
         ...result,
         verdict: finalVerdict,
