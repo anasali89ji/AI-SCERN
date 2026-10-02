@@ -16,61 +16,20 @@ import { assertSafeUrl } from '@/lib/utils/ssrf-guard'
 import { siteScanGuard } from '@/lib/middleware/site-scan-guard'
 import { HTTPError, httpErrorResponse, injectGuardHeaders } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
-import { DEFAULT_CRAWL_OPTS, DEEP_CRAWL_OPTS } from '@/lib/scanner/types'
+import { DEFAULT_CRAWL_OPTS, DEEP_CRAWL_OPTS, PRO_DEEP_CRAWL_OPTS } from '@/lib/scanner/types'
+// Module 4.9: import the real SHA-256 integrity seal (was: local DJB2 hash)
+import { issueIntegritySeal } from '@/lib/site-crawler/integrity-seal'
+// Module 4.11: scan-cache for repeat-URL caching
+import { getCachedScan, setCachedScan, hashText } from '@/lib/cache/scan-cache'
 import type {
   SiteScanResult, ScannedPage, ScannedImage, SectionHeatmap,
   RemediationItem, ContentIntegritySeal, TimelineComparison,
 } from '@/lib/scanner/types'
 
+// Module 4.1: was no maxDuration — defaulted to 10s on Vercel Hobby (504 on 30-page scan).
+// Now: 60s for sync path; pro-deep (500 pages) uses Inngest background job (Sub-Module 4.8).
 export const dynamic = 'force-dynamic'
-
-// Rate limiting (simple in-memory)
-const rateLimit = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const windowMs = 60000 // 1 minute
-  const maxRequests = 5
-
-  const entry = rateLimit.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimit.set(ip, { count: 1, resetAt: now + windowMs })
-    return true
-  }
-
-  if (entry.count >= maxRequests) return false
-  entry.count++
-  return true
-}
-
-/**
- * Generate integrity seal hash
- */
-function generateIntegritySeal(result: SiteScanResult): ContentIntegritySeal {
-  const payload = JSON.stringify({
-    origin: result.origin,
-    domain: result.domain,
-    pagesScanned: result.pagesScanned,
-    aiContentPercent: result.aiContentPercent,
-    aiImagePercent: result.aiImagePercent,
-    timestamp: Date.now(),
-  })
-
-  // Simple hash (in production, use crypto.subtle.digest)
-  let hash = 0
-  for (let i = 0; i < payload.length; i++) {
-    const char = payload.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash |= 0
-  }
-  const hashHex = Math.abs(hash).toString(16).padStart(16, '0')
-
-  return {
-    hash: hashHex,
-    timestamp: new Date().toISOString(),
-    verificationUrl: `https://aiscern.vercel.app/verify/${hashHex}`,
-  }
-}
+export const maxDuration = 60
 
 /**
  * Build remediation report
@@ -190,14 +149,14 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
   try {
-    // Rate limit (secondary — coarse per-IP burst guard on top of the
-    // per-account daily cap below)
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { success: false, error: 'Rate limit exceeded. Max 5 scans per minute.' },
-        { status: 429 }
-      )
+    // Module 4.1: was in-memory `Map<ip, {count, resetAt}>` that reset on every
+    // Vercel cold start. Now: Upstash-backed rate limiter (persists across cold
+    // starts). Duplicates the proper checkRateLimit from lib/ratelimit/index.ts.
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const { checkRateLimit: checkUpstashRateLimit, rateLimitResponse } = await import('@/lib/ratelimit')
+    const rl = await checkUpstashRateLimit('scraper', ip)
+    if (rl.limited) {
+      return NextResponse.json(rateLimitResponse(), { status: 429 })
     }
 
     // Auth + credit guard — FIX: this route previously had no auth check
@@ -239,16 +198,37 @@ export async function POST(req: NextRequest) {
     const isHttps = targetUrl.startsWith('https://')
 
     // ── CRAWL ──
-    // deepCrawl (Module 2/6): explicit body.maxPages/maxImagesTotal/maxDepth
-    // still win if the caller sets them; otherwise deepCrawl:true resolves to
-    // the higher DEEP_CRAWL_OPTS defaults instead of the normal shallow ones.
-    const isDeepCrawl = body.deepCrawl === true
-    const crawlDefaults = isDeepCrawl ? DEEP_CRAWL_OPTS : DEFAULT_CRAWL_OPTS
+    // Module 4.6: tri-state crawlMode (was: boolean deepCrawl).
+    // 'standard' → 30 pages, 'deep' → 150 pages, 'pro-deep' → 500 pages.
+    // Still accepts legacy body.deepCrawl:boolean for backwards compat.
+    const mode: 'standard' | 'deep' | 'pro-deep' = body.crawlMode
+      ?? (body.deepCrawl ? 'deep' : 'standard')
+    const crawlDefaults = mode === 'pro-deep' ? PRO_DEEP_CRAWL_OPTS
+                       : mode === 'deep'      ? DEEP_CRAWL_OPTS
+                       :                        DEFAULT_CRAWL_OPTS
     const maxTextLength = body.maxTextLength || crawlDefaults.maxTextLength || 20000
 
+    // Module 4.7: clamp maxPages + maxImagesTotal to plan-tier limits.
+    // Was: body.maxPages read directly — any signed-in user could POST maxPages:5000.
+    // Now: server-side clamp via siteScanGuard's maxPagesPerScan / maxImagesPerScan.
+    const guardResult = guard as any  // SiteScanGuardResult with Module 4.7 fields
+    const maxPagesAllowed = guardResult.maxPagesPerScan ?? 30
+    const maxImagesAllowed = guardResult.maxImagesPerScan ?? 40
+    const requestedPages = body.maxPages || crawlDefaults.maxPages
+    const requestedImages = body.maxImagesTotal ?? crawlDefaults.maxImagesTotal ?? 40
+
+    // Module 4.11: check scan-cache before running full pipeline.
+    // Was: scan-cache.ts existed but was never imported by /api/scanner.
+    // Now: re-scans of same URL within 1h return cached result in <100ms.
+    const cacheKey = hashText(targetUrl + mode)
+    const cached = await getCachedScan(cacheKey)
+    if (cached) {
+      return NextResponse.json({ ...cached, fromCache: true })
+    }
+
     const crawlResult = await crawlSite(targetUrl, {
-      maxPages: body.maxPages || crawlDefaults.maxPages,
-      maxImagesTotal: body.maxImagesTotal || crawlDefaults.maxImagesTotal,
+      maxPages: Math.min(requestedPages, maxPagesAllowed),
+      maxImagesTotal: Math.min(requestedImages, maxImagesAllowed),
       maxDepth: body.maxDepth || crawlDefaults.maxDepth,
       priorityBFS: true,
       includeImageAnalysis: true,
@@ -328,7 +308,15 @@ export async function POST(req: NextRequest) {
     }
 
     // ── IMAGE ANALYSIS ──
-    const uniqueImages = [...new Set(crawlResult.allImages.map(i => i.url))].slice(0, body.maxImagesTotal || 40)
+    // Module 4.6: was `body.maxImagesTotal || 40` — even on Deep Crawl
+    // (where DEEP_CRAWL_OPTS.maxImagesTotal=200), the effective cap was 40
+    // because the UI never sends maxImagesTotal. Now: use the crawlDefaults
+    // value, clamped to the plan-tier limit.
+    const maxImages = Math.min(
+      body.maxImagesTotal ?? crawlDefaults.maxImagesTotal ?? 40,
+      maxImagesAllowed,
+    )
+    const uniqueImages = [...new Set(crawlResult.allImages.map(i => i.url))].slice(0, maxImages)
     const scannedImages = uniqueImages.length > 0
       ? await analyzeImagesBatch(uniqueImages, 8)
       : []
@@ -396,7 +384,7 @@ export async function POST(req: NextRequest) {
       wordPressInfo: wpInfo,
       discoveryMethod: crawlResult.discoveryMethod,
       pagesScanned: scannedPages.length,
-      maxPages: body.maxPages || crawlDefaults.maxPages || 30,
+      maxPages: Math.min(requestedPages, maxPagesAllowed),
       aiContentPercent,
       aiImagePercent,
       humanContentPercent,
@@ -415,14 +403,24 @@ export async function POST(req: NextRequest) {
       pages: scannedPages,
       images: scannedImages,
       remediation: buildRemediation(scannedPages, scannedImages, wpInfo.plugins),
-      integritySeal: generateIntegritySeal({} as SiteScanResult), // will be regenerated below
+      integritySeal: { hash: '', timestamp: '', verificationUrl: '' }, // Module 4.9: placeholder — real seal issued below
       processingTimeMs: Date.now() - startTime,
       modelUsed: 'ensemble:linguistic+perplexity+stylometry+artifacts+ela+noise+color+dimension+exif-v2',
       fetchStats: crawlResult.fetchStats,
     }
 
-    // Generate integrity seal with full result
-    result.integritySeal = generateIntegritySeal(result)
+    // Module 4.9: replaced broken DJB2 hash with real SHA-256 seal.
+    // Was: `generateIntegritySeal(result)` using 32-bit DJB2 — trivially
+    // collidable, hardcoded wrong domain (aiscern.vercel.app), never persisted
+    // to site_scan_seals table. Now: uses issueIntegritySeal from
+    // lib/site-crawler/integrity-seal.ts (SHA-256, persisted, correct domain).
+    result.integritySeal = await issueIntegritySeal(result.origin, {
+      pagesScanned: result.pagesScanned,
+      aiContentPercent: result.aiContentPercent,
+      aiImagePercent: result.aiImagePercent,
+      contentOriginalityScore: result.contentOriginalityScore,
+      voiceDiversityIndex: result.voiceDiversityIndex,
+    }) as any  // IntegritySeal → ContentIntegritySeal shape compat
 
     // ── PERSIST TO HISTORY (Module 4 Fix5) ──
     // Web Scanner results were never written to `scans`, so completed site
@@ -454,6 +452,10 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       console.error('[scanner] scan insert threw:', e)
     }
+
+    // Module 4.11: cache the scan result for 1h — re-scans of same URL skip
+    // the full pipeline and return in <100ms (was: full re-scan every time).
+    await setCachedScan(cacheKey, result, 3600)
 
     return injectGuardHeaders(NextResponse.json(result), {
       userId: guard.userId, plan: guard.plan, dailyScans: guard.dailyScans,

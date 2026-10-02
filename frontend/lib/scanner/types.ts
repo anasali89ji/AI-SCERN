@@ -249,3 +249,21 @@ export const DEEP_CRAWL_OPTS: CrawlOptions = {
   respectRobots: true,
   maxTextLength: 50000,
 }
+
+// Module 4.6: Pro-Deep crawl mode — the new third tier.
+// 500 pages + 150 images (100+ headroom). Used when crawlMode='pro-deep'.
+// Server-side enforced: free/starter users can't access this (clamped by
+// siteScanGuard.maxPagesPerScan). Pro+ users get the full 500 pages.
+// Runs via Inngest background job (Sub-Module 4.8) — 500 pages × 2s = ~17min,
+// too long for any serverless sync handler.
+export const PRO_DEEP_CRAWL_OPTS: CrawlOptions = {
+  maxPages: 500,
+  maxImagesTotal: 150,   // "100+" headroom
+  maxDepth: 8,
+  priorityBFS: true,
+  includeImageAnalysis: true,
+  includeSubPageText: true,
+  scanImages: true,
+  respectRobots: true,
+  maxTextLength: 80000,
+}

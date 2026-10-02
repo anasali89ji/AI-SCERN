@@ -19,6 +19,10 @@ export interface SiteScanGuardResult {
   dailyScans: number
   dailyLimit: number
   unlimited?: boolean
+  // Module 4.7: per-plan max pages/images per scan (was: missing — server
+  // couldn't enforce "Pro = 500 pages per scan"). Now: clamped in /api/scanner.
+  maxPagesPerScan?:  number
+  maxImagesPerScan?: number
 }
 
 interface SiteScanRpcResult {
@@ -27,6 +31,9 @@ interface SiteScanRpcResult {
   plan:        string
   daily_scans: number
   daily_limit: number
+  // Module 4.7: new fields returned by the updated RPC (v36 migration)
+  max_pages_per_scan?: number
+  max_images_per_scan?: number
 }
 
 export async function siteScanGuard(_req: NextRequest): Promise<SiteScanGuardResult> {
@@ -74,5 +81,8 @@ export async function siteScanGuard(_req: NextRequest): Promise<SiteScanGuardRes
     dailyScans: result.daily_scans,
     dailyLimit: result.daily_limit,
     unlimited:  result.daily_limit === -1,
+    // Module 4.7: pass through per-plan page/image caps
+    maxPagesPerScan:  result.max_pages_per_scan ?? 30,
+    maxImagesPerScan: result.max_images_per_scan ?? 40,
   }
 }

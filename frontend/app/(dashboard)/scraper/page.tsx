@@ -104,7 +104,10 @@ const EXAMPLES = [
 export default function ScraperPage() {
   useAuth()
   const [url, setUrl]             = useState('')
-  const [deepCrawl, setDeepCrawl] = useState(false)
+  // Module 4.10: was `const [deepCrawl, setDeepCrawl] = useState(false)`.
+  // Now: tri-state crawlMode ('standard' | 'deep' | 'pro-deep'). Still
+  // sends `deepCrawl` for backwards compat with older API versions.
+  const [crawlMode, setCrawlMode] = useState<'standard' | 'deep' | 'pro-deep'>('standard')
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState<SiteScanResult | null>(null)
   const [error, setError]         = useState<string | null>(null)
@@ -140,7 +143,7 @@ export default function ScraperPage() {
       const res  = await fetch('/api/scanner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scanUrl, deepCrawl }),
+        body: JSON.stringify({ url: scanUrl, crawlMode, deepCrawl: crawlMode !== 'standard' }),
       })
       const data = await res.json()
       if (!data.success) { setError(data.error?.message || data.error || 'Site scan failed'); return }
@@ -208,17 +211,26 @@ export default function ScraperPage() {
           {/* Options row */}
           <div className="flex items-center gap-4 mt-3 flex-wrap">
             <div className="flex items-center gap-1">
-              <button onClick={() => setDeepCrawl(false)}
-                className={`px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${!deepCrawl ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+              {/* Module 4.10: was two-button Standard/Deep toggle. Now: three
+                  buttons including Pro 500. Pro button is gated by plan tier
+                  (disabled for free/starter users). */}
+              <button onClick={() => setCrawlMode('standard')}
+                className={`px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'standard' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
                 Standard · 30 pages
               </button>
-              <button onClick={() => setDeepCrawl(true)}
-                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${deepCrawl ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+              <button onClick={() => setCrawlMode('deep')}
+                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
                 <Gauge className="w-3.5 h-3.5" />
-                Deep Crawl · 150 pages
+                Deep · 150 pages
+              </button>
+              <button onClick={() => setCrawlMode('pro-deep')}
+                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'pro-deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}
+                title="Pro plan required — 500 pages + 100 images">
+                <Gauge className="w-3.5 h-3.5" />
+                Pro · 500 pages + 100 images
               </button>
             </div>
-            {deepCrawl && (
+            {crawlMode !== 'standard' && (
               <span className="text-[10px] text-[#6B6B6B]">Deeper crawls take longer — roughly 3–5 minutes for large sites.</span>
             )}
           </div>

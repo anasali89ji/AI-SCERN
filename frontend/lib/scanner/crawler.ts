@@ -90,16 +90,16 @@ async function fetchDirect(url: string, timeoutMs = 12000): Promise<string | nul
   } catch { return null }
 }
 
-async function fetchJina(url: string): Promise<string | null> {
+async function fetchJina(url: string, timeoutMs = 15000): Promise<string | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: {
         'Accept': 'text/html',
         'X-Return-Format': 'html',
-        'X-Timeout': '20',
+        'X-Timeout': String(Math.ceil(timeoutMs / 1000)),
         'X-No-Cache': 'true',
       },
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(timeoutMs),
     })
     if (!res.ok) return null
     const text = await res.text()
@@ -110,11 +110,11 @@ async function fetchJina(url: string): Promise<string | null> {
   } catch { return null }
 }
 
-async function fetchCache(url: string): Promise<string | null> {
+async function fetchCache(url: string, timeoutMs = 5000): Promise<string | null> {
   try {
     const res = await fetch(
       `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}&hl=en`,
-      { headers: { 'User-Agent': STEALTH_HEADERS['User-Agent'] }, signal: AbortSignal.timeout(10000) }
+      { headers: { 'User-Agent': STEALTH_HEADERS['User-Agent'] }, signal: AbortSignal.timeout(timeoutMs) }
     )
     if (!res.ok) return null
     const html = await res.text()
@@ -123,16 +123,23 @@ async function fetchCache(url: string): Promise<string | null> {
 }
 
 export async function fetchPage(url: string): Promise<FetchedPage | null> {
-  // Try direct first
-  const direct = await fetchDirect(url)
-  if (direct) return { url, html: direct, fetchMethod: 'direct', statusCode: 200 }
+  // Module 4.3: race direct + Jina in parallel (was: sequential 3-stage
+  // fallback — 12s + 25s + 10s = up to 47s for one dead URL).
+  // Now: whichever responds first wins; both have independent timeouts.
+  const DIRECT_TIMEOUT = 12_000
+  const JINA_TIMEOUT = 15_000  // reduced from 25s — if Jina works, it works in <15s
 
-  // Try Jina as fallback
-  const jina = await fetchJina(url)
-  if (jina) return { url, html: jina, fetchMethod: 'jina', statusCode: 200 }
+  const winner = await Promise.race([
+    fetchDirect(url, DIRECT_TIMEOUT).then(h => h ? { html: h, src: 'direct' as const } : null),
+    fetchJina(url, JINA_TIMEOUT).then(h => h ? { html: h, src: 'jina' as const } : null),
+  ]).catch(() => null)
 
-  // Last resort: Google cache
-  const cached = await fetchCache(url)
+  if (winner) {
+    return { url, html: winner.html, fetchMethod: winner.src, statusCode: 200 }
+  }
+
+  // Last resort — Google cache (5s timeout, was 10s)
+  const cached = await fetchCache(url, 5_000)
   if (cached) return { url, html: cached, fetchMethod: 'cache', statusCode: 200 }
 
   return null
@@ -383,7 +390,23 @@ async function discoverFromSitemap(origin: string, maxUrls: number): Promise<str
 // over the wildcard block for that same path prefix). Module 2 gap fix:
 // CrawlOptions.respectRobots existed and defaulted to true but nothing in
 // crawlSite() ever read it — every crawl ignored robots.txt entirely.
+// Module 4.5: Redis cache 1h TTL (was: fresh fetch every scan — 0.5-2s wasted).
 async function fetchRobotsDisallowed(origin: string): Promise<string[]> {
+  // Module 4.5: check Redis cache first
+  const cacheKey = `robots:${origin}`
+  try {
+    const { getRedis } = await import('@/lib/cache/redis')
+    const redis = getRedis()
+    if (redis) {
+      const cached = await redis.get<string>(cacheKey)
+      if (cached !== null) {
+        try {
+          return JSON.parse(cached)
+        } catch { /* corrupt cache — fall through to fresh fetch */ }
+      }
+    }
+  } catch { /* Redis down — fall through to fresh fetch */ }
+
   try {
     const res = await fetch(`${origin}/robots.txt`, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AiscernBot/1.0)' },
@@ -407,6 +430,14 @@ async function fetchRobotsDisallowed(origin: string): Promise<string[]> {
         disallowed.push(value)
       }
     }
+    // Module 4.5: cache the result in Redis (1h TTL)
+    try {
+      const { getRedis } = await import('@/lib/cache/redis')
+      const redis = getRedis()
+      if (redis) {
+        await redis.setex(cacheKey, 3600, JSON.stringify(disallowed))
+      }
+    } catch { /* Redis down — non-fatal */ }
     return disallowed
   } catch {
     return [] // fail open — an unreachable robots.txt shouldn't block a scan
@@ -435,84 +466,115 @@ export async function crawlSite(
   let discoveryMethod: 'sitemap' | 'crawl' | 'hybrid' = 'crawl'
 
   // Priority queue: higher priority = scan first
+  // Module 4.4: was `queue.some(q => q.url === url)` — O(n) per link. Now:
+  // use a Set `queuedUrls` for O(1) lookup. The queue array is still sorted
+  // by priority on dequeue (TODO: replace with binary heap in future pass —
+  // the Set fix eliminates the O(n²) bottleneck, sort is O(n log n) per item).
   const queue: { url: string; depth: number; priority: number }[] = [
     { url: startUrl, depth: 0, priority: 100 }
   ]
+  const queuedUrls = new Set<string>([startUrl])
 
   // robots.txt (Module 2 gap fix — see fetchRobotsDisallowed above)
   const disallowedPaths = opts.respectRobots !== false
     ? await fetchRobotsDisallowed(origin)
     : []
 
-  // Seed additional URLs from sitemap.xml when available — these get a
-  // slightly lower priority than the homepage itself but are scanned before
-  // any BFS-discovered link, since sitemap URLs are author-declared canonical
-  // pages.
+  // Seed additional URLs from sitemap.xml when available
   const sitemapUrls = await discoverFromSitemap(origin, opts.maxPages! * 2)
   if (sitemapUrls.length > 0) {
     discoveryMethod = 'hybrid'
     for (const url of sitemapUrls) {
-      if (url === startUrl || queue.some(q => q.url === url)) continue
+      if (queuedUrls.has(url)) continue  // Module 4.4: O(1) Set lookup
       try {
         const u = new URL(url)
-        if (u.hostname !== domain) continue // stay on-domain
+        if (u.hostname !== domain) continue
         if (isDisallowedByRobots(u.pathname, disallowedPaths)) continue
       } catch { continue }
       queue.push({ url, depth: 1, priority: 90 })
+      queuedUrls.add(url)
     }
   }
 
-  while (queue.length > 0 && pages.length < opts.maxPages!) {
-    // Sort by priority (descending)
-    queue.sort((a, b) => b.priority - a.priority)
-    const current = queue.shift()!
+  // Module 4.2: bounded-concurrency worker pool (was: sequential while loop).
+  // Was: `await fetchPage(current.url)` in a while loop — 30 pages × 2s = 60s.
+  // Now: CONCURRENCY workers fetch in parallel. 4 workers for ≤100 pages,
+  // 8 workers for >100 pages (Deep/Pro-Deep scans).
+  const CONCURRENCY = (opts.maxPages ?? 30) > 100 ? 8 : 4
+  let activeWorkers = 0
 
-    if (visited.has(current.url)) continue
-    visited.add(current.url)
+  await new Promise<void>((resolve) => {
+    const worker = async () => {
+      while (queue.length > 0 && pages.length < opts.maxPages!) {
+        // Priority dequeue — sort and shift (Module 4.4: O(n log n) per item,
+        // acceptable for ≤500 pages; binary heap would be O(log n) but adds a dep)
+        queue.sort((a, b) => b.priority - a.priority)
+        const current = queue.shift()!
+        queuedUrls.delete(current.url)
 
-    const fetched = await fetchPage(current.url)
-    if (!fetched) {
-      failedUrls.push(current.url)
-      fetchStats.failed++
-      continue
-    }
+        if (visited.has(current.url)) continue
+        visited.add(current.url)
 
-    fetchStats[fetched.fetchMethod]++
+        activeWorkers++
+        try {
+          const fetched = await fetchPage(current.url)
+          if (!fetched) {
+            failedUrls.push(current.url)
+            fetchStats.failed++
+            continue
+          }
 
-    const parsed = parsePage(fetched.html, current.url, fetched.fetchMethod)
-    pages.push(parsed)
+          fetchStats[fetched.fetchMethod]++
 
-    // Collect images
-    for (const imgUrl of parsed.imageUrls) {
-      allImages.push({ url: imgUrl, sourcePage: current.url })
-    }
+          const parsed = parsePage(fetched.html, current.url, fetched.fetchMethod)
+          pages.push(parsed)
 
-    // WordPress detection
-    if (!isWordPress) {
-      const wpCheck = detectWordPress(fetched.html, current.url)
-      isWordPress = wpCheck.isWordPress
-      wordPressVersion = wpCheck.version
-    }
+          // Collect images
+          for (const imgUrl of parsed.imageUrls) {
+            allImages.push({ url: imgUrl, sourcePage: current.url })
+          }
 
-    // Add internal links to queue
-    if (current.depth < opts.maxDepth!) {
-      const internalLinks = parsed.links
-        .filter(l => l.isInternal && !visited.has(l.url))
-        .filter(l => {
-          // Skip common non-content paths
-          const path = new URL(l.url).pathname.toLowerCase()
-          return !SKIP_PATHS.test(path) &&
-            !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path) &&
-            !isDisallowedByRobots(path, disallowedPaths)
-        })
+          // WordPress detection
+          if (!isWordPress) {
+            const wpCheck = detectWordPress(fetched.html, current.url)
+            isWordPress = wpCheck.isWordPress
+            wordPressVersion = wpCheck.version
+          }
 
-      for (const link of internalLinks) {
-        if (!queue.some(q => q.url === link.url)) {
-          queue.push({ url: link.url, depth: current.depth + 1, priority: link.priority })
+          // Add internal links to queue (Module 4.4: Set lookup instead of queue.some)
+          if (current.depth < opts.maxDepth!) {
+            const internalLinks = parsed.links
+              .filter(l => l.isInternal && !visited.has(l.url))
+              .filter(l => {
+                const path = new URL(l.url).pathname.toLowerCase()
+                return !SKIP_PATHS.test(path) &&
+                  !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path) &&
+                  !isDisallowedByRobots(path, disallowedPaths)
+              })
+
+            for (const link of internalLinks) {
+              if (!queuedUrls.has(link.url)) {  // Module 4.4: O(1) Set lookup
+                queue.push({ url: link.url, depth: current.depth + 1, priority: link.priority })
+                queuedUrls.add(link.url)
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`[crawl] failed ${current.url}:`, e)
+          failedUrls.push(current.url)
+        } finally {
+          activeWorkers--
+          if (queue.length === 0 && activeWorkers === 0) resolve()
         }
       }
+      if (queue.length === 0 && activeWorkers === 0) resolve()
     }
-  }
+    // Spawn workers
+    for (let i = 0; i < CONCURRENCY; i++) {
+      worker()
+    }
+    if (queue.length === 0) resolve()
+  })
 
   return {
     pages,
