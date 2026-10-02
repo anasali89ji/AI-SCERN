@@ -56,3 +56,8 @@ export async function api<T = unknown>(
 export function typedFetcher<T>() {
   return (path: string) => api<T>(path)
 }
+
+// Fix: tabs import { fetcher } — provide a default fetcher that returns JSON
+export async function fetcher<T = unknown>(path: string): Promise<T> {
+  return api<T>(path)
+}

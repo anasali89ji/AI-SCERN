@@ -49,3 +49,26 @@ export async function requireAdmin(
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown'
   return { adminId, ip }
 }
+
+// Fix: errors/[id]/route.ts imports { logAdminAction } — was missing
+export async function logAdminAction(
+  action: string,
+  targetId: string,
+  ip: string,
+  details?: Record<string, unknown>,
+  adminId?: string
+): Promise<void> {
+  try {
+    const db = getAdminDb()
+    await db.from('admin_activity_logs').insert({
+      action,
+      target_id: targetId,
+      ip,
+      details: details || {},
+      admin_id: adminId || 'system',
+      created_at: new Date().toISOString(),
+    })
+  } catch (e) {
+    console.error('[logAdminAction] failed:', e)
+  }
+}

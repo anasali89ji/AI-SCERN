@@ -5,7 +5,8 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 interface Props { children: ReactNode; tabName?: string }
 interface State { hasError: boolean; error?: Error }
 
-export default class ErrorBoundary extends Component<Props, State> {
+// Fix: tabs import { ErrorBoundary } (named) — was only default export
+class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) { super(props); this.state = { hasError: false } }
   static getDerivedStateFromError(error: Error): State { return { hasError: true, error } }
   componentDidCatch(error: Error, info: any) { console.error(`[ErrorBoundary${this.props.tabName ? ' @ ' + this.props.tabName : ''}]`, error, info) }
@@ -25,3 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     return this.props.children
   }
 }
+
+// Named + default export
+export { ErrorBoundary }
+export default ErrorBoundary

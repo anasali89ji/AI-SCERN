@@ -5,7 +5,8 @@ interface KpiCardProps {
   sub?: string; trend?: 'up' | 'down' | 'neutral'
 }
 
-export default function KpiCard({ label, value, icon: Icon, color, sub, trend }: KpiCardProps) {
+// Fix: tabs import { KpiCard } (named export) — was only default export
+function KpiCard({ label, value, icon: Icon, color, sub, trend }: KpiCardProps) {
   return (
     <div className="card p-4 hover:shadow-lg transition-all group">
       <div className="flex items-start justify-between mb-2">
@@ -24,3 +25,7 @@ export default function KpiCard({ label, value, icon: Icon, color, sub, trend }:
     </div>
   )
 }
+
+// Named + default export (tabs import { KpiCard }, other files import default)
+export { KpiCard }
+export default KpiCard
