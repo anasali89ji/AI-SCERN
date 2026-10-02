@@ -321,9 +321,34 @@ export async function POST(req: NextRequest) {
       chunk_scores:    chunkResults.map(c => ({ index: c.chunkIndex, confidence: c.confidence, verdict: c.verdict })),
     }
 
-    try { await getSupabaseAdmin().from('scans').insert({ user_id: userId, media_type: 'text', content_preview: fullText.substring(0, 500), verdict: finalVerdict, confidence_score: Math.round(aiScore) / 100, processing_time: processingTime, status: 'complete', metadata: { source: sourceType, char_count: fullText.length, chunks: chunkResults.length } }) } catch {}
+    // Insert scan record and issue seal
+    let pdfScanId: string | null = null
+    try {
+      const { data: pdfScanRow } = await getSupabaseAdmin().from('scans').insert({
+        user_id: userId, media_type: 'text',
+        content_preview: fullText.substring(0, 500),
+        verdict: finalVerdict,
+        confidence_score: Math.round(aiScore) / 100,
+        processing_time: processingTime, status: 'complete',
+        metadata: { source: sourceType, char_count: fullText.length, chunks: chunkResults.length }
+      }).select('id').single()
+      pdfScanId = pdfScanRow?.id ?? null
+    } catch {}
 
-    return NextResponse.json({ success: true, data: aggregatedResult })
+    // Seal issuance — signed HMAC-SHA256 seal for every scan (non-fatal)
+    let sealNumber: string | null = null
+    let sealVerifyUrl: string | null = null
+    if (pdfScanId) {
+      try {
+        const { issueSealForScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+        sealNumber = await issueSealForScan(pdfScanId, finalVerdict, aiScore / 100,
+          { media_type: 'pdf', source: sourceType })
+        sealVerifyUrl = buildSealUrl(sealNumber)
+      } catch (e) { console.warn('[detect/pdf] seal issuance failed:', e) }
+    }
+
+    const resultWithSeal = { ...aggregatedResult, sealNumber, sealVerifyUrl }
+    return NextResponse.json({ success: true, data: resultWithSeal })
   } catch (err: any) {
     console.error('[detect/pdf]', err)
     return NextResponse.json({

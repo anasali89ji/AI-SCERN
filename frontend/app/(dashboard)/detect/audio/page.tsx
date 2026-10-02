@@ -2,6 +2,7 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { SealBadge } from '@/components/dashboard/SealBadge'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
@@ -183,6 +184,8 @@ function AudioDetectionPage() {
   const [result, setResult] = useState<DetectionResult | null>(null)
   const [showMobileResult, setShowMobileResult] = useState(false)
   const [scanId, setScanId] = useState<string | null>(null)
+  const [sealNumber, setSealNumber] = useState<string | null>(null)
+  const [sealVerifyUrl, setSealVerifyUrl] = useState<string | null>(null)
 
   const shareResult = async () => {
     if (!scanId) return
@@ -274,6 +277,8 @@ function AudioDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
+      setSealNumber(data.sealNumber ?? null)
+      setSealVerifyUrl(data.sealVerifyUrl ?? null)
       window.dispatchEvent(new CustomEvent('aiscern:scan-saved'))
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
@@ -451,6 +456,11 @@ function AudioDetectionPage() {
     <div className="px-4 sm:px-6 lg:px-8 2xl:px-10 max-w-6xl 2xl:max-w-[1400px] 3xl:max-w-[1700px] mx-auto pb-6">
       
       <LazyReviewSuggestion toolName="AI Audio & Voice Clone Verification" />
+      {result && sealNumber && (
+        <div className="px-4 pt-2">
+          <SealBadge sealNumber={sealNumber} sealVerifyUrl={sealVerifyUrl} />
+        </div>
+      )}
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

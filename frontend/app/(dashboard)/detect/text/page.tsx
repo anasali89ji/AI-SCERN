@@ -1,6 +1,7 @@
 'use client'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
+import { SealBadge } from '@/components/dashboard/SealBadge'
 import { useState, useRef, useEffect } from 'react'
 import { toUserError } from '@/lib/utils/user-errors'
 import { FileType2, Send, RotateCcw, TriangleAlert, CircleCheck, CircleHelp, LoaderCircle, Copy, Download, ClipboardPaste, Upload, BookOpen, X, Share, Info, Database } from 'lucide-react'
@@ -218,6 +219,8 @@ function TextDetectionPage() {
   const [pdfMode, setPdfMode] = useState(false)
   const [paragraphScores, setParagraphScores] = useState<{text:string;confidence:number;verdict:string}[]>([])
   const [scanId, setScanId] = useState<string | null>(null)
+  const [sealNumber, setSealNumber] = useState<string | null>(null)
+  const [sealVerifyUrl, setSealVerifyUrl] = useState<string | null>(null)
   // Module 7.1 Focus Mode: dim everything but the textarea + action bar while typing
   const [focusMode, setFocusMode] = useState(false)
 
@@ -257,6 +260,8 @@ function TextDetectionPage() {
       const payload = data.data ?? data.result
       setResult(payload); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
+      setSealNumber(data.sealNumber ?? payload?.sealNumber ?? null)
+      setSealVerifyUrl(data.sealVerifyUrl ?? payload?.sealVerifyUrl ?? null)
       if (payload?.paragraph_scores) setParagraphScores(payload.paragraph_scores)
       incrementGlobalScanCount()
       window.dispatchEvent(new Event('aiscern:scan'))
@@ -281,6 +286,8 @@ function TextDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
+      setSealNumber(data.sealNumber ?? null)
+      setSealVerifyUrl(data.sealVerifyUrl ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
       // FIX B.6: Map sentence_scores from hf-analyze into paragraphScores for heatmap
       if (data.result?.sentence_scores?.length) {
@@ -601,6 +608,11 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
 
       <LazyReviewSuggestion toolName="AI Text Verification" />
+      {result && sealNumber && (
+        <div className="px-4 pt-2">
+          <SealBadge sealNumber={sealNumber} sealVerifyUrl={sealVerifyUrl} />
+        </div>
+      )}
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

@@ -5,8 +5,11 @@ import {
   LoaderCircle, SquareArrowOutUpRight, ChevronDown, Info,
   FileType2, ImageIcon, Copy, Check, Layers, Fingerprint,
   Zap, AlertOctagon, ListTree, Wrench, BadgeCheck, Gauge,
+  ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useUserPlan } from '@/hooks/useUserPlan'
+import { ProFeatureGate } from '@/components/dashboard/ProFeatureGate'
 
 // ── Types (mirrors SiteScanResult from lib/scanner/types.ts) ────────────────────
 interface EnsembleSignals {
@@ -103,6 +106,7 @@ const EXAMPLES = [
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function ScraperPage() {
   useAuth()
+  const { isPro } = useUserPlan()
   const [url, setUrl]             = useState('')
   // Module 4.10: was `const [deepCrawl, setDeepCrawl] = useState(false)`.
   // Now: tri-state crawlMode ('standard' | 'deep' | 'pro-deep'). Still
@@ -223,12 +227,19 @@ export default function ScraperPage() {
                 <Gauge className="w-3.5 h-3.5" />
                 Deep · 150 pages
               </button>
-              <button onClick={() => setCrawlMode('pro-deep')}
-                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'pro-deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}
-                title="Pro plan required — 500 pages + 100 images">
-                <Gauge className="w-3.5 h-3.5" />
-                Pro · 500 pages + 100 images
-              </button>
+              {/* Pro 500 button — visible to all but gated behind ProFeatureGate for free users */}
+              <ProFeatureGate
+                isPro={isPro}
+                featureName="Pro · 500 pages"
+                description="Upgrade to scan up to 500 pages + 100 images per scan"
+              >
+                <button onClick={() => setCrawlMode('pro-deep')}
+                  className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'pro-deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}
+                  title="Pro plan required — 500 pages + 100 images">
+                  <Gauge className="w-3.5 h-3.5" />
+                  Pro · 500 + 100
+                </button>
+              </ProFeatureGate>
             </div>
             {crawlMode !== 'standard' && (
               <span className="text-[10px] text-[#6B6B6B]">Deeper crawls take longer — roughly 3–5 minutes for large sites.</span>
@@ -337,13 +348,24 @@ export default function ScraperPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-white">Content Integrity Seal issued</p>
+                  {result.integritySeal.sealNumber && (
+                    <p className="text-[10px] text-[#2BEE34] font-mono">Seal: {result.integritySeal.sealNumber}</p>
+                  )}
                   <p className="text-[10px] text-[#6B6B6B] font-mono truncate">{result.integritySeal.hash}</p>
                 </div>
-                <button onClick={copySeal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141414] border border-[#333333] hover:border-[#2BEE34]/30 text-xs font-medium text-[#E5E5E5] transition-colors shrink-0">
-                  {copied ? <Check className="w-3.5 h-3.5 text-[#2BEE34]" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? 'Copied' : 'Copy verify link'}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {result.integritySeal.sealVerifyUrl && (
+                    <a href={result.integritySeal.sealVerifyUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2BEE34]/10 border border-[#2BEE34]/30 hover:bg-[#2BEE34]/20 text-xs font-medium text-[#2BEE34] transition-colors">
+                      <ExternalLink className="w-3.5 h-3.5" /> Verify
+                    </a>
+                  )}
+                  <button onClick={copySeal}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141414] border border-[#333333] hover:border-[#2BEE34]/30 text-xs font-medium text-[#E5E5E5] transition-colors">
+                    {copied ? <Check className="w-3.5 h-3.5 text-[#2BEE34]" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy link'}
+                  </button>
+                </div>
               </div>
             )}
 

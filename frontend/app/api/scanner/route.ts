@@ -422,6 +422,22 @@ export async function POST(req: NextRequest) {
       voiceDiversityIndex: result.voiceDiversityIndex,
     }) as any  // IntegritySeal → ContentIntegritySeal shape compat
 
+    // Issue a user-facing seal number (ASC-XXXXXXXX-XX format) for the site scan.
+    // This populates the seal_number column in site_scan_seals so /api/verify/seal/[sealNumber]
+    // can look it up. Non-fatal — the scan result is returned regardless.
+    let siteSealNumber: string | null = null
+    try {
+      const { issueSealForSiteScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+      const sealHash = (result.integritySeal as any)?.hash || ''
+      if (sealHash) {
+        siteSealNumber = await issueSealForSiteScan(
+          sealHash, guard.userId, result.origin, result.pagesScanned
+        )
+        ;(result.integritySeal as any).sealNumber = siteSealNumber
+        ;(result.integritySeal as any).sealVerifyUrl = buildSealUrl(siteSealNumber)
+      }
+    } catch (e) { console.warn('[scanner] site seal issuance failed:', e) }
+
     // ── PERSIST TO HISTORY (Module 4 Fix5) ──
     // Web Scanner results were never written to `scans`, so completed site
     // scans never showed up in /history like every other detect route does.

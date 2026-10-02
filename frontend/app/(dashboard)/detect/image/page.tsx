@@ -2,6 +2,7 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { MobileResultSheet } from '@/components/MobileResultSheet'
 import { useState, useCallback } from 'react'
+import { SealBadge } from '@/components/dashboard/SealBadge'
 import { toUserError } from '@/lib/utils/user-errors'
 import { useDropzone } from 'react-dropzone'
 import { uploadToR2WithProgress } from '@/lib/storage/upload-with-progress'
@@ -139,6 +140,8 @@ function ImageDetectionPage() {
   const [showMobileResult, setShowMobileResult] = useState(false)
   const [graphContext, setGraphContext] = useState<string | null>(null)
   const [scanId, setScanId] = useState<string | null>(null)
+  const [sealNumber, setSealNumber] = useState<string | null>(null)
+  const [sealVerifyUrl, setSealVerifyUrl] = useState<string | null>(null)
   const [forensicScanId, setForensicScanId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [zoomed, setZoomed] = useState(false)
@@ -202,6 +205,8 @@ function ImageDetectionPage() {
       if (!data.success) throw new Error(toUserError(data.error?.code, data.error?.message))
       setResult(data.result); setShowMobileResult(true)
       setScanId(data.scan_id ?? null)
+      setSealNumber(data.sealNumber ?? null)
+      setSealVerifyUrl(data.sealVerifyUrl ?? null)
       setForensicScanId(data.forensic_scan_id ?? null)
       if (data.graph_context) setGraphContext(data.graph_context)
       // Notify dashboard/history pages to refresh scan list
@@ -422,6 +427,11 @@ Analyzed: ${new Date().toLocaleString()}`
       )}
 
       <LazyReviewSuggestion toolName="Deepfake Image Verification" />
+      {result && sealNumber && (
+        <div className="px-4 pt-2">
+          <SealBadge sealNumber={sealNumber} sealVerifyUrl={sealVerifyUrl} />
+        </div>
+      )}
       {result && (
         <div className="px-4 pb-4 flex items-center justify-between flex-wrap gap-3">
           <LazyFeedbackBar scanId={scanId} verdict={result.verdict} />

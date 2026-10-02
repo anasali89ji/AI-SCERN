@@ -27,7 +27,7 @@ export async function GET() {
     // 1. Profile — plan + credits + billing period
     const { data: profile } = await db
       .from('profiles')
-      .select('plan, plan_id, credits_balance, credits_remaining, plan_updated_at, credit_period_start, credit_period_end, email, display_name')
+      .select('plan, plan_id, credits_balance, credits_remaining, plan_updated_at, plan_expires_at, credit_period_start, credit_period_end, email, display_name')
       .eq('id', userId)
       .maybeSingle()
 
@@ -92,6 +92,7 @@ export async function GET() {
       scans_total:      scansTotal  ?? 0,
 
       plan_updated_at:      profile?.plan_updated_at ?? null,
+      plan_expires_at:       profile?.plan_expires_at ?? null,
       credit_period_start:  profile?.credit_period_start ?? null,
       credit_period_end:    profile?.credit_period_end ?? null,
     })

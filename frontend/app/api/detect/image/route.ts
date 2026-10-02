@@ -306,6 +306,18 @@ export async function POST(req: NextRequest) {
       void logModelPredictions(scanId, 'image', result.model_breakdown, finalVerdict)
     }
 
+    // Seal issuance — signed HMAC-SHA256 seal for every scan (non-fatal)
+    let sealNumber: string | null = null
+    let sealVerifyUrl: string | null = null
+    if (scanId) {
+      try {
+        const { issueSealForScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+        sealNumber = await issueSealForScan(scanId, finalVerdict, finalConfidence,
+          { media_type: 'image', file_name: fileName })
+        sealVerifyUrl = buildSealUrl(sealNumber)
+      } catch (e) { console.warn('[detect/image] seal issuance failed:', e) }
+    }
+
     // ── Fire forensic cascade (non-blocking, parallel to response) ────────────
     // Runs the 6-layer pipeline in the background. User gets instant result now,
     // forensic deep-analysis is ready ~10s later at /forensic/[forensicScanId].
@@ -404,6 +416,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true, scan_id: scanId,
+      sealNumber,
+      sealVerifyUrl,
       forensic_scan_id: forensicScanId,
       forensic_available: forensicAvailable,
       forensic_unavailable_reason: forensicUnavailableReason,

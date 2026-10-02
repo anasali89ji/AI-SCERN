@@ -219,8 +219,21 @@ export async function POST(req: NextRequest) {
       void logModelPredictions(scanId, 'audio', result.model_breakdown, finalResult.verdict)
     }
 
+    // Seal issuance — signed HMAC-SHA256 seal for every scan (non-fatal)
+    let sealNumber: string | null = null
+    let sealVerifyUrl: string | null = null
+    if (scanId) {
+      try {
+        const { issueSealForScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+        sealNumber = await issueSealForScan(scanId, finalResult.verdict, finalResult.confidence,
+          { media_type: 'audio', file_name: fileName })
+        sealVerifyUrl = buildSealUrl(sealNumber)
+      } catch (e) { console.warn('[detect/audio] seal issuance failed:', e) }
+    }
+
     return NextResponse.json({
       success: true, scan_id: scanId,
+      sealNumber, sealVerifyUrl,
       result:  sanitizeDetectionResultForClient({ ...finalResult, processing_time: processingTime, file_name: fileName, forensic: forensicSummary, rag_stats: ragResult ? {
         rag_applied: ragResult.rag_applied,
         retrieval_confidence: ragResult.retrieval_confidence,

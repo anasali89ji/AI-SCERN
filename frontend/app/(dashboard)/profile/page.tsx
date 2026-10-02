@@ -94,6 +94,7 @@ interface CreditsData {
   scans_today: number; daily_limit: number; daily_pct: number
   scans_month: number; scans_total: number
   plan_updated_at: string | null
+  plan_expires_at: string | null
 }
 
 function CreditsCard({ userId }: { userId: string }) {
@@ -209,6 +210,11 @@ function CreditsCard({ userId }: { userId: string }) {
           {data.plan_updated_at && (
             <p className="text-[10px] text-[#6B6B6B] text-right">
               Plan updated {new Date(data.plan_updated_at).toLocaleDateString()}
+            </p>
+          )}
+          {data.plan_expires_at && (
+            <p className="text-[10px] text-amber-400 text-right">
+              Expires {new Date(data.plan_expires_at).toLocaleDateString()}
             </p>
           )}
         </div>
