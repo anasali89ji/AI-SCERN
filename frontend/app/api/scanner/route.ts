@@ -444,7 +444,7 @@ export async function POST(req: NextRequest) {
           images_analyzed:    result.totalImagesAnalyzed,
           ai_image_percent:   result.aiImagePercent,
           is_wordpress:       result.isWordPress,
-          deep_crawl:         isDeepCrawl,
+          deep_crawl:         mode !== 'standard',
           discovery_method:   result.discoveryMethod,
         },
       })

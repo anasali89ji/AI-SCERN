@@ -32,22 +32,26 @@ export function hashText(text: string): string {
   return createHash('sha256').update(normalised, 'utf8').digest('hex').slice(0, 32)
 }
 
-export async function getCachedScan(hash: string): Promise<DetectionResult | null> {
+export async function getCachedScan<T = DetectionResult>(hash: string): Promise<T | null> {
   const redis = getRedis()
   if (!redis) return null
   try {
     const raw = await redis.get<string>(`scan:${hash}`)
     if (!raw) return null
-    return typeof raw === 'string' ? JSON.parse(raw) : (raw as DetectionResult)
+    return typeof raw === 'string' ? (JSON.parse(raw) as T) : (raw as T)
   } catch {
     return null
   }
 }
 
-export async function setCachedScan(hash: string, result: DetectionResult): Promise<void> {
+export async function setCachedScan<T = DetectionResult>(
+  hash: string,
+  result: T,
+  ttlSeconds: number = CACHE_TTL_SECONDS,
+): Promise<void> {
   const redis = getRedis()
   if (!redis) return
   try {
-    await redis.setex(`scan:${hash}`, CACHE_TTL_SECONDS, JSON.stringify(result))
+    await redis.setex(`scan:${hash}`, ttlSeconds, JSON.stringify(result))
   } catch { /* cache write failure is always non-fatal */ }
 }
