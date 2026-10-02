@@ -5,8 +5,23 @@ import { fetcher } from '@/lib/api-client'
 import { ShimmerBlock } from '../components/ShimmerBlock'
 import { CheckCircle, XCircle, AlertTriangle, Activity, Server, Database, Shield } from 'lucide-react'
 
+interface HealthCheck {
+  name: string
+  status: string
+  latency_ms: number
+  message: string
+}
+
+interface HealthData {
+  overall?: string
+  checks?: HealthCheck[]
+  recent_errors_1h?: number
+  uptime_seconds?: number
+  version?: string
+}
+
 export default function HealthTab() {
-  const { data, error, isLoading } = useSWR('/api/health', fetcher, { refreshInterval: 30000 })
+  const { data, error, isLoading } = useSWR<HealthData>('/api/health', fetcher, { refreshInterval: 30000 })
 
   if (isLoading) return <ShimmerBlock />
   if (error) return <div className="p-6 text-red-400">Failed to load health data</div>
