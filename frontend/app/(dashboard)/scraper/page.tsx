@@ -32,7 +32,7 @@ interface RemediationItem {
   action: string; reason: string; priority: 'critical' | 'high' | 'medium' | 'low'
 }
 interface WPPlugin { slug: string; name?: string; hasVulnerability: boolean; severity?: string; aiRelated: boolean }
-interface ContentIntegritySeal { hash: string; timestamp: string; verificationUrl: string }
+interface ContentIntegritySeal { hash: string; timestamp: string; verificationUrl: string; sealNumber?: string; sealVerifyUrl?: string }
 
 interface SiteScanResult {
   success: boolean; origin: string; isWordPress: boolean

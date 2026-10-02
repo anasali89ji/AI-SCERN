@@ -142,6 +142,8 @@ export interface ContentIntegritySeal {
   hash: string
   timestamp: string
   verificationUrl: string
+  sealNumber?: string
+  sealVerifyUrl?: string
 }
 
 export interface RemediationItem {
