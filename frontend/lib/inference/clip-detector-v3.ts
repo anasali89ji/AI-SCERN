@@ -4,7 +4,7 @@
  * NEW FILE — does not modify existing inference files.
  */
 
-const HF_API = "https://api-inference.huggingface.co/models";
+const HF_API = "https://router.huggingface.co/hf-inference/models";
 const CLIP_MODEL = "openai/clip-vit-large-patch14";
 
 async function hfZeroShot(

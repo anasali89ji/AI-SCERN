@@ -170,7 +170,7 @@ export const hfModelWarmup = inngest.createFunction(
     const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
     if (!HF_TOKEN) return { skipped: true, reason: 'No HF token' }
 
-    const HF_API = 'https://api-inference.huggingface.co/models'
+    const HF_API = 'https://router.huggingface.co/hf-inference/models'
     const WARM_TEXT = 'The quick brown fox jumps over the lazy dog. This sentence is written by a human.'
 
     // ── Text models (6 total) ─────────────────────────────────────────────────

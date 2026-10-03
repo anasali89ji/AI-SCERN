@@ -197,7 +197,7 @@ async function quickScoreHF(text: string): Promise<{ aiScore: number; verdict: s
   const token = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN || ''
   if (!token) return { aiScore: 0.5, verdict: 'UNCERTAIN' }
   try {
-    const res = await fetch('https://api-inference.huggingface.co/models/openai-community/roberta-base-openai-detector', {
+    const res = await fetch('https://router.huggingface.co/hf-inference/models/openai-community/roberta-base-openai-detector', {
       method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputs: text.slice(0, 512) }), signal: AbortSignal.timeout(10_000),
     })

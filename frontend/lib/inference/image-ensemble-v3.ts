@@ -4,7 +4,7 @@
  * NEW FILE — does not modify existing hf-analyze.ts or image-detection-brain.ts
  */
 
-const HF_API = "https://api-inference.huggingface.co/models";
+const HF_API = "https://router.huggingface.co/hf-inference/models";
 
 export interface DLModelResult {
   model_id: string;

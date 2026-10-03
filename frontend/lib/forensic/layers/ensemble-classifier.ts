@@ -52,7 +52,7 @@ async function runHFAIDetector(imageUrl: string): Promise<{ score: number; confi
   const mimeType  = imgRes.headers.get('content-type') || 'image/jpeg'
   const dataUrl   = `data:${mimeType};base64,${imgBase64}`
 
-  const res = await fetch(`https://api-inference.huggingface.co/models/${MODEL}`, {
+  const res = await fetch(`https://router.huggingface.co/hf-inference/models/${MODEL}`, {
     method:  'POST',
     headers,
     body:    JSON.stringify({ inputs: dataUrl }),
@@ -96,7 +96,7 @@ async function runCLIPZeroShot(imageUrl: string): Promise<{ score: number; confi
     'a digitally manipulated photograph',
   ]
 
-  const res = await fetch(`https://api-inference.huggingface.co/models/${MODEL}`, {
+  const res = await fetch(`https://router.huggingface.co/hf-inference/models/${MODEL}`, {
     method:  'POST',
     headers,
     body:    JSON.stringify({ inputs: imageUrl, parameters: { candidate_labels } }),

@@ -74,7 +74,7 @@ export interface DetectionResult {
 }
 
 const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN || process.env.HF_TOKEN
-const HF_API   = 'https://api-inference.huggingface.co/models'
+const HF_API   = 'https://router.huggingface.co/hf-inference/models'
 
 const MODELS = {
   // TEXT — Aiscern fine-tuned (PRIMARY) + 4-model ensemble backup

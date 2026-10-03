@@ -35,7 +35,7 @@ export interface Env {
 }
 
 // ── Model registry (verbatim from hf-analyze.ts MODELS.image_*) ─────────────
-const HF_API = 'https://api-inference.huggingface.co/models'
+const HF_API = 'https://router.huggingface.co/hf-inference/models'
 const IMAGE_MODELS = [
   { model: 'saghi776/aiscern-image-detector',        weight: 0.40 }, // image_finetuned
   { model: 'Organika/sdxl-detector',                 weight: 0.22 }, // image_primary
