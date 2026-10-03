@@ -1,0 +1,57 @@
+# ── HuggingFace ZeroGPU requirements ────────────────────────────────────────
+# CRITICAL: do NOT install torch/torchvision/torchaudio from PyPI!
+# The `spaces` library provides CUDA-enabled versions automatically.
+# Installing torch from PyPI will break ZeroGPU.
+
+# ZeroGPU support (provides torch + CUDA automatically)
+spaces>=0.34.0
+gradio>=4.44.0,<5.0.0
+
+# Pin huggingface_hub to a version compatible with spaces
+huggingface_hub>=0.25.0,<0.27.0
+
+# ── GPU layers (L5, L5b) ───────────────────────────────────────────────────
+diffusers==0.27.2
+transformers==4.53.0
+accelerate==0.28.0
+lpips==0.1.4
+
+# ── Image processing ──────────────────────────────────────────────────────
+numpy==1.26.4
+pillow==12.3.0
+scipy==1.14.1
+PyWavelets==1.7.0
+opencv-python-headless==4.10.0.84
+scikit-image==0.24.0
+imagehash==4.3.1
+
+# ── Audio ──────────────────────────────────────────────────────────────────
+librosa==0.10.2.post1
+soundfile==0.12.1
+
+# ── Text ──────────────────────────────────────────────────────────────────
+nltk==3.9.3
+textstat==0.7.3
+langdetect==1.0.9
+
+# ── Document parsing ──────────────────────────────────────────────────────
+PyMuPDF==1.24.10
+python-docx==1.1.2
+python-pptx==0.6.23
+
+# ── EXIF ──────────────────────────────────────────────────────────────────
+exifread==3.0.0
+
+# ── OCR ──────────────────────────────────────────────────────────────────
+pytesseract==0.3.13
+
+# ── Web framework ────────────────────────────────────────────────────────
+fastapi==0.118.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.18
+pydantic==2.9.0
+python-dotenv==1.2.2
+httpx==0.27.2
+
+# ── Utils ─────────────────────────────────────────────────────────────────
+psutil==5.9.8

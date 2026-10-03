@@ -1,0 +1,69 @@
+# ────────────────────────────────────────────────────────────────────────────
+# AI-SCERN Signal Worker — HuggingFace ZeroGPU Dockerfile
+# ────────────────────────────────────────────────────────────────────────────
+# This Dockerfile is for HuggingFace Spaces with ZeroGPU hardware.
+# It does NOT install torch from PyPI — the `spaces` library provides
+# CUDA-enabled torch automatically at runtime.
+# ────────────────────────────────────────────────────────────────────────────
+
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV GPU_ENABLED=true
+
+# System packages (no CUDA toolkit — ZeroGPU provides it at runtime)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    libgles2 \
+    libxext6 \
+    libgomp1 \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    curl \
+    ca-certificates \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+# CRITICAL: install from requirements-hf-zero-gpu.txt (NOT requirements.txt)
+# The regular requirements.txt installs torch from PyPI which breaks ZeroGPU.
+COPY requirements-hf-zero-gpu.txt .
+RUN pip install --no-cache-dir -r requirements-hf-zero-gpu.txt
+
+# Pre-download models at build time (saves 30-60s on first request)
+# distilgpt2 for text engine + gpt2 for Binoculars
+RUN python3 -c "\
+from transformers import AutoTokenizer, AutoModelForCausalLM; \
+print('Pre-downloading distilgpt2...'); \
+AutoTokenizer.from_pretrained('distilgpt2'); \
+AutoModelForCausalLM.from_pretrained('distilgpt2'); \
+print('Pre-downloading gpt2...'); \
+AutoTokenizer.from_pretrained('gpt2'); \
+AutoModelForCausalLM.from_pretrained('gpt2'); \
+print('Done')" || echo "Model pre-download skipped"
+
+# Copy application code
+COPY . .
+
+# Model cache directory
+RUN mkdir -p /tmp/aiscern-models && chmod 777 /tmp/aiscern-models
+
+# Non-root user
+RUN useradd -m -u 1000 worker && chown -R worker:worker /app
+USER worker
+
+EXPOSE 7860
+
+# Health check (lightweight — just checks if the server responds)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -fsS http://localhost:7860/health > /dev/null || exit 1
+
+# Start the app — app.py is the entry point (Gradio + FastAPI mount)
+CMD ["python", "app.py"]
