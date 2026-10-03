@@ -25,6 +25,9 @@ from io import BytesIO
 from typing import Optional
 from functools import lru_cache
 
+# Hugging Face ZeroGPU integration (MUST be imported before model loads)
+import spaces
+
 logger = logging.getLogger(__name__)
 
 # ── Model registry ────────────────────────────────────────────────────────────
@@ -48,12 +51,7 @@ MODEL_CONFIGS = {
 def _build_model(model_key: str):
     """
     Actually build (not cache) the diffusion model components for inversion.
-    Called by utils.model_cache.get_model() on a cache miss — caching,
-    thread-safety, and TTL-based eviction (BUG-5) all live there now instead
-    of in a separate, never-evicted module-level global. Two GPU layers
-    (this + diffusion_snapback.py) used to each keep their own ad-hoc cache
-    with no lock and no way to free VRAM under memory pressure on shared
-    GPU instances.
+    Called by utils.model_cache.get_model() on a cache miss.
     """
     try:
         import torch
@@ -77,10 +75,12 @@ def _build_model(model_key: str):
     logger.info(f"[L5] Loading {model_id} on {device}...")
     t0 = time.time()
 
-    vae   = AutoencoderKL.from_pretrained(model_id, subfolder='vae',
-                                           torch_dtype=torch.float16).to(device)
-    unet  = UNet2DConditionModel.from_pretrained(model_id, subfolder='unet',
-                                                  torch_dtype=torch.float16).to(device)
+    vae   = AutoencoderKL.from_pretrained(
+        model_id, subfolder='vae', torch_dtype=torch.float16
+    ).to(device)
+    unet  = UNet2DConditionModel.from_pretrained(
+        model_id, subfolder='unet', torch_dtype=torch.float16
+    ).to(device)
     sched = DDIMScheduler.from_pretrained(model_id, subfolder='scheduler')
 
     vae.eval()
@@ -88,8 +88,13 @@ def _build_model(model_key: str):
 
     logger.info(f"[L5] Model loaded in {time.time()-t0:.1f}s")
 
-    return {'vae': vae, 'unet': unet, 'scheduler': sched,
-            'device': device, 'config': config}
+    return {
+        'vae': vae,
+        'unet': unet,
+        'scheduler': sched,
+        'device': device,
+        'config': config,
+    }
 
 
 def _load_model(model_key: str = 'sd15'):
@@ -100,9 +105,14 @@ def _load_model(model_key: str = 'sd15'):
 
 # ── Core analysis ─────────────────────────────────────────────────────────────
 
-def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_array: Optional[np.ndarray] = None) -> dict:
+@spaces.GPU(duration=60)
+def diffusion_inversion_score(
+    image_url: str = "",
+    model_key: str = 'sd15',
+    img_array: Optional[np.ndarray] = None,
+) -> dict:
     """
-    Run DDIM inversion on the image and measure reconstruction MSE.
+    Run DDIM inversion on the image and measure reconstruction MSE on ZeroGPU.
 
     Parameters
     ----------
@@ -111,25 +121,12 @@ def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_
     model_key : str
         Which diffusion model to use ('sd15' or 'sdxl').
     img_array : np.ndarray, optional
-        Pre-loaded RGB image array (H×W×3, uint8). When provided, skips
-        the HTTP fetch entirely — used by image_engine.analyze_image_from_bytes
-        so we can analyze uploaded bytes without round-tripping through a URL.
-
-    Returns
-    -------
-    mse:        float — reconstruction error (lower = more AI-like)
-    score:      float — 0.0 (real) to 1.0 (AI-generated)
-    confidence: float — certainty of the score
-    model:      str   — model used for inversion
-    steps:      int   — DDIM steps used
+        Pre-loaded RGB image array (H×W×3, uint8).
     """
     import torch
     from PIL import Image
 
     # ── Load image ────────────────────────────────────────────────────────────
-    # Module 1.1: prefer in-memory img_array (no URL fetch needed on upload path).
-    # Falls back to URL fetch only when img_array is None — preserves the
-    # original URL-based call site (analyze_image_from_url).
     try:
         if img_array is not None:
             if img_array.ndim != 3 or img_array.shape[2] != 3:
@@ -138,12 +135,17 @@ def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_
         else:
             if not image_url:
                 raise ValueError("either image_url or img_array must be provided")
-            resp = requests.get(image_url, timeout=20,
-                                headers={'User-Agent': 'Aiscern-L5/1.0'})
+            resp = requests.get(
+                image_url,
+                timeout=20,
+                headers={'User-Agent': 'Aiscern-L5/1.0'}
+            )
             resp.raise_for_status()
             image = Image.open(BytesIO(resp.content)).convert('RGB')
     except Exception as e:
-        raise ValueError(f"Failed to load image (url={image_url!r}, img_array={'provided' if img_array is not None else 'None'}): {e}")
+        raise ValueError(
+            f"Failed to load image (url={image_url!r}, img_array={'provided' if img_array is not None else 'None'}): {e}"
+        )
 
     # ── Load model ────────────────────────────────────────────────────────────
     try:
@@ -151,8 +153,11 @@ def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_
     except RuntimeError as e:
         logger.warning(f"[L5] {e}")
         return {
-            'mse': 0.5, 'score': 0.5, 'confidence': 0.0,
-            'model': model_key, 'steps': 0,
+            'mse': 0.5,
+            'score': 0.5,
+            'confidence': 0.0,
+            'model': model_key,
+            'steps': 0,
             'error': str(e),
         }
 
@@ -168,8 +173,7 @@ def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_
     # ── Preprocess ────────────────────────────────────────────────────────────
     image = image.resize((img_size, img_size), Image.LANCZOS)
     img_np = np.array(image).astype(np.float32) / 255.0  # [0, 1]
-    # Normalize to [-1, 1] as expected by SD VAE
-    img_np = img_np * 2.0 - 1.0
+    img_np = img_np * 2.0 - 1.0  # Normalize to [-1, 1] for SD VAE
     img_tensor = torch.from_numpy(img_np).permute(2, 0, 1).unsqueeze(0)
     img_tensor = img_tensor.to(device, dtype=torch.float16)
 
@@ -177,10 +181,7 @@ def diffusion_inversion_score(image_url: str = "", model_key: str = 'sd15', img_
         # ── Encode to latent space ────────────────────────────────────────────
         latent = vae.encode(img_tensor).latent_dist.sample() * 0.18215
 
-        # ── DDIM Inversion (forward process — add noise) ──────────────────────
-        # Empty conditioning (unconditional inversion)
-        # SD 1.5 uses (1, 77, 768) for cross-attention
-        # SDXL uses (1, 77, 2048)
+        # ── DDIM Inversion ────────────────────────────────────────────────────
         hidden_dim   = 768 if model_key == 'sd15' else 2048
         empty_prompt = torch.zeros(1, 77, hidden_dim, dtype=torch.float16).to(device)
 
