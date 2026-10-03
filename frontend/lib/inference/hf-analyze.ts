@@ -715,6 +715,9 @@ interface PythonCVResult {
   // the cross-validation bridge degrades gracefully if either is missing.
   layers?:  { layer?: number; layerSuspicionScore?: number }[]
   synthid?: { detected?: boolean; confidence?: number }
+  // Merged in from the HF ZeroGPU worker (L5 / L5b) — see callGpuWorker().
+  diffusion_inversion?: any
+  diffusion_snapback?:  any
 }
 
 async function callPythonCVWorker(
@@ -894,7 +897,7 @@ trackVendorCall('huggingface', 'image', 6) // MODULE 6 — 6 underlying model ca
 // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
 let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-const [geminiResult, grokResult, hfResults, cvWorkerResult, gpuWorkerResult] = await Promise.all([
+let [geminiResult, grokResult, hfResults, cvWorkerResult, gpuWorkerResult] = await Promise.all([
   geminiPromise, grokPromise, hfPromise, cvWorkerPromise, gpuWorkerPromise,
 ])
 
