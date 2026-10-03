@@ -1,0 +1,58 @@
+# AI-SCERN GPU Worker — L5/L5b ONLY (HuggingFace ZeroGPU)
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV GPU_ENABLED=true
+
+# System packages (minimal — no OCR, no audio, no video)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install dependencies (NO torch from PyPI — spaces provides it)
+COPY requirements-gpu-only.txt .
+RUN pip install --no-cache-dir -r requirements-gpu-only.txt
+
+# Pre-download Stable Diffusion 1.5 components at build time
+# (saves 30-60s on first request)
+RUN python3 -c "\
+import os; os.environ['HF_HOME'] = '/app/hf-cache'; \
+from diffusers import DDIMScheduler, AutoencoderKL, UNet2DConditionModel; \
+import torch; \
+print('Pre-downloading SD 1.5 VAE...'); \
+AutoencoderKL.from_pretrained('runwayml/stable-diffusion-v1-5', subfolder='vae', torch_dtype=torch.float16); \
+print('Pre-downloading SD 1.5 UNet...'); \
+UNet2DConditionModel.from_pretrained('runwayml/stable-diffusion-v1-5', subfolder='unet', torch_dtype=torch.float16); \
+print('Pre-downloading DDIM scheduler...'); \
+DDIMScheduler.from_pretrained('runwayml/stable-diffusion-v1-5', subfolder='scheduler'); \
+print('Done')" || echo "Model pre-download skipped (will happen on first request)"
+
+# Copy ONLY the files needed for L5/L5b (not the full signal-worker)
+# The GPU worker only needs: engines/image_engine.py (L5/L5b functions),
+# analyzers/diffusion_inversion.py, analyzers/diffusion_snapback.py,
+# utils/model_cache.py, version.py
+COPY . .
+
+# Model cache directory
+RUN mkdir -p /tmp/aiscern-models && chmod 777 /tmp/aiscern-models
+
+# Non-root user
+RUN useradd -m -u 1000 worker && chown -R worker:worker /app
+USER worker
+
+EXPOSE 7860
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -fsS http://localhost:7860/health > /dev/null || exit 1
+
+# Start the GPU-only worker
+CMD ["python", "app_gpu_only.py"]

@@ -767,6 +767,34 @@ const brainResult = await analyzeImageWithBrain(imageBuffer, imageBuffer.length,
 // against cvScore separately further down.
 const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime, brainResult)
 
+// ── GPU Worker (L5/L5b) — HuggingFace ZeroGPU ──────────────────────────────
+// Calls the HF Space GPU worker for L5 (Diffusion Inversion) + L5b (Snap-Back).
+// Runs in parallel with the CPU worker (DigitalOcean) — if the GPU worker
+// responds, its L5/L5b scores are merged into the CV worker result.
+const HF_GPU_WORKER_URL = process.env.HF_GPU_WORKER_URL || ''
+async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l5: any; l5b: any } | null> {
+  if (!HF_GPU_WORKER_URL) return null
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
+    const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
+      method: 'POST', body: form,
+      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) {
+      console.error(`[hf-analyze] GPU worker returned ${res.status} — L5/L5b unavailable`)
+      return null
+    }
+    const data = await res.json()
+    if (!data.diffusion_inversion && !data.diffusion_snapback) return null
+    return { l5: data.diffusion_inversion, l5b: data.diffusion_snapback }
+  } catch (err) {
+    console.error('[hf-analyze] GPU worker call failed — L5/L5b unavailable:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+const gpuWorkerPromise = callGpuWorker(inferenceBuffer, inferenceMime)
+
 // ── LLM Vision Analysis — Gemini only (dual-key fallback), Grok disabled ───
 // DECISION: Grok is intentionally disabled — makes zero API calls, regardless
 // of whether GROK_API_KEY is set in the environment. Reliability/redundancy
@@ -832,8 +860,8 @@ trackVendorCall('huggingface', 'image', 6) // MODULE 6 — 6 underlying model ca
 // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
 let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-const [geminiResult, grokResult, hfResults, cvWorkerResult] = await Promise.all([
-  geminiPromise, grokPromise, hfPromise, cvWorkerPromise,
+const [geminiResult, grokResult, hfResults, cvWorkerResult, gpuWorkerResult] = await Promise.all([
+  geminiPromise, grokPromise, hfPromise, cvWorkerPromise, gpuWorkerPromise,
 ])
 
 try {
@@ -872,6 +900,33 @@ const grokScore   = grokResult?.aiScore   ?? null
 // silently discards the v2 layers' work. Falls back to composite_cv_score for
 // older worker versions that don't return composite_score.
 const cvScore     = cvWorkerResult?.composite_score?.fused_score ?? cvWorkerResult?.composite_cv_score ?? null
+
+// ── Merge GPU worker L5/L5b scores into the CV result ──────────────────────
+// If the HuggingFace ZeroGPU worker responded with L5/L5b scores, merge them
+// into the CV worker result so they participate in the fusion. This simulates
+// what the signal-worker would have done if it had a GPU locally.
+if (gpuWorkerResult && cvWorkerResult) {
+  if (gpuWorkerResult.l5?.available && typeof gpuWorkerResult.l5.score === 'number') {
+    cvWorkerResult.diffusion_inversion = gpuWorkerResult.l5
+  }
+  if (gpuWorkerResult.l5b?.available && typeof gpuWorkerResult.l5b.snapBackScore === 'number') {
+    cvWorkerResult.diffusion_snapback = gpuWorkerResult.l5b
+  }
+}
+// If the CPU worker is offline but the GPU worker responded, use the GPU
+// worker's L5 score as the CV score (better than falling back to ensemble-only)
+if (!cvWorkerResult && gpuWorkerResult?.l5?.available) {
+  // Create a minimal CV result from the GPU worker's L5 score
+  // L5 (weight 1.4) is the single highest-weighted signal — using it alone
+  // is better than the Brain-only ensemble fallback
+  const l5Score = gpuWorkerResult.l5.score
+  ;(cvWorkerResult as any) = {
+    composite_cv_score: l5Score,
+    composite_score: { fused_score: l5Score, brain_included: false },
+    diffusion_inversion: gpuWorkerResult.l5,
+    diffusion_snapback: gpuWorkerResult.l5b,
+  }
+}
 
 // ── IMAGE ENSEMBLE v8.2 — Brain+CV-first, LLM weight restored, Gemini-only ──
 // (decision: prioritize generator-ID strength; use dual Gemini keys for
