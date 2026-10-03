@@ -775,10 +775,40 @@ const HF_GPU_WORKER_URL = process.env.HF_GPU_WORKER_URL || ''
 async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l5: any; l5b: any } | null> {
   if (!HF_GPU_WORKER_URL) return null
   try {
-    const form = new FormData()
-    form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
-    const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
-      method: 'POST', body: form,
+    // HuggingFace Spaces with Gradio SDK serve a Gradio API, not FastAPI.
+    // The API endpoint is /api/predict with a specific JSON format.
+    // We use the @gradio/client library's REST API format.
+    //
+    // But since the Space may also have FastAPI routes (if mounted correctly),
+    // we try the FastAPI endpoint first (/analyze/image), then fall back to
+    // the Gradio API format (/api/predict).
+    //
+    // Attempt 1: FastAPI route (if the Space serves it)
+    try {
+      const form = new FormData()
+      form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
+      const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
+        method: 'POST', body: form,
+        signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.diffusion_inversion || data.diffusion_snapback) {
+          return { l5: data.diffusion_inversion, l5b: data.diffusion_snapback }
+        }
+      }
+    } catch {
+      // FastAPI route not available — fall through to Gradio API
+    }
+
+    // Attempt 2: Gradio API format (HuggingFace Spaces standard)
+    // Convert image to base64 for Gradio API
+    const base64 = imageBuffer.toString('base64')
+    const dataUrl = `data:${mimeType};base64,${base64}`
+    const res = await fetch(`${HF_GPU_WORKER_URL}/api/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [dataUrl] }),
       signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
     })
     if (!res.ok) {
@@ -786,8 +816,12 @@ async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l
       return null
     }
     const data = await res.json()
-    if (!data.diffusion_inversion && !data.diffusion_snapback) return null
-    return { l5: data.diffusion_inversion, l5b: data.diffusion_snapback }
+    // Gradio returns { data: [markdown_string, json_object] }
+    const resultData = data.data?.[1] || data.data?.[0]
+    if (resultData && (resultData.diffusion_inversion || resultData.diffusion_snapback)) {
+      return { l5: resultData.diffusion_inversion, l5b: resultData.diffusion_snapback }
+    }
+    return null
   } catch (err) {
     console.error('[hf-analyze] GPU worker call failed — L5/L5b unavailable:', err instanceof Error ? err.message : err)
     return null
