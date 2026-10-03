@@ -28,7 +28,8 @@ export interface Env {
   HUGGINGFACE_API_TOKEN?: string
   GEMINI_API_KEY?:         string
   GEMINI_API_KEY_2?:       string
-  PYTHON_WORKER_URL?:      string
+  PYTHON_WORKER_URL?:      string   // DigitalOcean signal-worker (CV) — REQUIRED
+  HF_GPU_WORKER_URL?:      string   // HF ZeroGPU Space (L5/L5b) — REQUIRED
   WORKER_SHARED_SECRET:    string
   CALLBACK_BASE_URL:       string
 }
@@ -106,6 +107,36 @@ async function callPythonCVWorker(workerUrl: string, imageBuffer: ArrayBuffer, m
     return data
   } catch (err) {
     console.error('[worker] CV worker call failed:', (err as Error).message)
+    return null
+  }
+}
+
+// ── HF ZeroGPU worker (L5 diffusion inversion / L5b snap-back) ──────────────
+// Mirrors callGpuWorker in lib/inference/hf-analyze.ts.
+async function callGpuWorker(gpuUrl: string, imageBuffer: ArrayBuffer, mimeType: string, imageBase64: string): Promise<{ l5: any; l5b: any } | null> {
+  if (!gpuUrl) return null
+  try {
+    try {
+      const form = new FormData()
+      form.append('file', new Blob([imageBuffer], { type: mimeType }), 'image.png')
+      const res = await fetch(`${gpuUrl}/analyze/image`, { method: 'POST', body: form, signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS) })
+      if (res.ok) {
+        const d = await res.json() as any
+        if (d.diffusion_inversion || d.diffusion_snapback) return { l5: d.diffusion_inversion, l5b: d.diffusion_snapback }
+      }
+    } catch { /* fall through to Gradio API */ }
+    const res = await fetch(`${gpuUrl}/api/predict`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [`data:${mimeType};base64,${imageBase64}`] }),
+      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+    })
+    if (!res.ok) { console.error(`[worker] GPU worker returned ${res.status}`); return null }
+    const d = await res.json() as any
+    const r = d.data?.[1] || d.data?.[0]
+    if (r && (r.diffusion_inversion || r.diffusion_snapback)) return { l5: r.diffusion_inversion, l5b: r.diffusion_snapback }
+    return null
+  } catch (err) {
+    console.error('[worker] GPU worker call failed:', (err as Error).message)
     return null
   }
 }
@@ -301,6 +332,10 @@ async function processInBackground(body: AnalyzeRequest, env: Env) {
   try {
     const imageBuffer = base64ToArrayBuffer(imageBase64)
 
+    // STRICT: both remote workers are mandatory for image detection.
+    const missingCfg = [!env.PYTHON_WORKER_URL && 'PYTHON_WORKER_URL', !env.HF_GPU_WORKER_URL && 'HF_GPU_WORKER_URL'].filter(Boolean)
+    if (missingCfg.length) throw new Error(`Required worker(s) not configured: ${missingCfg.join(', ')}`)
+
     // ── Parallel fan-out — the whole reason this lives here and not on Vercel ──
     const cvPromise = callPythonCVWorker(env.PYTHON_WORKER_URL ?? '', imageBuffer, mimeType)
     const geminiPromise = env.GEMINI_API_KEY
@@ -310,7 +345,14 @@ async function processInBackground(body: AnalyzeRequest, env: Env) {
       ? Promise.all(IMAGE_MODELS.map(m => hfInference(env.HUGGINGFACE_API_TOKEN!, m.model, imageBuffer, 15000)))
       : Promise.resolve(IMAGE_MODELS.map(() => null))
 
-    const [cvWorkerResult, geminiResult, hfResults] = await Promise.all([cvPromise, geminiPromise, hfPromise])
+    const gpuPromise = callGpuWorker(env.HF_GPU_WORKER_URL ?? '', imageBuffer, mimeType, imageBase64)
+
+    const [cvWorkerResult, geminiResult, hfResults, gpuWorkerResult] = await Promise.all([cvPromise, geminiPromise, hfPromise, gpuPromise])
+
+    if (!cvWorkerResult || !gpuWorkerResult) {
+      const failed = [!cvWorkerResult && 'CV worker (DigitalOcean)', !gpuWorkerResult && 'GPU worker (HF ZeroGPU)'].filter(Boolean)
+      throw new Error(`Required worker(s) unavailable: ${failed.join(', ')}`)
+    }
 
     // ── Fusion — verbatim from hf-analyze.ts analyzeImage() (v8.1/v8.2) ──────
     const mlScores: { model: string; aiScore: number; weight: number }[] = []

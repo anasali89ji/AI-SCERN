@@ -6,7 +6,8 @@ compatibility_date = "2025-01-01"
 #   HUGGINGFACE_API_TOKEN   — HF Inference API token
 #   GEMINI_API_KEY          — Google AI Studio key (primary)
 #   GEMINI_API_KEY_2        — Google AI Studio key (secondary fallback, optional)
-#   PYTHON_WORKER_URL       — DigitalOcean signal-worker base URL (optional)
+#   PYTHON_WORKER_URL       — DigitalOcean signal-worker base URL (REQUIRED)
+#   HF_GPU_WORKER_URL       — HF ZeroGPU Space base URL (REQUIRED)
 #   WORKER_SHARED_SECRET    — must match INTERNAL_API_SECRET checked by Vercel's
 #                             /api/detect/image/finalize route, and must be sent
 #                             BY Vercel when it calls this worker's /analyze route

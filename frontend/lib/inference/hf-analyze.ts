@@ -668,6 +668,21 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const imgCached    = await getCachedScan(imgCacheHash)
   if (imgCached) return { ...imgCached, summary: imgCached.summary + ' (cached)' }
 
+  // ── STRICT MODE: image detection REQUIRES both remote workers ────────────
+  // CV worker = DigitalOcean signal-worker (PYTHON_WORKER_URL, L1-L21 forensics)
+  // GPU worker = HuggingFace ZeroGPU Space (HF_GPU_WORKER_URL, L5/L5b diffusion)
+  // Set IMAGE_WORKERS_OPTIONAL=true to restore the old degrade-gracefully mode.
+  const REQUIRE_IMAGE_WORKERS = process.env.IMAGE_WORKERS_OPTIONAL !== 'true'
+  if (REQUIRE_IMAGE_WORKERS) {
+    const missingCfg = [
+      !process.env.PYTHON_WORKER_URL && 'PYTHON_WORKER_URL',
+      !process.env.HF_GPU_WORKER_URL && 'HF_GPU_WORKER_URL',
+    ].filter(Boolean)
+    if (missingCfg.length) {
+      throw new Error(`Image detection requires remote workers; not configured: ${missingCfg.join(', ')}`)
+    }
+  }
+
   // Preprocess: resize to 1024px max, strip EXIF, normalise to JPEG 92%
   // Use preprocessed buffer for all ML inference (stays under HF 10MB limit)
   // Keep original buffer for pixel signal extraction (needs full fidelity)
@@ -900,6 +915,11 @@ let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 let [geminiResult, grokResult, hfResults, cvWorkerResult, gpuWorkerResult] = await Promise.all([
   geminiPromise, grokPromise, hfPromise, cvWorkerPromise, gpuWorkerPromise,
 ])
+
+if (REQUIRE_IMAGE_WORKERS && (!cvWorkerResult || !gpuWorkerResult)) {
+  const failed = [!cvWorkerResult && 'CV worker (DigitalOcean)', !gpuWorkerResult && 'GPU worker (HF ZeroGPU)'].filter(Boolean)
+  throw new Error(`Image detection aborted — required worker(s) unavailable: ${failed.join(', ')}`)
+}
 
 try {
   const cal = await getCalibrationStats()
