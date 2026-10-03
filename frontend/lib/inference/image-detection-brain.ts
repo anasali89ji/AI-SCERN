@@ -554,7 +554,7 @@ function analyzeHueDistribution(samples: RGBPixel[]): { signal: ImageBrainSignal
         (huePk > 10 ? 0.92 : huePk > 6 ? 0.76 : huePk > 3.5 ? 0.52 : 0.22) * 0.40 +
         (top3  > 0.55 ? 0.90 : top3 > 0.40 ? 0.70 : top3 > 0.28 ? 0.46 : 0.18) * 0.40 +
         genBoost * 0.20,
-      0, 1), weight: 0.08, rawValue: huePk,
+      0, 1), weight: hueHints.length > 0 ? 0.14 : 0.08, rawValue: huePk,
       evidence: [
         `peak=${huePk.toFixed(1)} at ${(hF.indexOf(Math.max(...hF)) * 5).toFixed(0)}° (AI: >6)`,
         `top-3=${(top3*100).toFixed(1)}% (AI: >40%)`,
@@ -1060,7 +1060,25 @@ export async function analyzeImageWithBrain(
   const isPurpleDom  = genHints.some(h => /midjourney|grok|gemini/i.test(h)) && hueSig.score >= 0.55
   const purpleBoost  = isPurpleDom ? 0.12 : 0
 
-  const score   = clamp(rawSc + boost + artBoost + purpleBoost, 0.01, 0.99)
+  // ── Strong Hue Ring Generator Override (v4.13.1) ──────────────────────────
+  // When the hue ring distribution ALONE strongly identifies a specific AI
+  // generator (score >= 0.80 AND a generator hint is present), it is far more
+  // reliable than the texture/frequency/gradient signals — those are calibrated
+  // for photorealistic AI and miss artistic/stylized AI (Stable Diffusion with
+  // warm amber cast, Midjourney purple-blue, Grok violet+lime).
+  //
+  // Without this override, a clearly AI image (hue ring says 0.83 + "Stable
+  // Diffusion (warm amber cast)") gets dragged to HUMAN by 14 other signals
+  // that score "clean" because they're looking for photorealistic AI artifacts
+  // (smooth skin, uniform noise) that don't exist in artistic AI output.
+  //
+  // Fix: apply a minimum floor of 0.55 when hue ring is >= 0.80 AND a
+  // generator hint is present. This ensures the image is at minimum UNCERTAIN
+  // (not HUMAN) even when all other signals say "clean".
+  const strongHueGenerator = hueSig.score >= 0.80 && genHints.length > 0
+  const hueGeneratorFloor  = strongHueGenerator ? 0.55 : 0
+
+  const score   = clamp(Math.max(rawSc + boost + artBoost + purpleBoost, hueGeneratorFloor), 0.01, 0.99)
   const verdict = score > 0.55 ? 'AI' : score < 0.36 ? 'HUMAN' : 'UNCERTAIN'
 
   // Step 4: Findings
