@@ -86,8 +86,12 @@ def _per_block_dct_diff(a: np.ndarray, b: np.ndarray) -> float:
     b_blocks = b_gray[: h_blocks * 8, : w_blocks * 8].reshape(h_blocks, 8, w_blocks, 8).swapaxes(1, 2)
 
     # Per-block DCT
-    dct_a = cv2.dct(a_blocks.reshape(-1, 8, 8).astype(np.float32))
-    dct_b = cv2.dct(b_blocks.reshape(-1, 8, 8).astype(np.float32))
+    # cv2.dct only accepts 2-D single-channel arrays, so a (N, 8, 8) stack raised
+    # error -215 on every image. scipy's orthonormal DCT-II over the last two
+    # axes is numerically identical to cv2.dct per block.
+    from scipy.fft import dctn
+    dct_a = dctn(a_blocks.reshape(-1, 8, 8).astype(np.float32), type=2, axes=(1, 2), norm='ortho')
+    dct_b = dctn(b_blocks.reshape(-1, 8, 8).astype(np.float32), type=2, axes=(1, 2), norm='ortho')
 
     # Mean absolute difference across all coefficients
     return float(np.mean(np.abs(dct_a - dct_b)))

@@ -127,6 +127,12 @@ export const VISION_API_COST: Record<string, number> = {
 /** Signal worker timeout in ms */
 export const SIGNAL_WORKER_TIMEOUT_MS = 15_000
 
+/** Image CV worker (DigitalOcean, L1-L30) — measured ~34s cold / still >15s warm. Route maxDuration is 60s. */
+export const IMAGE_CV_WORKER_TIMEOUT_MS = 45_000
+
+/** HF ZeroGPU worker (L5/L5b) — allow for cold-start + model load. */
+export const GPU_WORKER_TIMEOUT_MS = 40_000
+
 /** Per-agent vision API timeout in ms (raised slightly for 9-agent parallel runs) */
 export const VISION_AGENT_TIMEOUT_MS = 10_000
 

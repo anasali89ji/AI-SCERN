@@ -22,7 +22,7 @@ import { hashBuffer, hashText, getCachedScan, setCachedScan } from '@/lib/cache/
 // Those functions operated on raw compressed bytes as if they were 8-bit
 // PCM — pure noise for any non-WAV upload. Now: route all audio signal
 // extraction through the Python worker (which uses real librosa.load).
-import { SIGNAL_WORKER_TIMEOUT_MS } from '@/lib/forensic/constants'
+import { SIGNAL_WORKER_TIMEOUT_MS, IMAGE_CV_WORKER_TIMEOUT_MS, GPU_WORKER_TIMEOUT_MS } from '@/lib/forensic/constants'
 import { getCalibrationStats, getAudioCalibrationStats }                      from './calibration-client'
 import { trackVendorCall } from './vendor-call-tracker'
 import { analyzeVideoFrames }                                                  from './nvidia-nim'
@@ -755,7 +755,7 @@ async function callPythonCVWorker(
     }
     const res = await fetch(`${PYTHON_WORKER_URL}/analyze/image`, {
       method: 'POST', body: form,
-      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+      signal: AbortSignal.timeout(IMAGE_CV_WORKER_TIMEOUT_MS),
     })
     if (!res.ok) {
       console.error(`[hf-analyze] CV worker returned ${res.status} ${res.statusText} — falling back to Brain+ML+LLM only.`)
@@ -807,7 +807,7 @@ async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l
       form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
       const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
         method: 'POST', body: form,
-        signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+        signal: AbortSignal.timeout(GPU_WORKER_TIMEOUT_MS),
       })
       if (res.ok) {
         const data = await res.json()
@@ -827,7 +827,7 @@ async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: [dataUrl] }),
-      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+      signal: AbortSignal.timeout(GPU_WORKER_TIMEOUT_MS),
     })
     if (!res.ok) {
       console.error(`[hf-analyze] GPU worker returned ${res.status} — L5/L5b unavailable`)
