@@ -5,7 +5,24 @@ import { Clock, Search, Filter, Download, Trash, Eye, Image as ImgIcon, Video, M
 import { useAuth } from '@/components/auth-provider'
 import type { Scan } from '@/types'
 import { formatRelativeTime, formatFileSize } from '@/lib/utils/helpers'
-import { UsageAnalytics } from '@/components/history/UsageAnalytics'
+import dynamic from 'next/dynamic'
+
+// Recharts is the heaviest dependency on this route (342 kB raw / ~105 kB gz on
+// the 2026-11 audit build) but the Analytics panel is only rendered under the
+// non-default tab — load it on first open instead of on page load.
+const UsageAnalytics = dynamic(
+  () => import('@/components/history/UsageAnalytics').then(m => ({ default: m.UsageAnalytics })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="card p-6 space-y-4" aria-busy="true" aria-label="Loading analytics">
+        <div className="h-6 w-40 rounded bg-white/5 animate-pulse" />
+        <div className="h-48 w-full rounded bg-white/5 animate-pulse" />
+        <div className="h-4 w-64 rounded bg-white/5 animate-pulse" />
+      </div>
+    ),
+  },
+)
 
 
 

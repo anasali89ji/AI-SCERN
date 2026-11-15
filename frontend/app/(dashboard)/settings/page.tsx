@@ -9,11 +9,18 @@ import {
   RefreshCw, Mail, ToggleLeft, Database, Languages, Clock,
   ChevronRight, Star, BrainCircuit
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useClerk } from '@clerk/nextjs'
 import { useAnimationPref } from '@/components/AnimationPreferenceContext'
+
+// Supabase browser client (~169 kB raw / ~50 kB gz) is only needed for the
+// two data actions below (export + clear history). It is imported on demand
+// so it never enters this route's initial bundle (2026-11 audit, PERF-B4).
+async function getSupabase() {
+  const { createClient } = await import('@/lib/supabase/client')
+  return createClient()
+}
 
 
 
@@ -69,7 +76,6 @@ function Section({ title, icon: Icon, children }: { title: string; icon: any; ch
 export default function SettingsPage() {
   const { user, signOut }  = useAuth()
   const { openUserProfile } = useClerk()
-  const supabase            = createClient()
   const { setReduceAnimations } = useAnimationPref()
 
   // ── Notification settings ──────────────────────────────────────────────────
@@ -199,6 +205,7 @@ export default function SettingsPage() {
 
   const exportData = async () => {
     if (!user?.uid) return
+    const supabase = await getSupabase()
     const { data: scans } = await (supabase as any).from('scans').select('*').eq('user_id', user.uid)
     const blob = new Blob([JSON.stringify({ scans, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aiscern-data.json'; a.click()
@@ -339,6 +346,7 @@ export default function SettingsPage() {
           action={
             <button onClick={async () => {
               if (!user?.uid) return
+              const supabase = await getSupabase()
               await (supabase as any).from('scans').delete().eq('user_id', user.uid)
               toast.success('History cleared')
             }} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#FF4444]/30 text-[#FF4444] hover:bg-[#FF4444]/10 transition-colors">

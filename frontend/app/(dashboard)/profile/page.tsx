@@ -7,9 +7,17 @@ import {
   LoaderCircle, Check, FileType2, Image as ImageIcon, Music, Video,
   Brain, User, Zap, Crown, ChevronRight, RefreshCw
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
+
+// Supabase browser client (~169 kB raw / ~50 kB gz) is used for a single
+// profile read on mount; importing it on demand keeps it out of this route's
+// initial bundle (2026-11 audit, PERF-B4). It loads in parallel with the
+// fetch, so profile display latency is unchanged.
+async function getSupabase() {
+  const { createClient } = await import('@/lib/supabase/client')
+  return createClient()
+}
 
 // ── Avatar ────────────────────────────────────────────────────
 function Avatar({ name, size = 96 }: { name: string; size?: number }) {
@@ -227,7 +235,6 @@ function CreditsCard({ userId }: { userId: string }) {
 export default function ProfilePage() {
   const { user }            = useAuth()
   const { user: clerkUser } = useUser()
-  const supabase            = createClient()
 
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const [stats,   setStats]   = useState<Record<string, number> | null>(null)
@@ -245,7 +252,8 @@ export default function ProfilePage() {
 
   const loadProfile = useCallback(async () => {
     if (!user?.uid) return
-    const { data } = await (supabase as ReturnType<typeof createClient>)
+    const supabase = await getSupabase()
+    const { data } = await supabase
       .from('profiles').select('*').eq('id', user.uid).single() as { data: Record<string, unknown> | null }
     if (data) {
       setProfile(data)

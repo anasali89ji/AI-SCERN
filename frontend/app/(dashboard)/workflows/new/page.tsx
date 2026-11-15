@@ -4,15 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkflowBuilder } from '@/components/workflow/WorkflowBuilder';
 import { WorkflowStep } from '@/lib/workflow/types';
-import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth-provider';
 import { toast } from 'sonner';
+
+// Supabase browser client (~169 kB raw / ~50 kB gz) is only needed when saving
+// a workflow; importing it on demand keeps it out of this route's initial
+// bundle (2026-11 audit, PERF-B4).
+async function getSupabase() {
+  const { createClient } = await import('@/lib/supabase/client');
+  return createClient();
+}
 
 export default function NewWorkflowPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [name, setName] = useState('');
-  const supabase = createClient();
 
   const handleSave = async (steps: WorkflowStep[]) => {
     if (!name.trim()) {
@@ -24,6 +30,7 @@ export default function NewWorkflowPage() {
       return;
     }
 
+    const supabase = await getSupabase();
     const { error } = await supabase.from('workflows').insert({
       user_id: user.uid,
       name: name.trim(),

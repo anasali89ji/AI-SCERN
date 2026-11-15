@@ -3,28 +3,38 @@
 import Link from 'next/link';
 import { Plus, GitBranch, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth-provider';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
+
+// Supabase browser client (~169 kB raw / ~50 kB gz) is imported on demand so
+// it never enters this route's initial bundle (2026-11 audit, PERF-B4).
+async function getSupabase() {
+  const { createClient } = await import('@/lib/supabase/client');
+  return createClient();
+}
 
 export default function WorkflowsPage() {
   const { user } = useAuth();
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     if (!user?.uid) return;
-    supabase
-      .from('workflows')
-      .select('*')
-      .eq('user_id', user.uid)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setWorkflows(data || []);
-        setLoading(false);
-      });
+    let cancelled = false;
+    getSupabase().then(supabase =>
+      supabase
+        .from('workflows')
+        .select('*')
+        .eq('user_id', user.uid)
+        .order('created_at', { ascending: false })
+        .then(({ data }) => {
+          if (cancelled) return;
+          setWorkflows(data || []);
+          setLoading(false);
+        })
+    );
+    return () => { cancelled = true; };
   }, [user]);
 
   if (loading) {
