@@ -12,7 +12,7 @@ import { analyzeImagesBatch } from '@/lib/scanner/image-forensics'
 import { deepWordPressScan } from '@/lib/scanner/wordpress'
 import { buildSiteTrustScore } from '@/lib/scanner/trust'
 import { computeVoiceDiversityIndex, analyzeStylometry } from '@/lib/scanner/stylometry'
-import { assertSafeUrl } from '@/lib/utils/ssrf-guard'
+import { assertSafeUrlResolved } from '@/lib/utils/ssrf-guard'
 import { siteScanGuard } from '@/lib/middleware/site-scan-guard'
 import { HTTPError, httpErrorResponse, injectGuardHeaders } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
@@ -186,7 +186,10 @@ export async function POST(req: NextRequest) {
     targetUrl = targetUrl.replace(/\/$/, '')
 
     try {
-      assertSafeUrl(targetUrl)
+      // SCANNER-SEC-1: resolved variant — also rejects domains whose DNS
+      // records point at private/internal addresses (string checks alone
+      // can be bypassed with a custom domain).
+      await assertSafeUrlResolved(targetUrl)
     } catch (err) {
       return NextResponse.json(
         { success: false, error: err instanceof Error ? err.message : 'This URL is not allowed.' },

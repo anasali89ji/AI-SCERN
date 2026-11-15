@@ -4,7 +4,7 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:read')
   if (auth instanceof NextResponse) return auth
 
   const { searchParams } = new URL(req.url)
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const { ip, reason } = await req.json()

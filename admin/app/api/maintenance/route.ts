@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 const KEYS = ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips']
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:read')
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   let body: any

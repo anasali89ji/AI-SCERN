@@ -22,6 +22,7 @@ import { creditGuard, httpErrorResponse, HTTPError } from '@/lib/middleware/cred
 import { fireScanCompleted }                 from '@/lib/inngest/send-scan-event'
 import { getSupabaseAdmin }                  from '@/lib/supabase/admin'
 import { scanSite }                          from '@/lib/site-crawler/site-scanner'
+import { assertSafeUrlResolved }             from '@/lib/utils/ssrf-guard'
 
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 300 // full-site crawls take longer than a single-page scan
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest) {
   let parsedUrl: URL
   try { parsedUrl = new URL(url) } catch { return NextResponse.json({ success: false, error: { code: 'INVALID_URL', message: 'Invalid URL' } }, { status: 400 }) }
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) return NextResponse.json({ success: false, error: { code: 'INVALID_PROTOCOL', message: 'Only http/https URLs allowed' } }, { status: 400 })
+
+  // SCANNER-SEC-1: this route previously had NO SSRF guard at all — the seed
+  // URL went straight into scanSite()'s fetch() calls. Block private/
+  // internal targets, including domains whose DNS records resolve to them.
+  try {
+    await assertSafeUrlResolved(url)
+  } catch (err) {
+    return NextResponse.json({ success: false, error: { code: 'BLOCKED_URL', message: err instanceof Error ? err.message : 'This URL is not allowed.' } }, { status: 400 })
+  }
 
   const maxPages       = typeof body.maxPages === 'number' ? Math.min(Math.max(1, body.maxPages), HARD_MAX_PAGES) : 25
   const includeImages  = body.includeImages !== false

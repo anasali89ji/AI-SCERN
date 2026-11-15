@@ -4,7 +4,7 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const body = await req.json()
@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()

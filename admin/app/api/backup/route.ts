@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 const TABLES = ['profiles', 'scans', 'credit_transactions', 'support_tickets', 'error_logs', 'admin_audit_log', 'api_keys', 'content_flags', 'webhooks', 'feature_flags', 'announcements', 'admin_users', 'site_settings', 'rate_limit_events', 'backups', 'marketing_analytics', 'pipeline_stats', 'pipeline_costs', 'fallback_flags']
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:read')
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const { name } = await req.json()

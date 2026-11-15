@@ -13,6 +13,8 @@
 // Respects robots.txt Disallow rules for the "*" and "AiscernBot" user agents.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { assertSafeUrlResolved, safeFetch } from '@/lib/utils/ssrf-guard'
+
 export interface CrawledPage {
   url:          string
   html:         string
@@ -45,7 +47,9 @@ interface RobotsRules { disallow: string[]; sitemaps: string[] }
 async function fetchRobots(origin: string, ua: string, timeoutMs: number): Promise<RobotsRules> {
   const rules: RobotsRules = { disallow: [], sitemaps: [] }
   try {
-    const res = await fetch(`${origin}/robots.txt`, { signal: AbortSignal.timeout(timeoutMs), headers: { 'User-Agent': ua } })
+    // SCANNER-SEC-1: safeFetch re-validates redirects — a robots.txt that
+    // 302s to an internal address must not be followed.
+    const res = await safeFetch(`${origin}/robots.txt`, { signal: AbortSignal.timeout(timeoutMs), headers: { 'User-Agent': ua } })
     if (!res.ok) return rules
     const text = await res.text()
     let relevant = false
@@ -79,7 +83,12 @@ function isAllowed(pathname: string, disallow: string[]): boolean {
 async function fetchSitemapUrls(sitemapUrl: string, ua: string, timeoutMs: number, depth = 0): Promise<string[]> {
   if (depth > 2) return [] // avoid sitemap-index recursion bombs
   try {
-    const res = await fetch(sitemapUrl, { signal: AbortSignal.timeout(timeoutMs), headers: { 'User-Agent': ua } })
+    // SCANNER-SEC-1: sitemap URLs come from the scanned site's robots.txt
+    // and sitemap-index <loc> entries — both attacker-controlled. Reject any
+    // that fails the SSRF guard (string checks + DNS resolution) before
+    // fetching; cross-origin sitemaps on public CDNs still work.
+    await assertSafeUrlResolved(sitemapUrl)
+    const res = await safeFetch(sitemapUrl, { signal: AbortSignal.timeout(timeoutMs), headers: { 'User-Agent': ua } })
     if (!res.ok) return []
     const xml = await res.text()
 
@@ -152,7 +161,8 @@ function extractImages(html: string): string[] {
 
 async function fetchPage(url: string, ua: string, timeoutMs: number): Promise<CrawledPage> {
   try {
-    const res = await fetch(url, {
+    // SCANNER-SEC-1: safeFetch — manual redirects with per-hop validation.
+    const res = await safeFetch(url, {
       signal: AbortSignal.timeout(timeoutMs),
       headers: { 'User-Agent': ua, 'Accept': 'text/html' },
     })

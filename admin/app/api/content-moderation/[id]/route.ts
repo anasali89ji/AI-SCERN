@@ -4,7 +4,7 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'content:moderate')
   if (auth instanceof NextResponse) return auth
 
   const { status, resolution } = await req.json()

@@ -7,6 +7,7 @@
 import * as cheerio from 'cheerio'
 import type { DiscoveredLink, CrawlOptions } from './types'
 import { DEFAULT_CRAWL_OPTS } from './types'
+import { safeFetch } from '@/lib/utils/ssrf-guard'
 
 const STEALTH_HEADERS: Record<string, string> = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
@@ -77,10 +78,12 @@ export interface FetchedPage {
 
 async function fetchDirect(url: string, timeoutMs = 12000): Promise<string | null> {
   try {
-    const res = await fetch(url, {
+    // SCANNER-SEC-1: safeFetch follows redirects manually and re-validates
+    // every hop — a public page 302-ing to an internal address was previously
+    // followed silently (redirect: 'follow').
+    const res = await safeFetch(url, {
       headers: STEALTH_HEADERS,
       signal: AbortSignal.timeout(timeoutMs),
-      redirect: 'follow',
     })
     if (!res.ok) return null
     const ct = res.headers.get('content-type') || ''
@@ -123,16 +126,31 @@ async function fetchCache(url: string, timeoutMs = 5000): Promise<string | null>
 }
 
 export async function fetchPage(url: string): Promise<FetchedPage | null> {
-  // Module 4.3: race direct + Jina in parallel (was: sequential 3-stage
+  // Module 4.3: start direct + Jina in parallel (was: sequential 3-stage
   // fallback — 12s + 25s + 10s = up to 47s for one dead URL).
-  // Now: whichever responds first wins; both have independent timeouts.
+  // SCANNER-RACE-1 (audit 2026-11): was Promise.race, which settles with the
+  // FIRST result even when it is a failure — a fast 429/404/timeout from
+  // r.jina.ai (sub-second) aborted the fetch although the direct path would
+  // have succeeded moments later, dropping pages and failing whole scans
+  // whenever Jina rate-limited. Now: first SUCCESS wins; only if both paths
+  // fail do we fall through to the cache.
   const DIRECT_TIMEOUT = 12_000
   const JINA_TIMEOUT = 15_000  // reduced from 25s — if Jina works, it works in <15s
 
-  const winner = await Promise.race([
-    fetchDirect(url, DIRECT_TIMEOUT).then(h => h ? { html: h, src: 'direct' as const } : null),
-    fetchJina(url, JINA_TIMEOUT).then(h => h ? { html: h, src: 'jina' as const } : null),
-  ]).catch(() => null)
+  const directP = fetchDirect(url, DIRECT_TIMEOUT)
+  const jinaP = fetchJina(url, JINA_TIMEOUT)
+
+  const winner = await new Promise<{ html: string; src: 'direct' | 'jina' } | null>((resolve) => {
+    let pending = 2
+    let done = false
+    const settle = (v: { html: string; src: 'direct' | 'jina' } | null) => {
+      if (done) return
+      if (v) { done = true; resolve(v); return }   // first success wins
+      if (--pending === 0) resolve(null)           // both paths failed
+    }
+    directP.then(h => settle(h ? { html: h, src: 'direct' } : null)).catch(() => settle(null))
+    jinaP.then(h => settle(h ? { html: h, src: 'jina' } : null)).catch(() => settle(null))
+  })
 
   if (winner) {
     return { url, html: winner.html, fetchMethod: winner.src, statusCode: 200 }
@@ -353,7 +371,12 @@ async function discoverFromSitemap(origin: string, maxUrls: number): Promise<str
 
   async function fetchXml(url: string): Promise<string | null> {
     try {
-      const res = await fetch(url, {
+      // SCANNER-SEC-1: <loc> entries in a sitemap index are attacker-
+      // controlled (the scanned site decides what to list). A malicious
+      // sitemap.xml could previously point the server at internal URLs.
+      // Cross-origin sub-sitemaps stay allowed (legitimate on CDNs) but
+      // every hop must pass the SSRF guard.
+      const res = await safeFetch(url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AiscernBot/1.0)' },
         signal: AbortSignal.timeout(8000),
       })
@@ -500,81 +523,94 @@ export async function crawlSite(
   // Was: `await fetchPage(current.url)` in a while loop — 30 pages × 2s = 60s.
   // Now: CONCURRENCY workers fetch in parallel. 4 workers for ≤100 pages,
   // 8 workers for >100 pages (Deep/Pro-Deep scans).
+  //
+  // SCANNER-HANG-1 (audit 2026-11): the previous termination logic deadlocked
+  // whenever the maxPages cap was reached while a worker was still mid-fetch.
+  // That worker pushed the fetched page's links inside its try block, so its
+  // finally-block resolve condition (`queue.length === 0 && activeWorkers === 0`)
+  // never fired, its while-loop then exited on the cap, and the trailing
+  // resolve also failed (queue non-empty). No worker was left to dequeue and
+  // the outer Promise never settled — crawlSite hung until the platform's
+  // 60s maxDuration killed the route. Every scan of a site with more
+  // discoverable pages than the cap (i.e. most real sites on deep crawls)
+  // ended in a timeout instead of returning results.
+  //
+  // Fix: a worker may only exit when the queue is empty AND no other worker
+  // is mid-fetch (only then can no new links appear). Otherwise it parks for
+  // 20ms and re-checks. Promise.all resolves when every worker has exited.
   const CONCURRENCY = (opts.maxPages ?? 30) > 100 ? 8 : 4
-  let activeWorkers = 0
+  let activeFetches = 0
 
-  await new Promise<void>((resolve) => {
-    const worker = async () => {
-      while (queue.length > 0 && pages.length < opts.maxPages!) {
-        // Priority dequeue — sort and shift (Module 4.4: O(n log n) per item,
-        // acceptable for ≤500 pages; binary heap would be O(log n) but adds a dep)
-        queue.sort((a, b) => b.priority - a.priority)
-        const current = queue.shift()!
-        queuedUrls.delete(current.url)
+  const worker = async (): Promise<void> => {
+    while (pages.length < opts.maxPages!) {
+      if (queue.length === 0) {
+        if (activeFetches === 0) return // provably done — nothing pending or in flight
+        await new Promise(r => setTimeout(r, 20)) // in-flight workers may enqueue more
+        continue
+      }
 
-        if (visited.has(current.url)) continue
-        visited.add(current.url)
+      // Priority dequeue — sort and shift (Module 4.4: O(n log n) per item,
+      // acceptable for ≤500 pages; binary heap would be O(log n) but adds a dep)
+      queue.sort((a, b) => b.priority - a.priority)
+      const current = queue.shift()!
+      queuedUrls.delete(current.url)
 
-        activeWorkers++
-        try {
-          const fetched = await fetchPage(current.url)
-          if (!fetched) {
-            failedUrls.push(current.url)
-            fetchStats.failed++
-            continue
-          }
+      if (visited.has(current.url)) continue
+      visited.add(current.url)
 
-          fetchStats[fetched.fetchMethod]++
+      activeFetches++
+      try {
+        const fetched = await fetchPage(current.url)
+        if (!fetched) {
+          failedUrls.push(current.url)
+          fetchStats.failed++
+          continue
+        }
 
-          const parsed = parsePage(fetched.html, current.url, fetched.fetchMethod)
-          pages.push(parsed)
+        fetchStats[fetched.fetchMethod]++
 
-          // Collect images
-          for (const imgUrl of parsed.imageUrls) {
-            allImages.push({ url: imgUrl, sourcePage: current.url })
-          }
+        const parsed = parsePage(fetched.html, current.url, fetched.fetchMethod)
+        pages.push(parsed)
 
-          // WordPress detection
-          if (!isWordPress) {
-            const wpCheck = detectWordPress(fetched.html, current.url)
-            isWordPress = wpCheck.isWordPress
-            wordPressVersion = wpCheck.version
-          }
+        // Collect images
+        for (const imgUrl of parsed.imageUrls) {
+          allImages.push({ url: imgUrl, sourcePage: current.url })
+        }
 
-          // Add internal links to queue (Module 4.4: Set lookup instead of queue.some)
-          if (current.depth < opts.maxDepth!) {
-            const internalLinks = parsed.links
-              .filter(l => l.isInternal && !visited.has(l.url))
-              .filter(l => {
-                const path = new URL(l.url).pathname.toLowerCase()
-                return !SKIP_PATHS.test(path) &&
-                  !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path) &&
-                  !isDisallowedByRobots(path, disallowedPaths)
-              })
+        // WordPress detection
+        if (!isWordPress) {
+          const wpCheck = detectWordPress(fetched.html, current.url)
+          isWordPress = wpCheck.isWordPress
+          wordPressVersion = wpCheck.version
+        }
 
-            for (const link of internalLinks) {
-              if (!queuedUrls.has(link.url)) {  // Module 4.4: O(1) Set lookup
-                queue.push({ url: link.url, depth: current.depth + 1, priority: link.priority })
-                queuedUrls.add(link.url)
-              }
+        // Add internal links to queue (Module 4.4: Set lookup instead of queue.some)
+        if (current.depth < opts.maxDepth!) {
+          const internalLinks = parsed.links
+            .filter(l => l.isInternal && !visited.has(l.url))
+            .filter(l => {
+              const path = new URL(l.url).pathname.toLowerCase()
+              return !SKIP_PATHS.test(path) &&
+                !/\/(wp-admin|wp-login|wp-json|wp-content\/uploads\/\d{4}\/\d{2})\//i.test(path) &&
+                !isDisallowedByRobots(path, disallowedPaths)
+            })
+
+          for (const link of internalLinks) {
+            if (!queuedUrls.has(link.url)) {  // Module 4.4: O(1) Set lookup
+              queue.push({ url: link.url, depth: current.depth + 1, priority: link.priority })
+              queuedUrls.add(link.url)
             }
           }
-        } catch (e) {
-          console.warn(`[crawl] failed ${current.url}:`, e)
-          failedUrls.push(current.url)
-        } finally {
-          activeWorkers--
-          if (queue.length === 0 && activeWorkers === 0) resolve()
         }
+      } catch (e) {
+        console.warn(`[crawl] failed ${current.url}:`, e)
+        failedUrls.push(current.url)
+      } finally {
+        activeFetches--
       }
-      if (queue.length === 0 && activeWorkers === 0) resolve()
     }
-    // Spawn workers
-    for (let i = 0; i < CONCURRENCY; i++) {
-      worker()
-    }
-    if (queue.length === 0) resolve()
-  })
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 
   return {
     pages,

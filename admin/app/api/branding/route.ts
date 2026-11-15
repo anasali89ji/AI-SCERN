@@ -11,7 +11,7 @@ const BRANDING_KEYS = [
 ]
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:read')
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const body = await req.json()

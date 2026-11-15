@@ -4,7 +4,7 @@ import { requireAdmin, getAdminDb } from '@/lib/admin-middleware'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'settings:write')
   if (auth instanceof NextResponse) return auth
 
   const { title, body, type, priority, target_audience, action_url } = await req.json()

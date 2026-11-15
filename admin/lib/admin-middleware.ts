@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession, COOKIE_NAME } from './auth'
 
 const PERMISSIONS: Record<string, string[]> = {
-  admin: ['users:read', 'users:write', 'scans:read', 'settings:read', 'settings:write'],
+  admin: ['users:read', 'users:write', 'scans:read', 'settings:read', 'settings:write', 'content:moderate'],
   moderator: ['users:read', 'scans:read', 'content:moderate'],
   super_admin: ['*'],
 }
@@ -39,7 +39,9 @@ export async function requireAdmin(
   if (requiredPermission && requiredPermission !== '*') {
     const db = getAdminDb()
     const { data: admin } = await db.from('admin_users').select('role').eq('id', adminId).single()
-    const role = admin?.role || 'admin'
+    // Legacy env-password admin authenticates as super_admin (see verifyAdminPassword);
+    // unknown or deleted admin IDs get the deny-by-default viewer role.
+    const role = adminId === 'legacy' ? 'super_admin' : (admin?.role || 'viewer')
     const allowed = PERMISSIONS[role] || []
     if (!allowed.includes('*') && !allowed.includes(requiredPermission)) {
       return NextResponse.json({ error: 'Forbidden: insufficient permissions' }, { status: 403 })

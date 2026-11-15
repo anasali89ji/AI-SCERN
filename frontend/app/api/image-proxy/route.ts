@@ -11,7 +11,7 @@
  * Referer/UA, fixes that inconsistency.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { assertSafeUrl } from '@/lib/utils/ssrf-guard'
+import { assertSafeUrlResolved, safeFetch } from '@/lib/utils/ssrf-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
   if (!target) return NextResponse.json({ error: 'Missing url' }, { status: 400 })
 
   try {
-    assertSafeUrl(target)
+    // SCANNER-SEC-1: resolved variant + safeFetch below — this route also
+    // streamed redirects blindly before.
+    await assertSafeUrlResolved(target)
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Blocked URL' }, { status: 400 })
   }
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(target, {
+    const upstream = await safeFetch(target, {
       headers: {
         'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
         'Accept':          'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',

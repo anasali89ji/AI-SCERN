@@ -18,7 +18,7 @@ import {
 } from '@/lib/trust/verify'
 import { auditVerificationCreated, auditVerificationCompleted } from '@/lib/trust/audit'
 import { getSupabaseAdmin }          from '@/lib/supabase/admin'
-import { assertSafeUrl }             from '@/lib/utils/ssrf-guard'
+import { assertSafeUrlResolved } from '@/lib/utils/ssrf-guard'
 import type { EvidenceItem, Finding } from '@/lib/trust/types'
 
 export const dynamic     = 'force-dynamic'
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'URL must use http or https.' }, { status: 400 })
 
   try {
-    assertSafeUrl(url)
+    await assertSafeUrlResolved(url)
   } catch {
     return NextResponse.json({ error: 'URL resolves to a private or blocked address.' }, { status: 400 })
   }

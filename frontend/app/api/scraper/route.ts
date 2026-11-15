@@ -6,7 +6,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/ratelimit'
 import { fetchWithProxy }             from '@/lib/proxy/fetch-with-proxy'
 import { geminiAvailable }            from '@/lib/inference/gemini-analyzer'
 import { GoogleGenerativeAI }         from '@google/generative-ai'
-import { assertSafeUrl }              from '@/lib/utils/ssrf-guard'
+import { assertSafeUrlResolved }       from '@/lib/utils/ssrf-guard'
 import { getSupabaseAdmin }           from '@/lib/supabase/admin'
 import * as cheerio                   from 'cheerio'
 
@@ -215,7 +215,7 @@ async function quickScoreHF(text: string): Promise<{ aiScore: number; verdict: s
 // Each agent fetches, parses, and quick-scores one page independently
 async function runSubAgent(link: { url: string; text: string }): Promise<AgentResult | null> {
   try {
-    assertSafeUrl(link.url)
+    await assertSafeUrlResolved(link.url)
     const { html, fetchMethod } = await fetchPage(link.url)
     const page = parseHTML(html, link.url, fetchMethod)
     if (page.wordCount < 50) return null
@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
     try { urlObj = new URL(normalised) } catch {
       return NextResponse.json({ success: false, error: { code: 'INVALID_URL', message: 'Invalid URL format' } }, { status: 400 })
     }
-    assertSafeUrl(normalised)
+    await assertSafeUrlResolved(normalised)
 
     // Fetch main page
     let html: string; let fetchMethod: PageData['fetchMethod']

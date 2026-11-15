@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'admins:manage')
   if (auth instanceof NextResponse) return auth
 
   const db = getAdminDb()
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req)
+  const auth = await requireAdmin(req, 'admins:manage')
   if (auth instanceof NextResponse) return auth
 
   const { email, name, password, role = 'admin' } = await req.json()

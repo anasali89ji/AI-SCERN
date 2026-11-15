@@ -3,6 +3,7 @@
  * Routes through Cloudflare Worker proxy first, then static pool, then direct.
  */
 import { getNextProxy, markProxyFailed, type ProxyConfig } from './rotation'
+import { safeFetch } from '@/lib/utils/ssrf-guard'
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -46,7 +47,10 @@ export async function fetchWithProxy(
           signal: AbortSignal.timeout(timeoutMs),
         })
       } else {
-        res = await fetch(targetUrl, {
+        // SCANNER-SEC-1: safeFetch follows redirects manually, re-validating
+        // every hop — `redirect: 'follow'` silently allowed a public URL to
+        // 302 into internal address space.
+        res = await safeFetch(targetUrl, {
           headers: {
             'User-Agent':      randomUA(),
             'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -57,7 +61,6 @@ export async function fetchWithProxy(
             ...extraHeaders,
           },
           signal:   AbortSignal.timeout(timeoutMs),
-          redirect: 'follow',
         })
       }
 
