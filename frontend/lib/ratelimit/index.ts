@@ -37,7 +37,7 @@ export function getRedis(): Redis | null {
 }
 
 // ── Rate limiter config ───────────────────────────────────────────────────────
-type LimiterKey = 'text' | 'image' | 'audio' | 'video' | 'scraper' | 'upload' | 'batch' | 'anon_scan' | 'chat' | 'admin' | 'credit_purchase'
+type LimiterKey = 'text' | 'image' | 'audio' | 'video' | 'scraper' | 'upload' | 'batch' | 'anon_scan' | 'chat' | 'admin' | 'credit_purchase' | 'image-proxy'
 
 const LIMITS: Record<LimiterKey, { requests: number; window: `${number} ${'s' | 'm' | 'h'}` }> = {
   text:    { requests: 30, window: '1 m' },
@@ -50,6 +50,7 @@ const LIMITS: Record<LimiterKey, { requests: number; window: `${number} ${'s' | 
   anon_scan: { requests:  5, window: '24 h' },
   chat:      { requests: 20, window: '1 m' },
   credit_purchase: { requests: 10, window: '1 h' },
+  'image-proxy':  { requests: 30, window: '1 m' },  // IMGPROXY-RL-1: unauthenticated relay guard
   admin:     { requests: 10, window: '1 m' },
 }
 

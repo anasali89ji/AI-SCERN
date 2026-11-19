@@ -70,7 +70,16 @@ function LoginContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const [redirecting, setRedirecting] = useState(false)
-  const redirectUrl = searchParams.get('redirect_url') || '/dashboard'
+  // AUTH-REDIR-1 (audit 2026-11): open-redirect guard. redirect_url used to
+  // be honored verbatim — a phishing link to /login?redirect_url=https://evil.com
+  // bounced the user to the attacker's site right after sign-in. Only same-
+  // origin relative paths are allowed now; everything else falls back to the
+  // dashboard.
+  const rawRedirect = searchParams.get('redirect_url') || '/dashboard'
+  const redirectUrl =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.startsWith('/\\')
+      ? rawRedirect
+      : '/dashboard'
 
   useEffect(() => {
     if (isLoaded && isSignedIn) { setRedirecting(true); router.replace(redirectUrl) }

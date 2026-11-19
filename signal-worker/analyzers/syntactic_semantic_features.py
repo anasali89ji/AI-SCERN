@@ -99,11 +99,11 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Module 2.6: gate the LSA compute behind a flag. The full SVD on a
-# (sentences × vocab) matrix is 30-200ms per long-English request and
-# contributes ZERO to the final score — semantic_lsa is emitted with
-# score=0.5, provisional=True, scored=False. Skip the compute entirely
-# until scoring is calibrated against a labeled corpus.
+# PY-LSA-1: this flag documents that the LSA SCORE path is closed —
+# _score() gives LSA zero weight until thresholds are calibrated against a
+# labeled corpus. Measurements are ALWAYS computed and reported (the
+# response contract requires real numbers); only the score contribution is
+# gated. Do not use this flag to skip the measurement itself.
 _LSA_SCORING_ENABLED = False
 
 # ── Closed-class lexicon ────────────────────────────────────────────────────
@@ -469,21 +469,16 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _semantic_signal(sentences: Sequence[str]) -> Dict[str, Any]:
-    # Module 2.6: skip the SVD entirely until scoring is turned on.
-    # _build_lsa_space does a full np.linalg.svd on a (sentences × vocab)
-    # matrix and _semantic_signal computes coherence/drift/concentration —
-    # but _score() ignores all of it (semantic_lsa is emitted with
-    # score=0.5, provisional=True, scored=False per the spec). Wastes 30-
-    # 200ms per long-English request with zero contribution. Flip this
-    # flag to True once LSA is calibrated against a labeled corpus.
-    if not _LSA_SCORING_ENABLED:
-        return {
-            "available": False,
-            "reason": "lsa_scoring_disabled_provisional",
-            "note": "LSA compute skipped — _LSA_SCORING_ENABLED is False. "
-                    "Set to True after calibrating against a labeled corpus.",
-        }
-
+    # PY-LSA-1 (audit 2026-11): Module 2.6 skipped the SVD entirely because
+    # _score() gives it zero weight — but that also removed the MEASUREMENTS
+    # from the response, breaking the documented contract (tests
+    # test_lsa_reports_real_measurements / test_lsa_block_is_provisional_
+    # and_unscored: the LSA block must carry real coherence/concentration
+    # numbers AND provisional=True/scored=False). The honest scope is:
+    # always measure, never score. _LSA_SCORING_ENABLED stays False and now
+    # only documents that the SCORE path is closed (see _score — LSA is
+    # computed and reported, but not scored). CPU stays bounded by the
+    # existing MAX_SENTENCES=400 / MAX_TERMS=3000 caps.
     embeddings, spectrum = _build_lsa_space(sentences)
     if embeddings is None:
         return {"available": False, "reason": "insufficient_cross_sentence_vocabulary"}

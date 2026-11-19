@@ -1100,6 +1100,23 @@ def _fuse_scores(
         layer_by_num.get(n, 0.0) >= 0.55 for n in CONTENT_LAYERS
     )
 
+    # GFE-SPARKLE-1: fingerprint-class exception. A DECISIVE Gemini sparkle
+    # fingerprint (L10: >= 15 isolated single-pixel spikes in dark
+    # neighbourhoods at isolation >= 0.6 — see _gemini_sparkle_evidence) is
+    # watermark-class evidence, not a soft content heuristic the DIRE
+    # reality-check was built to veto: real-photo fixtures produce ZERO
+    # candidates, so this cannot fire on sensor noise. Unlike the EXIF
+    # exception it still requires the L10 attribution itself to corroborate
+    # (layerSuspicionScore >= 0.62), and floors at 0.82 (strong evidence,
+    # not certainty) — it is one attribution input, never a sole verdict.
+    sparkle_fingerprint = any(
+        bool(l.get("sparkle_fingerprint")) for l in v2_layers if l.get("layer") == 10
+    )
+    if (sparkle_fingerprint
+            and layer_by_num.get(10, 0.0) >= 0.62):
+        floor = 0.82
+        override_reason = "sparkle_fingerprint_gemini"
+
     if metadata_score >= 0.95:
         # Literal AI software tag in EXIF — certain
         floor = 0.97

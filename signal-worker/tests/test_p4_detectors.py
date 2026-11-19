@@ -168,7 +168,20 @@ class TestP4Integration:
         assert 8 in layer_nums, "Layer 8 (NLM) missing"
         assert 9 in layer_nums, "Layer 9 (AI Fingerprint) missing"
 
+        # PY-STAT-2: the core detector layers (L1-L4, L6-L9) must fire with
+        # status 'success' via the bytes path. Newer auxiliary layers may
+        # honestly report 'not_applicable' when their input requirements are
+        # absent on a 64x64 noise PNG — that is not a regression of this
+        # test's contract (all 7 P4 detectors firing), but 'failure' always is.
+        MANDATORY = {1, 2, 3, 4, 6, 7, 8, 9}
         for layer in layers:
-            assert layer.get("status") == "success", (
-                f"Layer {layer.get('layer')} status={layer.get('status')}"
-            )
+            ln = layer.get("layer")
+            status = layer.get("status")
+            if ln in MANDATORY:
+                assert status == "success", (
+                    f"Mandatory layer {ln} status={status}"
+                )
+            else:
+                assert status in ("success", "not_applicable"), (
+                    f"Auxiliary layer {ln} status={status}"
+                )

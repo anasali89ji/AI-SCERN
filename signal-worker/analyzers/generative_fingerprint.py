@@ -491,8 +491,11 @@ def _detect_eye_perfection(img_array: np.ndarray) -> float:
 # M4: Gemini Sparkle Artifact Detector
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _gemini_sparkle_detector(img_array: np.ndarray) -> float:
+def _gemini_sparkle_evidence(img_array: np.ndarray) -> Dict[str, Any]:
     """
+    Full sparkle evidence (count / isolation / density / score / decisive).
+    _gemini_sparkle_detector() returns just the score for API compatibility.
+
     Google Gemini / ImageFX adds characteristic "sparkle" or "dust particle"
     visual artifacts — isolated bright pixels scattered in dark background regions.
     These appear as small high-value spikes that don't correspond to any coherent
@@ -511,7 +514,8 @@ def _gemini_sparkle_detector(img_array: np.ndarray) -> float:
     try:
         wins = sliding_window_view(padded, (7, 7))
     except Exception:
-        return 0.0
+        return {"score": 0.0, "count": 0, "isolation_ratio": 0.0,
+                "density": 0.0, "decisive": False}
     local_mean = wins.mean(axis=(-2, -1))
 
     # "Dark neighbourhood": local mean < 80 (surrounding pixels are dark)
@@ -528,7 +532,8 @@ def _gemini_sparkle_detector(img_array: np.ndarray) -> float:
     total_dark_neighbourhood = int(dark_neighbourhood.sum())
 
     if total_dark_neighbourhood < 100:
-        return 0.0
+        return {"score": 0.0, "count": 0, "isolation_ratio": 0.0,
+                "density": 0.0, "decisive": False}
 
     sparkle_density = sparkle_count / total_dark_neighbourhood
 
@@ -553,7 +558,33 @@ def _gemini_sparkle_detector(img_array: np.ndarray) -> float:
         0, 1
     ))
 
-    return round(score, 4)
+    # GFE-SPARKLE-1 (audit 2026-11): presence-based evidence floor. The
+    # density scaling above was calibrated on full Gemini outputs (density
+    # 0.001-0.008), but the EVIDENCE in this signature is the count of
+    # isolated spikes, not the density: under any natural dark-field noise
+    # model, an isolated single-pixel spike (>130 while its 7x7 neighborhood
+    # mean stays < 80 and 1.8x below the spike) is a rare event — real-photo
+    # fixtures in the regression battery produce ZERO candidates. 15+ such
+    # spikes at high isolation (>= 0.6) is a Poisson-tail event that stays
+    # decisive regardless of image size (a small crop or sparse sparkle
+    # field has low density but the same overwhelming per-event evidence).
+    # Floor at 0.78 (strong evidence, not certainty) — it feeds a 30-layer
+    # composite where it is one attribution input, never a sole verdict.
+    if sparkle_count >= 15 and isolation_ratio >= 0.6:
+        score = max(score, 0.78)
+
+    return {
+        "score": round(float(score), 6),
+        "count": sparkle_count,
+        "isolation_ratio": round(float(isolation_ratio), 4),
+        "density": round(float(sparkle_density), 6),
+        "decisive": bool(sparkle_count >= 15 and isolation_ratio >= 0.6),
+    }
+
+
+def _gemini_sparkle_detector(img_array: np.ndarray) -> float:
+    """Score-only view of _gemini_sparkle_evidence (API compat for tests)."""
+    return _gemini_sparkle_evidence(img_array)["score"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1032,7 +1063,8 @@ def analyze_generative_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[
         latent_geo   = _latent_residual_geometry(img_array)
         lighting     = _lighting_physics_consistency(img_array)
         bio          = _biological_markers(img_array)
-        sparkle      = _gemini_sparkle_detector(img_array)
+        sparkle_ev   = _gemini_sparkle_evidence(img_array)
+        sparkle      = sparkle_ev["score"]
         visual_wm    = _gemini_visual_watermark(img_array)
         spectral_sig = _spectral_generator_signatures(img_array)
         texture_reg  = _texture_regularity(img_array)
@@ -1083,6 +1115,16 @@ def analyze_generative_fingerprint(img_array: np.ndarray, img_pil: Any) -> Dict[
         report["latent_geometry"]        = latent_geo
         report["spectral_signatures"]    = spectral_sig
         report["gemini_sparkle_score"]   = round(sparkle, 4)
+        # GFE-SPARKLE-1: plumbing for the fusion floor — a DECISIVE sparkle
+        # fingerprint (>= 15 isolated spikes) is fingerprint-class evidence
+        # (like a watermark), not a soft content heuristic, and
+        # image_engine._fuse_scores treats it accordingly.
+        report["sparkle_fingerprint"]    = bool(sparkle_ev["decisive"])
+        report["sparkle_evidence"]       = {
+            "count": sparkle_ev["count"],
+            "isolation_ratio": sparkle_ev["isolation_ratio"],
+            "density": sparkle_ev["density"],
+        }
         report["gemini_visual_watermark"] = round(visual_wm, 4)
         report["texture_regularity"]     = round(texture_reg, 4)
         return report

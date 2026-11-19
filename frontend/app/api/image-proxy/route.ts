@@ -16,6 +16,17 @@ import { assertSafeUrlResolved, safeFetch } from '@/lib/utils/ssrf-guard'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
+  // IMGPROXY-RL-1 (audit 2026-11): this route is unauthenticated (scanner
+  // result galleries can render while a session is expiring) and forwards
+  // to third-party origins — without a limiter it could be used as an open
+  // bandwidth relay. 30 req/min/IP matches the heaviest gallery usage.
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  try {
+    const { checkRateLimit, rateLimitResponse } = await import('@/lib/ratelimit')
+    const rl = await checkRateLimit('image-proxy', ip)
+    if (rl.limited) return NextResponse.json(rateLimitResponse(), { status: 429 })
+  } catch { /* limiter unavailable — proceed: SSRF + content-type guards remain */ }
+
   const target = req.nextUrl.searchParams.get('url')
   if (!target) return NextResponse.json({ error: 'Missing url' }, { status: 400 })
 

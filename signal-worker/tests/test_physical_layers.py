@@ -282,4 +282,8 @@ class TestPhysicalConsistencyIntegration:
         for r in reports:
             assert "layerSuspicionScore" in r
             assert 0 <= r["layerSuspicionScore"] <= 1
-            assert r["status"] in ("success", "failure")
+            # PY-STAT-1: 'not_applicable' is a legitimate, honest status —
+            # e.g. MakerNote layers on files with no maker notes, SSWDP on
+            # inputs with no applicable structure. The engine reports it
+            # instead of faking a score.
+            assert r["status"] in ("success", "failure", "not_applicable")

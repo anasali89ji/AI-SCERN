@@ -61,7 +61,7 @@
     "lucide-react": "0.397.0",
     "mammoth": "^1.12.0",
     "nanoid": "^5.1.11",
-    "next": "15.5.21",
+    "next": "15.5.29",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
     "postgres": "^3.4.9",

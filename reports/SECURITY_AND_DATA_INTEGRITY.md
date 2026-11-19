@@ -32,3 +32,19 @@
 1. Live pen-test of admin RBAC as non-admin roles (Module 7 extends this).
 2. `image-proxy` route SSRF hardening review — deferred to Module 7/8 close-out if budget allows (fetches remote images for display; verified it rejects non-image content types and caps response size — see code notes; full redirect-chain audit pending).
 3. Production RLS verification — needs live DB (blocked, no credentials).
+
+## Module 8 additions (cross-cutting pass close-out)
+
+| ID | Sev | Area | Root cause | Fix | Verification |
+|---|---|---|---|---|---|
+| AUTH-REDIR-1 | P1 | `/login`, `/signup` | `redirect_url` query param honored verbatim by `router.replace()` — phishing link `/login?redirect_url=https://evil.com` bounced users to the attacker post-auth (classic open redirect) | both auth pages accept only same-origin relative paths (`/…`, not `//`, not `/\`); anything else falls back to `/dashboard` | tsc PASS, build PASS |
+| IMGPROXY-RL-1 | P2 | `/api/image-proxy` | unauthenticated + unlimited third-party image relay (bandwidth abuse vector); SSRF/content-type guards were already correct | Upstash limiter `image-proxy` 30/min/IP (new LimiterKey), fail-open only if the limiter service itself is down (SSRF + content-type guards remain) | tsc PASS |
+| DEP-1 | P0 (advisory) | dependencies | `npm audit`: 26 vulnerabilities (2 critical: dompurify XSS chain, **next ≤15.5.27 unauthenticated RCE** in Image Optimization AVIF + cache poisoning) | semver-safe `npm audit fix` (26→7) + `next` 15.5.21→**15.5.29** (patch-line bump). Full re-verification: tsc PASS, vitest 81/81, build PASS, lint 0 errors | audit now 0 critical / 2 high / 4 moderate |
+| DEP-2 | P2 | dependencies (deferred) | remaining highs: `zod <4.6.6` memory-exhaustion advisory (fix = major bump beyond current semver), 2 moderate transitive | **deferred deliberately** — broad dependency upgrades without compatibility review are out of audit scope; recommend a dedicated upgrade round with the full E2E suite | documented |
+
+Also verified this pass:
+- **Open redirects (server side):** middleware only ever sets `redirect_url` from `req.nextUrl.pathname` (internal, relative) — no server-side open redirect found.
+- **HTML injection:** all 5 `dangerouslySetInnerHTML` sites are static JSON-LD structured-data scripts (`JSON.stringify` of constant/route-derived objects — no user input).
+- **Secrets scan:** no `sk-…`/`AKIA…`/`ghp_…`/private-key PEM patterns in tracked files.
+- **`image-proxy` content pipeline:** SSRF guard + per-hop redirect revalidation + `image/*` content-type enforcement + streaming (no full buffering) — verified before adding the rate limit.
+- **Admin client-error logger** — fixed in Module 7 (ADMIN-LOG-1).
