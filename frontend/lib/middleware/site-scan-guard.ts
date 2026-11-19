@@ -7,6 +7,20 @@
  * but tracks its own daily counter via check_and_increment_site_scan(),
  * so the Web Scanner's 5-scans/day free-tier cap never collides with the
  * general text/image/audio/video daily quota.
+ *
+ * SCAN-QUOTA-1 (audit 2026-11): the guard originally ran BEFORE the scan-cache
+ * lookup and the RPC increments the daily counter unconditionally — a cache
+ * hit burned a paid scan credit without performing any work. The route now
+ * authenticates first (getSiteScanUser), resolves plan caps without mutating
+ * anything (getSiteScanPlanContext), checks the cache, and only calls the
+ * incrementing siteScanGuard() on a cache miss.
+ *
+ * SCAN-GUARD-1 (audit 2026-11): an RPC failure used to fail OPEN with a
+ * permissive free/5/0 fallback — an attacker able to induce RPC errors
+ * (or a real outage) got unlimited free scans with no plan caps. Quota
+ * enforcement is billing-critical and now fails CLOSED with a 503 and a
+ * retryable error. Legitimate users see a clear "try again" message; the
+ * rate limiter still bounds retry pressure.
  */
 import { NextRequest }      from 'next/server'
 import { auth }             from '@clerk/nextjs/server'
@@ -36,7 +50,25 @@ interface SiteScanRpcResult {
   max_images_per_scan?: number
 }
 
-export async function siteScanGuard(_req: NextRequest): Promise<SiteScanGuardResult> {
+/**
+ * Per-plan Web Scanner caps. MUST mirror the CASE branches in
+ * supabase/migrations/v36_site_scan_plan_tiers.sql (check_and_increment_site_scan).
+ * Drift here only affects cache-key scoping and pre-RPC display, never the
+ * enforced quota (the RPC re-derives and returns its own caps).
+ */
+export const SITE_SCAN_PLAN_CAPS: Record<string, { pages: number; images: number; daily: number }> = {
+  free:       { pages: 30,   images: 40,  daily: 5 },
+  starter:    { pages: 150,  images: 100, daily: 25 },
+  pro:        { pages: 500,  images: 150, daily: 100 },
+  enterprise: { pages: 5000, images: 500, daily: -1 },
+}
+
+export function siteScanCapsForPlan(plan: string): { pages: number; images: number; daily: number } {
+  return SITE_SCAN_PLAN_CAPS[plan] ?? SITE_SCAN_PLAN_CAPS.free
+}
+
+/** Step 1 — authenticate only. No DB access, no quota mutation. */
+export async function getSiteScanUser(_req: NextRequest): Promise<{ userId: string }> {
   let userId: string | null = null
   try {
     const session = await auth()
@@ -49,19 +81,79 @@ export async function siteScanGuard(_req: NextRequest): Promise<SiteScanGuardRes
       upgrade_url: '/signup',
     })
   }
+  return { userId }
+}
+
+/**
+ * Step 2 — resolve the user's plan + caps WITHOUT incrementing the daily
+ * counter. Used by /api/scanner to scope the scan-cache key to the user's
+ * plan entitlement before deciding whether a fresh (quota-consuming) scan
+ * is needed. Failures return the free-tier caps (conservative, never
+ * over-grants) and are non-fatal.
+ */
+export async function getSiteScanPlanContext(userId: string): Promise<SiteScanGuardResult> {
+  const db = getSupabaseAdmin()
+  const { data, error } = await db
+    .from('profiles')
+    .select('plan')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const plan = (!error && data?.plan) ? data.plan : 'free'
+  const caps = siteScanCapsForPlan(plan)
+  return {
+    userId,
+    plan,
+    dailyScans: 0,
+    dailyLimit: caps.daily,
+    unlimited: caps.daily === -1,
+    maxPagesPerScan:  caps.pages,
+    maxImagesPerScan: caps.images,
+  }
+}
+
+/**
+ * Current daily usage WITHOUT incrementing (for cache-hit response headers).
+ * Returns 0 when the usage row is missing or unreadable.
+ */
+export async function getSiteScanDailyUsage(userId: string): Promise<number> {
+  const db = getSupabaseAdmin()
+  const { data, error } = await db
+    .from('user_site_scan_counts')
+    .select('daily_count')
+    .eq('user_id', userId)
+    .eq('scan_date', new Date().toISOString().slice(0, 10))
+    .maybeSingle()
+  if (error || !data) return 0
+  return Number(data.daily_count ?? 0)
+}
+
+/** Full quota check — increments the daily counter. Call only on a cache miss. */
+export async function siteScanGuard(req: NextRequest): Promise<SiteScanGuardResult> {
+  const { userId } = await getSiteScanUser(req)
 
   const db = getSupabaseAdmin()
   const { data, error } = await db.rpc('check_and_increment_site_scan', { p_user_id: userId })
 
   if (error) {
     console.error('[siteScanGuard] RPC error:', error.message)
-    // Fail open — an infrastructure hiccup shouldn't block a legitimate user
-    return { userId, plan: 'free', dailyScans: 0, dailyLimit: 5 }
+    // SCAN-GUARD-1: fail CLOSED. The old permissive fallback (free/0-of-5)
+    // silently granted unlimited scans with no plan caps whenever the RPC
+    // errored — quota enforcement must not depend on the quota store being
+    // healthy. 503 (not 429/402): this is a service fault, not the user's
+    // quota state, and clients should retry later, not upgrade.
+    throw new HTTPError(503, 'Scan quota service is temporarily unavailable. Please try again in a moment.', {
+      code: 'QUOTA_SERVICE_UNAVAILABLE',
+      retryable: true,
+    })
   }
 
   const result = (Array.isArray(data) ? data[0] : data) as SiteScanRpcResult | null
   if (!result) {
-    return { userId, plan: 'free', dailyScans: 0, dailyLimit: 5 }
+    throw new HTTPError(503, 'Scan quota service is temporarily unavailable. Please try again in a moment.', {
+      code: 'QUOTA_SERVICE_UNAVAILABLE',
+      retryable: true,
+    })
   }
 
   if (!result.allowed) {

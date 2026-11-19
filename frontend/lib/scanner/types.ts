@@ -198,6 +198,9 @@ export interface SiteScanResult {
   integritySeal: ContentIntegritySeal
   processingTimeMs: number
   modelUsed: string
+  /** SCAN-QUOTA-1: true when the result came from the 1h scan cache (no
+   *  fresh crawl ran; no daily-scan credit was consumed). */
+  fromCache?: boolean
   fetchStats: {
     direct: number
     jina: number

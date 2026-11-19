@@ -87,7 +87,8 @@ export async function POST(req: NextRequest) {
     if (fileSize > 10 * 1024 * 1024)
       return NextResponse.json({ success: false, error: { code: 'TOO_LARGE', message: 'Image must be under 10MB' } }, { status: 400 })
 
-    const hash   = contentHash(buffer.subarray(0, 65536))
+    // CACHE-IMG-1: hash the complete buffer (was: first 64 KiB — collided on shared headers)
+    const hash   = contentHash(buffer)
     const cached = await getCachedDetection('image', hash)
 
     // Anti-probing: flag boundary-mapping patterns (near-duplicate files,

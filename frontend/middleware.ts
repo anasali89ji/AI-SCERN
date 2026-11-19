@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 // ── Route matchers ────────────────────────────────────────────────────────────
 const isProtected = createRouteMatcher([
@@ -97,54 +97,87 @@ function isExempt(pathname: string): boolean {
   return MAINTENANCE_EXEMPT.some(p => pathname.startsWith(p))
 }
 
-async function checkMaintenanceMode(req: Request): Promise<{
+// ── Maintenance state cache (PERF-M1) ────────────────────────────────────────
+// checkMaintenanceMode() runs on EVERY non-exempt request (pages AND /api/*).
+// Before this cache it created a fresh Supabase client and ran a DB query per
+// request — 50–300ms of avoidable TTFB on every navigation and API call, and
+// a likely contributor to "slow initial load / slow dashboard navigation"
+// on a busy database. A 10s per-instance TTL keeps maintenance toggles
+// propagating quickly (an admin flipping maintenance off waits at most ~10s
+// for the site to return) while eliminating the per-request round-trip at
+// any real traffic volume.
+interface MaintenanceState {
   enabled: boolean
   message: string
   duration: string
   allowed_ips: string[]
-} | null> {
+}
+
+let maintenanceCache: { at: number; state: MaintenanceState | null } | null = null
+const MAINTENANCE_CACHE_TTL_MS = 10_000
+
+// Module-level client reuse: createClient() per request re-created the whole
+// Supabase client (fetch bindings, auth state machine) on every request.
+let maintenanceDbClient: SupabaseClient | null = null
+function getMaintenanceDb(url: string, key: string) {
+  if (!maintenanceDbClient) {
+    maintenanceDbClient = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  }
+  return maintenanceDbClient
+}
+
+async function checkMaintenanceMode(req: Request): Promise<MaintenanceState | null> {
+  const now = Date.now()
+  if (maintenanceCache && now - maintenanceCache.at < MAINTENANCE_CACHE_TTL_MS) {
+    return maintenanceCache.state
+  }
+
+  let state: MaintenanceState | null = null
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!url || !key) {
       console.error('[MAINTENANCE] Missing Supabase credentials')
-      return null
-    }
+    } else {
+      const db = getMaintenanceDb(url, key)
 
-    const db = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
+      const { data, error } = await db
+        .from('site_settings')
+        .select('key, value')
+        .in('key', ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips'])
 
-    const { data, error } = await db
-      .from('site_settings')
-      .select('key, value')
-      .in('key', ['maintenance_enabled', 'maintenance_message', 'maintenance_duration', 'maintenance_allowed_ips'])
+      if (error) {
+        console.error('[MAINTENANCE] DB error:', error.message)
+      } else if (data) {
+        const settings: Record<string, string> = {}
+        for (const row of data) {
+          settings[row.key] = row.value
+        }
 
-    if (error) {
-      console.error('[MAINTENANCE] DB error:', error.message)
-      return null
-    }
+        const allowed_ips: string[] = []
+        try {
+          allowed_ips.push(...JSON.parse(settings.maintenance_allowed_ips || '[]'))
+        } catch { /* ignore */ }
 
-    const settings: Record<string, string> = {}
-    for (const row of data || []) {
-      settings[row.key] = row.value
-    }
-
-    const allowed_ips: string[] = []
-    try {
-      allowed_ips.push(...JSON.parse(settings.maintenance_allowed_ips || '[]'))
-    } catch { /* ignore */ }
-
-    return {
-      enabled: settings.maintenance_enabled === 'true',
-      message: settings.maintenance_message || 'We are currently performing scheduled maintenance. Please check back soon.',
-      duration: settings.maintenance_duration || '',
-      allowed_ips,
+        state = {
+          enabled: settings.maintenance_enabled === 'true',
+          message: settings.maintenance_message || 'We are currently performing scheduled maintenance. Please check back soon.',
+          duration: settings.maintenance_duration || '',
+          allowed_ips,
+        }
+      }
     }
   } catch (err) {
     console.error('[MAINTENANCE] Unexpected error:', err)
-    return null
   }
+
+  // Cache errors for the same TTL: an unreachable DB should not turn into a
+  // per-request retry storm. state === null is treated as "not enabled"
+  // (same behavior as before the cache).
+  maintenanceCache = { at: now, state }
+  return state
 }
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {

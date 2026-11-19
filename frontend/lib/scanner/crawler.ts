@@ -431,7 +431,10 @@ async function fetchRobotsDisallowed(origin: string): Promise<string[]> {
   } catch { /* Redis down — fall through to fresh fetch */ }
 
   try {
-    const res = await fetch(`${origin}/robots.txt`, {
+    // SCAN-SSRF-2 (audit 2026-11): robots.txt was fetched with a plain
+    // fetch() (redirect: 'follow') — a robots.txt 302-ing to an internal
+    // address was followed silently. safeFetch re-validates every hop.
+    const res = await safeFetch(`${origin}/robots.txt`, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AiscernBot/1.0)' },
       signal: AbortSignal.timeout(6000),
     })

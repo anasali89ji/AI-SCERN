@@ -299,7 +299,25 @@ export async function analyzeText(
     (1 - voiceDiversity) * 0.10 + // low diversity = more AI
     (stylometricFlag ? 0.15 : 0) * 0.10
 
-  const aiScore = Math.min(0.97, Math.max(0.03, ensembleScore))
+  let aiScore = Math.min(0.97, Math.max(0.03, ensembleScore))
+
+  // ── Artifact-density escalation (ENGINE-CAL-1) ──
+  // The ensemble's other members are deliberately neutral for short texts:
+  // computePerplexityBurst needs >= 3 sentences and computeInformationDensity
+  // needs >= 3 paragraphs, so a 2-3 sentence AI-boilerplate snippet could
+  // never cross the 0.65 AI threshold even when it is nothing BUT AI
+  // signature phrases (verified fixture: 6 artifacts in ~36 words scored
+  // 0.42 → UNCERTAIN). A dense cluster of AI-signature phrases (>= 6 per
+  // 100 words AND at least one high-severity phrase) is decisive evidence
+  // on its own — floor the score at 0.72 ("strong AI evidence"). The
+  // density gate keeps human writing that merely quotes a cliché from
+  // escalating: 1-2 artifacts in 100+ words never reaches 6/100.
+  const artifactWords = Math.max(1, wordCount || text.split(/\s+/).filter(Boolean).length)
+  const artifactDensityPer100 = (highArtifacts + mediumArtifacts) / artifactWords * 100
+  const artifactEscalated = highArtifacts >= 1 && artifactDensityPer100 >= 6
+  if (artifactEscalated) {
+    aiScore = Math.max(aiScore, 0.72)
+  }
 
   // Verdict
   let verdict: 'AI' | 'HUMAN' | 'UNCERTAIN'
@@ -319,6 +337,7 @@ export async function analyzeText(
   if (stylometry.sentenceLengthCV < 0.2) topFindings.push(`Unnaturally consistent sentence lengths`)
   if (perplexityResult.burstiness < 0.1) topFindings.push(`Low perplexity burstiness — AI signature`)
   if (highArtifacts > 0) topFindings.push(`${highArtifacts} high-severity AI artifact${highArtifacts > 1 ? 's' : ''}`)
+  if (artifactEscalated) topFindings.push(`Dense AI-phrase cluster — ${highArtifacts + mediumArtifacts} signature phrases in ${artifactWords} words`)
   if (stylometricFlag) topFindings.push(`Stylometric uniformity across site`)
   if (isThin) topFindings.push(`Thin content detected`)
   if (aiArtifacts.some(a => a.type === 'watermark')) topFindings.push(`Zero-width character watermarking detected`)

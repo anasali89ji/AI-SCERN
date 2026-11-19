@@ -14,6 +14,7 @@
 
 import sharp from 'sharp'
 import type { ScannedImage } from './types'
+import { safeFetch } from '@/lib/utils/ssrf-guard'
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5MB — skip larger images
 const DECODE_TIMEOUT_MS = 15_000
@@ -441,8 +442,13 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
       'Accept-Language': 'en-US,en;q=0.9',
     }
 
+    // SCAN-SSRF-1 (audit 2026-11): image URLs come from the scanned site's
+    // HTML — attacker-controlled. Both fetches now go through safeFetch,
+    // which follows redirects MANUALLY and re-validates every hop against
+    // private/reserved ranges (a public image URL 302-ing to an internal
+    // address was previously followed silently with redirect:'follow').
     try {
-      res = await fetch(imageUrl, {
+      res = await safeFetch(imageUrl, {
         headers: { ...baseHeaders, ...(origin ? { Referer: `${origin}/` } : {}) },
         signal: AbortSignal.timeout(15000),
       })
@@ -451,7 +457,7 @@ export async function analyzeImageForensics(imageUrl: string): Promise<ScannedIm
 
     if (!res) {
       try {
-        res = await fetch(imageUrl, { headers: baseHeaders, signal: AbortSignal.timeout(15000) })
+        res = await safeFetch(imageUrl, { headers: baseHeaders, signal: AbortSignal.timeout(15000) })
         if (!res.ok) res = null
       } catch { res = null }
     }

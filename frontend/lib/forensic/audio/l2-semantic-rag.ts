@@ -235,6 +235,24 @@ export async function runAudioSemanticRAG(
   const acousticSummary = buildAcousticSummary(l1Signals)
   const agentKeys = ['PROSODY_ANALYST', 'VOICE_FORENSICS', 'ENVIRONMENT_FORENSICS', 'LINGUISTIC_FORENSICS'] as const
 
+  // AUD-PIPE-1 (audit 2026-11): an empty transcription previously still fired
+  // all 4 LLM agent calls on `TRANSCRIPTION: ""` — the agents then produced
+  // suspicion scores from no evidence at all (hallucinated conclusions billed
+  // to the user). No transcription = no semantic layer: return neutral agents
+  // with an explicit unavailability note. L1 (signal) and L3 (temporal, when
+  // tracks exist) still contribute; L4 fusion weighs the neutral L2 honestly.
+  if (!transcription || !transcription.trim()) {
+    return {
+      agents: agentKeys.map(key => ({
+        agentName:           key,
+        agentSuspicionScore: 0.5,
+        evidence:            [],
+        rawResponse:         'Skipped: no transcription available for this audio.',
+      })),
+      l2Score: 0.5,
+    }
+  }
+
   // Equal weights: 0.25 each for 4 agents
   const AGENT_WEIGHTS: Record<string, number> = {
     PROSODY_ANALYST:       0.30,

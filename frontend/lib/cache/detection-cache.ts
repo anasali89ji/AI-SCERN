@@ -22,9 +22,40 @@ function getRedis(): Redis | null {
   catch { return null }
 }
 
+/**
+ * SHA-256 content hash for cache keys.
+ *
+ * CACHE-IMG-1 / CACHE-AUD-1 (audit 2026-11): callers previously passed
+ * `buffer.subarray(0, 65536)` — only the first 64 KiB contributed to the
+ * hash, so two DIFFERENT files sharing a header (same camera profile +
+ * embedded thumbnail, re-saved edits, large ICC/EXIF blocks, concatenated
+ * containers) collided and the cache served the wrong verdict. Callers now
+ * pass the complete buffer and this helper bounds the CPU cost itself:
+ *   - <= 32 MB : SHA-256 over the entire buffer (images are capped at 10 MB)
+ *   - >  32 MB : length + head 1 MB + tail 1 MB + 64 evenly spaced 16 KB
+ *               samples (bounded CPU for large audio; length + spread
+ *               samples make accidental collisions negligible)
+ * Mirrors lib/cache/scan-cache.ts hashBuffer.
+ */
+const FULL_HASH_LIMIT = 32 * 1024 * 1024
+
 export function contentHash(content: string | Buffer): string {
   const input = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8')
-  return createHash('sha256').update(input as unknown as string).digest('hex').slice(0, 40)
+  const h = createHash('sha256')
+  if (input.length <= FULL_HASH_LIMIT) {
+    h.update(input as unknown as string)
+  } else {
+    const MB = 1024 * 1024
+    h.update(`len:${input.length}:`)
+    h.update(input.subarray(0, MB) as unknown as string)
+    h.update(input.subarray(input.length - MB) as unknown as string)
+    const step = Math.floor((input.length - 2 * MB) / 64)
+    for (let i = 0; i < 64; i++) {
+      const start = MB + i * step
+      h.update(input.subarray(start, start + 16384) as unknown as string)
+    }
+  }
+  return h.digest('hex').slice(0, 40)
 }
 
 export async function getCachedDetection(

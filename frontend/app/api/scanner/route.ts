@@ -12,8 +12,11 @@ import { analyzeImagesBatch } from '@/lib/scanner/image-forensics'
 import { deepWordPressScan } from '@/lib/scanner/wordpress'
 import { buildSiteTrustScore } from '@/lib/scanner/trust'
 import { computeVoiceDiversityIndex, analyzeStylometry } from '@/lib/scanner/stylometry'
+import { aggregateVerdictMix, aiImagePercent } from '@/lib/scanner/aggregate'
 import { assertSafeUrlResolved } from '@/lib/utils/ssrf-guard'
-import { siteScanGuard } from '@/lib/middleware/site-scan-guard'
+import {
+  getSiteScanUser, getSiteScanPlanContext, getSiteScanDailyUsage, siteScanGuard,
+} from '@/lib/middleware/site-scan-guard'
 import { HTTPError, httpErrorResponse, injectGuardHeaders } from '@/lib/middleware/credit-guard'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { DEFAULT_CRAWL_OPTS, DEEP_CRAWL_OPTS, PRO_DEEP_CRAWL_OPTS } from '@/lib/scanner/types'
@@ -23,13 +26,100 @@ import { issueIntegritySeal } from '@/lib/site-crawler/integrity-seal'
 import { getCachedScan, setCachedScan, hashText } from '@/lib/cache/scan-cache'
 import type {
   SiteScanResult, ScannedPage, ScannedImage, SectionHeatmap,
-  RemediationItem, ContentIntegritySeal, TimelineComparison,
+  RemediationItem, TimelineComparison,
 } from '@/lib/scanner/types'
 
 // Module 4.1: was no maxDuration — defaulted to 10s on Vercel Hobby (504 on 30-page scan).
 // Now: 60s for sync path; pro-deep (500 pages) uses Inngest background job (Sub-Module 4.8).
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+// SCAN-PERF-1: bounded concurrency for the per-page text ensemble. 4 keeps
+// CPU flat under the route's 60s budget while cutting wall time ~3-4x on
+// 150-500-page scans (analyzeText is pure-JS, ~1-3ms/page).
+const TEXT_ANALYSIS_CONCURRENCY = 4
+
+/**
+ * Run analyzeText over all pages with bounded concurrency while PRESERVING
+ * input order (results are index-assigned, not array-raced). A failure on
+ * one page yields a neutral-scored placeholder that is excluded from the
+ * verdict mix (verdict stays undefined) instead of failing the whole scan.
+ */
+async function analyzeAllPages(
+  pages: Parameters<typeof analyzeText>[0] extends never ? never : import('@/lib/scanner/crawler').ParsedPage[],
+  allStylometries: ReturnType<typeof analyzeStylometry>[],
+): Promise<ScannedPage[]> {
+  const scannedPages: ScannedPage[] = new Array(pages.length)
+  let cursor = 0
+
+  async function worker() {
+    while (cursor < pages.length) {
+      const i = cursor++
+      const page = pages[i]
+      try {
+        const result = await analyzeText(
+          {
+            text: page.textContent,
+            wordCount: page.wordCount,
+            contentType: page.contentType,
+            headings: page.headings,
+          },
+          allStylometries,
+        )
+        scannedPages[i] = {
+          url: page.url,
+          title: page.title,
+          description: page.description,
+          textContent: page.textContent.slice(0, 20_000),
+          wordCount: page.wordCount,
+          contentType: page.contentType,
+          headings: page.headings,
+          imageUrls: page.imageUrls,
+          links: page.links,
+          fetchMethod: page.fetchMethod,
+          publishDate: page.publishDate,
+          author: page.author,
+          language: page.language,
+          metaKeywords: page.metaKeywords,
+          ...result,
+        } as ScannedPage
+      } catch (e) {
+        console.warn(`[scanner] analyzeText failed for ${page.url}:`, e)
+        // Honest failure placeholder — excluded from verdict mix by
+        // aggregateVerdictMix (no verdict field).
+        scannedPages[i] = {
+          url: page.url,
+          title: page.title,
+          description: page.description,
+          textContent: '',
+          wordCount: page.wordCount ?? 0,
+          contentType: page.contentType ?? 'other',
+          headings: [],
+          imageUrls: [],
+          links: [],
+          fetchMethod: page.fetchMethod ?? 'direct',
+          aiScore: 0,
+          verdict: undefined as unknown as ScannedPage['verdict'],
+          confidence: 0,
+          ensembleSignals: {} as ScannedPage['ensembleSignals'],
+          topFindings: ['Text analysis failed for this page'],
+          stylometry: {} as ScannedPage['stylometry'],
+          aiArtifacts: [],
+          sentenceScores: [],
+          isSpun: false,
+          isThinContent: false,
+          contentDepthScore: 0,
+          perplexityScore: 0.5,
+        } as ScannedPage
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(TEXT_ANALYSIS_CONCURRENCY, pages.length) }, () => worker()),
+  )
+  return scannedPages
+}
 
 /**
  * Build remediation report
@@ -103,10 +193,12 @@ function buildRemediation(
 }
 
 /**
- * Build section heatmap
+ * Build section heatmap. SCAN-AGG-1: "AI share" per section is the share of
+ * pages whose VERDICT is AI — the same threshold as the page cards and the
+ * site summary (was: raw score >= 0.5, disagreeing with both).
  */
 function buildSectionHeatmap(pages: ScannedPage[]): SectionHeatmap[] {
-  const sections: Record<string, { scores: number[]; words: number[] }> = {}
+  const sections: Record<string, { scores: number[]; words: number[]; ai: number }> = {}
 
   for (const page of pages) {
     try {
@@ -114,9 +206,10 @@ function buildSectionHeatmap(pages: ScannedPage[]): SectionHeatmap[] {
       const parts = path.split('/').filter(Boolean)
       const prefix = parts.length > 0 ? `/${parts[0]}/` : '/'
 
-      if (!sections[prefix]) sections[prefix] = { scores: [], words: [] }
+      if (!sections[prefix]) sections[prefix] = { scores: [], words: [], ai: 0 }
       sections[prefix].scores.push(page.aiScore)
       sections[prefix].words.push(page.wordCount)
+      if (page.verdict === 'AI') sections[prefix].ai++
     } catch {}
   }
 
@@ -125,7 +218,7 @@ function buildSectionHeatmap(pages: ScannedPage[]): SectionHeatmap[] {
       pathPrefix,
       pageCount: data.scores.length,
       avgAiScore: Math.round((data.scores.reduce((a, b) => a + b, 0) / data.scores.length) * 1000) / 1000,
-      aiContentPercent: Math.round((data.scores.filter(s => s >= 0.5).length / data.scores.length) * 1000) / 10,
+      aiContentPercent: Math.round((data.ai / data.scores.length) * 1000) / 10,
       totalWords: data.words.reduce((a, b) => a + b, 0),
     }))
     .sort((a, b) => b.pageCount - a.pageCount)
@@ -145,6 +238,45 @@ function buildTimeline(): TimelineComparison {
   }
 }
 
+/**
+ * Persist a scan row to /history for the requesting user (fresh scans AND
+ * cache hits — a completed site scan belongs in the user's history either
+ * way). Non-fatal: history failures must not erase the scan result.
+ */
+async function insertScanHistory(
+  userId: string,
+  domain: string,
+  result: Pick<SiteScanResult, 'pagesScanned' | 'aiContentPercent' | 'humanContentPercent' | 'aiImagePercent' | 'totalImagesAnalyzed' | 'isWordPress' | 'discoveryMethod' | 'processingTimeMs' | 'modelUsed'>,
+  mode: string,
+  fromCache: boolean,
+): Promise<void> {
+  try {
+    const { error: insertErr } = await getSupabaseAdmin().from('scans').insert({
+      user_id:          userId,
+      media_type:       'text', // scans_media_type_check only allows text/image/audio/video/document — matches the convention in detect/web and detect/site routes; scan type itself lives in metadata + model_used below
+      content_preview:  `${domain} — ${result.pagesScanned} pages`,
+      verdict:          result.aiContentPercent >= 50 ? 'AI' : result.humanContentPercent >= 50 ? 'HUMAN' : 'UNCERTAIN',
+      confidence_score: Math.max(result.aiContentPercent, result.humanContentPercent) / 100,
+      processing_time:  result.processingTimeMs,
+      model_used:       result.modelUsed,
+      status:           'complete',
+      metadata: {
+        domain,
+        pages_scanned:      result.pagesScanned,
+        images_analyzed:    result.totalImagesAnalyzed,
+        ai_image_percent:   result.aiImagePercent,
+        is_wordpress:       result.isWordPress,
+        deep_crawl:         mode !== 'standard',
+        discovery_method:   result.discoveryMethod,
+        from_cache:         fromCache,
+      },
+    })
+    if (insertErr) console.error('[scanner] scan insert error:', insertErr.message, insertErr.code)
+  } catch (e) {
+    console.error('[scanner] scan insert threw:', e)
+  }
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
@@ -159,12 +291,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(rateLimitResponse(), { status: 429 })
     }
 
-    // Auth + credit guard — FIX: this route previously had no auth check
-    // and no daily limit at all. Free accounts now get exactly 5 Web
-    // Scanner scans/day; paid plans get their own higher caps.
-    let guard
+    // ── 1. AUTH (SCAN-QUOTA-1: auth-only first — no quota mutation yet) ──
+    let userId: string
     try {
-      guard = await siteScanGuard(req)
+      ({ userId } = await getSiteScanUser(req))
     } catch (err) {
       if (err instanceof HTTPError) return httpErrorResponse(err)
       return NextResponse.json({ success: false, error: { code: 'ERROR', message: 'Auth failed' } }, { status: 500 })
@@ -211,27 +341,76 @@ export async function POST(req: NextRequest) {
                        :                        DEFAULT_CRAWL_OPTS
     const maxTextLength = body.maxTextLength || crawlDefaults.maxTextLength || 20000
 
-    // Module 4.7: clamp maxPages + maxImagesTotal to plan-tier limits.
-    // Was: body.maxPages read directly — any signed-in user could POST maxPages:5000.
-    // Now: server-side clamp via siteScanGuard's maxPagesPerScan / maxImagesPerScan.
-    const guardResult = guard as any  // SiteScanGuardResult with Module 4.7 fields
-    const maxPagesAllowed = guardResult.maxPagesPerScan ?? 30
-    const maxImagesAllowed = guardResult.maxImagesPerScan ?? 40
+    // ── 2. PLAN CONTEXT (non-mutating — SCAN-QUOTA-1/SCAN-CACHE-1) ──
+    // Resolve plan + caps BEFORE touching quota or cache so that:
+    //  (a) the cache key is scoped to the plan's effective caps — a free
+    //      user can never be served a cached 500-page pro-deep result;
+    //  (b) a cache hit doesn't need the incrementing RPC at all.
+    const planCtx = await getSiteScanPlanContext(userId)
+    const maxPagesAllowed = planCtx.maxPagesPerScan ?? 30
+    const maxImagesAllowed = planCtx.maxImagesPerScan ?? 40
     const requestedPages = body.maxPages || crawlDefaults.maxPages
     const requestedImages = body.maxImagesTotal ?? crawlDefaults.maxImagesTotal ?? 40
 
-    // Module 4.11: check scan-cache before running full pipeline.
-    // Was: scan-cache.ts existed but was never imported by /api/scanner.
-    // Now: re-scans of same URL within 1h return cached result in <100ms.
-    const cacheKey = hashText(targetUrl + mode)
-    const cached = await getCachedScan(cacheKey)
-    if (cached) {
-      return NextResponse.json({ ...cached, fromCache: true })
+    // Effective caps — what the scan WILL actually analyze. Part of the
+    // cache key: two users with different entitlements never share results.
+    const effectivePages = Math.min(requestedPages, maxPagesAllowed)
+    const effectiveImages = Math.min(requestedImages, maxImagesAllowed)
+
+    // ── 3. CACHE LOOKUP (before quota — SCAN-QUOTA-1) ──
+    // Semantics (documented contract): a cache hit performs no new work, so
+    // it consumes NO daily-scan credit, but it DOES create a history row for
+    // the requesting user and re-issues the integrity seal in their name.
+    const cacheKey = hashText(`${targetUrl}|${mode}|${effectivePages}|${effectiveImages}`)
+    const cached = await getCachedScan<SiteScanResult>(cacheKey)
+    if (cached && cached.success) {
+      // Strip the ORIGINAL requester's seal from the shared cache payload
+      // (SCAN-CACHE-1: seals are user-specific artifacts; the cached copy
+      // must not leak another user's seal number to a different account).
+      const shared: SiteScanResult = { ...cached, fromCache: true }
+      shared.integritySeal = { hash: '', timestamp: '', verificationUrl: '' }
+
+      // Re-issue the seal for THIS user from the cached metrics (non-fatal).
+      try {
+        shared.integritySeal = await issueIntegritySeal(shared.origin, {
+          pagesScanned: shared.pagesScanned,
+          aiContentPercent: shared.aiContentPercent,
+          aiImagePercent: shared.aiImagePercent,
+          contentOriginalityScore: shared.contentOriginalityScore,
+          voiceDiversityIndex: shared.voiceDiversityIndex,
+        }) as any
+        const { issueSealForSiteScan, sealVerifyUrl: buildSealUrl } = await import('@/lib/seal/issue')
+        const sealHash = (shared.integritySeal as any)?.hash || ''
+        if (sealHash) {
+          const sealNumber = await issueSealForSiteScan(sealHash, userId, shared.origin, shared.pagesScanned)
+          ;(shared.integritySeal as any).sealNumber = sealNumber
+          ;(shared.integritySeal as any).sealVerifyUrl = buildSealUrl(sealNumber)
+        }
+      } catch (e) { console.warn('[scanner] cache-hit seal reissue failed:', e) }
+
+      // History row for the requesting user (from_cache: true).
+      await insertScanHistory(userId, domain, shared, mode, true)
+
+      const dailyScans = await getSiteScanDailyUsage(userId)
+      return injectGuardHeaders(NextResponse.json(shared), {
+        userId, plan: planCtx.plan, dailyScans,
+        dailyLimit: planCtx.dailyLimit, creditsRemaining: planCtx.unlimited ? 999_999 : Math.max(0, planCtx.dailyLimit - dailyScans),
+        unlimited: planCtx.unlimited,
+      })
+    }
+
+    // ── 4. QUOTA (incrementing RPC — cache miss only) ──
+    let guard
+    try {
+      guard = await siteScanGuard(req)
+    } catch (err) {
+      if (err instanceof HTTPError) return httpErrorResponse(err)
+      return NextResponse.json({ success: false, error: { code: 'ERROR', message: 'Quota check failed' } }, { status: 500 })
     }
 
     const crawlResult = await crawlSite(targetUrl, {
-      maxPages: Math.min(requestedPages, maxPagesAllowed),
-      maxImagesTotal: Math.min(requestedImages, maxImagesAllowed),
+      maxPages: effectivePages,
+      maxImagesTotal: effectiveImages,
       maxDepth: body.maxDepth || crawlDefaults.maxDepth,
       priorityBFS: true,
       includeImageAnalysis: true,
@@ -251,44 +430,9 @@ export async function POST(req: NextRequest) {
     // ── TEXT ANALYSIS (Phase 1: stylometry for all pages) ──
     const allStylometries = crawlResult.pages.map(p => analyzeStylometry(p.textContent))
 
-    // ── TEXT ANALYSIS (Phase 2: full ensemble per page) ──
-    const scannedPages: ScannedPage[] = []
-    for (let i = 0; i < crawlResult.pages.length; i++) {
-      const page = crawlResult.pages[i]
-      const result = await analyzeText(
-        {
-          text: page.textContent,
-          wordCount: page.wordCount,
-          contentType: page.contentType,
-          headings: page.headings,
-        },
-        allStylometries
-      )
-
-      scannedPages.push({
-        url: page.url,
-        title: page.title,
-        description: page.description,
-        // Was slice(0, 3000) — that discarded the tail of any page over
-        // ~500 words, which fed directly into near-duplicate detection
-        // (analyzeDuplicity, below) and site trust scoring, both of which
-        // need the full page to compare accurately. 20k chars (~4-5k words)
-        // covers the overwhelming majority of real pages while still
-        // bounding response payload size for the rare very-long page.
-        textContent: page.textContent.slice(0, maxTextLength),
-        wordCount: page.wordCount,
-        contentType: page.contentType,
-        headings: page.headings,
-        imageUrls: page.imageUrls,
-        links: page.links,
-        fetchMethod: page.fetchMethod,
-        publishDate: page.publishDate,
-        author: page.author,
-        language: page.language,
-        metaKeywords: page.metaKeywords,
-        ...result,
-      })
-    }
+    // ── TEXT ANALYSIS (Phase 2: full ensemble per page, bounded concurrency —
+    // SCAN-PERF-1; was: sequential await in a for loop) ──
+    const scannedPages = await analyzeAllPages(crawlResult.pages, allStylometries)
 
     // ── DUPLICITY ANALYSIS (site-wide) ──
     const duplicityInput = scannedPages.map(p => ({
@@ -314,11 +458,8 @@ export async function POST(req: NextRequest) {
     // Module 4.6: was `body.maxImagesTotal || 40` — even on Deep Crawl
     // (where DEEP_CRAWL_OPTS.maxImagesTotal=200), the effective cap was 40
     // because the UI never sends maxImagesTotal. Now: use the crawlDefaults
-    // value, clamped to the plan-tier limit.
-    const maxImages = Math.min(
-      body.maxImagesTotal ?? crawlDefaults.maxImagesTotal ?? 40,
-      maxImagesAllowed,
-    )
+    // value, clamped to the plan-tier limit (effectiveImages, computed above).
+    const maxImages = effectiveImages
     const uniqueImages = [...new Set(crawlResult.allImages.map(i => i.url))].slice(0, maxImages)
     const scannedImages = uniqueImages.length > 0
       ? await analyzeImagesBatch(uniqueImages, 8)
@@ -358,22 +499,14 @@ export async function POST(req: NextRequest) {
       isHttps
     )
 
-    // ── AGGREGATE METRICS ──
-    const textScores = scannedPages.map(p => p.aiScore)
-    const aiContentPercent = textScores.length > 0
-      ? Math.round((textScores.filter(s => s >= 0.5).length / textScores.length) * 1000) / 10
-      : 0
-
-    const imageScores = scannedImages.map(i => i.aiScore)
-    const aiImagePercent = imageScores.length > 0
-      ? Math.round((imageScores.filter(s => s >= 0.5).length / imageScores.length) * 1000) / 10
-      : 0
-
-    const humanContentPercent = textScores.length > 0
-      ? Math.round((textScores.filter(s => s <= 0.35).length / textScores.length) * 1000) / 10
-      : 0
-
-    const uncertainContentPercent = Math.round((100 - aiContentPercent - humanContentPercent) * 10) / 10
+    // ── AGGREGATE METRICS (SCAN-AGG-1: verdict-based, consistent with the
+    // per-page cards; was: raw-score >= 0.5 disagreeing with the 0.65/0.35
+    // verdict thresholds) ──
+    const mix = aggregateVerdictMix(scannedPages)
+    const aiContentPercent = mix.aiContentPercent
+    const humanContentPercent = mix.humanContentPercent
+    const uncertainContentPercent = mix.uncertainContentPercent
+    const aiImagePercentValue = aiImagePercent(scannedImages)
 
     const contentOriginality = computeContentOriginality(duplicityResults)
     const voiceDiversity = computeVoiceDiversityIndex(allStylometries)
@@ -387,9 +520,9 @@ export async function POST(req: NextRequest) {
       wordPressInfo: wpInfo,
       discoveryMethod: crawlResult.discoveryMethod,
       pagesScanned: scannedPages.length,
-      maxPages: Math.min(requestedPages, maxPagesAllowed),
+      maxPages: effectivePages,
       aiContentPercent,
-      aiImagePercent,
+      aiImagePercent: aiImagePercentValue,
       humanContentPercent,
       uncertainContentPercent,
       totalImagesAnalyzed: scannedImages.length,
@@ -413,10 +546,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Module 4.9: replaced broken DJB2 hash with real SHA-256 seal.
-    // Was: `generateIntegritySeal(result)` using 32-bit DJB2 — trivially
-    // collidable, hardcoded wrong domain (aiscern.vercel.app), never persisted
-    // to site_scan_seals table. Now: uses issueIntegritySeal from
-    // lib/site-crawler/integrity-seal.ts (SHA-256, persisted, correct domain).
     result.integritySeal = await issueIntegritySeal(result.origin, {
       pagesScanned: result.pagesScanned,
       aiContentPercent: result.aiContentPercent,
@@ -444,37 +573,16 @@ export async function POST(req: NextRequest) {
     // ── PERSIST TO HISTORY (Module 4 Fix5) ──
     // Web Scanner results were never written to `scans`, so completed site
     // scans never showed up in /history like every other detect route does.
-    // Mirrors the insert shape used by app/api/detect/text/route.ts.
-    // Fire-and-forget: a persistence failure shouldn't fail the response the
-    // user is waiting on for their scan results.
-    try {
-      const { error: insertErr } = await getSupabaseAdmin().from('scans').insert({
-        user_id:          guard.userId,
-        media_type:       'text', // scans_media_type_check only allows text/image/audio/video/document — matches the convention in detect/web and detect/site routes; scan type itself lives in metadata + model_used below
-        content_preview:  `${domain} — ${result.pagesScanned} pages`,
-        verdict:          result.aiContentPercent >= 50 ? 'AI' : result.humanContentPercent >= 50 ? 'HUMAN' : 'UNCERTAIN',
-        confidence_score: Math.max(result.aiContentPercent, result.humanContentPercent) / 100,
-        processing_time:  result.processingTimeMs,
-        model_used:       result.modelUsed,
-        status:           'complete',
-        metadata: {
-          domain,
-          pages_scanned:      result.pagesScanned,
-          images_analyzed:    result.totalImagesAnalyzed,
-          ai_image_percent:   result.aiImagePercent,
-          is_wordpress:       result.isWordPress,
-          deep_crawl:         mode !== 'standard',
-          discovery_method:   result.discoveryMethod,
-        },
-      })
-      if (insertErr) console.error('[scanner] scan insert error:', insertErr.message, insertErr.code)
-    } catch (e) {
-      console.error('[scanner] scan insert threw:', e)
-    }
+    await insertScanHistory(guard.userId, domain, result, mode, false)
 
     // Module 4.11: cache the scan result for 1h — re-scans of same URL skip
     // the full pipeline and return in <100ms (was: full re-scan every time).
-    await setCachedScan(cacheKey, result, 3600)
+    // SCAN-CACHE-1: the cached copy is the SHARED site-content payload.
+    // User-specific fields are stripped before caching so a cache hit never
+    // serves another user's seal; the cache-hit path re-issues a fresh seal.
+    const cacheable: SiteScanResult = { ...result }
+    cacheable.integritySeal = { hash: '', timestamp: '', verificationUrl: '' }
+    await setCachedScan(cacheKey, cacheable, 3600)
 
     return injectGuardHeaders(NextResponse.json(result), {
       userId: guard.userId, plan: guard.plan, dailyScans: guard.dailyScans,

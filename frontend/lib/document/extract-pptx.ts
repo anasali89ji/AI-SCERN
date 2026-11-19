@@ -41,6 +41,22 @@ function decodeXmlEntities(s: string): string {
     .replace(/&amp;/g, '&')
 }
 
+
+/** DOC-ZIP-1 (audit 2026-11): decompression-bomb guard. A 20 MB PPTX/DOCX
+ * of highly-compressible XML can declare a single entry of many GB —
+ * extracting it wholesale would OOM the serverless function. JSZip exposes
+ * the central-directory uncompressedSize on each entry's _data; vet every
+ * entry BEFORE decompressing it. Entries over the budget are skipped (the
+ * scan proceeds with the remaining content and an honest reduced page
+ * count) instead of crashing or hanging the route. */
+const MAX_ZIP_ENTRIES = 300
+const MAX_ENTRY_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
+
+function zipEntryTooLarge(entry: { _data?: { uncompressedSize?: number } } | undefined): boolean {
+  const declared = entry?._data?.uncompressedSize
+  return typeof declared === 'number' && declared > MAX_ENTRY_UNCOMPRESSED_BYTES
+}
+
 export async function extractPptx(buffer: Buffer): Promise<{
   text: string
   paragraphs: string[]
@@ -60,7 +76,8 @@ export async function extractPptx(buffer: Buffer): Promise<{
     })
 
   const paragraphs: string[] = []
-  for (const path of slidePaths) {
+  for (const path of slidePaths.slice(0, MAX_ZIP_ENTRIES)) {
+    if (zipEntryTooLarge(zip.files[path] as never)) continue // bomb guard
     const xml = await zip.files[path].async('string')
     const slideText = extractSlideText(xml)
     if (slideText.trim()) paragraphs.push(slideText.trim())
@@ -71,9 +88,10 @@ export async function extractPptx(buffer: Buffer): Promise<{
   try {
     const mediaFiles = Object.keys(zip.files).filter(f => f.startsWith('ppt/media/'))
     let idx = 0
-    for (const path of mediaFiles.sort()) {
+    for (const path of mediaFiles.sort().slice(0, MAX_ZIP_ENTRIES)) {
       const entry = zip.files[path]
       if (entry.dir) continue
+      if (zipEntryTooLarge(entry as never)) continue // bomb guard
       const ext = (path.split('.').pop() || '').toLowerCase()
       const mimeType = EXT_MIME[ext]
       if (!mimeType || !mimeType.startsWith('image/')) continue

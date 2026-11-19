@@ -86,7 +86,8 @@ export async function POST(req: NextRequest) {
 
     // Cache check
     const hashInput = buffer ?? Buffer.alloc(0)
-    const hash   = contentHash(hashInput.subarray(0, 65536))
+    // CACHE-AUD-1: hash the complete buffer (was: first 64 KiB — collided on shared headers)
+    const hash   = contentHash(hashInput)
     const cached = buffer && buffer.length > 0 ? await getCachedDetection('audio', hash) : null
     if (cached) {
       let scanId: string | null = null

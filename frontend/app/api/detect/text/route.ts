@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { analyzeText }               from '@/lib/inference/hf-analyze'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { getCachedDetection, setCachedDetection, contentHash } from '@/lib/cache/detection-cache'
@@ -15,6 +16,15 @@ export const dynamic = 'force-dynamic'
 // Without this, Vercel kills at default 10s → "failed to fetch"
 export const maxDuration = 60
 
+function isInternalRequest(headerSecret: string | null): boolean {
+  const envSecret = process.env.INTERNAL_API_SECRET
+  if (!headerSecret || !envSecret) return false
+  const a = Buffer.from(headerSecret)
+  const b = Buffer.from(envSecret)
+  if (a.length !== b.length) return false
+  return crypto.timingSafeEqual(a, b)
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
 
@@ -29,8 +39,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // TXT-SEC-1: constant-time comparison — a plain === on a shared secret
+  // leaks a timing oracle to an attacker who can measure response latency
+  // char-by-char. Also treats an UNSET INTERNAL_API_SECRET as "internal
+  // auth disabled" (previously an empty-string env value would have
+  // matched an empty header).
   const internalSecret = req.headers.get('X-Internal-Secret')
-  const isInternal     = internalSecret && internalSecret === process.env.INTERNAL_API_SECRET
+  const isInternal     = isInternalRequest(internalSecret)
+
 
   let userId: string
   if (isInternal) {

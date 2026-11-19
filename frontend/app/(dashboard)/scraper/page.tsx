@@ -10,6 +10,10 @@ import {
 import { useAuth } from '@/components/auth-provider'
 import { useUserPlan } from '@/hooks/useUserPlan'
 import { ProFeatureGate } from '@/components/dashboard/ProFeatureGate'
+// SCAN-UI-1: every 0..1 engine score shown with a '%' label goes through
+// toDisplayPercent — the raw value was previously printed next to '%', so
+// a 65%-AI page rendered as "1%".
+import { toDisplayPercent } from '@/lib/scanner/aggregate'
 
 // ── Types (mirrors SiteScanResult from lib/scanner/types.ts) ────────────────────
 interface EnsembleSignals {
@@ -106,7 +110,10 @@ const EXAMPLES = [
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function ScraperPage() {
   useAuth()
-  const { isPro } = useUserPlan()
+  const { isPro, plan } = useUserPlan()
+  // SCAN-MODE-1: Deep Crawl's 150-page cap needs Starter+ (the v36 RPC caps
+  // free at 30 pages per scan). Mirrors SITE_SCAN_PLAN_CAPS server-side.
+  const canDeepCrawl = ['starter', 'pro', 'team', 'enterprise'].includes(plan)
   const [url, setUrl]             = useState('')
   // Module 4.10: was `const [deepCrawl, setDeepCrawl] = useState(false)`.
   // Now: tri-state crawlMode ('standard' | 'deep' | 'pro-deep'). Still
@@ -186,7 +193,7 @@ export default function ScraperPage() {
           <p className="text-sm text-[#A3A3A3] ml-12">
             Crawls an entire site (sitemap-first), runs text + image verification on every page, and reports
             stylometric consistency, transparency, link trust, and WordPress fingerprinting.
-            Deep Crawl mode extends coverage to up to 150 pages and 200 images.
+            Deep Crawl extends coverage to up to 150 pages; Pro Deep to 500. Page/image limits scale with your plan.
           </p>
         </div>
 
@@ -219,25 +226,33 @@ export default function ScraperPage() {
                   buttons including Pro 500. Pro button is gated by plan tier
                   (disabled for free/starter users). */}
               <button onClick={() => setCrawlMode('standard')}
+                title="Standard — up to 30 pages, 40 images (all plans)"
                 className={`px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'standard' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
                 Standard · 30 pages
               </button>
+              {/* SCAN-MODE-1: Deep (150 pages) needs Starter or above — the
+                  server clamps free users to 30 pages, so the button now
+                  says so instead of silently advertising an unavailable cap. */}
               <button onClick={() => setCrawlMode('deep')}
-                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}>
+                disabled={!canDeepCrawl}
+                title={canDeepCrawl
+                  ? 'Deep — up to 150 pages; image cap 100 (Starter) / 150 (Pro+)'
+                  : 'Deep Crawl (150 pages) requires the Starter plan or above — your plan is capped at 30 pages'}
+                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'} disabled:opacity-50 disabled:cursor-not-allowed`}>
                 <Gauge className="w-3.5 h-3.5" />
-                Deep · 150 pages
+                Deep · up to 150
               </button>
               {/* Pro 500 button — visible to all but gated behind ProFeatureGate for free users */}
               <ProFeatureGate
                 isPro={isPro}
                 featureName="Pro · 500 pages"
-                description="Upgrade to scan up to 500 pages + 100 images per scan"
+                description="Upgrade to scan up to 500 pages + 150 images per scan"
               >
                 <button onClick={() => setCrawlMode('pro-deep')}
                   className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-xs font-bold transition-colors ${crawlMode === 'pro-deep' ? 'bg-[#2BEE34] text-white' : 'bg-[#141414] text-[#A3A3A3] hover:bg-[#2BEE34]/20'}`}
-                  title="Pro plan required — 500 pages + 100 images">
+                  title="Pro plan required — 500 pages + 150 images">
                   <Gauge className="w-3.5 h-3.5" />
-                  Pro · 500 + 100
+                  Pro · 500 + 150
                 </button>
               </ProFeatureGate>
             </div>
@@ -333,10 +348,10 @@ export default function ScraperPage() {
 
               {/* Secondary forensic scores */}
               <div className="mt-4 pt-4 border-t border-[#333333] grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <StatTile label="Originality" value={`${Math.round(result.contentOriginalityScore)}%`} />
-                <StatTile label="Voice diversity" value={`${Math.round(result.voiceDiversityIndex)}%`} />
-                <StatTile label="Transparency" value={`${Math.round(result.transparencyScore)}%`} />
-                <StatTile label="Link trust" value={`${Math.round(result.linkTrustScore)}%`} />
+                <StatTile label="Originality" value={`${toDisplayPercent(result.contentOriginalityScore)}%`} />
+                <StatTile label="Voice diversity" value={`${toDisplayPercent(result.voiceDiversityIndex)}%`} />
+                <StatTile label="Transparency" value={`${toDisplayPercent(result.transparencyScore)}%`} />
+                <StatTile label="Link trust" value={`${toDisplayPercent(result.linkTrustScore)}%`} />
               </div>
             </div>
 
@@ -433,7 +448,7 @@ export default function ScraperPage() {
                           {p.ensembleSignals.isSpun && <span title="Near-duplicate or spun content"><Copy className="w-3 h-3 text-[#FFB800]" /></span>}
                           {p.ensembleSignals.isThinContent && <span title="Thin content"><AlertOctagon className="w-3 h-3 text-[#6B6B6B]" /></span>}
                           <div className="text-right">
-                            <p className={`text-sm font-bold ${verdictColor(p.verdict)}`}>{Math.round(p.aiScore)}%</p>
+                            <p className={`text-sm font-bold ${verdictColor(p.verdict)}`}>{toDisplayPercent(p.aiScore)}%</p>
                             <p className="text-[10px] text-[#6B6B6B]">{p.wordCount.toLocaleString()} words</p>
                           </div>
                           <ChevronDown className="w-3.5 h-3.5 text-[#6B6B6B] group-open:rotate-180 transition-transform" />
@@ -444,7 +459,7 @@ export default function ScraperPage() {
                           <div><span className="text-[#6B6B6B]">HF ensemble</span><p className="text-[#E5E5E5] font-semibold">{p.ensembleSignals.hfEnsemble === null ? '—' : `${Math.round(p.ensembleSignals.hfEnsemble * 100)}%`}</p></div>
                           <div><span className="text-[#6B6B6B]">Linguistic brain</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.linguisticBrain * 100)}%</p></div>
                           <div><span className="text-[#6B6B6B]">Perplexity burst</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.ensembleSignals.perplexityBurst * 100)}%</p></div>
-                          <div><span className="text-[#6B6B6B]">Content depth</span><p className="text-[#E5E5E5] font-semibold">{Math.round(p.contentDepthScore)}%</p></div>
+                          <div><span className="text-[#6B6B6B]">Content depth</span><p className="text-[#E5E5E5] font-semibold">{toDisplayPercent(p.contentDepthScore)}%</p></div>
                         </div>
                         {p.topFindings.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
@@ -467,7 +482,7 @@ export default function ScraperPage() {
                         <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-24 object-cover"
                           loading="lazy" onError={e => { e.currentTarget.style.display = 'none' }} />
                         <div className={`absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${verdictBg(img.verdict)} ${verdictColor(img.verdict)}`}>
-                          {Math.round(img.aiScore)}%
+                          {toDisplayPercent(img.aiScore)}%
                         </div>
                       </div>
                       <div className="p-1.5">
