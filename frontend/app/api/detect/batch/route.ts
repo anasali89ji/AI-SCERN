@@ -202,8 +202,38 @@ export async function POST(req: NextRequest) {
   if (items.length > MAX_BATCH) return NextResponse.json({ success: false, error: { code: 'TOO_MANY', message: `Max ${MAX_BATCH} items per batch` } }, { status: 400 })
 
   const start   = Date.now()
-  // Run all items in parallel
-  const results = await Promise.all(items.map((item, i) => processItem(item, i, userId)))
+  // IMG-WORKER-1 — bounded concurrency for image items.
+  // Previously ALL items ran through Promise.all: a 3-image batch fired 3
+  // concurrent /analyze/image calls at the single DigitalOcean CV-worker
+  // instance (~32s of CPU each), stretched every call past its timeout, and
+  // aborted the whole batch with "required worker(s) unavailable". Image items
+  // now run through a small pool (the CV HTTP call itself is additionally
+  // single-flighted inside analyzeImage — see hf-analyze.ts), while text/URL
+  // items stay fully parallel.
+  // Budget note: images cost ~32-40s each serialized at the worker; with
+  // maxDuration=120 keep image batches to <=3 items per request, or raise
+  // maxDuration (Vercel Pro supports up to 300s) and IMAGE_ITEM_CONCURRENCY
+  // together.
+  const IMAGE_ITEM_CONCURRENCY = 2
+  const results: BatchItemResult[] = new Array(items.length)
+
+  const runPool = async (indexes: number[], limit: number): Promise<void> => {
+    let next = 0
+    const runners = Array.from({ length: Math.max(1, Math.min(limit, indexes.length)) }, async () => {
+      while (next < indexes.length) {
+        const idx = indexes[next++]
+        results[idx] = await processItem(items[idx], idx, userId)
+      }
+    })
+    await Promise.all(runners)
+  }
+
+  const imageIdx    = items.map((item, i) => (item.type === 'image' ? i : -1)).filter(i => i >= 0)
+  const parallelIdx = items.map((_, i) => i).filter(i => !imageIdx.includes(i))
+  await Promise.all([
+    runPool(imageIdx, IMAGE_ITEM_CONCURRENCY),
+    runPool(parallelIdx, parallelIdx.length || 1),
+  ])
 
   const processing_ms = Date.now() - start
   const ai            = results.filter(r => r.verdict === 'AI').length

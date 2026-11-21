@@ -50,6 +50,44 @@ export async function GET() {
     }
   }
 
+  // IMG-WORKER-1 — HF ZeroGPU Space (L5/L5b) probe. Reads the Space's Gradio
+  // /config (CPU-only, burns no GPU quota) and verifies the api_names the
+  // frontend's callGpuWorker() depends on actually exist. A Space running
+  // different code than hf-space-gpu-worker/ is reported as 'api-mismatch'
+  // with the observed function list — that state makes every L5/L5b call fail
+  // with 404 and previously surfaced only as a bare "GPU worker unavailable".
+  let gpuWorkerStatus: 'ok' | 'api-mismatch' | 'offline' | 'unconfigured' = 'unconfigured'
+  let gpuWorkerDetail: string | null = null
+  const gpuUrl = process.env.HF_GPU_WORKER_URL
+  if (gpuUrl) {
+    try {
+      const gCtl = new AbortController()
+      const gTmo = setTimeout(() => gCtl.abort(), 5000)
+      const gRes = await fetch(`${gpuUrl}/config`, { signal: gCtl.signal })
+      clearTimeout(gTmo)
+      if (gRes.ok) {
+        const cfg   = await gRes.json() as { dependencies?: { api_name?: string | false }[] }
+        const names = [...new Set((cfg.dependencies ?? [])
+          .map(d => d.api_name)
+          .filter((n): n is string => typeof n === 'string'))]
+        const hasL5  = names.includes('diffusion_inversion')
+        const hasL5b = names.includes('diffusion_snapback')
+        if (hasL5 && hasL5b) {
+          gpuWorkerStatus = 'ok'
+        } else {
+          gpuWorkerStatus = 'api-mismatch'
+          gpuWorkerDetail = `Space exposes [${names.join(', ')}] but the frontend calls diffusion_inversion + diffusion_snapback — redeploy the Space from hf-space-gpu-worker/ (see docs/IMG_WORKER_RECOVERY.md)`
+        }
+      } else {
+        gpuWorkerStatus = 'offline'
+        gpuWorkerDetail = `GET /config returned HTTP ${gRes.status}`
+      }
+    } catch (err) {
+      gpuWorkerStatus = 'offline'
+      gpuWorkerDetail = err instanceof Error ? err.message : 'fetch failed'
+    }
+  }
+
   // MODULE 5 — Failure Visibility. Extends the per-worker status pattern
   // established above (C.2.1) to the paid-vendor fallback sources, so a
   // single endpoint gives full-system degraded-mode visibility for ops
@@ -77,12 +115,15 @@ export async function GET() {
     uptime: uptimeSeconds,
     db: dbStatus,
     signal_worker: workerStatus,
+    // IMG-WORKER-1 — ZeroGPU Space status alongside signal_worker above
+    gpu_worker: gpuWorkerStatus,
+    gpu_worker_detail: gpuWorkerDetail,
     // MODULE 5 — per-vendor fallback visibility, alongside signal_worker above
     gemini: geminiStatus,
     nvidia_nim: nvidiaNimStatus,
     huggingface: hfStatus,
     timestamp: new Date().toISOString(),
-    version: '2.2.0',
+    version: '2.3.0',
   }, {
     status: 200,
     headers: {

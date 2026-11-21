@@ -21,7 +21,11 @@ export const dynamic = 'force-dynamic'
 // Vercel Hobby: 60s max. Pro/Enterprise: up to 300s.
 // Image pipeline (HF ensemble + Gemini + brain) can take 25–45s.
 // Without this, Vercel kills the function at the default 10s → "failed to fetch"
-export const maxDuration = 60
+// IMG-WORKER-1: 60 → 120 to match /api/detect/batch. The CV worker call alone
+// measures ~32s single-flight with a 60s timeout (see constants.ts); 60s left
+// no headroom for slow/large images plus post-processing. If your Vercel plan
+// rejects maxDuration > 60, lower this AND IMAGE_CV_WORKER_TIMEOUT_MS together.
+export const maxDuration = 120
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'

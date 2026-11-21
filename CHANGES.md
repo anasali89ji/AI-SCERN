@@ -515,3 +515,72 @@ New `purge_scans_by_retention()` function: deletes `scans` rows older than `user
 ## Module B — Auth pages redesign (not started yet)
 ## Module D — Bright tool-card accents / anti-vibecode pass (not started yet)
 ## Module E — Mobile responsiveness sweep (not started yet)
+
+---
+
+## IMG-WORKER-1 — Image-scan worker reliability (2026-11-19)
+
+**Symptom:** batch scan of 3 images → every item failed with
+`Image detection aborted — required worker(s) unavailable: CV worker (DigitalOcean), GPU worker (HF ZeroGPU)`.
+
+**Root causes found by live probing both workers (all three fixed):**
+
+1. **GPU leg never worked — wrong API protocol.** `callGpuWorker()` POSTed
+   `/analyze/image` then `/api/predict`; neither exists on the Gradio 4.x Space
+   (`hf-space-gpu-worker/app.py` serves `/call/diffusion_inversion` +
+   `/call/diffusion_snapback`, taking `(image_url, secret)`). Also never sent
+   `INTERNAL_API_SECRET`. The deployed Space additionally runs different code
+   than the repo (api_names `analyze`/`run_gpu_analysis`, invocations return
+   `event: error`) and must be redeployed — see
+   `docs/IMG_WORKER_RECOVERY.md`.
+2. **Batch scans self-DoSed the CV worker.** `/api/detect/batch` ran all items
+   in parallel; 3 concurrent `/analyze/image` calls (each ~32s CPU
+   single-flight on the single DigitalOcean instance) stretched past the 45s
+   timeout and ALL reported the healthy worker as unavailable.
+3. **Strict both-workers gate** turned any single-worker blip into a total
+   scan abort even though the ensemble already had full degraded paths.
+
+**Changes:**
+
+- `frontend/lib/inference/hf-analyze.ts` — CV single-flight lock
+  (`withCvWorkerLock`) + structured outcomes with human-readable failure
+  reasons; `callGpuWorker()` rewritten to the Gradio 4.x queued API (FastAPI
+  attempt kept for the `app_gpu_only.py` Space variant) with secret + optional
+  HF bearer, L5/L5b result normalization, and one overall GPU deadline;
+  policy gate `IMAGE_WORKERS_REQUIRED=both|any|none` (default `any`,
+  `IMAGE_WORKERS_OPTIONAL=true` still honored as `none`); `gpu-worker-*`
+  entries in `degraded_signals`.
+- `frontend/lib/forensic/constants.ts` — `IMAGE_CV_WORKER_TIMEOUT_MS` 45s→60s,
+  `GPU_WORKER_TIMEOUT_MS` 40s→60s.
+- `frontend/app/api/detect/batch/route.ts` — image items run through a
+  bounded pool (`IMAGE_ITEM_CONCURRENCY = 2`); text/URL items stay parallel.
+- `frontend/app/api/detect/image/route.ts` — `maxDuration` 60→120 (matches
+  batch; required by the 60s CV timeout).
+- `frontend/app/api/health/route.ts` — new `gpu_worker` probe (Gradio
+  `/config` api-name check; reports `api-mismatch` with observed api_names),
+  `gpu_worker_detail`; version 2.3.0.
+- `cloudflare-worker/src/index.ts` + `wrangler.toml` — mirrored: correct
+  Gradio protocol, per-worker timeouts (was one shared 15s — the CV leg could
+  never finish inside it), policy gate via `IMAGE_WORKERS_REQUIRED` var,
+  `gpu-worker-*` degraded signal.
+- `hf-space-gpu-worker/diffusion_inversion.py` + `diffusion_snapback.py` —
+  accept `data:` URLs (base64 → PIL) in addition to http(s) URLs; the
+  frontend sends buffers as data URLs and `requests.get()` cannot fetch them.
+- `scripts/check-workers.mjs` — new zero-dependency worker health probe
+  (shallow + `--deep` live-analysis modes) that diagnoses this entire failure
+  class in one command.
+- `docs/IMG_WORKER_RECOVERY.md` — operator runbook: probe results, Space
+  redeploy steps, env matrix, capacity guidance.
+
+**Operator actions required:**
+
+1. Redeploy the HF Space from `hf-space-gpu-worker/` (it currently runs
+   different code and errors on invocation) — steps in
+   `docs/IMG_WORKER_RECOVERY.md`.
+2. No env changes mandatory; optionally set `HF_TOKEN` (private Space) and
+   `INTERNAL_API_SECRET` (must match the Space secret).
+
+**Behavior change:** image scans now complete when at least one remote worker
+responds (previously: aborted unless both). Missing workers are flagged in
+`degraded_signals` instead of failing the scan. Set
+`IMAGE_WORKERS_REQUIRED=both` to restore the old strict behavior.

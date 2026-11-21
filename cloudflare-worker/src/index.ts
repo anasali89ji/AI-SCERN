@@ -30,6 +30,11 @@ export interface Env {
   GEMINI_API_KEY_2?:       string
   PYTHON_WORKER_URL?:      string   // DigitalOcean signal-worker (CV) — REQUIRED
   HF_GPU_WORKER_URL?:      string   // HF ZeroGPU Space (L5/L5b) — REQUIRED
+  // IMG-WORKER-1: which remote workers are mandatory. 'both' = abort unless
+  // both respond (previous behavior); 'any' = abort only when NEITHER
+  // responds (DEFAULT — a responding worker still anchors the verdict);
+  // 'none' = never abort. Set via wrangler.toml [vars] or `wrangler secret put`.
+  IMAGE_WORKERS_REQUIRED?: 'both' | 'any' | 'none'
   WORKER_SHARED_SECRET:    string
   CALLBACK_BASE_URL:       string
 }
@@ -46,7 +51,11 @@ const IMAGE_MODELS = [
 ] as const
 
 const GEMINI_MODEL = 'gemini-2.5-flash'
-const SIGNAL_WORKER_TIMEOUT_MS = 15_000
+// IMG-WORKER-1: dedicated per-worker budgets (previously all three calls
+// shared one 15s timeout — the CV worker alone measures ~32s single-flight,
+// so the CV leg could NEVER succeed inside 15s).
+const IMAGE_CV_WORKER_TIMEOUT_MS = 60_000   // measured ~32s/image single-flight (2026-11)
+const GPU_WORKER_TIMEOUT_MS      = 60_000   // ZeroGPU cold-start + L5/L5b result collection
 
 interface HfLabelScore { label: string; score: number }
 
@@ -93,52 +102,122 @@ interface PythonCVResult {
   cv_signals:         Record<string, number>
   composite_score?:   { v2_composite: number; v3_composite: number; fused_score: number }
 }
-async function callPythonCVWorker(workerUrl: string, imageBuffer: ArrayBuffer, mimeType: string): Promise<PythonCVResult | null> {
-  if (!workerUrl) return null
+type CvWorkerOutcome =
+  | { ok: true; result: PythonCVResult }
+  | { ok: false; reason: string }
+async function callPythonCVWorker(workerUrl: string, imageBuffer: ArrayBuffer, mimeType: string): Promise<CvWorkerOutcome> {
+  if (!workerUrl) return { ok: false, reason: 'unconfigured (PYTHON_WORKER_URL not set)' }
   try {
     const form = new FormData()
     form.append('file', new Blob([imageBuffer], { type: mimeType }), 'image.jpg')
     const res = await fetch(`${workerUrl}/analyze/image`, {
-      method: 'POST', body: form, signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
+      method: 'POST', body: form, signal: AbortSignal.timeout(IMAGE_CV_WORKER_TIMEOUT_MS),
     })
-    if (!res.ok) { console.error(`[worker] CV worker returned ${res.status}`); return null }
+    if (!res.ok) return { ok: false, reason: `HTTP ${res.status} ${res.statusText} from POST ${workerUrl}/analyze/image` }
     const data = await res.json() as PythonCVResult
-    if (typeof data.composite_cv_score !== 'number') return null
-    return data
+    if (typeof data.composite_cv_score !== 'number') return { ok: false, reason: 'composite_cv_score missing or not a number (version mismatch?)' }
+    return { ok: true, result: data }
   } catch (err) {
-    console.error('[worker] CV worker call failed:', (err as Error).message)
-    return null
+    const e = err as Error
+    return { ok: false, reason: e.name === 'TimeoutError' ? `timeout after ${IMAGE_CV_WORKER_TIMEOUT_MS}ms — worker healthy but slow/overloaded (measured ~32s/image single-flight)` : `network error: ${e.message}` }
   }
 }
 
 // ── HF ZeroGPU worker (L5 diffusion inversion / L5b snap-back) ──────────────
 // Mirrors callGpuWorker in lib/inference/hf-analyze.ts.
-async function callGpuWorker(gpuUrl: string, imageBuffer: ArrayBuffer, mimeType: string, imageBase64: string): Promise<{ l5: any; l5b: any } | null> {
-  if (!gpuUrl) return null
-  try {
-    try {
-      const form = new FormData()
-      form.append('file', new Blob([imageBuffer], { type: mimeType }), 'image.png')
-      const res = await fetch(`${gpuUrl}/analyze/image`, { method: 'POST', body: form, signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS) })
-      if (res.ok) {
-        const d = await res.json() as any
-        if (d.diffusion_inversion || d.diffusion_snapback) return { l5: d.diffusion_inversion, l5b: d.diffusion_snapback }
-      }
-    } catch { /* fall through to Gradio API */ }
-    const res = await fetch(`${gpuUrl}/api/predict`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: [`data:${mimeType};base64,${imageBase64}`] }),
-      signal: AbortSignal.timeout(SIGNAL_WORKER_TIMEOUT_MS),
-    })
-    if (!res.ok) { console.error(`[worker] GPU worker returned ${res.status}`); return null }
-    const d = await res.json() as any
-    const r = d.data?.[1] || d.data?.[0]
-    if (r && (r.diffusion_inversion || r.diffusion_snapback)) return { l5: r.diffusion_inversion, l5b: r.diffusion_snapback }
-    return null
-  } catch (err) {
-    console.error('[worker] GPU worker call failed:', (err as Error).message)
-    return null
+// IMG-WORKER-1 — protocol rewrite, mirrors the new callGpuWorker in
+// lib/inference/hf-analyze.ts. The previous version POSTed /analyze/image
+// then /api/predict — NEITHER exists on the Gradio 4.x Space this repo
+// deploys (hf-space-gpu-worker/app.py exposes /call/diffusion_inversion and
+// /call/diffusion_snapback taking (image_url, secret)), so the GPU leg could
+// never succeed. Also now sends the shared secret (WORKER_SHARED_SECRET —
+// same value as the Space's INTERNAL_API_SECRET, which its functions check)
+// and an HF bearer token for private Spaces.
+type GpuWorkerOutcome =
+  | { ok: true; l5: any; l5b: any }
+  | { ok: false; reason: string }
+
+async function gradioSseLastEvent(res: Response): Promise<{ event: string; data: any }> {
+  const text = await res.text()
+  let event = 'unknown'
+  let data: any = null
+  for (const line of text.split('\n')) {
+    const ev = line.match(/^event:\s*(.*)$/)
+    if (ev) { event = ev[1].trim(); continue }
+    const da = line.match(/^data:\s*(.*)$/)
+    if (da) { try { data = JSON.parse(da[1]) } catch { data = da[1] } }
   }
+  return { event, data }
+}
+
+const normalizeL5  = (r: any): any => (!r || typeof r !== 'object') ? { available: false } : { ...r, available: !r.error && typeof r.score === 'number' }
+const normalizeL5b = (r: any): any => {
+  if (!r || typeof r !== 'object') return { available: false }
+  const snap = typeof r.snapBackScore === 'number' ? r.snapBackScore : (typeof r.score === 'number' ? r.score : undefined)
+  return { ...r, snapBackScore: snap, available: !r.error && typeof snap === 'number' }
+}
+
+async function callGpuWorker(gpuUrl: string, imageBuffer: ArrayBuffer, mimeType: string, imageBase64: string, env?: Env): Promise<GpuWorkerOutcome> {
+  if (!gpuUrl) return { ok: false, reason: 'unconfigured (HF_GPU_WORKER_URL not set)' }
+
+  // Attempt 1 — FastAPI route (signal-worker/app_gpu_only.py Space variant);
+  // 404s fast on the Gradio-only variant.
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([imageBuffer], { type: mimeType }), 'image.png')
+    const res = await fetch(`${gpuUrl}/analyze/image`, { method: 'POST', body: form, signal: AbortSignal.timeout(10_000) })
+    if (res.ok) {
+      const d = await res.json() as any
+      if (d.diffusion_inversion || d.diffusion_snapback) {
+        return { ok: true, l5: normalizeL5(d.diffusion_inversion), l5b: normalizeL5b(d.diffusion_snapback) }
+      }
+    }
+  } catch { /* Gradio-only Space — fall through to the queued API */ }
+
+  // Attempt 2 — Gradio 4.x queued API: POST /call/<name> → event_id, then
+  // GET /call/<name>/<event_id> (SSE). L5 + L5b share one deadline.
+  const deadline = Date.now() + GPU_WORKER_TIMEOUT_MS
+  const dataUrl  = `data:${mimeType};base64,${imageBase64}`
+  const secret   = env?.WORKER_SHARED_SECRET ?? ''   // same value as the Space's INTERNAL_API_SECRET
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const hfToken = env?.HUGGINGFACE_API_TOKEN
+  if (hfToken) headers['Authorization'] = `Bearer ${hfToken}`
+
+  const callOne = async (apiName: string): Promise<{ ok: boolean; result?: any; error?: string }> => {
+    try {
+      const sub = await fetch(`${gpuUrl}/call/${apiName}`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ data: [dataUrl, secret] }),
+        signal: AbortSignal.timeout(Math.max(2_000, deadline - Date.now())),
+      })
+      if (sub.status === 404) return { ok: false, error: `Space has no /call/${apiName} route — running different code than hf-space-gpu-worker/ (redeploy the Space)` }
+      if (!sub.ok) return { ok: false, error: `submit ${apiName}: HTTP ${sub.status}` }
+      const { event_id } = await sub.json() as { event_id?: string }
+      if (!event_id) return { ok: false, error: `submit ${apiName}: no event_id` }
+      const sse = await fetch(`${gpuUrl}/call/${apiName}/${event_id}`, {
+        headers,
+        signal: AbortSignal.timeout(Math.max(2_000, deadline - Date.now())),
+      })
+      if (!sse.ok) return { ok: false, error: `result ${apiName}: HTTP ${sse.status}` }
+      const { event, data } = await gradioSseLastEvent(sse)
+      if (event === 'error') return { ok: false, error: `Space function ${apiName} errored (ZeroGPU quota/OOM — check Space logs)` }
+      if (event !== 'complete' || !Array.isArray(data)) return { ok: false, error: `result ${apiName}: unexpected SSE payload (event=${event})` }
+      return { ok: true, result: data[0] }
+    } catch (err) {
+      return { ok: false, error: `${apiName}: ${(err as Error).message}` }
+    }
+  }
+
+  const [l5Res, l5bRes] = await Promise.all([callOne('diffusion_inversion'), callOne('diffusion_snapback')])
+  const l5  = l5Res.ok  ? normalizeL5(l5Res.result)   : { available: false }
+  const l5b = l5bRes.ok ? normalizeL5b(l5bRes.result) : { available: false }
+  if (l5.available || l5b.available) return { ok: true, l5, l5b }
+
+  const reasons = [
+    l5Res.ok  ? (l5Res.result?.error ? `function returned error: ${l5Res.result.error}` : null) : l5Res.error,
+    l5bRes.ok ? (l5bRes.result?.error ? `function returned error: ${l5bRes.result.error}` : null) : l5bRes.error,
+  ].filter(Boolean) as string[]
+  return { ok: false, reason: reasons.join('; ') || 'no L5/L5b layer produced a usable score' }
 }
 
 // ── Gemini vision — same prompt/parsing as gemini-analyzer.ts geminiAnalyzeImage,
@@ -332,9 +411,16 @@ async function processInBackground(body: AnalyzeRequest, env: Env) {
   try {
     const imageBuffer = base64ToArrayBuffer(imageBase64)
 
-    // STRICT: both remote workers are mandatory for image detection.
-    const missingCfg = [!env.PYTHON_WORKER_URL && 'PYTHON_WORKER_URL', !env.HF_GPU_WORKER_URL && 'HF_GPU_WORKER_URL'].filter(Boolean)
-    if (missingCfg.length) throw new Error(`Required worker(s) not configured: ${missingCfg.join(', ')}`)
+    // IMG-WORKER-1 — policy gate, mirrors hf-analyze.ts. Previously BOTH
+    // workers were strictly mandatory; now IMAGE_WORKERS_REQUIRED controls it
+    // ('both' = old behavior, 'any' = DEFAULT, 'none' = never abort).
+    const workerMode = env.IMAGE_WORKERS_REQUIRED ?? 'any'
+    if (workerMode === 'both') {
+      const missingCfg = [!env.PYTHON_WORKER_URL && 'PYTHON_WORKER_URL', !env.HF_GPU_WORKER_URL && 'HF_GPU_WORKER_URL'].filter(Boolean)
+      if (missingCfg.length) throw new Error(`Required worker(s) not configured: ${missingCfg.join(', ')}`)
+    } else if (workerMode === 'any' && !env.PYTHON_WORKER_URL && !env.HF_GPU_WORKER_URL) {
+      throw new Error('At least one remote worker required; neither PYTHON_WORKER_URL nor HF_GPU_WORKER_URL is configured')
+    }
 
     // ── Parallel fan-out — the whole reason this lives here and not on Vercel ──
     const cvPromise = callPythonCVWorker(env.PYTHON_WORKER_URL ?? '', imageBuffer, mimeType)
@@ -345,13 +431,25 @@ async function processInBackground(body: AnalyzeRequest, env: Env) {
       ? Promise.all(IMAGE_MODELS.map(m => hfInference(env.HUGGINGFACE_API_TOKEN!, m.model, imageBuffer, 15000)))
       : Promise.resolve(IMAGE_MODELS.map(() => null))
 
-    const gpuPromise = callGpuWorker(env.HF_GPU_WORKER_URL ?? '', imageBuffer, mimeType, imageBase64)
+    const gpuPromise = callGpuWorker(env.HF_GPU_WORKER_URL ?? '', imageBuffer, mimeType, imageBase64, env)
 
-    const [cvWorkerResult, geminiResult, hfResults, gpuWorkerResult] = await Promise.all([cvPromise, geminiPromise, hfPromise, gpuPromise])
+    const [cvOutcome, geminiResult, hfResults, gpuOutcome] = await Promise.all([cvPromise, geminiPromise, hfPromise, gpuPromise])
 
-    if (!cvWorkerResult || !gpuWorkerResult) {
-      const failed = [!cvWorkerResult && 'CV worker (DigitalOcean)', !gpuWorkerResult && 'GPU worker (HF ZeroGPU)'].filter(Boolean)
-      throw new Error(`Required worker(s) unavailable: ${failed.join(', ')}`)
+    // IMG-WORKER-1 — unwrap structured outcomes; policy gate with reasons.
+    const cvWorkerResult  = cvOutcome.ok ? cvOutcome.result : null
+    const gpuWorkerResult = (gpuOutcome.ok && (gpuOutcome.l5?.available || gpuOutcome.l5b?.available))
+      ? { l5: gpuOutcome.l5, l5b: gpuOutcome.l5b } : null
+    const cvGateFailed  = !cvWorkerResult
+    const gpuGateFailed = !gpuWorkerResult
+    const gateShouldAbort =
+      (workerMode === 'both' && (cvGateFailed || gpuGateFailed)) ||
+      (workerMode === 'any'  &&  cvGateFailed && gpuGateFailed)
+    if (gateShouldAbort) {
+      const failed = [
+        cvGateFailed  && `CV worker (DigitalOcean): ${cvOutcome.ok ? 'no usable composite score' : cvOutcome.reason}`,
+        gpuGateFailed && `GPU worker (HF ZeroGPU): ${gpuOutcome.ok ? 'no usable L5/L5b layer' : gpuOutcome.reason}`,
+      ].filter(Boolean) as string[]
+      throw new Error(`Required worker(s) unavailable: ${failed.join(' | ')}. See docs/IMG_WORKER_RECOVERY.md`)
     }
 
     // ── Fusion — verbatim from hf-analyze.ts analyzeImage() (v8.1/v8.2) ──────
@@ -373,6 +471,7 @@ async function processInBackground(body: AnalyzeRequest, env: Env) {
 
     const imgDegradedSignals: string[] = [
       ...(!cvAvailable  ? [env.PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
+      ...(gpuWorkerResult ? [] : [env.HF_GPU_WORKER_URL ? 'gpu-worker-unavailable' : 'gpu-worker-unconfigured']),
       ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
       ...(!llmAvailable ? [env.GEMINI_API_KEY ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
     ]

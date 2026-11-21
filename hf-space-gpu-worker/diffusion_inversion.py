@@ -157,13 +157,25 @@ def diffusion_inversion_score(image_url: str, model_key: str = 'sd15') -> dict:
     from PIL import Image
 
     # ── Load image ────────────────────────────────────────────────────────────
+    # IMG-WORKER-1: accept data: URLs (inline base64 images) in addition to
+    # http(s) URLs. The Vercel/Cloudflare frontend holds the image buffer in
+    # hand with no hosted URL, so it sends a data: URL — and requests.get()
+    # cannot fetch data: URIs, which made every frontend-driven L5 call fail
+    # with "Invalid URL" before this.
+    is_data_url = image_url.startswith('data:')
     try:
-        resp = requests.get(image_url, timeout=20,
-                            headers={'User-Agent': 'Aiscern-L5/1.0'})
-        resp.raise_for_status()
-        image = Image.open(BytesIO(resp.content)).convert('RGB')
+        if is_data_url:
+            import base64 as _b64
+            payload = image_url.split(',', 1)[1] if ',' in image_url else ''
+            image = Image.open(BytesIO(_b64.b64decode(payload))).convert('RGB')
+        else:
+            resp = requests.get(image_url, timeout=20,
+                                headers={'User-Agent': 'Aiscern-L5/1.0'})
+            resp.raise_for_status()
+            image = Image.open(BytesIO(resp.content)).convert('RGB')
     except Exception as e:
-        raise ValueError(f"Failed to fetch image from {image_url}: {e}")
+        src = 'data: URL' if is_data_url else image_url
+        raise ValueError(f"Failed to load image from {src}: {e}")
 
     # ── Load model ────────────────────────────────────────────────────────────
     try:

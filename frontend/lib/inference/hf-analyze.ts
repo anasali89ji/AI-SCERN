@@ -668,19 +668,34 @@ export async function analyzeImage(imageBuffer: Buffer, mimeType: string, _fileN
   const imgCached    = await getCachedScan(imgCacheHash)
   if (imgCached) return { ...imgCached, summary: imgCached.summary + ' (cached)' }
 
-  // ── STRICT MODE: image detection REQUIRES both remote workers ────────────
-  // CV worker = DigitalOcean signal-worker (PYTHON_WORKER_URL, L1-L21 forensics)
+  // ── WORKER POLICY: which remote image workers are mandatory ────────────────
+  // CV worker  = DigitalOcean signal-worker (PYTHON_WORKER_URL, L1-L21 forensics)
   // GPU worker = HuggingFace ZeroGPU Space (HF_GPU_WORKER_URL, L5/L5b diffusion)
-  // Set IMAGE_WORKERS_OPTIONAL=true to restore the old degrade-gracefully mode.
-  const REQUIRE_IMAGE_WORKERS = process.env.IMAGE_WORKERS_OPTIONAL !== 'true'
-  if (REQUIRE_IMAGE_WORKERS) {
+  //
+  // IMG-WORKER-1: the previous hard "both workers mandatory or abort" gate
+  // turned every transient worker blip into a total scan failure (a batch of
+  // 3 images self-DoSed the single DigitalOcean instance — 3 concurrent
+  // ~32s-CPU analyses each stretched past the timeout and EVERY item aborted,
+  // even though the worker was perfectly healthy one-at-a-time). The gate is
+  // now policy-driven via IMAGE_WORKERS_REQUIRED:
+  //   'both' → abort unless BOTH workers respond (previous strict behavior)
+  //   'any'  → abort only when NEITHER responds — the responding worker still
+  //            anchors the verdict and the missing one is flagged in
+  //            degraded_signals (DEFAULT)
+  //   'none' → never abort; ensemble-only results allowed
+  // Legacy IMAGE_WORKERS_OPTIONAL=true is still honored as an alias for 'none'.
+  const WORKER_MODE = (process.env.IMAGE_WORKERS_REQUIRED
+    ?? (process.env.IMAGE_WORKERS_OPTIONAL === 'true' ? 'none' : 'any')) as 'both' | 'any' | 'none'
+  if (WORKER_MODE === 'both') {
     const missingCfg = [
       !process.env.PYTHON_WORKER_URL && 'PYTHON_WORKER_URL',
       !process.env.HF_GPU_WORKER_URL && 'HF_GPU_WORKER_URL',
     ].filter(Boolean)
     if (missingCfg.length) {
-      throw new Error(`Image detection requires remote workers; not configured: ${missingCfg.join(', ')}`)
+      throw new Error(`Image detection requires both remote workers; not configured: ${missingCfg.join(', ')}`)
     }
+  } else if (WORKER_MODE === 'any' && !process.env.PYTHON_WORKER_URL && !process.env.HF_GPU_WORKER_URL) {
+    throw new Error('Image detection requires at least one remote worker; neither PYTHON_WORKER_URL nor HF_GPU_WORKER_URL is configured')
   }
 
   // Preprocess: resize to 1024px max, strip EXIF, normalise to JPEG 92%
@@ -735,45 +750,82 @@ interface PythonCVResult {
   diffusion_snapback?:  any
 }
 
+// IMG-WORKER-1 — single-flight lock for the CV worker HTTP call.
+// Measured 2026-11 against the production worker: one /analyze/image call
+// costs ~32s of CPU on the single DigitalOcean App Platform instance. N
+// concurrent calls (a batch scan of N images through Promise.all) each
+// stretch toward N×32s, blow past the timeout, and EVERY item reports
+// "CV worker unavailable" even though the worker is perfectly healthy when
+// called one-at-a-time. Serializing just the HTTP call (the Brain/HF/Gemini
+// work still runs in parallel around it) restores per-call latency: a
+// 3-image batch finishes in ~3×32s instead of aborting outright.
+let cvWorkerChain: Promise<unknown> = Promise.resolve()
+async function withCvWorkerLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = cvWorkerChain.then(fn, fn)
+  cvWorkerChain = run.then(() => undefined, () => undefined)
+  return run
+}
+
+type CvWorkerOutcome =
+  | { ok: true; result: PythonCVResult }
+  | { ok: false; reason: string }
+
 async function callPythonCVWorker(
   imageBuffer: Buffer,
   mimeType: string,
   brainResult?: ImageBrainResult | null,
-): Promise<PythonCVResult | null> {
-  if (!PYTHON_WORKER_URL) return null
-  try {
-    const form = new FormData()
-    form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.jpg')
-    // v4.6 unification: send Brain's score along so the worker can fold it
-    // into ITS fusion as a third pillar (see image_engine.py _fuse_scores)
-    // instead of hf-analyze.ts blending Brain against cvScore separately.
-    // Purely additive — only the numeric score is needed for fusion, so a
-    // minimal payload keeps the request small; worker degrades gracefully
-    // if this field is missing/malformed.
-    if (brainResult && typeof brainResult.score === 'number') {
-      form.append('brain_result', JSON.stringify({ score: brainResult.score, verdict: brainResult.verdict }))
+): Promise<CvWorkerOutcome> {
+  if (!PYTHON_WORKER_URL) return { ok: false, reason: 'unconfigured (PYTHON_WORKER_URL not set)' }
+  const attempt = async (): Promise<CvWorkerOutcome> => {
+    try {
+      const form = new FormData()
+      form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.jpg')
+      // v4.6 unification: send Brain's score along so the worker can fold it
+      // into ITS fusion as a third pillar (see image_engine.py _fuse_scores)
+      // instead of hf-analyze.ts blending Brain against cvScore separately.
+      // Purely additive — only the numeric score is needed for fusion, so a
+      // minimal payload keeps the request small; worker degrades gracefully
+      // if this field is missing/malformed.
+      if (brainResult && typeof brainResult.score === 'number') {
+        form.append('brain_result', JSON.stringify({ score: brainResult.score, verdict: brainResult.verdict }))
+      }
+      const res = await fetch(`${PYTHON_WORKER_URL}/analyze/image`, {
+        method: 'POST', body: form,
+        signal: AbortSignal.timeout(IMAGE_CV_WORKER_TIMEOUT_MS),
+      })
+      if (!res.ok) {
+        return { ok: false, reason: `HTTP ${res.status} ${res.statusText} from POST ${PYTHON_WORKER_URL}/analyze/image` }
+      }
+      const data = await res.json() as PythonCVResult
+      if (typeof data.composite_cv_score !== 'number') {
+        return { ok: false, reason: 'worker responded but composite_cv_score was missing or not a number (worker/frontend version mismatch?)' }
+      }
+      return { ok: true, result: data }
+    } catch (err) {
+      const timedOut = err instanceof Error && err.name === 'TimeoutError'
+      return {
+        ok: false,
+        reason: timedOut
+          ? `timeout after ${IMAGE_CV_WORKER_TIMEOUT_MS}ms — worker healthy but slow/overloaded (measured ~32s/image single-flight; batch scans are serialized by design — if this persists on single scans, upgrade the DigitalOcean instance)`
+          : `network error: ${err instanceof Error ? err.message : String(err)}`,
+      }
     }
-    const res = await fetch(`${PYTHON_WORKER_URL}/analyze/image`, {
-      method: 'POST', body: form,
-      signal: AbortSignal.timeout(IMAGE_CV_WORKER_TIMEOUT_MS),
-    })
-    if (!res.ok) {
-      console.error(`[hf-analyze] CV worker returned ${res.status} ${res.statusText} — falling back to Brain+ML+LLM only.`)
-      return null
-    }
-    const data = await res.json() as PythonCVResult
-    if (typeof data.composite_cv_score !== 'number') {
-      console.error('[hf-analyze] CV worker response missing composite_cv_score — falling back to Brain+ML+LLM only.', data)
-      return null
-    }
-    return data
-  } catch (err) {
-    // NOT a silent fallback — log it. A failing CV worker silently dropping to
-    // null causes weight to redistribute to other layers with zero visibility
-    // into why, which makes accuracy regressions impossible to diagnose.
-    console.error('[hf-analyze] CV worker call failed — falling back to Brain+ML+LLM only. Reason:', err instanceof Error ? err.message : err)
-    return null
   }
+  const started = Date.now()
+  const first = await withCvWorkerLock(attempt)
+  if (first.ok) return first
+  // One retry — ONLY when the first attempt failed FAST (connection reset,
+  // 5xx blip). A full 60s timeout will not recover on an immediate second
+  // attempt and would double the wall-clock budget for nothing.
+  const failedFast = Date.now() - started < 10_000
+  const retryable  = /HTTP 5\d\d |network error/.test(first.reason)
+  if (failedFast && retryable) {
+    console.error(`[hf-analyze] CV worker fast-fail (${first.reason}) — retrying once`)
+    const second = await withCvWorkerLock(attempt)
+    if (second.ok) return second
+    return { ok: false, reason: `${first.reason}; retry also failed: ${second.reason}` }
+  }
+  return first
 }
 
 // ── IMAGE BRAIN (PRIMARY) — async with sharp pixel decode ──────────────────
@@ -790,60 +842,171 @@ const cvWorkerPromise = callPythonCVWorker(inferenceBuffer, inferenceMime, brain
 // Runs in parallel with the CPU worker (DigitalOcean) — if the GPU worker
 // responds, its L5/L5b scores are merged into the CV worker result.
 const HF_GPU_WORKER_URL = process.env.HF_GPU_WORKER_URL || ''
-async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<{ l5: any; l5b: any } | null> {
-  if (!HF_GPU_WORKER_URL) return null
-  try {
-    // HuggingFace Spaces with Gradio SDK serve a Gradio API, not FastAPI.
-    // The API endpoint is /api/predict with a specific JSON format.
-    // We use the @gradio/client library's REST API format.
-    //
-    // But since the Space may also have FastAPI routes (if mounted correctly),
-    // we try the FastAPI endpoint first (/analyze/image), then fall back to
-    // the Gradio API format (/api/predict).
-    //
-    // Attempt 1: FastAPI route (if the Space serves it)
-    try {
-      const form = new FormData()
-      form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
-      const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
-        method: 'POST', body: form,
-        signal: AbortSignal.timeout(GPU_WORKER_TIMEOUT_MS),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.diffusion_inversion || data.diffusion_snapback) {
-          return { l5: data.diffusion_inversion, l5b: data.diffusion_snapback }
-        }
-      }
-    } catch {
-      // FastAPI route not available — fall through to Gradio API
-    }
 
-    // Attempt 2: Gradio API format (HuggingFace Spaces standard)
-    // Convert image to base64 for Gradio API
-    const base64 = imageBuffer.toString('base64')
-    const dataUrl = `data:${mimeType};base64,${base64}`
-    const res = await fetch(`${HF_GPU_WORKER_URL}/api/predict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: [dataUrl] }),
-      signal: AbortSignal.timeout(GPU_WORKER_TIMEOUT_MS),
-    })
-    if (!res.ok) {
-      console.error(`[hf-analyze] GPU worker returned ${res.status} — L5/L5b unavailable`)
-      return null
-    }
-    const data = await res.json()
-    // Gradio returns { data: [markdown_string, json_object] }
-    const resultData = data.data?.[1] || data.data?.[0]
-    if (resultData && (resultData.diffusion_inversion || resultData.diffusion_snapback)) {
-      return { l5: resultData.diffusion_inversion, l5b: resultData.diffusion_snapback }
-    }
-    return null
-  } catch (err) {
-    console.error('[hf-analyze] GPU worker call failed — L5/L5b unavailable:', err instanceof Error ? err.message : err)
-    return null
+// IMG-WORKER-1 — protocol rewrite. The previous implementation POSTed
+// {HF_GPU_WORKER_URL}/analyze/image and then {HF_GPU_WORKER_URL}/api/predict
+// with {data:[dataUrl]}. NEITHER endpoint exists on the Space this repo
+// deploys (hf-space-gpu-worker/app.py, Gradio 4.x with demo.queue()): it
+// exposes the queue-based /call/<api_name> two-step API with functions
+// diffusion_inversion and diffusion_snapback, each taking (image_url, secret)
+// — the exact protocol lib/forensic/layers/diffusion-inversion.ts already
+// speaks. The old call could NEVER succeed, so every scan logged
+// "GPU worker (HF ZeroGPU) unavailable". This version:
+//   1. tries the FastAPI /analyze/image route first (that IS the contract of
+//      the signal-worker/app_gpu_only.py Space variant — it 404s fast on the
+//      Gradio-only variant),
+//   2. submits L5 + L5b through the Gradio 4.x queued API (/call/<name> →
+//      event_id → SSE /call/<name>/<event_id>), sending INTERNAL_API_SECRET
+//      (checked by the Space functions) and an HF_TOKEN bearer when set
+//      (required when the Space is private),
+//   3. sends the image as a data: URL — supported by the Space's
+//      diffusion_inversion.py / diffusion_snapback.py as of this patch
+//      (Python requests.get() cannot fetch data: URLs, which previously
+//      made even a correctly-routed call fail),
+//   4. normalizes the flat function results into the { available, score, ... }
+//      shape the ensemble merge below expects,
+//   5. returns a structured outcome with a human-readable failure reason, so
+//      the abort message (when a policy gate does fire) says WHAT failed and
+//      HOW to fix it instead of a bare "unavailable".
+type GpuWorkerOutcome =
+  | { ok: true; l5: any; l5b: any }
+  | { ok: false; reason: string }
+
+// Gradio 4.x SSE reader. Streams may contain progress/heartbeat events
+// BEFORE the terminal one — keep the LAST event/data pair, not the first.
+async function readGradioSseResult(res: Response): Promise<{ event: string; data: any }> {
+  const text = await res.text()
+  let event = 'unknown'
+  let data: any = null
+  for (const line of text.split('\n')) {
+    const ev = line.match(/^event:\s*(.*)$/)
+    if (ev) { event = ev[1].trim(); continue }
+    const da = line.match(/^data:\s*(.*)$/)
+    if (da) { try { data = JSON.parse(da[1]) } catch { data = da[1] } }
   }
+  return { event, data }
+}
+
+function gpuAuthHeaders(json = false): Record<string, string> {
+  const headers: Record<string, string> = {}
+  if (json) headers['Content-Type'] = 'application/json'
+  if (process.env.HF_TOKEN) headers['Authorization'] = `Bearer ${process.env.HF_TOKEN}` // private Spaces
+  return headers
+}
+
+async function submitGradioCall(apiName: string, dataUrl: string, deadline: number): Promise<{ eventId?: string; error?: string }> {
+  try {
+    const res = await fetch(`${HF_GPU_WORKER_URL}/call/${apiName}`, {
+      method:  'POST',
+      headers: gpuAuthHeaders(true),
+      body:    JSON.stringify({ data: [dataUrl, process.env.INTERNAL_API_SECRET || ''] }),
+      signal:  AbortSignal.timeout(Math.max(2_000, deadline - Date.now())),
+    })
+    if (res.status === 404) {
+      return { error: `Space has no /call/${apiName} route — it is running different code than hf-space-gpu-worker/ (redeploy the Space; see docs/IMG_WORKER_RECOVERY.md)` }
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      return { error: `submit ${apiName}: HTTP ${res.status} ${body.slice(0, 140)}` }
+    }
+    const { event_id } = await res.json() as { event_id?: string }
+    if (!event_id) return { error: `submit ${apiName}: response had no event_id` }
+    return { eventId: event_id }
+  } catch (err) {
+    return { error: `submit ${apiName}: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+async function collectGradioResult(apiName: string, eventId: string, deadline: number): Promise<{ ok: boolean; result?: any; error?: string }> {
+  try {
+    const res = await fetch(`${HF_GPU_WORKER_URL}/call/${apiName}/${eventId}`, {
+      headers: gpuAuthHeaders(),
+      signal:  AbortSignal.timeout(Math.max(2_000, deadline - Date.now())),
+    })
+    if (!res.ok) return { ok: false, error: `result ${apiName}: HTTP ${res.status}` }
+    const { event, data } = await readGradioSseResult(res)
+    if (event === 'error') {
+      return { ok: false, error: `Space function ${apiName} errored (ZeroGPU quota exhausted, GPU OOM, or exception — check the Space runtime logs)` }
+    }
+    if (event !== 'complete' || !Array.isArray(data)) {
+      return { ok: false, error: `result ${apiName}: unexpected SSE payload (event=${event})` }
+    }
+    return { ok: true, result: data[0] }
+  } catch (err) {
+    return { ok: false, error: `result ${apiName}: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+// The Space functions return flat dicts: L5 {mse, score, confidence, model,
+// steps, error?} and L5b {snapBackScore, score?, confidence, error?}. The
+// ensemble merge expects { available, score | snapBackScore, ... } — normalize.
+function normalizeL5(r: any): any {
+  if (!r || typeof r !== 'object') return { available: false }
+  return { ...r, available: !r.error && typeof r.score === 'number' }
+}
+function normalizeL5b(r: any): any {
+  if (!r || typeof r !== 'object') return { available: false }
+  const snap = typeof r.snapBackScore === 'number' ? r.snapBackScore : (typeof r.score === 'number' ? r.score : undefined)
+  return { ...r, snapBackScore: snap, available: !r.error && typeof snap === 'number' }
+}
+const layerError = (r: any): string | null =>
+  (r && typeof r === 'object' && typeof r.error === 'string' && r.error) ? `function returned error: ${r.error}` : null
+
+async function callGpuWorker(imageBuffer: Buffer, mimeType: string): Promise<GpuWorkerOutcome> {
+  if (!HF_GPU_WORKER_URL) return { ok: false, reason: 'unconfigured (HF_GPU_WORKER_URL not set)' }
+
+  // Attempt 1 — FastAPI route (signal-worker/app_gpu_only.py Space variant).
+  // Capped at 10s: the Gradio-only variant 404s immediately, so this costs
+  // nothing on the primary deployment.
+  try {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(imageBuffer)], { type: mimeType }), 'image.png')
+    const res = await fetch(`${HF_GPU_WORKER_URL}/analyze/image`, {
+      method: 'POST', body: form,
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (res.ok) {
+      const data = await res.json() as any
+      if (data.diffusion_inversion || data.diffusion_snapback) {
+        return { ok: true, l5: normalizeL5(data.diffusion_inversion), l5b: normalizeL5b(data.diffusion_snapback) }
+      }
+    }
+  } catch {
+    // Gradio-only Space — fall through to the queued API
+  }
+
+  // Attempt 2 — Gradio 4.x queued API (hf-space-gpu-worker/app.py variant).
+  // L5 and L5b are separate functions; submit both and collect both, sharing
+  // one overall deadline so the GPU leg never exceeds GPU_WORKER_TIMEOUT_MS.
+  const deadline = Date.now() + GPU_WORKER_TIMEOUT_MS
+  const dataUrl  = `data:${mimeType};base64,${imageBuffer.toString('base64')}`
+
+  const [l5Res, l5bRes] = await Promise.all([
+    (async (): Promise<{ ok: boolean; result?: any; error?: string }> => {
+      const sub = await submitGradioCall('diffusion_inversion', dataUrl, deadline)
+      if (sub.error) return { ok: false, error: sub.error }
+      return collectGradioResult('diffusion_inversion', sub.eventId!, deadline)
+    })(),
+    (async (): Promise<{ ok: boolean; result?: any; error?: string }> => {
+      const sub = await submitGradioCall('diffusion_snapback', dataUrl, deadline)
+      if (sub.error) return { ok: false, error: sub.error }
+      return collectGradioResult('diffusion_snapback', sub.eventId!, deadline)
+    })(),
+  ])
+
+  const l5  = l5Res.ok  ? normalizeL5(l5Res.result)   : { available: false }
+  const l5b = l5bRes.ok ? normalizeL5b(l5bRes.result) : { available: false }
+  if (l5.available || l5b.available) return { ok: true, l5, l5b }
+
+  const reasons = [
+    l5Res.ok  ? layerError(l5Res.result)  : l5Res.error,
+    l5bRes.ok ? layerError(l5bRes.result) : l5bRes.error,
+  ].filter(Boolean) as string[]
+  let reason = reasons.join('; ') || 'no L5/L5b layer produced a usable score'
+  if (/unauthorized/.test(reason)) {
+    reason += ' — the Space rejected INTERNAL_API_SECRET; make sure the frontend and the Space secret carry the same value'
+  }
+  return { ok: false, reason }
 }
 const gpuWorkerPromise = callGpuWorker(inferenceBuffer, inferenceMime)
 
@@ -912,13 +1075,41 @@ trackVendorCall('huggingface', 'image', 6) // MODULE 6 — 6 underlying model ca
 // Pixel signals always use the ORIGINAL buffer (needs camera-native fidelity)
 let imgSignals = extractImageSignals(imageBuffer, imageBuffer.length)
 
-let [geminiResult, grokResult, hfResults, cvWorkerResult, gpuWorkerResult] = await Promise.all([
+let [geminiResult, grokResult, hfResults, cvOutcome, gpuOutcome] = await Promise.all([
   geminiPromise, grokPromise, hfPromise, cvWorkerPromise, gpuWorkerPromise,
 ])
 
-if (REQUIRE_IMAGE_WORKERS && (!cvWorkerResult || !gpuWorkerResult)) {
-  const failed = [!cvWorkerResult && 'CV worker (DigitalOcean)', !gpuWorkerResult && 'GPU worker (HF ZeroGPU)'].filter(Boolean)
-  throw new Error(`Image detection aborted — required worker(s) unavailable: ${failed.join(', ')}`)
+// Unwrap the structured outcomes (IMG-WORKER-1). cvWorkerResult must stay a
+// `let` — the GPU→CV synthesis below reassigns it when only the GPU worker
+// responded.
+let cvWorkerResult: PythonCVResult | null = cvOutcome.ok ? cvOutcome.result : null
+let gpuWorkerResult: { l5: any; l5b: any } | null =
+  (gpuOutcome.ok && (gpuOutcome.l5?.available || gpuOutcome.l5b?.available))
+    ? { l5: gpuOutcome.l5, l5b: gpuOutcome.l5b }
+    : null
+const cvWorkerReason: string | null  = cvOutcome.ok  ? null : cvOutcome.reason
+const gpuWorkerReason: string | null  = gpuWorkerResult ? null : (gpuOutcome.ok ? 'no usable L5/L5b layer in the Space response' : gpuOutcome.reason)
+
+// IMG-WORKER-1 — policy gate (see WORKER_MODE above). Default 'any': the scan
+// completes when at least one worker responded (the responding worker still
+// anchors the verdict); it aborts only when NEITHER did. 'both' preserves the
+// previous strict behavior. Failure reasons are always included so the
+// operator sees exactly what broke and how to fix it.
+const cvGateFailed  = !cvWorkerResult
+const gpuGateFailed = !gpuWorkerResult
+const gateShouldAbort =
+  (WORKER_MODE === 'both' && (cvGateFailed || gpuGateFailed)) ||
+  (WORKER_MODE === 'any'  &&  cvGateFailed && gpuGateFailed)
+if (gateShouldAbort) {
+  const failed = [
+    cvGateFailed  && `CV worker (DigitalOcean): ${cvWorkerReason ?? 'no result'}`,
+    gpuGateFailed && `GPU worker (HF ZeroGPU): ${gpuWorkerReason ?? 'no result'}`,
+  ].filter(Boolean) as string[]
+  throw new Error(
+    `Image detection aborted — required worker(s) unavailable: ${failed.join(' | ')}. ` +
+    `Run scripts/check-workers.mjs from the repo root to probe both workers, or see docs/IMG_WORKER_RECOVERY.md. ` +
+    `To allow degraded ensemble-only results while a worker is down, set IMAGE_WORKERS_REQUIRED=none.`
+  )
 }
 
 try {
@@ -1040,6 +1231,7 @@ const brainUnified = cvAvailable && cvWorkerResult?.composite_score?.brain_inclu
 // what was already being decided silently.
 const imgDegradedSignals: string[] = [
   ...(!cvAvailable  ? [PYTHON_WORKER_URL ? 'cv-worker-offline' : 'cv-worker-unconfigured'] : []),
+  ...(gpuWorkerResult ? [] : [HF_GPU_WORKER_URL ? 'gpu-worker-unavailable' : 'gpu-worker-unconfigured']),
   ...(!hfAvailable  ? ['hf-ensemble-cold-or-failed'] : []),
   ...(!llmAvailable ? [geminiAvailable() ? 'gemini-call-failed' : 'gemini-unconfigured'] : []),
   ...(cvAvailable && !brainUnified ? ['brain-cv-not-unified-legacy-blend'] : []),

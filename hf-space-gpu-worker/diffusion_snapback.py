@@ -82,14 +82,24 @@ def diffusion_snapback_score(image_url: str) -> dict:
     import torch
     from PIL import Image
 
-    # ── Fetch image ────────────────────────────────────────────────────────────
+    # ── Load image ────────────────────────────────────────────────────────────
+    # IMG-WORKER-1: accept data: URLs (inline base64 images) in addition to
+    # http(s) URLs — requests.get() cannot fetch data: URIs, and the frontend
+    # sends the image buffer as a data: URL. See diffusion_inversion.py.
+    is_data_url = image_url.startswith('data:')
     try:
-        resp = requests.get(image_url, timeout=20,
-                            headers={'User-Agent': 'Aiscern-L5b/1.0'})
-        resp.raise_for_status()
-        orig_image = Image.open(BytesIO(resp.content)).convert('RGB').resize((512, 512))
+        if is_data_url:
+            import base64 as _b64
+            payload = image_url.split(',', 1)[1] if ',' in image_url else ''
+            orig_image = Image.open(BytesIO(_b64.b64decode(payload))).convert('RGB').resize((512, 512))
+        else:
+            resp = requests.get(image_url, timeout=20,
+                                headers={'User-Agent': 'Aiscern-L5b/1.0'})
+            resp.raise_for_status()
+            orig_image = Image.open(BytesIO(resp.content)).convert('RGB').resize((512, 512))
     except Exception as e:
-        raise ValueError(f"Failed to fetch image: {e}")
+        src = 'data: URL' if is_data_url else image_url
+        raise ValueError(f"Failed to load image from {src}: {e}")
 
     # ── Load model ────────────────────────────────────────────────────────────
     pipe   = _load_img2img_pipeline()
